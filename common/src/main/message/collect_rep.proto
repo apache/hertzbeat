@@ -1,0 +1,46 @@
+syntax = "proto3";
+package com.usthe.common.entity.message;
+
+message MetricsData
+{
+    // 监控的ID
+    uint64 id = 1;
+    // 监控的类型 eg: linux | mysql | jvm
+    string app = 2;
+    // 监控采集的指标集合 eg: cpu | memory | health
+    string metrics = 3;
+    // 采集时间
+    uint64 time = 4;
+    // 采集响应码
+    Code code = 5;
+    // 采集响应信息
+    string msg = 6;
+    // 采集指标名
+    repeated string fields = 7;
+    // 采集指标值集合(fields作为字段名称与ValueRow映射)
+    repeated ValueRow values = 8;
+}
+
+message ValueRow
+{
+    // 主键实例，唯一标识这行数据
+    string instance = 1;
+    // 采集指标值
+    repeated string columns = 2;
+}
+
+enum Code
+{
+    // 采集成功
+    SUCCESS = 0;
+    // 采集器不可用
+    UN_AVAILABLE = 1;
+    // 对端不可达(网络层icmp)
+    UN_REACHABLE = 2;
+    // 对端连接失败(传输层tcp,udp)
+    UN_CONNECTABLE = 3;
+    // 数据采集失败(应用层http,ssh,snmp)
+    FAIL = 4;
+    // 采集超时
+    TIMEOUT = 5;
+}
