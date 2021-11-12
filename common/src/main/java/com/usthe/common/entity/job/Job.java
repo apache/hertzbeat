@@ -81,17 +81,9 @@ public class Job {
     private transient List<Set<Metrics>> priorMetrics;
 
     /**
-     * collector使用 - 构造初始化标志
-     */
-    private transient boolean isConstruct = false;
-
-    /**
      * collector使用 - 构造初始化指标组
      */
-    public synchronized void constructMetrics() {
-        if (isConstruct) {
-            return;
-        }
+    public synchronized void constructPriorMetrics() {
         Map<Byte, List<Metrics>> map = metrics.stream()
                 .peek(metric -> {
                     // 判断是否配置aliasFields 没有则配置默认
@@ -134,26 +126,30 @@ public class Job {
      * 返回有数据集合表示：获取到下一组优先级的指标组任务
      */
     public synchronized Set<Metrics> getNextCollectMetrics(Metrics metrics, boolean first) {
-        if (!isConstruct || priorMetrics == null || priorMetrics.isEmpty()) {
+        if (priorMetrics == null || priorMetrics.isEmpty()) {
             return null;
         }
         Set<Metrics> metricsSet = priorMetrics.get(0);
         if (first) {
-            log.error("metrics must has one [availability] metrics at least.");
+            if (metricsSet.isEmpty()) {
+                log.error("metrics must has one [availability] metrics at least.");
+
+            }
             return metricsSet;
         }
         if (metrics == null) {
             log.error("metrics can not null when not first get");
+            return null;
         }
-        if (metrics != null && !metricsSet.remove(metrics)) {
+        if (!metricsSet.remove(metrics)) {
             log.error("Job {} appId {} app {} metrics {} remove empty error in priorMetrics.",
                     id, appId, app, metrics.getName());
         }
         if (metricsSet.isEmpty()) {
-            if (priorMetrics.size() == 1) {
+            priorMetrics.remove(0);
+            if (priorMetrics.size() == 0) {
                 return null;
             }
-            priorMetrics.remove(0);
             return priorMetrics.get(0);
         } else {
             return Collections.emptySet();

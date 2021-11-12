@@ -24,6 +24,7 @@
         <slf4j.version>1.7.21</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <lombok.version>1.18.20</lombok.version>
+        <swagger.version>3.0.0</swagger.version>
         <!-- Test 3rd-party dependencies: -->
         <junit.version>5.7.0</junit.version>
         <easymock.version>4.0.2</easymock.version>
@@ -43,6 +44,11 @@
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
                 <version>${xml.bind.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-boot-starter</artifactId>
+                <version>${swagger.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
