@@ -38,7 +38,7 @@ public class Job {
     /**
      * 监控ID 应用ID
      */
-    private long appId;
+    private long monitorId;
     /**
      * 监控的类型 eg: linux | mysql | jvm
      */
@@ -143,7 +143,7 @@ public class Job {
         }
         if (!metricsSet.remove(metrics)) {
             log.error("Job {} appId {} app {} metrics {} remove empty error in priorMetrics.",
-                    id, appId, app, metrics.getName());
+                    id, monitorId, app, metrics.getName());
         }
         if (metricsSet.isEmpty()) {
             priorMetrics.remove(0);
