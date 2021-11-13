@@ -1,0 +1,23 @@
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: cloud
+# 强制固定必须参数 - host(ipv4,ipv6,域名)
+param:
+  # field-字段名称标识符 type-字段类型,样式(大部分映射input标签type属性)
+  - field: host
+    type: host
+  - field: port
+    type: number
+    # 当type为number时,用range表示范围
+    range: 0-255
+  - field: username
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+  - field: password
+    type: password
+  - field: param1
+    type: radio
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表
+    option:
+      - param3
+      - param4
