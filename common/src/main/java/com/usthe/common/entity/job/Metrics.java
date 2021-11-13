@@ -67,4 +67,25 @@ public class Metrics {
      * 使用公共的jdbc规范实现的数据库配置信息
      */
     private JdbcProtocol jdbc;
+
+    /**
+     * todo 替换指标信息
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public class Field {
+        /**
+         * 指标名称
+         */
+        private String field;
+        /**
+         * 指标类型 number:数字 string:字符串
+         */
+        private String type;
+        /**
+         * 指标单位
+         */
+        private String unit;
+    }
 }
