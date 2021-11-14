@@ -48,4 +48,8 @@ public class Message<T> {
     public Message(String msg) {
         this.msg = msg;
     }
+
+    public Message(T data) {
+        this.data = data;
+    }
 }

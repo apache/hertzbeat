@@ -1,5 +1,6 @@
 package com.usthe.manager.dao;
 
+import com.usthe.manager.pojo.entity.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -7,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  *
  */
-public interface ParamDao extends JpaRepository<ParamDao, Long> {
+public interface ParamDao extends JpaRepository<Param, Long> {
 }
