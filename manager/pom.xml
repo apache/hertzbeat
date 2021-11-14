@@ -13,6 +13,7 @@
 
     <properties>
         <mysql.version>8.0.16</mysql.version>
+        <snake.yaml.version>1.26</snake.yaml.version>
     </properties>
 
     <dependencies>
@@ -67,6 +68,12 @@
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-boot-starter</artifactId>
+        </dependency>
+        <!-- yaml file load -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snake.yaml.version}</version>
         </dependency>
     </dependencies>
 
