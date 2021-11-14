@@ -4,6 +4,7 @@ import com.usthe.common.entity.dto.Message;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.service.MonitorService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +24,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author tomsun28
  * @date 2021/11/14 10:57
  */
-@Api(tags = "监控管理接口")
+@Api(tags = "监控管理API")
 @RestController
 @RequestMapping(path = "/monitor", consumes = {APPLICATION_JSON_VALUE}, produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
@@ -32,6 +33,7 @@ public class MonitorController {
     private MonitorService monitorService;
 
     @PostMapping
+    @ApiOperation(value = "新增监控", notes = "新增一个监控应用")
     public ResponseEntity<Message<Void>> addNewMonitor(@RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, false);
@@ -44,6 +46,7 @@ public class MonitorController {
     }
 
     @PutMapping
+    @ApiOperation(value = "修改监控", notes = "修改一个已存在监控应用")
     public ResponseEntity<Message<Void>> modifyMonitor(@RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, true);
@@ -56,6 +59,7 @@ public class MonitorController {
     }
 
     @GetMapping(path = "/{id}")
+    @ApiOperation(value = "查询监控", notes = "根据监控ID获取监控信息")
     public ResponseEntity<Message<MonitorDto>> getMonitor(@PathVariable("id") long id) {
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitor(id);
@@ -69,6 +73,7 @@ public class MonitorController {
     }
 
     @DeleteMapping(path = "/{id}")
+    @ApiOperation(value = "删除监控", notes = "根据监控ID删除监控应用,监控不存在也是删除成功")
     public ResponseEntity<Message<Void>> deleteMonitor(@PathVariable("id") long id) {
         // 删除监控,监控不存在或删除成功都返回成功
         monitorService.deleteMonitor(id);
@@ -76,6 +81,7 @@ public class MonitorController {
     }
 
     @PostMapping(path = "/detect")
+    @ApiOperation(value = "探测监控", notes = "根据监控信息去对此监控进行可用性探测")
     public ResponseEntity<Message<Void>> detectMonitor(@RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, false);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
