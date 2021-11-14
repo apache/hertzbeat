@@ -19,6 +19,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- swagger -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- etcd -->
         <dependency>
             <groupId>io.etcd</groupId>
