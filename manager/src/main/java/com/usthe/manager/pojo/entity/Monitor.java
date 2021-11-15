@@ -6,12 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
@@ -32,7 +33,6 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 public class Monitor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ApiModelProperty(value = "监控ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
 
@@ -46,36 +46,43 @@ public class Monitor {
      * 监控的名称
      */
     @ApiModelProperty(value = "监控名称", example = "Api-bing.com", accessMode = READ_WRITE, position = 2)
+    @Length(max = 100)
     private String name;
 
     /**
      * 监控的类型:linux,mysql,jvm...
      */
     @ApiModelProperty(value = "监控类型", example = "api", accessMode = READ_WRITE, position = 3)
+    @Length(max = 100)
     private String app;
 
     /**
      * 监控的对端host:ipv4,ipv6,域名
      */
     @ApiModelProperty(value = "监控的对端host", example = "192.167.25.11", accessMode = READ_WRITE, position = 4)
+    @Length(max = 100)
     private String host;
 
     /**
      * 监控的采集间隔时间,单位秒
      */
     @ApiModelProperty(value = "监控的采集间隔时间,单位秒", example = "600", accessMode = READ_WRITE, position = 5)
+    @Min(10)
     private Integer intervals;
 
     /**
      * 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起
      */
     @ApiModelProperty(value = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起", example = "1", accessMode = READ_WRITE, position = 6)
+    @Min(0)
+    @Max(4)
     private byte status;
 
     /**
      * 监控备注描述
      */
     @ApiModelProperty(value = "监控备注描述", example = "对搜索网站bing的可用性监控", accessMode = READ_WRITE, position = 7)
+    @Length(max = 255)
     private String description;
 
     /**

@@ -75,6 +75,11 @@
             <artifactId>snakeyaml</artifactId>
             <version>${snake.yaml.version}</version>
         </dependency>
+        <!-- validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

@@ -2,6 +2,7 @@ package com.usthe.manager.support;
 
 
 import com.usthe.common.entity.dto.Message;
+import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import static com.usthe.common.util.CommonConstants.DETECT_FAILED;
+import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT;
 
 /**
  * controller exception handler
@@ -35,6 +37,19 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(DETECT_FAILED).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
+
+    /**
+     * 处理数据库操作异常
+     * @param exception 探测异常
+     * @return response
+     */
+    @ExceptionHandler(MonitorDatabaseException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleMonitorDatabaseException(MonitorDatabaseException exception) {
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(MONITOR_CONFLICT).build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+    }
+
 
     /**
      * handler the exception thrown for data input verify

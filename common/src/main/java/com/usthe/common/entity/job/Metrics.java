@@ -39,7 +39,7 @@ public class Metrics {
     /**
      * 公共属性-采集监控的最终结果属性集合 eg: speed | times | size
      */
-    private List<String> fields;
+    private List<Field> fields;
     /**
      * 公共属性-采集监控的前置查询属性集合 eg: size1 | size2 | speedSize
      */
@@ -74,7 +74,7 @@ public class Metrics {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public class Field {
+    public static class Field {
         /**
          * 指标名称
          */
