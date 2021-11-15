@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 /**
  * 监控类型管理API
  *
@@ -21,7 +23,7 @@ import java.util.List;
  */
 @Api(tags = "监控类型管理API")
 @RestController
-@RequestMapping(path = "/apps")
+@RequestMapping(path = "/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
     @Autowired

@@ -28,8 +28,9 @@ public class Configmap {
     private Object value;
 
     /**
+     * 参数类型 0:数字 1:字符串 2:加密串
      * number,string,secret
      * 数字,非加密字符串,加密字符串
      */
-    private String type;
+    private byte type;
 }
