@@ -6,12 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
@@ -33,7 +36,7 @@ public class Param {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "参数ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
+    @ApiModelProperty(value = "参数主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
 
     /**
@@ -46,18 +49,22 @@ public class Param {
      * 参数字段标识符
      */
     @ApiModelProperty(value = "参数标识符字段", example = "port", accessMode = READ_WRITE, position = 2)
+    @Length(max = 100)
     private String field;
 
     /**
      * 参数值
      */
     @ApiModelProperty(value = "参数值", example = "8080", accessMode = READ_WRITE, position = 3)
+    @Length(max = 255)
     private String value;
 
     /**
      * 参数类型 0:数字 1:字符串 2:加密串
      */
     @ApiModelProperty(value = "参数类型 0:数字 1:字符串 2:加密串", example = "0", accessMode = READ_WRITE, position = 4)
+    @Min(0)
+    @Max(2)
     private byte type;
 
     /**

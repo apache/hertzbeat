@@ -50,11 +50,11 @@ public class Job {
     /**
      * 任务采集时间间隔(单位秒) eg: 30,60,600
      */
-    private long interval;
+    private long interval = 600L;
     /**
      * 是否是循环周期性任务 true为是,false为否
      */
-    private boolean isCyclic;
+    private boolean isCyclic = false;
     /**
      * 指标组配置 eg: cpu memory
      */
@@ -88,7 +88,7 @@ public class Job {
                 .peek(metric -> {
                     // 判断是否配置aliasFields 没有则配置默认
                     if (metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) {
-                        metric.setAliasFields(metric.getFields());
+                        metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
                     // 设置默认的指标组执行优先级
                     if (metric.getPriority() == null) {

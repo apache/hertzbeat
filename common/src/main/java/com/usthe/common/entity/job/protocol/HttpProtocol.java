@@ -22,6 +22,10 @@ public class HttpProtocol {
      */
     private String host;
     /**
+     * 对端主机端口
+     */
+    private String port;
+    /**
      * http/https 请求访问的url链接
      */
     private String url;
@@ -64,7 +68,7 @@ public class HttpProtocol {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public class Authorization {
+    public static class Authorization {
         /**
          * 认证类型：Bearer Token, Basic Auth, Digest Auth
          */

@@ -18,7 +18,8 @@ CREATE TABLE  monitor
      modifier     varchar(100) comment '最新修改者',
      gmt_create   timestamp    default current_timestamp comment 'create time',
      gmt_update   datetime     default current_timestamp on update current_timestamp comment 'update time',
-     primary key (id)
+     primary key (id),
+     index query_index (app, host, name)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
@@ -35,7 +36,8 @@ CREATE TABLE  param
     gmt_create   timestamp    default current_timestamp comment 'create time',
     gmt_update   datetime     default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
-    index monitor_id (monitor_id)
+    index monitor_id (monitor_id),
+    unique key unique_param (monitor_id, field)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
@@ -57,5 +59,5 @@ CREATE TABLE  param_define
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
-    index app_index (app)
+    unique key unique_param_define (app, field)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;

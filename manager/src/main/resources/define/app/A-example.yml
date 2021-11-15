@@ -4,15 +4,15 @@ app: cloud
 # 强制固定必须参数 - host
 configmap:
   - key: host
-    type: string
+    type: 1
   - key: port
-    type: number
+    type: 0
   - key: username
-    type: string
+    type: 1
   - key: password
-    type: secret
+    type: 2
   - key: param1
-    type: string
+    type: 1
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
@@ -25,7 +25,7 @@ metrics:
       # 指标信息 包括 field名称, type字段类型:number数字,string字符串, unit:指标单位
       - field: usage
         type: number
-        unit: %
+        unit: '%'
       - field: cores
         type: number
       - field: waitime
@@ -60,11 +60,11 @@ metrics:
       ssl: false
       # 请求头内容
       headers:
-        apiVersion: 'v1'
+        apiVersion: v1
       # 请求参数内容
       params:
-        - param1: param1
-        - param2: param2
+        param1: param1
+        param2: param2
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
@@ -73,7 +73,7 @@ metrics:
         basicAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,json_path-jsonPath脚本,xml_path-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: jsonPath
-      parseScript: "$.cpu[:1].*"
+      parseScript: '$.cpu[:1].*'
 
   - name: memory
     priority: 1
@@ -83,7 +83,7 @@ metrics:
         unit: kb
       - field: usage
         type: number
-        unit: %
+        unit: '%'
       - field: speed
         type: number
     protocol: http
@@ -93,13 +93,13 @@ metrics:
       url: /memory
       method: GET
       headers:
-        apiVersion: 'v1'
+        apiVersion: v1
       params:
-        - param1: param1
-        - param2: param2
+        param1: param1
+        param2: param2
       authorization:
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
       parseType: jsonPath
-      parseScript: "$.memory[:1].*"
+      parseScript: '$.memory[:1].*'
