@@ -28,6 +28,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Api(tags = "监控管理API")
 @RestController
 @RequestMapping(path = "/monitor", produces = {APPLICATION_JSON_VALUE})
+@Validated
 public class MonitorController {
 
     @Autowired
