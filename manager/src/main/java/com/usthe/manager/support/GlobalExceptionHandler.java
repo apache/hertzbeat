@@ -8,14 +8,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.lang.reflect.Field;
+
 import static com.usthe.common.util.CommonConstants.DETECT_FAILED;
 import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT;
+import static com.usthe.common.util.CommonConstants.PARAM_INVALID;
 
 /**
  * controller exception handler
@@ -25,6 +29,15 @@ import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static Field detailMessage;
+
+    static {
+        try {
+            detailMessage = Throwable.class.getDeclaredField("detailMessage");
+            detailMessage.setAccessible(true);
+        } catch (Exception e) {}
+    }
 
     /**
      * 处理探测失败
@@ -48,6 +61,35 @@ public class GlobalExceptionHandler {
     ResponseEntity<Message<Void>> handleMonitorDatabaseException(MonitorDatabaseException exception) {
         Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(MONITOR_CONFLICT).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+    }
+
+    /**
+     * 处理参数错误的失败
+     * @param exception 参数异常
+     * @return response
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleIllegalArgumentException(IllegalArgumentException exception) {
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID).build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    /**
+     * 处理请求参数错误的失败, 请求参数json映射body时出错
+     * @param exception 参数映射body异常
+     * @return response
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+        try {
+            Message<Void> message = Message.<Void>builder().msg((String) detailMessage.get(exception)).code(PARAM_INVALID).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        } catch (Exception e) {
+            Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        }
     }
 
 
