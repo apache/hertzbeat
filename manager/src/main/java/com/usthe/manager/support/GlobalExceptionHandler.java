@@ -9,12 +9,16 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
 import java.lang.reflect.Field;
 
 import static com.usthe.common.util.CommonConstants.DETECT_FAILED;
@@ -32,10 +36,14 @@ public class GlobalExceptionHandler {
 
     private static Field detailMessage;
 
+    private static Field fieldErrorField;
+
     static {
         try {
             detailMessage = Throwable.class.getDeclaredField("detailMessage");
             detailMessage.setAccessible(true);
+            fieldErrorField = FieldError.class.getDeclaredField("field");
+            fieldErrorField.setAccessible(true);
         } catch (Exception e) {}
     }
 
@@ -95,19 +103,32 @@ public class GlobalExceptionHandler {
 
     /**
      * handler the exception thrown for data input verify
-     * @param exception data input verify exception
+     * valid注解校验框架校验异常统一处理
+     * @param e data input verify exception
      * @return response
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     @ResponseBody
-    ResponseEntity<Message<Void>> handleInputValidException(MethodArgumentNotValidException exception) {
+    ResponseEntity<Message<Void>> handleInputValidException(Exception e) {
         StringBuffer errorMessage = new StringBuffer();
-        if (exception != null) {
-            exception.getBindingResult().getAllErrors().forEach(error ->
-                    errorMessage.append(error.getDefaultMessage()).append("."));
+        if (e instanceof MethodArgumentNotValidException) {
+            MethodArgumentNotValidException exception = (MethodArgumentNotValidException)e;
+            exception.getBindingResult().getAllErrors().forEach(error -> {
+                try {
+                    String field = (String) fieldErrorField.get(error);
+                    errorMessage.append(field).append(":").append(error.getDefaultMessage()).append("||");
+                } catch (Exception e1) {
+                    errorMessage.append(error.getDefaultMessage()).append("||");
+                }
+            });
+        } else if (e instanceof BindException) {
+            BindException exception = (BindException)e;
+            exception.getAllErrors().forEach(error -> {
+                errorMessage.append(error.getDefaultMessage()).append("||");
+            });
         }
         if (log.isDebugEnabled()) {
-            log.debug("[sample-tom]-[input argument not valid happen]-{}", errorMessage, exception);
+            log.debug("[input argument not valid happen]-{}", errorMessage, e);
         }
         Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
@@ -125,7 +146,7 @@ public class GlobalExceptionHandler {
         if (exception != null) {
             errorMessage = exception.getMessage();
         }
-        log.warn("[sample-tom]-[database error happen]-{}", errorMessage, exception);
+        log.warn("[database error happen]-{}", errorMessage, exception);
         Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
@@ -137,13 +158,13 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseBody
-    ResponseEntity<Message> handleMethodNotSupportException(HttpRequestMethodNotSupportedException exception) {
+    ResponseEntity<Message<Void>> handleMethodNotSupportException(HttpRequestMethodNotSupportedException exception) {
         String errorMessage = "Request method not supported";
         if (exception != null && exception.getMessage() != null) {
             errorMessage = exception.getMessage();
         }
         log.info("[monitor]-[Request method not supported]-{}", errorMessage);
-        Message message = Message.builder().msg(errorMessage).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(message);
     }
 
@@ -154,13 +175,13 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    ResponseEntity<Message> handleUnknownException(Exception exception) {
+    ResponseEntity<Message<Void>> handleUnknownException(Exception exception) {
         String errorMessage = "unknown error happen";
         if (exception != null) {
             errorMessage = exception.getMessage();
         }
         log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message message = Message.builder().msg(errorMessage).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 

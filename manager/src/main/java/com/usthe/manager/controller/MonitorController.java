@@ -7,7 +7,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -28,7 +29,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Api(tags = "监控管理API")
 @RestController
 @RequestMapping(path = "/monitor", produces = {APPLICATION_JSON_VALUE})
-@Validated
 public class MonitorController {
 
     @Autowired
@@ -36,7 +36,7 @@ public class MonitorController {
 
     @PostMapping
     @ApiOperation(value = "新增监控", notes = "新增一个监控应用")
-    public ResponseEntity<Message<Void>> addNewMonitor(@Validated @RequestBody MonitorDto monitorDto) {
+    public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, false);
         if (monitorDto.getDetected()) {
@@ -49,7 +49,7 @@ public class MonitorController {
 
     @PutMapping
     @ApiOperation(value = "修改监控", notes = "修改一个已存在监控应用")
-    public ResponseEntity<Message<Void>> modifyMonitor(@Validated @RequestBody MonitorDto monitorDto) {
+    public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, true);
         if (monitorDto.getDetected()) {
@@ -84,7 +84,7 @@ public class MonitorController {
 
     @PostMapping(path = "/detect")
     @ApiOperation(value = "探测监控", notes = "根据监控信息去对此监控进行可用性探测")
-    public ResponseEntity<Message<Void>> detectMonitor(@Validated @RequestBody MonitorDto monitorDto) {
+    public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, false);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(new Message<>("Detect success."));
