@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 监控采集的指标集合详情 eg: cpu | memory | health
@@ -67,6 +68,23 @@ public class Metrics {
      * 使用公共的jdbc规范实现的数据库配置信息
      */
     private JdbcProtocol jdbc;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Metrics metrics = (Metrics) o;
+        return name.equals(metrics.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
 
     @Data
     @AllArgsConstructor

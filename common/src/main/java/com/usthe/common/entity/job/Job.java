@@ -67,6 +67,12 @@ public class Job {
     private List<Configmap> configmap;
 
     /**
+     * collector使用 - 任务被时间轮开始调度的时间戳
+     */
+    @JsonIgnore
+    private transient long dispatchTime;
+
+    /**
      * collector使用 - 任务版本,此字段不存储于etcd
      */
     @JsonIgnore
@@ -88,7 +94,7 @@ public class Job {
      * collector使用 - 临时存储一次性任务指标组响应数据
      */
     @JsonIgnore
-    private transient List<CollectRep.MetricsData> metricsDataTemps;
+    private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
      * collector使用 - 构造初始化指标组执行视图
@@ -100,13 +106,9 @@ public class Job {
                     if (metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) {
                         metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
-                    // 设置默认的指标组执行优先级
+                    // 设置默认的指标组执行优先级,不填则默认最后优先级
                     if (metric.getPriority() == null) {
-                        if (AVAILABILITY.equals(metric.getName())) {
-                            metric.setPriority((byte)0);
-                        } else {
-                            metric.setPriority(Byte.MAX_VALUE);
-                        }
+                        metric.setPriority(Byte.MAX_VALUE);
                     }
                 })
                 .collect(Collectors.groupingBy(Metrics::getPriority));
@@ -167,9 +169,9 @@ public class Job {
     }
 
     public void addCollectMetricsData(CollectRep.MetricsData metricsData) {
-        if (metricsDataTemps == null) {
-            metricsDataTemps = new LinkedList<>();
+        if (responseDataTemp == null) {
+            responseDataTemp = new LinkedList<>();
         }
-        metricsDataTemps.add(metricsData);
+        responseDataTemp.add(metricsData);
     }
 }

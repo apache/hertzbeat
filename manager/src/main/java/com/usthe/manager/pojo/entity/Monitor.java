@@ -73,7 +73,7 @@ public class Monitor {
     /**
      * 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起
      */
-    @ApiModelProperty(value = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起", example = "1", accessMode = READ_WRITE, position = 6)
+    @ApiModelProperty(value = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起", accessMode = READ_WRITE, position = 6)
     @Min(0)
     @Max(4)
     private byte status;
