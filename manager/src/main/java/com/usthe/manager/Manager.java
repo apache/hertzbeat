@@ -2,6 +2,7 @@ package com.usthe.manager;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * @author tomsun28
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication
+@EnableFeignClients(basePackages = {"com.usthe"})
 public class Manager {
 
     public static void main(String[] args) {

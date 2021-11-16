@@ -5,7 +5,9 @@ import com.usthe.manager.pojo.entity.Param;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -25,6 +27,7 @@ public class MonitorDto {
      */
     @ApiModelProperty(value = "监控实体", accessMode = READ_WRITE, position = 0)
     @NotNull
+    @Valid
     private Monitor monitor;
 
     /**
@@ -32,6 +35,7 @@ public class MonitorDto {
      */
     @ApiModelProperty(value = "监控参数", accessMode = READ_WRITE, position = 1)
     @NotNull
+    @Valid
     private List<Param> params;
 
     /**
