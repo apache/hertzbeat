@@ -1,7 +1,6 @@
 package com.usthe.common.util;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProtoJsonUtil {
 
+    private static final JsonFormat.Printer PRINTER = JsonFormat.printer();
+    private static final JsonFormat.Parser PARSER = JsonFormat.parser();
+
     /**
      * protobuf 转 json
      * @param proto protobuf
@@ -20,7 +22,7 @@ public class ProtoJsonUtil {
      */
     public static String toJsonStr(Message proto) {
         try {
-            return JsonFormat.printer().print(proto);
+            return PRINTER.print(proto);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return null;
@@ -35,7 +37,7 @@ public class ProtoJsonUtil {
      */
     public static Message toProtobuf(String json, Message.Builder builder) {
         try {
-            JsonFormat.parser().merge(json, builder);
+            PARSER.merge(json, builder);
             return builder.build();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
