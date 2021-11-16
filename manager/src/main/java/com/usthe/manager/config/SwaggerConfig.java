@@ -6,7 +6,6 @@ import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.oas.annotations.EnableOpenApi;
 import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
@@ -27,20 +26,20 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.OAS_30)
                 .apiInfo(apiInfo())
                 .enable(true)
-                .groupName("usthe.com")
+                .groupName("TanCloud")
                 .select()
                 .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
+                .paths(PathSelectors.regex("(?!/error.*).*"))
                 .build();
     }
 
     private ApiInfo apiInfo(){
         return new ApiInfo(
-                "usthe api",
-                "monitor project",
+                "TanCloud",
+                null,
                 "v1.0",
-                "usthe.com",
-                new Contact("tom", "usthe.com", "tomsun28@outlook.com"),
+                null,
+                null,
                 "Apache 2.0",
                 "http://www.apache.org/licenses/LICENSE-2.0",
                 Collections.emptyList());

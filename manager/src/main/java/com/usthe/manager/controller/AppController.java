@@ -5,6 +5,7 @@ import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,8 @@ public class AppController {
 
     @GetMapping(path = "/{app}/params")
     @ApiOperation(value = "查询监控类型的参数结构", notes = "根据app查询指定监控类型的需要输入参数的结构")
-    public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(@PathVariable("app") String app) {
+    public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(
+            @ApiParam(value = "监控类型名称", example = "api") @PathVariable("app") String app) {
         List<ParamDefine> paramDefines = appService.getAppParamDefines(app);
         return ResponseEntity.ok(new Message<>(paramDefines));
     }

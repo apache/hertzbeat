@@ -5,6 +5,7 @@ import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.service.MonitorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,7 +63,8 @@ public class MonitorController {
 
     @GetMapping(path = "/{id}")
     @ApiOperation(value = "查询监控", notes = "根据监控ID获取监控信息")
-    public ResponseEntity<Message<MonitorDto>> getMonitor(@PathVariable("id") long id) {
+    public ResponseEntity<Message<MonitorDto>> getMonitor(
+            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") long id) {
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitor(id);
         Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
@@ -76,7 +78,8 @@ public class MonitorController {
 
     @DeleteMapping(path = "/{id}")
     @ApiOperation(value = "删除监控", notes = "根据监控ID删除监控应用,监控不存在也是删除成功")
-    public ResponseEntity<Message<Void>> deleteMonitor(@PathVariable("id") long id) {
+    public ResponseEntity<Message<Void>> deleteMonitor(
+            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") long id) {
         // 删除监控,监控不存在或删除成功都返回成功
         monitorService.deleteMonitor(id);
         return ResponseEntity.ok(new Message<>("Delete success"));
