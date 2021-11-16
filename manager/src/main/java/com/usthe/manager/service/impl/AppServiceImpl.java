@@ -2,6 +2,7 @@ package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.job.Job;
 import com.usthe.manager.dao.ParamDefineDao;
+import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.persistence.criteria.Join;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 监控类型管理实现
+ * TODO 暂时将监控配置和参数配置存放内存 之后存入数据库
  *
  *
  */
@@ -33,17 +34,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
+    private final Map<String, List<ParamDefine>> paramDefines = new ConcurrentHashMap<>();
 
     @Autowired
     private ParamDefineDao paramDefineDao;
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        List<ParamDefine> paramDefines = paramDefineDao.findParamDefinesByApp(app);
-        if (paramDefines == null) {
-            paramDefines = Collections.emptyList();
+        List<ParamDefine> params = paramDefines.get(app);
+        if (params == null) {
+            params = Collections.emptyList();
         }
-        return paramDefines;
+        return params;
     }
 
     @Override
@@ -71,6 +73,25 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                     Job app = yaml.loadAs(fileInputStream, Job.class);
                     appDefines.put(app.getApp(), app);
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                    throw new IOException(e);
+                }
+            }
+        }
+        // 读取监控参数定义配置加载到数据库中 define/param/*.yml
+        String defineParamPath = "define" + File.separator + "param";
+        url = Thread.currentThread().getContextClassLoader().getResource(defineParamPath);
+        assert url != null;
+        directory = new File(url.toURI());
+        if (!directory.exists() || directory.listFiles() == null) {
+            throw new  IllegalArgumentException("define param directory not exist");
+        }
+        for (File appFile : Objects.requireNonNull(directory.listFiles())) {
+            if (appFile.exists()) {
+                try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
+                    ParamDefineDto paramDefine = yaml.loadAs(fileInputStream, ParamDefineDto.class);
+                    paramDefines.put(paramDefine.getApp(), paramDefine.getParam());
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                     throw new IOException(e);

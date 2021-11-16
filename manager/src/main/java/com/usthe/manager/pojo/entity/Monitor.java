@@ -45,14 +45,14 @@ public class Monitor {
     /**
      * 监控的名称
      */
-    @ApiModelProperty(value = "监控名称", example = "Api-bing.com", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "监控名称", example = "Api-TanCloud.cn", accessMode = READ_WRITE, position = 2)
     @Length(max = 100)
     private String name;
 
     /**
      * 监控的类型:linux,mysql,jvm...
      */
-    @ApiModelProperty(value = "监控类型", example = "api", accessMode = READ_WRITE, position = 3)
+    @ApiModelProperty(value = "监控类型", example = "TanCloud", accessMode = READ_WRITE, position = 3)
     @Length(max = 100)
     private String app;
 
@@ -81,7 +81,7 @@ public class Monitor {
     /**
      * 监控备注描述
      */
-    @ApiModelProperty(value = "监控备注描述", example = "对搜索网站bing的可用性监控", accessMode = READ_WRITE, position = 7)
+    @ApiModelProperty(value = "监控备注描述", example = "对SAAS网站TanCloud的可用性监控", accessMode = READ_WRITE, position = 7)
     @Length(max = 255)
     private String description;
 
