@@ -68,9 +68,6 @@ public class Metrics {
      */
     private JdbcProtocol jdbc;
 
-    /**
-     * todo 替换指标信息
-     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

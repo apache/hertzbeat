@@ -63,7 +63,10 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         List<CollectRep.MetricsData> collectRep = jobScheduling.addSyncCollectJob(appDefine);
         // 判断探测结果 失败则抛出探测异常
-        if (collectRep == null || collectRep.isEmpty() || collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+        if (collectRep == null || collectRep.isEmpty()) {
+            throw new MonitorDetectException("No collector response");
+        }
+        if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
     }

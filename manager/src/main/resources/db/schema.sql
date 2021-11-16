@@ -51,6 +51,7 @@ CREATE TABLE  param_define
     name         varchar(100)     not null comment '参数字段对外显示名称',
     field        varchar(100)     not null comment '参数字段标识符',
     type         varchar(20)      not null default 'text' comment '字段类型,样式(大部分映射input标签type属性)',
+    required     boolean          not null default false comment '是否是必输项 true-必填 false-可选',
     param_range  varchar(100)     not null comment '当type为number时,用range表示范围 eg: 0-233',
     param_limit  tinyint unsigned not null comment '当type为text时,用limit表示字符串限制大小.最大255',
     param_option varchar(255)     not null comment '当type为radio单选框,checkbox复选框时,option表示可选项值列表',
