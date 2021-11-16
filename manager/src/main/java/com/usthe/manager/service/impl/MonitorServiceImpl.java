@@ -61,8 +61,11 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        CollectRep collectRep = jobScheduling.addSyncCollectJob(appDefine);
+        List<CollectRep.MetricsData> collectRep = jobScheduling.addSyncCollectJob(appDefine);
         // 判断探测结果 失败则抛出探测异常
+        if (collectRep == null || collectRep.isEmpty() || collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            throw new MonitorDetectException(collectRep.get(0).getMsg());
+        }
     }
 
     @Override

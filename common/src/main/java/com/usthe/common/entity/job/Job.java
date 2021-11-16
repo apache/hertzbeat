@@ -1,6 +1,8 @@
 package com.usthe.common.entity.job;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.usthe.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -67,6 +69,7 @@ public class Job {
     /**
      * collector使用 - 任务版本,此字段不存储于etcd
      */
+    @JsonIgnore
     private transient long version;
     /**
      * collector使用 - 指标组任务执行优先级视图
@@ -78,10 +81,17 @@ public class Job {
      * 126 - otherMetrics
      * 127 - lastPriorMetrics
      */
+    @JsonIgnore
     private transient List<Set<Metrics>> priorMetrics;
 
     /**
-     * collector使用 - 构造初始化指标组
+     * collector使用 - 临时存储一次性任务指标组响应数据
+     */
+    @JsonIgnore
+    private transient List<CollectRep.MetricsData> metricsDataTemps;
+
+    /**
+     * collector使用 - 构造初始化指标组执行视图
      */
     public synchronized void constructPriorMetrics() {
         Map<Byte, List<Metrics>> map = metrics.stream()
@@ -154,5 +164,12 @@ public class Job {
         } else {
             return Collections.emptySet();
         }
+    }
+
+    public void addCollectMetricsData(CollectRep.MetricsData metricsData) {
+        if (metricsDataTemps == null) {
+            metricsDataTemps = new LinkedList<>();
+        }
+        metricsDataTemps.add(metricsData);
     }
 }
