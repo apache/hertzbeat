@@ -11,8 +11,6 @@ configmap:
     type: 1
   - key: password
     type: 2
-  - key: param1
-    type: 1
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
