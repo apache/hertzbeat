@@ -1,5 +1,6 @@
 package com.usthe.manager.pojo.entity;
 
+import com.usthe.manager.support.valid.HostValid;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -61,6 +62,7 @@ public class Monitor {
      */
     @ApiModelProperty(value = "监控的对端host", example = "192.167.25.11", accessMode = READ_WRITE, position = 4)
     @Length(max = 100)
+    @HostValid
     private String host;
 
     /**
