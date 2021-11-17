@@ -29,5 +29,6 @@ param:
   - field: ssl
     name: 启动SSL
     type: radio
+    required: false
     # 当type为radio单选框,checkbox复选框时,option表示可选项值列表
     option: Yes,No
