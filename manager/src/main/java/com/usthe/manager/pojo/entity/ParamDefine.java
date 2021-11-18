@@ -71,7 +71,7 @@ public class ParamDefine {
     /**
      * 当type为number时,用range表示范围 eg: 0-233
      */
-    @ApiModelProperty(value = "当type为number时,用range表示范围", example = "0-233", accessMode = READ_WRITE, position = 6)
+    @ApiModelProperty(value = "当type为number时,用range区间表示范围", example = "[0,233]", accessMode = READ_WRITE, position = 6)
     @Column(name = "param_range")
     private String range;
 
@@ -80,7 +80,7 @@ public class ParamDefine {
      */
     @ApiModelProperty(value = "当type为text时,用limit表示字符串限制大小.最大255", example = "30", accessMode = READ_WRITE, position = 7)
     @Column(name = "param_limit")
-    private short limit;
+    private Short limit;
 
     /**
      * 当type为radio单选框,checkbox复选框时,option表示可选项值列表
