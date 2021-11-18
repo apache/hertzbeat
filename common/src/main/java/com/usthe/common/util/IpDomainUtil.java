@@ -17,12 +17,17 @@ public class IpDomainUtil {
     private static final Pattern DOMAIN_PATTERN =
             Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://)?(([A-Za-z0-9-~]+).)+([A-Za-z0-9-~\\/])+$");
 
+    private static final String LOCALHOST = "localhost";
+
     /**
      * 校验判断是否是 ip或者domain
      * @param ipDomain ip domain string
      * @return true-yes false-no
      */
     public static boolean validateIpDomain(String ipDomain) {
+        if (LOCALHOST.equalsIgnoreCase(ipDomain)) {
+            return true;
+        }
         if (IPAddressUtil.isIPv4LiteralAddress(ipDomain)) {
             return true;
         }

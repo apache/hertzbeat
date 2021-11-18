@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
@@ -50,6 +51,7 @@ public class Param {
      */
     @ApiModelProperty(value = "参数标识符字段", example = "port", accessMode = READ_WRITE, position = 2)
     @Length(max = 100)
+    @NotNull
     private String field;
 
     /**
@@ -57,6 +59,7 @@ public class Param {
      */
     @ApiModelProperty(value = "参数值", example = "8080", accessMode = READ_WRITE, position = 3)
     @Length(max = 255)
+    @NotNull
     private String value;
 
     /**
