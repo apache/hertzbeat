@@ -3,13 +3,17 @@ package com.usthe.manager.service.impl;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.IntervalExpressionUtil;
+import com.usthe.common.util.IpDomainUtil;
 import com.usthe.common.util.SnowFlakeIdGenerator;
 import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.dao.ParamDao;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.pojo.entity.Monitor;
 import com.usthe.manager.pojo.entity.Param;
+import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -111,7 +116,69 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(readOnly = true)
     public void validate(MonitorDto monitorDto, boolean isModify) throws IllegalArgumentException {
-
+        // 请求监控参数与监控参数定义映射校验匹配
+        Monitor monitor = monitorDto.getMonitor();
+        Map<String, Param> paramMap = monitorDto.getParams()
+                .stream()
+                .peek(param -> param.setMonitorId(monitor.getId()))
+                .collect(Collectors.toMap(Param::getField, param -> param));
+        List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
+        if (paramDefines != null) {
+            for (ParamDefine paramDefine : paramDefines) {
+                String field = paramDefine.getField();
+                Param param = paramMap.get(field);
+                if (paramDefine.isRequired() && param == null) {
+                    throw new IllegalArgumentException("Params field " + field + " is required.");
+                }
+                if (param != null) {
+                    switch (paramDefine.getType()) {
+                        case "number":
+                            double doubleValue;
+                            try {
+                                doubleValue = Double.parseDouble(param.getValue());
+                            } catch (Exception e) {
+                                throw new IllegalArgumentException("Params field " + field + " type "
+                                        + paramDefine.getType() + " is invalid.");
+                            }
+                            if (paramDefine.getRange() != null) {
+                                if (!IntervalExpressionUtil.validNumberIntervalExpress(doubleValue,
+                                        paramDefine.getRange())) {
+                                    throw new IllegalArgumentException("Params field " + field + " type "
+                                            + paramDefine.getType() + " over range " + paramDefine.getRange());
+                                }
+                            }
+                            break;
+                        case "text":
+                            Short limit = paramDefine.getLimit();
+                            if (limit != null) {
+                                if (param.getValue() != null && param.getValue().length() > limit) {
+                                    throw new IllegalArgumentException("Params field " + field + " type "
+                                            + paramDefine.getType() + " over limit " + limit);
+                                }
+                            }
+                            break;
+                        case "host":
+                            String hostValue = param.getValue();
+                            if (!IpDomainUtil.validateIpDomain(hostValue)) {
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + hostValue + " is invalid host value.");
+                            }
+                            break;
+                        case "password":
+                            // 明文密码需加密传输存储
+                            String value = param.getValue();
+                            if (!AesUtil.isCiphertext(value)) {
+                                value = AesUtil.aesEncode(value);
+                                param.setValue(value);
+                            }
+                            break;
+                        // todo 更多参数定义与实际值格式校验
+                        default:
+                            throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
+                    }
+                }
+            }
+        }
     }
 
     @Override
