@@ -19,6 +19,8 @@ public class IpDomainUtil {
 
     private static final String LOCALHOST = "localhost";
 
+    private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://)");
+
     /**
      * 校验判断是否是 ip或者domain
      * @param ipDomain ip domain string
@@ -35,6 +37,15 @@ public class IpDomainUtil {
             return true;
         }
         return DOMAIN_PATTERN.matcher(ipDomain).matches();
+    }
+
+    /**
+     * 判断 domain or ip 是否存在http / https 头
+     * @param domainIp host
+     * @return 存在true
+     */
+    public static boolean isHasSchema(String domainIp) {
+        return DOMAIN_SCHEMA.matcher(domainIp).matches();
     }
 
 }
