@@ -45,6 +45,9 @@ public class IpDomainUtil {
      * @return 存在true
      */
     public static boolean isHasSchema(String domainIp) {
+        if (domainIp == null || "".equals(domainIp)) {
+            return false;
+        }
         return DOMAIN_SCHEMA.matcher(domainIp).matches();
     }
 
