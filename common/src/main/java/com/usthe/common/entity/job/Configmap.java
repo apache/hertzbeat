@@ -32,5 +32,5 @@ public class Configmap {
      * number,string,secret
      * 数字,非加密字符串,加密字符串
      */
-    private byte type;
+    private byte type = 1;
 }
