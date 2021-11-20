@@ -99,6 +99,10 @@ public class Metrics {
          */
         private String type;
         /**
+         * 此字段是否为实例主键
+         */
+        private boolean instance = false;
+        /**
          * 指标单位
          */
         private String unit;

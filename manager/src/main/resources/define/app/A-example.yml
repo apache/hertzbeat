@@ -20,17 +20,21 @@ metrics:
     priority: 0
     # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称, type字段类型:number数字,string字符串, unit:指标单位
+      # 指标信息 包括 field名称, type字段类型:number数字,string字符串,instance是否为实例主键   unit:指标单位
+      - field: hostname
+        type: instance
+        instance: true
       - field: usage
         type: number
         unit: '%'
       - field: cores
         type: number
-      - field: waitime
+      - field: waitTime
         type: number
         unit: s
 # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
+      - hostname
       - core1
       - core2
       - usage
@@ -39,6 +43,7 @@ metrics:
 # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
 # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
+      - hostname=hostname
       - cores=core1+core2
       - usage=usage
       - waitTime=allTime-runningTime
@@ -51,7 +56,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: /cpu
+      url: /metrics/cpu
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -69,13 +74,15 @@ metrics:
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,json_path-jsonPath脚本,xml_path-xmlPath脚本,prometheus-Prometheus数据规则
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: jsonPath
-      parseScript: '$.cpu[:1].*'
+      parseScript: '$'
 
   - name: memory
     priority: 1
     fields:
+      - field: hostname
+        type: string
       - field: total
         type: number
         unit: kb
@@ -88,7 +95,7 @@ metrics:
     http:
       host: ^_^host^_^
       port: ^_^port^_^
-      url: /memory
+      url: /metrics/memory
       method: GET
       headers:
         apiVersion: v1
@@ -99,5 +106,4 @@ metrics:
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      parseType: jsonPath
-      parseScript: '$.memory[:1].*'
+      parseType: default

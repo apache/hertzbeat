@@ -57,4 +57,9 @@ public interface CommonConstants {
      */
     byte SUSPENDING = 0x04;
 
+
+    /**
+     * null空值占位符
+     */
+    String NULL_VALUE = "&nbsp;";
 }
