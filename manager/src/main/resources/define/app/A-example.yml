@@ -1,6 +1,6 @@
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: TanCloud
-# 参数映射map. type是参数类型: number数字, string明文字符串, secret加密字符串
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
   - key: host
@@ -83,6 +83,7 @@ metrics:
     fields:
       - field: hostname
         type: string
+        instance: true
       - field: total
         type: number
         unit: kb
