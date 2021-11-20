@@ -95,9 +95,9 @@ public class Metrics {
          */
         private String field;
         /**
-         * 指标类型 number:数字 string:字符串
+         * 指标类型 0-number:数字 1-string:字符串
          */
-        private String type;
+        private byte type = 1;
         /**
          * 此字段是否为实例主键
          */

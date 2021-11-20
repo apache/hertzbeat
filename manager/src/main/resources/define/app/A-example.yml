@@ -20,17 +20,17 @@ metrics:
     priority: 0
     # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称, type字段类型:number数字,string字符串,instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: hostname
-        type: instance
+        type: 1
         instance: true
       - field: usage
-        type: number
+        type: 0
         unit: '%'
       - field: cores
-        type: number
+        type: 0
       - field: waitTime
-        type: number
+        type: 0
         unit: s
 # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
@@ -82,16 +82,16 @@ metrics:
     priority: 1
     fields:
       - field: hostname
-        type: string
+        type: 1
         instance: true
       - field: total
-        type: number
+        type: 0
         unit: kb
       - field: usage
-        type: number
+        type: 0
         unit: '%'
       - field: speed
-        type: number
+        type: 0
     protocol: http
     http:
       host: ^_^host^_^

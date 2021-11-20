@@ -59,7 +59,22 @@ public interface CommonConstants {
 
 
     /**
-     * null空值占位符
+     * 字段参数类型: 数字
+     */
+    byte TYPE_NUMBER = 0;
+
+    /**
+     * 字段参数类型: 字符串
+     */
+    byte TYPE_STRING = 1;
+
+    /**
+     * 字段参数类型: 加密字符串
+     */
+    byte TYPE_SECRET = 2;
+
+    /**
+     * 采集指标值：null空值占位符
      */
     String NULL_VALUE = "&nbsp;";
 }
