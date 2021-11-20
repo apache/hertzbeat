@@ -14,7 +14,7 @@ param:
     name: 端口
     type: number
     # 当type为number时,用range表示范围
-    range: '[0,255]'
+    range: '[0,65535]'
     required: true
   - field: username
     name: 用户名
