@@ -4,6 +4,7 @@ package com.usthe.manager.support;
 import com.usthe.common.entity.dto.Message;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
+import com.usthe.scheduler.ScheduleException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -132,6 +133,23 @@ public class GlobalExceptionHandler {
         }
         Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    /**
+     * 处理分发调度器异常问题
+     * @param exception 调度器异常问题
+     * @return response
+     */
+    @ExceptionHandler(ScheduleException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleScheduleException(ScheduleException exception) {
+        String errorMessage = "scheduler warning";
+        if (exception != null) {
+            errorMessage = exception.getMessage();
+        }
+        log.warn("[scheduler warning]-{}", errorMessage);
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
     /**
