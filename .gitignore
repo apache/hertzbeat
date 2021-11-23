@@ -9,7 +9,7 @@ micronaut-cli.yml
 .mvn/
 mvnw
 mvnw.bat
-.log
+*.log
 
 ### STS ###
 .apt_generated
