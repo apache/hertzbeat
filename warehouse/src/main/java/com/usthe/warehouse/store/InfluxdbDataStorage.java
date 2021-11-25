@@ -1,6 +1,5 @@
 package com.usthe.warehouse.store;
 
-import com.google.protobuf.ProtocolStringList;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.WriteApi;
@@ -8,6 +7,7 @@ import com.influxdb.client.WriteOptions;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.MetricsDataQueue;
 import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * influxdb存储采集数据
@@ -81,17 +82,40 @@ public class InfluxdbDataStorage implements DisposableBean {
 
 
     public void saveData(CollectRep.MetricsData metricsData) {
-        String measurement = metricsData.getApp() + "--" + metricsData.getMetrics();
+        String measurement = metricsData.getApp() + "_" + metricsData.getMetrics();
         String monitorId = String.valueOf(metricsData.getId());
         Instant collectTime = Instant.ofEpochMilli(metricsData.getTime());
-        ProtocolStringList fields = metricsData.getFieldsList();
+
+        List<CollectRep.Field> fields = metricsData.getFieldsList();
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             Point point = Point.measurement(measurement)
                     .addTag("id", monitorId)
                     .addTag("instance", valueRow.getInstance())
                     .time(collectTime, WritePrecision.MS);
             for (int index = 0; index < fields.size(); index++) {
-                point.addField(fields.get(index), valueRow.getColumns(index));
+                CollectRep.Field field = fields.get(index);
+                String value = valueRow.getColumns(index);
+                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                    // number data
+                    if (CommonConstants.NULL_VALUE.equals(value)) {
+                        point.addField(field.getName(), (Number) null);
+                    } else {
+                        try {
+                            double number = Double.parseDouble(value);
+                            point.addField(field.getName(), number);
+                        } catch (Exception e) {
+                            log.warn(e.getMessage());
+                            point.addField(field.getName(), (Number) null);
+                        }
+                    }
+                } else {
+                    // string
+                    if (CommonConstants.NULL_VALUE.equals(value)) {
+                        point.addField(field.getName(), (String) null);
+                    } else {
+                        point.addField(field.getName(), value);
+                    }
+                }
             }
             writeApi.writePoint(point);
         }
