@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.usthe.warehouse.WarehouseProperties,\
+com.usthe.warehouse.MetricsDataQueue,\
+com.usthe.warehouse.WarehouseWorkerPool,\
+com.usthe.warehouse.entrance.KafkaDataConsume,\
+com.usthe.warehouse.store.InfluxdbDataStorage,\
+com.usthe.warehouse.store.RedisDataStorage
