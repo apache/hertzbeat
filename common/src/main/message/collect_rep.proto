@@ -16,9 +16,17 @@ message MetricsData
     // 采集响应信息
     string msg = 6;
     // 采集指标名
-    repeated string fields = 7;
+    repeated Field fields = 7;
     // 采集指标值集合(fields作为字段名称与ValueRow映射)
     repeated ValueRow values = 8;
+}
+
+message Field
+{
+    // 指标采集字符名称
+    string name = 1;
+    // 字段类型：0-number数字 1-string字符串
+    uint32 type = 2;
 }
 
 message ValueRow
