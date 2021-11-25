@@ -29,6 +29,12 @@
             <artifactId>scheduler</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- data warehouse -->
+        <dependency>
+            <groupId>com.usthe.tancloud</groupId>
+            <artifactId>warehouse</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
