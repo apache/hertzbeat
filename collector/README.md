@@ -1,4 +1,10 @@
-### TanCloud Collector
+### TanCloud Collector 采集器  
+
+使用通用协议远程采集获取对端指标数据  
+
+准备支持协议：http/https, jdbc, ssh, telnet, jmx, ping
+
+#### 监控项   
 
 * 操作系统
   * Linux
