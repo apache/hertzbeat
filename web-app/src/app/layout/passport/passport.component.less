@@ -1,0 +1,98 @@
+@import '~@delon/theme/index';
+:host ::ng-deep {
+  .container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: #f0f2f5;
+  }
+  .langs {
+    width: 100%;
+    height: 40px;
+    line-height: 44px;
+    text-align: right;
+    .anticon {
+      margin-top: 24px;
+      margin-right: 24px;
+      font-size: 14px;
+      vertical-align: top;
+      cursor: pointer;
+    }
+  }
+  .wrap {
+    flex: 1;
+    padding: 32px 0;
+  }
+  .ant-form-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  @media (min-width: @screen-md-min) {
+    .container {
+      background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
+      background-repeat: no-repeat;
+      background-position: center 110px;
+      background-size: 100%;
+    }
+    .wrap {
+      padding: 32px 0 24px;
+    }
+  }
+  .top {
+    text-align: center;
+  }
+  .header {
+    height: 44px;
+    line-height: 44px;
+    a {
+      text-decoration: none;
+    }
+  }
+  .logo {
+    height: 44px;
+    margin-right: 16px;
+  }
+  .title {
+    position: relative;
+    color: @heading-color;
+    font-weight: 600;
+    font-size: 33px;
+    font-family: 'Myriad Pro', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    vertical-align: middle;
+  }
+  .desc {
+    margin-top: 12px;
+    margin-bottom: 40px;
+    color: @text-color-secondary;
+    font-size: @font-size-base;
+  }
+}
+
+[data-theme='dark'] {
+  :host ::ng-deep {
+    .container {
+      background: #141414;
+    }
+    .title {
+      color: fade(@white, 85%);
+    }
+    .desc {
+      color: fade(@white, 45%);
+    }
+    @media (min-width: @screen-md-min) {
+      .container {
+        background-image: none;
+      }
+    }
+  }
+}
+
+[data-theme='compact'] {
+  :host ::ng-deep {
+    .ant-form-item {
+      margin-bottom: 16px;
+    }
+  }
+}

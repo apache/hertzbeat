@@ -1,0 +1,42 @@
+@import '~@delon/theme/index';
+:host {
+  display: block;
+  width: 368px;
+  margin: 0 auto;
+  ::ng-deep {
+    h3 {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    .submit {
+      width: 50%;
+    }
+    .login {
+      float: right;
+      line-height: @btn-height-lg;
+    }
+  }
+}
+::ng-deep {
+  .register-password-cdk {
+    .success,
+    .warning,
+    .error {
+      transition: color 0.3s;
+    }
+    .success {
+      color: @success-color;
+    }
+    .warning {
+      color: @warning-color;
+    }
+    .error {
+      color: @error-color;
+    }
+    .progress-pass > .progress {
+      .ant-progress-bg {
+        background-color: @warning-color;
+      }
+    }
+  }
+}
