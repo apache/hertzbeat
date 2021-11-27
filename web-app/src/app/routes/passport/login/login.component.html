@@ -1,0 +1,74 @@
+<form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
+  <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
+    <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
+      <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
+      <nz-form-item>
+        <nz-form-control nzErrorTip="Please enter mobile number, muse be: admin or user">
+          <nz-input-group nzSize="large" nzPrefixIcon="user">
+            <input nz-input formControlName="userName" placeholder="username: admin or user" />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control nzErrorTip="Please enter password">
+          <nz-input-group nzSize="large" nzPrefixIcon="lock">
+            <input nz-input type="password" formControlName="password" placeholder="password: admin@123" />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-tab>
+    <nz-tab [nzTitle]="'app.login.tab-login-mobile' | i18n">
+      <nz-form-item>
+        <nz-form-control [nzErrorTip]="mobileErrorTip">
+          <nz-input-group nzSize="large" nzPrefixIcon="user">
+            <input nz-input formControlName="mobile" placeholder="mobile number" />
+          </nz-input-group>
+          <ng-template #mobileErrorTip let-i>
+            <ng-container *ngIf="i.errors.required">
+              {{ 'validation.phone-number.required' | i18n }}
+            </ng-container>
+            <ng-container *ngIf="i.errors.pattern">
+              {{ 'validation.phone-number.wrong-format' | i18n }}
+            </ng-container>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzErrorTip]="'validation.verification-code.required' | i18n">
+          <nz-row [nzGutter]="8">
+            <nz-col [nzSpan]="16">
+              <nz-input-group nzSize="large" nzPrefixIcon="mail">
+                <input nz-input formControlName="captcha" placeholder="captcha" />
+              </nz-input-group>
+            </nz-col>
+            <nz-col [nzSpan]="8">
+              <button type="button" nz-button nzSize="large" (click)="getCaptcha()" [disabled]="count >= 0" nzBlock [nzLoading]="loading">
+                {{ count ? count + 's' : ('app.register.get-verification-code' | i18n) }}
+              </button>
+            </nz-col>
+          </nz-row>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-tab>
+  </nz-tabset>
+  <nz-form-item>
+    <nz-col [nzSpan]="12">
+      <label nz-checkbox formControlName="remember">{{ 'app.login.remember-me' | i18n }}</label>
+    </nz-col>
+    <nz-col [nzSpan]="12" class="text-right">
+      <a class="forgot" routerLink="/passport/register">{{ 'app.login.forgot-password' | i18n }}</a>
+    </nz-col>
+  </nz-form-item>
+  <nz-form-item>
+    <button nz-button type="submit" nzType="primary" nzSize="large" [nzLoading]="loading" nzBlock>
+      {{ 'app.login.login' | i18n }}
+    </button>
+  </nz-form-item>
+</form>
+<div class="other">
+  {{ 'app.login.sign-in-with' | i18n }}
+  <i nz-tooltip nzTooltipTitle="in fact Auth0 via window" (click)="open('auth0', 'window')" nz-icon nzType="alipay-circle" class="icon"></i>
+  <i nz-tooltip nzTooltipTitle="in fact Github via redirect" (click)="open('github')" nz-icon nzType="taobao-circle" class="icon"></i>
+  <i (click)="open('weibo', 'window')" nz-icon nzType="weibo-circle" class="icon"></i>
+  <a class="register" routerLink="/passport/register">{{ 'app.login.signup' | i18n }}</a>
+</div>
