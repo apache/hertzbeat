@@ -3,10 +3,21 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "start": "ng s -o",
+    "build": "npm run ng-high-memory build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "ng-high-memory": "node --max_old_space_size=8000 ./node_modules/@angular/cli/bin/ng",
+    "hmr": "ng s -o --hmr",
+    "analyze": "npm run ng-high-memory build -- --source-map",
+    "analyze:view": "source-map-explorer dist/**/*.js",
+    "test-coverage": "ng test --code-coverage --watch=false",
+    "color-less": "ng-alain-plugin-theme -t=colorLess",
+    "theme": "ng-alain-plugin-theme -t=themeCss",
+    "icon": "ng g ng-alain:plugin icon",
+    "lint": "npm run lint:ts && npm run lint:style",
+    "lint:ts": "ng lint --fix",
+    "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix"
   },
   "private": true,
   "dependencies": {
@@ -18,10 +29,24 @@
     "@angular/platform-browser": "~12.2.0",
     "@angular/platform-browser-dynamic": "~12.2.0",
     "@angular/router": "~12.2.0",
+    "@angular/cdk": "~12.2.0",
+    "ng-alain": "^12.4.2",
     "ng-zorro-antd": "^12.0.2",
     "rxjs": "~6.6.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.11.4",
+    "@delon/abc": "^12.4.2",
+    "@delon/acl": "^12.4.2",
+    "@delon/auth": "^12.4.2",
+    "@delon/cache": "^12.4.2",
+    "@delon/form": "^12.4.2",
+    "@delon/mock": "^12.4.2",
+    "@delon/theme": "^12.4.2",
+    "@delon/util": "^12.4.2",
+    "@delon/chart": "^12.4.2",
+    "ajv": "^8.6.2",
+    "ajv-formats": "^2.1.1",
+    "screenfull": "^5.1.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~12.2.13",
@@ -35,6 +60,40 @@
     "karma-coverage": "~2.0.3",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "~1.7.0",
-    "typescript": "~4.3.5"
+    "typescript": "~4.3.5",
+    "@angular-eslint/builder": "~12.3.1",
+    "@angular-eslint/eslint-plugin": "~12.3.1",
+    "@angular-eslint/eslint-plugin-template": "~12.3.1",
+    "@angular-eslint/schematics": "~12.3.1",
+    "@angular-eslint/template-parser": "~12.3.1",
+    "@typescript-eslint/eslint-plugin": "~4.29.2",
+    "@typescript-eslint/parser": "~4.29.2",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^2.2.1",
+    "eslint-plugin-import": "~2.24.1",
+    "eslint-plugin-jsdoc": "~36.0.7",
+    "eslint-plugin-prefer-arrow": "~1.2.3",
+    "eslint-plugin-prettier": "^2.2.1",
+    "prettier": "^2.2.1",
+    "ng-alain": "^12.4.2",
+    "ng-alain-plugin-theme": "^12.0.0",
+    "source-map-explorer": "^2.5.2",
+    "@angular/language-service": "~12.2.0",
+    "@delon/testing": "^12.4.2",
+    "lint-staged": "^11.1.2",
+    "stylelint": "^13.13.1",
+    "stylelint-config-prettier": "^8.0.2",
+    "stylelint-config-rational-order": "^0.1.2",
+    "stylelint-config-standard": "^22.0.0",
+    "stylelint-declaration-block-no-ignored-properties": "^2.4.0",
+    "stylelint-order": "^4.1.0"
+  },
+  "lint-staged": {
+    "(src)/**/*.{html,ts}": [
+      "eslint --fix"
+    ],
+    "(src)/**/*.less": [
+      "stylelint --syntax less --fix"
+    ]
   }
 }

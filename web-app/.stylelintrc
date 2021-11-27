@@ -1,0 +1,36 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-rational-order",
+    "stylelint-config-prettier"
+  ],
+  "plugins": [
+    "stylelint-order",
+    "stylelint-declaration-block-no-ignored-properties"
+  ],
+  "rules": {
+    "no-descending-specificity": null,
+    "plugin/declaration-block-no-ignored-properties": true,
+    "selector-type-no-unknown": [
+      true,
+      {
+        "ignoreTypes": [
+          "/^g2-/",
+          "/^nz-/",
+          "/^app-/"
+        ]
+      }
+    ],
+    "selector-pseudo-element-no-unknown": [
+      true,
+      {
+        "ignorePseudoElements": [
+          "ng-deep"
+        ]
+      }
+    ]
+  },
+  "ignoreFiles": [
+    "src/assets/**/*"
+  ]
+}
