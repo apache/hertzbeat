@@ -1,0 +1,61 @@
+@import '~@delon/theme/index';
+:host ::ng-deep {
+  .map-chart {
+    height: 457px;
+    padding-top: 24px;
+    text-align: center;
+    img {
+      display: inline-block;
+      max-width: 100%;
+      max-height: 437px;
+    }
+  }
+  .pie-card {
+    .pie-stat {
+      font-size: 24px !important;
+    }
+  }
+  .active-chart {
+    position: relative;
+    g2-mini-area {
+      margin-top: 32px;
+    }
+    .active-grid {
+      p {
+        position: absolute;
+        top: 80px;
+        width: 100%;
+        padding-bottom: 4px;
+        border-bottom: 1px dashed #e9e9e9;
+      }
+      p:last-child {
+        top: 115px;
+      }
+    }
+    .active-legend {
+      position: relative;
+      height: 20px;
+      margin-top: 8px;
+      font-size: 0;
+      line-height: 20px;
+      span {
+        display: inline-block;
+        width: 33.33%;
+        font-size: 12px;
+        text-align: center;
+      }
+      span:first-child {
+        text-align: left;
+      }
+      span:last-child {
+        text-align: right;
+      }
+    }
+  }
+
+  @media screen and (max-width: @screen-lg) {
+    .map-chart {
+      height: auto;
+    }
+  }
+}
