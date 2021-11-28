@@ -1,19 +1,46 @@
 {
   "menu": {
-    "dashboard": {
-      "": "仪表盘",
-      "v1": "默认页",
-      "analysis": "分析页",
-      "monitor": "监控页",
-      "workplace": "工作台"
+    "main": "主导航",
+    "dashboard": "仪表盘",
+    "monitor": {
+      "": "监控",
+      "service": "应用服务监控",
+      "db": "数据库监控",
+      "os": "操作系统监控",
+      "mid": "中间件监控"
+    },
+    "alert": {
+      "": "告警",
+      "center": "告警中心",
+      "setting": "告警配置",
+      "dispatch": "告警转发"
+    },
+    "more": "更多"
+  },
+  "monitor": {
+    "": "监控",
+    "category": {
+      "": "监控类别",
+      "service": "应用服务",
+      "db": "数据库",
+      "os": "操作系统",
+      "mid": "中间件"
+    },
+    "app": {
+      "": "监控类型",
+      "http": "HTTP API",
+      "ping": "PING连通性",
+      "telnet": "Telnet端口可用性",
+      "mysql": "Mysql",
+      "oracle": "Oracle",
+      "redis": "Redis"
     }
   },
-  "menu.search.placeholder": "搜索：员工、文件、照片等",
+  "menu.search.placeholder": "搜索监控：名称、IP等",
   "menu.fullscreen": "全屏",
   "menu.fullscreen.exit": "退出全屏",
   "menu.clear.local.storage": "清理本地缓存",
   "menu.lang": "语言",
-  "menu.main": "主导航",
   "menu.shortcut": "快捷菜单",
   "menu.widgets": "小部件",
   "menu.alain": "Alain",
@@ -64,7 +91,6 @@
   "menu.account.settings": "个人设置",
   "menu.account.trigger": "触发错误",
   "menu.account.logout": "退出登录",
-  "menu.more": "更多",
   "menu.report": "报表",
   "menu.report.relation": "全屏关系图",
   "menu.extras": "扩展",
