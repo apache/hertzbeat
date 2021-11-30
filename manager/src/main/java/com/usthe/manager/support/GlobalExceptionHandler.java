@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.ValidationException;
 import java.lang.reflect.Field;
 
 import static com.usthe.common.util.CommonConstants.DETECT_FAILED;

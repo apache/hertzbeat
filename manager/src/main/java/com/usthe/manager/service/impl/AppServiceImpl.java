@@ -72,7 +72,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (appFile.exists()) {
                 try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                     Job app = yaml.loadAs(fileInputStream, Job.class);
-                    appDefines.put(app.getApp(), app);
+                    appDefines.put(app.getApp().toLowerCase(), app);
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                     throw new IOException(e);
@@ -91,7 +91,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (appFile.exists()) {
                 try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                     ParamDefineDto paramDefine = yaml.loadAs(fileInputStream, ParamDefineDto.class);
-                    paramDefines.put(paramDefine.getApp(), paramDefine.getParam());
+                    paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                     throw new IOException(e);
