@@ -34,7 +34,7 @@ public class AppController {
     @ApiOperation(value = "查询监控类型的参数结构", notes = "根据app查询指定监控类型的需要输入参数的结构")
     public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(
             @ApiParam(value = "监控类型名称", example = "api") @PathVariable("app") String app) {
-        List<ParamDefine> paramDefines = appService.getAppParamDefines(app);
+        List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase());
         return ResponseEntity.ok(new Message<>(paramDefines));
     }
 
