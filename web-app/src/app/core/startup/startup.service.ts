@@ -12,7 +12,6 @@ import { NzIconService } from 'ng-zorro-antd/icon';
 
 import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
-
 /**
  * Used for application startup
  * Generally used to get the basic data of the application, like: Menu Data, User Data, etc.
@@ -36,7 +35,7 @@ export class StartupService {
 
     private viaHttp(): Observable<void> {
       const defaultLang = this.i18n.defaultLang;
-      return zip(this.i18n.loadLangData(defaultLang), this.httpClient.get('assets/tmp/app-data.json')).pipe(
+      return zip(this.i18n.loadLangData(defaultLang), this.httpClient.get('http://localhost:4200/assets/tmp/app-data.json')).pipe(
         catchError((res: NzSafeAny) => {
           console.warn(`StartupService.load: Network request failed`, res);
           setTimeout(() => this.router.navigateByUrl(`/exception/500`));

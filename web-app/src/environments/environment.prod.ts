@@ -5,7 +5,6 @@ export const environment = {
   useHash: true,
   api: {
     baseUrl: './',
-    refreshTokenEnabled: true,
-    refreshTokenType: 'auth-refresh'
+    refreshTokenEnabled: true
   }
 } as Environment;

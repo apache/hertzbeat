@@ -51,7 +51,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { DefaultInterceptor } from '@core';
 import { SimpleInterceptor } from '@delon/auth';
 const INTERCEPTOR_PROVIDES = [
-  { provide: HTTP_INTERCEPTORS, useClass: SimpleInterceptor, multi: true},
+  // { provide: HTTP_INTERCEPTORS, useClass: SimpleInterceptor, multi: true},
   { provide: HTTP_INTERCEPTORS, useClass: DefaultInterceptor, multi: true}
 ];
 // #endregion
@@ -65,7 +65,7 @@ import { StartupService } from '@core';
 export function StartupServiceFactory(startupService: StartupService): () => Observable<void> {
   return () => startupService.load();
 }
-const APPINIT_PROVIDES = [
+const APP_INIT_PROVIDES = [
   StartupService,
   {
     provide: APP_INITIALIZER,
@@ -83,6 +83,7 @@ import { LayoutModule } from './layout/layout.module';
 import { RoutesModule } from './routes/routes.module';
 import { SharedModule } from './shared/shared.module';
 import { STWidgetModule } from './shared/st-widget/st-widget.module';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -101,13 +102,14 @@ import { STWidgetModule } from './shared/st-widget/st-widget.module';
     NzMessageModule,
     NzNotificationModule,
     ...FORM_MODULES,
-    ...GLOBAL_THIRD_MODULES
+    ...GLOBAL_THIRD_MODULES,
+    ReactiveFormsModule
   ],
   providers: [
     ...LANG_PROVIDES,
     ...INTERCEPTOR_PROVIDES,
     ...I18NSERVICE_PROVIDES,
-    ...APPINIT_PROVIDES
+    ...APP_INIT_PROVIDES
   ],
   bootstrap: [AppComponent]
 })
