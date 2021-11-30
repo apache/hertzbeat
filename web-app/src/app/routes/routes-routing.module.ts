@@ -21,12 +21,11 @@ const routes: Routes = [
     component: LayoutBasicComponent,
     canActivate: [SimpleGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // todo 根据路由自动生成面包屑
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full'},
       { path: 'dashboard', component: DashboardComponent, data: { title: '仪表盘' } },
       { path: 'exception', loadChildren: () => import('./exception/exception.module').then(m => m.ExceptionModule) },
-      // 业务子模块
-      // { path: 'widgets', loadChildren: () => import('./widgets/widgets.module').then(m => m.WidgetsModule) },
-    { path: 'monitor', loadChildren: () => import('./monitor/monitor.module').then((m) => m.MonitorModule) },]
+      { path: 'monitors', loadChildren: () => import('./monitor/monitor.module').then((m) => m.MonitorModule) },]
   },
   // 空白布局
   // {
