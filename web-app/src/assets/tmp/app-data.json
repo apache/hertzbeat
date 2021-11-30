@@ -19,7 +19,7 @@
           "text": "仪表盘",
           "i18n": "menu.dashboard",
           "icon": "anticon-dashboard",
-          "link": "/dashboard/v1"
+          "link": "/dashboard"
         }
       ]
     },
@@ -35,18 +35,18 @@
           "icon": "anticon-cloud",
           "children": [
             {
-              "text": "仪表盘V1",
-              "link": "/dashboard/v1",
+              "text": "http",
+              "link": "/monitors",
               "i18n": "monitor.app.http"
             },
             {
-              "text": "分析页",
-              "link": "/dashboard/analysis",
+              "text": "ping",
+              "link": "/monitors",
               "i18n": "monitor.app.ping"
             },
             {
-              "text": "监控页",
-              "link": "/dashboard/monitor",
+              "text": "telnet",
+              "link": "/monitors",
               "i18n": "monitor.app.telnet"
             }
           ]
@@ -58,17 +58,17 @@
           "children": [
             {
               "text": "Mysql",
-              "link": "/dashboard/v1",
+              "link": "/monitors",
               "i18n": "monitor.app.mysql"
             },
             {
               "text": "Oracle",
-              "link": "/dashboard/analysis",
+              "link": "/monitors",
               "i18n": "monitor.app.oracle"
             },
             {
               "text": "Redis",
-              "link": "/dashboard/monitor",
+              "link": "/monitors",
               "i18n": "monitor.app.redis"
             }
           ]
