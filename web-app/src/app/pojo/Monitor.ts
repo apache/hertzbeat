@@ -3,7 +3,7 @@ export class Monitor {
   name!: string;
   app!: string;
   host!: string;
-  intervals!: number;
+  intervals: number = 600;
   status!: number;
   description!: string;
   creator!: string;

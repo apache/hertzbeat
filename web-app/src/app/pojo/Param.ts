@@ -1,6 +1,6 @@
 export class Param {
   id!: number;
-  field: string | undefined;
+  field!: string;
   type: number | undefined;
-  value: string | undefined;
+  value: any;
 }

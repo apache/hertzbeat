@@ -18,119 +18,124 @@
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<div class = "-inner-content">
-  <form nz-form (ngSubmit)="onSubmit()">
-    <nz-form-item>
-      <nz-form-label [nzSpan]="7" nzFor= 'host' nzRequired="true">监控Host</nz-form-label>
-      <nz-form-control [nzSpan]="10">
-        <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host">
-      </nz-form-control>
-    </nz-form-item >
-    <nz-form-item>
-      <nz-form-label [nzSpan]="7" nzFor= 'name' nzRequired="true">监控名称</nz-form-label>
-      <nz-form-control [nzSpan]="10">
-        <input [(ngModel)]="monitor.name" nz-input name="name" type="text" id="name">
-      </nz-form-control>
-    </nz-form-item >
+<nz-spin [nzSpinning]="isSpinning">
+  <div class = "-inner-content">
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'host' nzRequired="true">监控Host</nz-form-label>
+        <nz-form-control [nzSpan]="10">
+          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host">
+        </nz-form-control>
+      </nz-form-item >
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'name' nzRequired="true">监控名称</nz-form-label>
+        <nz-form-control [nzSpan]="10">
+          <input [(ngModel)]="monitor.name" nz-input name="name" type="text" id="name">
+        </nz-form-control>
+      </nz-form-item >
 
-    <nz-divider></nz-divider>
+      <nz-divider></nz-divider>
 
-    <nz-form-item *ngFor="let paramDefine of paramDefines; let i = index">
-      <nz-form-label *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'"
-                     nzSpan="7"
-                     [nzRequired]="paramDefine.required"
-                     [nzFor]= "paramDefine.field">{{paramDefine.name}}
-      </nz-form-label>
-      <nz-form-control *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'" nzSpan="10">
-        <input nz-input [(ngModel)]="params[i].value" [name]="paramDefine.field" [type]="paramDefine.type" [id]="paramDefine.field">
-      </nz-form-control>
+      <nz-form-item *ngFor="let paramDefine of paramDefines; let i = index">
+        <nz-form-label *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'"
+                       nzSpan="7"
+                       [nzRequired]="paramDefine.required"
+                       [nzFor]= "paramDefine.field">{{paramDefine.name}}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'" nzSpan="10">
+          <input nz-input [(ngModel)]="params[i].value" [name]="paramDefine.field" [type]="paramDefine.type" [id]="paramDefine.field">
+        </nz-form-control>
 
-      <nz-form-label *ngIf="paramDefine.type === 'password'"
-                     nzSpan="7"
-                     [nzRequired]="paramDefine.required"
-                     [nzFor]= "paramDefine.field">{{paramDefine.name}}
-      </nz-form-label>
-      <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="10">
-        <nz-input-group [nzSuffix]="suffixTemplate">
-          <input
-            [type]="passwordVisible ? 'text' : 'password'"
-            nz-input
-            placeholder="input password"
+        <nz-form-label *ngIf="paramDefine.type === 'password'"
+                       nzSpan="7"
+                       [nzRequired]="paramDefine.required"
+                       [nzFor]= "paramDefine.field">{{paramDefine.name}}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="10">
+          <nz-input-group [nzSuffix]="suffixTemplate">
+            <input
+              [type]="passwordVisible ? 'text' : 'password'"
+              nz-input
+              placeholder="input password"
+              [(ngModel)]="params[i].value"
+              [id]="paramDefine.field"
+              [name]="paramDefine.field"
+            />
+          </nz-input-group>
+          <ng-template #suffixTemplate>
+            <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
+          </ng-template>
+        </nz-form-control>
+
+
+        <nz-form-label *ngIf="paramDefine.type === 'number'"
+                       nzSpan="7"
+                       [nzRequired]="paramDefine.required"
+                       [nzFor]= "paramDefine.field">{{paramDefine.name}}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="10">
+          <nz-input-number
             [(ngModel)]="params[i].value"
-            [id]="paramDefine.field"
-            [name]="paramDefine.field"
-          />
-        </nz-input-group>
-        <ng-template #suffixTemplate>
-          <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
-        </ng-template>
-      </nz-form-control>
+            [nzMin]="-1000"
+            [nzMax]="65535"
+            [nzStep]="1"
+            [nzPlaceHolder]="paramDefine.name"
+            [name]="paramDefine.field" [id]="paramDefine.field"
+          ></nz-input-number>
+        </nz-form-control>
 
+        <nz-form-label *ngIf="paramDefine.type === 'boolean'"
+                       nzSpan="7"
+                       [nzRequired]="paramDefine.required"
+                       [nzFor]= "paramDefine.field">{{paramDefine.name}}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="10">
+          <nz-switch [(ngModel)]="params[i].value" [name]="paramDefine.field" [id]="paramDefine.field"></nz-switch>
+        </nz-form-control>
 
-      <nz-form-label *ngIf="paramDefine.type === 'number'"
-                     nzSpan="7"
-                     [nzRequired]="paramDefine.required"
-                     [nzFor]= "paramDefine.field">{{paramDefine.name}}
-      </nz-form-label>
-      <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="10">
-        <nz-input-number
-          [(ngModel)]="params[i].value"
-          [nzMin]="-1000"
-          [nzMax]="65535"
-          [nzStep]="1"
-          [nzPlaceHolder]="paramDefine.name"
-          [name]="paramDefine.field" [id]="paramDefine.field"
-        ></nz-input-number>
-      </nz-form-control>
+      </nz-form-item >
 
-      <nz-form-label *ngIf="paramDefine.type === 'boolean'"
-                     nzSpan="7"
-                     [nzRequired]="paramDefine.required"
-                     [nzFor]= "paramDefine.field">{{paramDefine.name}}
-      </nz-form-label>
-      <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="10">
-        <nz-switch [(ngModel)]="params[i].value" [name]="paramDefine.field" [id]="paramDefine.field"></nz-switch>
-      </nz-form-control>
+      <nz-divider></nz-divider>
 
-    </nz-form-item >
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor= "intervals">采集间隔</nz-form-label>
+        <nz-form-control nzSpan="10">
+          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="10000" [nzStep]="10"
+                           name="intervals" id="intervals">
+          </nz-input-number>
+        </nz-form-control>
+      </nz-form-item >
 
-    <nz-divider></nz-divider>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor= "detect">启动探测</nz-form-label>
+        <nz-form-control nzSpan="10">
+          <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
+        </nz-form-control>
+      </nz-form-item >
 
-    <nz-form-item>
-      <nz-form-label nzSpan="7" nzFor= "intervals">采集间隔</nz-form-label>
-      <nz-form-control nzSpan="10">
-        <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="10000" [nzStep]="10" id="intervals"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item >
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'description'>描述备注</nz-form-label>
+        <nz-form-control [nzSpan]="10">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea rows="3" nz-input name="description" id="description"></textarea>
+          </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item >
 
-    <nz-form-item>
-      <nz-form-label nzSpan="7" nzFor= "detect">启动探测</nz-form-label>
-      <nz-form-control nzSpan="10">
-        <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
-      </nz-form-control>
-    </nz-form-item >
-
-    <nz-form-item>
-      <nz-form-label [nzSpan]="7" nzFor= 'description'>描述备注</nz-form-label>
-      <nz-form-control [nzSpan]="10">
-        <nz-textarea-count [nzMaxCharacterCount]="100">
-          <textarea rows="3" nz-input name="description" id="description"></textarea>
-        </nz-textarea-count>
-      </nz-form-control>
-    </nz-form-item >
-
-    <div nz-row>
-      <div nz-col nzSpan="8" nzOffset="9">
-        <button nz-button nzType="primary" type="submit">
-          探测
-        </button>
-        <button nz-button nzType="primary" type="submit">
-          确定
-        </button>
-        <button nz-button nzType="primary" nzDanger="true" type="reset">
-          取消
-        </button>
+      <div nz-row>
+        <div nz-col nzSpan="8" nzOffset="9">
+          <button nz-button nzType="primary" type="submit" (click)="onDetect()">
+            探测
+          </button>
+          <button nz-button nzType="primary" type="submit" (click)="onSubmit()">
+            确定
+          </button>
+          <button nz-button nzType="primary" type="reset" (click)="onCancel()">
+            取消
+          </button>
+        </div>
       </div>
-    </div>
-  </form>
-</div>
+    </form>
+  </div>
+</nz-spin>
+

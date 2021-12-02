@@ -6,7 +6,7 @@ import {MonitorEditComponent} from "./monitor-edit/monitor-edit.component";
 import {MonitorDetailComponent} from "./monitor-detail/monitor-detail.component";
 
 const routes: Routes = [
-  { path: '', component: MonitorNewComponent },
+  { path: '', component: MonitorListComponent },
   { path: 'new', component: MonitorNewComponent },
   { path: ':monitorId/edit', component: MonitorEditComponent },
   { path: ':monitorId', component: MonitorDetailComponent },
