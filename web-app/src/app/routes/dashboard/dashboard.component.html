@@ -1,1 +1,27 @@
-<page-header></page-header>
+
+<div nz-row [nzGutter]="24" class="pt-lg">
+  <div nz-col nzXs="24" nzSm="24" nzMd="24" nzLg="18">
+<!--    <button nz-button (click)="refresh()" nzType="primary">监控分布</button>-->
+    <nz-card nzTitle="在网监控" class="pie-card">
+      <g2-pie
+        #pie
+        [hasLegend]="true"
+        title="在网监控数量"
+        subTitle="监控数量"
+        [total]="433"
+        [valueFormat]="format"
+        [data]="salesPieData"
+        height="294"
+        repaint="false"
+        (clickItem)="handleClick($event)"
+      ></g2-pie>
+    </nz-card>
+  </div>
+  <div nz-col nzXs="24" nzSm="24" nzMd="12" nzLg="6">
+    <nz-card nzTitle="监控资源使用情况" class="pie-card">
+      <div class="text-center">
+        <g2-water-wave [title]="'已监控License占比'" [percent]="34" [height]="161"></g2-water-wave>
+      </div>
+    </nz-card>
+  </div>
+</div>
