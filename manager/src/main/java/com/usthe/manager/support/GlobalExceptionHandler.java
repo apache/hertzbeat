@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("[input argument not valid happen]-{}", errorMessage, e);
         }
-        Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).code(PARAM_INVALID).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
@@ -146,7 +146,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.warn("[scheduler warning]-{}", errorMessage);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
@@ -163,7 +163,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.warn("[database error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
@@ -197,7 +197,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 

@@ -21,12 +21,16 @@ import com.usthe.manager.support.exception.MonitorDetectException;
 import com.usthe.scheduler.JobScheduling;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -166,10 +170,20 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "password":
                             // 明文密码需加密传输存储
-                            String value = param.getValue();
-                            if (!AesUtil.isCiphertext(value)) {
-                                value = AesUtil.aesEncode(value);
-                                param.setValue(value);
+                            String passwordValue = param.getValue();
+                            if (!AesUtil.isCiphertext(passwordValue)) {
+                                passwordValue = AesUtil.aesEncode(passwordValue);
+                                param.setValue(passwordValue);
+                            }
+                            break;
+                        case "boolean":
+                            // boolean校验
+                            String booleanValue = param.getValue();
+                            try {
+                                Boolean.parseBoolean(booleanValue);
+                            } catch (Exception e) {
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + booleanValue + " is invalid boolean value.");
                             }
                             break;
                         // todo 更多参数定义与实际值格式校验
@@ -237,6 +251,19 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMonitors(Set<Long> ids) throws RuntimeException {
+        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
+        if (monitors != null) {
+            monitorDao.deleteAll(monitors);
+            paramDao.deleteParamsByMonitorIdIn(ids);
+            for (Monitor monitor : monitors) {
+                jobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            }
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MonitorDto getMonitor(long id) throws RuntimeException {
         Optional<Monitor> monitorOptional = monitorDao.findById(id);
@@ -249,5 +276,10 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest) {
+        return monitorDao.findAll(specification, pageRequest);
     }
 }
