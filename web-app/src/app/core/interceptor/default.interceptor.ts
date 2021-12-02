@@ -4,7 +4,7 @@ import {
   HttpHandler,
   HttpHeaders,
   HttpInterceptor,
-  HttpRequest,
+  HttpRequest, HttpResponse,
   HttpResponseBase
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
@@ -27,6 +27,7 @@ const CODE_MESSAGE: { [key: number]: string } = {
   403: '用户得到授权，但是访问是被禁止的。',
   404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
   406: '请求的格式不可得。',
+  409: '请求与服务器端目标资源的当前状态相冲突',
   410: '请求的资源被永久删除，且不会再得到的。',
   422: '当创建一个对象时，发生一个验证错误。',
   500: '服务器发生错误，请检查服务器。',
@@ -63,9 +64,9 @@ export class DefaultInterceptor implements HttpInterceptor {
   }
 
   private checkStatus(ev: HttpResponseBase): void {
-    if (ev.status >= 200 && ev.status < 500) {
-      return;
-    }
+    // if (ev.status >= 200 && ev.status < 500) {
+    //   return;
+    // }
     const errorText = CODE_MESSAGE[ev.status] || ev.statusText;
     this.notification.error(`抱歉服务器繁忙 ${ev.status}: ${ev.url}`, errorText);
   }
@@ -158,27 +159,40 @@ export class DefaultInterceptor implements HttpInterceptor {
     const newReq = req.clone({ url, setHeaders: this.fillHeaders(req.headers) });
     return next.handle(newReq).pipe(
       mergeMap(httpEvent => {
+
         if (httpEvent instanceof HttpResponseBase) {
-          // 处理token过期自动刷新
-          switch (httpEvent.status) {
-            case 401:
-              if (this.refreshTokenEnabled) {
-                return this.tryRefreshToken(httpEvent, req, next);
-              }
-              this.toLogin();
-              break;
-            case 403 | 404 | 500:
-              this.goTo(`/exception/${httpEvent.status}?url=${req.urlWithParams}`);
-              break;
-            default:
-              break;
-          }
+          // todo 处理成功状态响应
+
           return of(httpEvent);
         } else {
           return of(httpEvent);
         }
       }),
       catchError((err: HttpErrorResponse) => {
+        // 处理失败响应，处理token过期自动刷新
+        switch (err.status) {
+          case 401:
+            if (this.refreshTokenEnabled) {
+              return this.tryRefreshToken(err, req, next);
+            }
+            this.toLogin();
+            break;
+          case 403:
+          case 404:
+          case 500:
+            this.goTo(`/exception/${err.status}?url=${req.urlWithParams}`);
+            break;
+          case 400:
+            let resp = new HttpResponse({
+              body: err.error,
+              headers: err.headers,
+              status: err.status,
+              statusText: err.statusText
+            });
+            return of(resp);
+          default:
+            break;
+        }
         this.checkStatus(err);
         console.warn(`${err.status} == ${err.message}`)
         return throwError(err);

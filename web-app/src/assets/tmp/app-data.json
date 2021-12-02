@@ -36,12 +36,12 @@
           "children": [
             {
               "text": "http",
-              "link": "/monitors",
+              "link": "/monitors?app=http",
               "i18n": "monitor.app.http"
             },
             {
               "text": "ping",
-              "link": "/monitors",
+              "link": "/monitors?app=ping",
               "i18n": "monitor.app.ping"
             },
             {

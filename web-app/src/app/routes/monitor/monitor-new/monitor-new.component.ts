@@ -23,7 +23,8 @@ export class MonitorNewComponent implements OnInit {
   monitor!: Monitor;
   profileForm: FormGroup = new FormGroup({});
   detected: boolean = true;
-  passwordVisible!: boolean;
+  passwordVisible: boolean = false;
+  isSpinning:boolean = false
   constructor(private appDefineSvc: AppDefineService,
               private monitorSvc: MonitorService,
               private route: ActivatedRoute,
@@ -48,6 +49,9 @@ export class MonitorNewComponent implements OnInit {
           let param = new Param();
           param.field = define.field;
           param.type = define.type === "number" ? 0 : 1;
+          if (define.type === "boolean") {
+            param.value = false;
+          }
           this.params.push(param);
         })
       } else {
@@ -58,20 +62,61 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onSubmit() {
+    // todo 暂时单独设置host属性值
+    this.params.forEach(param => {
+      if (param.field === "host") {
+        param.value = this.monitor.host;
+      }
+    });
     let addMonitor = {
       "detected": this.detected,
       "monitor": this.monitor,
       "params": this.params
     };
+    this.isSpinning = true;
     this.monitorSvc.newMonitor(addMonitor)
       .subscribe(message => {
+        this.isSpinning = false;
         if (message.code === 0) {
           this.notifySvc.success("新增监控成功", "");
           this.router.navigateByUrl("/monitors")
         } else {
           this.notifySvc.error("新增监控失败", message.msg);
+        }},
+        error => {
+          this.isSpinning = false
         }
-    })
+      )
+  }
+
+  onDetect() {
+    // todo 暂时单独设置host属性值
+    this.params.forEach(param => {
+      if (param.field === "host") {
+        param.value = this.monitor.host;
+      }
+    });
+    let detectMonitor = {
+      "detected": this.detected,
+      "monitor": this.monitor,
+      "params": this.params
+    };
+    this.isSpinning = true;
+    this.monitorSvc.newMonitor(detectMonitor)
+      .subscribe(message => {
+        this.isSpinning = false;
+        if (message.code === 0) {
+          this.notifySvc.success("探测成功", "");
+        } else {
+          this.notifySvc.error("探测失败", message.msg);
+        }
+      })
+  }
+
+  onCancel() {
+    let app = this.monitor.app;
+    app = app ? app : '';
+    this.router.navigateByUrl(`/monitors?app=${app}`)
   }
 
 }
