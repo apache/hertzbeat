@@ -1,5 +1,7 @@
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import {G2PieModule} from "@delon/chart/pie";
+import {G2WaterWaveModule} from "@delon/chart/water-wave";
 // dashboard pages
 import { DashboardComponent } from './dashboard/dashboard.component';
 // single pages
@@ -23,7 +25,7 @@ const COMPONENTS: Array<Type<void>> = [
 ];
 
 @NgModule({
-  imports: [SharedModule, RouteRoutingModule],
+  imports: [SharedModule, RouteRoutingModule, G2PieModule, G2WaterWaveModule],
   declarations: COMPONENTS,
 })
 export class RoutesModule {}

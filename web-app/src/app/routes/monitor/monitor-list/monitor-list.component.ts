@@ -5,6 +5,7 @@ import {Monitor} from "../../../pojo/Monitor";
 import {Page} from "../../../pojo/Page";
 import {NzModalService} from "ng-zorro-antd/modal";
 import {NzNotificationService} from "ng-zorro-antd/notification";
+import {NzMessageService} from "ng-zorro-antd/message";
 
 @Component({
   selector: 'app-monitor-list',
@@ -18,6 +19,7 @@ export class MonitorListComponent implements OnInit {
               private router: Router,
               private modal: NzModalService,
               private notifySvc: NzNotificationService,
+              private msg: NzMessageService,
               private monitorSvc: MonitorService) { }
 
   app!: string;

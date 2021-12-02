@@ -4,6 +4,7 @@ import com.usthe.manager.pojo.entity.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * ParamDao 数据库操作
@@ -24,4 +25,10 @@ public interface ParamDao extends JpaRepository<Param, Long> {
      * @param monitorId 监控ID
      */
     void deleteParamsByMonitorId(long monitorId);
+
+    /**
+     * 根据监控ID列表删除与之关联的参数列表
+     * @param monitorIds 监控ID列表
+     */
+    void deleteParamsByMonitorIdIn(Set<Long> monitorIds);
 }
