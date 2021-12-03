@@ -93,4 +93,29 @@ public class MonitorsController {
         Message<Void> message = new Message<>();
         return ResponseEntity.ok(message);
     }
+
+    @DeleteMapping("manage")
+    @ApiOperation(value = "批量取消纳管监控", notes = "根据监控ID列表批量取消纳管监控项")
+    public ResponseEntity<Message<Void>> cancelManageMonitors(
+            @ApiParam(value = "监控IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+    ) {
+        if (ids != null && !ids.isEmpty()) {
+            monitorService.cancelManageMonitors(new HashSet<>(ids));
+        }
+        Message<Void> message = new Message<>();
+        return ResponseEntity.ok(message);
+    }
+
+    @GetMapping("manage")
+    @ApiOperation(value = "批量启动纳管监控", notes = "根据监控ID列表批量启动纳管监控项")
+    public ResponseEntity<Message<Void>> enableManageMonitors(
+            @ApiParam(value = "监控IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+    ) {
+        if (ids != null && !ids.isEmpty()) {
+            monitorService.enableManageMonitors(new HashSet<>(ids));
+        }
+        Message<Void> message = new Message<>();
+        return ResponseEntity.ok(message);
+    }
+
 }

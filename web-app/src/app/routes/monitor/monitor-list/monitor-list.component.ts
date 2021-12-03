@@ -38,6 +38,8 @@ export class MonitorListComponent implements OnInit {
         this.app = paramMap.get("app") || '';
         this.pageIndex = 1;
         this.pageSize = 8;
+        this.checkedMonitorIds = new Set<number>();
+        this.tableLoading = true;
         this.loadMonitorTable();
       });
   }
@@ -138,6 +140,97 @@ export class MonitorListComponent implements OnInit {
     );
   }
 
+  onCancelManageMonitors() {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
+      this.notifySvc.warning("未选中任何待取消项！","");
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: '请确认是否批量取消纳管！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.cancelManageMonitors(this.checkedMonitorIds)
+    });
+  }
+
+  onCancelManageOneMonitor(monitorId: number) {
+    let monitors = new Set<number>();
+    monitors.add(monitorId);
+    this.modal.confirm({
+      nzTitle: '请确认是否取消纳管！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.cancelManageMonitors(monitors)
+    });
+  }
+
+  cancelManageMonitors(monitors: Set<number>) {
+    const cancelManage$ = this.monitorSvc.cancelManageMonitors(monitors)
+      .subscribe(message => {
+          cancelManage$.unsubscribe();
+          if (message.code === 0) {
+            this.notifySvc.success("取消纳管成功！", "");
+            this.loadMonitorTable();
+          } else {
+            this.notifySvc.error("取消纳管失败！", message.msg);
+          }
+        },
+        error => {
+          cancelManage$.unsubscribe();
+          this.notifySvc.error("取消纳管失败！", error.msg)
+        }
+      );
+  }
+
+  onEnableManageMonitors() {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
+      this.notifySvc.warning("未选中任何待启用纳管项！","");
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: '请确认是否批量启用纳管！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.enableManageMonitors(this.checkedMonitorIds)
+    });
+  }
+
+  onEnableManageOneMonitor(monitorId: number) {
+    let monitors = new Set<number>();
+    monitors.add(monitorId);
+    this.modal.confirm({
+      nzTitle: '请确认是否启用纳管！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.enableManageMonitors(monitors)
+    });
+  }
+
+  enableManageMonitors(monitors: Set<number>) {
+    const enableManage$ = this.monitorSvc.enableManageMonitors(monitors)
+      .subscribe(message => {
+          enableManage$.unsubscribe();
+          if (message.code === 0) {
+            this.notifySvc.success("启用纳管成功！", "");
+            this.loadMonitorTable();
+          } else {
+            this.notifySvc.error("启用纳管失败！", message.msg);
+          }
+        },
+        error => {
+          enableManage$.unsubscribe();
+          this.notifySvc.error("启用纳管失败！", error.msg)
+        }
+      );
+  }
 
   // begin: 列表多选逻辑
   checkedAll: boolean = false;
