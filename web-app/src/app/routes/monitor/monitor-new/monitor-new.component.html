@@ -6,7 +6,7 @@
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
-    <a [routerLink]="['/monitors']">
+    <a [routerLink]="['/monitors']" [queryParams]="{app: monitor.app ? monitor.app : ''}">
       <i nz-icon nzType="monitor"></i>
       <span>监控列表</span>
     </a>
