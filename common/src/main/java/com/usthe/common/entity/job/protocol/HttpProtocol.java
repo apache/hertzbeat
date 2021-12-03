@@ -32,7 +32,7 @@ public class HttpProtocol {
     /**
      * http是否使用链路加密ssl/tls,即是http还是https
      */
-    private boolean ssl = false;
+    private String ssl = "false";
     /**
      * http请求方法: get, post, put, delete, patch
      */
