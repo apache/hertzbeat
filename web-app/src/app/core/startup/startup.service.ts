@@ -49,7 +49,7 @@ export class StartupService {
           // Application information: including site name, description, year
           this.settingService.setApp(appData.app);
           // User information: including name, avatar, email address
-          this.settingService.setUser(appData.user);
+          // this.settingService.setUser(appData.user);
           // ACL: Set the permissions to full, https://ng-alain.com/acl/getting-started
           this.aclService.setFull(true);
           // Menu data, https://ng-alain.com/theme/menu
