@@ -10,6 +10,7 @@ import { NzTabChangeEvent } from 'ng-zorro-antd/tabs';
 import { finalize } from 'rxjs/operators';
 import {Message} from "../../../pojo/Message";
 import {LocalStorageService} from "../../../service/local-storage.service";
+import {User} from "@delon/theme/src/services/settings/types";
 
 @Component({
   selector: 'passport-login',
@@ -136,6 +137,12 @@ export class UserLoginComponent implements OnDestroy {
         // 设置用户Token信息
         this.storageSvc.storageAuthorizationToken(message.data.token);
         this.storageSvc.storageRefreshToken(message.data.refreshToken);
+        let user:User = {
+          name: this.userName.value,
+          avatar: "./assets/tmp/img/avatar.svg",
+          email: ""
+        }
+        this.settingsService.setUser(user);
         // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响
         this.startupSrv.load().subscribe(() => {
           let url = this.tokenService.referrer!.url || '/';
