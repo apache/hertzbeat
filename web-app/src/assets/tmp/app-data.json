@@ -35,8 +35,8 @@
           "icon": "anticon-cloud",
           "children": [
             {
-              "text": "http",
-              "link": "/monitors?app=http",
+              "text": "api",
+              "link": "/monitors?app=api",
               "i18n": "monitor.app.http"
             },
             {

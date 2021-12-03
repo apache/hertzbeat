@@ -2,6 +2,7 @@ package com.usthe.common.util;
 
 /**
  * 雪花算法生成器实例
+ * 注意 由于前端JS TS 在json解析大数会造成精度丢失 UUID 不能超过 9007199254740991（16位）
  * @author from https://www.cnblogs.com/vchar/p/14857677.html
  * @date 2021/11/10 10:58
  */
@@ -15,12 +16,12 @@ public class SnowFlakeIdWorker {
     /**
      * 机器 ID 所占的位数
      */
-    private static final long WORKER_ID_BITS = 5L;
+    private static final long WORKER_ID_BITS = 2L;
 
     /**
      * 数据标识 ID 所占的位数
      */
-    private static final long DATA_CENTER_ID_BITS = 5L;
+    private static final long DATA_CENTER_ID_BITS = 4L;
 
     /**
      * 支持的最大机器ID，最大为31

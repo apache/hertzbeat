@@ -102,7 +102,7 @@ export class MonitorNewComponent implements OnInit {
       "params": this.params
     };
     this.isSpinning = true;
-    this.monitorSvc.newMonitor(detectMonitor)
+    this.monitorSvc.detectMonitor(detectMonitor)
       .subscribe(message => {
         this.isSpinning = false;
         if (message.code === 0) {

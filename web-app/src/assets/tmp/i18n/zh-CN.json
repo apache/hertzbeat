@@ -28,6 +28,7 @@
     },
     "app": {
       "": "监控类型",
+      "api": "HTTP API",
       "http": "HTTP API",
       "ping": "PING连通性",
       "telnet": "Telnet端口可用性",
