@@ -33,6 +33,11 @@ public interface CommonConstants {
     byte MONITOR_CONFLICT = 0x04;
 
     /**
+     * 响应状态码: 登陆账户密码错误
+     */
+    byte MONITOR_LOGIN_FAILED = 0x05;
+
+    /**
      * 监控状态码: 未管理
      */
     byte UN_MANAGE = 0x00;

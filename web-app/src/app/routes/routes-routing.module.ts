@@ -19,7 +19,8 @@ const routes: Routes = [
   {
     path: '',
     component: LayoutBasicComponent,
-    canActivate: [SimpleGuard],
+    // 路由守卫 在路由之前判断是否有认证或者权限进入此路由
+    // canActivate: [SimpleGuard],
     children: [
       // todo 根据路由自动生成面包屑
       { path: '', redirectTo: 'dashboard', pathMatch: 'full'},
