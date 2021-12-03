@@ -9,7 +9,6 @@ import {
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
-import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
 import { ALAIN_I18N_TOKEN, _HttpClient } from '@delon/theme';
 import { environment } from '@env/environment';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -51,10 +50,6 @@ export class DefaultInterceptor implements HttpInterceptor {
     return this.injector.get(NzNotificationService);
   }
 
-  private get tokenSrv(): ITokenService {
-    return this.injector.get(DA_SERVICE_TOKEN);
-  }
-
   private get http(): _HttpClient {
     return this.injector.get(_HttpClient);
   }
@@ -75,15 +70,16 @@ export class DefaultInterceptor implements HttpInterceptor {
    * 刷新 Token 请求
    */
   private refreshTokenRequest(): Observable<any> {
-    const model = this.tokenSrv.get();
-    return this.http.post(`/api/auth/refresh`, null, null, { headers: { refresh_token: model?.refresh_token || '' } });
+    const refreshToken = this.storageSvc.getRefreshToken();
+    return this.http.post(`/account/auth/refresh`, null, null,
+      { headers: { Authorization: `Bearer ${refreshToken}` }});
   }
 
   // #region 刷新Token方式一：使用 401 重新刷新 Token
 
   private tryRefreshToken(ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandler): Observable<any> {
     // 1、若请求为刷新Token请求，表示来自刷新Token可以直接跳转登录页
-    if ([`/api/auth/refresh`].some(url => req.url.includes(url))) {
+    if ([`/account/auth/refresh`].some(url => req.url.includes(url))) {
       this.toLogin();
       return throwError(ev);
     }
@@ -105,8 +101,10 @@ export class DefaultInterceptor implements HttpInterceptor {
         this.refreshToking = false;
         this.refreshToken$.next(res);
         // 重新保存新 token
-        this.storageSvc.storageAuthorizationToken(res);
-        this.tokenSrv.set(res);
+        let token = res.token;
+        let refreshToken = res.refreshToken;
+        this.storageSvc.storageAuthorizationToken(token);
+        this.storageSvc.storageRefreshToken(refreshToken);
         // 重新发起请求
         return next.handle(this.reAttachToken(req));
       }),
@@ -134,7 +132,7 @@ export class DefaultInterceptor implements HttpInterceptor {
 
   private toLogin(): void {
     this.notification.error(`未登录或登录已过期，请重新登录。`, ``);
-    this.goTo(this.tokenSrv.login_url!);
+    this.goTo('/passport/login');
   }
 
   private fillHeaders(headers?: HttpHeaders): { [name: string]: string } {

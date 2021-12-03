@@ -8,6 +8,8 @@ import { SettingsService, _HttpClient } from '@delon/theme';
 import { environment } from '@env/environment';
 import { NzTabChangeEvent } from 'ng-zorro-antd/tabs';
 import { finalize } from 'rxjs/operators';
+import {Message} from "../../../pojo/Message";
+import {LocalStorageService} from "../../../service/local-storage.service";
 
 @Component({
   selector: 'passport-login',
@@ -28,11 +30,12 @@ export class UserLoginComponent implements OnDestroy {
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
     private startupSrv: StartupService,
     private http: _HttpClient,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private storageSvc: LocalStorageService
   ) {
     this.form = fb.group({
-      userName: [null, [Validators.required, Validators.pattern(/^(admin|user)$/)]],
-      password: [null, [Validators.required, Validators.pattern(/^(admin@123)$/)]],
+      userName: [null, [Validators.required]],
+      password: [null, [Validators.required]],
       mobile: [null, [Validators.required, Validators.pattern(/^1\d{10}$/)]],
       captcha: [null, [Validators.required]],
       remember: [true]
@@ -111,29 +114,28 @@ export class UserLoginComponent implements OnDestroy {
     this.loading = true;
     this.cdr.detectChanges();
     this.http
-      .post('/login/account?_allow_anonymous=true', {
+      .post<Message<any>>('/account/auth/form', {
         type: this.type,
-        userName: this.userName.value,
+        identifier: this.userName.value,
         password: this.password.value
       })
       .pipe(
         finalize(() => {
-          this.loading = true;
+          this.loading = false;
           this.cdr.detectChanges();
         })
       )
-      .subscribe(res => {
-        if (res.msg !== 'ok') {
-          this.error = res.msg;
+      .subscribe(message => {
+        if (message.code !== 0) {
+          this.error = message.msg;
           this.cdr.detectChanges();
           return;
         }
         // 清空路由复用信息
         this.reuseTabService.clear();
         // 设置用户Token信息
-        // TODO: Mock expired value
-        res.user.expired = +new Date() + 1000 * 60 * 5;
-        this.tokenService.set(res.user);
+        this.storageSvc.storageAuthorizationToken(message.data.token);
+        this.storageSvc.storageRefreshToken(message.data.refreshToken);
         // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响
         this.startupSrv.load().subscribe(() => {
           let url = this.tokenService.referrer!.url || '/';
