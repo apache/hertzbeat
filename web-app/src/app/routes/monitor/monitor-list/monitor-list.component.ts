@@ -6,6 +6,7 @@ import {Page} from "../../../pojo/Page";
 import {NzModalService} from "ng-zorro-antd/modal";
 import {NzNotificationService} from "ng-zorro-antd/notification";
 import {NzMessageService} from "ng-zorro-antd/message";
+import {NzTableQueryParams} from "ng-zorro-antd/table";
 
 @Component({
   selector: 'app-monitor-list',
@@ -25,7 +26,7 @@ export class MonitorListComponent implements OnInit {
   app!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
-  pageTotal: number = 0;
+  total: number = 0;
   monitors!: Monitor[];
   pageMonitors!: Page<Monitor>;
   tableLoading: boolean = true;
@@ -35,11 +36,13 @@ export class MonitorListComponent implements OnInit {
     this.route.queryParamMap
       .subscribe(paramMap => {
         this.app = paramMap.get("app") || '';
-        this.initMonitorTable();
+        this.pageIndex = 1;
+        this.pageSize = 8;
+        this.loadMonitorTable();
       });
   }
 
-  initMonitorTable() {
+  loadMonitorTable() {
     let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize)
       .subscribe(message => {
         this.tableLoading = false;
@@ -47,7 +50,7 @@ export class MonitorListComponent implements OnInit {
           this.pageMonitors = message.data;
           this.monitors = this.pageMonitors.content;
           this.pageIndex = this.pageMonitors.number + 1;
-          this.pageTotal = this.pageMonitors.totalElements;
+          this.total = this.pageMonitors.totalElements;
         } else {
           console.warn(message.msg);
         }
@@ -123,7 +126,7 @@ export class MonitorListComponent implements OnInit {
           deleteMonitors$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success("删除成功！", "");
-          this.initMonitorTable();
+          this.loadMonitorTable();
         } else {
           this.notifySvc.error("删除失败！", message.msg);
         }
@@ -154,5 +157,15 @@ export class MonitorListComponent implements OnInit {
   }
   // end: 列表多选逻辑
 
+  /**
+   * 分页回调
+   * @param params 页码信息
+   */
+  onTablePageChange(params: NzTableQueryParams) {
+    const { pageSize, pageIndex, sort, filter } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    this.loadMonitorTable();
+  }
 
 }
