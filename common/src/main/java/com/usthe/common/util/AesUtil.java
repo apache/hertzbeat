@@ -19,9 +19,9 @@ import java.security.NoSuchAlgorithmException;
 public class AesUtil {
 
     /**
-     *  默认加密秘钥 AES加密秘钥为约定16位，小于16位会报错
+     *  默认加密秘钥 AES加密秘钥为约定16位，大于小于16位会报错
      */
-    private static final String ENCODE_RULES = "tomSun28HaHaHaHaHa";
+    private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
      *  默认算法
