@@ -27,6 +27,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -281,5 +282,49 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest) {
         return monitorDao.findAll(specification, pageRequest);
+    }
+
+    @Override
+    public void cancelManageMonitors(HashSet<Long> ids) {
+        // 更新监控状态  删除对应的监控周期性任务
+        // jobId不删除 待启动纳管之后再次复用jobId
+        List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
+                .stream().filter(monitor ->
+                        monitor.getStatus() != CommonConstants.UN_MANAGE && monitor.getJobId() != null)
+                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE))
+                .collect(Collectors.toList());
+        if (!managedMonitors.isEmpty()) {
+            monitorDao.saveAll(managedMonitors);
+            for (Monitor monitor : managedMonitors) {
+                jobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            }
+        }
+    }
+
+    @Override
+    public void enableManageMonitors(HashSet<Long> ids) {
+        // 更新监控状态 新增对应的监控周期性任务
+        List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
+                .stream().filter(monitor ->
+                        monitor.getStatus() == CommonConstants.UN_MANAGE && monitor.getJobId() != null)
+                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE))
+                .collect(Collectors.toList());
+        if (!unManagedMonitors.isEmpty()) {
+            monitorDao.saveAll(unManagedMonitors);
+            for (Monitor monitor : unManagedMonitors) {
+                // 构造采集任务Job实体
+                Job appDefine = appService.getAppDefine(monitor.getApp());
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setCyclic(true);
+                appDefine.setTimestamp(System.currentTimeMillis());
+                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                List<Configmap> configmaps = params.stream().map(param ->
+                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+                // 下发采集任务
+                jobScheduling.addAsyncCollectJob(appDefine);
+            }
+        }
     }
 }

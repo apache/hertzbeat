@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -80,4 +81,16 @@ public interface MonitorService {
      * @return 查询结果
      */
     Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest);
+
+    /**
+     * 根据监控ID列表批量取消纳管监控项
+     * @param ids 监控IDs
+     */
+    void cancelManageMonitors(HashSet<Long> ids);
+
+    /**
+     * 根据监控ID列表批量启动纳管监控项
+     * @param ids 监控IDs
+     */
+    void enableManageMonitors(HashSet<Long> ids);
 }

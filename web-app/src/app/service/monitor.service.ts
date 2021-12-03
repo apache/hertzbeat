@@ -8,6 +8,7 @@ import {Monitor} from "../pojo/Monitor";
 const monitor_uri = "/monitor";
 const monitors_uri = "/monitors";
 const detect_monitor_uri = "/monitor/detect"
+const manage_monitors_uri = "/monitors/manage";
 
 @Injectable({
   providedIn: 'root'
@@ -31,11 +32,32 @@ export class MonitorService {
   public deleteMonitors(monitorIds: Set<number>) : Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
-      // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
-      httpParams = httpParams.set('ids', monitorId);
+      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
+      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      httpParams = httpParams.append('ids', monitorId);
     })
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(monitors_uri, options);
+  }
+
+  public cancelManageMonitors(monitorIds: Set<number>) : Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    monitorIds.forEach(monitorId => {
+      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
+      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      httpParams = httpParams.append('ids', monitorId);
+    })
+    const options = { params: httpParams };
+    return this.http.delete<Message<any>>(manage_monitors_uri, options);
+  }
+
+  public enableManageMonitors(monitorIds: Set<number>) : Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    monitorIds.forEach(monitorId => {
+      httpParams = httpParams.append('ids', monitorId);
+    })
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(manage_monitors_uri, options);
   }
 
   public detectMonitor(body: any) : Observable<Message<any>> {
