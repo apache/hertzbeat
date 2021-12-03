@@ -105,12 +105,12 @@ export class MonitorEditComponent implements OnInit {
       "params": this.params
     };
     this.isSpinning = true;
-    this.monitorSvc.newMonitor(addMonitor)
+    this.monitorSvc.editMonitor(addMonitor)
       .subscribe(message => {
           this.isSpinning = false;
           if (message.code === 0) {
             this.notifySvc.success("修改监控成功", "");
-            this.router.navigateByUrl("/monitors")
+            this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`)
           } else {
             this.notifySvc.error("修改监控失败", message.msg);
           }},

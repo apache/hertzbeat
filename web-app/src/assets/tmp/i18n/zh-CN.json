@@ -28,6 +28,7 @@
     },
     "app": {
       "": "监控类型",
+      "website": "网站监测",
       "api": "HTTP API",
       "http": "HTTP API",
       "ping": "PING连通性",

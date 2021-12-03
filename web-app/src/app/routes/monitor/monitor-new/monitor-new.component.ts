@@ -81,7 +81,7 @@ export class MonitorNewComponent implements OnInit {
         this.isSpinning = false;
         if (message.code === 0) {
           this.notifySvc.success("新增监控成功", "");
-          this.router.navigateByUrl("/monitors")
+          this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`)
         } else {
           this.notifySvc.error("新增监控失败", message.msg);
         }},
