@@ -48,8 +48,8 @@ export class MonitorService {
 
   public getMonitors(app: string, pageIndex: number, pageSize: number) : Observable<Message<Page<Monitor>>> {
     app = app.trim();
-    pageIndex = pageIndex ? 1 : pageIndex;
-    pageSize = pageSize ? 10 : pageSize;
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({

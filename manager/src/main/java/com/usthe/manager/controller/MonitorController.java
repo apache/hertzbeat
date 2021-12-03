@@ -40,7 +40,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, false);
-        if (monitorDto.getDetected()) {
+        if (monitorDto.isDetected()) {
             // 进行探测
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         }
@@ -53,7 +53,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // 校验请求数据
         monitorService.validate(monitorDto, true);
-        if (monitorDto.getDetected()) {
+        if (monitorDto.isDetected()) {
             // 进行探测
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         }

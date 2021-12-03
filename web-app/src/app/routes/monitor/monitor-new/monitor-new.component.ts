@@ -36,9 +36,12 @@ export class MonitorNewComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const paramDefine$ = this.route.queryParamMap.pipe(
+    this.route.queryParamMap.pipe(
       switchMap((paramMap: ParamMap) => {
         this.monitor.app = paramMap.get("app") || '';
+        this.detected = true;
+        this.passwordVisible = false;
+        this.isSpinning = false;
         return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
       })
     ).subscribe(message => {
@@ -57,7 +60,6 @@ export class MonitorNewComponent implements OnInit {
       } else {
         console.warn(message.msg);
       }
-      paramDefine$.unsubscribe();
     });
   }
 

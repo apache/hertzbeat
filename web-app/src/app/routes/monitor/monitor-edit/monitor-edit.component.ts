@@ -37,6 +37,8 @@ export class MonitorEditComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.pipe(
       switchMap((paramMap: ParamMap) => {
+        this.isSpinning = false;
+        this.passwordVisible = false;
         let id = paramMap.get("monitorId");
         this.monitor.id = Number(id);
         // 查询监控信息
@@ -51,7 +53,7 @@ export class MonitorEditComponent implements OnInit {
           });
         }
         this.params = message.data.params;
-        this.detected = message.data.detected;
+        this.detected = message.data.detected? message.data.detected : true;
       } else {
         console.warn(message.msg);
         this.notifySvc.error("查询异常，此监控不存在", message.msg);
@@ -132,7 +134,7 @@ export class MonitorEditComponent implements OnInit {
       "params": this.params
     };
     this.isSpinning = true;
-    this.monitorSvc.editMonitor(detectMonitor)
+    this.monitorSvc.detectMonitor(detectMonitor)
       .subscribe(message => {
         this.isSpinning = false;
         if (message.code === 0) {
