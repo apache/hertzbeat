@@ -51,6 +51,7 @@ export class MonitorEditComponent implements OnInit {
           });
         }
         this.params = message.data.params;
+        this.detected = message.data.detected;
       } else {
         console.warn(message.msg);
         this.notifySvc.error("查询异常，此监控不存在", message.msg);
@@ -71,6 +72,14 @@ export class MonitorEditComponent implements OnInit {
             }
             if (param.field === "host") {
               param.value = this.monitor.host;
+            }
+          } else {
+            if (define.type === "boolean") {
+              if (param.value != null) {
+                param.value = param.value.toLowerCase() == 'true';
+              } else {
+                param.value = false;
+              }
             }
           }
           this.params.push(param);
