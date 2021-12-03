@@ -59,9 +59,35 @@
   <tr *ngFor="let data of fixedTable.data">
     <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
     <td nzAlign="center">{{ data.name }}</td>
-    <td nzAlign="center">{{ data.status }}</td>
+    <td nzAlign="center">
+      <nz-tag *ngIf="data.status == 0" nzColor="default">
+        <i nz-icon nzType="sync"></i>
+        <span>未监控</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.status == 1" nzColor="success">
+        <i nz-icon nzType="sync"></i>
+        <span>正常监控</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.status == 2" nzColor="warning">
+        <i nz-icon nzType="sync"></i>
+        <span>监控不可用</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.status == 3" nzColor="error">
+        <i nz-icon nzType="sync"></i>
+        <span>监控不可大达</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.status == 4" nzColor="default">
+        <i nz-icon nzType="sync"></i>
+        <span>监控已挂起</span>
+      </nz-tag>
+    </td>
     <td nzAlign="center">{{ data.host }}</td>
-    <td nzAlign="center">{{ data.app }}</td>
+    <td nzAlign="center">
+      <nz-tag nzColor="processing">
+        <i nz-icon nzType="cloud"></i>
+        <span>{{ data.app }}</span>
+      </nz-tag>
+    </td>
     <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
     <td nzAlign="center" nzRight>
       <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)">
