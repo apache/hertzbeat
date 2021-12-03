@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 const Authorization = 'Authorization';
+const refreshToken = 'refresh-token';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,14 @@ export class LocalStorageService {
 
   public getAuthorizationToken(): string | null {
     return this.getData(Authorization);
+  }
+
+  public getRefreshToken(): string | null {
+    return this.getData(refreshToken);
+  }
+
+  public storageRefreshToken(token: string) {
+    return this.putData(refreshToken, token);
   }
 
   public storageAuthorizationToken(token: string) {

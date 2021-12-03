@@ -1,0 +1,44 @@
+## -- sureness.yml document dataSource-- ##
+
+# load api resource which need be protected, config role who can access these resource.
+# resources that are not configured are also authenticated and protected by default, but not authorized
+# eg: /api/v2/host===post===[role2,role3,role4] means /api/v2/host===post can be access by role2,role3,role4
+# eg: /api/v1/getSource3===get===[] means /api/v1/getSource3===get can not be access by any role
+resourceRole:
+  - /account/auth/refresh===post===[role1,role2,role3,role4]
+
+# load api resource which do not need be protected, means them need be excluded.
+# these api resource can be access by everyone
+excludedResource:
+  - /account/auth/form===post
+  - /**/*.html===get
+  - /**/*.js===get
+  - /**/*.css===get
+  - /**/*.ico===get
+  - /**/*.ttf===get
+  - /**/*.png===get
+  - /**/*.gif===get
+  - /swagger-resources/**===get
+  - /v2/api-docs===get
+  - /v3/api-docs===get
+  - /**/*.png===*
+
+# account info
+# there are three account: admin, root, tom
+# eg: admin has [role1,role2] ROLE, unencrypted password is admin, encrypted password is 0192023A7BBD73250516F069DF18B500
+# eg: root has role1, unencrypted password is 23456
+# eg: tom has role3, unencrypted password is 32113
+account:
+  - appId: admin
+    credential: admin
+    role: [role1,role2]
+  - appId: tom
+    credential: tom@123
+    role: [role1,role2,role3]
+  - appId: lili
+    # 注意 Digest认证不支持加盐加密的密码账户
+    # 加盐加密的密码，通过 MD5(password+salt)计算
+    # 此账户的原始密码为 lili
+    credential: 1A676730B0C7F54654B0E09184448289
+    salt: 123
+    role: [role1,role2]
