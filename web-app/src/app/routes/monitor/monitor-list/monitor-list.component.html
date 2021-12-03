@@ -61,20 +61,20 @@
     <td nzAlign="center">{{ data.name }}</td>
     <td nzAlign="center">
       <nz-tag *ngIf="data.status == 0" nzColor="default">
-        <i nz-icon nzType="sync"></i>
+        <i nz-icon nzType="robot" nzTheme="outline"></i>
         <span>未监控</span>
       </nz-tag>
       <nz-tag *ngIf="data.status == 1" nzColor="success">
-        <i nz-icon nzType="sync"></i>
+        <i nz-icon nzType="smile" nzTheme="outline"></i>
         <span>正常监控</span>
       </nz-tag>
       <nz-tag *ngIf="data.status == 2" nzColor="warning">
-        <i nz-icon nzType="sync"></i>
+        <i nz-icon nzType="meh" nzTheme="outline"></i>
         <span>监控不可用</span>
       </nz-tag>
       <nz-tag *ngIf="data.status == 3" nzColor="error">
-        <i nz-icon nzType="sync"></i>
-        <span>监控不可大达</span>
+        <i nz-icon nzType="frown" nzTheme="outline"></i>
+        <span>监控不可达</span>
       </nz-tag>
       <nz-tag *ngIf="data.status == 4" nzColor="default">
         <i nz-icon nzType="sync"></i>
