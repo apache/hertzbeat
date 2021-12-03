@@ -84,7 +84,8 @@ export class MonitorNewComponent implements OnInit {
           this.notifySvc.error("新增监控失败", message.msg);
         }},
         error => {
-          this.isSpinning = false
+          this.isSpinning = false;
+          this.notifySvc.error("新增监控失败", error.error.msg);
         }
       )
   }
@@ -110,7 +111,11 @@ export class MonitorNewComponent implements OnInit {
         } else {
           this.notifySvc.error("探测失败", message.msg);
         }
-      })
+      }, error => {
+        this.isSpinning = false;
+        this.notifySvc.error("探测异常", error.error.msg);
+        }
+      )
   }
 
   onCancel() {

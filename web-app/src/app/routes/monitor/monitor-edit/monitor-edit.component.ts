@@ -53,7 +53,7 @@ export class MonitorEditComponent implements OnInit {
         this.params = message.data.params;
       } else {
         console.warn(message.msg);
-        this.notifySvc.error("查询此监控异常", message.msg);
+        this.notifySvc.error("查询异常，此监控不存在", message.msg);
         return throwError("查询此监控异常");
       }
       return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
@@ -98,13 +98,14 @@ export class MonitorEditComponent implements OnInit {
       .subscribe(message => {
           this.isSpinning = false;
           if (message.code === 0) {
-            this.notifySvc.success("新增监控成功", "");
+            this.notifySvc.success("修改监控成功", "");
             this.router.navigateByUrl("/monitors")
           } else {
-            this.notifySvc.error("新增监控失败", message.msg);
+            this.notifySvc.error("修改监控失败", message.msg);
           }},
         error => {
-          this.isSpinning = false
+          this.isSpinning = false;
+          this.notifySvc.error("修改监控失败", error.error.msg);
         }
       )
   }
@@ -122,7 +123,7 @@ export class MonitorEditComponent implements OnInit {
       "params": this.params
     };
     this.isSpinning = true;
-    this.monitorSvc.newMonitor(detectMonitor)
+    this.monitorSvc.editMonitor(detectMonitor)
       .subscribe(message => {
         this.isSpinning = false;
         if (message.code === 0) {
@@ -130,7 +131,12 @@ export class MonitorEditComponent implements OnInit {
         } else {
           this.notifySvc.error("探测失败", message.msg);
         }
-      })
+      },
+        error => {
+        this.isSpinning = false;
+          this.notifySvc.error("探测异常", error.error.msg);
+        }
+      )
   }
 
   onCancel() {
