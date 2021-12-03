@@ -41,5 +41,5 @@ public class MonitorDto {
      * 是否探测
      */
     @ApiModelProperty(value = "是否进行探测", accessMode = READ_WRITE, position = 2)
-    private Boolean detected;
+    private boolean detected;
 }
