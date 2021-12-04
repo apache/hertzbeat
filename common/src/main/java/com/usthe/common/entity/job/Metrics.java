@@ -4,6 +4,7 @@ import com.usthe.common.entity.job.protocol.HttpProtocol;
 import com.usthe.common.entity.job.protocol.IcmpProtocol;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
 import com.usthe.common.entity.job.protocol.TcpUdpProtocol;
+import com.usthe.common.entity.job.protocol.TelnetProtocol;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -60,6 +61,10 @@ public class Metrics {
      * 使用icmp协议进行ping的监控配置信息
      */
     private IcmpProtocol icmp;
+    /**
+     * 使用telnet协议的监控配置信息
+     */
+    private TelnetProtocol telnet;
     /**
      * 使用socket实现的tcp或ucp进行服务端口探测配置信息
      */
