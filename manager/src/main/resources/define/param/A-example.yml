@@ -16,6 +16,10 @@ param:
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
+    # 端口默认值
+    defaultValue: 80
+    # 参数输入框提示信息
+    placeholder: '请输入端口'
   - field: username
     name: 用户名
     type: text

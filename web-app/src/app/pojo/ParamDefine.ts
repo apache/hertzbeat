@@ -3,7 +3,9 @@ export class ParamDefine {
   field!: string;
   type!: string;
   required: boolean | undefined;
+  defaultValue: string | undefined;
+  placeholder!: string;
   range: string | undefined;
   limit: number | undefined;
-  option: string | undefined;
+  options: string | undefined;
 }

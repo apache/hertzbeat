@@ -55,6 +55,15 @@ export class MonitorNewComponent implements OnInit {
           if (define.type === "boolean") {
             param.value = false;
           }
+          if (define.defaultValue != undefined) {
+            if (define.type === "number") {
+              param.value = Number(define.defaultValue);
+            } else if (define.type === "boolean") {
+              param.value = define.defaultValue.toLowerCase() == 'true'
+            } else {
+              param.value = define.defaultValue;
+            }
+          }
           this.params.push(param);
         })
       } else {
