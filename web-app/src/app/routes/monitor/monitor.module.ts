@@ -9,6 +9,7 @@ import {NzBreadCrumbModule} from "ng-zorro-antd/breadcrumb";
 import {NzDividerModule} from "ng-zorro-antd/divider";
 import {NzSwitchModule} from "ng-zorro-antd/switch";
 import {NzTagModule} from "ng-zorro-antd/tag";
+import {NzRadioModule} from "ng-zorro-antd/radio";
 
 const COMPONENTS: Type<void>[] = [
   MonitorNewComponent,
@@ -24,7 +25,8 @@ const COMPONENTS: Type<void>[] = [
         NzBreadCrumbModule,
         NzDividerModule,
         NzSwitchModule,
-        NzTagModule
+        NzTagModule,
+        NzRadioModule
     ],
   declarations: COMPONENTS,
 })

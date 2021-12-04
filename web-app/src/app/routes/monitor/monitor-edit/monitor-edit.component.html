@@ -96,6 +96,20 @@
           <nz-switch [(ngModel)]="params[i].value" [name]="paramDefine.field" [id]="paramDefine.field"></nz-switch>
         </nz-form-control>
 
+        <nz-form-label *ngIf="paramDefine.type === 'radio'"
+                       nzSpan="7"
+                       [nzRequired]="paramDefine.required"
+                       [nzFor]= "paramDefine.field">{{paramDefine.name}}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="10">
+          <nz-radio-group [(ngModel)]="params[i].value" nzButtonStyle="solid"
+                          [name]="paramDefine.field" [id]="paramDefine.field">
+            <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
+              {{optionItem.label}}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+
       </nz-form-item >
 
       <nz-divider></nz-divider>
