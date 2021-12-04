@@ -48,6 +48,8 @@ export class MonitorListComponent implements OnInit {
     let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize)
       .subscribe(message => {
         this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedMonitorIds.clear();
         if (message.code === 0) {
           this.pageMonitors = message.data;
           this.monitors = this.pageMonitors.content;
@@ -123,6 +125,7 @@ export class MonitorListComponent implements OnInit {
       this.notifySvc.warning("未选中任何待删除项！","");
       return;
     }
+    this.tableLoading = true;
     const deleteMonitors$ = this.monitorSvc.deleteMonitors(monitors)
       .subscribe(message => {
           deleteMonitors$.unsubscribe();
@@ -130,10 +133,12 @@ export class MonitorListComponent implements OnInit {
           this.notifySvc.success("删除成功！", "");
           this.loadMonitorTable();
         } else {
+          this.tableLoading = false;
           this.notifySvc.error("删除失败！", message.msg);
         }
     },
         error => {
+          this.tableLoading = false;
           deleteMonitors$.unsubscribe();
           this.notifySvc.error("删除失败！", error.msg)
         }
@@ -169,6 +174,7 @@ export class MonitorListComponent implements OnInit {
   }
 
   cancelManageMonitors(monitors: Set<number>) {
+    this.tableLoading = true;
     const cancelManage$ = this.monitorSvc.cancelManageMonitors(monitors)
       .subscribe(message => {
           cancelManage$.unsubscribe();
@@ -176,10 +182,12 @@ export class MonitorListComponent implements OnInit {
             this.notifySvc.success("取消纳管成功！", "");
             this.loadMonitorTable();
           } else {
+            this.tableLoading = false;
             this.notifySvc.error("取消纳管失败！", message.msg);
           }
         },
         error => {
+          this.tableLoading = false;
           cancelManage$.unsubscribe();
           this.notifySvc.error("取消纳管失败！", error.msg)
         }
@@ -215,6 +223,7 @@ export class MonitorListComponent implements OnInit {
   }
 
   enableManageMonitors(monitors: Set<number>) {
+    this.tableLoading = true;
     const enableManage$ = this.monitorSvc.enableManageMonitors(monitors)
       .subscribe(message => {
           enableManage$.unsubscribe();
@@ -222,10 +231,12 @@ export class MonitorListComponent implements OnInit {
             this.notifySvc.success("启用纳管成功！", "");
             this.loadMonitorTable();
           } else {
+            this.tableLoading = false;
             this.notifySvc.error("启用纳管失败！", message.msg);
           }
         },
         error => {
+          this.tableLoading = false;
           enableManage$.unsubscribe();
           this.notifySvc.error("启用纳管失败！", error.msg)
         }
