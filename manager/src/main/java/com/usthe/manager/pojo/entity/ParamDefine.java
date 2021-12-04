@@ -15,7 +15,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -107,8 +107,8 @@ public class ParamDefine {
      */
     @ApiModelProperty(value = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "{key1,value1}", accessMode = READ_WRITE, position = 8)
     @Column(name = "param_options")
-    @Convert(converter = JsonMapAttributeConverter.class)
-    private Map<String,String> options;
+    @Convert(converter = JsonOptionListAttributeConverter.class)
+    private List<Option> options;
 
     /**
      * 此条记录创建者
@@ -133,4 +133,18 @@ public class ParamDefine {
      */
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 12)
     private LocalDateTime gmtUpdate;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static final class Option {
+        /**
+         * 值显示标签
+         */
+        private String label;
+        /**
+         * 可选值
+         */
+        private String value;
+    }
 }

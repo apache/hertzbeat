@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {ParamDefine} from "../../../pojo/ParamDefine";
 import {AppDefineService} from "../../../service/app-define.service";
 import {ActivatedRoute, ParamMap, Router} from "@angular/router";
@@ -30,6 +30,7 @@ export class MonitorNewComponent implements OnInit {
               private route: ActivatedRoute,
               private router: Router,
               private notifySvc: NzNotificationService,
+              private cdr: ChangeDetectorRef,
               private i18n: I18NService,
               private formBuilder: FormBuilder) {
     this.monitor = new Monitor();
@@ -134,5 +135,4 @@ export class MonitorNewComponent implements OnInit {
     app = app ? app : '';
     this.router.navigateByUrl(`/monitors?app=${app}`)
   }
-
 }
