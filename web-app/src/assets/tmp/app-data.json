@@ -42,7 +42,7 @@
             {
               "text": "api",
               "link": "/monitors?app=api",
-              "i18n": "monitor.app.http"
+              "i18n": "monitor.app.api"
             },
             {
               "text": "ping",
@@ -51,7 +51,7 @@
             },
             {
               "text": "telnet",
-              "link": "/monitors",
+              "link": "/monitors?app=telnet",
               "i18n": "monitor.app.telnet"
             }
           ]
