@@ -1,24 +1,26 @@
 // 请参考：https://ng-alain.com/docs/i18n
-import { Platform } from '@angular/cdk/platform';
-import { registerLocaleData } from '@angular/common';
+import {Platform} from '@angular/cdk/platform';
+import {registerLocaleData} from '@angular/common';
 import ngEn from '@angular/common/locales/en';
 import ngZh from '@angular/common/locales/zh';
 import ngZhTw from '@angular/common/locales/zh-Hant';
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {
+  _HttpClient,
+  AlainI18nBaseService,
   DelonLocaleService,
   en_US as delonEnUS,
   SettingsService,
   zh_CN as delonZhCn,
-  zh_TW as delonZhTw,
-  _HttpClient,
-  AlainI18nBaseService
+  zh_TW as delonZhTw
 } from '@delon/theme';
-import { AlainConfigService } from '@delon/util/config';
-import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw } from 'date-fns/locale';
-import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { en_US as zorroEnUS, NzI18nService, zh_CN as zorroZhCN, zh_TW as zorroZhTW } from 'ng-zorro-antd/i18n';
-import { Observable } from 'rxjs';
+import {AlainConfigService} from '@delon/util/config';
+import {enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw} from 'date-fns/locale';
+import {NzSafeAny} from 'ng-zorro-antd/core/types';
+import {en_US as zorroEnUS, NzI18nService, zh_CN as zorroZhCN, zh_TW as zorroZhTW} from 'ng-zorro-antd/i18n';
+import {Observable, zip} from 'rxjs';
+import {map} from "rxjs/operators";
+import {Message} from "../../pojo/Message";
 
 interface LangConfigData {
   abbr: string;
@@ -92,7 +94,16 @@ export class I18NService extends AlainI18nBaseService {
   }
 
   loadLangData(lang: string): Observable<NzSafeAny> {
-    return this.http.get(`http://localhost:4200/assets/tmp/i18n/${lang}.json`);
+    return zip(this.http.get(`http://localhost:4200/assets/tmp/i18n/${lang}.json`),this.http.get(`/i18n/${lang}`))
+      .pipe(
+        map(([langLocalData, langRemoteData]: [Record<string, string>, Message<any>]) => {
+          let remote:Record<string, string> = langRemoteData.data;
+          Object.keys(remote).forEach(key => {
+            langLocalData[key] = remote[key];
+          });
+          return langLocalData;
+        })
+      )
   }
 
   use(lang: string, data: Record<string, unknown>): void {
