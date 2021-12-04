@@ -8,12 +8,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -69,6 +71,18 @@ public class ParamDefine {
     private boolean required = false;
 
     /**
+     * 参数默认值
+     */
+    @ApiModelProperty(value = "参数默认值", example = "12", accessMode = READ_WRITE, position = 6)
+    private String defaultValue;
+
+    /**
+     * 参数输入框提示信息
+     */
+    @ApiModelProperty(value = "参数输入框提示信息", example = "请输入密码", accessMode = READ_WRITE, position = 7)
+    private String placeholder;
+
+    /**
      * 当type为number时,用range表示范围 eg: 0-233
      */
     @ApiModelProperty(value = "当type为number时,用range区间表示范围", example = "[0,233]", accessMode = READ_WRITE, position = 6)
@@ -83,12 +97,18 @@ public class ParamDefine {
     private Short limit;
 
     /**
-     * 当type为radio单选框,checkbox复选框时,option表示可选项值列表
-     * eg: param3,param4,param5
+     * 当type为radio单选框,checkbox复选框时,options表示可选项值列表
+     * eg: {
+     *     "key1":"value1",
+     *     "key2":"value2"
+     * }
+     * key-值显示标签
+     * value-真正值
      */
-    @ApiModelProperty(value = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "10,20,30", accessMode = READ_WRITE, position = 8)
-    @Column(name = "param_option")
-    private String option;
+    @ApiModelProperty(value = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "{key1,value1}", accessMode = READ_WRITE, position = 8)
+    @Column(name = "param_options")
+    @Convert(converter = JsonMapAttributeConverter.class)
+    private Map<String,String> options;
 
     /**
      * 此条记录创建者

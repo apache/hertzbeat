@@ -16,12 +16,14 @@ param:
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
+    defaultValue: 80
   - field: uri
     name: URI路径
     type: text
     # 当type为text时,用limit表示字符串限制大小
     limit: 100
     required: true
+    placeholder: 'eg:/index.html'
   - field: method
     name: 请求方式
     type: text
