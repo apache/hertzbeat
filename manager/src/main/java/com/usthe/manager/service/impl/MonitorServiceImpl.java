@@ -187,6 +187,12 @@ public class MonitorServiceImpl implements MonitorService {
                                         + booleanValue + " is invalid boolean value.");
                             }
                             break;
+                        case "radio":
+                            // todo radio校验
+                            break;
+                        case "checkbox":
+                            // todo checkbox校验
+                            break;
                         // todo 更多参数定义与实际值格式校验
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");

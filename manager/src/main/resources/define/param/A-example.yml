@@ -1,5 +1,5 @@
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: TanCloud
+app: exapmle_type
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
     # field-字段名称标识符
@@ -32,8 +32,20 @@ param:
     required: false
   - field: ssl
     name: 启动SSL
+    # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: false
-    # 当type为boolean时,前端用switch展示开关
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表
-    # option: Yes,No
+  - field: method
+    name: 请求方式
+    type: radio
+    required: true
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: GET请求
+        value: GET
+      - label: POST请求
+        value: POST
+      - label: PUT请求
+        value: PUT
+      - label: DELETE请求
+        value: DELETE
