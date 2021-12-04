@@ -23,14 +23,15 @@
     <form nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor= 'host' nzRequired="true">监控Host</nz-form-label>
-        <nz-form-control [nzSpan]="10">
-          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host" placeholder="请输入域名或IP">
+        <nz-form-control [nzSpan]="8">
+          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host"
+                 placeholder="请输入域名或IP" (ngModelChange)="onHostChange($event)">
         </nz-form-control>
       </nz-form-item >
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor= 'name' nzRequired="true">监控名称</nz-form-label>
-        <nz-form-control [nzSpan]="10">
-          <input [(ngModel)]="monitor.name" nz-input name="name" type="text" id="name">
+        <nz-form-control [nzSpan]="8">
+          <input [(ngModel)]="monitor.name" nz-input name="name" type="text" id="name" placeholder="监控名称需要保证唯一性">
         </nz-form-control>
       </nz-form-item >
 
@@ -42,7 +43,7 @@
                        [nzRequired]="paramDefine.required"
                        [nzFor]= "paramDefine.field">{{paramDefine.name}}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'" nzSpan="10">
+        <nz-form-control *ngIf="paramDefine.field !== 'host' && paramDefine.type ==='text'" nzSpan="8">
           <input nz-input [(ngModel)]="params[i].value" [name]="paramDefine.field"
                  [type]="paramDefine.type" [id]="paramDefine.field"
                  [placeholder]="paramDefine.placeholder? paramDefine.placeholder : ''">
@@ -53,7 +54,7 @@
                        [nzRequired]="paramDefine.required"
                        [nzFor]= "paramDefine.field">{{paramDefine.name}}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="10">
+        <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8">
           <nz-input-group [nzSuffix]="suffixTemplate">
             <input
               [type]="passwordVisible ? 'text' : 'password'"
@@ -76,7 +77,7 @@
                        [nzRequired]="paramDefine.required"
                        [nzFor]= "paramDefine.field">{{paramDefine.name}}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="10">
+        <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8">
           <nz-input-number
             [(ngModel)]="params[i].value"
             [nzMin]="-1000"
@@ -92,7 +93,7 @@
                        [nzRequired]="paramDefine.required"
                        [nzFor]= "paramDefine.field">{{paramDefine.name}}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="10">
+        <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8">
           <nz-switch [(ngModel)]="params[i].value" [name]="paramDefine.field" [id]="paramDefine.field"></nz-switch>
         </nz-form-control>
 
@@ -101,7 +102,7 @@
                        [nzRequired]="paramDefine.required"
                        [nzFor]= "paramDefine.field">{{paramDefine.name}}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="10">
+        <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8">
           <nz-radio-group [(ngModel)]="params[i].value" nzButtonStyle="solid"
                           [name]="paramDefine.field" [id]="paramDefine.field">
             <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
@@ -116,7 +117,7 @@
 
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor= "intervals">采集间隔</nz-form-label>
-        <nz-form-control nzSpan="10">
+        <nz-form-control nzSpan="8">
           <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="10000" [nzStep]="10"
                            name="intervals" id="intervals" nzPlaceHolder="监控周期性采集间隔时间,单位秒">
           </nz-input-number>
@@ -125,14 +126,14 @@
 
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor= "detect">启动探测</nz-form-label>
-        <nz-form-control nzSpan="10">
+        <nz-form-control nzSpan="8">
           <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
         </nz-form-control>
       </nz-form-item >
 
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor= 'description'>描述备注</nz-form-label>
-        <nz-form-control [nzSpan]="10">
+        <nz-form-control [nzSpan]="8">
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea rows="3" nz-input name="description" id="description"></textarea>
           </nz-textarea-count>
