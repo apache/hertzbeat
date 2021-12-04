@@ -46,6 +46,12 @@ public class Job {
      */
     private String app;
     /**
+     * 监控类型的国际化名称
+     * zh-CN: PING连通性
+     * en-US: PING CONNECT
+     */
+    private Map<String, String> name;
+    /**
      * 任务派发开始时间戳
      */
     private long timestamp;

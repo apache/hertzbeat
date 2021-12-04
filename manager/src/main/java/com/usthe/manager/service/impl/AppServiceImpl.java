@@ -6,6 +6,7 @@ import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +57,23 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
         return appDefine;
+    }
+
+    @Override
+    public Map<String, String> getI18nResources(String lang) {
+        Map<String, String> i18nMap = new HashMap<>(32);
+        for (Job job : appDefines.values()) {
+            // todo 暂时只国际化监控类型名称  后面需要支持指标名称
+            Map<String, String> name = job.getName();
+            if (name != null && !name.isEmpty()) {
+                String i18nName = name.get(lang);
+                if (i18nName == null) {
+                    i18nName = name.values().stream().findFirst().get();
+                }
+                i18nMap.put("monitor.app." + job.getApp(), i18nName);
+            }
+        }
+        return i18nMap;
     }
 
     @Override

@@ -7,7 +7,7 @@
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="monitor"></i>
-    <span>{{app?app.toUpperCase() : ""}} 监控列表</span>
+    <span>{{'monitor.app.' + app | i18n}} 监控列表</span>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
@@ -15,7 +15,7 @@
 <button nz-button nzType="primary">
   <a routerLink="/monitors/new" [queryParams]="{app: app}">
     <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-    新增 {{app}}
+    新增 {{'monitor.app.' + app | i18n}}
   </a>
 </button>
 <button nz-button nzType="primary" (click)="onEditMonitor()" >
@@ -85,7 +85,7 @@
     <td nzAlign="center">
       <nz-tag nzColor="processing">
         <i nz-icon nzType="cloud"></i>
-        <span>{{ data.app }}</span>
+        <span>{{ 'monitor.app.' + data.app | i18n }}</span>
       </nz-tag>
     </td>
     <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
