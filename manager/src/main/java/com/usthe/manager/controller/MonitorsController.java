@@ -47,9 +47,9 @@ public class MonitorsController {
             @ApiParam(value = "监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) String name,
             @ApiParam(value = "监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) String host,
             @ApiParam(value = "排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") String sort,
-            @ApiParam(value = "排序方式，asc:升序，desc:降序", example = "asc") @RequestParam(defaultValue = "asc") String order,
+            @ApiParam(value = "排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @ApiParam(value = "列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @ApiParam(value = "列表分页数量", example = "10") @RequestParam(defaultValue = "8") int pageSize) {
+            @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
