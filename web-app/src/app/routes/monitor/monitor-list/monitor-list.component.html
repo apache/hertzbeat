@@ -46,7 +46,7 @@
           nzShowPagination = "true" [nzScroll]="{ x: '1150px', y: '1240px' }">
   <thead>
   <tr>
-    <th nzAlign="center" nzLeft nzWidth="60px" [nzChecked]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+    <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
     <th nzAlign="center">监控名称</th>
     <th nzAlign="center">监控状态</th>
     <th nzAlign="center">监控主机Host</th>
