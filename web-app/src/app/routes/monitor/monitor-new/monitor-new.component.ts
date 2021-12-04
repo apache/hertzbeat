@@ -73,6 +73,10 @@ export class MonitorNewComponent implements OnInit {
     });
   }
 
+  onHostChange(hostValue: string) {
+    this.monitor.name = this.monitor.app.toUpperCase() + '_' + hostValue;
+  }
+
   onSubmit() {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
