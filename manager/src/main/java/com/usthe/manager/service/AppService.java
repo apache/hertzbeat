@@ -4,6 +4,7 @@ import com.usthe.common.entity.job.Job;
 import com.usthe.manager.pojo.entity.ParamDefine;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 监控类型管理接口
@@ -26,4 +27,11 @@ public interface AppService {
      * @throws IllegalArgumentException 当不存在即不支持对应名称的监控类型时抛出
      */
     Job getAppDefine(String app) throws IllegalArgumentException;
+
+    /**
+     * 获取定义的监控I18N资源
+     * @param lang 语言类型
+     * @return I18N资源
+     */
+    Map<String, String> getI18nResources(String lang);
 }

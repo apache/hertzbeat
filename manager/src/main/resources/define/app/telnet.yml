@@ -1,4 +1,7 @@
 app: telnet
+name:
+  zh-CN: TELNET端口可用性
+  en-US: PORT TELNET
 configmap:
   - key: host
     type: 1
