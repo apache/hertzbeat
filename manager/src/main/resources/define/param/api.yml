@@ -24,10 +24,18 @@ param:
     required: true
   - field: method
     name: 请求方式
-    type: text
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 20
+    type: radio
     required: true
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: GET请求
+        value: GET
+      - label: POST请求
+        value: POST
+      - label: PUT请求
+        value: PUT
+      - label: DELETE请求
+        value: DELETE
   - field: username
     name: 用户名
     type: text
@@ -40,8 +48,6 @@ param:
     required: false
   - field: ssl
     name: 使用SSL
+    # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: true
-    # 当type为boolean时,前端用switch展示开关
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表
-    # option: Yes,No

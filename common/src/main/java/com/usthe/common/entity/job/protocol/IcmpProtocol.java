@@ -15,9 +15,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class IcmpProtocol {
+
     /**
      * 对端主机ip或域名
      */
     private String host;
+
+    /**
+     * 超时时间
+     */
+    private String timeout;
 
 }
