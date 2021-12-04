@@ -1,0 +1,27 @@
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: telnet
+# 强制固定必须参数 - host(ipv4,ipv6,域名)
+param:
+    # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name: 主机Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name: 端口
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+  - field: timeout
+    name: Telnet超时时间
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    required: true
+    placeholder: '请输入超时时间,单位毫秒'
+    defaultValue: 3000
