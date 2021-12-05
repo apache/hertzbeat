@@ -9,6 +9,7 @@ import {Param} from "../../../pojo/Param";
 import {Monitor} from "../../../pojo/Monitor";
 import {MonitorService} from "../../../service/monitor.service";
 import {NzNotificationService} from "ng-zorro-antd/notification";
+import {TitleService} from "@delon/theme";
 
 @Component({
   selector: 'app-monitor-add',
@@ -32,6 +33,7 @@ export class MonitorNewComponent implements OnInit {
               private notifySvc: NzNotificationService,
               private cdr: ChangeDetectorRef,
               private i18n: I18NService,
+              private titleSvc: TitleService,
               private formBuilder: FormBuilder) {
     this.monitor = new Monitor();
   }
@@ -40,6 +42,7 @@ export class MonitorNewComponent implements OnInit {
     this.route.queryParamMap.pipe(
       switchMap((paramMap: ParamMap) => {
         this.monitor.app = paramMap.get("app") || '';
+        this.titleSvc.setTitleByI18n('monitor.app.' + this.monitor.app)
         this.detected = true;
         this.passwordVisible = false;
         this.isSpinning = false;

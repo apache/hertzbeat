@@ -58,7 +58,11 @@
   <tbody>
   <tr *ngFor="let data of fixedTable.data">
     <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-    <td nzAlign="center">{{ data.name }}</td>
+    <td nzAlign="center">
+      <a [routerLink]="['/monitors/' + data.id]">
+        <span>{{ data.name }}</span>
+      </a>
+    </td>
     <td nzAlign="center">
       <nz-tag *ngIf="data.status == 0" nzColor="default">
         <i nz-icon nzType="robot" nzTheme="outline"></i>

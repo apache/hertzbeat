@@ -4,4 +4,5 @@ com.usthe.warehouse.MetricsDataQueue,\
 com.usthe.warehouse.WarehouseWorkerPool,\
 com.usthe.warehouse.entrance.KafkaDataConsume,\
 com.usthe.warehouse.store.InfluxdbDataStorage,\
-com.usthe.warehouse.store.RedisDataStorage
+com.usthe.warehouse.store.RedisDataStorage,\
+com.usthe.warehouse.controller.MetricsDataController
