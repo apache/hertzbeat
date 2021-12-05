@@ -1,1 +1,21 @@
-<p>monitor-detail works!</p>
+<nz-divider></nz-divider>
+<nz-breadcrumb>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/']">
+      <i nz-icon nzType="home"></i>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/monitors']" [queryParams]="{app: app ? app : ''}">
+      <i nz-icon nzType="monitor"></i>
+      <span>监控列表</span>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <i nz-icon nzType="pie-chart"></i>
+    <span>{{'monitor.app.' + app | i18n}} 监控详情</span>
+  </nz-breadcrumb-item>
+</nz-breadcrumb>
+<nz-divider></nz-divider>
+
+<div echarts [options]="options" class="demo-chart"></div>
