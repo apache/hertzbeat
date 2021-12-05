@@ -2,6 +2,7 @@ package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
+import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
@@ -275,10 +276,14 @@ public class MonitorServiceImpl implements MonitorService {
     public MonitorDto getMonitor(long id) throws RuntimeException {
         Optional<Monitor> monitorOptional = monitorDao.findById(id);
         if (monitorOptional.isPresent()) {
+            Monitor monitor = monitorOptional.get();
             MonitorDto monitorDto = new MonitorDto();
-            monitorDto.setMonitor(monitorOptional.get());
+            monitorDto.setMonitor(monitor);
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
+            Job job = appService.getAppDefine(monitor.getApp());
+            List<String> metrics = job.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList());
+            monitorDto.setMetrics(metrics);
             return monitorDto;
         } else {
             return null;
