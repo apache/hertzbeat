@@ -8,11 +8,13 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -41,6 +43,11 @@ public class RedisDataStorage implements DisposableBean {
 
         initRedisClient(properties);
         startStorageData();
+    }
+
+    public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
+        RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
+        return commands.hget(String.valueOf(monitorId), metric);
     }
 
     private void startStorageData() {

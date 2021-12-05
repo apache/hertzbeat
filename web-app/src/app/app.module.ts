@@ -84,6 +84,7 @@ import { RoutesModule } from './routes/routes.module';
 import { SharedModule } from './shared/shared.module';
 import { STWidgetModule } from './shared/st-widget/st-widget.module';
 import { ReactiveFormsModule } from '@angular/forms';
+import { NgxEchartsModule } from 'ngx-echarts';
 
 @NgModule({
   declarations: [
@@ -103,7 +104,10 @@ import { ReactiveFormsModule } from '@angular/forms';
     NzNotificationModule,
     ...FORM_MODULES,
     ...GLOBAL_THIRD_MODULES,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    NgxEchartsModule.forRoot({
+      echarts: () => import('echarts')
+    })
   ],
   providers: [
     ...LANG_PROVIDES,

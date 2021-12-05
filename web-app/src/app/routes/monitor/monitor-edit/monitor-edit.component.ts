@@ -10,6 +10,7 @@ import {Monitor} from "../../../pojo/Monitor";
 import {FormGroup} from "@angular/forms";
 import {Message} from "../../../pojo/Message";
 import {throwError} from "rxjs";
+import {TitleService} from "@delon/theme";
 
 @Component({
   selector: 'app-monitor-modify',
@@ -23,6 +24,7 @@ export class MonitorEditComponent implements OnInit {
               private monitorSvc: MonitorService,
               private route: ActivatedRoute,
               private router: Router,
+              private titleSvc: TitleService,
               private notifySvc: NzNotificationService,) { }
 
   paramDefines!: ParamDefine[];
@@ -47,6 +49,7 @@ export class MonitorEditComponent implements OnInit {
     ).pipe(switchMap((message: Message<any>) => {
       if (message.code === 0) {
         this.monitor = message.data.monitor;
+        this.titleSvc.setTitleByI18n('monitor.app.' + this.monitor.app)
         if (message.data.params != null) {
           message.data.params.forEach((item: Param) => {
             this.paramValueMap.set(item.field, item)
