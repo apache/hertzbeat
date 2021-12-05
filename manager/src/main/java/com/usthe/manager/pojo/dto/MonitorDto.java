@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
+import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
@@ -37,9 +38,14 @@ public class MonitorDto {
     @Valid
     private List<Param> params;
 
+    @ApiModelProperty(value = "指标组列表", accessMode = READ_ONLY, position = 2)
+    @NotNull
+    @Valid
+    private List<String> metrics;
+
     /**
      * 是否探测
      */
-    @ApiModelProperty(value = "是否进行探测", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "是否进行探测", accessMode = READ_WRITE, position = 3)
     private boolean detected;
 }
