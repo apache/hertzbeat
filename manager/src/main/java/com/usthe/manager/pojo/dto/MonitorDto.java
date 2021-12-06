@@ -39,8 +39,6 @@ public class MonitorDto {
     private List<Param> params;
 
     @ApiModelProperty(value = "指标组列表", accessMode = READ_ONLY, position = 2)
-    @NotNull
-    @Valid
     private List<String> metrics;
 
     /**
