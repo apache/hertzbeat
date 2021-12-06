@@ -3,15 +3,13 @@ import {MonitorService} from "../../../service/monitor.service";
 import {ActivatedRoute, ParamMap, Router} from "@angular/router";
 import {TitleService} from "@delon/theme";
 import {switchMap} from "rxjs/operators";
-import {Message} from "../../../pojo/Message";
 import {Param} from "../../../pojo/Param";
-import {throwError} from "rxjs";
+import {Monitor} from "../../../pojo/Monitor";
 
 @Component({
   selector: 'app-monitor-detail',
   templateUrl: './monitor-detail.component.html',
-  styles: [
-  ]
+  styleUrls: ['./monitor-detail.component.less']
 })
 export class MonitorDetailComponent implements OnInit {
 
@@ -22,67 +20,38 @@ export class MonitorDetailComponent implements OnInit {
   isSpinning: boolean = false
   monitorId!: number;
   app: string | undefined;
-
+  monitor: Monitor | undefined;
   options: any;
+  port: number | undefined;
+  metrics!: string[];
 
   ngOnInit(): void {
     this.route.paramMap.pipe(
       switchMap((paramMap: ParamMap) => {
-        this.isSpinning = false;
+        this.isSpinning = true;
         let id = paramMap.get("monitorId");
         this.monitorId = Number(id);
         // 查询监控指标组结构信息
         return this.monitorSvc.getMonitor(this.monitorId);
       })
     ).subscribe(message => {
+      this.isSpinning = false;
       if (message.code === 0) {
-
+        this.monitor = message.data.monitor;
+        this.app = this.monitor?.app;
+        let params: Param[] = message.data.params;
+        // 取出端口信息
+        params.forEach(param => {
+          if (param.field === 'port') {
+            this.port = Number(param.value);
+          }
+        })
+        this.metrics = message.data.metrics;
       } else {
         console.warn(message.msg);
       }
+    }, error => {
+      this.isSpinning = false;
     });
-
-
-    const xAxisData = [];
-    const data1 = [];
-    const data2 = [];
-
-    for (let i = 0; i < 10; i++) {
-      xAxisData.push('category' + i);
-      data1.push((Math.sin(i / 5) * (i / 5 - 10) + i / 6) * 5);
-      data2.push((Math.cos(i / 5) * (i / 5 - 10) + i / 6) * 5);
-    }
-
-    this.options = {
-      legend: {
-        data: ['bar', 'bar2'],
-        align: 'left',
-      },
-      tooltip: {},
-      xAxis: {
-        data: xAxisData,
-        silent: false,
-        splitLine: {
-          show: false,
-        },
-      },
-      yAxis: {},
-      series: [
-        {
-          name: 'bar',
-          type: 'bar',
-          data: data1,
-          animationDelay: (idx: number) => idx * 10,
-        },
-        {
-          name: 'bar2',
-          type: 'bar',
-          data: data2,
-          animationDelay: (idx: number) => idx * 10 + 100,
-        },
-      ],
-      animationEasing: 'elasticOut',
-      animationDelayUpdate: (idx: number) => idx * 5,
-    };
   }
 }

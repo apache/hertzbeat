@@ -134,7 +134,7 @@
         <nz-form-label [nzSpan]="7" nzFor= 'description'>描述备注</nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea rows="3" nz-input name="description" id="description"></textarea>
+            <textarea [(ngModel)]="monitor.description" rows="3" nz-input name="description" id="description"></textarea>
           </nz-textarea-count>
         </nz-form-control>
       </nz-form-item >

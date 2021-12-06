@@ -11,25 +11,31 @@ import {NzSwitchModule} from "ng-zorro-antd/switch";
 import {NzTagModule} from "ng-zorro-antd/tag";
 import {NzRadioModule} from "ng-zorro-antd/radio";
 import {NgxEchartsModule} from "ngx-echarts";
+import {NzLayoutModule} from "ng-zorro-antd/layout";
+import {NzSpaceModule} from "ng-zorro-antd/space";
+import {MonitorDataChartComponent} from "./monitor-data-chart/monitor-data-chart.component";
 
 const COMPONENTS: Type<void>[] = [
   MonitorNewComponent,
   MonitorEditComponent,
   MonitorListComponent,
-  MonitorDetailComponent
+  MonitorDetailComponent,
+  MonitorDataChartComponent
 ];
 
 @NgModule({
-    imports: [
-        SharedModule,
-        MonitorRoutingModule,
-        NzBreadCrumbModule,
-        NzDividerModule,
-        NzSwitchModule,
-        NzTagModule,
-        NzRadioModule,
-        NgxEchartsModule
-    ],
+  imports: [
+    SharedModule,
+    MonitorRoutingModule,
+    NzBreadCrumbModule,
+    NzDividerModule,
+    NzSwitchModule,
+    NzTagModule,
+    NzRadioModule,
+    NgxEchartsModule,
+    NzLayoutModule,
+    NzSpaceModule
+  ],
   declarations: COMPONENTS,
 })
 export class MonitorModule { }
