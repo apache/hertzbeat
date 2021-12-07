@@ -1,5 +1,6 @@
 package com.usthe.manager.service;
 
+import com.usthe.manager.pojo.dto.AppCount;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.pojo.entity.Monitor;
 import com.usthe.manager.pojo.entity.Param;
@@ -93,4 +94,10 @@ public interface MonitorService {
      * @param ids 监控IDs
      */
     void enableManageMonitors(HashSet<Long> ids);
+
+    /**
+     * 查询监控类别及其对应的监控数量
+     * @return 监控类别与监控数量映射
+     */
+    List<AppCount> getAllAppMonitorsCount();
 }

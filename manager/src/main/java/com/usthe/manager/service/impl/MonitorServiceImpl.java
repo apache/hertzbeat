@@ -11,6 +11,7 @@ import com.usthe.common.util.IpDomainUtil;
 import com.usthe.common.util.SnowFlakeIdGenerator;
 import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.dao.ParamDao;
+import com.usthe.manager.pojo.dto.AppCount;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.pojo.entity.Monitor;
 import com.usthe.manager.pojo.entity.Param;
@@ -337,5 +338,11 @@ public class MonitorServiceImpl implements MonitorService {
                 jobScheduling.addAsyncCollectJob(appDefine);
             }
         }
+    }
+
+    @Override
+    public List<AppCount> getAllAppMonitorsCount() {
+        return monitorDao.findAppsCount();
+
     }
 }
