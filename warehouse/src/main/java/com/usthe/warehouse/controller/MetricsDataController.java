@@ -53,7 +53,8 @@ public class MetricsDataController {
                     .time(redisData.getTime());
             List<Field> fields = redisData.getFieldsList().stream().map(redisField ->
                             Field.builder().name(redisField.getName())
-                                    .type(Integer.valueOf(redisField.getType()).byteValue()).build())
+                                    .type(Integer.valueOf(redisField.getType()).byteValue())
+                                    .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);
             List<ValueRow> valueRows = redisData.getValuesList().stream().map(redisValueRow ->
