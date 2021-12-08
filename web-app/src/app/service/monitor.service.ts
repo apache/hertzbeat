@@ -9,6 +9,7 @@ const monitor_uri = "/monitor";
 const monitors_uri = "/monitors";
 const detect_monitor_uri = "/monitor/detect"
 const manage_monitors_uri = "/monitors/manage";
+const summary_uri = "/summary";
 
 @Injectable({
   providedIn: 'root'
@@ -86,4 +87,9 @@ export class MonitorService {
   public getMonitorMetricData(monitorId: number, metric: string) : Observable<Message<any>> {
     return this.http.get<Message<any>>(`/monitors/${monitorId}/metrics/${metric}`);
   }
+
+  public getAppsMonitorSummary() : Observable<Message<any>> {
+    return this.http.get<Message<any>>(summary_uri);
+  }
+
 }
