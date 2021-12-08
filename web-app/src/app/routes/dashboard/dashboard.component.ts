@@ -37,7 +37,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refresh();
     this.appsCountLoading = false;
     // https://stackoverflow.com/questions/43908009/why-is-setinterval-in-an-angular-service-only-firing-one-time
-    this.interval$ = setInterval(this.refresh.bind(this), 10000);
+    this.interval$ = setInterval(this.refresh.bind(this), 30000);
   }
 
   ngOnDestroy(): void {
