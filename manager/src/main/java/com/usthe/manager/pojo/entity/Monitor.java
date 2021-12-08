@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -103,12 +104,14 @@ public class Monitor {
      * 记录创建时间
      */
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 10)
+    @Column(insertable = false, updatable = false)
     private LocalDateTime gmtCreate;
 
     /**
      * 记录最新修改时间
      */
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 11)
+    @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
 
 }
