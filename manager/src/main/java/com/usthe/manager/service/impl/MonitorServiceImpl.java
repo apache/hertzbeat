@@ -96,8 +96,6 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
-            param.setGmtCreate(null);
-            param.setGmtUpdate(null);
             return new Configmap(param.getField(), param.getValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
@@ -108,8 +106,6 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             monitor.setStatus(CommonConstants.AVAILABLE);
-            monitor.setGmtCreate(null);
-            monitor.setGmtUpdate(null);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -224,12 +220,8 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
-        List<Configmap> configmaps = params.stream().map(param -> {
-            param.setMonitorId(monitorId);
-            param.setGmtCreate(null);
-            param.setGmtUpdate(null);
-            return new Configmap(param.getField(), param.getValue(), param.getType());
-        }).collect(Collectors.toList());
+        List<Configmap> configmaps = params.stream().map(param ->
+                new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // 更新采集任务
         jobScheduling.updateAsyncCollectJob(appDefine);
@@ -237,8 +229,6 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             monitor.setJobId(preMonitor.getJobId());
             monitor.setStatus(preMonitor.getStatus());
-            monitor.setGmtCreate(null);
-            monitor.setGmtUpdate(null);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
