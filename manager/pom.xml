@@ -36,6 +36,12 @@
             <artifactId>warehouse</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- alerter -->
+        <dependency>
+            <groupId>com.usthe.tancloud</groupId>
+            <artifactId>alerter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
