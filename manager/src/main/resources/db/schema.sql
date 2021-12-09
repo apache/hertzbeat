@@ -62,3 +62,47 @@ CREATE TABLE  param_define
     primary key (id),
     unique key unique_param_define (app, field)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ----------------------------
+-- Table structure for alert_define
+-- ----------------------------
+DROP TABLE IF EXISTS  alert_define ;
+CREATE TABLE  alert_define
+(
+    id           bigint           not null auto_increment comment '告警定义ID',
+    app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
+    metric       varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
+    field        varchar(100)     not null comment '配置告警的指标:usage,cores...',
+    preset       boolean          not null default false comment '是否是默认预置告警，是则新增监控默认关联此告警',
+    expr         varchar(255)     not null comment '告警触发条件表达式',
+    priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    duration     int              not null comment '触发告警后持续时间,单位s',
+    enable       boolean          not null default true comment '告警触发后是否发送',
+    delay        int              not null comment '告警延迟时间,即延迟多久再发送告警,单位s',
+    content      varchar(255)     not null comment '告警通知内容',
+    creator      varchar(100)     comment '创建者',
+    modifier     varchar(100)     comment '最新修改者',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for alert_define_monitor_bind
+-- ----------------------------
+DROP TABLE IF EXISTS  alert_define_monitor_bind ;
+CREATE TABLE  alert_define_monitor_bind
+(
+    id               bigint           not null auto_increment comment '告警定义与监控关联ID',
+    alert_define_id  bigint           not null comment '告警定义ID',
+    monitor_id       bigint           not null comment '监控ID',
+    monitor_name     varchar(100)     not null comment '监控的名称(拢余字段方便展示)',
+    gmt_create       timestamp        default current_timestamp comment 'create time',
+    gmt_update       datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    unique key unique_bind (alert_define_id, monitor_id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+COMMIT;

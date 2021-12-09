@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.usthe.alert.service.impl.AlertDefineServiceImpl,\
+com.usthe.alert.controller.AlertDefineController
