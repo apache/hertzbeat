@@ -73,7 +73,7 @@ public interface MonitorService {
      * @return MonitorDto
      * @throws RuntimeException 查询过程中异常抛出
      */
-    MonitorDto getMonitor(long id) throws RuntimeException;
+    MonitorDto getMonitorDto(long id) throws RuntimeException;
 
     /**
      * 动态条件查询
@@ -100,4 +100,18 @@ public interface MonitorService {
      * @return 监控类别与监控数量映射
      */
     List<AppCount> getAllAppMonitorsCount();
+
+    /**
+     * 查询监控
+     * @param monitorId 监控ID
+     * @return 监控信息
+     */
+    Monitor getMonitor(Long monitorId);
+
+    /**
+     * 更新指定监控的状态
+     * @param monitorId 监控ID
+     * @param status 监控状态
+     */
+    void updateMonitorStatus(Long monitorId, byte status);
 }

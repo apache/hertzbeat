@@ -78,8 +78,7 @@ CREATE TABLE  alert_define
     expr         varchar(255)     not null comment '告警触发条件表达式',
     priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     duration     int              not null comment '触发告警后持续时间,单位s',
-    enable       boolean          not null default true comment '告警触发后是否发送',
-    delay        int              not null comment '告警延迟时间,即延迟多久再发送告警,单位s',
+    enable       boolean          not null default true comment '告警阈值开关',
     template     varchar(255)     not null comment '告警通知模板内容',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
@@ -104,5 +103,22 @@ CREATE TABLE  alert_define_monitor_bind
     index index_bind (alert_define_id, monitor_id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------
+-- Table structure for alert
+-- ----------------------------
+DROP TABLE IF EXISTS  alert ;
+CREATE TABLE  alert
+(
+    id            bigint           not null auto_increment comment '告警ID',
+    monitor_id    bigint           not null comment '告警监控对象ID',
+    monitor_name  varchar(100)     comment '告警监控对象名称',
+    priority      tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    status        tinyint          not null default 0 comment '告警状态: 0-待发送 1-已发送 2-已过期(已经超过持续时间)',
+    target        varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
+    duration      int              not null comment '触发告警后持续时间,单位s',
+    content       varchar(255)     not null comment '告警通知实际内容',
+    gmt_create    timestamp        default current_timestamp comment 'create time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 COMMIT;

@@ -68,18 +68,24 @@ public class CalculateAlarm {
         // 先判断采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             // 采集异常
-            if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE
-                    || metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
-                // 连接型可用性异常 UN_REACHABLE 对端不可达(网络层icmp) UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
-                Alert alert = Alert.builder()
-                        .monitorId(monitorId)
-                        .priority((byte) 0)
-                        .status((byte) 0)
-                        .target(CommonConstants.AVAILABLE)
-                        .duration(300)
-                        .content("监控紧急可用性告警: " + metricsData.getCode().name())
-                        .build();
-                dataQueue.addAlertData(alert);
+            Alert.AlertBuilder alertBuilder = Alert.builder()
+                    .monitorId(monitorId)
+                    .priority((byte) 0)
+                    .status((byte) 0)
+                    .duration(300);
+            if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
+                // UN_REACHABLE 对端不可达(网络层icmp)
+                alertBuilder.target(CommonConstants.REACHABLE)
+                        .content("监控紧急可达性告警: " + metricsData.getCode().name());
+                dataQueue.addAlertData(alertBuilder.build());
+            } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
+                // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
+                alertBuilder.target(CommonConstants.AVAILABLE)
+                        .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                dataQueue.addAlertData(alertBuilder.build());
+            } else {
+                // todo 其它规范异常 TIMEOUT ...
+                return;
             }
             return;
         }
@@ -127,7 +133,7 @@ public class CalculateAlarm {
                             Expression expression = AviatorEvaluator.compile(expr, true);
                             Boolean match = (Boolean) expression.execute(fieldValueMap);
                             if (match) {
-                                // 阈值规则匹配，触发告警 todo 告警延迟delay参数实现
+                                // 阈值规则匹配，触发告警
                                 Alert alert = Alert.builder()
                                         .monitorId(monitorId)
                                         .priority(define.getPriority())
