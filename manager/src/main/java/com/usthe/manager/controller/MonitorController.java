@@ -66,7 +66,7 @@ public class MonitorController {
     public ResponseEntity<Message<MonitorDto>> getMonitor(
             @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") long id) {
         // 获取监控信息
-        MonitorDto monitorDto = monitorService.getMonitor(id);
+        MonitorDto monitorDto = monitorService.getMonitorDto(id);
         Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
         if (monitorDto == null) {
             messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("Monitor not exist.");

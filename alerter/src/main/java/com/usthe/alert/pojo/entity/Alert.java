@@ -61,8 +61,7 @@ public class Alert {
 
     @ApiModelProperty(value = "告警目标对象: 监控可用性-available 指标-app.metrics.field",
             example = "1", accessMode = READ_WRITE, position = 4)
-    @Min(0)
-    @Max(2)
+    @Length(max = 255)
     private String target;
 
     @ApiModelProperty(value = "触发告警后持续时间,单位s", example = "60", accessMode = READ_WRITE, position = 7)
