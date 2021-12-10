@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -83,5 +84,16 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                         .monitorName(entry.getValue()).build())
                 .collect(Collectors.toList());
         alertDefineBindDao.saveAll(alertDefineBinds);
+    }
+
+    @Override
+    public Map<String, List<AlertDefine>> getAlertDefines(long monitorId, String app, String metrics) {
+        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, metrics);
+        if (defines == null || defines.isEmpty()) {
+            return null;
+        }
+        // 将告警阈值定义从告警级别0-3数字升序排序，数字越小告警基本越高，即从最高的告警阈值开始匹配计算
+        return defines.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
+                .collect(Collectors.groupingBy(AlertDefine::getField));
     }
 }

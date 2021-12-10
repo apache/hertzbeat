@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.usthe.common.util.CommonConstants.MONITOR_LOGIN_FAILED;
+import static com.usthe.common.util.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -53,7 +53,7 @@ public class AccountController {
         SurenessAccount account = accountProvider.loadAccount(identifier);
         if (account == null || account.getPassword() == null) {
             Message<Void> message = Message.<Void>builder().msg("账户密码错误")
-                    .code(MONITOR_LOGIN_FAILED).build();
+                    .code(MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         } else {
             if (account.getSalt() != null) {
@@ -61,12 +61,12 @@ public class AccountController {
             }
             if (!account.getPassword().equals(password)) {
                 Message<Void> message = Message.<Void>builder().msg("账户密码错误")
-                        .code(MONITOR_LOGIN_FAILED).build();
+                        .code(MONITOR_LOGIN_FAILED_CODE).build();
                 return ResponseEntity.ok(message);
             }
             if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
                 Message<Void> message = Message.<Void>builder().msg("账户过期或被锁定")
-                        .code(MONITOR_LOGIN_FAILED).build();
+                        .code(MONITOR_LOGIN_FAILED_CODE).build();
                 return ResponseEntity.ok(message);
             }
         }

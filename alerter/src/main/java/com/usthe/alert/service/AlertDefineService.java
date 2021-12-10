@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,4 +75,13 @@ public interface AlertDefineService {
      * @param monitorMap 监控ID-名称 MAP
      */
     void applyBindAlertDefineMonitors(Long alertId, Map<Long, String> monitorMap);
+
+    /**
+     * 查询与此监控ID关联的指定指标组匹配的告警定义
+     * @param monitorId 监控ID
+     * @param app 监控类型
+     * @param metrics 指标组
+     * @return field - define[]
+     */
+    Map<String, List<AlertDefine>> getAlertDefines(long monitorId, String app, String metrics);
 }

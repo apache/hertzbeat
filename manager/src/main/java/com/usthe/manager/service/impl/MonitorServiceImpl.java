@@ -105,7 +105,7 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE);
+            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -292,8 +292,8 @@ public class MonitorServiceImpl implements MonitorService {
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.UN_MANAGE && monitor.getJobId() != null)
-                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE))
+                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE && monitor.getJobId() != null)
+                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             monitorDao.saveAll(managedMonitors);
@@ -308,8 +308,8 @@ public class MonitorServiceImpl implements MonitorService {
         // 更新监控状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.UN_MANAGE && monitor.getJobId() != null)
-                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE))
+                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE && monitor.getJobId() != null)
+                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
                 .collect(Collectors.toList());
         if (!unManagedMonitors.isEmpty()) {
             monitorDao.saveAll(unManagedMonitors);

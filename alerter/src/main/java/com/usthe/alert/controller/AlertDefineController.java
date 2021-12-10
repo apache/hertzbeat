@@ -21,7 +21,7 @@ import javax.validation.Valid;
 
 import java.util.Map;
 
-import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST;
+import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -63,7 +63,7 @@ public class AlertDefineController {
         AlertDefine alertDefine = alertDefineService.getAlertDefine(id);
         Message.MessageBuilder<AlertDefine> messageBuilder = Message.builder();
         if (alertDefine == null) {
-            messageBuilder.code(MONITOR_NOT_EXIST).msg("AlertDefine not exist.");
+            messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("AlertDefine not exist.");
         } else {
             messageBuilder.data(alertDefine);
         }

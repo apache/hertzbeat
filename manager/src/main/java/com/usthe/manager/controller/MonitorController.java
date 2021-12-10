@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
-import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST;
+import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -69,7 +69,7 @@ public class MonitorController {
         MonitorDto monitorDto = monitorService.getMonitor(id);
         Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
         if (monitorDto == null) {
-            messageBuilder.code(MONITOR_NOT_EXIST).msg("Monitor not exist.");
+            messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("Monitor not exist.");
         } else {
             messageBuilder.data(monitorDto);
         }
