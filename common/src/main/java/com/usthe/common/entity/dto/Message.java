@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static com.usthe.common.util.CommonConstants.SUCCESS;
+import static com.usthe.common.util.CommonConstants.SUCCESS_CODE;
 
 /**
  * Unified message structure definition for front and back ends
@@ -43,7 +43,7 @@ public class Message<T> {
      * response code, not http code
      */
     @ApiModelProperty(value = "携带编码", position = 2)
-    private byte code = SUCCESS;
+    private byte code = SUCCESS_CODE;
 
     public Message(String msg) {
         this.msg = msg;

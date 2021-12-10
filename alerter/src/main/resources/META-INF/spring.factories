@@ -1,3 +1,9 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.usthe.alert.service.impl.AlertDefineServiceImpl,\
-com.usthe.alert.controller.AlertDefineController
+com.usthe.alert.controller.AlertDefineController,\
+com.usthe.alert.AlerterWorkerPool,\
+com.usthe.alert.AlerterProperties,\
+com.usthe.alert.AlerterDataQueue,\
+com.usthe.alert.entrance.KafkaDataConsume,\
+com.usthe.alert.AlerterConfiguration,\
+com.usthe.alert.calculate.CalculateAlarm

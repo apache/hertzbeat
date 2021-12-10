@@ -80,7 +80,7 @@ CREATE TABLE  alert_define
     duration     int              not null comment '触发告警后持续时间,单位s',
     enable       boolean          not null default true comment '告警触发后是否发送',
     delay        int              not null comment '告警延迟时间,即延迟多久再发送告警,单位s',
-    content      varchar(255)     not null comment '告警通知内容',
+    template     varchar(255)     not null comment '告警通知模板内容',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
@@ -101,7 +101,7 @@ CREATE TABLE  alert_define_monitor_bind
     gmt_create       timestamp        default current_timestamp comment 'create time',
     gmt_update       datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
-    unique key unique_bind (alert_define_id, monitor_id)
+    index index_bind (alert_define_id, monitor_id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 
