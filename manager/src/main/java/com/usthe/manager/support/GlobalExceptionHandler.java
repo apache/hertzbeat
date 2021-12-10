@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.lang.reflect.Field;
 
-import static com.usthe.common.util.CommonConstants.DETECT_FAILED;
-import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT;
-import static com.usthe.common.util.CommonConstants.PARAM_INVALID;
+import static com.usthe.common.util.CommonConstants.DETECT_FAILED_CODE;
+import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT_CODE;
+import static com.usthe.common.util.CommonConstants.PARAM_INVALID_CODE;
 
 /**
  * controller exception handler
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MonitorDetectException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorDetectException(MonitorDetectException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(DETECT_FAILED).build();
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(DETECT_FAILED_CODE).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MonitorDatabaseException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorDatabaseException(MonitorDatabaseException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(MONITOR_CONFLICT).build();
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(MONITOR_CONFLICT_CODE).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleIllegalArgumentException(IllegalArgumentException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID).build();
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
@@ -91,10 +91,10 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
         try {
-            Message<Void> message = Message.<Void>builder().msg((String) detailMessage.get(exception)).code(PARAM_INVALID).build();
+            Message<Void> message = Message.<Void>builder().msg((String) detailMessage.get(exception)).code(PARAM_INVALID_CODE).build();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         } catch (Exception e) {
-            Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID).build();
+            Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         }
     }
@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("[input argument not valid happen]-{}", errorMessage, e);
         }
-        Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).code(PARAM_INVALID).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).code(PARAM_INVALID_CODE).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
@@ -146,7 +146,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.warn("[scheduler warning]-{}", errorMessage);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT_CODE).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
@@ -163,7 +163,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.warn("[database error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT_CODE).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
@@ -197,7 +197,7 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT_CODE).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 

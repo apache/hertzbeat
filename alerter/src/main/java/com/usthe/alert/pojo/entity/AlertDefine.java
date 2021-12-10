@@ -56,7 +56,7 @@ public class AlertDefine {
     @ApiModelProperty(value = "是否是默认预置告警", example = "false", accessMode = READ_WRITE, position = 4)
     private boolean preset;
 
-    @ApiModelProperty(value = "告警触发条件表达式", example = "usage>90", accessMode = READ_WRITE, position = 5)
+    @ApiModelProperty(value = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE, position = 5)
     @Length(max = 1024)
     private String expr;
 
@@ -80,7 +80,7 @@ public class AlertDefine {
     @ApiModelProperty(value = "告警通知内容", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE, position = 10)
     @Length(max = 1024)
-    private String content;
+    private String template;
 
     /**
      * 此条记录创建者
