@@ -70,12 +70,8 @@ public class AlertDefine {
     @Min(0)
     private int duration;
 
-    @ApiModelProperty(value = "告警触发后是否发送", example = "true", accessMode = READ_WRITE, position = 8)
+    @ApiModelProperty(value = "告警阈值开关", example = "true", accessMode = READ_WRITE, position = 8)
     private boolean enable = true;
-
-    @ApiModelProperty(value = "告警延迟时间,即延迟多久再发送告警,单位s", example = "300", accessMode = READ_WRITE, position = 9)
-    @Min(0)
-    private int delay;
 
     @ApiModelProperty(value = "告警通知内容", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE, position = 10)

@@ -87,4 +87,9 @@ public interface CommonConstants {
      * 可用性对象
      */
     String AVAILABLE = "available";
+
+    /**
+     * 可达性对象
+     */
+    String REACHABLE = "reachable";
 }

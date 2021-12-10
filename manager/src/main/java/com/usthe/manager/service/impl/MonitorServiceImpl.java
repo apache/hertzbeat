@@ -264,7 +264,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(readOnly = true)
-    public MonitorDto getMonitor(long id) throws RuntimeException {
+    public MonitorDto getMonitorDto(long id) throws RuntimeException {
         Optional<Monitor> monitorOptional = monitorDao.findById(id);
         if (monitorOptional.isPresent()) {
             Monitor monitor = monitorOptional.get();
@@ -334,5 +334,15 @@ public class MonitorServiceImpl implements MonitorService {
     public List<AppCount> getAllAppMonitorsCount() {
         return monitorDao.findAppsCount();
 
+    }
+
+    @Override
+    public Monitor getMonitor(Long monitorId) {
+        return monitorDao.findById(monitorId).orElse(null);
+    }
+
+    @Override
+    public void updateMonitorStatus(Long monitorId, byte status) {
+        monitorDao.updateMonitorStatus(monitorId, status);
     }
 }
