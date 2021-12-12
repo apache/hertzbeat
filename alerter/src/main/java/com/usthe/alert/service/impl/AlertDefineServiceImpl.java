@@ -73,16 +73,12 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public void applyBindAlertDefineMonitors(Long alertId, Map<Long, String> monitorMap) {
+    public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineBind> alertDefineBinds) {
         // todo 校验此告警定义和监控是否存在
 
         // 先删除此告警的所有关联
         alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
         // 保存关联
-        List<AlertDefineBind> alertDefineBinds = monitorMap.entrySet().stream().map(entry ->
-                AlertDefineBind.builder().alertDefineId(alertId).monitorId(entry.getKey())
-                        .monitorName(entry.getValue()).build())
-                .collect(Collectors.toList());
         alertDefineBindDao.saveAll(alertDefineBinds);
     }
 
@@ -100,5 +96,10 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
         return alertDefineDao.findAll(specification, pageRequest);
+    }
+
+    @Override
+    public List<AlertDefineBind> getBindAlertDefineMonitors(long alertDefineId) {
+        return alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
     }
 }
