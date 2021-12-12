@@ -68,7 +68,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
+    public Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
         return alertDefineDao.findAll(specification, pageRequest);
     }
 
@@ -87,7 +87,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public Map<String, List<AlertDefine>> getAlertDefines(long monitorId, String app, String metrics) {
+    public Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics) {
         List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, metrics);
         if (defines == null || defines.isEmpty()) {
             return null;
@@ -95,5 +95,10 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         // 将告警阈值定义从告警级别0-3数字升序排序，数字越小告警基本越高，即从最高的告警阈值开始匹配计算
         return defines.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
                 .collect(Collectors.groupingBy(AlertDefine::getField));
+    }
+
+    @Override
+    public Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
+        return alertDefineDao.findAll(specification, pageRequest);
     }
 }

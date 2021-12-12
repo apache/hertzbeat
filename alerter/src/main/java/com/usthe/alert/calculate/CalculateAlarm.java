@@ -91,7 +91,7 @@ public class CalculateAlarm {
         }
         // 查出此监控类型下的此指标集合下关联配置的告警定义信息
         // field - define[]
-        Map<String, List<AlertDefine>> defineMap = alertDefineService.getAlertDefines(monitorId, app, metrics);
+        Map<String, List<AlertDefine>> defineMap = alertDefineService.getMonitorBindAlertDefines(monitorId, app, metrics);
         if (defineMap == null || defineMap.isEmpty()) {
             return;
         }
