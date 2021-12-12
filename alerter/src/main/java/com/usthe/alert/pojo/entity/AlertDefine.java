@@ -16,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -43,14 +44,17 @@ public class AlertDefine {
 
     @ApiModelProperty(value = "配置告警的监控类型", example = "linux", accessMode = READ_WRITE, position = 1)
     @Length(max = 100)
+    @NotNull
     private String app;
 
     @ApiModelProperty(value = "配置告警的指标集合", example = "cpu", accessMode = READ_WRITE, position = 2)
     @Length(max = 100)
+    @NotNull
     private String metric;
 
     @ApiModelProperty(value = "配置告警的指标", example = "usage", accessMode = READ_WRITE, position = 3)
     @Length(max = 100)
+    @NotNull
     private String field;
 
     @ApiModelProperty(value = "是否是默认预置告警", example = "false", accessMode = READ_WRITE, position = 4)

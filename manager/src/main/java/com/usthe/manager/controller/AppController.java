@@ -1,6 +1,7 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
+import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import io.swagger.annotations.Api;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,11 +40,18 @@ public class AppController {
         return ResponseEntity.ok(new Message<>(paramDefines));
     }
 
-    @GetMapping
+    @GetMapping(path = "/hierarchy")
     @ApiOperation(value = "查询全部层级的监控类型", notes = "查询所有监控类型,以层级结构输出")
-    public ResponseEntity<Message<Object>> queryAppsHierarchy() {
-
-        return null;
+    public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchy(
+            @ApiParam(value = "语言类型", example = "zh-CN", defaultValue = "zh-CN")
+            @RequestParam(name = "lang", required = false) String lang) {
+        if (lang == null || "".equals(lang)) {
+            lang = "zh-CN";
+        }
+        lang = lang.equalsIgnoreCase("zh-cn")? "zh-CN" : lang;
+        lang = lang.equalsIgnoreCase("en-us")? "en-US" : lang;
+        List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
+        return ResponseEntity.ok(new Message<>(appHierarchies));
     }
 
 }
