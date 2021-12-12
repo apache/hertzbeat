@@ -3,12 +3,12 @@ export class AlertDefine {
   app!: string;
   metric!: string;
   field!: string;
-  preset!: boolean;
+  preset: boolean = false;
   expr!: string;
   // 告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色
-  priority!: number;
-  duration!: number;
-  enable!: boolean;
+  priority: number = 2;
+  duration: number = 600;
+  enable: boolean = true;
   template!: string;
   creator!: string;
   modifier!: string;

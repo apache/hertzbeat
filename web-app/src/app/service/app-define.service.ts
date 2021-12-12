@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Message} from "../pojo/Message";
 import {Observable} from "rxjs";
 import {ParamDefine} from "../pojo/ParamDefine";
 
+const app_hierarchy = '/apps/hierarchy';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +19,12 @@ export class AppDefineService {
     }
     const paramDefineUri = `/apps/${app}/params`;
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
+  }
+
+  public getAppHierarchy() : Observable<Message<any>> {
+    let httpParams = new HttpParams().append("lang",'zh-CN');
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(app_hierarchy,options);
   }
 
 }

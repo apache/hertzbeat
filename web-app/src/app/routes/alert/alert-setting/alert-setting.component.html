@@ -70,7 +70,7 @@
         <span>警告告警</span>
       </nz-tag>
     </td>
-    <td nzAlign="center">{{ data.duration }}</td>
+    <td nzAlign="center">{{ data.duration + 's' }}</td>
     <td nzAlign="center">{{ data.template }}</td>
     <td nzAlign="center">
       <nz-tag *ngIf="data.preset" nzColor="green">
@@ -96,3 +96,84 @@
 <ng-template #rangeTemplate>
   总量 {{ total }}
 </ng-template>
+
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="isModalAdd?'新增告警阈值' : '修改告警阈值'"
+  (nzOnCancel)="onModalCancel()"
+  (nzOnOk)="onModalOk()"
+  nzMaskClosable="false"
+  nzWidth="60%"
+  [nzOkLoading]="isModalOkLoading"
+>
+  <div *nzModalContent class = "-inner-content">
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'target' nzRequired="true">指标对象</nz-form-label>
+        <nz-form-control [nzSpan]="8">
+          <nz-cascader name="target" id="target" [nzOptions]="appHierarchies" [(ngModel)]="cascadeValues">
+          </nz-cascader>
+        </nz-form-control>
+      </nz-form-item >
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'expr' nzRequired="true">阈值触发表达式</nz-form-label>
+        <nz-form-control [nzSpan]="8">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea [(ngModel)]="define.expr" rows="3" nz-input
+                      name="expr" id="expr"  placeholder="请输入阈值判断表达式">
+            </textarea>
+          </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item >
+      <nz-form-item>
+        <nz-form-label nzSpan="7"
+                       nzRequired="true"
+                       nzFor= "priority">告警级别
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-select
+            [(ngModel)]="define.priority"
+            nzAllowClear
+            nzPlaceHolder="Choose"
+            name="priority" id="priority"
+          >
+            <nz-option [nzValue]="0" nzLabel="紧急告警"></nz-option>
+            <nz-option [nzValue]="1" nzLabel="严重告警"></nz-option>
+            <nz-option [nzValue]="2" nzLabel="警告告警"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "duration">持续时间</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-input-number [(ngModel)]="define.duration" [nzMin]="10" [nzMax]="10000" [nzStep]="10"
+                           name="duration" id="duration" nzPlaceHolder="请输入告警的持续时间">
+          </nz-input-number>
+        </nz-form-control>
+      </nz-form-item >
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor= 'template' nzRequired="true">通知模版</nz-form-label>
+        <nz-form-control [nzSpan]="8">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea [(ngModel)]="define.template" rows="3" nz-input
+                      name="template" id="template"  placeholder="请输入告警的通知模版">
+            </textarea>
+          </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "preset">默认预置</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
+        </nz-form-control>
+      </nz-form-item >
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "enable">启用告警</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="define.enable" name="enable" id="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item >
+    </form>
+  </div>
+</nz-modal>
