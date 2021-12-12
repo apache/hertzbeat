@@ -67,7 +67,7 @@ public interface AlertDefineService {
      * @param pageRequest 分页参数
      * @return 查询结果
      */
-    Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
+    Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 
     /**
      * 应用告警定于与监控关联关系
@@ -83,5 +83,13 @@ public interface AlertDefineService {
      * @param metrics 指标组
      * @return field - define[]
      */
-    Map<String, List<AlertDefine>> getAlertDefines(long monitorId, String app, String metrics);
+    Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics);
+
+    /**
+     * 动态条件查询
+     * @param specification 查询条件
+     * @param pageRequest 分页参数
+     * @return 查询结果
+     */
+    Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 }

@@ -73,7 +73,7 @@ public class AlertDefine {
     @ApiModelProperty(value = "告警阈值开关", example = "true", accessMode = READ_WRITE, position = 8)
     private boolean enable = true;
 
-    @ApiModelProperty(value = "告警通知内容", example = "linux {monitor_name}: {monitor_id} cpu usage high",
+    @ApiModelProperty(value = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE, position = 10)
     @Length(max = 1024)
     private String template;
