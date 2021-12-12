@@ -1,7 +1,9 @@
 package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.job.Job;
+import com.usthe.common.entity.job.Metrics;
 import com.usthe.manager.dao.ParamDefineDao;
+import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,6 +77,46 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             }
         }
         return i18nMap;
+    }
+
+    @Override
+    public List<Hierarchy> getAllAppHierarchy(String lang) {
+        List<Hierarchy> hierarchies = new LinkedList<>();
+        for (Job job : appDefines.values()) {
+            Hierarchy hierarchyApp = new Hierarchy();
+            hierarchyApp.setValue(job.getApp());
+            Map<String, String> nameMap = job.getName();
+            if (nameMap != null) {
+                String i18nName = nameMap.get(lang);
+                if (i18nName == null) {
+                    i18nName = nameMap.values().stream().findFirst().get();
+                }
+                hierarchyApp.setLabel(i18nName);
+            }
+            List<Hierarchy> hierarchyMetricList = new LinkedList<>();
+            if (job.getMetrics() != null) {
+                for (Metrics metrics : job.getMetrics()) {
+                    Hierarchy hierarchyMetric = new Hierarchy();
+                    hierarchyMetric.setValue(metrics.getName());
+                    hierarchyMetric.setLabel(metrics.getName());
+                    List<Hierarchy> hierarchyFieldList = new LinkedList<>();
+                    if (metrics.getFields() != null) {
+                        for (Metrics.Field field : metrics.getFields()) {
+                            Hierarchy hierarchyField = new Hierarchy();
+                            hierarchyField.setValue(field.getField());
+                            hierarchyField.setLabel(field.getField());
+                            hierarchyField.setIsLeaf(true);
+                            hierarchyFieldList.add(hierarchyField);
+                        }
+                        hierarchyMetric.setChildren(hierarchyFieldList);
+                    }
+                    hierarchyMetricList.add(hierarchyMetric);
+                }
+            }
+            hierarchyApp.setChildren(hierarchyMetricList);
+            hierarchies.add(hierarchyApp);
+        }
+        return hierarchies;
     }
 
     @Override
