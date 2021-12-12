@@ -7,6 +7,9 @@ import {AlertCenterComponent} from "./alert-center/alert-center.component";
 import {AlertSettingComponent} from "./alert-setting/alert-setting.component";
 import {AlertNoticeComponent} from "./alert-notice/alert-notice.component";
 import {NzTagModule} from "ng-zorro-antd/tag";
+import {NzRadioModule} from "ng-zorro-antd/radio";
+import {NzSwitchModule} from "ng-zorro-antd/switch";
+import {NzCascaderModule} from "ng-zorro-antd/cascader";
 
 const COMPONENTS: Type<void>[] = [
   AlertCenterComponent,
@@ -21,6 +24,9 @@ const COMPONENTS: Type<void>[] = [
     NzDividerModule,
     NzBreadCrumbModule,
     NzTagModule,
+    NzRadioModule,
+    NzSwitchModule,
+    NzCascaderModule,
   ],
   declarations: COMPONENTS,
 })

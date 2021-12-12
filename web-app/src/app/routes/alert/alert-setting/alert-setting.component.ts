@@ -6,6 +6,8 @@ import {NzNotificationService} from "ng-zorro-antd/notification";
 import {NzMessageService} from "ng-zorro-antd/message";
 import {AlertDefineService} from "../../../service/alert-define.service";
 import {AlertDefine} from "../../../pojo/AlertDefine";
+import {finalize} from "rxjs/operators";
+import {AppDefineService} from "../../../service/app-define.service";
 
 @Component({
   selector: 'app-alert-setting',
@@ -20,6 +22,7 @@ export class AlertSettingComponent implements OnInit {
               private modal: NzModalService,
               private notifySvc: NzNotificationService,
               private msg: NzMessageService,
+              private appDefineSvc: AppDefineService,
               private alertDefineSvc: AlertDefineService) { }
 
   pageIndex: number = 1;
@@ -29,8 +32,24 @@ export class AlertSettingComponent implements OnInit {
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
 
+  appHierarchies!: any[];
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
+    // 查询监控层级
+    const getHierarchy$ = this.appDefineSvc.getAppHierarchy()
+      .pipe(finalize(() => {
+        getHierarchy$.unsubscribe();
+      }))
+      .subscribe(message => {
+        if (message.code === 0) {
+          this.appHierarchies = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+      }, error => {
+        console.warn(error.msg);
+      })
   }
 
   loadAlertDefineTable() {
@@ -56,11 +75,54 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onNewAlertDefine() {
+    this.define = new AlertDefine();
+    this.isModalAdd = true;
+    this.isModalVisible = true;
+    this.isModalOkLoading = false;
+  }
 
+  onEditOneAlertDefine(alertDefineId: number) {
+    if (alertDefineId == null) {
+      this.notifySvc.warning("未选中任何待编辑项！","");
+      return;
+    }
+    this.editAlertDefine(alertDefineId);
   }
 
   onEditAlertDefine() {
+    // 编辑时只能选中一个
+    if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
+      this.notifySvc.warning("未选中任何待编辑项！","");
+      return;
+    }
+    if (this.checkedDefineIds.size > 1) {
+      this.notifySvc.warning("只能对一个选中项进行编辑！","");
+      return;
+    }
+    let alertDefineId = 0;
+    this.checkedDefineIds.forEach(item => alertDefineId = item);
+    this.editAlertDefine(alertDefineId);
+  }
 
+  editAlertDefine(alertDefineId: number) {
+    this.isModalAdd = false;
+    this.isModalVisible = true;
+    this.isModalOkLoading = false;
+    // 查询告警定义信息
+    const getDefine$ = this.alertDefineSvc.getAlertDefine(alertDefineId)
+      .pipe(finalize(() => {
+        getDefine$.unsubscribe();
+      }))
+      .subscribe(message => {
+        if (message.code === 0) {
+          this.define = message.data;
+          this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
+        } else {
+          this.notifySvc.error("查询此监控定义详情失败！",message.msg);
+        }
+      }, error => {
+        this.notifySvc.error("查询此监控定义详情失败！",error.msg);
+      })
   }
 
   onDeleteAlertDefines() {
@@ -91,10 +153,6 @@ export class AlertSettingComponent implements OnInit {
     });
   }
 
-  onEditOneAlertDefine(alertDefineId: number) {
-
-  }
-
 
   deleteAlertDefines(defineIds: Set<number>) {
     if (defineIds == null || defineIds.size == 0) {
@@ -119,7 +177,7 @@ export class AlertSettingComponent implements OnInit {
       })
   }
 
-  // begin: 列表多选逻辑
+  // begin: 列表多选分页逻辑
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -135,8 +193,6 @@ export class AlertSettingComponent implements OnInit {
       this.checkedDefineIds.delete(monitorId);
     }
   }
-  // end: 列表多选逻辑
-
   /**
    * 分页回调
    * @param params 页码信息
@@ -145,6 +201,59 @@ export class AlertSettingComponent implements OnInit {
     const { pageSize, pageIndex, sort, filter } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    // this.loadMonitorTable();
+    this.loadAlertDefineTable();
+  }
+  // end: 列表多选逻辑
+
+
+  // start 新增修改告警定义model
+  isModalVisible = false;
+  isModalOkLoading = false;
+  isModalAdd = true;
+  define!: AlertDefine;
+  cascadeValues: string[] = [];
+  onModalCancel() {
+    this.isModalVisible = false;
+  }
+  onModalOk() {
+    this.isModalOkLoading = true;
+    this.define.app = this.cascadeValues[0];
+    this.define.metric = this.cascadeValues[1];
+    this.define.field = this.cascadeValues[2];
+    if (this.isModalAdd) {
+      const modalOk$ = this.alertDefineSvc.newAlertDefine(this.define)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isModalVisible = false;
+            this.notifySvc.success("新增成功！", "");
+            this.loadAlertDefineTable();
+          } else {
+            this.notifySvc.error("新增失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("新增失败！", error.msg);
+        })
+    } else {
+      const modalOk$ = this.alertDefineSvc.editAlertDefine(this.define)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isModalVisible = false;
+            this.notifySvc.success("修改成功！", "");
+            this.loadAlertDefineTable();
+          } else {
+            this.notifySvc.error("修改失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("修改失败！", error.msg);
+        })
+    }
   }
 }
