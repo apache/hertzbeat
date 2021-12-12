@@ -1,6 +1,7 @@
 package com.usthe.alert.service;
 
 import com.usthe.alert.pojo.entity.AlertDefine;
+import com.usthe.alert.pojo.entity.AlertDefineBind;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -72,9 +73,9 @@ public interface AlertDefineService {
     /**
      * 应用告警定于与监控关联关系
      * @param alertId 告警定义ID
-     * @param monitorMap 监控ID-名称 MAP
+     * @param alertDefineBinds 关联关系
      */
-    void applyBindAlertDefineMonitors(Long alertId, Map<Long, String> monitorMap);
+    void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineBind> alertDefineBinds);
 
     /**
      * 查询与此监控ID关联的指定指标组匹配的告警定义
@@ -92,4 +93,11 @@ public interface AlertDefineService {
      * @return 查询结果
      */
     Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
+
+    /**
+     * 根据告警定义ID查询其关联的监控列表关联信息
+     * @param alertDefineId 告警定义ID
+     * @return 监控列表关联信息
+     */
+    List<AlertDefineBind> getBindAlertDefineMonitors(long alertDefineId);
 }
