@@ -90,38 +90,38 @@
           "text": "告警中心",
           "i18n": "menu.alert.center",
           "icon": "anticon-alert",
-          "link": "/style/typography"
+          "link": "/alert/center"
         },
         {
           "text": "告警配置",
           "i18n": "menu.alert.setting",
-          "icon": "anticon-setting",
-          "link": "/style/typography"
+          "icon": "anticon-bulb",
+          "link": "/alert/setting"
         },
         {
           "text": "告警转发",
           "i18n": "menu.alert.dispatch",
           "icon": "anticon-notification",
-          "link": "/style/typography"
+          "link": "/alert/notice"
         }
       ]
     },
     {
       "text": "More",
-      "i18n": "menu.more",
+      "i18n": "menu.extras",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
         {
           "text": "Help Center",
-          "link": "/extras/helpcenter",
-          "i18n": "menu.extras.helpcenter",
+          "link": "/extras/help",
+          "i18n": "menu.extras.help",
           "icon": "anticon-link"
         },
         {
           "text": "Settings",
-          "link": "/extras/settings",
-          "i18n": "menu.extras.settings",
+          "link": "/extras/setting",
+          "i18n": "menu.extras.setting",
           "icon": "anticon-setting"
         }
       ]
