@@ -10,6 +10,7 @@ import {NzTagModule} from "ng-zorro-antd/tag";
 import {NzRadioModule} from "ng-zorro-antd/radio";
 import {NzSwitchModule} from "ng-zorro-antd/switch";
 import {NzCascaderModule} from "ng-zorro-antd/cascader";
+import {NzTransferModule} from "ng-zorro-antd/transfer";
 
 const COMPONENTS: Type<void>[] = [
   AlertCenterComponent,
@@ -27,6 +28,7 @@ const COMPONENTS: Type<void>[] = [
     NzRadioModule,
     NzSwitchModule,
     NzCascaderModule,
+    NzTransferModule,
   ],
   declarations: COMPONENTS,
 })

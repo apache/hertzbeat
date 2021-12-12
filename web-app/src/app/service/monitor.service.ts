@@ -69,6 +69,10 @@ export class MonitorService {
     return this.http.get<Message<any>>(`${monitor_uri}/${monitorId}`);
   }
 
+  public getMonitorsByApp(app: string) : Observable<Message<Monitor[]>> {
+    return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
+  }
+
   public getMonitors(app: string, pageIndex: number, pageSize: number) : Observable<Message<Page<Monitor>>> {
     app = app.trim();
     pageIndex = pageIndex ? pageIndex : 0;

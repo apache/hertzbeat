@@ -4,6 +4,7 @@ import {Observable} from "rxjs";
 import {Message} from "../pojo/Message";
 import {Page} from "../pojo/Page";
 import {AlertDefine} from "../pojo/AlertDefine";
+import {AlertDefineBind} from "../pojo/AlertDefineBind";
 
 const alert_define_uri = "/alert/define";
 const alert_defines_uri = "/alert/defines";
@@ -27,14 +28,13 @@ export class AlertDefineService {
     return this.http.get<Message<AlertDefine>>(`${alert_define_uri}/${alertDefineId}`);
   }
 
-  /**
-   * 应用告警定义与监控关联
-   * @param alertDefineId 告警定义ID
-   * @param monitorMap 关联的监控ID-监控名称
-   */
   public applyAlertDefineMonitorsBind(alertDefineId: number,
-                                      monitorMap: Record<number, string>): Observable<Message<AlertDefine>> {
-    return this.http.post<Message<AlertDefine>>(`${alert_define_uri}/${alertDefineId}/monitors`, monitorMap);
+                                      binds: AlertDefineBind[]): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${alert_define_uri}/${alertDefineId}/monitors`, binds);
+  }
+
+  public getAlertDefineMonitorsBind(alertDefineId: number) : Observable<Message<AlertDefineBind[]>> {
+    return this.http.get<Message<AlertDefineBind[]>>(`${alert_define_uri}/${alertDefineId}/monitors`);
   }
 
   public deleteAlertDefines(alertDefineIds: Set<number>) : Observable<Message<any>> {
