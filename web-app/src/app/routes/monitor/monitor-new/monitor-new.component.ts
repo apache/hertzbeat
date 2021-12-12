@@ -25,6 +25,7 @@ export class MonitorNewComponent implements OnInit {
   profileForm: FormGroup = new FormGroup({});
   detected: boolean = true;
   passwordVisible: boolean = false;
+  // 是否显示加载中
   isSpinning:boolean = false
   constructor(private appDefineSvc: AppDefineService,
               private monitorSvc: MonitorService,
