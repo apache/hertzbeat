@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {MonitorService} from "../../../service/monitor.service";
 import {Monitor} from "../../../pojo/Monitor";
-import {Page} from "../../../pojo/Page";
 import {NzModalService} from "ng-zorro-antd/modal";
 import {NzNotificationService} from "ng-zorro-antd/notification";
 import {NzMessageService} from "ng-zorro-antd/message";
@@ -28,7 +27,6 @@ export class MonitorListComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   monitors!: Monitor[];
-  pageMonitors!: Page<Monitor>;
   tableLoading: boolean = true;
   checkedMonitorIds = new Set<number>();
 
@@ -51,10 +49,10 @@ export class MonitorListComponent implements OnInit {
         this.checkedAll = false;
         this.checkedMonitorIds.clear();
         if (message.code === 0) {
-          this.pageMonitors = message.data;
-          this.monitors = this.pageMonitors.content;
-          this.pageIndex = this.pageMonitors.number + 1;
-          this.total = this.pageMonitors.totalElements;
+          let page = message.data;
+          this.monitors = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
         } else {
           console.warn(message.msg);
         }

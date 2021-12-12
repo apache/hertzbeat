@@ -1,0 +1,98 @@
+<nz-divider></nz-divider>
+<nz-breadcrumb>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/']">
+      <i nz-icon nzType="home"></i>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <i nz-icon nzType="alert"></i>
+    <span>告警阈值配置</span>
+  </nz-breadcrumb-item>
+</nz-breadcrumb>
+<nz-divider></nz-divider>
+
+<button nz-button nzType="primary" (click)="onNewAlertDefine()">
+  <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+  新增阈值
+</button>
+<button nz-button nzType="primary" (click)="onEditAlertDefine()" >
+  <i nz-icon nzType="edit" nzTheme="outline"></i>
+  编辑
+</button>
+<button nz-button nzType="primary" (click)="onDeleteAlertDefines()">
+  <i nz-icon nzType="delete" nzTheme="outline"></i>
+  删除
+</button>
+
+<nz-table #fixedTable [nzData]="defines"
+          [nzPageIndex]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total"
+          nzFrontPagination ="false"
+          [nzLoading] = "tableLoading"
+          nzShowSizeChanger
+          [nzShowTotal]="rangeTemplate"
+          [nzPageSizeOptions]="[8,15,25]"
+          (nzQueryParams)="onTablePageChange($event)"
+          nzShowPagination = "true" [nzScroll]="{ x: '1150px', y: '1240px' }">
+  <thead>
+  <tr>
+    <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+    <th nzAlign="center">指标对象</th>
+    <th nzAlign="center">阈值触发表达式</th>
+    <th nzAlign="center">告警级别</th>
+    <th nzAlign="center">持续时间</th>
+    <th nzAlign="center">通知模版</th>
+    <th nzAlign="center">预置默认</th>
+    <th nzAlign="center">最新修改时间</th>
+    <th nzAlign="center" nzRight>操作</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let data of fixedTable.data">
+    <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+    <td nzAlign="center">
+        <span>{{ data.app + '.'  + data.metric + '.' + data.field }}</span>
+    </td>
+    <td nzAlign="center">
+      <span>{{ data.expr}}</span>
+    </td>
+    <td nzAlign="center">
+      <nz-tag *ngIf="data.priority == 0" nzColor="red">
+        <i nz-icon nzType="robot" nzTheme="outline"></i>
+        <span>紧急告警</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.priority == 1" nzColor="orange">
+        <i nz-icon nzType="smile" nzTheme="outline"></i>
+        <span>严重告警</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
+        <i nz-icon nzType="meh" nzTheme="outline"></i>
+        <span>警告告警</span>
+      </nz-tag>
+    </td>
+    <td nzAlign="center">{{ data.duration }}</td>
+    <td nzAlign="center">{{ data.template }}</td>
+    <td nzAlign="center">
+      <nz-tag *ngIf="data.preset" nzColor="green">
+        <span>是</span>
+      </nz-tag>
+      <nz-tag *ngIf="!data.preset" nzColor="orange">
+        <span>否</span>
+      </nz-tag>
+    </td>
+    <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
+    <td nzAlign="center" nzRight>
+      <button nz-button nzType="primary" (click)="onEditOneAlertDefine(data.id)">
+        <i nz-icon nzType="edit" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onDeleteOneAlertDefine(data.id)">
+        <i nz-icon nzType="delete" nzTheme="outline"></i>
+      </button>
+    </td>
+  </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate>
+  总量 {{ total }}
+</ng-template>
