@@ -6,8 +6,14 @@ import {NzNotificationService} from "ng-zorro-antd/notification";
 import {NzMessageService} from "ng-zorro-antd/message";
 import {AlertDefineService} from "../../../service/alert-define.service";
 import {AlertDefine} from "../../../pojo/AlertDefine";
-import {finalize} from "rxjs/operators";
+import {finalize, map} from "rxjs/operators";
 import {AppDefineService} from "../../../service/app-define.service";
+import {TransferChange, TransferItem} from "ng-zorro-antd/transfer";
+import {zip} from "rxjs";
+import {MonitorService} from "../../../service/monitor.service";
+import {Message} from "../../../pojo/Message";
+import {AlertDefineBind} from "../../../pojo/AlertDefineBind";
+import {Monitor} from "../../../pojo/Monitor";
 
 @Component({
   selector: 'app-alert-setting',
@@ -23,6 +29,7 @@ export class AlertSettingComponent implements OnInit {
               private notifySvc: NzNotificationService,
               private msg: NzMessageService,
               private appDefineSvc: AppDefineService,
+              private monitorSvc: MonitorService,
               private alertDefineSvc: AlertDefineService) { }
 
   pageIndex: number = 1;
@@ -76,9 +83,9 @@ export class AlertSettingComponent implements OnInit {
 
   onNewAlertDefine() {
     this.define = new AlertDefine();
-    this.isModalAdd = true;
-    this.isModalVisible = true;
-    this.isModalOkLoading = false;
+    this.isManageModalAdd = true;
+    this.isManageModalVisible = true;
+    this.isManageModalOkLoading = false;
   }
 
   onEditOneAlertDefine(alertDefineId: number) {
@@ -105,9 +112,9 @@ export class AlertSettingComponent implements OnInit {
   }
 
   editAlertDefine(alertDefineId: number) {
-    this.isModalAdd = false;
-    this.isModalVisible = true;
-    this.isModalOkLoading = false;
+    this.isManageModalAdd = false;
+    this.isManageModalVisible = true;
+    this.isManageModalOkLoading = false;
     // 查询告警定义信息
     const getDefine$ = this.alertDefineSvc.getAlertDefine(alertDefineId)
       .pipe(finalize(() => {
@@ -207,28 +214,28 @@ export class AlertSettingComponent implements OnInit {
 
 
   // start 新增修改告警定义model
-  isModalVisible = false;
-  isModalOkLoading = false;
-  isModalAdd = true;
+  isManageModalVisible = false;
+  isManageModalOkLoading = false;
+  isManageModalAdd = true;
   define!: AlertDefine;
   cascadeValues: string[] = [];
-  onModalCancel() {
-    this.isModalVisible = false;
+  onManageModalCancel() {
+    this.isManageModalVisible = false;
   }
-  onModalOk() {
-    this.isModalOkLoading = true;
+  onManageModalOk() {
+    this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
     this.define.metric = this.cascadeValues[1];
     this.define.field = this.cascadeValues[2];
-    if (this.isModalAdd) {
+    if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc.newAlertDefine(this.define)
         .pipe(finalize(() => {
           modalOk$.unsubscribe();
-          this.isModalOkLoading = false;
+          this.isManageModalOkLoading = false;
         }))
         .subscribe(message => {
           if (message.code === 0) {
-            this.isModalVisible = false;
+            this.isManageModalVisible = false;
             this.notifySvc.success("新增成功！", "");
             this.loadAlertDefineTable();
           } else {
@@ -241,11 +248,11 @@ export class AlertSettingComponent implements OnInit {
       const modalOk$ = this.alertDefineSvc.editAlertDefine(this.define)
         .pipe(finalize(() => {
           modalOk$.unsubscribe();
-          this.isModalOkLoading = false;
+          this.isManageModalOkLoading = false;
         }))
         .subscribe(message => {
           if (message.code === 0) {
-            this.isModalVisible = false;
+            this.isManageModalVisible = false;
             this.notifySvc.success("修改成功！", "");
             this.loadAlertDefineTable();
           } else {
@@ -256,4 +263,86 @@ export class AlertSettingComponent implements OnInit {
         })
     }
   }
+  // end 新增修改告警定义model
+
+  // start 告警定义与监控关联model
+  isConnectModalVisible = false;
+  isConnectModalOkLoading = false;
+  transferData: TransferItem[] = [];
+  currentAlertDefineId!: number;
+  $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
+  onOpenConnectModal(alertDefineId: number, app: string) {
+    this.isConnectModalVisible = true;
+    this.currentAlertDefineId = alertDefineId;
+    zip(this.alertDefineSvc.getAlertDefineMonitorsBind(alertDefineId), this.monitorSvc.getMonitorsByApp(app))
+      .pipe(
+        map(([defineBindData, monitorData]: [Message<AlertDefineBind[]>, Message<Monitor[]>]) => {
+          let bindRecode: Record<number, string> = {};
+          if (defineBindData.data != undefined) {
+            defineBindData.data.forEach(bind => {
+              bindRecode[bind.monitorId] = bind.monitorName;
+            })
+          }
+          let listTmp: any[] = [];
+          if (monitorData.data != undefined) {
+            monitorData.data.forEach(monitor => {
+              listTmp.push({
+                id: monitor.id,
+                name: monitor.name,
+                key: monitor.id,
+                direction: bindRecode[monitor.id] == undefined ? 'left' : 'right'
+              })
+            })
+          }
+          return listTmp;
+        })
+      ).subscribe(list => this.transferData = list);
+  }
+  onConnectModalCancel() {
+    this.isConnectModalVisible = false;
+  }
+  onConnectModalOk() {
+    this.isConnectModalOkLoading = true;
+    let defineBinds: AlertDefineBind[] = [];
+    this.transferData.forEach(item => {
+      if (item.direction == 'right') {
+        let bind = new AlertDefineBind();
+        bind.alertDefineId = this.currentAlertDefineId;
+        bind.monitorId = item.id;
+        bind.monitorName = item.name;
+        defineBinds.push(bind);
+      }
+    })
+    const applyBind$ = this.alertDefineSvc.applyAlertDefineMonitorsBind(this.currentAlertDefineId, defineBinds)
+      .pipe(finalize(() => {
+        applyBind$.unsubscribe();
+      }))
+      .subscribe(message => {
+        this.isConnectModalOkLoading = false;
+        if (message.code === 0) {
+          this.notifySvc.success("应用成功！", "");
+          this.isConnectModalVisible = false;
+          this.loadAlertDefineTable();
+        } else {
+          this.notifySvc.error("应用失败！", message.msg);
+        }
+      }, error => {
+        this.notifySvc.error("应用失败！", error.msg);
+      })
+  }
+  change(ret: TransferChange): void {
+    const listKeys = ret.list.map(l => l.key);
+    const hasOwnKey = (e: TransferItem): boolean => e.hasOwnProperty('key');
+    this.transferData = this.transferData.map(e => {
+      if (listKeys.includes(e.key) && hasOwnKey(e)) {
+        if (ret.to === 'left') {
+          delete e.hide;
+        } else if (ret.to === 'right') {
+          e.hide = false;
+        }
+      }
+      return e;
+    });
+  }
+  // end 告警定义与监控关联model
 }
