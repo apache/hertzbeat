@@ -1,6 +1,7 @@
 package com.usthe.manager.service;
 
 import com.usthe.common.entity.job.Job;
+import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.manager.pojo.entity.ParamDefine;
 
 import java.util.List;
@@ -34,4 +35,12 @@ public interface AppService {
      * @return I18N资源
      */
     Map<String, String> getI18nResources(String lang);
+
+    /**
+     * 查询所有监控的类型-指标组-指标层级
+     * @param lang 语言
+     * @return 层级信息
+     */
+    List<Hierarchy> getAllAppHierarchy(String lang);
+
 }
