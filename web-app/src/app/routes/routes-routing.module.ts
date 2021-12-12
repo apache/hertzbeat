@@ -26,7 +26,8 @@ const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full'},
       { path: 'dashboard', component: DashboardComponent, data: { title: '仪表盘' } },
       { path: 'exception', loadChildren: () => import('./exception/exception.module').then(m => m.ExceptionModule) },
-      { path: 'monitors', loadChildren: () => import('./monitor/monitor.module').then((m) => m.MonitorModule) },]
+      { path: 'monitors', loadChildren: () => import('./monitor/monitor.module').then((m) => m.MonitorModule) },
+      { path: 'alert', loadChildren: () => import('./alert/alert.module').then((m) => m.AlertModule) },]
   },
   // 空白布局
   // {

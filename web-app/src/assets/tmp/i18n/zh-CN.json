@@ -27,6 +27,11 @@
       "setting": "告警配置",
       "dispatch": "告警转发"
     },
+    "extras": {
+      "": "更多",
+      "help": "帮助中心",
+      "setting": "设置"
+    },
     "more": "更多"
   },
   "monitor": {
