@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -79,6 +80,15 @@ public class MonitorsController {
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Monitor> monitorPage = monitorService.getMonitors(specification, pageRequest);
         Message<Page<Monitor>> message = new Message<>(monitorPage);
+        return ResponseEntity.ok(message);
+    }
+
+    @GetMapping(path = "/{app}")
+    @ApiOperation(value = "查询指定监控类型的监控列表", notes = "根据查询过滤指定监控类型的所有获取监控信息列表")
+    public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
+            @ApiParam(value = "监控类型", example = "linux") @PathVariable(required = false) String app) {
+        List<Monitor> monitors = monitorService.getAppMonitors(app);
+        Message<List<Monitor>> message = new Message<>(monitors);
         return ResponseEntity.ok(message);
     }
 

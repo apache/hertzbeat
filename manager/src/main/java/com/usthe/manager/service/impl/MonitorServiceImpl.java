@@ -345,4 +345,9 @@ public class MonitorServiceImpl implements MonitorService {
     public void updateMonitorStatus(Long monitorId, byte status) {
         monitorDao.updateMonitorStatus(monitorId, status);
     }
+
+    @Override
+    public List<Monitor> getAppMonitors(String app) {
+        return monitorDao.findMonitorsByAppEquals(app);
+    }
 }

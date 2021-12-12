@@ -114,4 +114,11 @@ public interface MonitorService {
      * @param status 监控状态
      */
     void updateMonitorStatus(Long monitorId, byte status);
+
+    /**
+     * 查询指定监控类型下的所有监控信息列表
+     * @param app 监控类型
+     * @return 监控列表
+     */
+    List<Monitor> getAppMonitors(String app);
 }

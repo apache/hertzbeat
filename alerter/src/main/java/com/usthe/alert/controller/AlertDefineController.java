@@ -1,6 +1,7 @@
 package com.usthe.alert.controller;
 
 import com.usthe.alert.pojo.entity.AlertDefine;
+import com.usthe.alert.pojo.entity.AlertDefineBind;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.common.entity.dto.Message;
 import io.swagger.annotations.Api;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
@@ -79,13 +81,21 @@ public class AlertDefineController {
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
 
-    @PostMapping(path = "/{alertId}/monitors")
+    @PostMapping(path = "/{alertDefineId}/monitors")
     @ApiOperation(value = "应用告警定义与监控关联", notes = "应用指定告警定义与监控关联关系")
     public ResponseEntity<Message<Void>> applyAlertDefineMonitorsBind(
-            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertId") long alertId,
-            @RequestBody Map<Long, String> monitorMap) {
-        alertDefineService.applyBindAlertDefineMonitors(alertId, monitorMap);
+            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId,
+            @RequestBody List<AlertDefineBind> alertDefineBinds) {
+        alertDefineService.applyBindAlertDefineMonitors(alertDefineId, alertDefineBinds);
         return ResponseEntity.ok(new Message<>("Apply success"));
+    }
+
+    @GetMapping(path = "/{alertDefineId}/monitors")
+    @ApiOperation(value = "应用告警定义与监控关联", notes = "应用指定告警定义与监控关联关系")
+    public ResponseEntity<Message<List<AlertDefineBind>>> getAlertDefineMonitorsBind(
+            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
+        List<AlertDefineBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
+        return ResponseEntity.ok(new Message<>(defineBinds));
     }
 
 }
