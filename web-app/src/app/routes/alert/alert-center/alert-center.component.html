@@ -1,1 +1,86 @@
-<p>alert-center works!</p>
+<nz-divider></nz-divider>
+<nz-breadcrumb>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/']">
+      <i nz-icon nzType="home"></i>
+      <span>仪表盘</span>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <i nz-icon nzType="alert"></i>
+    <span>告警中心</span>
+  </nz-breadcrumb-item>
+</nz-breadcrumb>
+<nz-divider></nz-divider>
+
+<button nz-button nzType="primary" (click)="onRestoreAlerts()" >
+  <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+  恢复告警
+</button>
+<button nz-button nzType="primary" (click)="onDeleteAlerts()">
+  <i nz-icon nzType="delete" nzTheme="outline"></i>
+  删除告警
+</button>
+
+<nz-table #fixedTable [nzData]="alerts"
+          [nzPageIndex]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total"
+          nzFrontPagination ="false"
+          [nzLoading] = "tableLoading"
+          nzShowSizeChanger
+          [nzShowTotal]="rangeTemplate"
+          [nzPageSizeOptions]="[8,15,25]"
+          (nzQueryParams)="onTablePageChange($event)"
+          nzShowPagination = "true" [nzScroll]="{ x: '1150px', y: '1240px' }">
+  <thead>
+  <tr>
+    <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+    <th nzAlign="center">告警对象</th>
+    <th nzAlign="center">所属监控</th>
+    <th nzAlign="center">级别</th>
+    <th nzAlign="center">告警内容</th>
+    <th nzAlign="center">触发时间</th>
+    <th nzAlign="center">持续时间</th>
+    <th nzAlign="center" nzRight>操作</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let data of fixedTable.data">
+    <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+    <td nzAlign="center">{{ data.target }}</td>
+    <td nzAlign="center">
+      <a [routerLink]="['/monitors/' + data.monitorId]">
+        <span>{{ data.monitorName }}</span>
+      </a>
+    </td>
+    <td nzAlign="center">
+      <nz-tag *ngIf="data.priority == 0" nzColor="red">
+        <i nz-icon nzType="bell" nzTheme="outline"></i>
+        <span>紧急告警</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.priority == 1" nzColor="orange">
+        <i nz-icon nzType="bell" nzTheme="outline"></i>
+        <span>严重告警</span>
+      </nz-tag>
+      <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
+        <i nz-icon nzType="bell" nzTheme="outline"></i>
+        <span>警告告警</span>
+      </nz-tag>
+    </td>
+    <td nzAlign="center">{{ data.content }}</td>
+    <td nzAlign="center">{{ data.gmtCreate }}</td>
+    <td nzAlign="center">{{ data.duration }}</td>
+    <td nzAlign="center" nzRight>
+      <button nz-button nzType="primary" (click)="onRestoreOneAlert(data.id)">
+        <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)">
+        <i nz-icon nzType="delete" nzTheme="outline"></i>
+      </button>
+    </td>
+  </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate>
+  总量 {{ total }}
+</ng-template>
