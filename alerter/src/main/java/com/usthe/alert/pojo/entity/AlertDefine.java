@@ -57,7 +57,7 @@ public class AlertDefine {
     @NotNull
     private String field;
 
-    @ApiModelProperty(value = "是否是默认预置告警", example = "false", accessMode = READ_WRITE, position = 4)
+    @ApiModelProperty(value = "是否是全局默认告警", example = "false", accessMode = READ_WRITE, position = 4)
     private boolean preset;
 
     @ApiModelProperty(value = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE, position = 5)
@@ -70,9 +70,10 @@ public class AlertDefine {
     @Max(2)
     private byte priority;
 
-    @ApiModelProperty(value = "触发告警后持续时间,单位s", example = "60", accessMode = READ_WRITE, position = 7)
+    @ApiModelProperty(value = "阈值触发次数,即达到次数要求后才触发告警", example = "3", accessMode = READ_WRITE, position = 7)
     @Min(0)
-    private int duration;
+    @Max(10)
+    private int times;
 
     @ApiModelProperty(value = "告警阈值开关", example = "true", accessMode = READ_WRITE, position = 8)
     private boolean enable = true;

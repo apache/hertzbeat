@@ -72,7 +72,7 @@ public class CalculateAlarm {
                     .monitorId(monitorId)
                     .priority((byte) 0)
                     .status((byte) 0)
-                    .duration(300);
+                    .times(1);
             if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                 // UN_REACHABLE 对端不可达(网络层icmp)
                 alertBuilder.target(CommonConstants.REACHABLE)
@@ -139,7 +139,7 @@ public class CalculateAlarm {
                                         .priority(define.getPriority())
                                         .status((byte) 0)
                                         .target(app + "." + metrics + "." + define.getField())
-                                        .duration(define.getDuration())
+                                        .times(1)
                                         // 模板中关键字匹配替换
                                         .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                         .build();

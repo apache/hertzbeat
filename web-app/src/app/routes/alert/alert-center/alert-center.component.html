@@ -34,12 +34,11 @@
   <thead>
   <tr>
     <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-    <th nzAlign="center">告警对象</th>
+    <th nzAlign="center">告警指标</th>
     <th nzAlign="center">所属监控</th>
     <th nzAlign="center">级别</th>
     <th nzAlign="center">告警内容</th>
-    <th nzAlign="center">触发时间</th>
-    <th nzAlign="center">持续时间</th>
+    <th nzAlign="center">告警时间</th>
     <th nzAlign="center" nzRight>操作</th>
   </tr>
   </thead>
@@ -68,7 +67,6 @@
     </td>
     <td nzAlign="center">{{ data.content }}</td>
     <td nzAlign="center">{{ data.gmtCreate }}</td>
-    <td nzAlign="center">{{ data.duration }}</td>
     <td nzAlign="center" nzRight>
       <button nz-button nzType="primary" (click)="onRestoreOneAlert(data.id)">
         <i nz-icon nzType="up-circle" nzTheme="outline"></i>

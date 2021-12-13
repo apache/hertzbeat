@@ -41,9 +41,9 @@
     <th nzAlign="center">指标对象</th>
     <th nzAlign="center">阈值触发表达式</th>
     <th nzAlign="center">告警级别</th>
-    <th nzAlign="center">持续时间</th>
+    <th nzAlign="center">触发次数</th>
     <th nzAlign="center">通知模版</th>
-    <th nzAlign="center">预置默认</th>
+    <th nzAlign="center">全局默认</th>
     <th nzAlign="center">最新修改时间</th>
     <th nzAlign="center" nzRight>操作</th>
   </tr>
@@ -71,7 +71,7 @@
         <span>警告告警</span>
       </nz-tag>
     </td>
-    <td nzAlign="center">{{ data.duration + 's' }}</td>
+    <td nzAlign="center">{{ data.times }}</td>
     <td nzAlign="center">{{ data.template }}</td>
     <td nzAlign="center">
       <nz-tag *ngIf="data.preset" nzColor="green">
@@ -149,10 +149,10 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "duration">持续时间</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "duration">触发次数</nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-input-number [(ngModel)]="define.duration" [nzMin]="10" [nzMax]="10000" [nzStep]="10"
-                           name="duration" id="duration" nzPlaceHolder="请输入告警的持续时间">
+          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="10" [nzStep]="1"
+                           name="duration" id="duration" nzPlaceHolder="触发几次后告警">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item >
@@ -167,7 +167,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "preset">默认预置</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "preset">全局默认</nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
         </nz-form-control>
