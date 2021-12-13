@@ -20,7 +20,7 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * 根据ID列表删除告警定义
      * @param alertDefineIds 告警定义ID列表
      */
-    void deleteAllByIdIn(Set<Long> alertDefineIds);
+    void deleteAlertDefinesByIdIn(Set<Long> alertDefineIds);
 
     /**
      * 根据监控ID查询与之关联的告警定义列表
