@@ -6,6 +6,6 @@ export class Alert {
   priority: number = 2;
   status!: number;
   content!: string;
-  duration!: number;
+  times!: number;
   gmtCreate!: number;
 }
