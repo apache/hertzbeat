@@ -74,10 +74,10 @@ CREATE TABLE  alert_define
     app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
     metric       varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
     field        varchar(100)     not null comment '配置告警的指标:usage,cores...',
-    preset       boolean          not null default false comment '是否是默认预置告警，是则新增监控默认关联此告警',
+    preset       boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
     expr         varchar(255)     not null comment '告警触发条件表达式',
     priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
-    duration     int              not null comment '触发告警后持续时间,单位s',
+    times        int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
     enable       boolean          not null default true comment '告警阈值开关',
     template     varchar(255)     not null comment '告警通知模板内容',
     creator      varchar(100)     comment '创建者',
@@ -109,15 +109,16 @@ CREATE TABLE  alert_define_monitor_bind
 DROP TABLE IF EXISTS  alert ;
 CREATE TABLE  alert
 (
-    id            bigint           not null auto_increment comment '告警ID',
-    monitor_id    bigint           not null comment '告警监控对象ID',
-    monitor_name  varchar(100)     comment '告警监控对象名称',
-    priority      tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
-    status        tinyint          not null default 0 comment '告警状态: 0-待发送 1-已发送 2-已过期(已经超过持续时间)',
-    target        varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
-    duration      int              not null comment '触发告警后持续时间,单位s',
-    content       varchar(255)     not null comment '告警通知实际内容',
-    gmt_create    timestamp        default current_timestamp comment 'create time',
+    id               bigint           not null auto_increment comment '告警ID',
+    target           varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
+    monitor_id       bigint           not null comment '告警对象关联的监控ID',
+    monitor_name     varchar(100)     comment '告警对象关联的监控名称',
+    alert_define_id  bigint           not null comment '告警关联的告警定义ID',
+    priority         tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    content          varchar(255)     not null comment '告警通知实际内容',
+    status           tinyint          not null default 0 comment '告警状态: 0-待发送 1-已发送 2-已过期(已经超过持续时间)',
+    times            int              not null comment '触发次数,即达到告警定义的触发阈值次数要求后才会发告警',
+    gmt_create       timestamp        default current_timestamp comment 'create time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
