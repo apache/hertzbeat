@@ -72,7 +72,7 @@ public class AlertDefinesController {
     }
 
     @DeleteMapping
-    @ApiOperation(value = "批量删除告警定义", notes = "根据告警定义ID列表批量删除监控项")
+    @ApiOperation(value = "批量删除告警定义", notes = "根据告警定义ID列表批量删除告警定义")
     public ResponseEntity<Message<Void>> deleteAlertDefines(
             @ApiParam(value = "告警定义IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {

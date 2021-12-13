@@ -12,13 +12,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.Id;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -80,6 +83,18 @@ public class AlertsController {
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Alert> alertPage = alertService.getAlerts(specification, pageRequest);
         Message<Page<Alert>> message = new Message<>(alertPage);
+        return ResponseEntity.ok(message);
+    }
+
+    @DeleteMapping
+    @ApiOperation(value = "批量删除告警", notes = "根据告警ID列表批量删除告警")
+    public ResponseEntity<Message<Void>> deleteAlertDefines(
+            @ApiParam(value = "告警IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+    ) {
+        if (ids != null && !ids.isEmpty()) {
+            alertService.deleteAlerts(new HashSet<>(ids));
+        }
+        Message<Void> message = new Message<>();
         return ResponseEntity.ok(message);
     }
 

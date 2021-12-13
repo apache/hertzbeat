@@ -64,7 +64,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException {
-        alertDefineDao.deleteAllByIdIn(alertIds);
+        alertDefineDao.deleteAlertDefinesByIdIn(alertIds);
     }
 
     @Override
