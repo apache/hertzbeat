@@ -9,6 +9,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+
 /**
  * 告警信息服务实现
  * @author tom
@@ -28,5 +30,10 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public Page<Alert> getAlerts(Specification<Alert> specification, PageRequest pageRequest) {
         return alertDao.findAll(specification, pageRequest);
+    }
+
+    @Override
+    public void deleteAlerts(HashSet<Long> ids) {
+        alertDao.deleteAlertsByIdIn(ids);
     }
 }
