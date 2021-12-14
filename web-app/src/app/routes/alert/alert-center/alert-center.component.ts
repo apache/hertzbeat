@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import {NzTableQueryParams} from "ng-zorro-antd/table";
 import {Alert} from "../../../pojo/Alert";
 import {NzNotificationService} from "ng-zorro-antd/notification";
-import {NzMessageService} from "ng-zorro-antd/message";
 import {AlertService} from "../../../service/alert.service";
+import {NzModalService} from "ng-zorro-antd/modal";
 
 @Component({
   selector: 'app-alert-center',
@@ -14,7 +14,7 @@ import {AlertService} from "../../../service/alert.service";
 export class AlertCenterComponent implements OnInit {
 
   constructor(private notifySvc: NzNotificationService,
-              private msg: NzMessageService,
+              private modal: NzModalService,
               private alertSvc: AlertService) { }
 
   pageIndex: number = 1;
@@ -50,18 +50,53 @@ export class AlertCenterComponent implements OnInit {
       });
   }
 
-  onRestoreAlerts() {
-
-  }
-  onRestoreOneAlert(alertId: number) {
-
-  }
   onDeleteAlerts() {
-
+    if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
+      this.notifySvc.warning("未选中任何待删除项！","");
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: '请确认是否批量删除！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.deleteAlerts(this.checkedAlertIds)
+    });
   }
 
   onDeleteOneAlert(alertId: number) {
+    let alerts = new Set<number>();
+    alerts.add(alertId);
+    this.modal.confirm({
+      nzTitle: '请确认是否删除！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.deleteAlerts(alerts)
+    });
+  }
 
+  deleteAlerts(alertIds: Set<number>) {
+    this.tableLoading = true;
+    const deleteAlerts$ = this.alertSvc.deleteAlerts(alertIds)
+      .subscribe(message => {
+          deleteAlerts$.unsubscribe();
+          if (message.code === 0) {
+            this.notifySvc.success("删除成功！", "");
+            this.loadAlertsTable();
+          } else {
+            this.tableLoading = false;
+            this.notifySvc.error("删除失败！", message.msg);
+          }
+        },
+        error => {
+          this.tableLoading = false;
+          deleteAlerts$.unsubscribe();
+          this.notifySvc.error("删除失败！", error.msg)
+        }
+      );
   }
 
   // begin: 列表多选分页逻辑

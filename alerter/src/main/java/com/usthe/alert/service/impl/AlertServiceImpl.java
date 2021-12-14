@@ -3,11 +3,13 @@ package com.usthe.alert.service.impl;
 import com.usthe.alert.dao.AlertDao;
 import com.usthe.alert.pojo.entity.Alert;
 import com.usthe.alert.service.AlertService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 
@@ -17,6 +19,8 @@ import java.util.HashSet;
  * @date 2021/12/10 15:39
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
+@Slf4j
 public class AlertServiceImpl implements AlertService {
 
     @Autowired

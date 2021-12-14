@@ -28,4 +28,16 @@ export class AlertService {
     const options = { params: httpParams };
     return this.http.get<Message<Page<Alert>>>(alerts_uri, options);
   }
+
+  public deleteAlerts(alertIds: Set<number>) : Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    alertIds.forEach(alertId => {
+      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
+      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      httpParams = httpParams.append('ids', alertId);
+    })
+    const options = { params: httpParams };
+    return this.http.delete<Message<any>>(alerts_uri, options);
+  }
+
 }
