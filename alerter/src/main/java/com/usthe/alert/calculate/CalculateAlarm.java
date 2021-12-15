@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 根据告警定义规则和采集数据匹配计算告警
@@ -34,12 +35,14 @@ public class CalculateAlarm {
     private AlerterWorkerPool workerPool;
     private AlerterDataQueue dataQueue;
     private AlertDefineService alertDefineService;
+    private Map<String, Alert> triggeredAlertMap;
 
     public CalculateAlarm (AlerterProperties properties, AlerterWorkerPool workerPool,
                            AlerterDataQueue dataQueue, AlertDefineService alertDefineService) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alertDefineService = alertDefineService;
+        this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         startCalculate();
     }
 
@@ -133,17 +136,34 @@ public class CalculateAlarm {
                             Expression expression = AviatorEvaluator.compile(expr, true);
                             Boolean match = (Boolean) expression.execute(fieldValueMap);
                             if (match) {
-                                // 阈值规则匹配，触发告警
-                                Alert alert = Alert.builder()
-                                        .monitorId(monitorId)
-                                        .priority(define.getPriority())
-                                        .status((byte) 0)
-                                        .target(app + "." + metrics + "." + define.getField())
-                                        .times(1)
-                                        // 模板中关键字匹配替换
-                                        .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
-                                        .build();
-                                dataQueue.addAlertData(alert);
+                                // 阈值规则匹配，判断已触发阈值次数，触发告警
+                                String monitorAlertKey = String.valueOf(monitorId) + define.getId();
+                                Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
+                                if (triggeredAlert != null) {
+                                    int times = triggeredAlert.getTimes() + 1;
+                                    triggeredAlert.setTimes(times);
+                                    if (times >= define.getTimes()) {
+                                        triggeredAlertMap.remove(monitorAlertKey);
+                                        dataQueue.addAlertData(triggeredAlert);
+                                    }
+                                } else {
+                                    int times = 1;
+                                    Alert alert = Alert.builder()
+                                            .monitorId(monitorId)
+                                            .alertDefineId(define.getId())
+                                            .priority(define.getPriority())
+                                            .status((byte) 0)
+                                            .target(app + "." + metrics + "." + define.getField())
+                                            .times(times)
+                                            // 模板中关键字匹配替换
+                                            .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
+                                            .build();
+                                    if (times >= define.getTimes()) {
+                                        dataQueue.addAlertData(alert);
+                                    } else {
+                                        triggeredAlertMap.put(monitorAlertKey, alert);
+                                    }
+                                }
                                 // 此优先级以下的阈值规则则忽略
                                 break;
                             }

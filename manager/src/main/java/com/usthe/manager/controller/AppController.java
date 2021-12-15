@@ -48,8 +48,8 @@ public class AppController {
         if (lang == null || "".equals(lang)) {
             lang = "zh-CN";
         }
-        lang = lang.equalsIgnoreCase("zh-cn")? "zh-CN" : lang;
-        lang = lang.equalsIgnoreCase("en-us")? "en-US" : lang;
+        lang = "zh-cn".equalsIgnoreCase(lang)? "zh-CN" : lang;
+        lang = "en-us".equalsIgnoreCase(lang)? "en-US" : lang;
         List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
         return ResponseEntity.ok(new Message<>(appHierarchies));
     }
