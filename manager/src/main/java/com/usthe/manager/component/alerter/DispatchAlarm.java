@@ -55,7 +55,6 @@ public class DispatchAlarm {
     }
 
     private void storeAlertData(Alert alert) {
-        // todo 过滤重复告警 使用 告警持续时间参数-duration 这个时间段的相同重复告警应该被过滤
         // todo 使用缓存不直接操作库
         Monitor monitor = monitorService.getMonitor(alert.getMonitorId());
         if (monitor == null) {
@@ -67,8 +66,7 @@ public class DispatchAlarm {
             // 当监控未管理时  忽略静默其告警信息
             return;
         }
-        if (monitor.getStatus() != CommonConstants.UN_AVAILABLE_CODE
-                && monitor.getStatus() != CommonConstants.UN_REACHABLE_CODE) {
+        if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
             if (CommonConstants.AVAILABLE.equals(alert.getTarget())) {
                 // 可用性告警 需变更监控状态为不可用
                 monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
@@ -76,6 +74,11 @@ public class DispatchAlarm {
                 // 可达性告警 需变更监控状态为不可达
                 monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_REACHABLE_CODE);
             }
+        } else {
+            // 若是恢复告警 需对监控状态进行恢复
+           if (alert.getStatus() == 2) {
+               monitorService.updateMonitorStatus(alert.getMonitorId(), CommonConstants.AVAILABLE_CODE);
+           }
         }
         // 告警落库
         alertService.addAlert(alert);

@@ -263,10 +263,20 @@ public final class CollectRep {
 
     /**
      * <pre>
+     * 监控采集指标集合的采集优先级&gt;=0
+     * </pre>
+     *
+     * <code>uint32 priority = 4;</code>
+     * @return The priority.
+     */
+    int getPriority();
+
+    /**
+     * <pre>
      * 采集时间
      * </pre>
      *
-     * <code>uint64 time = 4;</code>
+     * <code>uint64 time = 5;</code>
      * @return The time.
      */
     long getTime();
@@ -276,7 +286,7 @@ public final class CollectRep {
      * 采集响应码
      * </pre>
      *
-     * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+     * <code>.com.usthe.common.entity.message.Code code = 6;</code>
      * @return The enum numeric value on the wire for code.
      */
     int getCodeValue();
@@ -285,7 +295,7 @@ public final class CollectRep {
      * 采集响应码
      * </pre>
      *
-     * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+     * <code>.com.usthe.common.entity.message.Code code = 6;</code>
      * @return The code.
      */
     com.usthe.common.entity.message.CollectRep.Code getCode();
@@ -295,7 +305,7 @@ public final class CollectRep {
      * 采集响应信息
      * </pre>
      *
-     * <code>string msg = 6;</code>
+     * <code>string msg = 7;</code>
      * @return The msg.
      */
     java.lang.String getMsg();
@@ -304,7 +314,7 @@ public final class CollectRep {
      * 采集响应信息
      * </pre>
      *
-     * <code>string msg = 6;</code>
+     * <code>string msg = 7;</code>
      * @return The bytes for msg.
      */
     com.google.protobuf.ByteString
@@ -315,7 +325,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     java.util.List<com.usthe.common.entity.message.CollectRep.Field> 
         getFieldsList();
@@ -324,7 +334,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     com.usthe.common.entity.message.CollectRep.Field getFields(int index);
     /**
@@ -332,7 +342,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     int getFieldsCount();
     /**
@@ -340,7 +350,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     java.util.List<? extends com.usthe.common.entity.message.CollectRep.FieldOrBuilder> 
         getFieldsOrBuilderList();
@@ -349,7 +359,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     com.usthe.common.entity.message.CollectRep.FieldOrBuilder getFieldsOrBuilder(
         int index);
@@ -359,7 +369,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     java.util.List<com.usthe.common.entity.message.CollectRep.ValueRow> 
         getValuesList();
@@ -368,7 +378,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     com.usthe.common.entity.message.CollectRep.ValueRow getValues(int index);
     /**
@@ -376,7 +386,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     int getValuesCount();
     /**
@@ -384,7 +394,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     java.util.List<? extends com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder> 
         getValuesOrBuilderList();
@@ -393,7 +403,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder getValuesOrBuilder(
         int index);
@@ -469,22 +479,27 @@ public final class CollectRep {
             }
             case 32: {
 
-              time_ = input.readUInt64();
+              priority_ = input.readUInt32();
               break;
             }
             case 40: {
+
+              time_ = input.readUInt64();
+              break;
+            }
+            case 48: {
               int rawValue = input.readEnum();
 
               code_ = rawValue;
               break;
             }
-            case 50: {
+            case 58: {
               java.lang.String s = input.readStringRequireUtf8();
 
               msg_ = s;
               break;
             }
-            case 58: {
+            case 66: {
               if (!((mutable_bitField0_ & 0x00000001) != 0)) {
                 fields_ = new java.util.ArrayList<com.usthe.common.entity.message.CollectRep.Field>();
                 mutable_bitField0_ |= 0x00000001;
@@ -493,7 +508,7 @@ public final class CollectRep {
                   input.readMessage(com.usthe.common.entity.message.CollectRep.Field.parser(), extensionRegistry));
               break;
             }
-            case 66: {
+            case 74: {
               if (!((mutable_bitField0_ & 0x00000002) != 0)) {
                 values_ = new java.util.ArrayList<com.usthe.common.entity.message.CollectRep.ValueRow>();
                 mutable_bitField0_ |= 0x00000002;
@@ -647,14 +662,29 @@ public final class CollectRep {
       }
     }
 
-    public static final int TIME_FIELD_NUMBER = 4;
+    public static final int PRIORITY_FIELD_NUMBER = 4;
+    private int priority_;
+    /**
+     * <pre>
+     * 监控采集指标集合的采集优先级&gt;=0
+     * </pre>
+     *
+     * <code>uint32 priority = 4;</code>
+     * @return The priority.
+     */
+    @java.lang.Override
+    public int getPriority() {
+      return priority_;
+    }
+
+    public static final int TIME_FIELD_NUMBER = 5;
     private long time_;
     /**
      * <pre>
      * 采集时间
      * </pre>
      *
-     * <code>uint64 time = 4;</code>
+     * <code>uint64 time = 5;</code>
      * @return The time.
      */
     @java.lang.Override
@@ -662,14 +692,14 @@ public final class CollectRep {
       return time_;
     }
 
-    public static final int CODE_FIELD_NUMBER = 5;
+    public static final int CODE_FIELD_NUMBER = 6;
     private int code_;
     /**
      * <pre>
      * 采集响应码
      * </pre>
      *
-     * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+     * <code>.com.usthe.common.entity.message.Code code = 6;</code>
      * @return The enum numeric value on the wire for code.
      */
     @java.lang.Override public int getCodeValue() {
@@ -680,7 +710,7 @@ public final class CollectRep {
      * 采集响应码
      * </pre>
      *
-     * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+     * <code>.com.usthe.common.entity.message.Code code = 6;</code>
      * @return The code.
      */
     @java.lang.Override public com.usthe.common.entity.message.CollectRep.Code getCode() {
@@ -689,14 +719,14 @@ public final class CollectRep {
       return result == null ? com.usthe.common.entity.message.CollectRep.Code.UNRECOGNIZED : result;
     }
 
-    public static final int MSG_FIELD_NUMBER = 6;
+    public static final int MSG_FIELD_NUMBER = 7;
     private volatile java.lang.Object msg_;
     /**
      * <pre>
      * 采集响应信息
      * </pre>
      *
-     * <code>string msg = 6;</code>
+     * <code>string msg = 7;</code>
      * @return The msg.
      */
     @java.lang.Override
@@ -717,7 +747,7 @@ public final class CollectRep {
      * 采集响应信息
      * </pre>
      *
-     * <code>string msg = 6;</code>
+     * <code>string msg = 7;</code>
      * @return The bytes for msg.
      */
     @java.lang.Override
@@ -735,14 +765,14 @@ public final class CollectRep {
       }
     }
 
-    public static final int FIELDS_FIELD_NUMBER = 7;
+    public static final int FIELDS_FIELD_NUMBER = 8;
     private java.util.List<com.usthe.common.entity.message.CollectRep.Field> fields_;
     /**
      * <pre>
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     @java.lang.Override
     public java.util.List<com.usthe.common.entity.message.CollectRep.Field> getFieldsList() {
@@ -753,7 +783,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     @java.lang.Override
     public java.util.List<? extends com.usthe.common.entity.message.CollectRep.FieldOrBuilder> 
@@ -765,7 +795,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     @java.lang.Override
     public int getFieldsCount() {
@@ -776,7 +806,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     @java.lang.Override
     public com.usthe.common.entity.message.CollectRep.Field getFields(int index) {
@@ -787,7 +817,7 @@ public final class CollectRep {
      * 采集指标名
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+     * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
      */
     @java.lang.Override
     public com.usthe.common.entity.message.CollectRep.FieldOrBuilder getFieldsOrBuilder(
@@ -795,14 +825,14 @@ public final class CollectRep {
       return fields_.get(index);
     }
 
-    public static final int VALUES_FIELD_NUMBER = 8;
+    public static final int VALUES_FIELD_NUMBER = 9;
     private java.util.List<com.usthe.common.entity.message.CollectRep.ValueRow> values_;
     /**
      * <pre>
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     @java.lang.Override
     public java.util.List<com.usthe.common.entity.message.CollectRep.ValueRow> getValuesList() {
@@ -813,7 +843,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     @java.lang.Override
     public java.util.List<? extends com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder> 
@@ -825,7 +855,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     @java.lang.Override
     public int getValuesCount() {
@@ -836,7 +866,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     @java.lang.Override
     public com.usthe.common.entity.message.CollectRep.ValueRow getValues(int index) {
@@ -847,7 +877,7 @@ public final class CollectRep {
      * 采集指标值集合(fields作为字段名称与ValueRow映射)
      * </pre>
      *
-     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+     * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
      */
     @java.lang.Override
     public com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder getValuesOrBuilder(
@@ -878,20 +908,23 @@ public final class CollectRep {
       if (!getMetricsBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, metrics_);
       }
+      if (priority_ != 0) {
+        output.writeUInt32(4, priority_);
+      }
       if (time_ != 0L) {
-        output.writeUInt64(4, time_);
+        output.writeUInt64(5, time_);
       }
       if (code_ != com.usthe.common.entity.message.CollectRep.Code.SUCCESS.getNumber()) {
-        output.writeEnum(5, code_);
+        output.writeEnum(6, code_);
       }
       if (!getMsgBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, msg_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, msg_);
       }
       for (int i = 0; i < fields_.size(); i++) {
-        output.writeMessage(7, fields_.get(i));
+        output.writeMessage(8, fields_.get(i));
       }
       for (int i = 0; i < values_.size(); i++) {
-        output.writeMessage(8, values_.get(i));
+        output.writeMessage(9, values_.get(i));
       }
       unknownFields.writeTo(output);
     }
@@ -912,24 +945,28 @@ public final class CollectRep {
       if (!getMetricsBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, metrics_);
       }
+      if (priority_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(4, priority_);
+      }
       if (time_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(4, time_);
+          .computeUInt64Size(5, time_);
       }
       if (code_ != com.usthe.common.entity.message.CollectRep.Code.SUCCESS.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(5, code_);
+          .computeEnumSize(6, code_);
       }
       if (!getMsgBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, msg_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, msg_);
       }
       for (int i = 0; i < fields_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, fields_.get(i));
+          .computeMessageSize(8, fields_.get(i));
       }
       for (int i = 0; i < values_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(8, values_.get(i));
+          .computeMessageSize(9, values_.get(i));
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -952,6 +989,8 @@ public final class CollectRep {
           .equals(other.getApp())) return false;
       if (!getMetrics()
           .equals(other.getMetrics())) return false;
+      if (getPriority()
+          != other.getPriority()) return false;
       if (getTime()
           != other.getTime()) return false;
       if (code_ != other.code_) return false;
@@ -979,6 +1018,8 @@ public final class CollectRep {
       hash = (53 * hash) + getApp().hashCode();
       hash = (37 * hash) + METRICS_FIELD_NUMBER;
       hash = (53 * hash) + getMetrics().hashCode();
+      hash = (37 * hash) + PRIORITY_FIELD_NUMBER;
+      hash = (53 * hash) + getPriority();
       hash = (37 * hash) + TIME_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getTime());
@@ -1135,6 +1176,8 @@ public final class CollectRep {
 
         metrics_ = "";
 
+        priority_ = 0;
+
         time_ = 0L;
 
         code_ = 0;
@@ -1183,6 +1226,7 @@ public final class CollectRep {
         result.id_ = id_;
         result.app_ = app_;
         result.metrics_ = metrics_;
+        result.priority_ = priority_;
         result.time_ = time_;
         result.code_ = code_;
         result.msg_ = msg_;
@@ -1262,6 +1306,9 @@ public final class CollectRep {
         if (!other.getMetrics().isEmpty()) {
           metrics_ = other.metrics_;
           onChanged();
+        }
+        if (other.getPriority() != 0) {
+          setPriority(other.getPriority());
         }
         if (other.getTime() != 0L) {
           setTime(other.getTime());
@@ -1590,13 +1637,56 @@ public final class CollectRep {
         return this;
       }
 
+      private int priority_ ;
+      /**
+       * <pre>
+       * 监控采集指标集合的采集优先级&gt;=0
+       * </pre>
+       *
+       * <code>uint32 priority = 4;</code>
+       * @return The priority.
+       */
+      @java.lang.Override
+      public int getPriority() {
+        return priority_;
+      }
+      /**
+       * <pre>
+       * 监控采集指标集合的采集优先级&gt;=0
+       * </pre>
+       *
+       * <code>uint32 priority = 4;</code>
+       * @param value The priority to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPriority(int value) {
+        
+        priority_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 监控采集指标集合的采集优先级&gt;=0
+       * </pre>
+       *
+       * <code>uint32 priority = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPriority() {
+        
+        priority_ = 0;
+        onChanged();
+        return this;
+      }
+
       private long time_ ;
       /**
        * <pre>
        * 采集时间
        * </pre>
        *
-       * <code>uint64 time = 4;</code>
+       * <code>uint64 time = 5;</code>
        * @return The time.
        */
       @java.lang.Override
@@ -1608,7 +1698,7 @@ public final class CollectRep {
        * 采集时间
        * </pre>
        *
-       * <code>uint64 time = 4;</code>
+       * <code>uint64 time = 5;</code>
        * @param value The time to set.
        * @return This builder for chaining.
        */
@@ -1623,7 +1713,7 @@ public final class CollectRep {
        * 采集时间
        * </pre>
        *
-       * <code>uint64 time = 4;</code>
+       * <code>uint64 time = 5;</code>
        * @return This builder for chaining.
        */
       public Builder clearTime() {
@@ -1639,7 +1729,7 @@ public final class CollectRep {
        * 采集响应码
        * </pre>
        *
-       * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+       * <code>.com.usthe.common.entity.message.Code code = 6;</code>
        * @return The enum numeric value on the wire for code.
        */
       @java.lang.Override public int getCodeValue() {
@@ -1650,7 +1740,7 @@ public final class CollectRep {
        * 采集响应码
        * </pre>
        *
-       * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+       * <code>.com.usthe.common.entity.message.Code code = 6;</code>
        * @param value The enum numeric value on the wire for code to set.
        * @return This builder for chaining.
        */
@@ -1665,7 +1755,7 @@ public final class CollectRep {
        * 采集响应码
        * </pre>
        *
-       * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+       * <code>.com.usthe.common.entity.message.Code code = 6;</code>
        * @return The code.
        */
       @java.lang.Override
@@ -1679,7 +1769,7 @@ public final class CollectRep {
        * 采集响应码
        * </pre>
        *
-       * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+       * <code>.com.usthe.common.entity.message.Code code = 6;</code>
        * @param value The code to set.
        * @return This builder for chaining.
        */
@@ -1697,7 +1787,7 @@ public final class CollectRep {
        * 采集响应码
        * </pre>
        *
-       * <code>.com.usthe.common.entity.message.Code code = 5;</code>
+       * <code>.com.usthe.common.entity.message.Code code = 6;</code>
        * @return This builder for chaining.
        */
       public Builder clearCode() {
@@ -1713,7 +1803,7 @@ public final class CollectRep {
        * 采集响应信息
        * </pre>
        *
-       * <code>string msg = 6;</code>
+       * <code>string msg = 7;</code>
        * @return The msg.
        */
       public java.lang.String getMsg() {
@@ -1733,7 +1823,7 @@ public final class CollectRep {
        * 采集响应信息
        * </pre>
        *
-       * <code>string msg = 6;</code>
+       * <code>string msg = 7;</code>
        * @return The bytes for msg.
        */
       public com.google.protobuf.ByteString
@@ -1754,7 +1844,7 @@ public final class CollectRep {
        * 采集响应信息
        * </pre>
        *
-       * <code>string msg = 6;</code>
+       * <code>string msg = 7;</code>
        * @param value The msg to set.
        * @return This builder for chaining.
        */
@@ -1773,7 +1863,7 @@ public final class CollectRep {
        * 采集响应信息
        * </pre>
        *
-       * <code>string msg = 6;</code>
+       * <code>string msg = 7;</code>
        * @return This builder for chaining.
        */
       public Builder clearMsg() {
@@ -1787,7 +1877,7 @@ public final class CollectRep {
        * 采集响应信息
        * </pre>
        *
-       * <code>string msg = 6;</code>
+       * <code>string msg = 7;</code>
        * @param value The bytes for msg to set.
        * @return This builder for chaining.
        */
@@ -1820,7 +1910,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public java.util.List<com.usthe.common.entity.message.CollectRep.Field> getFieldsList() {
         if (fieldsBuilder_ == null) {
@@ -1834,7 +1924,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public int getFieldsCount() {
         if (fieldsBuilder_ == null) {
@@ -1848,7 +1938,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public com.usthe.common.entity.message.CollectRep.Field getFields(int index) {
         if (fieldsBuilder_ == null) {
@@ -1862,7 +1952,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder setFields(
           int index, com.usthe.common.entity.message.CollectRep.Field value) {
@@ -1883,7 +1973,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder setFields(
           int index, com.usthe.common.entity.message.CollectRep.Field.Builder builderForValue) {
@@ -1901,7 +1991,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder addFields(com.usthe.common.entity.message.CollectRep.Field value) {
         if (fieldsBuilder_ == null) {
@@ -1921,7 +2011,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder addFields(
           int index, com.usthe.common.entity.message.CollectRep.Field value) {
@@ -1942,7 +2032,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder addFields(
           com.usthe.common.entity.message.CollectRep.Field.Builder builderForValue) {
@@ -1960,7 +2050,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder addFields(
           int index, com.usthe.common.entity.message.CollectRep.Field.Builder builderForValue) {
@@ -1978,7 +2068,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder addAllFields(
           java.lang.Iterable<? extends com.usthe.common.entity.message.CollectRep.Field> values) {
@@ -1997,7 +2087,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder clearFields() {
         if (fieldsBuilder_ == null) {
@@ -2014,7 +2104,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public Builder removeFields(int index) {
         if (fieldsBuilder_ == null) {
@@ -2031,7 +2121,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public com.usthe.common.entity.message.CollectRep.Field.Builder getFieldsBuilder(
           int index) {
@@ -2042,7 +2132,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public com.usthe.common.entity.message.CollectRep.FieldOrBuilder getFieldsOrBuilder(
           int index) {
@@ -2056,7 +2146,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public java.util.List<? extends com.usthe.common.entity.message.CollectRep.FieldOrBuilder> 
            getFieldsOrBuilderList() {
@@ -2071,7 +2161,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public com.usthe.common.entity.message.CollectRep.Field.Builder addFieldsBuilder() {
         return getFieldsFieldBuilder().addBuilder(
@@ -2082,7 +2172,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public com.usthe.common.entity.message.CollectRep.Field.Builder addFieldsBuilder(
           int index) {
@@ -2094,7 +2184,7 @@ public final class CollectRep {
        * 采集指标名
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.Field fields = 7;</code>
+       * <code>repeated .com.usthe.common.entity.message.Field fields = 8;</code>
        */
       public java.util.List<com.usthe.common.entity.message.CollectRep.Field.Builder> 
            getFieldsBuilderList() {
@@ -2132,7 +2222,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public java.util.List<com.usthe.common.entity.message.CollectRep.ValueRow> getValuesList() {
         if (valuesBuilder_ == null) {
@@ -2146,7 +2236,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public int getValuesCount() {
         if (valuesBuilder_ == null) {
@@ -2160,7 +2250,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public com.usthe.common.entity.message.CollectRep.ValueRow getValues(int index) {
         if (valuesBuilder_ == null) {
@@ -2174,7 +2264,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder setValues(
           int index, com.usthe.common.entity.message.CollectRep.ValueRow value) {
@@ -2195,7 +2285,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder setValues(
           int index, com.usthe.common.entity.message.CollectRep.ValueRow.Builder builderForValue) {
@@ -2213,7 +2303,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder addValues(com.usthe.common.entity.message.CollectRep.ValueRow value) {
         if (valuesBuilder_ == null) {
@@ -2233,7 +2323,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder addValues(
           int index, com.usthe.common.entity.message.CollectRep.ValueRow value) {
@@ -2254,7 +2344,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder addValues(
           com.usthe.common.entity.message.CollectRep.ValueRow.Builder builderForValue) {
@@ -2272,7 +2362,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder addValues(
           int index, com.usthe.common.entity.message.CollectRep.ValueRow.Builder builderForValue) {
@@ -2290,7 +2380,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder addAllValues(
           java.lang.Iterable<? extends com.usthe.common.entity.message.CollectRep.ValueRow> values) {
@@ -2309,7 +2399,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder clearValues() {
         if (valuesBuilder_ == null) {
@@ -2326,7 +2416,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public Builder removeValues(int index) {
         if (valuesBuilder_ == null) {
@@ -2343,7 +2433,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public com.usthe.common.entity.message.CollectRep.ValueRow.Builder getValuesBuilder(
           int index) {
@@ -2354,7 +2444,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder getValuesOrBuilder(
           int index) {
@@ -2368,7 +2458,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public java.util.List<? extends com.usthe.common.entity.message.CollectRep.ValueRowOrBuilder> 
            getValuesOrBuilderList() {
@@ -2383,7 +2473,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public com.usthe.common.entity.message.CollectRep.ValueRow.Builder addValuesBuilder() {
         return getValuesFieldBuilder().addBuilder(
@@ -2394,7 +2484,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public com.usthe.common.entity.message.CollectRep.ValueRow.Builder addValuesBuilder(
           int index) {
@@ -2406,7 +2496,7 @@ public final class CollectRep {
        * 采集指标值集合(fields作为字段名称与ValueRow映射)
        * </pre>
        *
-       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 8;</code>
+       * <code>repeated .com.usthe.common.entity.message.ValueRow values = 9;</code>
        */
       public java.util.List<com.usthe.common.entity.message.CollectRep.ValueRow.Builder> 
            getValuesBuilderList() {
@@ -4090,18 +4180,18 @@ public final class CollectRep {
   static {
     java.lang.String[] descriptorData = {
       "\n\021collect_rep.proto\022\037com.usthe.common.en" +
-      "tity.message\"\372\001\n\013MetricsData\022\n\n\002id\030\001 \001(\004" +
-      "\022\013\n\003app\030\002 \001(\t\022\017\n\007metrics\030\003 \001(\t\022\014\n\004time\030\004" +
-      " \001(\004\0223\n\004code\030\005 \001(\0162%.com.usthe.common.en" +
-      "tity.message.Code\022\013\n\003msg\030\006 \001(\t\0226\n\006fields" +
-      "\030\007 \003(\0132&.com.usthe.common.entity.message" +
-      ".Field\0229\n\006values\030\010 \003(\0132).com.usthe.commo" +
-      "n.entity.message.ValueRow\"#\n\005Field\022\014\n\004na" +
-      "me\030\001 \001(\t\022\014\n\004type\030\002 \001(\r\"-\n\010ValueRow\022\020\n\010in" +
-      "stance\030\001 \001(\t\022\017\n\007columns\030\002 \003(\t*b\n\004Code\022\013\n" +
-      "\007SUCCESS\020\000\022\020\n\014UN_AVAILABLE\020\001\022\020\n\014UN_REACH" +
-      "ABLE\020\002\022\022\n\016UN_CONNECTABLE\020\003\022\010\n\004FAIL\020\004\022\013\n\007" +
-      "TIMEOUT\020\005b\006proto3"
+      "tity.message\"\214\002\n\013MetricsData\022\n\n\002id\030\001 \001(\004" +
+      "\022\013\n\003app\030\002 \001(\t\022\017\n\007metrics\030\003 \001(\t\022\020\n\010priori" +
+      "ty\030\004 \001(\r\022\014\n\004time\030\005 \001(\004\0223\n\004code\030\006 \001(\0162%.c" +
+      "om.usthe.common.entity.message.Code\022\013\n\003m" +
+      "sg\030\007 \001(\t\0226\n\006fields\030\010 \003(\0132&.com.usthe.com" +
+      "mon.entity.message.Field\0229\n\006values\030\t \003(\013" +
+      "2).com.usthe.common.entity.message.Value" +
+      "Row\"#\n\005Field\022\014\n\004name\030\001 \001(\t\022\014\n\004type\030\002 \001(\r" +
+      "\"-\n\010ValueRow\022\020\n\010instance\030\001 \001(\t\022\017\n\007column" +
+      "s\030\002 \003(\t*b\n\004Code\022\013\n\007SUCCESS\020\000\022\020\n\014UN_AVAIL" +
+      "ABLE\020\001\022\020\n\014UN_REACHABLE\020\002\022\022\n\016UN_CONNECTAB" +
+      "LE\020\003\022\010\n\004FAIL\020\004\022\013\n\007TIMEOUT\020\005b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4112,7 +4202,7 @@ public final class CollectRep {
     internal_static_com_usthe_common_entity_message_MetricsData_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_usthe_common_entity_message_MetricsData_descriptor,
-        new java.lang.String[] { "Id", "App", "Metrics", "Time", "Code", "Msg", "Fields", "Values", });
+        new java.lang.String[] { "Id", "App", "Metrics", "Priority", "Time", "Code", "Msg", "Fields", "Values", });
     internal_static_com_usthe_common_entity_message_Field_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_com_usthe_common_entity_message_Field_fieldAccessorTable = new

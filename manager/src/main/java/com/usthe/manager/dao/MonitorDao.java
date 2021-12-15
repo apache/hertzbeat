@@ -4,6 +4,7 @@ import com.usthe.manager.pojo.dto.AppCount;
 import com.usthe.manager.pojo.entity.Monitor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -50,6 +51,7 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
      * @param id 监控ID
      * @param status 监控状态
      */
+    @Modifying
     @Query("update Monitor set status = :status where id = :id")
     void updateMonitorStatus(@Param(value = "id") Long id, @Param(value = "status") byte status);
 }

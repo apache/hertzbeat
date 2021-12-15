@@ -116,7 +116,7 @@ CREATE TABLE  alert
     alert_define_id  bigint           not null comment '告警关联的告警定义ID',
     priority         tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     content          varchar(255)     not null comment '告警通知实际内容',
-    status           tinyint          not null default 0 comment '告警状态: 0-待发送 1-已发送 2-已过期(已经超过持续时间)',
+    status           tinyint          not null default 0 comment '告警状态: 0-正常告警 1-阈值触发但未达到告警次数 2-恢复告警',
     times            int              not null comment '触发次数,即达到告警定义的触发阈值次数要求后才会发告警',
     gmt_create       timestamp        default current_timestamp comment 'create time',
     primary key (id)
