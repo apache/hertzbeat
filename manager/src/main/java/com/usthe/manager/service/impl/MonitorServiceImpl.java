@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  * @date 2021/11/14 13:06
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 

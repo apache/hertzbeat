@@ -67,7 +67,7 @@ public class Alert {
     @Length(max = 1024)
     private String content;
 
-    @ApiModelProperty(value = "告警状态: 0-待发送 1-已发送 2-已过期(已经超过持续时间)",
+    @ApiModelProperty(value = "告警状态: 0-正常告警 1-触发中:阈值触发但未达到告警次数 2-恢复告警",
             example = "1", accessMode = READ_WRITE, position = 7)
     @Min(0)
     @Max(2)

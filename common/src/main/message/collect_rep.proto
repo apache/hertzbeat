@@ -9,16 +9,18 @@ message MetricsData
     string app = 2;
     // 监控采集的指标集合 eg: cpu | memory | health
     string metrics = 3;
+    // 监控采集指标集合的采集优先级>=0
+    uint32 priority = 4;
     // 采集时间
-    uint64 time = 4;
+    uint64 time = 5;
     // 采集响应码
-    Code code = 5;
+    Code code = 6;
     // 采集响应信息
-    string msg = 6;
+    string msg = 7;
     // 采集指标名
-    repeated Field fields = 7;
+    repeated Field fields = 8;
     // 采集指标值集合(fields作为字段名称与ValueRow映射)
-    repeated ValueRow values = 8;
+    repeated ValueRow values = 9;
 }
 
 message Field
