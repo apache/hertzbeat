@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  *
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 
