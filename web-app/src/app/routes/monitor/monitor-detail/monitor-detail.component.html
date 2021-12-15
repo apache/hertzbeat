@@ -44,7 +44,28 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">状态</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.status}}</p></div>
+        <div nz-col nzSpan="16">
+          <nz-tag *ngIf="monitor?.status == 0" nzColor="default">
+            <i nz-icon nzType="robot" nzTheme="outline"></i>
+            <span>未监控</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor?.status == 1" nzColor="success">
+            <i nz-icon nzType="smile" nzTheme="outline"></i>
+            <span>正常监控</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor?.status == 2" nzColor="warning">
+            <i nz-icon nzType="meh" nzTheme="outline"></i>
+            <span>监控不可用</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor?.status == 3" nzColor="error">
+            <i nz-icon nzType="frown" nzTheme="outline"></i>
+            <span>监控不可达</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor?.status == 4" nzColor="default">
+            <i nz-icon nzType="sync"></i>
+            <span>监控已挂起</span>
+          </nz-tag>
+        </div>
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">采集间隔</p></div>
