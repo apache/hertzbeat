@@ -75,7 +75,7 @@ import { environment } from '@env/environment';
 })
 export class LayoutBasicComponent {
   options: LayoutDefaultOptions = {
-    logoExpanded: `./assets/logo-color.svg`,
+    logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`,
   };
   searchToggleStatus = false;
