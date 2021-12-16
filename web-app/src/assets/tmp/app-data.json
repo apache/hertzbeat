@@ -99,7 +99,7 @@
           "link": "/alert/setting"
         },
         {
-          "text": "告警转发",
+          "text": "告警通知",
           "i18n": "menu.alert.dispatch",
           "icon": "anticon-notification",
           "link": "/alert/notice"
