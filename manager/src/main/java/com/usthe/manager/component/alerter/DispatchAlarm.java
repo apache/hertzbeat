@@ -86,6 +86,8 @@ public class DispatchAlarm {
 
     private void sendAlertDataListener(Alert alert) {
         // todo 转发配置的邮件 微信 webhook
+        
+
     }
 
 
