@@ -19,17 +19,17 @@ const COMPONENTS: Type<void>[] = [
 ];
 
 @NgModule({
-  imports: [
-    SharedModule,
-    AlertRoutingModule,
-    NzDividerModule,
-    NzBreadCrumbModule,
-    NzTagModule,
-    NzRadioModule,
-    NzSwitchModule,
-    NzCascaderModule,
-    NzTransferModule,
-  ],
+    imports: [
+        SharedModule,
+        AlertRoutingModule,
+        NzDividerModule,
+        NzBreadCrumbModule,
+        NzTagModule,
+        NzRadioModule,
+        NzSwitchModule,
+        NzCascaderModule,
+        NzTransferModule
+    ],
   declarations: COMPONENTS,
 })
 export class AlertModule { }

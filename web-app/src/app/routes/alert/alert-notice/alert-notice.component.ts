@@ -1,4 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import {ActivatedRoute, Router} from "@angular/router";
+import {NzModalService} from "ng-zorro-antd/modal";
+import {NzNotificationService} from "ng-zorro-antd/notification";
+import {NzMessageService} from "ng-zorro-antd/message";
+import {NoticeReceiverService} from "../../../service/notice-receiver.service";
+import {NoticeRuleService} from "../../../service/notice-rule.service";
+import {NoticeReceiver} from "../../../pojo/NoticeReceiver";
+import {finalize} from "rxjs/operators";
+import {NoticeRule} from "../../../pojo/NoticeRule";
 
 @Component({
   selector: 'app-alert-notice',
@@ -8,9 +17,209 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AlertNoticeComponent implements OnInit {
 
-  constructor() { }
+  constructor(private route: ActivatedRoute,
+              private router: Router,
+              private modal: NzModalService,
+              private notifySvc: NzNotificationService,
+              private msg: NzMessageService,
+              private noticeReceiverSvc: NoticeReceiverService,
+              private noticeRuleSvc : NoticeRuleService) { }
+
+  receivers!: NoticeReceiver[];
+  receiverTableLoading: boolean = true;
+  rules!: NoticeRule[];
+  ruleTableLoading: boolean = true;
 
   ngOnInit(): void {
+    this.loadReceiversTable();
+    this.loadRulesTable();
+  }
+
+  loadReceiversTable() {
+    this.receiverTableLoading = true;
+    let receiverInit$ = this.noticeReceiverSvc.getReceivers()
+      .subscribe(message => {
+        this.receiverTableLoading = false;
+        if (message.code === 0) {
+          this.receivers = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+        receiverInit$.unsubscribe();
+      }, error => {
+        this.receiverTableLoading = false;
+        receiverInit$.unsubscribe();
+      });
+  }
+  loadRulesTable() {
+    this.ruleTableLoading = true;
+    let rulesInit$ = this.noticeRuleSvc.getNoticeRules()
+      .subscribe(message => {
+        this.ruleTableLoading = false;
+        if (message.code === 0) {
+          this.rules = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+        rulesInit$.unsubscribe();
+      }, error => {
+        this.ruleTableLoading = false;
+        rulesInit$.unsubscribe();
+      });
+  }
+
+  onDeleteOneNoticeReceiver(receiveId : number) {
+    const deleteReceiver$ = this.noticeReceiverSvc.deleteReceiver(receiveId)
+      .pipe(finalize(() => {
+        deleteReceiver$.unsubscribe();
+      }))
+      .subscribe(message => {
+        if (message.code === 0) {
+          this.notifySvc.success("删除成功！", "");
+          this.loadReceiversTable();
+        } else {
+          this.notifySvc.error("删除失败！", message.msg);
+        }
+      }, error => {
+        this.notifySvc.error("删除失败！", error.msg);
+      })
+  }
+
+  onDeleteOneNoticeRule(ruleId : number) {
+    const deleteRule$ = this.noticeRuleSvc.deleteNoticeRule(ruleId)
+      .pipe(finalize(() => {
+        deleteRule$.unsubscribe();
+      }))
+      .subscribe(message => {
+        if (message.code === 0) {
+          this.notifySvc.success("删除成功！", "");
+          this.loadRulesTable();
+        } else {
+          this.notifySvc.error("删除失败！", message.msg);
+        }
+      }, error => {
+        this.notifySvc.error("删除失败！", error.msg);
+      })
+  }
+
+  // start 新增或修改通知接收人弹出框
+  isManageReceiverModalVisible : boolean = false;
+  isManageReceiverModalAdd: boolean = true;
+  isManageReceiverModalOkLoading: boolean = false;
+  receiver!: NoticeReceiver;
+
+  onNewNoticeReceiver() {
+    this.receiver = new NoticeReceiver();
+    this.isManageReceiverModalVisible = true;
+    this.isManageReceiverModalAdd = true;
+  }
+  onEditOneNoticeReceiver(receiver : NoticeReceiver) {
+    this.receiver = receiver;
+    this.isManageReceiverModalVisible = true;
+    this.isManageReceiverModalAdd = false;
+  }
+
+  onManageReceiverModalCancel() {
+    this.isManageReceiverModalVisible = false;
+  }
+  onManageReceiverModalOk() {
+    this.isManageReceiverModalOkLoading = true;
+    if (this.isManageReceiverModalAdd) {
+      const modalOk$ = this.noticeReceiverSvc.newReceiver(this.receiver)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isManageReceiverModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isManageReceiverModalVisible = false;
+            this.notifySvc.success("新增成功！", "");
+            this.loadReceiversTable();
+          } else {
+            this.notifySvc.error("新增失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("新增失败！", error.msg);
+        })
+    } else {
+      const modalOk$ = this.noticeReceiverSvc.editReceiver(this.receiver)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isManageReceiverModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isManageReceiverModalVisible = false;
+            this.notifySvc.success("修改成功！", "");
+            this.loadReceiversTable();
+          } else {
+            this.notifySvc.error("修改失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("修改失败！", error.msg);
+        })
+    }
+  }
+
+  // start 新增或修改通知策略弹出框
+  isManageRuleModalVisible : boolean = false;
+  isManageRuleModalAdd: boolean = true;
+  isManageRuleModalOkLoading: boolean = false;
+  rule!: NoticeRule;
+
+  onNewNoticeRule() {
+    this.rule = new NoticeRule();
+    this.isManageRuleModalVisible = true;
+    this.isManageRuleModalAdd = true;
+  }
+
+  onEditOneNoticeRule(rule : NoticeRule) {
+    this.rule = rule;
+    this.isManageRuleModalVisible = true;
+    this.isManageRuleModalAdd = false;
+  }
+
+  onManageRuleModalCancel() {
+    this.isManageRuleModalVisible = false;
+  }
+
+  onManageRuleModalOk() {
+    this.isManageRuleModalOkLoading = true;
+    if (this.isManageRuleModalAdd) {
+      const modalOk$ = this.noticeRuleSvc.newNoticeRule(this.rule)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isManageRuleModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isManageRuleModalVisible = false;
+            this.notifySvc.success("新增成功！", "");
+            this.loadRulesTable();
+          } else {
+            this.notifySvc.error("新增失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("新增失败！", error.msg);
+        })
+    } else {
+      const modalOk$ = this.noticeRuleSvc.editNoticeRule(this.rule)
+        .pipe(finalize(() => {
+          modalOk$.unsubscribe();
+          this.isManageRuleModalOkLoading = false;
+        }))
+        .subscribe(message => {
+          if (message.code === 0) {
+            this.isManageRuleModalVisible = false;
+            this.notifySvc.success("修改成功！", "");
+            this.loadRulesTable();
+          } else {
+            this.notifySvc.error("修改失败！", message.msg);
+          }
+        }, error => {
+          this.notifySvc.error("修改失败！", error.msg);
+        })
+    }
   }
 
 }
