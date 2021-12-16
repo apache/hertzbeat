@@ -122,4 +122,43 @@ CREATE TABLE  alert
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------
+-- Table structure for notice_rule
+-- ----------------------------
+DROP TABLE IF EXISTS  notice_rule ;
+CREATE TABLE  notice_rule
+(
+    id           bigint           not null auto_increment comment '通知策略主键索引ID',
+    name         varchar(100)     not null comment '策略名称',
+    receiverId   bigint           not null comment '消息接收人ID',
+    receiverName varchar(100)     not null comment '消息接收人标识',
+    enable       boolean          not null default true comment '是否启用此策略',
+    filter_all   boolean          not null default true comment '是否转发所有',
+    creator      varchar(100)     comment '创建者',
+    modifier     varchar(100)     comment '最新修改者',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for notice_receiver
+-- ----------------------------
+DROP TABLE IF EXISTS  notice_receiver ;
+CREATE TABLE  notice_receiver
+(
+    id           bigint           not null auto_increment comment '消息接收人ID',
+    name         varchar(100)     not null comment '消息接收人姓名',
+    type         tinyint          not null comment '通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号',
+    phone        varchar(100)     comment '手机号, 通知方式为手机短信时有效',
+    email        varchar(100)     comment '邮箱账号, 通知方式为邮箱时有效',
+    hook_url     varchar(100)     comment 'URL地址, 通知方式为webhook有效',
+    wechat_id    varchar(100)     comment 'wechat用户openId, 通知方式为微信公众号有效',
+    creator      varchar(100)     comment '创建者',
+    modifier     varchar(100)     comment '最新修改者',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
