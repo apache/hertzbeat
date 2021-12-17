@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {NzModalService} from "ng-zorro-antd/modal";
 import {NzNotificationService} from "ng-zorro-antd/notification";
-import {NzMessageService} from "ng-zorro-antd/message";
 import {NoticeReceiverService} from "../../../service/notice-receiver.service";
 import {NoticeRuleService} from "../../../service/notice-rule.service";
 import {NoticeReceiver} from "../../../pojo/NoticeReceiver";
@@ -17,11 +14,7 @@ import {NoticeRule} from "../../../pojo/NoticeRule";
 })
 export class AlertNoticeComponent implements OnInit {
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private modal: NzModalService,
-              private notifySvc: NzNotificationService,
-              private msg: NzMessageService,
+  constructor(private notifySvc: NzNotificationService,
               private noticeReceiverSvc: NoticeReceiverService,
               private noticeRuleSvc : NoticeRuleService) { }
 
@@ -47,6 +40,7 @@ export class AlertNoticeComponent implements OnInit {
         }
         receiverInit$.unsubscribe();
       }, error => {
+        console.error(error.msg);
         this.receiverTableLoading = false;
         receiverInit$.unsubscribe();
       });
@@ -63,6 +57,7 @@ export class AlertNoticeComponent implements OnInit {
         }
         rulesInit$.unsubscribe();
       }, error => {
+        console.error(error.msg);
         this.ruleTableLoading = false;
         rulesInit$.unsubscribe();
       });
@@ -166,6 +161,7 @@ export class AlertNoticeComponent implements OnInit {
   isManageRuleModalAdd: boolean = true;
   isManageRuleModalOkLoading: boolean = false;
   rule!: NoticeRule;
+  receiversOption: any[] = [];
 
   onNewNoticeRule() {
     this.rule = new NoticeRule();
@@ -177,6 +173,39 @@ export class AlertNoticeComponent implements OnInit {
     this.rule = rule;
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
+    this.receiversOption.push({
+      value: rule.receiverId,
+      label: rule.receiverName
+    })
+  }
+
+  loadReceiversOption() {
+    let receiverOption$ = this.noticeReceiverSvc.getReceivers()
+      .subscribe(message => {
+        if (message.code === 0) {
+          let data = message.data;
+          this.receiversOption = [];
+          data.forEach(item => {
+            let label = item.name + '-';
+            switch (item.type) {
+              case 0: label = label + 'Phone';break;
+              case 1: label = label + 'Email';break;
+              case 2: label = label + 'WebHook';break;
+              case 3: label = label + 'WeChat';break;
+            }
+            this.receiversOption.push({
+              value: item.id,
+              label: label
+            });
+          })
+        } else {
+          console.warn(message.msg);
+        }
+        receiverOption$.unsubscribe();
+      }, error => {
+        console.error(error.msg);
+        receiverOption$.unsubscribe();
+      });
   }
 
   onManageRuleModalCancel() {
@@ -184,6 +213,11 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
+    this.receiversOption.forEach(option => {
+      if (option.value == this.rule.receiverId) {
+        this.rule.receiverName = option.label;
+      }
+    });
     this.isManageRuleModalOkLoading = true;
     if (this.isManageRuleModalAdd) {
       const modalOk$ = this.noticeRuleSvc.newNoticeRule(this.rule)
