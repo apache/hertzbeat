@@ -12,7 +12,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,10 +75,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
         // todo 使用缓存
-        List<NoticeRule> rules = noticeRuleDao.findAll();
+        List<NoticeRule> rules = noticeRuleDao.findNoticeRulesByEnableTrue();
         // todo 暂时规则是全部转发 后面实现更多匹配规则：告警状态选择 监控类型选择等
         Set<Long> receiverIds = rules.stream()
-                .filter(item -> item.isFilterAll() && item.isEnable())
+                .filter(NoticeRule::isFilterAll)
                 .map(NoticeRule::getReceiverId)
                 .collect(Collectors.toSet());
         return noticeReceiverDao.findAllById(receiverIds);
