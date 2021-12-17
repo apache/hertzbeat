@@ -234,6 +234,12 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item >
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "enable">是否启用</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="rule.enable" name="enable" id="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item >
     </form>
   </div>
 </nz-modal>
