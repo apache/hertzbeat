@@ -208,24 +208,23 @@
         </nz-form-control>
       </nz-form-item >
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "filterAll">全局默认</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "filterAll">转发所有</nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-switch [(ngModel)]="rule.filterAll" name="filterAll" id="filterAll"></nz-switch>
+          <nz-switch [(ngModel)]="rule.filterAll" disabled name="filterAll" id="filterAll"></nz-switch>
         </nz-form-control>
       </nz-form-item >
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "receiver">全局默认</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor= "receiver">接收人</nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-select
             [(ngModel)]="rule.receiverId"
+            (nzOpenChange)="loadReceiversOption()"
+            [nzOptions]="receiversOption"
+            nzShowSearch
             nzAllowClear
-            nzPlaceHolder="Choose"
+            nzPlaceHolder="Select a person"
             name="receiver" id="receiver"
           >
-            <!--todo 消息接收人选择-->
-            <nz-option [nzValue]="0" [nzLabel]="rule.receiverName"></nz-option>
-            <nz-option [nzValue]="1" [nzLabel]="rule.receiverName"></nz-option>
-            <nz-option [nzValue]="2" [nzLabel]="rule.receiverName"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item >
