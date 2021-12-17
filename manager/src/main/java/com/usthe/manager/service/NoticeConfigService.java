@@ -1,5 +1,6 @@
 package com.usthe.manager.service;
 
+import com.usthe.alert.pojo.entity.Alert;
 import com.usthe.manager.pojo.entity.NoticeReceiver;
 import com.usthe.manager.pojo.entity.NoticeRule;
 import org.springframework.data.jpa.domain.Specification;
@@ -62,4 +63,11 @@ public interface NoticeConfigService {
      * @param ruleId 通知策略ID
      */
     void deleteNoticeRule(Long ruleId);
+
+    /**
+     * 根据告警信息与所有通知策略匹配，过滤出需要通知的接收人
+     * @param alert 告警信息
+     * @return 接收人
+     */
+    List<NoticeReceiver> getReceiverFilterRule(Alert alert);
 }

@@ -6,9 +6,16 @@ import com.usthe.alert.pojo.entity.Alert;
 import com.usthe.alert.service.AlertService;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.pojo.entity.Monitor;
+import com.usthe.manager.pojo.entity.NoticeReceiver;
 import com.usthe.manager.service.MonitorService;
+import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * 告警信息入库分发
@@ -23,13 +30,18 @@ public class DispatchAlarm {
     private AlerterDataQueue dataQueue;
     private AlertService alertService;
     private MonitorService monitorService;
+    private NoticeConfigService noticeConfigService;
+    private JavaMailSender javaMailSender;
 
     public DispatchAlarm(AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
+                         JavaMailSender javaMailSender,NoticeConfigService noticeConfigService,
                          AlertService alertService, MonitorService monitorService) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alertService = alertService;
         this.monitorService = monitorService;
+        this.noticeConfigService = noticeConfigService;
+        this.javaMailSender = javaMailSender;
         startDispatch();
     }
 
@@ -86,8 +98,46 @@ public class DispatchAlarm {
 
     private void sendAlertDataListener(Alert alert) {
         // todo 转发配置的邮件 微信 webhook
-        
+        List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
+        // todo 发送通知这里暂时单线程
+        for (NoticeReceiver receiver : receivers) {
+            switch (receiver.getType()) {
+                // todo 短信通知
+                case 0: break;
+                case 1: sendEmailAlert(receiver, alert); break;
+                case 2: sendWebHookAlert(receiver, alert); break;
+                case 3: sendWeChatAlert(receiver, alert); break;
+                default: break;
+            }
+        }
+    }
 
+    private void sendWeChatAlert(NoticeReceiver receiver, Alert alert) {
+
+    }
+
+    private void sendWebHookAlert(NoticeReceiver receiver, Alert alert) {
+
+    }
+
+    private void sendEmailAlert(NoticeReceiver receiver, Alert alert) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("TanCloud探云-监控告警");
+        message.setFrom("gongchao@tancloud.cn");
+        message.setTo(receiver.getEmail());
+        message.setSentDate(new Date());
+        message.setText("探云TanCloud-监控告警\n" +
+                "告警目标对象: " + alert.getTarget() + "\n" +
+                "所属监控ID: " + alert.getMonitorId() + "\n" +
+                "所属监控名称: " + alert.getMonitorName() + "\n" +
+                "告警级别: " + alert.getPriority() + "\n" +
+                "告警详情: \n" + alert.getContent());
+        javaMailSender.send(message);
+    }
+
+    private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
+        // todo 使用缓存
+        return noticeConfigService.getReceiverFilterRule(alert);
     }
 
 
