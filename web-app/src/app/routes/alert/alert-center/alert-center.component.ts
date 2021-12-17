@@ -28,6 +28,10 @@ export class AlertCenterComponent implements OnInit {
     this.loadAlertsTable();
   }
 
+  sync() {
+    this.loadAlertsTable();
+  }
+
   loadAlertsTable() {
     this.tableLoading = true;
     let alertsInit$ = this.alertSvc.getAlerts(this.pageIndex - 1, this.pageSize)

@@ -42,7 +42,12 @@ export class MonitorListComponent implements OnInit {
       });
   }
 
+  sync() {
+    this.loadMonitorTable();
+  }
+
   loadMonitorTable() {
+    this.tableLoading = true;
     let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize)
       .subscribe(message => {
         this.tableLoading = false;

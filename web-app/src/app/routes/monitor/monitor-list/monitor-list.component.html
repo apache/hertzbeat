@@ -12,7 +12,6 @@
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
-
 <button nz-button nzType="primary">
   <a routerLink="/monitors/new" [queryParams]="{app: app}">
     <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
@@ -34,6 +33,9 @@
 <button nz-button nzType="primary" (click)="onCancelManageMonitors()">
   <i nz-icon nzType="down-circle" nzTheme="outline"></i>
   取消纳管
+</button>
+<button nz-button nzType="primary" (click)="sync()">
+  <i nz-icon nzType="sync" nzTheme="outline"></i>
 </button>
 
 <nz-table #fixedTable [nzData]="monitors"
