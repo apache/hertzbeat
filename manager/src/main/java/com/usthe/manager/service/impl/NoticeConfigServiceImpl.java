@@ -1,5 +1,6 @@
 package com.usthe.manager.service.impl;
 
+import com.usthe.alert.pojo.entity.Alert;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.manager.pojo.entity.NoticeReceiver;
@@ -11,7 +12,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 消息通知配置实现
@@ -67,5 +71,17 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public void deleteNoticeRule(Long ruleId) {
         noticeRuleDao.deleteById(ruleId);
+    }
+
+    @Override
+    public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
+        // todo 使用缓存
+        List<NoticeRule> rules = noticeRuleDao.findAll();
+        // todo 暂时规则是全部转发 后面实现更多匹配规则：告警状态选择 监控类型选择等
+        Set<Long> receiverIds = rules.stream()
+                .filter(item -> item.isFilterAll() && item.isEnable())
+                .map(NoticeRule::getReceiverId)
+                .collect(Collectors.toSet());
+        return noticeReceiverDao.findAllById(receiverIds);
     }
 }
