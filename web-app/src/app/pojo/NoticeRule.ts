@@ -1,7 +1,7 @@
 export class NoticeRule {
   id!: number;
   name!: string;
-  receiverId!: string;
+  receiverId!: number;
   receiverName!: string;
   enable: boolean = true;
   // 是否转发所有
