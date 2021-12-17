@@ -42,17 +42,16 @@ public class NoticeRule {
     @ApiModelProperty(value = "策略名称", example = "dispatch-1", accessMode = READ_WRITE, position = 1)
     @Length(max = 100)
     @NotNull
-    private Long name;
+    private String name;
 
     @ApiModelProperty(value = "接收人ID", example = "4324324", accessMode = READ_WRITE, position = 2)
-    @Length(max = 100)
     @NotNull
     private Long receiverId;
 
     @ApiModelProperty(value = "接收人标识", example = "tom", accessMode = READ_WRITE, position = 3)
     @Length(max = 100)
     @NotNull
-    private Long receiverName;
+    private String receiverName;
 
     @ApiModelProperty(value = "是否启用此策略", example = "true", accessMode = READ_WRITE, position = 4)
     private boolean enable = true;

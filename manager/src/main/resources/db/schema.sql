@@ -128,16 +128,16 @@ CREATE TABLE  alert
 DROP TABLE IF EXISTS  notice_rule ;
 CREATE TABLE  notice_rule
 (
-    id           bigint           not null auto_increment comment '通知策略主键索引ID',
-    name         varchar(100)     not null comment '策略名称',
-    receiverId   bigint           not null comment '消息接收人ID',
-    receiverName varchar(100)     not null comment '消息接收人标识',
-    enable       boolean          not null default true comment '是否启用此策略',
-    filter_all   boolean          not null default true comment '是否转发所有',
-    creator      varchar(100)     comment '创建者',
-    modifier     varchar(100)     comment '最新修改者',
-    gmt_create   timestamp        default current_timestamp comment 'create time',
-    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    id             bigint           not null auto_increment comment '通知策略主键索引ID',
+    name           varchar(100)     not null comment '策略名称',
+    receiver_id    bigint           not null comment '消息接收人ID',
+    receiver_name  varchar(100)     not null comment '消息接收人标识',
+    enable         boolean          not null default true comment '是否启用此策略',
+    filter_all     boolean          not null default true comment '是否转发所有',
+    creator        varchar(100)     comment '创建者',
+    modifier       varchar(100)     comment '最新修改者',
+    gmt_create     timestamp        default current_timestamp comment 'create time',
+    gmt_update     datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
