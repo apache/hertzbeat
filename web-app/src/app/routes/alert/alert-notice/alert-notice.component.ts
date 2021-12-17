@@ -27,6 +27,12 @@ export class AlertNoticeComponent implements OnInit {
     this.loadReceiversTable();
     this.loadRulesTable();
   }
+  syncReceiver() {
+    this.loadReceiversTable();
+  }
+  syncRule() {
+    this.loadRulesTable();
+  }
 
   loadReceiversTable() {
     this.receiverTableLoading = true;

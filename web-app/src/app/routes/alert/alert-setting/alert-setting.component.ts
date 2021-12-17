@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NzTableQueryParams} from "ng-zorro-antd/table";
-import {ActivatedRoute, Router} from "@angular/router";
 import {NzModalService} from "ng-zorro-antd/modal";
 import {NzNotificationService} from "ng-zorro-antd/notification";
-import {NzMessageService} from "ng-zorro-antd/message";
 import {AlertDefineService} from "../../../service/alert-define.service";
 import {AlertDefine} from "../../../pojo/AlertDefine";
 import {finalize, map} from "rxjs/operators";
@@ -23,11 +21,8 @@ import {Monitor} from "../../../pojo/Monitor";
 })
 export class AlertSettingComponent implements OnInit {
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private modal: NzModalService,
+  constructor(private modal: NzModalService,
               private notifySvc: NzNotificationService,
-              private msg: NzMessageService,
               private appDefineSvc: AppDefineService,
               private monitorSvc: MonitorService,
               private alertDefineSvc: AlertDefineService) { }
@@ -57,6 +52,10 @@ export class AlertSettingComponent implements OnInit {
       }, error => {
         console.warn(error.msg);
       })
+  }
+
+  sync() {
+    this.loadAlertDefineTable();
   }
 
   loadAlertDefineTable() {
