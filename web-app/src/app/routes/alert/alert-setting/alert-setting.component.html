@@ -25,6 +25,9 @@
   <i nz-icon nzType="delete" nzTheme="outline"></i>
   删除
 </button>
+<button nz-button nzType="primary" (click)="sync()">
+  <i nz-icon nzType="sync" nzTheme="outline"></i>
+</button>
 
 <nz-table #fixedTable [nzData]="defines"
           [nzPageIndex]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total"

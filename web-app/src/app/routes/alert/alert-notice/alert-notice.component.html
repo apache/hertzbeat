@@ -19,6 +19,9 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       新增接收人
     </button>
+    <button nz-button nzType="primary" (click)="syncReceiver()">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
     <nz-table #fixedTable [nzData]="receivers"
               nzFrontPagination ="false"
               [nzLoading] = "receiverTableLoading"
@@ -38,7 +41,7 @@
           <span>{{ data.name}}</span>
         </td>
         <td nzAlign="center">
-          <nz-tag *ngIf="data.type == 0" nzColor="red">
+          <nz-tag *ngIf="data.type == 0" nzColor="orange">
             <i nz-icon nzType="notification" nzTheme="outline"></i>
             <span>短信</span>
           </nz-tag>
@@ -46,11 +49,11 @@
             <i nz-icon nzType="notification" nzTheme="outline"></i>
             <span>邮件</span>
           </nz-tag>
-          <nz-tag *ngIf="data.type == 2" nzColor="yellow">
+          <nz-tag *ngIf="data.type == 2" nzColor="orange">
             <i nz-icon nzType="notification" nzTheme="outline"></i>
             <span>WebHook</span>
           </nz-tag>
-          <nz-tag *ngIf="data.type == 3" nzColor="yellow">
+          <nz-tag *ngIf="data.type == 3" nzColor="orange">
             <i nz-icon nzType="notification" nzTheme="outline"></i>
             <span>微信公众号</span>
           </nz-tag>
@@ -78,6 +81,9 @@
     <button nz-button nzType="primary" (click)="onNewNoticeRule()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       新增通知策略
+    </button>
+    <button nz-button nzType="primary" (click)="syncRule()">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
     <nz-table #ruleFixedTable [nzData]="rules"
               nzFrontPagination ="false"
