@@ -36,14 +36,14 @@ public class MetricsDataController {
     @Autowired
     private RedisDataStorage redisDataStorage;
 
-    @GetMapping("/monitors/{monitorId}/metrics/{metric}")
+    @GetMapping("/monitors/{monitorId}/metrics/{metrics}")
     @ApiOperation(value = "查询监控指标组的指标数据", notes = "查询监控指标组的指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @ApiParam(value = "监控ID", example = "343254354")
             @PathVariable Long monitorId,
             @ApiParam(value = "监控指标组", example = "cpu")
-            @PathVariable String metric) {
-        CollectRep.MetricsData redisData = redisDataStorage.getCurrentMetricsData(monitorId, metric);
+            @PathVariable String metrics) {
+        CollectRep.MetricsData redisData = redisDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (redisData == null) {
             return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
         }
@@ -66,18 +66,23 @@ public class MetricsDataController {
         }
     }
 
-    @GetMapping("/monitors/{monitorId}/metrics/{metric}/fields/{field}")
+    @GetMapping("/monitors/{monitorId}/metrics/{metricFull}")
     @ApiOperation(value = "查询监控指标组的指定指标的历史数据", notes = "查询监控指标组下的指定指标的历史数据")
     public ResponseEntity<Message<Void>> getMetricHistoryData(
             @ApiParam(value = "监控ID", example = "343254354")
             @PathVariable Long monitorId,
-            @ApiParam(value = "监控指标组", example = "cpu")
-            @PathVariable String metric,
-            @ApiParam(value = "监控指标组指标", example = "343254354")
-            @PathVariable String field,
+            @ApiParam(value = "监控指标全路径", example = "linux.cpu.usage")
+            @PathVariable() String metricFull,
             @ApiParam(value = "查询历史时间段,默认6h-6小时:h-小时, d-天, m-月, y-年", example = "6h")
             @RequestParam(required = false) String history
             ) {
+        String[] names = metricFull.split(".");
+        if (names.length != 3) {
+            throw new IllegalArgumentException("metrics full name: " + metricFull + " is illegal.");
+        }
+        String app = names[0];
+        String metrics = names[1];
+        String metric = names[2];
         return ResponseEntity.ok().body(null);
     }
 }
