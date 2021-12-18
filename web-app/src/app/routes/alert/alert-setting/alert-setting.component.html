@@ -124,11 +124,30 @@
         </nz-form-control>
       </nz-form-item >
       <nz-form-item>
+        <nz-col [nzSpan]="8" nzOffset="7">
+          <nz-collapse>
+            <nz-collapse-panel
+              [nzActive] = "isManageModalAdd"
+              nzHeader="支持的阈值触发表达式环境变量"
+            >
+              <nz-list nzSize="small" nzSplit="false">
+                <nz-list-item *ngIf="cascadeValues.length == 3">
+                  <code>{{cascadeValues[2]}} : 选中的指标对象</code>
+                </nz-list-item>
+                <nz-list-item>
+                  <code>instance : 所属行实例值</code>
+                </nz-list-item>
+              </nz-list>
+            </nz-collapse-panel>
+          </nz-collapse>
+        </nz-col>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor= 'expr' nzRequired="true">阈值触发表达式</nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea [(ngModel)]="define.expr" rows="3" nz-input
-                      name="expr" id="expr"  placeholder="请输入阈值判断表达式">
+                      name="expr" id="expr"  placeholder="请输入阈值判断表达式,示例: instance.equals(cpu1)&&usage>40">
             </textarea>
           </nz-textarea-count>
         </nz-form-control>
