@@ -17,7 +17,7 @@
   <i nz-icon nzType="delete" nzTheme="outline"></i>
   删除告警
 </button>
-<button nz-button nzType="primary" (click)="sync()">
+<button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
   <i nz-icon nzType="sync" nzTheme="outline"></i>
 </button>
 
@@ -67,7 +67,7 @@
     <td nzAlign="center">{{ data.content }}</td>
     <td nzAlign="center">{{ data.gmtCreate }}</td>
     <td nzAlign="center" nzRight>
-      <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)">
+      <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
         <i nz-icon nzType="delete" nzTheme="outline"></i>
       </button>
     </td>
