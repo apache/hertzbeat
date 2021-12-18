@@ -3,13 +3,11 @@
   <nz-table #smallTable nzSize="small" nzNoResult="No Metrics Data" nzFrontPagination="false" [nzData]="valueRows">
     <thead>
     <tr>
-      <th style="text-align: center">instanceId</th>
       <th style="text-align: center" *ngFor="let field of fields">{{field.name}}</th>
     </tr>
     </thead>
     <tbody>
     <tr *ngFor="let valueRow of smallTable.data">
-      <td>{{valueRow.instance || ''}}</td>
       <td *ngFor="let value of valueRow.values">{{ value.origin}}</td>
     </tr>
     </tbody>

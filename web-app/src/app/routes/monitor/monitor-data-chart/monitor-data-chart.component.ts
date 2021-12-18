@@ -1,6 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {MonitorService} from "../../../service/monitor.service";
-import {finalize} from "rxjs/operators";
 
 @Component({
   selector: 'app-monitor-data-chart',
@@ -48,24 +47,5 @@ export class MonitorDataChartComponent implements OnInit {
         metricData$.unsubscribe();
       })
   }
-
-
-  data = [
-    {
-      name: 'John Brown',
-      age: 32,
-      address: 'New York No. 1 Lake Park'
-    },
-    {
-      name: 'Jim Green',
-      age: 42,
-      address: 'London No. 1 Lake Park'
-    },
-    {
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sidney No. 1 Lake Park'
-    }
-  ];
 
 }
