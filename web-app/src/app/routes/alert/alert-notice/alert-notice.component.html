@@ -19,7 +19,7 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       新增接收人
     </button>
-    <button nz-button nzType="primary" (click)="syncReceiver()">
+    <button nz-button nzType="primary" (click)="syncReceiver()" nz-tooltip nzTooltipTitle="刷新">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
     <nz-table #fixedTable [nzData]="receivers"
@@ -66,10 +66,10 @@
         </td>
         <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
         <td nzAlign="center" nzRight>
-          <button nz-button nzType="primary" (click)="onEditOneNoticeReceiver(data)">
+          <button nz-button nzType="primary" (click)="onEditOneNoticeReceiver(data)" nz-tooltip nzTooltipTitle="修改接收人">
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button nz-button nzType="primary" (click)="onDeleteOneNoticeReceiver(data.id)">
+          <button nz-button nzType="primary" (click)="onDeleteOneNoticeReceiver(data.id)" nz-tooltip nzTooltipTitle="删除接收人">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
           </button>
         </td>
@@ -82,7 +82,7 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       新增通知策略
     </button>
-    <button nz-button nzType="primary" (click)="syncRule()">
+    <button nz-button nzType="primary" (click)="syncRule()" nz-tooltip nzTooltipTitle="刷新">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
     <nz-table #ruleFixedTable [nzData]="rules"
@@ -125,10 +125,10 @@
         </td>
         <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
         <td nzAlign="center" nzRight>
-          <button nz-button nzType="primary" (click)="onEditOneNoticeRule(data)">
+          <button nz-button nzType="primary" (click)="onEditOneNoticeRule(data)" nz-tooltip nzTooltipTitle="修改告警策略">
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button nz-button nzType="primary" (click)="onDeleteOneNoticeRule(data.id)">
+          <button nz-button nzType="primary" (click)="onDeleteOneNoticeRule(data.id)" nz-tooltip nzTooltipTitle="删除告警策略">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
           </button>
         </td>
