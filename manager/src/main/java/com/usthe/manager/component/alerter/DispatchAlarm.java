@@ -10,9 +10,16 @@ import com.usthe.manager.pojo.entity.NoticeReceiver;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
 import java.util.List;
@@ -32,16 +39,18 @@ public class DispatchAlarm {
     private MonitorService monitorService;
     private NoticeConfigService noticeConfigService;
     private JavaMailSender javaMailSender;
+    private RestTemplate restTemplate;
 
     public DispatchAlarm(AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
                          JavaMailSender javaMailSender,NoticeConfigService noticeConfigService,
-                         AlertService alertService, MonitorService monitorService) {
+                         AlertService alertService, MonitorService monitorService, RestTemplate restTemplate) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alertService = alertService;
         this.monitorService = monitorService;
         this.noticeConfigService = noticeConfigService;
         this.javaMailSender = javaMailSender;
+        this.restTemplate = restTemplate;
         startDispatch();
     }
 
@@ -117,7 +126,18 @@ public class DispatchAlarm {
     }
 
     private void sendWebHookAlert(NoticeReceiver receiver, Alert alert) {
-
+        try {
+            ResponseEntity<String> entity = restTemplate.postForEntity(receiver.getHookUrl(), alert, String.class);
+            if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
+                log.debug("Send WebHook: {} Success", receiver.getHookUrl());
+            } else {
+                log.warn("Send WebHook: {} Failed", receiver.getHookUrl());
+            }
+        } catch (ResourceAccessException e) {
+            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     private void sendEmailAlert(NoticeReceiver receiver, Alert alert) {
