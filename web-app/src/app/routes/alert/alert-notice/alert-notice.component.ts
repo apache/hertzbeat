@@ -5,6 +5,7 @@ import {NoticeRuleService} from "../../../service/notice-rule.service";
 import {NoticeReceiver} from "../../../pojo/NoticeReceiver";
 import {finalize} from "rxjs/operators";
 import {NoticeRule} from "../../../pojo/NoticeRule";
+import {NzModalService} from "ng-zorro-antd/modal";
 
 @Component({
   selector: 'app-alert-notice',
@@ -16,6 +17,7 @@ export class AlertNoticeComponent implements OnInit {
 
   constructor(private notifySvc: NzNotificationService,
               private noticeReceiverSvc: NoticeReceiverService,
+              private modal: NzModalService,
               private noticeRuleSvc : NoticeRuleService) { }
 
   receivers!: NoticeReceiver[];
@@ -70,6 +72,17 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onDeleteOneNoticeReceiver(receiveId : number) {
+    this.modal.confirm({
+      nzTitle: '请确认是否删除！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.deleteOneNoticeReceiver(receiveId)
+    });
+  }
+
+  deleteOneNoticeReceiver(receiveId : number) {
     const deleteReceiver$ = this.noticeReceiverSvc.deleteReceiver(receiveId)
       .pipe(finalize(() => {
         deleteReceiver$.unsubscribe();
@@ -87,6 +100,17 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onDeleteOneNoticeRule(ruleId : number) {
+    this.modal.confirm({
+      nzTitle: '请确认是否删除！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.deleteOneNoticeRule(ruleId)
+    });
+  }
+
+  deleteOneNoticeRule(ruleId : number) {
     const deleteRule$ = this.noticeRuleSvc.deleteNoticeRule(ruleId)
       .pipe(finalize(() => {
         deleteRule$.unsubscribe();
