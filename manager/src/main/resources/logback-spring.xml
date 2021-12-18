@@ -57,6 +57,7 @@
     <logger name="io.netty" level="info"/>
     <logger name="org.slf4j" level="info"/>
     <logger name="ch.qos.logback" level="info"/>
+    <logger name="org.apache.kafka.clients" level="info"/>
 
     <!-- 生产环境配置 -->
     <springProfile name="prod">
@@ -69,7 +70,7 @@
 
     <!-- 开发环境配置 -->
     <springProfile name="dev">
-        <root level="INFO">
+        <root level="DEBUG">
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>

@@ -94,6 +94,7 @@
         <th nzAlign="center">策略名称</th>
         <th nzAlign="center">接收人</th>
         <th nzAlign="center">转发所有</th>
+        <th nzAlign="center">是否启用</th>
         <th nzAlign="center">最新修改时间</th>
         <th nzAlign="center" nzRight>操作</th>
       </tr>
@@ -112,6 +113,14 @@
           </nz-tag>
           <nz-tag *ngIf="!data.filterAll" nzColor="orange">
             <span>否</span>
+          </nz-tag>
+        </td>
+        <td nzAlign="center">
+          <nz-tag *ngIf="data.enable" nzColor="green">
+            <span>开启</span>
+          </nz-tag>
+          <nz-tag *ngIf="!data.enable" nzColor="orange">
+            <span>关闭</span>
           </nz-tag>
         </td>
         <td nzAlign="center">{{ data.gmtUpdate? data.gmtUpdate : data.gmtCreate }}</td>
