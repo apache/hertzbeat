@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * 告警信息管理接口
@@ -34,4 +35,11 @@ public interface AlertService {
      * @param ids 告警IDs
      */
     void deleteAlerts(HashSet<Long> ids);
+
+    /**
+     * 根据告警ID-状态值 更新告警状态
+     * @param status 待修改为的告警状态
+     * @param ids 待修改的告警IDs
+     */
+    void editAlertStatus(Byte status, List<Long> ids);
 }

@@ -13,13 +13,43 @@
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<button nz-button nzType="primary" (click)="onDeleteAlerts()">
-  <i nz-icon nzType="delete" nzTheme="outline"></i>
-  删除告警
-</button>
-<button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
-  <i nz-icon nzType="sync" nzTheme="outline"></i>
-</button>
+<div>
+  <button nz-button nzType="primary" (click)="onDeleteAlerts()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    删除告警
+  </button>
+  <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
+    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+    标记已读
+  </button>
+  <button nz-button nzType="primary" (click)="onMarkUnReadAlerts()">
+    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+    标记未读
+  </button>
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+
+  <button style="margin-right: 25px;float: right;" nz-button nzType="primary" (click)="onFilterSearchAlerts()">
+    搜索
+  </button>
+  <input style="margin-right: 5px;float: right;width:150px;border-radius: 9px;text-align: center;" nz-input
+         type="text" placeholder="搜索告警内容" nzSize="default" [(ngModel)]="filterContent" />
+  <nz-select style="margin-right: 10px;float: right;width: 120px;" nzAllowClear
+             [nzPlaceHolder]="'告警状态过滤'" [(ngModel)]="filterStatus">
+    <nz-option nzLabel="全部状态" nzValue="9"></nz-option>
+    <nz-option nzLabel="未读告警" nzValue="0"></nz-option>
+    <nz-option nzLabel="已读告警" nzValue="3"></nz-option>
+  </nz-select>
+  <nz-select style="margin-right: 10px;float: right;width: 120px;" nzAllowClear
+             [nzPlaceHolder]="'告警级别过滤'" [(ngModel)]="filterPriority">
+    <nz-option nzLabel="全部级别" nzValue="9"></nz-option>
+    <nz-option nzLabel="警告级别" nzValue="2"></nz-option>
+    <nz-option nzLabel="严重级别" nzValue="1"></nz-option>
+    <nz-option nzLabel="紧急级别" nzValue="0"></nz-option>
+  </nz-select>
+
+</div>
 
 <nz-table #fixedTable [nzData]="alerts"
           [nzPageIndex]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total"
@@ -37,12 +67,13 @@
     <th nzAlign="center">所属监控</th>
     <th nzAlign="center">级别</th>
     <th nzAlign="center">告警内容</th>
+    <th nzAlign="center">状态</th>
     <th nzAlign="center">告警时间</th>
     <th nzAlign="center" nzRight>操作</th>
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let data of fixedTable.data">
+  <tr *ngFor="let data of fixedTable.data" [ngStyle]="{'background-color':data.status === 0 ? '#E1E7A89B' : 'inherit' }">
     <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
     <td nzAlign="center">{{ data.target }}</td>
     <td nzAlign="center">
@@ -65,10 +96,19 @@
       </nz-tag>
     </td>
     <td nzAlign="center">{{ data.content }}</td>
+    <td nzAlign="center">
+      {{ data.status === 0 ? '未读' : '已读' }}
+    </td>
     <td nzAlign="center">{{ data.gmtCreate }}</td>
     <td nzAlign="center" nzRight>
       <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
         <i nz-icon nzType="delete" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记已读">
+        <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onMarkUnReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记未读">
+        <i nz-icon nzType="up-circle" nzTheme="outline"></i>
       </button>
     </td>
   </tr>

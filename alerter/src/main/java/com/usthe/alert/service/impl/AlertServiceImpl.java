@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * 告警信息服务实现
@@ -40,4 +41,10 @@ public class AlertServiceImpl implements AlertService {
     public void deleteAlerts(HashSet<Long> ids) {
         alertDao.deleteAlertsByIdIn(ids);
     }
+
+    @Override
+    public void editAlertStatus(Byte status, List<Long> ids) {
+        alertDao.updateAlertsStatus(status, ids);
+    }
+
 }
