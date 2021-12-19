@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -49,19 +50,20 @@ public class AlertDefinesController {
             @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
+            List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
                 CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
-                predicate = criteriaBuilder.and(inPredicate);
+                andList.add(inPredicate);
             }
             if (priority != null) {
-                Predicate predicateApp = criteriaBuilder.equal(root.get("priority"), priority);
-                predicate = criteriaBuilder.and(predicateApp);
+                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
+                andList.add(predicate);
             }
-            return predicate;
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
         };
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));

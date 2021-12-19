@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -54,31 +55,33 @@ public class AlertsController {
             @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<Alert> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
+            List<Predicate> andList = new ArrayList<>();
+
             if (ids != null && !ids.isEmpty()) {
                 CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
-                predicate = criteriaBuilder.and(inPredicate);
+                andList.add(inPredicate);
             }
             if (monitorId != null) {
-                Predicate predicateApp = criteriaBuilder.equal(root.get("monitorId"), monitorId);
-                predicate = criteriaBuilder.and(predicateApp);
+                Predicate predicate = criteriaBuilder.equal(root.get("monitorId"), monitorId);
+                andList.add(predicate);
             }
             if (priority != null) {
-                Predicate predicateApp = criteriaBuilder.equal(root.get("priority"), priority);
-                predicate = criteriaBuilder.and(predicateApp);
+                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
+                andList.add(predicate);
             }
             if (status != null) {
-                Predicate predicateApp = criteriaBuilder.equal(root.get("status"), status);
-                predicate = criteriaBuilder.and(predicateApp);
+                Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
+                andList.add(predicate);
             }
             if (content != null && !"".equals(content)) {
                 Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
-                predicate = criteriaBuilder.and(predicateContent);
+                andList.add(predicateContent);
             }
-            return predicate;
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
