@@ -12,6 +12,8 @@ import {
 } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import {MonitorService} from "../../../service/monitor.service";
+import {Monitor} from "../../../pojo/Monitor";
 
 @Component({
   selector: 'header-search',
@@ -34,8 +36,14 @@ import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
         [attr.placeholder]="'menu.search.placeholder' | i18n"
       />
     </nz-input-group>
-    <nz-autocomplete nzBackfill #auto>
-      <nz-auto-option *ngFor="let i of options" [nzValue]="i">{{ i }}</nz-auto-option>
+    <nz-autocomplete nzBackfill="false" nzDefaultActiveFirstOption #auto>
+      <nz-auto-option *ngFor="let option of options" [nzValue]="option.id" [nzLabel]="option.name">
+        <a [routerLink]="['/monitors/' + option.id]">
+          监控名称: {{ option.name }}
+          <span style="left:50% ; position: absolute;">监控Host: {{option.host}}</span>
+          <span style="right: 10px; position: absolute;"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
+        </a>
+      </nz-auto-option>
     </nz-autocomplete>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -43,7 +51,7 @@ import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
   q = '';
   qIpt: HTMLInputElement | null = null;
-  options: string[] = [];
+  options: Monitor[] = [];
   search$ = new BehaviorSubject('');
   loading = false;
 
@@ -65,7 +73,9 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
   }
   @Output() readonly toggleChangeChange = new EventEmitter<boolean>();
 
-  constructor(private el: ElementRef<HTMLElement>, private cdr: ChangeDetectorRef) {}
+  constructor(private el: ElementRef<HTMLElement>,
+              private cdr: ChangeDetectorRef,
+              private monitorSvc : MonitorService) {}
 
   ngAfterViewInit(): void {
     this.qIpt = this.el.nativeElement.querySelector('.ant-input') as HTMLInputElement;
@@ -80,9 +90,23 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
         })
       )
       .subscribe(value => {
-        this.options = value ? [value, value + value, value + value + value] : [];
-        this.loading = false;
-        this.cdr.detectChanges();
+        // 远程加载搜索数据
+        let searchMonitors$ = this.monitorSvc.searchMonitors(value, value, 0, 10)
+          .subscribe(message => {
+            this.loading = false;
+            searchMonitors$.unsubscribe();
+            if (message.code === 0) {
+              let page = message.data;
+              this.options = page.content;
+              this.cdr.detectChanges();
+            } else {
+              console.warn(message.msg);
+            }
+          }, error => {
+            this.loading = false;
+            searchMonitors$.unsubscribe();
+            console.error(error.msg);
+          })
       });
   }
 
