@@ -65,13 +65,19 @@ public class MonitorsController {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 predicate = criteriaBuilder.and(predicateApp);
             }
-            if (name != null && !"".equals(name)) {
+            if (name != null && !"".equals(name) && host != null && !"".equals(host)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
-            }
-            if (host != null && !"".equals(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
-                predicate = criteriaBuilder.and(predicateHost);
+                predicate = criteriaBuilder.or(predicateName, predicateHost);
+            } else {
+                if (host != null && !"".equals(host)) {
+                    Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
+                    predicate = criteriaBuilder.and(predicateHost);
+                }
+                if (name != null && !"".equals(name)) {
+                    Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                    predicate = criteriaBuilder.and(predicateName);
+                }
             }
             return predicate;
         };
