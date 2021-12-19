@@ -2,7 +2,6 @@ package com.usthe.alert.calculate;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
-import com.usthe.alert.AlerterProperties;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.entrance.KafkaDataConsume;
@@ -116,7 +115,7 @@ public class CalculateAlarm {
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Map<String, Object> fieldValueMap = new HashMap<>(16);
         fieldValueMap.put("app", app);
-        fieldValueMap.put("metric", metrics);
+        fieldValueMap.put("metrics", metrics);
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             if (!valueRow.getColumnsList().isEmpty()) {
                 String instance = valueRow.getInstance();
@@ -128,6 +127,7 @@ public class CalculateAlarm {
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                     String valueStr = valueRow.getColumns(index);
                     CollectRep.Field field = fields.get(index);
+                    fieldValueMap.put("metric", field.getName());
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
                         Double doubleValue = CommonUtil.parseDoubleStr(valueStr);
                         if (doubleValue != null) {
