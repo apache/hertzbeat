@@ -14,6 +14,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -92,6 +94,18 @@ public class AlertsController {
     ) {
         if (ids != null && !ids.isEmpty()) {
             alertService.deleteAlerts(new HashSet<>(ids));
+        }
+        Message<Void> message = new Message<>();
+        return ResponseEntity.ok(message);
+    }
+
+    @PutMapping(path = "/status/{status}")
+    @ApiOperation(value = "批量修改告警状态", notes = "批量修改告警状态,设置已读未读")
+    public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
+            @ApiParam(value = "告警状态值", example = "0") @PathVariable Byte status,
+            @ApiParam(value = "告警IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+        if (ids != null && status != null && !ids.isEmpty()) {
+            alertService.editAlertStatus(status, ids);
         }
         Message<Void> message = new Message<>();
         return ResponseEntity.ok(message);
