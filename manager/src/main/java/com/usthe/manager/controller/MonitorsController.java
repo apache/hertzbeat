@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -53,33 +54,34 @@ public class MonitorsController {
             @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
+            List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
                 CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
-                predicate = criteriaBuilder.and(inPredicate);
+                andList.add(inPredicate);
             }
             if (app != null && !"".equals(app)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
-                predicate = criteriaBuilder.and(predicateApp);
+                andList.add(predicateApp);
             }
-            if (name != null && !"".equals(name) && host != null && !"".equals(host)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            List<Predicate> orList = new ArrayList<>();
+            if (host != null && !"".equals(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
-                predicate = criteriaBuilder.or(predicateName, predicateHost);
-            } else {
-                if (host != null && !"".equals(host)) {
-                    Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
-                    predicate = criteriaBuilder.and(predicateHost);
-                }
-                if (name != null && !"".equals(name)) {
-                    Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                    predicate = criteriaBuilder.and(predicateName);
-                }
+                orList.add(predicateHost);
             }
-            return predicate;
+            if (name != null && !"".equals(name)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                orList.add(predicateName);
+            }
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.and(orList.toArray(orPredicates));
+
+            return query.where(andPredicate,orPredicate).getRestriction();
         };
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
