@@ -88,6 +88,22 @@ export class MonitorService {
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
 
+  public searchMonitors(monitorName: string, monitorHost: string,
+                        pageIndex: number, pageSize: number): Observable<Message<Page<Monitor>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      'name': monitorName,
+      'host': monitorHost,
+      'pageIndex': pageIndex,
+      'pageSize': pageSize
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
+  }
+
   public getMonitorMetricData(monitorId: number, metric: string) : Observable<Message<any>> {
     return this.http.get<Message<any>>(`/monitors/${monitorId}/metrics/${metric}`);
   }
