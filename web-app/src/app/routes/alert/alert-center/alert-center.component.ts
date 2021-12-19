@@ -23,9 +23,38 @@ export class AlertCenterComponent implements OnInit {
   alerts!: Alert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
+  // 搜索过滤相关属性
+  filterStatus: number | undefined;
+  filterPriority: number | undefined;
+  filterContent: string | undefined;
 
   ngOnInit(): void {
     this.loadAlertsTable();
+  }
+
+  onFilterSearchAlerts() {
+    this.tableLoading = true;
+    let filterAlerts$ = this.alertSvc.searchAlerts(this.filterStatus, this.filterPriority,
+      this.filterContent, this.pageIndex - 1, this.pageSize)
+      .subscribe(message => {
+        filterAlerts$.unsubscribe();
+        this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedAlertIds.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.alerts = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+        } else {
+          console.warn(message.msg);
+        }
+      }, error => {
+        this.tableLoading = false;
+        filterAlerts$.unsubscribe();
+        console.error(error.msg);
+      });
+
   }
 
   sync() {
@@ -51,6 +80,7 @@ export class AlertCenterComponent implements OnInit {
       }, error => {
         this.tableLoading = false;
         alertsInit$.unsubscribe();
+        console.error(error.msg);
       });
   }
 
@@ -69,6 +99,35 @@ export class AlertCenterComponent implements OnInit {
     });
   }
 
+  onMarkReadAlerts() {
+    if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
+      this.notifySvc.warning("未选中任何待标记项！","");
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: '请确认是否批量标记已读！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 3)
+    });
+  }
+  onMarkUnReadAlerts() {
+    if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
+      this.notifySvc.warning("未选中任何待标记项！","");
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: '请确认是否批量标记未读！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 0)
+    });
+  }
+
   onDeleteOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
@@ -79,6 +138,32 @@ export class AlertCenterComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: "primary",
       nzOnOk: () => this.deleteAlerts(alerts)
+    });
+  }
+
+  onMarkReadOneAlert(alertId: number) {
+    let alerts = new Set<number>();
+    alerts.add(alertId);
+    this.modal.confirm({
+      nzTitle: '请确认是否标记已读！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.updateAlertsStatus(alerts, 3)
+    });
+  }
+
+  onMarkUnReadOneAlert(alertId: number) {
+    let alerts = new Set<number>();
+    alerts.add(alertId);
+    this.modal.confirm({
+      nzTitle: '请确认是否标记未读！',
+      nzOkText: '确定',
+      nzCancelText: '取消',
+      nzOkDanger: true,
+      nzOkType: "primary",
+      nzOnOk: () => this.updateAlertsStatus(alerts, 0)
     });
   }
 
@@ -99,6 +184,27 @@ export class AlertCenterComponent implements OnInit {
           this.tableLoading = false;
           deleteAlerts$.unsubscribe();
           this.notifySvc.error("删除失败！", error.msg)
+        }
+      );
+  }
+
+  updateAlertsStatus(alertIds: Set<number>, status: number) {
+    this.tableLoading = true;
+    const markAlertsStatus$ = this.alertSvc.applyAlertsStatus(alertIds, status)
+      .subscribe(message => {
+          markAlertsStatus$.unsubscribe();
+          if (message.code === 0) {
+            this.notifySvc.success("标记成功！", "");
+            this.loadAlertsTable();
+          } else {
+            this.tableLoading = false;
+            this.notifySvc.error("标记失败！", message.msg);
+          }
+        },
+        error => {
+          this.tableLoading = false;
+          markAlertsStatus$.unsubscribe();
+          this.notifySvc.error("标记失败！", error.msg)
         }
       );
   }
@@ -126,6 +232,4 @@ export class AlertCenterComponent implements OnInit {
     this.loadAlertsTable();
   }
   // end: 列表多选分页逻辑
-
-
 }
