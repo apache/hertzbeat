@@ -91,7 +91,7 @@
           </ng-template>
           <div style="display: flex;justify-content:flex-start;flex-wrap: wrap;">
             <div *ngFor="let metric of metrics; let i = index">
-              <app-monitor-data-chart [metric]="metric" [monitorId]="monitorId"></app-monitor-data-chart>
+              <app-monitor-data-chart [metrics]="metric" [monitorId]="monitorId"></app-monitor-data-chart>
             </div>
           </div>
         </nz-tab>
