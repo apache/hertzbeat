@@ -16,7 +16,7 @@ export class MonitorDataChartComponent implements OnInit {
   }
   private _monitorId!: number;
   @Input()
-  metric!: string;
+  metrics!: string;
 
   time!: any;
   fields!: any[];
@@ -29,7 +29,7 @@ export class MonitorDataChartComponent implements OnInit {
 
   loadData() {
     // 读取实时指标数据
-    let metricData$ = this.monitorSvc.getMonitorMetricData(this.monitorId, this.metric)
+    let metricData$ = this.monitorSvc.getMonitorMetricsData(this.monitorId, this.metrics)
       .subscribe(message => {
         metricData$.unsubscribe();
         if (message.code === 0) {

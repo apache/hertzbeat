@@ -104,8 +104,8 @@ export class MonitorService {
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
 
-  public getMonitorMetricData(monitorId: number, metric: string) : Observable<Message<any>> {
-    return this.http.get<Message<any>>(`/monitors/${monitorId}/metrics/${metric}`);
+  public getMonitorMetricsData(monitorId: number, metrics: string) : Observable<Message<any>> {
+    return this.http.get<Message<any>>(`/monitor/${monitorId}/metrics/${metrics}`);
   }
 
   public getAppsMonitorSummary() : Observable<Message<any>> {
