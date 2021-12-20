@@ -6,10 +6,9 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 
 import { ExceptionRoutingModule } from './exception-routing.module';
 import { ExceptionComponent } from './exception.component';
-import { ExceptionTriggerComponent } from './trigger.component';
 
 @NgModule({
   imports: [CommonModule, DelonExceptionModule, NzButtonModule, NzCardModule, ExceptionRoutingModule],
-  declarations: [ExceptionComponent, ExceptionTriggerComponent]
+  declarations: [ExceptionComponent]
 })
 export class ExceptionModule {}
