@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { NoticeIconList, NoticeIconSelect, NoticeItem } from '@delon/abc/notice-icon';
-import { add, formatDistanceToNow, parse } from 'date-fns';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit} from '@angular/core';
+import {NoticeIconSelect, NoticeItem } from '@delon/abc/notice-icon';
 import { NzI18nService } from 'ng-zorro-antd/i18n';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import {AlertService} from "../../../service/alert.service";
+import {ALAIN_I18N_TOKEN} from "@delon/theme";
+import {I18NService} from "@core";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'header-notify',
@@ -13,53 +16,35 @@ import { NzMessageService } from 'ng-zorro-antd/message';
       [loading]="loading"
       btnClass="alain-default__nav-item"
       btnIconClass="alain-default__nav-item-icon"
-      (select)="select($event)"
-      (clear)="clear($event)"
+      (clear)="gotoAlertCenter($event)"
       (popoverVisibleChange)="loadData()"
     ></notice-icon>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeaderNotifyComponent {
+export class HeaderNotifyComponent implements OnInit{
+
   data: NoticeItem[] = [
     {
-      title: '告警通知',
+      title: '近期未处理告警',
       list: [],
-      emptyText: '暂无告警通知',
+      emptyText: '暂无未处理告警',
       emptyImage: 'https://gw.alipayobjects.com/zos/rmsportal/wAhyIChODzsoKIOBHcBk.svg',
-      clearText: '清空告警'
+      clearText: '进入告警中心'
     }
   ];
-  count = 5;
+  count = 0;
   loading = false;
 
-  constructor(private msg: NzMessageService, private nzI18n: NzI18nService, private cdr: ChangeDetectorRef) {}
+  constructor(private msg: NzMessageService,
+              private nzI18n: NzI18nService,
+              private router: Router,
+              @Inject(ALAIN_I18N_TOKEN)  private i18nSvc: I18NService,
+              private alertSvc: AlertService,
+              private cdr: ChangeDetectorRef) {}
 
-  private updateNoticeData(notices: NoticeIconList[]): NoticeItem[] {
-    const data = this.data.slice();
-    data.forEach(i => (i.list = []));
-
-    notices.forEach(item => {
-      const newItem = { ...item } as NoticeIconList;
-      if (typeof newItem.datetime === 'string') {
-        newItem.datetime = parse(newItem.datetime, 'yyyy-MM-dd', new Date());
-      }
-      if (newItem.datetime) {
-        newItem.datetime = formatDistanceToNow(newItem.datetime as Date, { locale: this.nzI18n.getDateLocale() });
-      }
-      if (newItem.extra && newItem.status) {
-        newItem.color = (
-          {
-            todo: undefined,
-            processing: 'blue',
-            urgent: 'red',
-            doing: 'gold'
-          } as { [key: string]: string | undefined }
-        )[newItem.status];
-      }
-      data.find(w => w.title === newItem.type)!.list.push(newItem);
-    });
-    return data;
+  ngOnInit(): void {
+    this.loadData();
   }
 
   loadData(): void {
@@ -67,60 +52,39 @@ export class HeaderNotifyComponent {
       return;
     }
     this.loading = true;
-    setTimeout(() => {
-      const now = new Date();
-      this.data = this.updateNoticeData([
-        {
-          id: '000000001',
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-          title: '监控-MYSQL_192.135.34.2-发出2级告警',
-          datetime: add(now, { days: 10 }),
-          type: '告警通知'
-        },
-        {
-          id: '000000002',
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-          title: '监控-MYSQL_192.135.44.2-发出1级告警',
-          datetime: add(now, { days: -3 }),
-          type: '告警通知'
-        },
-        {
-          id: '000000003',
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-          title: '监控-WEBSITE_www.baidu.com-发出4级告警',
-          datetime: add(now, { months: -3 }),
-          read: true,
-          type: '告警通知'
-        },
-        {
-          id: '000000004',
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/GvqBnKhFgObvnSGkDsje.png',
-          title: '监控-REDIS_192.34.55.3-发出4级告警',
-          datetime: add(now, { years: -1 }),
-          type: '告警通知'
-        },
-        {
-          id: '000000005',
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-          title: '监控-REDIS_192.34.55.6-发出4级告警',
-          datetime: '2020-08-07',
-          type: '告警通知'
+    let loadAlerts$ = this.alertSvc.searchAlerts(0, undefined,undefined, 0, 5)
+      .subscribe(message => {
+        loadAlerts$.unsubscribe();
+        if (message.code === 0) {
+          let page = message.data;
+          let alerts = page.content;
+          this.data[0].list = [];
+          alerts.forEach(alert => {
+            let item = {
+                id: alert.id,
+                avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
+                title: '监控-' + alert.monitorName +'-发出' + this.i18nSvc.fanyi(`alert.priority.${alert.priority}`),
+                datetime: alert.gmtCreate,
+                color: 'blue',
+                type: '近期未处理告警'
+              }
+            this.data[0].list.push(item);
+          })
+          this.count = page.totalElements;
+        } else {
+          console.warn(message.msg);
         }
-      ]);
-
-      this.loading = false;
-      this.cdr.detectChanges();
-    }, 500);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }, error => {
+        loadAlerts$.unsubscribe();
+        console.error(error.msg);
+        this.loading = false;
+      })
   }
 
-  clear(type: string): void {
-    this.loading = true;
-    setTimeout(() => {
-      this.data = this.updateNoticeData([]);
-      this.loading = false;
-      this.cdr.detectChanges();
-    }, 500);
-    this.msg.success(`已清空 ${type}`);
+  gotoAlertCenter(type: string): void {
+    this.router.navigateByUrl(`/alert/center`);
   }
 
   select(res: NoticeIconSelect): void {

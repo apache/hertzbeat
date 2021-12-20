@@ -20,11 +20,11 @@
   </button>
   <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    标记已读
+    标记已处理
   </button>
   <button nz-button nzType="primary" (click)="onMarkUnReadAlerts()">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    标记未读
+    标记未处理
   </button>
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
@@ -38,8 +38,8 @@
   <nz-select style="margin-right: 10px;float: right;width: 120px;" nzAllowClear
              [nzPlaceHolder]="'告警状态过滤'" [(ngModel)]="filterStatus">
     <nz-option nzLabel="全部状态" nzValue="9"></nz-option>
-    <nz-option nzLabel="未读告警" nzValue="0"></nz-option>
-    <nz-option nzLabel="已读告警" nzValue="3"></nz-option>
+    <nz-option nzLabel="未处理" nzValue="0"></nz-option>
+    <nz-option nzLabel="已处理" nzValue="3"></nz-option>
   </nz-select>
   <nz-select style="margin-right: 10px;float: right;width: 120px;" nzAllowClear
              [nzPlaceHolder]="'告警级别过滤'" [(ngModel)]="filterPriority">
@@ -97,17 +97,17 @@
     </td>
     <td nzAlign="center">{{ data.content }}</td>
     <td nzAlign="center">
-      {{ data.status === 0 ? '未读' : '已读' }}
+      {{ data.status === 0 ? '未处理' : '已处理' }}
     </td>
     <td nzAlign="center">{{ data.gmtCreate }}</td>
     <td nzAlign="center" nzRight>
       <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
         <i nz-icon nzType="delete" nzTheme="outline"></i>
       </button>
-      <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记已读">
+      <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记已处理">
         <i nz-icon nzType="down-circle" nzTheme="outline"></i>
       </button>
-      <button nz-button nzType="primary" (click)="onMarkUnReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记未读">
+      <button nz-button nzType="primary" (click)="onMarkUnReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记未处理">
         <i nz-icon nzType="up-circle" nzTheme="outline"></i>
       </button>
     </td>

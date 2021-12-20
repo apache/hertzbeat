@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
 import { SettingsService, User } from '@delon/theme';
+import {LocalStorageService} from "../../../service/local-storage.service";
 
 @Component({
   selector: 'header-user',
@@ -20,10 +20,6 @@ import { SettingsService, User } from '@delon/theme';
           <i nz-icon nzType="setting" class="mr-sm"></i>
           {{ 'menu.account.settings' | i18n }}
         </div>
-        <div nz-menu-item routerLink="/exception/trigger">
-          <i nz-icon nzType="close-circle" class="mr-sm"></i>
-          {{ 'menu.account.trigger' | i18n }}
-        </div>
         <li nz-menu-divider></li>
         <div nz-menu-item (click)="logout()">
           <i nz-icon nzType="logout" class="mr-sm"></i>
@@ -39,10 +35,12 @@ export class HeaderUserComponent {
     return this.settings.user;
   }
 
-  constructor(private settings: SettingsService, private router: Router, @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService) {}
+  constructor(private settings: SettingsService,
+              private router: Router,
+              private localStorageSvc : LocalStorageService) {}
 
   logout(): void {
-    this.tokenService.clear();
-    this.router.navigateByUrl(this.tokenService.login_url!);
+    this.localStorageSvc.clear();
+    this.router.navigateByUrl('/passport/login');
   }
 }
