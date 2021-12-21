@@ -35,6 +35,10 @@ export class LocalStorageService {
     return this.putData(Authorization, token);
   }
 
+  public hasAuthorizationToken() {
+    return localStorage.getItem(Authorization) === null;
+  }
+
   public clear() {
     localStorage.clear();
   }

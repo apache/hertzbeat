@@ -7,11 +7,11 @@
 resourceRole:
   - /account/auth/refresh===post===[role1,role2,role3,role4]
 
-# load api resource which do not need be protected, means them need be excluded.
+# load api resource which do not need protected, means them need be excluded.
 # these api resource can be access by everyone
 excludedResource:
-  - /**===*
   - /account/auth/form===post
+  - /i18n/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
