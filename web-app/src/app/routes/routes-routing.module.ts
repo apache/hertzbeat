@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { SimpleGuard } from '@delon/auth';
 import { environment } from '@env/environment';
 // layout
 import { LayoutBasicComponent } from '../layout/basic/basic.component';
@@ -14,13 +13,14 @@ import { UserLockComponent } from './passport/lock/lock.component';
 import { UserLoginComponent } from './passport/login/login.component';
 import { UserRegisterResultComponent } from './passport/register-result/register-result.component';
 import { UserRegisterComponent } from './passport/register/register.component';
+import {DetectAuthGuard} from "../core/guard/detect-auth-guard";
 
 const routes: Routes = [
   {
     path: '',
     component: LayoutBasicComponent,
     // 路由守卫 在路由之前判断是否有认证或者权限进入此路由
-    // canActivate: [SimpleGuard],
+    canActivate: [DetectAuthGuard],
     children: [
       // todo 根据路由自动生成面包屑
       { path: '', redirectTo: 'dashboard', pathMatch: 'full'},
