@@ -7,40 +7,50 @@
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
-    <a [routerLink]="['/monitors']" [queryParams]="{app: app ? app : ''}">
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: app ? app : '' }">
       <i nz-icon nzType="monitor"></i>
       <span>监控列表</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="pie-chart"></i>
-    <span>{{'monitor.app.' + app | i18n}} 监控详情</span>
+    <span>{{ 'monitor.app.' + app | i18n }} 监控详情</span>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
 <nz-layout>
   <nz-sider nzWidth="19%" nzTheme="light">
-    <nz-card nzHoverable style="width:100%;height:100%" [nzBordered]="true" [nzTitle]="monitor_basic_card_title" >
+    <nz-card nzHoverable style="width: 100%; height: 100%" [nzBordered]="true" [nzTitle]="monitor_basic_card_title">
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitorId}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitorId }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">名称</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.name}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.name }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.host}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.host }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">端口</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{port}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ port }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">描述</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.description}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.description }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">状态</p></div>
@@ -69,15 +79,21 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">采集间隔</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.intervals}}s</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.intervals }}s</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">创建时间</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.gmtCreate}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.gmtCreate }}</p></div
+        >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">最近更新时间</p></div>
-        <div nz-col nzSpan="16"><p style="text-align: left">{{monitor?.gmtUpdate}}</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor?.gmtUpdate }}</p></div
+        >
       </div>
     </nz-card>
   </nz-sider>
@@ -89,7 +105,7 @@
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
             监控数据报告详情
           </ng-template>
-          <div style="display: flex;justify-content:flex-start;flex-wrap: wrap;">
+          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
             <div *ngFor="let metric of metrics; let i = index">
               <app-monitor-data-chart [metrics]="metric" [monitorId]="monitorId"></app-monitor-data-chart>
             </div>

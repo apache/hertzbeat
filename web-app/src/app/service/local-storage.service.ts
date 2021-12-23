@@ -7,8 +7,7 @@ const refreshToken = 'refresh-token';
   providedIn: 'root'
 })
 export class LocalStorageService {
-
-  constructor() { }
+  constructor() {}
 
   public putData(key: string, value: string) {
     localStorage.setItem(key, value);
@@ -36,11 +35,10 @@ export class LocalStorageService {
   }
 
   public hasAuthorizationToken() {
-    return localStorage.getItem(Authorization) === null;
+    return localStorage.getItem(Authorization) != null;
   }
 
   public clear() {
     localStorage.clear();
   }
-
 }

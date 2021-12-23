@@ -4,7 +4,8 @@ import {
   HttpHandler,
   HttpHeaders,
   HttpInterceptor,
-  HttpRequest, HttpResponse,
+  HttpRequest,
+  HttpResponse,
   HttpResponseBase
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
@@ -14,7 +15,8 @@ import { environment } from '@env/environment';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, mergeMap, switchMap, take } from 'rxjs/operators';
-import {LocalStorageService} from "../../service/local-storage.service";
+
+import { LocalStorageService } from '../../service/local-storage.service';
 
 const CODE_MESSAGE: { [key: number]: string } = {
   200: '服务器成功返回请求的数据。',
@@ -44,7 +46,7 @@ export class DefaultInterceptor implements HttpInterceptor {
   private refreshToking = false;
   private refreshToken$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  constructor(private injector: Injector, private storageSvc: LocalStorageService) { }
+  constructor(private injector: Injector, private storageSvc: LocalStorageService) {}
 
   private get notification(): NzNotificationService {
     return this.injector.get(NzNotificationService);
@@ -71,8 +73,7 @@ export class DefaultInterceptor implements HttpInterceptor {
    */
   private refreshTokenRequest(): Observable<any> {
     const refreshToken = this.storageSvc.getRefreshToken();
-    return this.http.post(`/account/auth/refresh`, null, null,
-      { headers: { Authorization: `Bearer ${refreshToken}` }});
+    return this.http.post(`/account/auth/refresh`, null, null, { headers: { Authorization: `Bearer ${refreshToken}` } });
   }
 
   // #region 刷新Token方式一：使用 401 重新刷新 Token
@@ -124,11 +125,10 @@ export class DefaultInterceptor implements HttpInterceptor {
     let token = this.storageSvc.getAuthorizationToken();
     return req.clone({
       setHeaders: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
   }
-
 
   private toLogin(): void {
     this.notification.error(`未登录或登录已过期，请重新登录。`, ``);
@@ -150,14 +150,13 @@ export class DefaultInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let url = req.url;
-    if (!url.startsWith('https://') && !url.startsWith('http://')) {
+    if (!url.startsWith('https://') && !url.startsWith('http://') && !url.startsWith('.')) {
       const { baseUrl } = environment.api;
       url = baseUrl + (baseUrl.endsWith('/') && url.startsWith('/') ? url.substring(1) : url);
     }
     const newReq = req.clone({ url, setHeaders: this.fillHeaders(req.headers) });
     return next.handle(newReq).pipe(
       mergeMap(httpEvent => {
-
         if (httpEvent instanceof HttpResponseBase) {
           // todo 处理成功状态响应
 
@@ -192,7 +191,7 @@ export class DefaultInterceptor implements HttpInterceptor {
             break;
         }
         this.checkStatus(err);
-        console.warn(`${err.status} == ${err.message}`)
+        console.warn(`${err.status} == ${err.message}`);
         return throwError(err);
       })
     );

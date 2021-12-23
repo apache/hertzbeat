@@ -15,11 +15,7 @@ export class UserLockComponent {
     return this.settings.user;
   }
 
-  constructor(
-    fb: FormBuilder,
-    private settings: SettingsService,
-    private router: Router
-  ) {
+  constructor(fb: FormBuilder, private settings: SettingsService, private router: Router) {
     this.f = fb.group({
       password: [null, Validators.required]
     });

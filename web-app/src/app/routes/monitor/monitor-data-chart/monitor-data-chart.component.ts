@@ -1,5 +1,6 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {MonitorService} from "../../../service/monitor.service";
+import { Component, Input, OnInit } from '@angular/core';
+
+import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
   selector: 'app-monitor-data-chart',
@@ -7,9 +8,10 @@ import {MonitorService} from "../../../service/monitor.service";
   styleUrls: ['./monitor-data-chart.component.less']
 })
 export class MonitorDataChartComponent implements OnInit {
-
   @Input()
-  get monitorId(): number { return this._monitorId; }
+  get monitorId(): number {
+    return this._monitorId;
+  }
   set monitorId(monitorId: number) {
     this._monitorId = monitorId;
     this.loadData();
@@ -24,13 +26,13 @@ export class MonitorDataChartComponent implements OnInit {
   rowValues!: any[];
   isTable: boolean = true;
 
-  constructor(private monitorSvc: MonitorService) { }
+  constructor(private monitorSvc: MonitorService) {}
   ngOnInit(): void {}
 
   loadData() {
     // 读取实时指标数据
-    let metricData$ = this.monitorSvc.getMonitorMetricsData(this.monitorId, this.metrics)
-      .subscribe(message => {
+    let metricData$ = this.monitorSvc.getMonitorMetricsData(this.monitorId, this.metrics).subscribe(
+      message => {
         metricData$.unsubscribe();
         if (message.code === 0) {
           this.time = message.data.time;
@@ -43,9 +45,10 @@ export class MonitorDataChartComponent implements OnInit {
         } else {
           console.error(message.msg);
         }
-      }, error => {
+      },
+      error => {
         metricData$.unsubscribe();
-      })
+      }
+    );
   }
-
 }

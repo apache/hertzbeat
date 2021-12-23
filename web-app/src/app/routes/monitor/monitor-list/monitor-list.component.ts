@@ -1,26 +1,27 @@
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {MonitorService} from "../../../service/monitor.service";
-import {Monitor} from "../../../pojo/Monitor";
-import {NzModalService} from "ng-zorro-antd/modal";
-import {NzNotificationService} from "ng-zorro-antd/notification";
-import {NzMessageService} from "ng-zorro-antd/message";
-import {NzTableQueryParams} from "ng-zorro-antd/table";
+import { ActivatedRoute, Router } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzTableQueryParams } from 'ng-zorro-antd/table';
+
+import { Monitor } from '../../../pojo/Monitor';
+import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
   selector: 'app-monitor-list',
   templateUrl: './monitor-list.component.html',
-  styles: [
-  ]
+  styles: []
 })
 export class MonitorListComponent implements OnInit {
-
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private modal: NzModalService,
-              private notifySvc: NzNotificationService,
-              private msg: NzMessageService,
-              private monitorSvc: MonitorService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private modal: NzModalService,
+    private notifySvc: NzNotificationService,
+    private msg: NzMessageService,
+    private monitorSvc: MonitorService
+  ) {}
 
   app!: string;
   pageIndex: number = 1;
@@ -31,15 +32,14 @@ export class MonitorListComponent implements OnInit {
   checkedMonitorIds = new Set<number>();
 
   ngOnInit(): void {
-    this.route.queryParamMap
-      .subscribe(paramMap => {
-        this.app = paramMap.get("app") || '';
-        this.pageIndex = 1;
-        this.pageSize = 8;
-        this.checkedMonitorIds = new Set<number>();
-        this.tableLoading = true;
-        this.loadMonitorTable();
-      });
+    this.route.queryParamMap.subscribe(paramMap => {
+      this.app = paramMap.get('app') || '';
+      this.pageIndex = 1;
+      this.pageSize = 8;
+      this.checkedMonitorIds = new Set<number>();
+      this.tableLoading = true;
+      this.loadMonitorTable();
+    });
   }
 
   sync() {
@@ -48,8 +48,8 @@ export class MonitorListComponent implements OnInit {
 
   loadMonitorTable() {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize)
-      .subscribe(message => {
+    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize).subscribe(
+      message => {
         this.tableLoading = false;
         this.checkedAll = false;
         this.checkedMonitorIds.clear();
@@ -66,12 +66,13 @@ export class MonitorListComponent implements OnInit {
       error => {
         this.tableLoading = false;
         monitorInit$.unsubscribe();
-      });
+      }
+    );
   }
 
   onEditOneMonitor(monitorId: number) {
     if (monitorId == null) {
-      this.notifySvc.warning("未选中任何待编辑项！","");
+      this.notifySvc.warning('未选中任何待编辑项！', '');
       return;
     }
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
@@ -82,15 +83,15 @@ export class MonitorListComponent implements OnInit {
   onEditMonitor() {
     // 编辑时只能选中一个监控
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning("未选中任何待编辑项！","");
+      this.notifySvc.warning('未选中任何待编辑项！', '');
       return;
     }
     if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning("只能对一个选中项进行编辑！","");
+      this.notifySvc.warning('只能对一个选中项进行编辑！', '');
       return;
     }
     let monitorId = 0;
-    this.checkedMonitorIds.forEach(item => monitorId = item);
+    this.checkedMonitorIds.forEach(item => (monitorId = item));
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
   }
 
@@ -102,14 +103,14 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.deleteMonitors(monitors)
     });
   }
 
   onDeleteMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning("未选中任何待删除项！","");
+      this.notifySvc.warning('未选中任何待删除项！', '');
       return;
     }
     this.modal.confirm({
@@ -117,40 +118,39 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.deleteMonitors(this.checkedMonitorIds)
     });
   }
 
-
   deleteMonitors(monitors: Set<number>) {
     if (monitors == null || monitors.size == 0) {
-      this.notifySvc.warning("未选中任何待删除项！","");
+      this.notifySvc.warning('未选中任何待删除项！', '');
       return;
     }
     this.tableLoading = true;
-    const deleteMonitors$ = this.monitorSvc.deleteMonitors(monitors)
-      .subscribe(message => {
-          deleteMonitors$.unsubscribe();
+    const deleteMonitors$ = this.monitorSvc.deleteMonitors(monitors).subscribe(
+      message => {
+        deleteMonitors$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success("删除成功！", "");
+          this.notifySvc.success('删除成功！', '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error("删除失败！", message.msg);
+          this.notifySvc.error('删除失败！', message.msg);
         }
-    },
-        error => {
-          this.tableLoading = false;
-          deleteMonitors$.unsubscribe();
-          this.notifySvc.error("删除失败！", error.msg)
-        }
+      },
+      error => {
+        this.tableLoading = false;
+        deleteMonitors$.unsubscribe();
+        this.notifySvc.error('删除失败！', error.msg);
+      }
     );
   }
 
   onCancelManageMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning("未选中任何待取消项！","");
+      this.notifySvc.warning('未选中任何待取消项！', '');
       return;
     }
     this.modal.confirm({
@@ -158,7 +158,7 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.cancelManageMonitors(this.checkedMonitorIds)
     });
   }
@@ -171,35 +171,35 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.cancelManageMonitors(monitors)
     });
   }
 
   cancelManageMonitors(monitors: Set<number>) {
     this.tableLoading = true;
-    const cancelManage$ = this.monitorSvc.cancelManageMonitors(monitors)
-      .subscribe(message => {
-          cancelManage$.unsubscribe();
-          if (message.code === 0) {
-            this.notifySvc.success("取消纳管成功！", "");
-            this.loadMonitorTable();
-          } else {
-            this.tableLoading = false;
-            this.notifySvc.error("取消纳管失败！", message.msg);
-          }
-        },
-        error => {
+    const cancelManage$ = this.monitorSvc.cancelManageMonitors(monitors).subscribe(
+      message => {
+        cancelManage$.unsubscribe();
+        if (message.code === 0) {
+          this.notifySvc.success('取消纳管成功！', '');
+          this.loadMonitorTable();
+        } else {
           this.tableLoading = false;
-          cancelManage$.unsubscribe();
-          this.notifySvc.error("取消纳管失败！", error.msg)
+          this.notifySvc.error('取消纳管失败！', message.msg);
         }
-      );
+      },
+      error => {
+        this.tableLoading = false;
+        cancelManage$.unsubscribe();
+        this.notifySvc.error('取消纳管失败！', error.msg);
+      }
+    );
   }
 
   onEnableManageMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning("未选中任何待启用纳管项！","");
+      this.notifySvc.warning('未选中任何待启用纳管项！', '');
       return;
     }
     this.modal.confirm({
@@ -207,7 +207,7 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.enableManageMonitors(this.checkedMonitorIds)
     });
   }
@@ -220,30 +220,30 @@ export class MonitorListComponent implements OnInit {
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.enableManageMonitors(monitors)
     });
   }
 
   enableManageMonitors(monitors: Set<number>) {
     this.tableLoading = true;
-    const enableManage$ = this.monitorSvc.enableManageMonitors(monitors)
-      .subscribe(message => {
-          enableManage$.unsubscribe();
-          if (message.code === 0) {
-            this.notifySvc.success("启用纳管成功！", "");
-            this.loadMonitorTable();
-          } else {
-            this.tableLoading = false;
-            this.notifySvc.error("启用纳管失败！", message.msg);
-          }
-        },
-        error => {
+    const enableManage$ = this.monitorSvc.enableManageMonitors(monitors).subscribe(
+      message => {
+        enableManage$.unsubscribe();
+        if (message.code === 0) {
+          this.notifySvc.success('启用纳管成功！', '');
+          this.loadMonitorTable();
+        } else {
           this.tableLoading = false;
-          enableManage$.unsubscribe();
-          this.notifySvc.error("启用纳管失败！", error.msg)
+          this.notifySvc.error('启用纳管失败！', message.msg);
         }
-      );
+      },
+      error => {
+        this.tableLoading = false;
+        enableManage$.unsubscribe();
+        this.notifySvc.error('启用纳管失败！', error.msg);
+      }
+    );
   }
 
   // begin: 列表多选逻辑
@@ -266,6 +266,7 @@ export class MonitorListComponent implements OnInit {
 
   /**
    * 分页回调
+   *
    * @param params 页码信息
    */
   onTablePageChange(params: NzTableQueryParams) {
@@ -274,5 +275,4 @@ export class MonitorListComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadMonitorTable();
   }
-
 }
