@@ -1,18 +1,7 @@
-import {ThemeOption} from "ngx-echarts";
+import { ThemeOption } from 'ngx-echarts';
 
 export const CoolTheme: ThemeOption = {
-  color: [
-    '#b21ab4',
-    '#6f0099',
-    '#2a2073',
-    '#0b5ea8',
-    '#17aecc',
-    '#b3b3ff',
-    '#eb99ff',
-    '#fae6ff',
-    '#e6f2ff',
-    '#eeeeee'
-  ],
+  color: ['#b21ab4', '#6f0099', '#2a2073', '#0b5ea8', '#17aecc', '#b3b3ff', '#eb99ff', '#fae6ff', '#e6f2ff', '#eeeeee'],
 
   title: {
     textStyle: {

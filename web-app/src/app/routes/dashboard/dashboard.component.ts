@@ -1,17 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  Inject,
-  OnDestroy,
-  OnInit
-} from '@angular/core';
-import {NzMessageService} from "ng-zorro-antd/message";
-import {MonitorService} from "../../service/monitor.service";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
-import {I18NService} from "@core";
-import {ALAIN_I18N_TOKEN} from "@delon/theme";
-import {Router} from "@angular/router";
+import { NzMessageService } from 'ng-zorro-antd/message';
+
+import { MonitorService } from '../../service/monitor.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,12 +14,13 @@ import {Router} from "@angular/router";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-
-  constructor(private msg: NzMessageService,
-              private monitorSvc: MonitorService,
-              @Inject(ALAIN_I18N_TOKEN)  private i18nSvc: I18NService,
-              private router: Router,
-              private cdr: ChangeDetectorRef){}
+  constructor(
+    private msg: NzMessageService,
+    private monitorSvc: MonitorService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   interval$!: number;
   appsCountLoading: boolean = true;
@@ -45,8 +40,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   refresh(): void {
-    let dashboard$ = this.monitorSvc.getAppsMonitorSummary()
-      .subscribe(message => {
+    let dashboard$ = this.monitorSvc.getAppsMonitorSummary().subscribe(
+      message => {
         dashboard$.unsubscribe();
         if (message.code === 0) {
           // {app:'linux',size: 12}
@@ -54,7 +49,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.appsCountTableData = [];
           let total = 0;
           apps.forEach(app => {
-            let appName = this.i18nSvc.fanyi('monitor.app.' + app.app);
+            let appName = this.i18nSvc.fanyi(`monitor.app.${app.app}`);
             this.appsCountTableData.push({
               // 自定义属性
               app: app.app,
@@ -62,7 +57,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               name: appName,
               value: app.size
             });
-            total = total + app.size? app.size : 0;
+            total = total + app.size ? app.size : 0;
           });
 
           this.appsCountEChartOption = {
@@ -94,14 +89,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
                   fontSize: 15,
                   color: '#ffffff',
                   fontStyle: 'oblique',
-                  formatter: '{a}:{c}',
+                  formatter: '{a}:{c}'
                 },
                 labelLine: {
                   show: false
                 },
-                data: [
-                  { value: total, name: '监控总量' },
-                ]
+                data: [{ value: total, name: '监控总量' }]
               },
               {
                 name: '纳管数量分布',
@@ -148,10 +141,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           };
           this.cdr.detectChanges();
         }
-      }, error => {
+      },
+      error => {
         console.error(error);
         dashboard$.unsubscribe();
-      });
+      }
+    );
   }
 
   onChartClick(click: any) {

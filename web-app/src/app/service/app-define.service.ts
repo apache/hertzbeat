@@ -1,8 +1,9 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Message} from "../pojo/Message";
-import {Observable} from "rxjs";
-import {ParamDefine} from "../pojo/ParamDefine";
+import { Observable } from 'rxjs';
+
+import { Message } from '../pojo/Message';
+import { ParamDefine } from '../pojo/ParamDefine';
 
 const app_hierarchy = '/apps/hierarchy';
 
@@ -10,21 +11,19 @@ const app_hierarchy = '/apps/hierarchy';
   providedIn: 'root'
 })
 export class AppDefineService {
+  constructor(private http: HttpClient) {}
 
-  constructor(private http : HttpClient) { }
-
-  public getAppParamsDefine(app: string | undefined | null) : Observable<Message<ParamDefine[]>> {
+  public getAppParamsDefine(app: string | undefined | null): Observable<Message<ParamDefine[]>> {
     if (app === null || app === undefined) {
-      console.log("getAppParamsDefine app can not null");
+      console.log('getAppParamsDefine app can not null');
     }
     const paramDefineUri = `/apps/${app}/params`;
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
   }
 
-  public getAppHierarchy() : Observable<Message<any>> {
-    let httpParams = new HttpParams().append("lang",'zh-CN');
+  public getAppHierarchy(): Observable<Message<any>> {
+    let httpParams = new HttpParams().append('lang', 'zh-CN');
     const options = { params: httpParams };
-    return this.http.get<Message<any>>(app_hierarchy,options);
+    return this.http.get<Message<any>>(app_hierarchy, options);
   }
-
 }

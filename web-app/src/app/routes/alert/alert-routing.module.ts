@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import {AlertCenterComponent} from "./alert-center/alert-center.component";
-import {AlertSettingComponent} from "./alert-setting/alert-setting.component";
-import {AlertNoticeComponent} from "./alert-notice/alert-notice.component";
+
+import { AlertCenterComponent } from './alert-center/alert-center.component';
+import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
+import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 
 const routes: Routes = [
   { path: '', component: AlertCenterComponent },
@@ -16,4 +17,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class AlertRoutingModule { }
+export class AlertRoutingModule {}

@@ -50,19 +50,13 @@ import { environment } from '@env/environment';
         <header-user></header-user>
       </layout-default-header-item>
       <ng-template #asideUserTpl>
-        <div nz-dropdown nzTrigger="click" [nzDropdownMenu]="userMenu" class="alain-default__aside-user">
-          <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="user.avatar"></nz-avatar>
+        <div nz-dropdown nzTrigger="click" class="alain-default__aside-user">
+          <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="avatar"></nz-avatar>
           <div class="alain-default__aside-user-info">
             <strong>{{ user.name }}</strong>
             <p class="mb0">{{ user.email }}</p>
           </div>
         </div>
-        <nz-dropdown-menu #userMenu="nzDropdownMenu">
-          <ul nz-menu>
-            <li nz-menu-item routerLink="/pro/account/center">{{ 'menu.account.center' | i18n }}</li>
-            <li nz-menu-item routerLink="/pro/account/settings">{{ 'menu.account.settings' | i18n }}</li>
-          </ul>
-        </nz-dropdown-menu>
       </ng-template>
       <ng-template #contentTpl>
         <router-outlet></router-outlet>
@@ -71,13 +65,14 @@ import { environment } from '@env/environment';
 
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
     <theme-btn></theme-btn>
-  `,
+  `
 })
 export class LayoutBasicComponent {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
-    logoCollapsed: `./assets/logo.svg`,
+    logoCollapsed: `./assets/logo.svg`
   };
+  avatar: string = `./assets/logo.svg`;
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
   get user(): User {

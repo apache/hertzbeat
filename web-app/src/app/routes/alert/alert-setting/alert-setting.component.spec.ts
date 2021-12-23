@@ -8,9 +8,8 @@ describe('AlertSettingComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ AlertSettingComponent ]
-    })
-    .compileComponents();
+      declarations: [AlertSettingComponent]
+    }).compileComponents();
   });
 
   beforeEach(() => {

@@ -1,9 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import {MonitorListComponent} from "./monitor-list/monitor-list.component";
-import {MonitorNewComponent} from "./monitor-new/monitor-new.component";
-import {MonitorEditComponent} from "./monitor-edit/monitor-edit.component";
-import {MonitorDetailComponent} from "./monitor-detail/monitor-detail.component";
+
+import { MonitorDetailComponent } from './monitor-detail/monitor-detail.component';
+import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
+import { MonitorListComponent } from './monitor-list/monitor-list.component';
+import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 
 const routes: Routes = [
   { path: '', component: MonitorListComponent },
@@ -17,4 +18,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class MonitorRoutingModule { }
+export class MonitorRoutingModule {}
