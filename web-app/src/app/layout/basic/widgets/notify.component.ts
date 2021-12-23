@@ -1,11 +1,12 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit} from '@angular/core';
-import {NoticeIconSelect, NoticeItem } from '@delon/abc/notice-icon';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { I18NService } from '@core';
+import { NoticeIconSelect, NoticeItem } from '@delon/abc/notice-icon';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzI18nService } from 'ng-zorro-antd/i18n';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import {AlertService} from "../../../service/alert.service";
-import {ALAIN_I18N_TOKEN} from "@delon/theme";
-import {I18NService} from "@core";
-import {Router} from "@angular/router";
+
+import { AlertService } from '../../../service/alert.service';
 
 @Component({
   selector: 'header-notify',
@@ -22,8 +23,7 @@ import {Router} from "@angular/router";
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeaderNotifyComponent implements OnInit{
-
+export class HeaderNotifyComponent implements OnInit {
   data: NoticeItem[] = [
     {
       title: '近期未处理告警',
@@ -36,12 +36,14 @@ export class HeaderNotifyComponent implements OnInit{
   count = 0;
   loading = false;
 
-  constructor(private msg: NzMessageService,
-              private nzI18n: NzI18nService,
-              private router: Router,
-              @Inject(ALAIN_I18N_TOKEN)  private i18nSvc: I18NService,
-              private alertSvc: AlertService,
-              private cdr: ChangeDetectorRef) {}
+  constructor(
+    private msg: NzMessageService,
+    private nzI18n: NzI18nService,
+    private router: Router,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private alertSvc: AlertService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -52,8 +54,8 @@ export class HeaderNotifyComponent implements OnInit{
       return;
     }
     this.loading = true;
-    let loadAlerts$ = this.alertSvc.searchAlerts(0, undefined,undefined, 0, 5)
-      .subscribe(message => {
+    let loadAlerts$ = this.alertSvc.searchAlerts(0, undefined, undefined, 0, 5).subscribe(
+      message => {
         loadAlerts$.unsubscribe();
         if (message.code === 0) {
           let page = message.data;
@@ -61,26 +63,28 @@ export class HeaderNotifyComponent implements OnInit{
           this.data[0].list = [];
           alerts.forEach(alert => {
             let item = {
-                id: alert.id,
-                avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-                title: '监控-' + alert.monitorName +'-发出' + this.i18nSvc.fanyi(`alert.priority.${alert.priority}`),
-                datetime: alert.gmtCreate,
-                color: 'blue',
-                type: '近期未处理告警'
-              }
+              id: alert.id,
+              avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
+              title: `监控-${alert.monitorName}-发出${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
+              datetime: alert.gmtCreate,
+              color: 'blue',
+              type: '近期未处理告警'
+            };
             this.data[0].list.push(item);
-          })
+          });
           this.count = page.totalElements;
         } else {
           console.warn(message.msg);
         }
         this.loading = false;
         this.cdr.detectChanges();
-      }, error => {
+      },
+      error => {
         loadAlerts$.unsubscribe();
         console.error(error.msg);
         this.loading = false;
-      })
+      }
+    );
   }
 
   gotoAlertCenter(type: string): void {

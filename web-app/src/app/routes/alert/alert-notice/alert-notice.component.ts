@@ -1,24 +1,25 @@
 import { Component, OnInit } from '@angular/core';
-import {NzNotificationService} from "ng-zorro-antd/notification";
-import {NoticeReceiverService} from "../../../service/notice-receiver.service";
-import {NoticeRuleService} from "../../../service/notice-rule.service";
-import {NoticeReceiver} from "../../../pojo/NoticeReceiver";
-import {finalize} from "rxjs/operators";
-import {NoticeRule} from "../../../pojo/NoticeRule";
-import {NzModalService} from "ng-zorro-antd/modal";
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { finalize } from 'rxjs/operators';
+
+import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
+import { NoticeRule } from '../../../pojo/NoticeRule';
+import { NoticeReceiverService } from '../../../service/notice-receiver.service';
+import { NoticeRuleService } from '../../../service/notice-rule.service';
 
 @Component({
   selector: 'app-alert-notice',
   templateUrl: './alert-notice.component.html',
-  styles: [
-  ]
+  styles: []
 })
 export class AlertNoticeComponent implements OnInit {
-
-  constructor(private notifySvc: NzNotificationService,
-              private noticeReceiverSvc: NoticeReceiverService,
-              private modal: NzModalService,
-              private noticeRuleSvc : NoticeRuleService) { }
+  constructor(
+    private notifySvc: NzNotificationService,
+    private noticeReceiverSvc: NoticeReceiverService,
+    private modal: NzModalService,
+    private noticeRuleSvc: NoticeRuleService
+  ) {}
 
   receivers!: NoticeReceiver[];
   receiverTableLoading: boolean = true;
@@ -38,8 +39,8 @@ export class AlertNoticeComponent implements OnInit {
 
   loadReceiversTable() {
     this.receiverTableLoading = true;
-    let receiverInit$ = this.noticeReceiverSvc.getReceivers()
-      .subscribe(message => {
+    let receiverInit$ = this.noticeReceiverSvc.getReceivers().subscribe(
+      message => {
         this.receiverTableLoading = false;
         if (message.code === 0) {
           this.receivers = message.data;
@@ -47,16 +48,18 @@ export class AlertNoticeComponent implements OnInit {
           console.warn(message.msg);
         }
         receiverInit$.unsubscribe();
-      }, error => {
+      },
+      error => {
         console.error(error.msg);
         this.receiverTableLoading = false;
         receiverInit$.unsubscribe();
-      });
+      }
+    );
   }
   loadRulesTable() {
     this.ruleTableLoading = true;
-    let rulesInit$ = this.noticeRuleSvc.getNoticeRules()
-      .subscribe(message => {
+    let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(
+      message => {
         this.ruleTableLoading = false;
         if (message.code === 0) {
           this.rules = message.data;
@@ -64,71 +67,85 @@ export class AlertNoticeComponent implements OnInit {
           console.warn(message.msg);
         }
         rulesInit$.unsubscribe();
-      }, error => {
+      },
+      error => {
         console.error(error.msg);
         this.ruleTableLoading = false;
         rulesInit$.unsubscribe();
-      });
+      }
+    );
   }
 
-  onDeleteOneNoticeReceiver(receiveId : number) {
+  onDeleteOneNoticeReceiver(receiveId: number) {
     this.modal.confirm({
       nzTitle: '请确认是否删除！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.deleteOneNoticeReceiver(receiveId)
     });
   }
 
-  deleteOneNoticeReceiver(receiveId : number) {
-    const deleteReceiver$ = this.noticeReceiverSvc.deleteReceiver(receiveId)
-      .pipe(finalize(() => {
-        deleteReceiver$.unsubscribe();
-      }))
-      .subscribe(message => {
-        if (message.code === 0) {
-          this.notifySvc.success("删除成功！", "");
-          this.loadReceiversTable();
-        } else {
-          this.notifySvc.error("删除失败！", message.msg);
+  deleteOneNoticeReceiver(receiveId: number) {
+    const deleteReceiver$ = this.noticeReceiverSvc
+      .deleteReceiver(receiveId)
+      .pipe(
+        finalize(() => {
+          deleteReceiver$.unsubscribe();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.notifySvc.success('删除成功！', '');
+            this.loadReceiversTable();
+          } else {
+            this.notifySvc.error('删除失败！', message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error('删除失败！', error.msg);
         }
-      }, error => {
-        this.notifySvc.error("删除失败！", error.msg);
-      })
+      );
   }
 
-  onDeleteOneNoticeRule(ruleId : number) {
+  onDeleteOneNoticeRule(ruleId: number) {
     this.modal.confirm({
       nzTitle: '请确认是否删除！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
-      nzOkType: "primary",
+      nzOkType: 'primary',
       nzOnOk: () => this.deleteOneNoticeRule(ruleId)
     });
   }
 
-  deleteOneNoticeRule(ruleId : number) {
-    const deleteRule$ = this.noticeRuleSvc.deleteNoticeRule(ruleId)
-      .pipe(finalize(() => {
-        deleteRule$.unsubscribe();
-      }))
-      .subscribe(message => {
-        if (message.code === 0) {
-          this.notifySvc.success("删除成功！", "");
-          this.loadRulesTable();
-        } else {
-          this.notifySvc.error("删除失败！", message.msg);
+  deleteOneNoticeRule(ruleId: number) {
+    const deleteRule$ = this.noticeRuleSvc
+      .deleteNoticeRule(ruleId)
+      .pipe(
+        finalize(() => {
+          deleteRule$.unsubscribe();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.notifySvc.success('删除成功！', '');
+            this.loadRulesTable();
+          } else {
+            this.notifySvc.error('删除失败！', message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error('删除失败！', error.msg);
         }
-      }, error => {
-        this.notifySvc.error("删除失败！", error.msg);
-      })
+      );
   }
 
   // start 新增或修改通知接收人弹出框
-  isManageReceiverModalVisible : boolean = false;
+  isManageReceiverModalVisible: boolean = false;
   isManageReceiverModalAdd: boolean = true;
   isManageReceiverModalOkLoading: boolean = false;
   receiver!: NoticeReceiver;
@@ -138,7 +155,7 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = true;
   }
-  onEditOneNoticeReceiver(receiver : NoticeReceiver) {
+  onEditOneNoticeReceiver(receiver: NoticeReceiver) {
     this.receiver = receiver;
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = false;
@@ -150,44 +167,56 @@ export class AlertNoticeComponent implements OnInit {
   onManageReceiverModalOk() {
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {
-      const modalOk$ = this.noticeReceiverSvc.newReceiver(this.receiver)
-        .pipe(finalize(() => {
-          modalOk$.unsubscribe();
-          this.isManageReceiverModalOkLoading = false;
-        }))
-        .subscribe(message => {
-          if (message.code === 0) {
-            this.isManageReceiverModalVisible = false;
-            this.notifySvc.success("新增成功！", "");
-            this.loadReceiversTable();
-          } else {
-            this.notifySvc.error("新增失败！", message.msg);
+      const modalOk$ = this.noticeReceiverSvc
+        .newReceiver(this.receiver)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageReceiverModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageReceiverModalVisible = false;
+              this.notifySvc.success('新增成功！', '');
+              this.loadReceiversTable();
+            } else {
+              this.notifySvc.error('新增失败！', message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error('新增失败！', error.msg);
           }
-        }, error => {
-          this.notifySvc.error("新增失败！", error.msg);
-        })
+        );
     } else {
-      const modalOk$ = this.noticeReceiverSvc.editReceiver(this.receiver)
-        .pipe(finalize(() => {
-          modalOk$.unsubscribe();
-          this.isManageReceiverModalOkLoading = false;
-        }))
-        .subscribe(message => {
-          if (message.code === 0) {
-            this.isManageReceiverModalVisible = false;
-            this.notifySvc.success("修改成功！", "");
-            this.loadReceiversTable();
-          } else {
-            this.notifySvc.error("修改失败！", message.msg);
+      const modalOk$ = this.noticeReceiverSvc
+        .editReceiver(this.receiver)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageReceiverModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageReceiverModalVisible = false;
+              this.notifySvc.success('修改成功！', '');
+              this.loadReceiversTable();
+            } else {
+              this.notifySvc.error('修改失败！', message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error('修改失败！', error.msg);
           }
-        }, error => {
-          this.notifySvc.error("修改失败！", error.msg);
-        })
+        );
     }
   }
 
   // start 新增或修改通知策略弹出框
-  isManageRuleModalVisible : boolean = false;
+  isManageRuleModalVisible: boolean = false;
   isManageRuleModalAdd: boolean = true;
   isManageRuleModalOkLoading: boolean = false;
   rule!: NoticeRule;
@@ -199,43 +228,53 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageRuleModalAdd = true;
   }
 
-  onEditOneNoticeRule(rule : NoticeRule) {
+  onEditOneNoticeRule(rule: NoticeRule) {
     this.rule = rule;
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption.push({
       value: rule.receiverId,
       label: rule.receiverName
-    })
+    });
   }
 
   loadReceiversOption() {
-    let receiverOption$ = this.noticeReceiverSvc.getReceivers()
-      .subscribe(message => {
+    let receiverOption$ = this.noticeReceiverSvc.getReceivers().subscribe(
+      message => {
         if (message.code === 0) {
           let data = message.data;
           this.receiversOption = [];
           data.forEach(item => {
-            let label = item.name + '-';
+            let label = `${item.name}-`;
             switch (item.type) {
-              case 0: label = label + 'Phone';break;
-              case 1: label = label + 'Email';break;
-              case 2: label = label + 'WebHook';break;
-              case 3: label = label + 'WeChat';break;
+              case 0:
+                label = `${label}Phone`;
+                break;
+              case 1:
+                label = `${label}Email`;
+                break;
+              case 2:
+                label = `${label}WebHook`;
+                break;
+              case 3:
+                label = `${label}WeChat`;
+                break;
             }
             this.receiversOption.push({
               value: item.id,
               label: label
             });
-          })
+          });
         } else {
           console.warn(message.msg);
         }
         receiverOption$.unsubscribe();
-      }, error => {
+      },
+      error => {
         console.error(error.msg);
         receiverOption$.unsubscribe();
-      });
+      }
+    );
   }
 
   onManageRuleModalCancel() {
@@ -250,40 +289,51 @@ export class AlertNoticeComponent implements OnInit {
     });
     this.isManageRuleModalOkLoading = true;
     if (this.isManageRuleModalAdd) {
-      const modalOk$ = this.noticeRuleSvc.newNoticeRule(this.rule)
-        .pipe(finalize(() => {
-          modalOk$.unsubscribe();
-          this.isManageRuleModalOkLoading = false;
-        }))
-        .subscribe(message => {
-          if (message.code === 0) {
-            this.isManageRuleModalVisible = false;
-            this.notifySvc.success("新增成功！", "");
-            this.loadRulesTable();
-          } else {
-            this.notifySvc.error("新增失败！", message.msg);
+      const modalOk$ = this.noticeRuleSvc
+        .newNoticeRule(this.rule)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageRuleModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageRuleModalVisible = false;
+              this.notifySvc.success('新增成功！', '');
+              this.loadRulesTable();
+            } else {
+              this.notifySvc.error('新增失败！', message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error('新增失败！', error.msg);
           }
-        }, error => {
-          this.notifySvc.error("新增失败！", error.msg);
-        })
+        );
     } else {
-      const modalOk$ = this.noticeRuleSvc.editNoticeRule(this.rule)
-        .pipe(finalize(() => {
-          modalOk$.unsubscribe();
-          this.isManageRuleModalOkLoading = false;
-        }))
-        .subscribe(message => {
-          if (message.code === 0) {
-            this.isManageRuleModalVisible = false;
-            this.notifySvc.success("修改成功！", "");
-            this.loadRulesTable();
-          } else {
-            this.notifySvc.error("修改失败！", message.msg);
+      const modalOk$ = this.noticeRuleSvc
+        .editNoticeRule(this.rule)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageRuleModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageRuleModalVisible = false;
+              this.notifySvc.success('修改成功！', '');
+              this.loadRulesTable();
+            } else {
+              this.notifySvc.error('修改失败！', message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error('修改失败！', error.msg);
           }
-        }, error => {
-          this.notifySvc.error("修改失败！", error.msg);
-        })
+        );
     }
   }
-
 }

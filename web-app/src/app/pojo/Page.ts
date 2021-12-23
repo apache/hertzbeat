@@ -1,4 +1,3 @@
-
 export class Page<T> {
   content!: T[];
   // 集合总页数

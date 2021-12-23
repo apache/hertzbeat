@@ -12,8 +12,9 @@ import {
 } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import {MonitorService} from "../../../service/monitor.service";
-import {Monitor} from "../../../pojo/Monitor";
+
+import { Monitor } from '../../../pojo/Monitor';
+import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
   selector: 'header-search',
@@ -40,7 +41,7 @@ import {Monitor} from "../../../pojo/Monitor";
       <nz-auto-option *ngFor="let option of options" [nzValue]="option.id" [nzLabel]="option.name">
         <a [routerLink]="['/monitors/' + option.id]">
           监控名称: {{ option.name }}
-          <span style="left:50% ; position: absolute;">监控Host: {{option.host}}</span>
+          <span style="left:50% ; position: absolute;">监控Host: {{ option.host }}</span>
           <span style="right: 10px; position: absolute;"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
         </a>
       </nz-auto-option>
@@ -73,9 +74,7 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
   }
   @Output() readonly toggleChangeChange = new EventEmitter<boolean>();
 
-  constructor(private el: ElementRef<HTMLElement>,
-              private cdr: ChangeDetectorRef,
-              private monitorSvc : MonitorService) {}
+  constructor(private el: ElementRef<HTMLElement>, private cdr: ChangeDetectorRef, private monitorSvc: MonitorService) {}
 
   ngAfterViewInit(): void {
     this.qIpt = this.el.nativeElement.querySelector('.ant-input') as HTMLInputElement;
@@ -91,8 +90,8 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
       )
       .subscribe(value => {
         // 远程加载搜索数据
-        let searchMonitors$ = this.monitorSvc.searchMonitors(value, value, 0, 10)
-          .subscribe(message => {
+        let searchMonitors$ = this.monitorSvc.searchMonitors(value, value, 0, 10).subscribe(
+          message => {
             this.loading = false;
             searchMonitors$.unsubscribe();
             if (message.code === 0) {
@@ -102,11 +101,13 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
             } else {
               console.warn(message.msg);
             }
-          }, error => {
+          },
+          error => {
             this.loading = false;
             searchMonitors$.unsubscribe();
             console.error(error.msg);
-          })
+          }
+        );
       });
   }
 

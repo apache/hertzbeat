@@ -1,6 +1,13 @@
-<br/>
+<br />
 <div nz-row [nzGutter]="24" style="margin-top: 10px">
   <div nz-col nzXs="18" nzSm="18" nzMd="18" nzLg="18" nzOffset="1">
-    <div echarts [options]="appsCountEChartOption" theme='default' [autoResize]= 'true' [loading]="appsCountLoading" (chartClick)="onChartClick($event)"></div>
+    <div
+      echarts
+      [options]="appsCountEChartOption"
+      theme="default"
+      [autoResize]="true"
+      [loading]="appsCountLoading"
+      (chartClick)="onChartClick($event)"
+    ></div>
   </div>
 </div>

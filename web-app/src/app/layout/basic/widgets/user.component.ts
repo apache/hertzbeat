@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingsService, User } from '@delon/theme';
-import {LocalStorageService} from "../../../service/local-storage.service";
+
+import { LocalStorageService } from '../../../service/local-storage.service';
 
 @Component({
   selector: 'header-user',
@@ -12,14 +13,6 @@ import {LocalStorageService} from "../../../service/local-storage.service";
     </div>
     <nz-dropdown-menu #userMenu="nzDropdownMenu">
       <div nz-menu class="width-sm">
-        <div nz-menu-item routerLink="/pro/account/center">
-          <i nz-icon nzType="user" class="mr-sm"></i>
-          {{ 'menu.account.center' | i18n }}
-        </div>
-        <div nz-menu-item routerLink="/pro/account/settings">
-          <i nz-icon nzType="setting" class="mr-sm"></i>
-          {{ 'menu.account.settings' | i18n }}
-        </div>
         <li nz-menu-divider></li>
         <div nz-menu-item (click)="logout()">
           <i nz-icon nzType="logout" class="mr-sm"></i>
@@ -35,9 +28,7 @@ export class HeaderUserComponent {
     return this.settings.user;
   }
 
-  constructor(private settings: SettingsService,
-              private router: Router,
-              private localStorageSvc : LocalStorageService) {}
+  constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {}
 
   logout(): void {
     this.localStorageSvc.clear();
