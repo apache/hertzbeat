@@ -9,7 +9,7 @@ import * as MOCK_DATA from '../../_mock';
 
 export const environment = {
   production: false,
-  useHash: true,
+  useHash: false,
   api: {
     baseUrl: 'http://localhost:8080/',
     refreshTokenEnabled: true
