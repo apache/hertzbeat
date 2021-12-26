@@ -4,7 +4,7 @@
 SERVER_NAME="${project.artifactId}"
 
 # jar名称
-JAR_NAME="${project.build.finalName}.jar"
+JAR_NAME="${project.build.finalName}-executable.jar"
 
 # 进入bin目录
 cd `dirname $0`
