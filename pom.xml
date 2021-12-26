@@ -102,7 +102,7 @@
                 <configuration>
                     <rulesets>
                         <ruleset>rulesets/java/ali-comment.xml</ruleset>
-                        <ruleset>rulesets/java/ali-concurrent.xml</ruleset>
+                        <!--<ruleset>rulesets/java/ali-concurrent.xml</ruleset>-->
                         <ruleset>rulesets/java/ali-constant.xml</ruleset>
                         <!--<ruleset>rulesets/java/ali-exception.xml</ruleset>-->
                         <!--<ruleset>rulesets/java/ali-flowcontrol.xml</ruleset>-->

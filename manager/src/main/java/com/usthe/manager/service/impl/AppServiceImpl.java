@@ -8,7 +8,6 @@ import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -123,12 +121,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public void run(String... args) throws Exception {
         // 读取app定义配置加载到内存中 define/app/*.yml
         Yaml yaml = new Yaml();
-        String defineAppPath = "define" + File.separator + "app";
-        URL url = Thread.currentThread().getContextClassLoader().getResource(defineAppPath);
-        assert url != null;
-        File directory = new File(url.toURI());
+        String classpath = this.getClass().getResource(File.separator).getPath();
+        String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+        File directory = new File(defineAppPath);
         if (!directory.exists() || directory.listFiles() == null) {
-            throw new  IllegalArgumentException("define app directory not exist");
+            throw new  IllegalArgumentException("define app directory not exist: " + defineAppPath);
         }
         for (File appFile : Objects.requireNonNull(directory.listFiles())) {
             if (appFile.exists()) {
@@ -142,12 +139,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             }
         }
         // 读取监控参数定义配置加载到数据库中 define/param/*.yml
-        String defineParamPath = "define" + File.separator + "param";
-        url = Thread.currentThread().getContextClassLoader().getResource(defineParamPath);
-        assert url != null;
-        directory = new File(url.toURI());
+        String defineParamPath = classpath + File.separator + "define" + File.separator + "param";
+        directory = new File(defineParamPath);
         if (!directory.exists() || directory.listFiles() == null) {
-            throw new  IllegalArgumentException("define param directory not exist");
+            throw new  IllegalArgumentException("define param directory not exist: " + defineParamPath);
         }
         for (File appFile : Objects.requireNonNull(directory.listFiles())) {
             if (appFile.exists()) {

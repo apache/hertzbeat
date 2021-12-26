@@ -75,8 +75,8 @@ public class CalculateAlarm {
                 // 采集异常
                 Alert.AlertBuilder alertBuilder = Alert.builder()
                         .monitorId(monitorId)
-                        .priority((byte) 0)
-                        .status((byte) 0)
+                        .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                        .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                         .times(1);
                 if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                     // UN_REACHABLE 对端不可达(网络层icmp)
@@ -101,7 +101,8 @@ public class CalculateAlarm {
                 if (stateCode != null) {
                     // 发送告警恢复
                     Alert resumeAlert = Alert.builder()
-                            .monitorId(monitorId).status((byte) 2).build();
+                            .monitorId(monitorId)
+                            .status(CommonConstants.ALERT_STATUS_CODE_RESTORED).build();
                     dataQueue.addAlertData(resumeAlert);
                 }
             }
@@ -167,7 +168,7 @@ public class CalculateAlarm {
                                             .monitorId(monitorId)
                                             .alertDefineId(define.getId())
                                             .priority(define.getPriority())
-                                            .status((byte) 0)
+                                            .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                                             .target(app + "." + metrics + "." + define.getField())
                                             .times(times)
                                             // 模板中关键字匹配替换

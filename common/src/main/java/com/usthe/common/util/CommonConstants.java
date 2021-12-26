@@ -62,6 +62,40 @@ public interface CommonConstants {
      */
     byte SUSPENDING_CODE = 0x04;
 
+    /**
+     * 告警状态: 0-正常告警(待处理)
+     */
+    byte ALERT_STATUS_CODE_PENDING = 0x00;
+
+    /**
+     * 告警状态: 1-阈值触发但未达到告警次数
+     */
+    byte ALERT_STATUS_CODE_NOT_REACH = 0x01;
+
+    /**
+     * 告警状态: 2-恢复告警
+     */
+    byte ALERT_STATUS_CODE_RESTORED = 0x02;
+
+    /**
+     * 告警状态: 3-已处理
+     */
+    byte ALERT_STATUS_CODE_SOLVED = 0x03;
+
+    /**
+     * 告警级别: 0:高-emergency-紧急告警-红色
+     */
+    byte ALERT_PRIORITY_CODE_EMERGENCY = 0x00;
+
+    /**
+     * 告警级别: 1:中-critical-严重告警-橙色
+     */
+    byte ALERT_PRIORITY_CODE_CRITICAL = 0x01;
+
+    /**
+     * 告警级别: 2:低-warning-警告告警-黄色
+     */
+    byte ALERT_PRIORITY_CODE_WARNING = 0x02;
 
     /**
      * 字段参数类型: 数字

@@ -33,6 +33,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Api(tags = "监控指标数据API")
 public class MetricsDataController {
 
+    private static final Integer METRIC_FULL_LENGTH = 3;
+
     @Autowired
     private RedisDataStorage redisDataStorage;
 
@@ -77,7 +79,7 @@ public class MetricsDataController {
             @RequestParam(required = false) String history
             ) {
         String[] names = metricFull.split(".");
-        if (names.length != 3) {
+        if (names.length != METRIC_FULL_LENGTH) {
             throw new IllegalArgumentException("metrics full name: " + metricFull + " is illegal.");
         }
         String app = names[0];
