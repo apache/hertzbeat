@@ -94,7 +94,7 @@ public class DispatchAlarm {
             }
         } else {
             // 若是恢复告警 需对监控状态进行恢复
-           if (alert.getStatus() == 2) {
+           if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
                monitorService.updateMonitorStatus(alert.getMonitorId(), CommonConstants.AVAILABLE_CODE);
            }
         }

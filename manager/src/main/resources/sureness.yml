@@ -12,6 +12,8 @@ resourceRole:
 excludedResource:
   - /account/auth/form===post
   - /i18n/**===get
+  # web ui 静态资源
+  - /console/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
@@ -19,10 +21,11 @@ excludedResource:
   - /**/*.ttf===get
   - /**/*.png===get
   - /**/*.gif===get
+    - /**/*.png===*
+  # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get
   - /v3/api-docs===get
-  - /**/*.png===*
 
 # account info
 # there are three account: admin, root, tom

@@ -113,16 +113,63 @@
     </dependencies>
 
     <build>
+        <finalName>hertz-beat</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>application.yml</include>
+                    <include>sureness.yml</include>
+                    <include>banner.txt</include>
+                    <include>db/**</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.4.13</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <!--生成的jar包不包含maven描述相关文件-->
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifest>
+                            <!--项目启动类-->
+                            <mainClass>com.usthe.manager.Manager</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
+                            <addClasspath>true</addClasspath>
+                            <!--外部依赖jar包的位置-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>. config</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!--关键插件,maven提供的assembly插件,需要放在最后-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
+                        <id>make-zip</id>
+                        <!--绑定的maven操作-->
+                        <phase>package</phase>
+                        <!--运行一次-->
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>single</goal>
                         </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>../assembly/server/assembly.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
