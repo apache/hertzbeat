@@ -4,16 +4,15 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.alert.AlerterDataQueue;
-import com.usthe.alert.entrance.KafkaDataConsume;
 import com.usthe.alert.pojo.entity.Alert;
 import com.usthe.alert.pojo.entity.AlertDefine;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.alert.util.AlertTemplateUtil;
+import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
@@ -27,20 +26,21 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 @Configuration
-@AutoConfigureAfter(value = {KafkaDataConsume.class})
 @Slf4j
 public class CalculateAlarm {
 
     private AlerterWorkerPool workerPool;
     private AlerterDataQueue dataQueue;
+    private MetricsDataExporter dataExporter;
     private AlertDefineService alertDefineService;
     private Map<String, Alert> triggeredAlertMap;
     private Map<Long, CollectRep.Code> triggeredMonitorStateAlertMap;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
-                           AlertDefineService alertDefineService) {
+                           AlertDefineService alertDefineService, MetricsDataExporter dataExporter) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
+        this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         this.triggeredMonitorStateAlertMap = new ConcurrentHashMap<>(128);
@@ -51,7 +51,7 @@ public class CalculateAlarm {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataQueue.pollMetricsData();
+                    CollectRep.MetricsData metricsData = dataExporter.pollAlertMetricsData();
                     if (metricsData != null) {
                         calculate(metricsData);
                     }

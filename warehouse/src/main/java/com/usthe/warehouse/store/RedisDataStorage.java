@@ -1,7 +1,7 @@
 package com.usthe.warehouse.store;
 
+import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.warehouse.MetricsDataQueue;
 import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import io.lettuce.core.RedisClient;
@@ -34,13 +34,12 @@ public class RedisDataStorage implements DisposableBean {
     private RedisClient redisClient;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
     private WarehouseWorkerPool workerPool;
-    private MetricsDataQueue dataQueue;
+    private MetricsDataExporter dataExporter;
 
     public RedisDataStorage (WarehouseProperties properties, WarehouseWorkerPool workerPool,
-                                MetricsDataQueue dataQueue) {
+                             MetricsDataExporter dataExporter) {
         this.workerPool = workerPool;
-        this.dataQueue = dataQueue;
-
+        this.dataExporter = dataExporter;
         initRedisClient(properties);
         startStorageData();
     }
@@ -55,7 +54,7 @@ public class RedisDataStorage implements DisposableBean {
             Thread.currentThread().setName("warehouse-redis-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataQueue.pollRedisMetricsData();
+                    CollectRep.MetricsData metricsData = dataExporter.pollWarehouseRedisMetricsData();
                     if (metricsData != null) {
                         saveData(metricsData);
                     }

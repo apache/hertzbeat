@@ -22,8 +22,11 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <fileSets>
         <!--bin文件下的所有脚本文件输出到打包后的bin目录下-->
         <fileSet>
-            <directory>../assembly/server/bin</directory>
+            <directory>../script/assembly/server/bin</directory>
+            <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
+            <filtered>true</filtered>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
         </fileSet>
 
         <!-- src/main/resources目录下配置文件打包到config目录下 -->

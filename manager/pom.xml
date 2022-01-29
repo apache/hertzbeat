@@ -5,7 +5,7 @@
     <parent>
         <artifactId>monitor</artifactId>
         <groupId>com.usthe.tancloud</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>manager</artifactId>
@@ -22,25 +22,25 @@
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <!-- scheduler -->
-        <dependency>
-            <groupId>com.usthe.tancloud</groupId>
-            <artifactId>scheduler</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <!-- data warehouse -->
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>warehouse</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <!-- alerter -->
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>alerter</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
+        </dependency>
+        <!-- collector -->
+        <dependency>
+            <groupId>com.usthe.tancloud</groupId>
+            <artifactId>collector</artifactId>
+            <version>1.0</version>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -123,6 +123,7 @@
                     <include>sureness.yml</include>
                     <include>banner.txt</include>
                     <include>db/**</include>
+                    <include>define/**</include>
                 </includes>
             </resource>
         </resources>
@@ -167,7 +168,7 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>../assembly/server/assembly.xml</descriptor>
+                                <descriptor>../script/assembly/server/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
