@@ -1,0 +1,9 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.usthe.collector.dispatch.timer.TimerDispatcher,\
+com.usthe.collector.dispatch.CommonDispatcher,\
+com.usthe.collector.dispatch.DispatchProperties,\
+com.usthe.collector.dispatch.MetricsCollectorQueue,\
+com.usthe.collector.dispatch.WorkerPool,\
+com.usthe.collector.dispatch.entrance.internal.CollectJobService,\
+com.usthe.collector.dispatch.export.MetricsDataExporter,\
+com.usthe.collector.util.SpringContextHolder

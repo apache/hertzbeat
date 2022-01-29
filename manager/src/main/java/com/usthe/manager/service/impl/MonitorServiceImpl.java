@@ -1,5 +1,6 @@
 package com.usthe.manager.service.impl;
 
+import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
@@ -20,7 +21,6 @@ import com.usthe.manager.service.AppService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
-import com.usthe.scheduler.JobScheduling;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,7 +52,7 @@ public class MonitorServiceImpl implements MonitorService {
     private AppService appService;
 
     @Autowired
-    private JobScheduling jobScheduling;
+    private CollectJobService collectJobService;
 
     @Autowired
     private MonitorDao monitorDao;
@@ -74,7 +74,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        List<CollectRep.MetricsData> collectRep = jobScheduling.addSyncCollectJob(appDefine);
+        List<CollectRep.MetricsData> collectRep = collectJobService.collectSyncJobData(appDefine);
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
             throw new MonitorDetectException("No collector response");
@@ -101,7 +101,7 @@ public class MonitorServiceImpl implements MonitorService {
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // 下发采集任务得到jobId
-        long jobId = jobScheduling.addAsyncCollectJob(appDefine);
+        long jobId = collectJobService.addAsyncCollectJob(appDefine);
         // 下发成功后刷库
         try {
             monitor.setId(monitorId);
@@ -112,7 +112,7 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // 刷库异常取消之前的下发任务
-            jobScheduling.cancelAsyncCollectJob(jobId);
+            collectJobService.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -225,7 +225,7 @@ public class MonitorServiceImpl implements MonitorService {
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // 更新采集任务
-        jobScheduling.updateAsyncCollectJob(appDefine);
+        collectJobService.updateAsyncCollectJob(appDefine);
         // 下发更新成功后刷库
         try {
             monitor.setJobId(preMonitor.getJobId());
@@ -246,7 +246,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
             paramDao.deleteParamsByMonitorId(id);
-            jobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            collectJobService.cancelAsyncCollectJob(monitor.getJobId());
         }
     }
 
@@ -258,7 +258,7 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
             for (Monitor monitor : monitors) {
-                jobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             }
         }
     }
@@ -299,7 +299,7 @@ public class MonitorServiceImpl implements MonitorService {
         if (!managedMonitors.isEmpty()) {
             monitorDao.saveAll(managedMonitors);
             for (Monitor monitor : managedMonitors) {
-                jobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             }
         }
     }
@@ -326,7 +326,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
                 // 下发采集任务
-                jobScheduling.addAsyncCollectJob(appDefine);
+                collectJobService.addAsyncCollectJob(appDefine);
             }
         }
     }
