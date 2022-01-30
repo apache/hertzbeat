@@ -42,25 +42,25 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '1240px' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center">指标对象</th>
+      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzLeft>指标对象</th>
       <th nzAlign="center">阈值触发表达式</th>
       <th nzAlign="center">告警级别</th>
       <th nzAlign="center">触发次数</th>
       <th nzAlign="center">通知模版</th>
       <th nzAlign="center">全局默认</th>
       <th nzAlign="center">最新修改时间</th>
-      <th nzAlign="center" nzRight>操作</th>
+      <th nzAlign="center">操作</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzLeft>
         <span>{{ data.app + '.' + data.metric + '.' + data.field }}</span>
       </td>
       <td nzAlign="center">
@@ -91,7 +91,7 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
-      <td nzAlign="center" nzRight>
+      <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onOpenConnectModal(data.id, data.app)" nz-tooltip nzTooltipTitle="配置关联监控">
           <i nz-icon nzType="link" nzTheme="outline"></i>
         </button>
@@ -119,11 +119,11 @@
   [nzOkLoading]="isManageModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <form nz-form>
+    <form nz-form #defineForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">指标对象</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <nz-cascader name="target" id="target" [nzOptions]="appHierarchies" [(ngModel)]="cascadeValues"> </nz-cascader>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-cascader required name="target" id="target" [nzOptions]="appHierarchies" [(ngModel)]="cascadeValues"></nz-cascader>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -154,10 +154,11 @@
         >
           阈值触发表达式
         </nz-form-label>
-        <nz-form-control [nzSpan]="8">
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea
               [(ngModel)]="define.expr"
+              required
               rows="3"
               nz-input
               name="expr"
@@ -177,8 +178,8 @@
         >
           告警级别
         </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-select [(ngModel)]="define.priority" nzAllowClear nzPlaceHolder="Choose" name="priority" id="priority">
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select [(ngModel)]="define.priority" nzPlaceHolder="Choose" name="priority" id="priority">
             <nz-option [nzValue]="0" nzLabel="紧急告警"></nz-option>
             <nz-option [nzValue]="1" nzLabel="严重告警"></nz-option>
             <nz-option [nzValue]="2" nzLabel="警告告警"></nz-option>
@@ -189,8 +190,8 @@
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="duration" nzTooltipTitle="设置触发阈值多少次之后才会发送告警">
           触发次数
         </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="10" [nzStep]="1" name="duration" id="duration">
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="10" [nzStep]="1" required name="duration" id="duration">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>
@@ -200,19 +201,19 @@
             <nz-collapse-panel [nzActive]="isManageModalAdd" nzHeader="支持的通知模版环境变量">
               <nz-list nzSize="small" nzSplit="false">
                 <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#40;metric&#41; : 选中的指标对象名称</code>
+                  <code>&#36;&#123;metric&#125; : 选中的指标对象名称</code>
                 </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#40;{{ cascadeValues[2] }}&#41; : 选中的指标对象值</code>
+                  <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : 选中的指标对象值</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>&#36;&#40;instance&#41; : 所在行实例值</code>
+                  <code>&#36;&#123;instance&#125; : 所在行实例值</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>&#36;&#40;app&#41; : 所属监控类型名称</code>
+                  <code>&#36;&#123;app&#125; : 所属监控类型名称</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>&#36;&#40;metrics&#41; : 所属监控指标组名称</code>
+                  <code>&#36;&#123;metrics&#125; : 所属监控指标组名称</code>
                 </nz-list-item>
               </nz-list>
             </nz-collapse-panel>
@@ -223,12 +224,13 @@
         <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" nzTooltipTitle="告警触发后发送的通知信息模版,模版环境变量见上方">
           通知模版
         </nz-form-label>
-        <nz-form-control [nzSpan]="8">
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="200">
             <textarea
               [(ngModel)]="define.template"
               rows="3"
               nz-input
+              required
               name="template"
               id="template"
               placeholder="请输入告警的通知模版.&#10;示例: ${app}.${metrics}.${metric}'s value is too high"
@@ -238,9 +240,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="preset" nzTooltipTitle="此告警阈值配置是否应用于全局所有此类型监控">
-          全局默认
-        </nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="preset" nzTooltipTitle="此告警阈值配置是否应用于全局所有此类型监控"> 全局默认 </nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
         </nz-form-control>
@@ -248,7 +248,7 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable" nzTooltipTitle="此告警阈值配置开启生效或关闭"> 启用告警 </nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-switch [(ngModel)]="define.enable" name="enable" id="enable"></nz-switch>
+          <nz-switch [(ngModel)]="define.enable" [ngModelOptions]="{ standalone: true }" name="enable" id="enable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
     </form>
