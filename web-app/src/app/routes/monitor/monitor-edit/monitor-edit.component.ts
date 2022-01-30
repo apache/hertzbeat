@@ -77,6 +77,7 @@ export class MonitorEditComponent implements OnInit {
             let param = this.paramValueMap.get(define.field);
             if (param === undefined) {
               param = new Param();
+              param.field = define.field;
               param.type = define.type === 'number' ? 0 : 1;
               if (define.type === 'boolean') {
                 param.value = false;
