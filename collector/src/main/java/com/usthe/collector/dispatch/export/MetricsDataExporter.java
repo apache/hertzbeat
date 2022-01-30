@@ -18,12 +18,12 @@ import java.util.concurrent.TimeUnit;
 public class MetricsDataExporter implements DisposableBean {
 
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToWarehouseInfluxQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToWarehouseRedisQueue;
 
     public MetricsDataExporter() {
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
-        metricsDataToWarehouseInfluxQueue = new LinkedBlockingQueue<>();
+        metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
         metricsDataToWarehouseRedisQueue = new LinkedBlockingQueue<>();
     }
 
@@ -31,7 +31,7 @@ public class MetricsDataExporter implements DisposableBean {
         return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
     }
 
-    public CollectRep.MetricsData pollWarehouseInfluxMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException {
         return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
     }
 
@@ -45,7 +45,7 @@ public class MetricsDataExporter implements DisposableBean {
      */
     public void send(CollectRep.MetricsData metricsData) {
         metricsDataToAlertQueue.offer(metricsData);
-        metricsDataToWarehouseInfluxQueue.offer(metricsData);
+        metricsDataToPersistentStorageQueue.offer(metricsData);
         metricsDataToWarehouseRedisQueue.offer(metricsData);
     }
 

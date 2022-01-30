@@ -3,4 +3,5 @@ com.usthe.warehouse.WarehouseProperties,\
 com.usthe.warehouse.MetricsDataQueue,\
 com.usthe.warehouse.WarehouseWorkerPool,\
 com.usthe.warehouse.store.RedisDataStorage,\
+com.usthe.warehouse.store.TdEngineDataStorage,\
 com.usthe.warehouse.controller.MetricsDataController
