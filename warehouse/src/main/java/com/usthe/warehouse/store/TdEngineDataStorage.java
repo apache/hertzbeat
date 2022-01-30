@@ -55,8 +55,8 @@ public class TdEngineDataStorage implements DisposableBean {
         this.workerPool = workerPool;
         this.dataExporter = dataExporter;
         if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
-            log.error("init error, please config Warehouse influxdb props in application.yml");
-            throw new IllegalArgumentException("please config Warehouse influxdb props");
+            log.error("init error, please config Warehouse TdEngine props in application.yml");
+            throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
         initTdEngineDatasource(properties.getStore().getTdEngine());
         startStorageData();
