@@ -1,7 +1,6 @@
 package com.usthe.common.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.codec.binary.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -9,6 +8,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 /**
  * AES 对称加密解密工具
@@ -58,7 +58,7 @@ public class AesUtil {
             //根据密码器的初始化方式--加密：将数据加密
             byte[] byteAes = cipher.doFinal(byteEncode);
             //将加密后的byte[]数据转换为Base64字符串
-            return new String(Base64.encodeBase64(byteAes),StandardCharsets.UTF_8);
+            return new String(Base64.getEncoder().encode(byteAes),StandardCharsets.UTF_8);
             //将字符串返回
         } catch (Exception e) {
             log.error("密文加密失败"+e.getMessage(),e);
@@ -85,27 +85,22 @@ public class AesUtil {
             //初始化密码器，第一个参数为加密(Encrypt_mode)或者解密(Decrypt_mode)操作，第二个参数为使用的KEY
             cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
             //8.将加密并编码base64后的字符串内容base64解码成字节数组
-            byte[] bytesContent = Base64.decodeBase64(content);
+            byte[] bytesContent = Base64.getDecoder().decode(content);
             /*
              * 解密
              */
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            log.error("没有指定的加密算法::"+e.getMessage(),e);
+            log.error("没有指定的加密算法::{}", e.getMessage(),e);
         } catch (IllegalBlockSizeException e) {
-            log.error("非法的块大小"+"::"+e.getMessage(),e);
-            throw new RuntimeException("密文解密失败");
+            log.error("非法的块大小::{}", e.getMessage(),e);
         } catch (NullPointerException e) {
-            log.error("秘钥解析空指针异常"+"::"+e.getMessage(),e);
-            throw new RuntimeException("秘钥解析空指针异常");
+            log.error("秘钥解析空指针异常::{}", e.getMessage(),e);
         } catch (Exception e) {
-            log.error("秘钥AES解析出现未知错误"+"::"+e.getMessage(),e);
-            throw new RuntimeException("密文解密失败");
+            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(),e);
         }
-        //如果有错就返null
-        return null;
-
+        return content;
     }
 
     /**
@@ -115,6 +110,6 @@ public class AesUtil {
      */
     public static boolean isCiphertext(String text) {
         // 根据是否被base64来判断是否已经被加密
-        return Base64.isBase64(text);
+        return Base64Util.isBase64(text);
     }
 }

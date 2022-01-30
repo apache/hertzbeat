@@ -10,7 +10,7 @@ resourceRole:
 # load api resource which do not need protected, means them need be excluded.
 # these api resource can be access by everyone
 excludedResource:
-  - /account/auth/form===post
+  - /account/auth/**===*
   - /i18n/**===get
   # web ui 静态资源
   - /console/**===get

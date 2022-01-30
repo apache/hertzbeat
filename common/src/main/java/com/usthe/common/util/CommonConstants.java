@@ -8,9 +8,14 @@ package com.usthe.common.util;
 public interface CommonConstants {
 
     /**
-     * 响应状态码: 成功
+     * 响应状态码: 通用成功
      */
     byte SUCCESS_CODE = 0x00;
+
+    /**
+     * 响应状态码: 通用失败
+     */
+    byte FAIL_CODE = 0x0F;
 
     /**
      * 响应状态码: 参数校验失败
@@ -36,6 +41,13 @@ public interface CommonConstants {
      * 响应状态码: 登陆账户密码错误
      */
     byte MONITOR_LOGIN_FAILED_CODE = 0x05;
+
+    /**
+     * 响应状态码: 注册失败异常
+     */
+    byte MONITOR_REGISTER_FAILED_CODE = 0x06;
+
+
 
     /**
      * 监控状态码: 未管理
@@ -126,4 +138,39 @@ public interface CommonConstants {
      * 可达性对象
      */
     String REACHABLE = "reachable";
+
+    /**
+     * 参数类型 数字
+     */
+    byte PARAM_TYPE_NUMBER = 0;
+
+    /**
+     * 参数类型 字符串
+     */
+    byte PARAM_TYPE_STRING = 1;
+
+    /**
+     * 参数类型 密码
+     */
+    byte PARAM_TYPE_PASSWORD = 2;
+
+    /**
+     * 认证类型 账户密码
+     */
+    byte AUTH_TYPE_PASSWORD = 1;
+
+    /**
+     * 认证类型 GITHUB三方登陆
+     */
+    byte AUTH_TYPE_GITHUB = 2;
+
+    /**
+     * 认证类型 微信三方登陆
+     */
+    byte AUTH_TYPE_WEIXIN = 3;
+
+    /**
+     * 认证类型 GITEE三方登陆
+     */
+    byte AUTH_TYPE_GITEE = 5;
 }
