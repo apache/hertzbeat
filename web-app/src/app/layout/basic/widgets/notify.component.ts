@@ -60,6 +60,10 @@ export class HeaderNotifyComponent implements OnInit {
         if (message.code === 0) {
           let page = message.data;
           let alerts = page.content;
+          if (alerts == undefined) {
+            this.loading = false;
+            return;
+          }
           this.data[0].list = [];
           alerts.forEach(alert => {
             let item = {
