@@ -79,20 +79,20 @@
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center">告警指标</th>
+      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzLeft>告警指标</th>
       <th nzAlign="center">所属监控</th>
       <th nzAlign="center">级别</th>
       <th nzAlign="center">告警内容</th>
       <th nzAlign="center">状态</th>
       <th nzAlign="center">告警时间</th>
-      <th nzAlign="center" nzRight>操作</th>
+      <th nzAlign="center">操作</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data" [ngStyle]="{ 'background-color': data.status === 0 ? '#E1E7A89B' : 'inherit' }">
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">{{ data.target }}</td>
+      <td nzAlign="center" nzLeft>{{ data.target }}</td>
       <td nzAlign="center">
         <a [routerLink]="['/monitors/' + data.monitorId]">
           <span>{{ data.monitorName }}</span>
@@ -117,7 +117,7 @@
         {{ data.status === 0 ? '未处理' : '已处理' }}
       </td>
       <td nzAlign="center">{{ data.gmtCreate }}</td>
-      <td nzAlign="center" nzRight>
+      <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>

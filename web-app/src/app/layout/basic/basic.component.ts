@@ -12,6 +12,11 @@ import { environment } from '@env/environment';
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
+      <layout-default-header-item direction="left">
+        <a layout-default-header-item-trigger href="//gitee.com/usthe" target="_blank">
+          <i nz-icon nzIconfont="icon-gitee"></i>
+        </a>
+      </layout-default-header-item>
       <layout-default-header-item direction="left" hidden="mobile">
         <a layout-default-header-item-trigger routerLink="/passport/lock">
           <i nz-icon nzType="lock"></i>
@@ -25,7 +30,7 @@ import { environment } from '@env/environment';
       <layout-default-header-item direction="middle">
         <header-search class="alain-default__search" [toggleChange]="searchToggleStatus"></header-search>
       </layout-default-header-item>
-      <layout-default-header-item direction="right">
+      <layout-default-header-item direction="right" hidden="mobile">
         <header-notify></header-notify>
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">

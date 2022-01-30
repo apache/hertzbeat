@@ -27,15 +27,15 @@
       [nzData]="receivers"
       nzFrontPagination="false"
       [nzLoading]="receiverTableLoading"
-      [nzScroll]="{ x: '1150px', y: '1240px' }"
+      [nzScroll]="{ x: '100%', y: '100%' }"
     >
       <thead>
         <tr>
-          <th nzAlign="center">接收人</th>
-          <th nzAlign="center">通知方式</th>
-          <th nzAlign="center">配置</th>
-          <th nzAlign="center">最新修改时间</th>
-          <th nzAlign="center" nzRight>操作</th>
+          <th nzAlign="center" nzWidth="10%">接收人</th>
+          <th nzAlign="center" nzWidth="20%">通知方式</th>
+          <th nzAlign="center" nzWidth="20%">配置</th>
+          <th nzAlign="center" nzWidth="20%">最新修改时间</th>
+          <th nzAlign="center" nzWidth="30%">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -68,7 +68,7 @@
             <span *ngIf="data.type == 3">{{ data.wechatId }}</span>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
-          <td nzAlign="center" nzRight>
+          <td nzAlign="center">
             <button nz-button nzType="primary" (click)="onEditOneNoticeReceiver(data)" nz-tooltip nzTooltipTitle="修改接收人">
               <i nz-icon nzType="edit" nzTheme="outline"></i>
             </button>
@@ -93,16 +93,16 @@
       [nzData]="rules"
       nzFrontPagination="false"
       [nzLoading]="ruleTableLoading"
-      [nzScroll]="{ x: '1150px', y: '1240px' }"
+      [nzScroll]="{ x: '100%', y: '100%' }"
     >
       <thead>
         <tr>
-          <th nzAlign="center">策略名称</th>
-          <th nzAlign="center">接收人</th>
-          <th nzAlign="center">转发所有</th>
-          <th nzAlign="center">是否启用</th>
-          <th nzAlign="center">最新修改时间</th>
-          <th nzAlign="center" nzRight>操作</th>
+          <th nzAlign="center" nzWidth="15%">策略名称</th>
+          <th nzAlign="center" nzWidth="12%">接收人</th>
+          <th nzAlign="center" nzWidth="12%">转发所有</th>
+          <th nzAlign="center" nzWidth="15%">是否启用</th>
+          <th nzAlign="center" nzWidth="15%">最新修改时间</th>
+          <th nzAlign="center" nzWidth="25%">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -130,7 +130,7 @@
             </nz-tag>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
-          <td nzAlign="center" nzRight>
+          <td nzAlign="center">
             <button nz-button nzType="primary" (click)="onEditOneNoticeRule(data)" nz-tooltip nzTooltipTitle="修改告警策略">
               <i nz-icon nzType="edit" nzTheme="outline"></i>
             </button>
@@ -155,17 +155,17 @@
   [nzOkLoading]="isManageReceiverModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <form nz-form>
+    <form nz-form #receiverForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">接收人名称</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="receiver.name" nz-input name="name" type="text" id="name" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.name" nz-input required name="name" type="text" id="name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="type">通知方式 </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-select [(ngModel)]="receiver.type" nzAllowClear nzPlaceHolder="Choose" name="type" id="type">
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select [(ngModel)]="receiver.type" nzPlaceHolder="Choose" required name="type" id="type">
             <nz-option [nzValue]="0" nzDisabled nzLabel="短信"></nz-option>
             <nz-option [nzValue]="1" nzLabel="邮箱"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
@@ -175,26 +175,34 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 0">
         <nz-form-label [nzSpan]="7" nzFor="phone" [nzRequired]="receiver.type === 0">手机号</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="receiver.phone" nz-input name="phone" type="tel" id="phone" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.phone.invalid' | i18n">
+          <input
+            [(ngModel)]="receiver.phone"
+            nz-input
+            [required]="receiver.type === 0"
+            pattern="/^1\d{10}$/"
+            name="phone"
+            type="tel"
+            id="phone"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 1">
         <nz-form-label [nzSpan]="7" nzFor="email" [nzRequired]="receiver.type === 1">邮箱</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="receiver.email" nz-input name="email" type="email" id="email" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.email.invalid' | i18n">
+          <input [(ngModel)]="receiver.email" nz-input [required]="receiver.type === 1" email name="email" type="email" id="email" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 2">
         <nz-form-label [nzSpan]="7" nzFor="hookUrl" [nzRequired]="receiver.type === 2">URL地址</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="receiver.hookUrl" nz-input name="hookUrl" type="url" id="hookUrl" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.hookUrl" nz-input [required]="receiver.type === 2" name="hookUrl" type="url" id="hookUrl" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 3">
         <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 3">微信OPENID</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="receiver.wechatId" nz-input name="wechatId" type="text" id="wechatId" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 3" name="wechatId" type="text" id="wechatId" />
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -212,11 +220,11 @@
   [nzOkLoading]="isManageRuleModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <form nz-form>
+    <form nz-form #ruleForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">策略名称</nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="rule.name" nz-input name="rule_name" type="text" id="rule_name" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="rule.name" nz-input required name="rule_name" type="text" id="rule_name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -227,7 +235,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="receiver">接收人</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="rule.receiverId"
             (nzOpenChange)="loadReceiversOption()"
@@ -235,6 +243,7 @@
             nzShowSearch
             nzAllowClear
             nzPlaceHolder="Select a person"
+            required
             name="receiver"
             id="receiver"
           >
