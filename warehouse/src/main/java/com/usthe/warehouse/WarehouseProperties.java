@@ -47,13 +47,13 @@ public class WarehouseProperties {
         /**
          * kafka配置信息
          */
-        private EntranceProperties.KafkaProperties kafka;
+        private KafkaProperties kafka;
 
-        public EntranceProperties.KafkaProperties getKafka() {
+        public KafkaProperties getKafka() {
             return kafka;
         }
 
-        public void setKafka(EntranceProperties.KafkaProperties kafka) {
+        public void setKafka(KafkaProperties kafka) {
             this.kafka = kafka;
         }
 
@@ -124,6 +124,10 @@ public class WarehouseProperties {
          * redis配置信息
          */
         private RedisProperties redis;
+        /**
+         * TdEngine配置信息
+         */
+        private TdEngineProperties tdEngine;
 
         public InfluxdbProperties getInfluxdb() {
             return influxdb;
@@ -141,11 +145,19 @@ public class WarehouseProperties {
             this.redis = redis;
         }
 
+        public TdEngineProperties getTdEngine() {
+            return tdEngine;
+        }
+
+        public void setTdEngine(TdEngineProperties tdEngine) {
+            this.tdEngine = tdEngine;
+        }
+
         public static class InfluxdbProperties {
             /**
              * influxdb数据存储是否启动
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
             /**
              * influxdb的连接服务器url
              */
@@ -201,6 +213,69 @@ public class WarehouseProperties {
 
             public void setOrg(String org) {
                 this.org = org;
+            }
+        }
+
+        public static class TdEngineProperties {
+            /**
+             * TdEngine数据存储是否启动
+             */
+            private boolean enabled = true;
+            /**
+             * TdEngine的连接服务器url
+             */
+            private String url = "jdbc:TAOS-RS://localhost:6041/demo";
+            /**
+             * 驱动类路径
+             */
+            private String driverClassName = "com.taosdata.jdbc.rs.RestfulDriver";
+            /**
+             * 数据库用户名
+             */
+            private String username;
+            /**
+             * 数据库密码
+             */
+            private String password;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getUrl() {
+                return url;
+            }
+
+            public void setUrl(String url) {
+                this.url = url;
+            }
+
+            public String getDriverClassName() {
+                return driverClassName;
+            }
+
+            public void setDriverClassName(String driverClassName) {
+                this.driverClassName = driverClassName;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
             }
         }
 
