@@ -103,7 +103,7 @@ export class UserLoginComponent implements OnDestroy {
       .post<Message<any>>('/account/auth/form', {
         type: this.type,
         identifier: this.userName.value,
-        password: this.password.value
+        credential: this.password.value
       })
       .pipe(
         finalize(() => {

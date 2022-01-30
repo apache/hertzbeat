@@ -1,6 +1,6 @@
 package com.usthe.alert.dao;
 
-import com.usthe.common.entity.alerter.AlertDefineBind;
+import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -11,7 +11,7 @@ import java.util.List;
  *
  *
  */
-public interface AlertDefineBindDao extends JpaRepository<AlertDefineBind, Long>, JpaSpecificationExecutor<AlertDefineBind> {
+public interface AlertDefineBindDao extends JpaRepository<AlertDefineMonitorBind, Long>, JpaSpecificationExecutor<AlertDefineMonitorBind> {
 
     /**
      * 根据告警定义ID删除告警定义与监控关联
@@ -24,5 +24,5 @@ public interface AlertDefineBindDao extends JpaRepository<AlertDefineBind, Long>
      * @param alertDefineId 告警定义ID
      * @return 关联监控信息
      */
-    List<AlertDefineBind> getAlertDefineBindsByAlertDefineIdEquals(Long alertDefineId);
+    List<AlertDefineMonitorBind> getAlertDefineBindsByAlertDefineIdEquals(Long alertDefineId);
 }
