@@ -32,7 +32,7 @@ public class JsonPathParser {
      * 使用jsonPath来解析json内容
      * @param content json内容
      * @param jsonPath jsonPath脚本
-     * @return 解析后的内容
+     * @return 解析后的内容 [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static List<Map<String, Object>> parseContentWithJsonPath(String content, String jsonPath) {
         if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {

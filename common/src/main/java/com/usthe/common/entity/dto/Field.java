@@ -29,6 +29,6 @@ public class Field {
     private String unit;
 
     @ApiModelProperty(value = "是否是实例字段", position = 3)
-    private boolean instance;
+    private Boolean instance;
 
 }
