@@ -242,9 +242,9 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("The Monitor " + monitorId + " not exists");
         }
         Monitor preMonitor = queryOption.get();
-        if (!preMonitor.getApp().equals(monitor.getApp()) || !preMonitor.getHost().equals(monitor.getHost())) {
-            // 监控的 类型和host不能修改
-            throw new IllegalArgumentException("Can not modify monitor's app or host");
+        if (!preMonitor.getApp().equals(monitor.getApp())) {
+            // 监控的类型不能修改
+            throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // 构造采集任务Job实体
         Job appDefine = appService.getAppDefine(monitor.getApp());
