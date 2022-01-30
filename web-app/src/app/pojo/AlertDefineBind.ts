@@ -1,8 +1,10 @@
+import { Monitor } from './Monitor';
+
 export class AlertDefineBind {
   id!: number;
   alertDefineId!: number;
   monitorId!: number;
-  monitorName!: string;
+  monitor!: Monitor;
   gmtCreate!: number;
   gmtUpdate!: number;
 }
