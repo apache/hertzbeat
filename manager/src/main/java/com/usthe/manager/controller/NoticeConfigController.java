@@ -1,8 +1,8 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
-import com.usthe.manager.pojo.entity.NoticeReceiver;
-import com.usthe.manager.pojo.entity.NoticeRule;
+import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.manager.service.NoticeConfigService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

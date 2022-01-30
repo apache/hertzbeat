@@ -1,4 +1,4 @@
-package com.usthe.alert.pojo.entity;
+package com.usthe.common.entity.alerter;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

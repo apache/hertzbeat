@@ -1,7 +1,7 @@
 package com.usthe.manager.dao;
 
 import com.usthe.manager.pojo.dto.AppCount;
-import com.usthe.manager.pojo.entity.Monitor;
+import com.usthe.common.entity.manager.Monitor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

@@ -2,8 +2,8 @@ package com.usthe.alert.service.impl;
 
 import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.alert.dao.AlertDefineDao;
-import com.usthe.alert.pojo.entity.AlertDefine;
-import com.usthe.alert.pojo.entity.AlertDefineBind;
+import com.usthe.common.entity.alerter.AlertDefine;
+import com.usthe.common.entity.alerter.AlertDefineBind;
 import com.usthe.alert.service.AlertDefineService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

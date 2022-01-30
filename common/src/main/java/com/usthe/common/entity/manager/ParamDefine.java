@@ -1,4 +1,4 @@
-package com.usthe.manager.pojo.entity;
+package com.usthe.common.entity.manager;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

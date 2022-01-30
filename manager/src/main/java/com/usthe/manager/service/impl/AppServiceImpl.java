@@ -5,7 +5,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.manager.dao.ParamDefineDao;
 import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.manager.pojo.dto.ParamDefineDto;
-import com.usthe.manager.pojo.entity.ParamDefine;
+import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

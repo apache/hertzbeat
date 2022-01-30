@@ -1,7 +1,7 @@
 package com.usthe.alert.service.impl;
 
 import com.usthe.alert.dao.AlertDao;
-import com.usthe.alert.pojo.entity.Alert;
+import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

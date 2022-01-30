@@ -1,6 +1,6 @@
 package com.usthe.manager.dao;
 
-import com.usthe.manager.pojo.entity.Param;
+import com.usthe.common.entity.manager.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

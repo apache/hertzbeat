@@ -2,8 +2,8 @@ package com.usthe.manager.service;
 
 import com.usthe.manager.pojo.dto.AppCount;
 import com.usthe.manager.pojo.dto.MonitorDto;
-import com.usthe.manager.pojo.entity.Monitor;
-import com.usthe.manager.pojo.entity.Param;
+import com.usthe.common.entity.manager.Monitor;
+import com.usthe.common.entity.manager.Param;
 import com.usthe.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

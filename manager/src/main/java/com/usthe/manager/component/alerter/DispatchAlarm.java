@@ -2,11 +2,11 @@ package com.usthe.manager.component.alerter;
 
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
-import com.usthe.alert.pojo.entity.Alert;
+import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.manager.pojo.entity.Monitor;
-import com.usthe.manager.pojo.entity.NoticeReceiver;
+import com.usthe.common.entity.manager.Monitor;
+import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;

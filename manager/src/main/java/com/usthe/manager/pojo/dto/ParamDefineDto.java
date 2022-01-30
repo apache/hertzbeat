@@ -1,6 +1,6 @@
 package com.usthe.manager.pojo.dto;
 
-import com.usthe.manager.pojo.entity.ParamDefine;
+import com.usthe.common.entity.manager.ParamDefine;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

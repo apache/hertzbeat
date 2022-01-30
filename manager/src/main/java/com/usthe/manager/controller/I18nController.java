@@ -1,7 +1,6 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
-import com.usthe.manager.pojo.entity.ParamDefine;
 import com.usthe.manager.service.AppService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

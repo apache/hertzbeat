@@ -1,8 +1,8 @@
 package com.usthe.manager.service;
 
-import com.usthe.alert.pojo.entity.Alert;
-import com.usthe.manager.pojo.entity.NoticeReceiver;
-import com.usthe.manager.pojo.entity.NoticeRule;
+import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.entity.manager.NoticeRule;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;

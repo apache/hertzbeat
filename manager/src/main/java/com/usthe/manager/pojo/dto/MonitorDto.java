@@ -1,7 +1,7 @@
 package com.usthe.manager.pojo.dto;
 
-import com.usthe.manager.pojo.entity.Monitor;
-import com.usthe.manager.pojo.entity.Param;
+import com.usthe.common.entity.manager.Monitor;
+import com.usthe.common.entity.manager.Param;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
