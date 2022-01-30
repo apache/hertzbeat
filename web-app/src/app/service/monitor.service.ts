@@ -107,6 +107,24 @@ export class MonitorService {
     return this.http.get<Message<any>>(`/monitor/${monitorId}/metrics/${metrics}`);
   }
 
+  public getMonitorMetricHistoryData(
+    monitorId: number,
+    app: string,
+    metrics: string,
+    metric: string,
+    history: string,
+    interval: boolean
+  ): Observable<Message<any>> {
+    let metricFull = `${app}.${metrics}.${metric}`;
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      history: history,
+      interval: interval
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`/monitor/${monitorId}/metric/${metricFull}`, options);
+  }
+
   public getAppsMonitorSummary(): Observable<Message<any>> {
     return this.http.get<Message<any>>(summary_uri);
   }
