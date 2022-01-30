@@ -8,7 +8,7 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.dto.ValueRow;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.store.RedisDataStorage;
+import com.usthe.warehouse.store.MemoryDataStorage;
 import com.usthe.warehouse.store.TdEngineDataStorage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -40,7 +40,7 @@ public class MetricsDataController {
     private static final Integer METRIC_FULL_LENGTH = 3;
 
     @Autowired
-    private RedisDataStorage redisDataStorage;
+    private MemoryDataStorage memoryDataStorage;
 
     @Autowired
     private TdEngineDataStorage tdEngineDataStorage;
@@ -52,7 +52,7 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @ApiParam(value = "监控指标组", example = "cpu")
             @PathVariable String metrics) {
-        CollectRep.MetricsData redisData = redisDataStorage.getCurrentMetricsData(monitorId, metrics);
+        CollectRep.MetricsData redisData = memoryDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (redisData == null) {
             return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
         }

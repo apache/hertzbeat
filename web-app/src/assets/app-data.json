@@ -105,20 +105,6 @@
           "link": "/alert/notice"
         }
       ]
-    },
-    {
-      "text": "More",
-      "i18n": "menu.extras",
-      "group": true,
-      "hideInBreadcrumb": true,
-      "children": [
-        {
-          "text": "Settings",
-          "link": "/account/settings",
-          "i18n": "menu.extras.setting",
-          "icon": "anticon-setting"
-        }
-      ]
     }
   ]
 }
