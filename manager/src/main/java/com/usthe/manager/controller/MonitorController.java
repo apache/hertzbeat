@@ -88,7 +88,7 @@ public class MonitorController {
     @PostMapping(path = "/detect")
     @ApiOperation(value = "探测监控", notes = "根据监控信息去对此监控进行可用性探测")
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
-        monitorService.validate(monitorDto, false);
+        monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(new Message<>("Detect success."));
     }

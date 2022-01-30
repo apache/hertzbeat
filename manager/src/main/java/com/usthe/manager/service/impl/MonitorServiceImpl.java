@@ -119,13 +119,29 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(readOnly = true)
-    public void validate(MonitorDto monitorDto, boolean isModify) throws IllegalArgumentException {
+    public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // 请求监控参数与监控参数定义映射校验匹配
         Monitor monitor = monitorDto.getMonitor();
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
                 .peek(param -> param.setMonitorId(monitor.getId()))
                 .collect(Collectors.toMap(Param::getField, param -> param));
+        // 校验名称唯一性
+        if (isModify != null) {
+            Optional<Monitor> monitorOptional = monitorDao.findMonitorByNameEquals(monitor.getName());
+            if (monitorOptional.isPresent()) {
+                Monitor existMonitor = monitorOptional.get();
+                if (isModify) {
+                    if (!existMonitor.getId().equals(monitor.getId())) {
+                        throw new IllegalArgumentException("监控名称不能重复!");
+                    }
+                } else {
+                    throw new IllegalArgumentException("监控名称不能重复!");
+                }
+            }
+        }
+
+        // 参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (paramDefines != null) {
             for (ParamDefine paramDefine : paramDefines) {

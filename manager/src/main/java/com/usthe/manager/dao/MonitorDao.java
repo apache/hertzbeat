@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -38,6 +39,13 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
      * @return 监控列表
      */
     List<Monitor> findMonitorsByAppEquals(String app);
+
+    /**
+     * 根据监控名称查询监控
+     * @param name 监控名称
+     * @return 监控列表
+     */
+    Optional<Monitor> findMonitorByNameEquals(String name);
 
     /**
      * 查询监控类别及其对应的监控数量
