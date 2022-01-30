@@ -2,7 +2,7 @@ export class ParamDefine {
   name!: string;
   field!: string;
   type!: string;
-  required: boolean | undefined;
+  required: boolean = false;
   defaultValue: string | undefined;
   placeholder!: string;
   range: string | undefined;
