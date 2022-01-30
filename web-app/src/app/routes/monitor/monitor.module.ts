@@ -10,6 +10,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NgxEchartsModule } from 'ngx-echarts';
 
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
+import { MonitorDataTableComponent } from './monitor-data-table/monitor-data-table.component';
 import { MonitorDetailComponent } from './monitor-detail/monitor-detail.component';
 import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
@@ -21,6 +22,7 @@ const COMPONENTS: Array<Type<void>> = [
   MonitorEditComponent,
   MonitorListComponent,
   MonitorDetailComponent,
+  MonitorDataTableComponent,
   MonitorDataChartComponent
 ];
 

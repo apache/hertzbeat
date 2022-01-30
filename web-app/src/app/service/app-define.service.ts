@@ -21,6 +21,13 @@ export class AppDefineService {
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
   }
 
+  public getAppDefine(app: string | undefined | null): Observable<Message<any>> {
+    if (app === null || app === undefined) {
+      console.log('getAppDefine app can not null');
+    }
+    return this.http.get<Message<any>>(`/apps/${app}/define`);
+  }
+
   public getAppHierarchy(): Observable<Message<any>> {
     let httpParams = new HttpParams().append('lang', 'zh-CN');
     const options = { params: httpParams };

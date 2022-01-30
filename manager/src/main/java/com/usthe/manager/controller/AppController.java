@@ -1,8 +1,9 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
-import com.usthe.manager.pojo.dto.Hierarchy;
+import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.manager.ParamDefine;
+import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.manager.service.AppService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -38,6 +39,14 @@ public class AppController {
             @ApiParam(value = "监控类型名称", example = "api") @PathVariable("app") String app) {
         List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase());
         return ResponseEntity.ok(new Message<>(paramDefines));
+    }
+
+    @GetMapping(path = "/{app}/define")
+    @ApiOperation(value = "查询监控类型的结构定义", notes = "根据app查询指定监控类型的定义结构")
+    public ResponseEntity<Message<Job>> queryAppDefine(
+            @ApiParam(value = "监控类型名称", example = "api") @PathVariable("app") String app) {
+        Job define = appService.getAppDefine(app.toLowerCase());
+        return ResponseEntity.ok(new Message<>(define));
     }
 
     @GetMapping(path = "/hierarchy")

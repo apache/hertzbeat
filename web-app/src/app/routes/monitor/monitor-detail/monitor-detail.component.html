@@ -103,11 +103,28 @@
         <nz-tab [nzTitle]="titleTemplate">
           <ng-template #titleTemplate>
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
-            监控数据报告详情
+            监控实时数据详情
           </ng-template>
           <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
             <div *ngFor="let metric of metrics; let i = index">
-              <app-monitor-data-chart [metrics]="metric" [monitorId]="monitorId"></app-monitor-data-chart>
+              <app-monitor-data-table [metrics]="metric" [monitorId]="monitorId"></app-monitor-data-table>
+            </div>
+          </div>
+        </nz-tab>
+        <nz-tab [nzTitle]="title2Template" (nzClick)="initMetricChart()">
+          <ng-template #title2Template>
+            <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
+            监控历史图表详情
+          </ng-template>
+          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
+            <div *ngFor="let item of chartMetrics; let i = index">
+              <app-monitor-data-chart
+                [app]="app"
+                [metrics]="item.metrics"
+                [metric]="item.metric"
+                [unit]="item.unit"
+                [monitorId]="monitorId"
+              ></app-monitor-data-chart>
             </div>
           </div>
         </nz-tab>
