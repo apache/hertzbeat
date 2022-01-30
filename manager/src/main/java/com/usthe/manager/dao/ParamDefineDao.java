@@ -1,10 +1,9 @@
 package com.usthe.manager.dao;
 
-import com.usthe.manager.pojo.entity.ParamDefine;
+import com.usthe.common.entity.manager.ParamDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * ParamDefine数据库操作

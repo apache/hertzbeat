@@ -1,6 +1,6 @@
 package com.usthe.alert.controller;
 
-import com.usthe.alert.pojo.entity.Alert;
+import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
 import com.usthe.common.entity.dto.Message;
 import io.swagger.annotations.Api;

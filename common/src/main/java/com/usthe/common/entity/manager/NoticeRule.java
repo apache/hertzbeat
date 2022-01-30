@@ -1,4 +1,4 @@
-package com.usthe.manager.pojo.entity;
+package com.usthe.common.entity.manager;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -14,8 +14,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
@@ -23,50 +21,43 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
- * 消息通知接收人实体
+ * 通知策略
  * @author tomsun28
  * @date 2021/11/13 22:19
  */
 @Entity
-@Table(name = "notice_receiver")
+@Table(name = "notice_rule")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "消息通知接收人实体")
-public class NoticeReceiver {
+@ApiModel(description = "通知策略实体")
+public class NoticeRule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "接收人实体主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
+    @ApiModelProperty(value = "通知策略实体主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
 
-    @ApiModelProperty(value = "接收人名称", example = "tom", accessMode = READ_WRITE, position = 1)
+    @ApiModelProperty(value = "策略名称", example = "dispatch-1", accessMode = READ_WRITE, position = 1)
     @Length(max = 100)
     @NotNull
     private String name;
 
-    @ApiModelProperty(value = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号", accessMode = READ_WRITE, position = 2)
-    @Min(0)
-    @Max(3)
+    @ApiModelProperty(value = "接收人ID", example = "4324324", accessMode = READ_WRITE, position = 2)
     @NotNull
-    private Byte type;
+    private Long receiverId;
 
-    @ApiModelProperty(value = "手机号, 通知方式为手机短信时有效", example = "18923435643", accessMode = READ_WRITE, position = 3)
+    @ApiModelProperty(value = "接收人标识", example = "tom", accessMode = READ_WRITE, position = 3)
     @Length(max = 100)
-    private String phone;
+    @NotNull
+    private String receiverName;
 
-    @ApiModelProperty(value = "邮箱账号, 通知方式为邮箱时有效", example = "tom@qq.com", accessMode = READ_WRITE, position = 4)
-    @Length(max = 100)
-    private String email;
+    @ApiModelProperty(value = "是否启用此策略", example = "true", accessMode = READ_WRITE, position = 4)
+    private boolean enable = true;
 
-    @ApiModelProperty(value = "URL地址, 通知方式为webhook有效", example = "https://www.tancloud.cn", accessMode = READ_WRITE, position = 5)
-    @Length(max = 100)
-    private String hookUrl;
-
-    @ApiModelProperty(value = "wechat用户openId, 通知方式为微信公众号有效", example = "343432", accessMode = READ_WRITE, position = 6)
-    @Length(max = 100)
-    private String wechatId;
+    @ApiModelProperty(value = "是否转发所有", example = "false", accessMode = READ_WRITE, position = 5)
+    private boolean filterAll = true;
 
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 7)
     private String creator;

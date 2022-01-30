@@ -1,6 +1,6 @@
 package com.usthe.alert.dao;
 
-import com.usthe.alert.pojo.entity.AlertDefineBind;
+import com.usthe.common.entity.alerter.AlertDefineBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

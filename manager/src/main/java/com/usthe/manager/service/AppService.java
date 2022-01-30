@@ -2,7 +2,7 @@ package com.usthe.manager.service;
 
 import com.usthe.common.entity.job.Job;
 import com.usthe.manager.pojo.dto.Hierarchy;
-import com.usthe.manager.pojo.entity.ParamDefine;
+import com.usthe.common.entity.manager.ParamDefine;
 
 import java.util.List;
 import java.util.Map;

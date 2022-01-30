@@ -1,6 +1,6 @@
 package com.usthe.manager.dao;
 
-import com.usthe.manager.pojo.entity.NoticeReceiver;
+import com.usthe.common.entity.manager.NoticeReceiver;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

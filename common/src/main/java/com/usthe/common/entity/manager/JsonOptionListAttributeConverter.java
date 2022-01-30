@@ -1,4 +1,4 @@
-package com.usthe.manager.pojo.entity;
+package com.usthe.common.entity.manager;
 
 import com.usthe.common.util.GsonUtil;
 
