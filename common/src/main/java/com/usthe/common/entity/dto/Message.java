@@ -49,6 +49,11 @@ public class Message<T> {
         this.msg = msg;
     }
 
+    public Message(byte code, String msg) {
+        this.code = code;
+        this.msg = msg;
+    }
+
     public Message(T data) {
         this.data = data;
     }

@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <!-- etcd -->
         <dependency>
@@ -83,6 +83,13 @@
             <groupId>com.googlecode.aviator</groupId>
             <artifactId>aviator</artifactId>
             <version>5.2.7</version>
+        </dependency>
+        <!--collect-->
+        <!-- mysql -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.27</version>
         </dependency>
     </dependencies>
 
