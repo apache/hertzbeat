@@ -16,6 +16,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, mergeMap, switchMap, take } from 'rxjs/operators';
 
+import { Message } from '../../pojo/Message';
+import { AuthService } from '../../service/auth.service';
 import { LocalStorageService } from '../../service/local-storage.service';
 
 const CODE_MESSAGE: { [key: number]: string } = {
@@ -25,7 +27,7 @@ const CODE_MESSAGE: { [key: number]: string } = {
   204: '删除数据成功。',
   400: '发出的请求有错误，服务器没有进行新建或修改数据的操作。',
   401: '用户没有权限（令牌、用户名、密码错误）。',
-  403: '用户得到授权，但是访问是被禁止的。',
+  403: '用户无权限访问此资源。',
   404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
   406: '请求的格式不可得。',
   409: '请求与服务器端目标资源的当前状态相冲突',
@@ -42,11 +44,11 @@ const CODE_MESSAGE: { [key: number]: string } = {
  */
 @Injectable()
 export class DefaultInterceptor implements HttpInterceptor {
-  private refreshTokenEnabled = environment.api.refreshTokenEnabled;
+  // 是否正在刷新TOKEN过程
   private refreshToking = false;
   private refreshToken$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  constructor(private injector: Injector, private storageSvc: LocalStorageService) {}
+  constructor(private injector: Injector, private authSvc: AuthService, private storageSvc: LocalStorageService) {}
 
   private get notification(): NzNotificationService {
     return this.injector.get(NzNotificationService);
@@ -61,19 +63,20 @@ export class DefaultInterceptor implements HttpInterceptor {
   }
 
   private checkStatus(ev: HttpResponseBase): void {
-    // if (ev.status >= 200 && ev.status < 500) {
-    //   return;
-    // }
     const errorText = CODE_MESSAGE[ev.status] || ev.statusText;
-    this.notification.error(`抱歉服务器繁忙 ${ev.status}: ${ev.url}`, errorText);
+    console.warn(` ${ev.status}: ${ev.url}`, errorText);
+    this.notification.error(` ${ev.status}: ${ev.url}`, errorText);
   }
 
   /**
    * 刷新 Token 请求
    */
-  private refreshTokenRequest(): Observable<any> {
+  private refreshTokenRequest(): Observable<Message<any>> {
     const refreshToken = this.storageSvc.getRefreshToken();
-    return this.http.post(`/account/auth/refresh`, null, null, { headers: { Authorization: `Bearer ${refreshToken}` } });
+    if (refreshToken == null) {
+      return throwError('refreshToken is null.');
+    }
+    return this.authSvc.refreshToken(refreshToken);
   }
 
   // #region 刷新Token方式一：使用 401 重新刷新 Token
@@ -95,32 +98,38 @@ export class DefaultInterceptor implements HttpInterceptor {
     // 3、尝试调用刷新 Token
     this.refreshToking = true;
     this.refreshToken$.next(null);
-
     return this.refreshTokenRequest().pipe(
       switchMap(res => {
-        // 通知后续请求继续执行
+        // 判断刷新TOKEN是否正确
         this.refreshToking = false;
-        this.refreshToken$.next(res);
-        // 重新保存新 token
-        let token = res.token;
-        let refreshToken = res.refreshToken;
-        this.storageSvc.storageAuthorizationToken(token);
-        this.storageSvc.storageRefreshToken(refreshToken);
-        // 重新发起请求
-        return next.handle(this.reAttachToken(req));
+        if (res.code === 0 && res.data != undefined) {
+          let token = res.data.token;
+          let refreshToken = res.data.refreshToken;
+          if (token != undefined) {
+            this.storageSvc.storageAuthorizationToken(token);
+            this.storageSvc.storageRefreshToken(refreshToken);
+            // 通知后续请求继续执行
+            this.refreshToken$.next(token);
+            // 重新发起请求
+            return next.handle(this.reAttachToken(req));
+          } else {
+            console.warn(`flush new token failed. ${res.msg}`);
+            return throwError('flush new token failed.');
+          }
+        } else {
+          console.warn(`flush new token failed. ${res.msg}`);
+          return throwError('flush new token failed.');
+        }
       }),
       catchError(err => {
+        // token 刷新失败
+        console.warn(`flush new token failed. ${err.msg}`);
         this.refreshToking = false;
         this.toLogin();
         return throwError(err);
       })
     );
   }
-
-  /**
-   * 重新附加新 Token 信息
-   *
-   */
   private reAttachToken(req: HttpRequest<any>): HttpRequest<any> {
     let token = this.storageSvc.getAuthorizationToken();
     return req.clone({
@@ -158,8 +167,6 @@ export class DefaultInterceptor implements HttpInterceptor {
     return next.handle(newReq).pipe(
       mergeMap(httpEvent => {
         if (httpEvent instanceof HttpResponseBase) {
-          // todo 处理成功状态响应
-
           return of(httpEvent);
         } else {
           return of(httpEvent);
@@ -169,12 +176,7 @@ export class DefaultInterceptor implements HttpInterceptor {
         // 处理失败响应，处理token过期自动刷新
         switch (err.status) {
           case 401:
-            if (this.refreshTokenEnabled) {
-              return this.tryRefreshToken(err, req, next);
-            }
-            this.toLogin();
-            break;
-          case 403:
+            return this.tryRefreshToken(err, newReq, next);
           case 404:
           case 500:
             this.goTo(`/exception/${err.status}?url=${req.urlWithParams}`);
@@ -191,7 +193,6 @@ export class DefaultInterceptor implements HttpInterceptor {
             break;
         }
         this.checkStatus(err);
-        console.warn(`${err.status} == ${err.message}`);
         return throwError(err);
       })
     );
