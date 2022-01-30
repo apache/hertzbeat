@@ -1,20 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MonitorDataChartComponent } from './monitor-data-chart.component';
+import { MonitorDataTableComponent } from './monitor-data-table.component';
 
 describe('MonitorDataChartComponent', () => {
-  let component: MonitorDataChartComponent;
-  let fixture: ComponentFixture<MonitorDataChartComponent>;
+  let component: MonitorDataTableComponent;
+  let fixture: ComponentFixture<MonitorDataTableComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ MonitorDataChartComponent ]
-    })
-    .compileComponents();
+      declarations: [MonitorDataTableComponent]
+    }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MonitorDataChartComponent);
+    fixture = TestBed.createComponent(MonitorDataTableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

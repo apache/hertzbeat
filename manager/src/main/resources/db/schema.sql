@@ -31,7 +31,7 @@ CREATE TABLE  param
     id           bigint       not null auto_increment comment '参数ID',
     monitor_id   bigint       not null comment '监控ID',
     field        varchar(100) not null comment '参数标识符',
-    value        varchar(255) not null comment '参数值,最大字符长度255',
+    value        varchar(255) comment '参数值,最大字符长度255',
     type         tinyint      not null default 0 comment '参数类型 0:数字 1:字符串 2:加密串',
     gmt_create   timestamp    default current_timestamp comment 'create time',
     gmt_update   datetime     default current_timestamp on update current_timestamp comment 'update time',

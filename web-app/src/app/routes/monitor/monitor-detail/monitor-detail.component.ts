@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { TitleService } from '@delon/theme';
-import { switchMap } from 'rxjs/operators';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { finalize, switchMap } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
+import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
@@ -13,14 +13,15 @@ import { MonitorService } from '../../../service/monitor.service';
   styleUrls: ['./monitor-detail.component.less']
 })
 export class MonitorDetailComponent implements OnInit {
-  constructor(private monitorSvc: MonitorService, private route: ActivatedRoute, private router: Router, private titleSvc: TitleService) {}
+  constructor(private monitorSvc: MonitorService, private route: ActivatedRoute, private appDefineSvc: AppDefineService) {}
   isSpinning: boolean = false;
   monitorId!: number;
-  app: string | undefined;
-  monitor: Monitor | undefined;
+  app!: string;
+  monitor!: Monitor;
   options: any;
   port: number | undefined;
   metrics!: string[];
+  chartMetrics: any[] = [];
 
   ngOnInit(): void {
     this.route.paramMap
@@ -53,6 +54,45 @@ export class MonitorDetailComponent implements OnInit {
         },
         error => {
           this.isSpinning = false;
+          console.error(error.msg);
+        }
+      );
+  }
+
+  initMetricChart() {
+    // 查询过滤出此监控下可计算聚合的数字指标
+    const define$ = this.appDefineSvc
+      .getAppDefine(this.app)
+      .pipe(
+        finalize(() => {
+          define$.unsubscribe();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0 && message.data != undefined) {
+            this.chartMetrics = [];
+            let metrics = message.data.metrics;
+            metrics.forEach((metric: { name: any; fields: any }) => {
+              let fields = metric.fields;
+              if (fields != undefined) {
+                fields.forEach((field: { type: number; field: any; unit: any }) => {
+                  if (field.type == 0) {
+                    this.chartMetrics.push({
+                      metrics: metric.name,
+                      metric: field.field,
+                      unit: field.unit
+                    });
+                  }
+                });
+              }
+            });
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.error(error.msg);
         }
       );
   }
