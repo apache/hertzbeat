@@ -1,5 +1,5 @@
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: exapmle
+app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP

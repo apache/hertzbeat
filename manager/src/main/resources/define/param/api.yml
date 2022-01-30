@@ -47,7 +47,7 @@ param:
     type: password
     required: false
   - field: ssl
-    name: 使用SSL
+    name: 开启SSL
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: true
