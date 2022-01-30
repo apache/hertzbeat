@@ -131,10 +131,10 @@ public class MonitorServiceImpl implements MonitorService {
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
-                if (paramDefine.isRequired() && param == null) {
+                if (paramDefine.isRequired() && (param == null || param.getValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null) {
+                if (param != null && param.getValue() != null && !"".equals(param.getValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -151,6 +151,7 @@ public class MonitorServiceImpl implements MonitorService {
                                             + paramDefine.getType() + " over range " + paramDefine.getRange());
                                 }
                             }
+                            param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "text":
                             Short limit = paramDefine.getLimit();
@@ -175,6 +176,7 @@ public class MonitorServiceImpl implements MonitorService {
                                 passwordValue = AesUtil.aesEncode(passwordValue);
                                 param.setValue(passwordValue);
                             }
+                            param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
                             break;
                         case "boolean":
                             // boolean校验
@@ -187,7 +189,21 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "radio":
-                            // todo radio校验
+                            // radio单选值校验
+                            List<ParamDefine.Option> options = paramDefine.getOptions();
+                            boolean invalid = true;
+                            if (options != null) {
+                                for (ParamDefine.Option option : options) {
+                                    if (param.getValue().equalsIgnoreCase(option.getValue())) {
+                                        invalid = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (invalid) {
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + param.getValue() + " is invalid option value");
+                            }
                             break;
                         case "checkbox":
                             // todo checkbox校验

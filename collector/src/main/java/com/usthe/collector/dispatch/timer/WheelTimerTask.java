@@ -10,6 +10,9 @@ import com.usthe.collector.util.SpringContextHolder;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
+import com.usthe.common.util.AesUtil;
+import com.usthe.common.util.CommonConstants;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
  *
  *
  */
+@Slf4j
 public class WheelTimerTask implements TimerTask {
 
     private final Job job;
@@ -42,7 +46,18 @@ public class WheelTimerTask implements TimerTask {
     private void initJobMetrics(Job job) {
         // 将监控实际参数值对采集字段进行替换
         List<Configmap> config = job.getConfigmap();
-        Map<String, Configmap> configmap = config.stream().collect(Collectors.toMap(Configmap::getKey, item -> item));
+        Map<String, Configmap> configmap = config.stream()
+                .peek(item -> {
+                    // 对加密串进行解密
+                    if (item.getType() == CommonConstants.PARAM_TYPE_PASSWORD && item.getValue() != null) {
+                        String decodeValue = AesUtil.aesDecode(String.valueOf(item.getValue()));
+                        if (decodeValue == null) {
+                            log.error("Aes Decode value {} error.", item.getValue());
+                        }
+                        item.setValue(decodeValue);
+                    }
+                })
+                .collect(Collectors.toMap(Configmap::getKey, item -> item));
         List<Metrics> metrics = job.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>(metrics.size());
         for (Metrics metric : metrics) {
