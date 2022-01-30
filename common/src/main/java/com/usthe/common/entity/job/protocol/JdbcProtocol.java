@@ -22,7 +22,7 @@ public class JdbcProtocol {
     /**
      * 端口号
      */
-    private Integer port;
+    private String port;
     /**
      * 数据库用户名(可选)
      */
@@ -32,7 +32,23 @@ public class JdbcProtocol {
      */
     private String password;
     /**
-     * 数据库链接url eg: jdbc:mysql://localhost:3306
+     * 数据库
+     */
+    private String database;
+    /**
+     * 数据库类型 mysql oracle ...
+     */
+    private String platform;
+    /**
+     * SQL查询方式： oneRow, multiRow, columns
+     */
+    private String queryType;
+    /**
+     * sql
+     */
+    private String sql;
+    /**
+     * 数据库链接url eg: jdbc:mysql://localhost:3306/usthe
      */
     private String url;
 }
