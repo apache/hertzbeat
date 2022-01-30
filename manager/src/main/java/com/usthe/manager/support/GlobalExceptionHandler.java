@@ -1,6 +1,5 @@
 package com.usthe.manager.support;
 
-
 import com.usthe.common.entity.dto.Message;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
@@ -31,6 +30,8 @@ import static com.usthe.common.util.CommonConstants.PARAM_INVALID_CODE;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static final String CONNECT_STR = "||";
 
     private static Field detailMessage;
 
@@ -66,7 +67,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorDatabaseException(MonitorDatabaseException exception) {
         Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(MONITOR_CONFLICT_CODE).build();
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+        return ResponseEntity.ok(message);
     }
 
     /**
@@ -78,7 +79,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleIllegalArgumentException(IllegalArgumentException exception) {
         Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        return ResponseEntity.ok(message);
     }
 
     /**
@@ -114,23 +115,27 @@ public class GlobalExceptionHandler {
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
                     String field = (String) fieldErrorField.get(error);
-                    errorMessage.append(field).append(":").append(error.getDefaultMessage()).append("||");
+                    errorMessage.append(field).append(":").append(error.getDefaultMessage()).append(CONNECT_STR);
                 } catch (Exception e1) {
-                    errorMessage.append(error.getDefaultMessage()).append("||");
+                    errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR);
                 }
             });
         } else if (e instanceof BindException) {
             BindException exception = (BindException)e;
-            exception.getAllErrors().forEach(error -> {
-                errorMessage.append(error.getDefaultMessage()).append("||");
-            });
+            exception.getAllErrors().forEach(error ->
+                    errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR));
+        }
+        String errorMsg = errorMessage.toString();
+        if (errorMsg.endsWith(CONNECT_STR)) {
+            errorMsg = errorMsg.substring(0, errorMsg.length() - 2);
         }
         if (log.isDebugEnabled()) {
-            log.debug("[input argument not valid happen]-{}", errorMessage, e);
+            log.debug("[input argument not valid happen]-{}", errorMsg, e);
         }
-        Message<Void> message = Message.<Void>builder().msg(errorMessage.toString()).code(PARAM_INVALID_CODE).build();
+        Message<Void> message = Message.<Void>builder().msg(errorMsg).code(PARAM_INVALID_CODE).build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
+
 
     /**
      * handler the exception thrown for datastore error
