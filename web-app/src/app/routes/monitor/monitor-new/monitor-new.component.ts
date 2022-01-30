@@ -22,7 +22,7 @@ export class MonitorNewComponent implements OnInit {
   params!: Param[];
   monitor!: Monitor;
   profileForm: FormGroup = new FormGroup({});
-  detected: boolean = true;
+  detected: boolean = false;
   passwordVisible: boolean = false;
   // 是否显示加载中
   isSpinning: boolean = false;
@@ -46,7 +46,7 @@ export class MonitorNewComponent implements OnInit {
         switchMap((paramMap: ParamMap) => {
           this.monitor.app = paramMap.get('app') || '';
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = true;
+          this.detected = false;
           this.passwordVisible = false;
           this.isSpinning = false;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
@@ -122,7 +122,7 @@ export class MonitorNewComponent implements OnInit {
       }
     });
     let detectMonitor = {
-      detected: this.detected,
+      detected: true,
       monitor: this.monitor,
       params: this.params
     };
