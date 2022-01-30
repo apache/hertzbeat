@@ -1,7 +1,7 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
-import com.usthe.manager.pojo.entity.Monitor;
+import com.usthe.common.entity.manager.Monitor;
 import com.usthe.manager.service.MonitorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

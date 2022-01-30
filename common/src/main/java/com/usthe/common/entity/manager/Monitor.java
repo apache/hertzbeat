@@ -1,6 +1,7 @@
-package com.usthe.manager.pojo.entity;
+package com.usthe.common.entity.manager;
 
-import com.usthe.manager.support.valid.HostValid;
+
+import com.usthe.common.support.valid.HostValid;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;

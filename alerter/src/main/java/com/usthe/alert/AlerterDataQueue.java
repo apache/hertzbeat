@@ -1,6 +1,6 @@
 package com.usthe.alert;
 
-import com.usthe.alert.pojo.entity.Alert;
+import com.usthe.common.entity.alerter.Alert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

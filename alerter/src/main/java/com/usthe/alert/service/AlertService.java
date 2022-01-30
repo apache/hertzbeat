@@ -1,6 +1,6 @@
 package com.usthe.alert.service;
 
-import com.usthe.alert.pojo.entity.Alert;
+import com.usthe.common.entity.alerter.Alert;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
