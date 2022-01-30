@@ -27,7 +27,7 @@ import java.time.temporal.ChronoUnit;
 @Configuration
 @AutoConfigureAfter(value = {WarehouseProperties.class})
 @ConditionalOnProperty(prefix = "warehouse.store.redis",
-        name = "enabled", havingValue = "true", matchIfMissing = true)
+        name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class RedisDataStorage implements DisposableBean {
 
@@ -54,7 +54,7 @@ public class RedisDataStorage implements DisposableBean {
             Thread.currentThread().setName("warehouse-redis-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataExporter.pollWarehouseRedisMetricsData();
+                    CollectRep.MetricsData metricsData = dataExporter.pollMemoryStorageMetricsData();
                     if (metricsData != null) {
                         saveData(metricsData);
                     }
