@@ -307,7 +307,7 @@ export class AlertSettingComponent implements OnInit {
           let bindRecode: Record<number, string> = {};
           if (defineBindData.data != undefined) {
             defineBindData.data.forEach(bind => {
-              bindRecode[bind.monitorId] = bind.monitorName;
+              bindRecode[bind.monitorId] = bind.monitor.name;
             });
           }
           let listTmp: any[] = [];
@@ -337,7 +337,6 @@ export class AlertSettingComponent implements OnInit {
         let bind = new AlertDefineBind();
         bind.alertDefineId = this.currentAlertDefineId;
         bind.monitorId = item.id;
-        bind.monitorName = item.name;
         defineBinds.push(bind);
       }
     });

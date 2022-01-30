@@ -3,7 +3,7 @@ package com.usthe.alert.service.impl;
 import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.alert.dao.AlertDefineDao;
 import com.usthe.common.entity.alerter.AlertDefine;
-import com.usthe.common.entity.alerter.AlertDefineBind;
+import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
 import com.usthe.alert.service.AlertDefineService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +73,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineBind> alertDefineBinds) {
+    public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds) {
         // todo 校验此告警定义和监控是否存在
 
         // 先删除此告警的所有关联
@@ -99,7 +99,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public List<AlertDefineBind> getBindAlertDefineMonitors(long alertDefineId) {
+    public List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId) {
         return alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
     }
 }

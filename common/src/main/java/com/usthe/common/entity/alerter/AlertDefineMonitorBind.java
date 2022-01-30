@@ -1,5 +1,6 @@
 package com.usthe.common.entity.alerter;
 
+import com.usthe.common.entity.manager.Monitor;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -9,9 +10,12 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -30,7 +34,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(description = "告警定义与监控关联实体")
-public class AlertDefineBind {
+public class AlertDefineMonitorBind {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +45,11 @@ public class AlertDefineBind {
     private Long alertDefineId;
 
     @ApiModelProperty(value = "监控ID", example = "87432674336", accessMode = READ_WRITE, position = 2)
+    @Column(name = "monitor_id")
     private Long monitorId;
 
-    @ApiModelProperty(value = "监控名称", example = "Linux_192.123.23.1", accessMode = READ_WRITE, position = 3)
-    private String monitorName;
+    @ApiModelProperty(value = "租户ID", example = "42343", accessMode = READ_WRITE, position = 3)
+    private Long tenantId;
 
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 4)
     @Column(insertable = false, updatable = false)
@@ -54,4 +59,7 @@ public class AlertDefineBind {
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "monitor_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Monitor monitor;
 }
