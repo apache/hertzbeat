@@ -2,10 +2,10 @@ FROM openjdk:8-alpine
 
 MAINTAINER tomsun28 "tomsun28@outlook.com"
 
-ADD tancloud-server-1.0.tar /opt/
+ADD hertz-beat-1.0.tar /opt/
 
-EXPOSE 1158
+EXPOSE 1157
 
-WORKDIR /opt/tancloud-server/
+WORKDIR /opt/hertz-beat/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
