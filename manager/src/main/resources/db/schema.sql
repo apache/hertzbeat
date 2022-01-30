@@ -113,7 +113,7 @@ CREATE TABLE  alert
     target           varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
     monitor_id       bigint           not null comment '告警对象关联的监控ID',
     monitor_name     varchar(100)     comment '告警对象关联的监控名称',
-    alert_define_id  bigint           not null comment '告警关联的告警定义ID',
+    alert_define_id  bigint           comment '告警关联的告警定义ID',
     priority         tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     content          varchar(255)     not null comment '告警通知实际内容',
     status           tinyint          not null default 0 comment '告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理',
