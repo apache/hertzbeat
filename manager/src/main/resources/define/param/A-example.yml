@@ -1,5 +1,5 @@
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: exapmle
+app: example
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
     # field-字段名称标识符

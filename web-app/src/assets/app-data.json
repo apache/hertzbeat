@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "探云",
+    "name": "TANCLOUD",
     "description": "易用友好的高性能监控云"
   },
   "user": {
@@ -50,9 +50,9 @@
               "i18n": "monitor.app.ping"
             },
             {
-              "text": "telnet",
-              "link": "/monitors?app=telnet",
-              "i18n": "monitor.app.telnet"
+              "text": "port",
+              "link": "/monitors?app=port",
+              "i18n": "monitor.app.port"
             }
           ]
         },
@@ -63,7 +63,7 @@
           "children": [
             {
               "text": "Mysql",
-              "link": "/monitors",
+              "link": "/monitors?app=mysql",
               "i18n": "monitor.app.mysql"
             },
             {
@@ -103,6 +103,20 @@
           "i18n": "menu.alert.dispatch",
           "icon": "anticon-notification",
           "link": "/alert/notice"
+        }
+      ]
+    },
+    {
+      "text": "More",
+      "i18n": "menu.extras",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Settings",
+          "link": "/account/settings",
+          "i18n": "menu.extras.setting",
+          "icon": "anticon-setting"
         }
       ]
     }
