@@ -55,19 +55,19 @@
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="60px" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center">监控名称</th>
+      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzLeft>监控名称</th>
       <th nzAlign="center">监控状态</th>
       <th nzAlign="center">监控Host</th>
       <th nzAlign="center">监控类型</th>
       <th nzAlign="center">最新修改时间</th>
-      <th nzAlign="center" nzRight>操作</th>
+      <th nzAlign="center">操作</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzLeft>
         <a [routerLink]="['/monitors/' + data.id]">
           <span>{{ data.name }}</span>
         </a>
@@ -102,7 +102,7 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
-      <td nzAlign="center" nzRight>
+      <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip nzTooltipTitle="修改监控">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
         </button>
