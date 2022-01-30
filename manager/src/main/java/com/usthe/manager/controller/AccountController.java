@@ -1,25 +1,29 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
+import com.usthe.manager.pojo.dto.LoginDto;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
-import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
-import com.usthe.sureness.util.SurenessContextHolder;
+import io.jsonwebtoken.Claims;
 import io.swagger.annotations.Api;
-import org.springframework.http.HttpStatus;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static com.usthe.common.util.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -32,87 +36,95 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Api(tags = "认证注册TOKEN管理API")
 @RestController()
 @RequestMapping(value = "/account/auth", produces = {APPLICATION_JSON_VALUE})
+@Slf4j
 public class AccountController {
+
+    /**
+     * TOKEN有效期时间 单位秒
+     */
+    private static final long PERIOD_TIME = 3600L;
 
     /**
      * account data provider
      */
     private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
-    /**
-     * 账户密码登陆获取token
-     * @param requestBody request
-     * @return token与refresh token
-     *
-     */
     @PostMapping("/form")
-    public ResponseEntity<Message> authGetToken(@RequestBody Map<String,String> requestBody) {
+    @ApiOperation(value = "账户登陆", notes = "账户密码登陆获取关联用户信息")
+    public ResponseEntity<Message<Map<String, String>>> authGetToken(@RequestBody LoginDto loginDto) {
 
-        String identifier = requestBody.get("identifier");
-        String password = requestBody.get("password");
-        SurenessAccount account = accountProvider.loadAccount(identifier);
+        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
-            Message<Void> message = Message.<Void>builder().msg("账户密码错误")
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")
                     .code(MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         } else {
+            String password = loginDto.getCredential();
             if (account.getSalt() != null) {
                 password = Md5Util.md5(password + account.getSalt());
             }
             if (!account.getPassword().equals(password)) {
-                Message<Void> message = Message.<Void>builder().msg("账户密码错误")
+                Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")
                         .code(MONITOR_LOGIN_FAILED_CODE).build();
                 return ResponseEntity.ok(message);
             }
             if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
-                Message<Void> message = Message.<Void>builder().msg("账户过期或被锁定")
+                Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户过期或被锁定")
                         .code(MONITOR_LOGIN_FAILED_CODE).build();
                 return ResponseEntity.ok(message);
             }
         }
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
-        long periodTime = 3600L;
-        // issue jwt
-        String jwt = JsonWebTokenUtil.issueJwt(UUID.randomUUID().toString(), identifier,
-                "token-server", periodTime, roles);
-        // issue refresh jwt
-        String refreshJwt = JsonWebTokenUtil.issueJwt(UUID.randomUUID().toString(), identifier,
-                "token-server-refresh", periodTime, roles);
+        // 签发TOKEN
+        String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
+        Map<String, Object> customClaimMap = new HashMap<>(1);
+        customClaimMap.put("refresh", true);
+        String issueRefresh = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME << 5, customClaimMap);
         Map<String, String> resp = new HashMap<>(2);
-        resp.put("token", jwt);
-        resp.put("refreshToken", refreshJwt);
-        return ResponseEntity.ok().body(new Message(resp));
+        resp.put("token", issueToken);
+        resp.put("refreshToken", issueRefresh);
+        return ResponseEntity.ok(new Message<>(resp));
     }
 
-    /**
-     * 账户密码登陆获取token
-     * @param requestBody request
-     * @return token与refresh token
-     *
-     */
-    @PostMapping("/refresh")
-    public ResponseEntity<Message> refreshToken(@RequestBody Map<String,String> requestBody) {
-
-        SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
-        if (subjectSum == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    @GetMapping("/refresh/{refreshToken}")
+    @ApiOperation(value = "TOKEN刷新", notes = "使用刷新TOKEN重新获取TOKEN")
+    public ResponseEntity<Message<Map<String, String>>> refreshToken(
+            @ApiParam(value = "刷新TOKEN", example = "xxx")
+            @PathVariable("refreshToken") @NotNull String refreshToken) {
+        String userId;
+        boolean isRefresh;
+        try {
+            Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
+            userId = String.valueOf(claims.getSubject());
+            isRefresh = claims.get("refresh", Boolean.class);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("刷新TOKEN过期或错误")
+                    .code(MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
         }
-        String identifier = String.valueOf(subjectSum.getPrincipal());
-
-        // Get the roles the user has - rbac
-        List<String> roles = (List<String>) subjectSum.getRoles();
-        long periodTime = 3600L;
-        // issue jwt
-        String jwt = JsonWebTokenUtil.issueJwt(UUID.randomUUID().toString(), identifier,
-                "token-server", periodTime, roles);
-        // issue refresh jwt
-        String refreshJwt = JsonWebTokenUtil.issueJwt(UUID.randomUUID().toString(), identifier,
-                "token-server-refresh", periodTime, roles);
+        if (userId == null || !isRefresh) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("非法的刷新TOKEN")
+                    .code(MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+        SurenessAccount account = accountProvider.loadAccount(userId);
+        if (account == null) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
+                    .code(MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+        List<String> roles = account.getOwnRoles();
+        // 签发TOKEN
+        String issueToken = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME, roles);
+        Map<String, Object> customClaimMap = new HashMap<>(1);
+        customClaimMap.put("refresh", true);
+        String issueRefresh = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME << 5, customClaimMap);
         Map<String, String> resp = new HashMap<>(2);
-        resp.put("token", jwt);
-        resp.put("refreshToken", refreshJwt);
-        return ResponseEntity.ok().body(new Message<>(resp));
+        resp.put("token", issueToken);
+        resp.put("refreshToken", issueRefresh);
+        return ResponseEntity.ok(new Message<>(resp));
     }
 
 }
