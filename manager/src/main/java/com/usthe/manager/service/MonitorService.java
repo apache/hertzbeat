@@ -43,7 +43,7 @@ public interface MonitorService {
      * @param isModify 是否是修改监控
      * @throws IllegalArgumentException 校验参数错误抛出
      */
-    void validate(MonitorDto monitorDto, boolean isModify) throws IllegalArgumentException;
+    void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException;
 
     /**
      * 修改更新监控
