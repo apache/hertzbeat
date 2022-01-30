@@ -106,7 +106,7 @@ export class AlertCenterComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量标记已读！',
+      nzTitle: '请确认是否批量标记已处理！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -120,7 +120,7 @@ export class AlertCenterComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量标记未读！',
+      nzTitle: '请确认是否批量标记未处理！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -146,7 +146,7 @@ export class AlertCenterComponent implements OnInit {
     let alerts = new Set<number>();
     alerts.add(alertId);
     this.modal.confirm({
-      nzTitle: '请确认是否标记已读！',
+      nzTitle: '请确认是否标记已处理！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -159,7 +159,7 @@ export class AlertCenterComponent implements OnInit {
     let alerts = new Set<number>();
     alerts.add(alertId);
     this.modal.confirm({
-      nzTitle: '请确认是否标记未读！',
+      nzTitle: '请确认是否标记未处理！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,

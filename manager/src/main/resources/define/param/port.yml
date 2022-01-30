@@ -1,5 +1,5 @@
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: website
+app: port
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
     # field-字段名称标识符
@@ -17,15 +17,11 @@ param:
     range: '[0,65535]'
     required: true
     defaultValue: 80
-  - field: uri
-    name: 网站路径
-    type: text
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 100
+  - field: timeout
+    name: 连接超时时间
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
     required: true
-    placeholder: '请输入网站地址，例如:/index.html'
-  - field: ssl
-    name: 开启SSL
-    # 当type为boolean时,前端用switch展示开关
-    type: boolean
-    required: true
+    placeholder: '请输入超时时间,单位毫秒'
+    defaultValue: 3000
