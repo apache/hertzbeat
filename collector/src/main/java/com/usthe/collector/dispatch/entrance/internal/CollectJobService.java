@@ -57,10 +57,12 @@ public class CollectJobService {
      * @return long 任务ID
      */
     public long addAsyncCollectJob(Job job) {
-        long jobId = SnowFlakeIdGenerator.generateId();
-        job.setId(jobId);
+        if (job.getId() == 0L) {
+            long jobId = SnowFlakeIdGenerator.generateId();
+            job.setId(jobId);
+        }
         timerDispatch.addJob(job, null);
-        return jobId;
+        return job.getId();
     }
 
     /**

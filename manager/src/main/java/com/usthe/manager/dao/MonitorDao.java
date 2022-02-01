@@ -41,6 +41,13 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
     List<Monitor> findMonitorsByAppEquals(String app);
 
     /**
+     * 查询已下发采集任务的监控
+     * @param status 监控状态
+     * @return 监控列表
+     */
+    List<Monitor> findMonitorsByStatusNotInAndAndJobIdNotNull(List<Byte> status);
+
+    /**
      * 根据监控名称查询监控
      * @param name 监控名称
      * @return 监控列表

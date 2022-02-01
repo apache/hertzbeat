@@ -10,6 +10,7 @@ import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2021/11/14 17:17
  */
 @Service
+@Order(value = 1)
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
