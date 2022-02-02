@@ -1,0 +1,62 @@
+{
+  "link.title.About Sureness": {
+    "message": "关于 Sureness",
+    "description": "The title of the footer links column with title=About Sureness in the footer"
+  },
+  "link.title.Community": {
+    "message": "社区与交流",
+    "description": "The title of the footer links column with title=Community in the footer"
+  },
+  "link.title.More": {
+    "message": "更多相关",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.High Performance": {
+    "message": "高性能",
+    "description": "The label of footer link with label=High Performance linking to https://github.com/tomsun28/sureness-shiro-spring-security-benchmark"
+  },
+  "link.item.label.Dashboard": {
+    "message": "看板",
+    "description": "The label of footer link with label=Dashboard linking to https://github.com/dromara/sureness/projects/1"
+  },
+  "link.item.label.Github": {
+    "message": "Github",
+    "description": "The label of footer link with label=Github linking to https://github.com/dromara/sureness"
+  },
+  "link.item.label.Gitee": {
+    "message": "Gitee",
+    "description": "The label of footer link with label=Gitee linking to https://gitee.com/dromara/sureness"
+  },
+  "link.item.label.Github Discussion": {
+    "message": "Github Discussion",
+    "description": "The label of footer link with label=Github Discussion linking to https://github.com/dromara/sureness/discussions"
+  },
+  "link.item.label.Gitter Channel": {
+    "message": "Gitter Channel",
+    "description": "The label of footer link with label=Gitter Channel linking to https://gitter.im/usthe/sureness"
+  },
+  "link.item.label.USTHE": {
+    "message": "USTHE",
+    "description": "The label of footer link with label=USTHE linking to https://github.com/usthe"
+  },
+  "copyright": {
+    "message": "Apache License 2.0 | Copyright © 2021",
+    "description": "The footer copyright"
+  },
+  "link.item.label.Dromara": {
+    "message": "Dromara 社区",
+    "description": "The label of footer link with label=Dromara linking to https://dromara.org"
+  },
+  "link.item.label.QQ Group - 390083213": {
+    "message": "QQ 群 - 390083213",
+    "description": "The label of footer link with label=QQ Group - 390083213 linking to https://qm.qq.com/cgi-bin/qm/qr?k=3IpzQjFOztJe464_eMBmDHfT0YTWK5Qa&jump_from=webapi"
+  },
+  "link.item.label.Tom Blog": {
+    "message": "Tom 博客",
+    "description": "The label of footer link with label=Tom Blog linking to https://blog.usthe.com"
+  },
+  "link.item.label.Tom": {
+    "message": "Tom",
+    "description": "The label of footer link with label=Tom linking to https://github.com/tomsun28"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "title": {
+    "message": " ",
+    "description": "The title in the navbar"
+  },
+  "item.label.Document": {
+    "message": "文档",
+    "description": "Navbar item with label Document"
+  },
+  "item.label.Dashboard": {
+    "message": "看板",
+    "description": "Navbar item with label Dashboard"
+  },
+  "item.label.High Performance": {
+    "message": "高性能",
+    "description": "Navbar item with label High Performance"
+  },
+  "item.label.Discuss": {
+    "message": "讨论",
+    "description": "Navbar item with label Discuss"
+  },
+  "item.label.Github Discussion": {
+    "message": "Github Discussion",
+    "description": "Navbar item with label Github Discussion"
+  },
+  "item.label.Gitter Channel": {
+    "message": "Gitter Channel",
+    "description": "Navbar item with label Gitter Channel"
+  },
+  "item.label.QQ Group - 390083213": {
+    "message": "QQ 群 - 390083213",
+    "description": "Navbar item with label QQ Group - 390083213"
+  },
+  "item.label.Blog": {
+    "message": "博客",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.Other": {
+    "message": "其它",
+    "description": "Navbar item with label Other"
+  },
+  "item.label.Design": {
+    "message": "设计文档",
+    "description": "Navbar item with label Design"
+  },
+  "item.label.Contributing": {
+    "message": "参与贡献",
+    "description": "Navbar item with label Contributing"
+  },
+  "item.label.Sponsor": {
+    "message": "赞助",
+    "description": "Navbar item with label Sponsor"
+  }
+}

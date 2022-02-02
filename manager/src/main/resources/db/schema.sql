@@ -1,4 +1,4 @@
-use usthe;
+use hertzbeat;
 
 -- ----------------------------
 -- Table structure for monitor

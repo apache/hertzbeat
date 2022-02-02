@@ -1,0 +1,63 @@
+{
+  "docs": [
+    {
+      "type": "category",
+      "label": "快速入门",
+      "items": [
+        "introduce",
+        "start/quickstart",
+        "start/mysql-init",
+        "start/tdengine-init",
+        "start/docker-deploy",
+        "start/package-deploy"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "自定义监控",
+      "items": [
+        "advanced/extend-point",
+        "advanced/custom-subject",
+        "advanced/custom-subject-creator",
+        "advanced/custom-processor",
+        "advanced/custom-datasource"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "帮助文档",
+      "items": [
+        {
+          "type": "category",
+          "label": "应用服务监控",
+          "items": [
+            "integrate/sample-bootstrap"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "数据库监控",
+          "items": [
+            "integrate/sample-bootstrap"
+          ]
+        },
+        "integrate/sample-bootstrap",
+        "integrate/sample-tom",
+        "integrate/sample-quarkus",
+        "integrate/sample-javalin",
+        "integrate/sample-spring-webflux",
+        "integrate/sample-ktor",
+        "integrate/sample-micronaut"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Others",
+      "items": [
+        "design",
+        "contributing",
+        "sponsor"
+      ]
+    }
+  ]
+}
