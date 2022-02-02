@@ -1,0 +1,21 @@
+{
+  "name": "TANCLOUD探云",
+  "short_name": "TANCLOUD",
+  "theme_color": "#ea5a07",
+  "background_color": "#efefef",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./index.html",
+  "icons": [
+    {
+      "src": "img/tancloud-logo.svg",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "img/tancloud-brand.svg",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}
