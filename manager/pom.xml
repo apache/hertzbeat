@@ -107,7 +107,6 @@
                     <include>application.yml</include>
                     <include>sureness.yml</include>
                     <include>banner.txt</include>
-                    <include>db/**</include>
                     <include>define/**</include>
                 </includes>
             </resource>

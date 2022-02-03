@@ -4,32 +4,53 @@ title: 通过Docker方式安装HertzBeat
 sidebar_label: Docker方式部署    
 ---
 
-### 🐕 开始使用
+> 推荐使用docker部署HertzBeat  
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登陆注册](https://console.tancloud.cn)免费使用。  
-- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
+1. 下载安装Docker环境   
+   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+   安装完毕后终端查看Docker版本是否正常输出。
+   ```
+   $ docker -v
+   Docker version 20.10.12, build e91ed57
+   ```
 
-### 🐵 依赖服务部署   
+2. 拉取HertzBeat Docker镜像   
+   ``` 
+   $ docker pull tancloud/hertzbeat:latest 
+   ```
+3. 配置HertzBeat的配置文件  
+   在主机目录下创建application.yml，eg:/opt/application.yml   
+   配置文件内容参考 项目仓库/script/application.yml，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
+   具体替换参数如下:
+   ``` 
+   spring.datasource.url
+   spring.datasource.username
+   spring.datasource.password
+   
+   warehouse.store.td-engine.url
+   warehouse.store.td-engine.username
+   warehouse.store.td-engine.password
+   
+   spring.mail.host
+   spring.mail.port
+   spring.mail.username
+   spring.mail.password
+   
+   ```
 
-> HertzBeat最少依赖于 关系型数据库[MYSQL8+](https://www.mysql.com/) 和 时序性数据库[TDengine2+](https://www.taosdata.com/getting-started)
-
-##### 安装MYSQL  
-1. docker安装MYSQl  
-`docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql`   
-2. 创建名称为hertzBeat的数据库  
-3. 执行位于项目仓库script目录下的数据库脚本 schema.sql    
-
-##### 安装TDengine   
-1. docker安装TDengine   
-`docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine`     
-2. 创建名称为hertzBeat的数据库
-
-### 🍞 HertzBeat安装   
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署。  
-
-#### Docker方式快速安装
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat:latest`  
-#### 通过安装包安装   
-todo  
+5. 启动HertzBeat Docker容器  
+   ``` 
+   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertz-beat/config/application.yml --name hertzbeat tancloud/hertzbeat:latest
+   526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
+   ```
+   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
+   - docker run -d : 通过Docker运行一个容器,使其在后台运行
+   - -p 1157:1157  : 映射容器端口到主机端口
+   - -v /opt/application.yml:/opt/hertz-beat/config/application.yml  : 挂载上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
+   - --name hertzbeat : 命名容器名称 hertzbeat 
+   - tancloud/hertzbeat:latest : 使用拉取的HertzBeat官方发布的应用镜像来启动容器 
+   
+6. 开始探索HertzBeat  
+   浏览器访问 http://ip:1157 开始使用HertzBeat进行监控告警。
 
 **HAVE FUN**
