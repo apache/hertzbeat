@@ -7,4 +7,12 @@
 
 ## 编译打包  
 
+web-app目录下执行
+
 ```ng build --prod --base-href /console/```
+
+manager目录下执行
+
+```mvn package```
+
+生成的安装包在 manager/target/hertz-beta-1.0.tar.gz 

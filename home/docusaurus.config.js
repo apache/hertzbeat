@@ -148,12 +148,12 @@ module.exports = {
                     title: '产品介绍',
                     items: [
                         {
-                            label: 'Github',
-                            href: 'https://github.com/dromara/sureness',
+                            label: '使用介绍',
+                            to: 'docs/introduce',
                         },
                         {
-                            label: 'Gitee',
-                            href: 'https://gitee.com/dromara/sureness',
+                            label: '安装文档',
+                            to: 'docs/start/quickstart',
                         },
                         {
                             label: 'High Performance',
@@ -190,16 +190,20 @@ module.exports = {
                     title: '相关资源',
                     items: [
                         {
-                            label: 'Tom Blog',
-                            to: 'https://blog.usthe.com',
+                            label: 'Github仓库',
+                            href: 'https://github.com/usthe/hertzbeat',
                         },
                         {
-                            label: 'USTHE',
-                            href: 'https://github.com/usthe',
+                            label: 'Gitee仓库',
+                            href: 'https://gitee.com/usthe/hertzbeat',
                         },
                         {
-                            label: 'Tom',
-                            href: 'https://github.com/tomsun28',
+                            label: 'HertzBeat赫兹节拍',
+                            href: 'https://hertzbeat.com',
+                        },
+                        {
+                            label: 'TanCloud探云',
+                            href: 'https://tancloud.cn',
                         },
                     ],
                 },
