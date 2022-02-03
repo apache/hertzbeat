@@ -1,0 +1,59 @@
+server:
+  port: 1157
+spring:
+  application:
+    name: ${HOSTNAME:@hertzbeat@}${PID}
+  profiles:
+    active: prod
+  mvc:
+    static-path-pattern: /console/**
+  resources:
+    static-locations:
+      - classpath:/dist/
+      - classpath:../dist/
+  jackson:
+    default-property-inclusion: NON_EMPTY
+
+sureness:
+  auths:
+    - digest
+    - basic
+    - jwt
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: admin
+    password: admin
+    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    platform: mysql
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    database: mysql
+
+  mail:
+    host: smtp.exmail.qq.com
+    username: example@tancloud.cn
+    password: example
+    port: 465
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactoryClass: javax.net.ssl.SSLSocketFactory
+          ssl:
+            enable: true
+
+warehouse:
+  store:
+    td-engine:
+      enabled: true
+      driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+      url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+      username: root
+      password: taosdata
