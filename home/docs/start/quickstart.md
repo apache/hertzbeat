@@ -17,7 +17,7 @@ sidebar_label: 快速开始
 1. docker安装MYSQl  
 `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql`   
 2. 创建名称为hertzbeat的数据库  
-3. 执行位于项目仓库script目录下的数据库脚本 schema.sql    
+3. 执行位于项目仓库/script/sql/目录下的数据库脚本 schema.sql    
 
 详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init.md)    
 
