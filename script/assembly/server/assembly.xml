@@ -7,6 +7,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--打包类型,可以设置多种类型,打包的时候不同的类型都会打包打出来-->
     <formats>
         <format>tar</format>
+        <format>tar.gz</format>
         <format>zip</format>
     </formats>
     <!--第三方依赖设置-->
