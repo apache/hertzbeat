@@ -36,3 +36,5 @@ nbdist/
 
 ### VS Code ###
 .vscode/
+
+application-dev.yml
