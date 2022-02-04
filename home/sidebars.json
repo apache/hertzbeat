@@ -16,47 +16,39 @@
       "type": "category",
       "label": "自定义监控",
       "items": [
-        "advanced/extend-point",
-        "advanced/custom-subject",
-        "advanced/custom-subject-creator",
-        "advanced/custom-processor",
-        "advanced/custom-datasource"
+        "advanced/extend-point"
       ]
     },
     {
       "type": "category",
       "label": "帮助文档",
       "items": [
+        "help/help",
         {
           "type": "category",
           "label": "应用服务监控",
           "items": [
-            "integrate/sample-bootstrap"
+            "help/help"
           ]
         },
         {
           "type": "category",
           "label": "数据库监控",
           "items": [
-            "integrate/sample-bootstrap"
+            "help/help"
           ]
-        },
-        "integrate/sample-bootstrap",
-        "integrate/sample-tom",
-        "integrate/sample-quarkus",
-        "integrate/sample-javalin",
-        "integrate/sample-spring-webflux",
-        "integrate/sample-ktor",
-        "integrate/sample-micronaut"
+        }
       ]
     },
     {
       "type": "category",
       "label": "Others",
       "items": [
-        "design",
-        "contributing",
-        "sponsor"
+        "others/contact",
+        "others/design",
+        "others/sponsor",
+        "others/private",
+        "others/resource"
       ]
     }
   ]

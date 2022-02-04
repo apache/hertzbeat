@@ -60,5 +60,5 @@ account:
 
 ```
 
-我们提供了默认文本数据源使用`DEMO`，默认文本数据源具体实现，请参考 [一步一步搭建认证鉴权系统](/docs/integrate/sample-bootstrap)     
+我们提供了默认文本数据源使用`DEMO`，默认文本数据源具体实现，请参考 [一步一步搭建认证鉴权系统](/docs/help/sample-bootstrap)     
 当然数据源也可以来自数据库等存储,我们提供了接口让用户轻松的自定义数据源，详见[自定义数据源](/docs/advanced/custom-datasource)  
