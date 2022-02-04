@@ -17,4 +17,4 @@ subject包含的就是我们request请求所带的用户信息，sureness已经�
 2. 实现`SubjectCreate`接口方法,创建出自定义的`subject` 参考[自定义Subject Creator](/docs/advanced/custom-subject-creator)
 3. 实现`Processor`接口,支持处理自定义的`subject` 参考[自定义Processor](/docs/advanced/custom-processor)
 
-具体扩展实践请参考 [使用sureness30分钟项目集成案例](/docs/integrate/sample-tom)     
+具体扩展实践请参考 [使用sureness30分钟项目集成案例](/docs/help/sample-tom)     

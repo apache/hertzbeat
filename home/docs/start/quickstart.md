@@ -17,7 +17,7 @@ sidebar_label: 快速开始
 1. docker安装MYSQl  
 `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql`   
 2. 创建名称为hertzbeat的数据库  
-3. 执行位于项目仓库/script/sql/目录下的数据库脚本 schema.sql    
+3. 执行位于项目仓库/script/sql/目录下的数据库脚本 [schema.sql](https://gitee.com/usthe/hertzbeat/raw/master/script/sql/schema.sql)      
 
 详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init.md)    
 
@@ -36,8 +36,10 @@ sidebar_label: 快速开始
 
 详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
 
-#### 通过安装包安装   
-todo  
+#### 通过安装包安装    
+1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/usthe/hertzbeat/releases) [GITHUB Release](https://github.com/usthe/hertzbeat/releases)  
+2. 配置HertzBeat的配置文件 hertz-beat/config/application.yml   
+3. 部署启动 `$ ./startup.sh `   
 
 详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
 

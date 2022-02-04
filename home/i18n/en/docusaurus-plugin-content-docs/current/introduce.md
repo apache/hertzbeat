@@ -62,13 +62,13 @@ slug: /
 
 ##### ✌ 框架支持样例
 
-- [x] Sureness集成**Spring Boot**样例(配置文件方案) [sample-bootstrap](/docs/integrate/sample-bootstrap)
-- [x] Sureness集成**Spring Boot**样例(数据库方案) [sample-tom](/docs/integrate/sample-tom)
-- [x] Sureness集成**Quarkus**样例 [sample-quarkus](/docs/integrate/sample-quarkus)
-- [x] Sureness集成**Javalin**样例 [sample-javalin](/docs/integrate/sample-javalin)
-- [x] Sureness集成**Ktor**样例 [sample-ktor](/docs/integrate/sample-ktor)
-- [x] Sureness集成**Spring Webflux**样例 [spring-webflux-sureness](/docs/integrate/sample-spring-webflux)
-- [x] Sureness集成**Micronaut**样例 [sample-micronaut](/docs/integrate/sample-micronaut)
+- [x] Sureness集成**Spring Boot**样例(配置文件方案) [sample-bootstrap](/docs/help/sample-bootstrap)
+- [x] Sureness集成**Spring Boot**样例(数据库方案) [sample-tom](/docs/help/sample-tom)
+- [x] Sureness集成**Quarkus**样例 [sample-quarkus](/docs/help/sample-quarkus)
+- [x] Sureness集成**Javalin**样例 [sample-javalin](/docs/help/sample-javalin)
+- [x] Sureness集成**Ktor**样例 [sample-ktor](/docs/help/sample-ktor)
+- [x] Sureness集成**Spring Webflux**样例 [spring-webflux-sureness](/docs/help/sample-spring-webflux)
+- [x] Sureness集成**Micronaut**样例 [sample-micronaut](/docs/help/sample-micronaut)
 - [x] Sureness使用Session样例 [sureness-session](https://github.com/usthe/sureness/tree/master/samples/sureness-session)
 - [x] Sureness分布式缓存Session样例 [sureness-redis-session](https://github.com/usthe/sureness/tree/master/samples/sureness-redis-session)
 - [x] More samples todo   

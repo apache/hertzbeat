@@ -1,9 +1,9 @@
 const path = require('path')
 
 const organizationName = 'usthe' // Usually your GitHub org/user name.
-const projectName = 'sureness' // Usually your repo name.
+const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
-const repoUrl = `https://github.com/dromara/${projectName}`
+const repoUrl = `https://github.com/usthe/${projectName}`
 const cdnUrl = '/'
 
 module.exports = {
@@ -85,51 +85,33 @@ module.exports = {
                 {
                     label: '博客',
                     position: 'left',
-                    to: 'blog',
+                    to: 'blog/',
                 },
                 {
                     label: '讨论交流',
                     position: 'left',
-                    to: 'docs/',
+                    to: 'docs/others/contact',
                 },
                 {
                     label: '私有化部署',
                     position: 'left',
-                    to: 'docs/',
-                },
-                {
-                    label: '反馈建议',
-                    position: 'left',
-                    items: [
-                        {
-                            label: 'Github Discussion',
-                            href: 'https://github.com/dromara/sureness/discussions',
-                        },
-                        {
-                            label: 'Gitter Channel',
-                            href: 'https://gitter.im/usthe/sureness',
-                        },
-                        {
-                            label: 'QQ Group - 390083213',
-                            href: 'https://qm.qq.com/cgi-bin/qm/qr?k=3IpzQjFOztJe464_eMBmDHfT0YTWK5Qa&jump_from=webapi',
-                        },
-                    ],
+                    to: 'docs/others/private',
                 },
                 {
                     label: '其它',
                     position: 'left',
                     items: [
                         {
-                            label: 'Design',
-                            to: 'docs/design',
+                            label: '设计文档',
+                            to: 'docs/others/design',
                         },
                         {
-                            label: 'Contributing',
-                            to: 'docs/contributing',
+                            label: '赞助我们',
+                            to: 'docs/others/sponsor',
                         },
                         {
-                            label: 'Sponsor',
-                            to: 'docs/sponsor',
+                            label: '相关资源',
+                            to: 'docs/others/resource',
                         },
                     ],
                 },
@@ -149,19 +131,19 @@ module.exports = {
                     items: [
                         {
                             label: '使用介绍',
-                            to: 'docs/introduce',
+                            to: 'docs/',
                         },
                         {
                             label: '安装文档',
                             to: 'docs/start/quickstart',
                         },
                         {
-                            label: 'High Performance',
-                            href: 'https://github.com/tomsun28/sureness-shiro-spring-security-benchmark',
+                            label: '自定义监控',
+                            to: 'docs/advanced/extend-point'
                         },
                         {
-                            label: 'Dashboard',
-                            href: 'https://github.com/dromara/sureness/projects/1',
+                            label: '帮助文档',
+                            to: 'docs/help/help'
                         },
                     ],
                 },
@@ -169,20 +151,20 @@ module.exports = {
                     title: '探云科技',
                     items: [
                         {
-                            label: 'Dromara',
-                            href: 'https://dromara.org',
+                            label: '交流联系',
+                            to: 'docs/others/contact',
                         },
                         {
-                            label: 'Github Discussion',
-                            href: 'https://github.com/dromara/sureness/discussions',
+                            label: '社区网站',
+                            href: 'https://support.qq.com/products/379369',
                         },
                         {
-                            label: 'Gitter Channel',
-                            href: 'https://gitter.im/usthe/sureness',
+                            label: 'TANCLOUD探云',
+                            href: 'https://tancloud.cn',
                         },
                         {
-                            label: 'QQ Group - 390083213',
-                            href: 'https://qm.qq.com/cgi-bin/qm/qr?k=3IpzQjFOztJe464_eMBmDHfT0YTWK5Qa&jump_from=webapi',
+                            label: 'HertzBeat赫兹节拍',
+                            href: 'https://hertzbeat.com',
                         },
                     ],
                 },
@@ -198,12 +180,8 @@ module.exports = {
                             href: 'https://gitee.com/usthe/hertzbeat',
                         },
                         {
-                            label: 'HertzBeat赫兹节拍',
-                            href: 'https://hertzbeat.com',
-                        },
-                        {
-                            label: 'TanCloud探云',
-                            href: 'https://tancloud.cn',
+                            label: '相关资源',
+                            to: 'docs/others/resource',
                         },
                     ],
                 },
@@ -213,7 +191,7 @@ module.exports = {
                 src: cdnUrl + 'img/tancloud-brand.svg',
                 href: 'https://tancloud.cn',
             },
-            copyright: `Apache License 2.0 | Copyright © ${new Date().getFullYear()}`,
+            copyright: `蜀ICP备2022002218号 | Copyright TANCLOUD© ${new Date().getFullYear()}`,
         },
     },
     presets: [
