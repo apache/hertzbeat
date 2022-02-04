@@ -20,14 +20,36 @@ sidebar_label: 安装包方式部署
    - 从[GITEE Release](https://gitee.com/usthe/hertzbeat/releases) 仓库下载
    - 从[GITHUB Release](https://github.com/usthe/hertzbeat/releases) 仓库下载
 
-3. 部署启动
+3. 配置HertzBeat的配置文件    
    解压安装包到主机 eg: /opt/hertz-beat
    ``` 
    $ tar zxvf hertz-beat-1.0.tar.gz 
    ```
-   执行位于安装目录/bin/下的启动脚本 startup.sh 
+   修改位于 hertz-beat/config/application.yml 的配置文件      
+   需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
+   具体替换参数如下:
+   ``` 
+   spring.datasource.url
+   spring.datasource.username
+   spring.datasource.password
+   
+   warehouse.store.td-engine.url
+   warehouse.store.td-engine.username
+   warehouse.store.td-engine.password
+   
+   spring.mail.host
+   spring.mail.port
+   spring.mail.username
+   spring.mail.password
+   
+   ```
+
+4. 部署启动
+   执行位于安装目录hertz-beat/bin/下的启动脚本 startup.sh 
    ``` 
    $ ./startup.sh 
    ```
+5. 开始探索HertzBeat  
+   浏览器访问 http://ip:1157 开始使用HertzBeat进行监控告警。
 
 **HAVE FUN**

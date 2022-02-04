@@ -32,4 +32,4 @@ public abstract class BaseProcessor implements Processor{
 sureness使用异常流程模型，以上的认证失败或鉴权失败都会抛出不同类型的异常，用户在最外部捕获判断实现接下来的流程。
 
 sureness默认异常类型参考 [默认异常类型](/docs/start/default-exception)    
-具体扩展实践请参考 [Springboot项目集成-数据库方案](/docs/integrate/sample-tom)    
+具体扩展实践请参考 [Springboot项目集成-数据库方案](/docs/help/sample-tom)    

@@ -78,4 +78,4 @@ public class DefaultAccount implements SurenessAccount {
 这个具体的数据库接口实现可参考类 - [DatabaseAccountProvider](https://github.com/tomsun28/sureness/blob/master/sample-tom/src/main/java/com/usthe/sureness/sample/tom/sureness/provider/DatabaseAccountProvider.java)
 
 
-具体扩展实践请参考 [Springboot项目集成-数据库方案](/docs/integrate/sample-tom)     
+具体扩展实践请参考 [Springboot项目集成-数据库方案](/docs/help/sample-tom)     

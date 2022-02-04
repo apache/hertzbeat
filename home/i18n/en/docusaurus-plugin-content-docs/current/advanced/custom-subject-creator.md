@@ -17,4 +17,4 @@ sureness已经内置能创建出基于账户密码的PasswordSubject的BasicSubj
 
 实现`SubjectCreate`接口方法,根据request请求的内容创建出对应需要的的`subject`
 
-具体扩展实践请参考 [sample-spring-webflux项目集成案例](/docs/integrate/sample-spring-webflux)      
+具体扩展实践请参考 [sample-spring-webflux项目集成案例](/docs/help/sample-spring-webflux)      
