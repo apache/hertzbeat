@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.usthe.collector.collect.AbstractCollect;
-import com.usthe.collector.common.http.HttpClientPool;
+import com.usthe.collector.collect.common.http.CommonHttpClient;
 import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.collector.util.JsonPathParser;
@@ -67,7 +67,7 @@ public class HttpCollectImpl extends AbstractCollect {
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try {
-            CloseableHttpResponse response = HttpClientPool.getHttpClient()
+            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
                     .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             log.debug("http response status: {}", statusCode);

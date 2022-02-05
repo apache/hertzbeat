@@ -1,9 +1,9 @@
 package com.usthe.collector.collect.database;
 
 import com.usthe.collector.collect.AbstractCollect;
-import com.usthe.collector.common.cache.CacheIdentifier;
-import com.usthe.collector.common.cache.CommonCache;
-import com.usthe.collector.common.cache.support.CommonJdbcConnect;
+import com.usthe.collector.collect.common.cache.CacheIdentifier;
+import com.usthe.collector.collect.common.cache.CommonCache;
+import com.usthe.collector.collect.common.cache.JdbcConnect;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
@@ -88,7 +88,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
-            CommonJdbcConnect jdbcConnect = (CommonJdbcConnect) cacheOption.get();
+            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // 设置查询超时时间10秒
@@ -119,7 +119,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         statement.setQueryTimeout(10);
         // 设置查询最大行数1000行
         statement.setMaxRows(1000);
-        CommonJdbcConnect jdbcConnect = new CommonJdbcConnect(connection);
+        JdbcConnect jdbcConnect = new JdbcConnect(connection);
         CommonCache.getInstance().addCache(identifier, jdbcConnect, 10000L);
         return statement;
     }
