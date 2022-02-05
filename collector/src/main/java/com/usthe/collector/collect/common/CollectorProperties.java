@@ -1,4 +1,4 @@
-package com.usthe.collector.common;
+package com.usthe.collector.collect.common;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
