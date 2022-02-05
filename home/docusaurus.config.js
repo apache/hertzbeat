@@ -4,7 +4,7 @@ const organizationName = 'usthe' // Usually your GitHub org/user name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/usthe/${projectName}`
-const cdnUrl = 'https://tancloud.gd2.qingstor.com/'
+const cdnUrl = 'https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/'
 
 module.exports = {
     title: 'TANCLOUD探云',

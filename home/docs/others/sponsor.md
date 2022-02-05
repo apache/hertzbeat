@@ -9,7 +9,7 @@ sidebar_label: 赞助
 
 ### 微信支付宝  
 
-![wechat-alipay](https://tancloud.gd2.qingstor.com/img/docs/pay.png)          
+![wechat-alipay](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/pay.png)          
 
 
 ### paypal
