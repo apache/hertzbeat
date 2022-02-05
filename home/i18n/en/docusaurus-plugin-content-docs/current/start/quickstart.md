@@ -4,90 +4,43 @@ title: 快速开始
 sidebar_label: 快速开始    
 ---
 
-#### 🐕 使用前一些约定    
+### 🐕 开始使用
 
-- `Sureness`基于`RBAC`,即用户-角色-资源: 用户所属角色--角色拥有资源(API)--用户就能访问资源(API)
-- 我们将`REST API`请求视作一个资源,资源格式为: `requestUri===httpMethod`  
-  即请求的路径加上其请求方式(`post,get,put,delete...`)作为一个整体被视作资源来赋权配置  
-  `eg: /api/v2/book===get` `get`方式请求`/api/v2/book`接口数据
+- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登陆注册](https://console.tancloud.cn)免费使用。  
+- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
 
-资源路径匹配详见 [url路径匹配](/docs/start/path-match)   
+### 🐵 依赖服务部署   
 
-#### 项目中加入Sureness
+> HertzBeat最少依赖于 关系型数据库[MYSQL8+](https://www.mysql.com/) 和 时序性数据库[TDengine2+](https://www.taosdata.com/getting-started)
 
-项目使用`maven`或`gradle`构建,加入坐标
-```
-<dependency>
-    <groupId>com.usthe.sureness</groupId>
-    <artifactId>sureness-core</artifactId>
-    <version>1.0.6</version>
-</dependency>
-```
-```
-compile group: 'com.usthe.sureness', name: 'sureness-core', version: '1.0.6'
-```
+##### 安装MYSQL  
+1. docker安装MYSQl  
+`docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql`   
+2. 创建名称为hertzbeat的数据库  
+3. 执行位于项目仓库/script/sql/目录下的数据库脚本 [schema.sql](https://gitee.com/usthe/hertzbeat/raw/master/script/sql/schema.sql)      
 
-#### 🐵 使用默认配置来配置Sureness
-默认配置使用了文件数据源`sureness.yml`作为账户权限数据源  
-默认配置支持了`JWT, Basic auth, Digest auth`认证
-```
-@Bean
-public DefaultSurenessConfig surenessConfig() {
-    return new DefaultSurenessConfig();
-}
-```
+详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init.md)    
 
-#### 配置权限账户数据源
+##### 安装TDengine   
+1. docker安装TDengine   
+`docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine`     
+2. 创建名称为hertzbeat的数据库
 
-`Sureness`认证鉴权，当然也需要我们提供自己的账户数据，角色权限数据等，这些数据可能来自文本，关系数据库，非关系数据库，注解等。  
-我们提供了数据源接口：`SurenessAccountProvider`, `PathTreeProvider`，用户可以实现此接口实现自定义数据源。
+详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init.md)   
 
-当前我们也提供文本形式的数据源实现 `DocumentResourceDefaultProvider` 和 注解形式的资源权限数据源实现 `AnnotationLoader`。  
-如果是使用了[默认sureness配置-DefaultSurenessConfig](#使用默认配置来配置sureness),其配置的是文本数据源，用户可以直接通过修改`sureness.yml`文件来配置数据。
+### 🍞 HertzBeat安装   
+> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署。  
 
-文本数据源`sureness.yml`配置使用方式详见文档 [默认文本数据源](/docs/start/default-datasource)     
-注解形式的资源权限数据源配置使用方式详见文档 [注解资源权限数据源](/docs/start/annotation-datasource)   
+#### Docker方式快速安装
+`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat:latest`  
 
-我们提供了使用代码`DEMO`：  
-默认文本数据源具体实现，请参考[Sureness集成Spring Boot样例(配置文件方案)--sample-bootstrap](https://github.com/tomsun28/sureness/tree/master/sample-bootstrap)   
-若权限配置数据来自数据库，请参考[Sureness集成Spring Boot样例(数据库方案)--sample-tom](https://github.com/tomsun28/sureness/tree/master/sample-tom)
+详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
 
-#### 添加过滤器拦截所有请求
+#### 通过安装包安装    
+1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/usthe/hertzbeat/releases) [GITHUB Release](https://github.com/usthe/hertzbeat/releases)  
+2. 配置HertzBeat的配置文件 hertz-beat/config/application.yml   
+3. 部署启动 `$ ./startup.sh `   
 
-`Sureness`的本质就拦截所有`API`请求对其认证鉴权判断。  
-入口拦截器器实现一般可以是 `filter or spring interceptor`  
-在拦截器中加入`Sureness`的安全过滤器，如下:
-
-```
-SubjectSum subject = SurenessSecurityManager.getInstance().checkIn(servletRequest)
-```
-
-#### 实现认证鉴权相关异常处理流程
-
-`Sureness`使用异常处理流程：
-1. 若认证鉴权成功,`checkIn`会返回包含用户信息的`SubjectSum`对象
-2. 若中间认证鉴权失败，`checkIn`会抛出不同类型的认证鉴权异常,用户需根据这些异常来继续后面的流程(返回相应的请求响应)
-
-这里我们就需要对`checkIn`抛出的异常做自定义处理,认证鉴权成功直接通过,失败抛出特定异常进行处理,如下:
-
-```
-try {
-    SubjectSum subject = SurenessSecurityManager.getInstance().checkIn(servletRequest);
-} catch (ProcessorNotFoundException | UnknownAccountException | UnsupportedSubjectException e4) {
-    // 账户创建相关异常 
-} catch (DisabledAccountException | ExcessiveAttemptsException e2 ) {
-    // 账户禁用相关异常
-} catch (IncorrectCredentialsException | ExpiredCredentialsException e3) {
-    // 认证失败相关异常
-} catch (UnauthorizedException e5) {
-    // 鉴权失败相关异常
-} catch (SurenessAuthenticationException | SurenessAuthorizationException e) {
-    // 其他自定义异常
-}
-```
-
-异常详见 [默认异常类型](/docs/start/default-exception)
+详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
 
 **HAVE FUN**
-
-> 如果这个[快速开始]对您不是很友好，可以参考下面一篇[一步一步搭建](https://juejin.cn/post/6921262609731682318)，里面一步一步详细介绍了使用Sureness搭建一个完整功能认证鉴权项目的步骤。    

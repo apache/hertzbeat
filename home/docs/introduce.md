@@ -31,7 +31,7 @@ slug: /
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
 > HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版    
-> 欢迎登陆 HertzBeat 的 [云环境TanCloud]((https://console.tancloud.cn)) 试用发现更多。   
+> 欢迎登陆 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。   
 > 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
 
 > `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
@@ -39,19 +39,18 @@ slug: /
 
 ## 🥐 模块  
 
-- **[manager](manager)** 提供监控管理,系统管理基础服务
+- **[manager](https://github.com/usthe/HertzBeat/tree/master/manager)** 提供监控管理,系统管理基础服务
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](collector)** 提供监控数据采集服务
+- **[collector](https://github.com/usthe/HertzBeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[scheduler](scheduler)** 提供监控任务调度服务
+- **[scheduler](https://github.com/usthe/HertzBeat/tree/master/scheduler)** 提供监控任务调度服务
 > 采集任务管理，一次性任务和周期性任务的调度分发。
-- **[warehouse](warehouse)** 提供监控数据仓储服务
+- **[warehouse](https://github.com/usthe/HertzBeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](alerter)** 提供告警服务
+- **[alerter](https://github.com/usthe/HertzBeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，监控状态联动，告警配置，告警通知。
-- **[web-app](web-app)** 提供可视化控制台页面
+- **[web-app](https://github.com/usthe/HertzBeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
-![hertzBeat](/img/docs/hertzbeat-stru.svg)    
-
+![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
 
