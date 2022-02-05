@@ -243,12 +243,12 @@ module.exports = {
                     {
                         tagName: 'link',
                         rel: 'icon',
-                        href: cdnUrl + 'img/tancloud-logo.svg',
+                        href: 'img/tancloud-logo.svg',
                     },
                     {
                         tagName: 'link',
                         rel: 'manifest',
-                        href: cdnUrl + 'manifest.json',
+                        href: 'manifest.json',
                     },
                     {
                         tagName: 'meta',
@@ -268,18 +268,18 @@ module.exports = {
                     {
                         tagName: 'link',
                         rel: 'apple-touch-icon',
-                        href: cdnUrl + 'img/tancloud-logo.svg',
+                        href: 'img/tancloud-logo.svg',
                     },
                     {
                         tagName: 'link',
                         rel: 'mask-icon',
-                        href: cdnUrl + 'img/tancloud-logo.svg',
+                        href: 'img/tancloud-logo.svg',
                         color: 'rgb(234, 90, 7)',
                     },
                     {
                         tagName: 'meta',
                         name: 'msapplication-TileImage',
-                        content: cdnUrl + 'img/tancloud-logo.svg',
+                        content: 'img/tancloud-logo.svg',
                     },
                     {
                         tagName: 'meta',
