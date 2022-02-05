@@ -26,7 +26,7 @@ slug: /
 
 ## 🎡 <font color="green">介绍</font>
 
-> [HertzBeat赫兹节拍](https://github.com/dromara/sureness) 是由[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
+> [HertzBeat赫兹节拍](https://github.com/usthe/hertzbeat) 是由[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
 > 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登陆即可免费开始](https://console.tancloud.cn)监控之旅。  
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
@@ -52,7 +52,5 @@ slug: /
 - **[web-app](https://github.com/usthe/HertzBeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
 
-## 🛡️ License
-[`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
