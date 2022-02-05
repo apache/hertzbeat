@@ -4,7 +4,7 @@ import styles from './LogoCarousel.module.css'
 
 const INTERVAL_LENGTH = 5000
 const LOGO_WIDTH = 150
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/usthe/sureness@gh-pages/img/icons/'
+const cdnUrl = 'https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/icons/'
 
 let ticks = 0
 
