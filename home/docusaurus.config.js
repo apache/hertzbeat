@@ -60,7 +60,7 @@ module.exports = {
         announcementBar: {
             id: "github-star",
             content:
-                '<font style="font-size: medium; font-weight: bolder">如果您喜欢TANCLOUD的开源产品HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/sureness">欢迎在 GitHub </a> <font style="font-size: medium; font-weight: bolder"> 或 </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/sureness">Gitee 给我们点赞! </a>⭐️',
+                '<font style="font-size: medium; font-weight: bolder">如果您喜欢TANCLOUD的开源产品HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/usthe/hertzbeat">欢迎在 GitHub </a> <font style="font-size: medium; font-weight: bolder"> 或 </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/usthe/hertzbeat">Gitee 给我们点赞! </a>⭐️',
             backgroundColor: '#7228B5',
             textColor: '#fafbfc',
             isCloseable: true,
@@ -200,7 +200,6 @@ module.exports = {
             docs: {
                 sidebarPath: require.resolve('./sidebars.json'),
                 // Please change this to your repo.
-                // editUrl:'https://github.com/dromara/sureness/edit/master/home/',
                 editUrl: `${repoUrl}/edit/${branch}/home/`,
                 editLocalizedFiles: true,
                 remarkPlugins: [
