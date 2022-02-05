@@ -6,7 +6,7 @@ sidebar_label: 设计文档
 
 ### HertzBeat架构   
 
-![architecture](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
+![architecture](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
 
 ### TanCloud架构  
 
