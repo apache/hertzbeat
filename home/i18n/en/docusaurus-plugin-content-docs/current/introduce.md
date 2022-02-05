@@ -1,74 +1,57 @@
 ---
 id: introduce  
-title: Sureness 介绍    
+title: HertzBeat赫兹节拍     
 sidebar_label: 介绍
 slug: /
 ---
 
-> 面向`REST API`的高性能认证鉴权框架
+> 易用友好的高性能监控告警系统。
 
-[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Maven](https://img.shields.io/badge/Maven%20Central-1.0.6-blue.svg)](https://search.maven.org/artifact/com.usthe.sureness/sureness-core)
-![GitHub pull request check contexts](https://img.shields.io/github/status/contexts/pulls/dromara/sureness/8?label=pull%20checks)
-[![Gitter](https://img.shields.io/gitter/room/usthe/sureness?label=sureness&color=orange&logo=gitter&logoColor=red)](https://gitter.im/usthe/sureness)
-![GitHub Release Date](https://img.shields.io/github/release-date/dromara/sureness?color=blue&logo=figshare&logoColor=red)
-[![star](https://gitee.com/dromara/sureness/badge/star.svg?theme=gray)](https://gitee.com/dromara/sureness/stargazers)
-[![star](https://img.shields.io/github/stars/dromara/sureness?style=social)](https://github.com/dromara/sureness)
+![tan-cloud](https://img.shields.io/badge/网站监控-4EB1BA.svg)
+![tan-cloud](https://img.shields.io/badge/PING连通性监控-blue.svg)
+![tan-cloud](https://img.shields.io/badge/端口可用性监控-green.svg)
+![tan-cloud](https://img.shields.io/badge/数据库监控-yellow.svg)
+![tan-cloud](https://img.shields.io/badge/自定义监控-orange.svg)
+![tan-cloud](https://img.shields.io/badge/阈值告警-red.svg)
+![tan-cloud](https://img.shields.io/badge/告警转发通知-blueviolet.svg)
 
+## 📫 前言   
 
-## 📫 背景
-
-在主流的前后端分离架构中，如何通过有效快速的认证鉴权来保护后端提供的`REST API`变得尤为重要。对现存框架，不原生支持`RESTful`的`Apache Shiro`，
-还是深度绑定`Spring`的`Spring Security`，或多或少都不是我们的理想型。   
-于是乎`Sureness`诞生了，我们希望能解决这些，提供一个面向**REST API**，**无框架依赖**，可以**动态修改权限**，**多认证策略**，**更快速度**，**易用易扩展**的认证鉴权框架。
+> 毕业后投入很多业余时间也做了一些开源项目,[Sureness](https://github.com/dromara/sureness) [Bootshiro](https://gitee.com/tomsun28/bootshiro) [Issues-translate-action](https://github.com/usthe/issues-translate-action) ,
+> 当时上班有空就回答网友问题，下班回家写开源代码，远程帮人看问题，还总感觉时间不够用，当时想如果不去上班能做自己热爱的该多好。  
+> 年轻就要折腾，何况还是自己很想做的。于是乎，21年底我放弃激励裸辞开始全职开源了(这里感谢老婆大人的全力支持)，也是第一次全职创业。
+> 自己在APM领域做了多年，当然这次创业加开源的方向也就是老本行APM监控系统，我们开发一个支持多种监控指标(更多监控类型指标正在适配中)，拥有自定义监控，支持阈值告警通知等功能，面向开发者友好的开源监控项目-HertzBeat赫兹节拍。
+> 想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署监控系统，我们也提供了可以直接登陆使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
+> 希望大家多多支持点赞，非常感谢。 
 
 ## 🎡 <font color="green">介绍</font>
 
-> [Sureness](https://github.com/dromara/sureness) 是我们在深度使用 `Apache Shiro` 之后,吸取其优点全新设计开发的一个认证鉴权框架
-> 面向 `REST API` 的认证鉴权,基于 `RBAC` (用户-角色-资源)主要关注于对 `API` 的安全保护     
-> 无特定Web框架依赖(已有 `Spring Boot,Quarkus,Javalin,Ktor,Micronaut,Jfinal,Solon` 等集成样例)     
-> 支持动态修改权限配置(动态修改配置每个 `API` 谁有权访问)   
-> 支持 `Websocket` ,主流 `HTTP` 容器 `Servlet` 和 `JAX-RS`       
-> 支持多种认证策略, `JWT, Basic Auth, Digest Auth` ... 可扩展自定义认证方式      
-> 基于改进的字典匹配树拥有的高性能      
-> 良好的扩展接口, 样例和文档助急速理解扩展使用
+> [HertzBeat赫兹节拍](https://github.com/dromara/sureness) 是由[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
+> 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登陆即可免费开始](https://console.tancloud.cn)监控之旅。  
+> HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
+> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
+> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版    
+> 欢迎登陆 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。   
+> 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
 
-> `Sureness`的低配置，易扩展，不耦合其他框架，希望能对系统多场景快速安全的保护
-
-##### 🔍 对比
-
-| ~         | Sureness | Shiro | Spring Security |
-| ---       | ---      | ---   | ---  |
-| **多框架支持**  | 支持      | 需改动支持   | 不支持 |
-| **REST API** | 支持 | 需改动支持   | 支持 |
-| **Websocket** | 支持 | 不支持   | 不支持 |
-| **过滤链匹配**  | 优化的字典匹配树 | ant匹配 | ant匹配 |
-| **注解支持**    | 支持      | 支持      | 支持 |
-| **Servlet**    | 支持      | 支持      | 支持|
-| **JAX-RS**     | 支持      | 不支持    | 不支持|
-| **权限动态修改** | 支持 | 需改动支持 | 需改动支持|
-| **性能速度** | 较快 | 较慢 | 较慢|
-| **学习曲线** | 简单 | 简单 | 陡峭|  
-
-##### 📈 基准性能测试
-
-![benchmark](/img/docs/benchmark_cn.png)
-
-**基准测试显示Sureness对比无权限框架应用损耗0.026ms性能，Shiro损耗0.088ms,Spring Security损耗0.116ms，
-相比之下Sureness性能(参考TPS损耗)是Shiro的3倍，Spring Security的4倍**     
-**性能差距会随着api匹配链的增加而进一步拉大**     
-详见[基准测试](https://github.com/tomsun28/sureness-shiro-spring-security)
+> `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
 
-##### ✌ 框架支持样例
+## 🥐 模块  
 
-- [x] Sureness集成**Spring Boot**样例(配置文件方案) [sample-bootstrap](/docs/help/sample-bootstrap)
-- [x] Sureness集成**Spring Boot**样例(数据库方案) [sample-tom](/docs/help/sample-tom)
-- [x] Sureness集成**Quarkus**样例 [sample-quarkus](/docs/help/sample-quarkus)
-- [x] Sureness集成**Javalin**样例 [sample-javalin](/docs/help/sample-javalin)
-- [x] Sureness集成**Ktor**样例 [sample-ktor](/docs/help/sample-ktor)
-- [x] Sureness集成**Spring Webflux**样例 [spring-webflux-sureness](/docs/help/sample-spring-webflux)
-- [x] Sureness集成**Micronaut**样例 [sample-micronaut](/docs/help/sample-micronaut)
-- [x] Sureness使用Session样例 [sureness-session](https://github.com/usthe/sureness/tree/master/samples/sureness-session)
-- [x] Sureness分布式缓存Session样例 [sureness-redis-session](https://github.com/usthe/sureness/tree/master/samples/sureness-redis-session)
-- [x] More samples todo   
+- **[manager](https://github.com/usthe/HertzBeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+> 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
+- **[collector](https://github.com/usthe/HertzBeat/tree/master/collector)** 提供监控数据采集服务
+> 使用通用协议远程采集获取对端指标数据。
+- **[scheduler](https://github.com/usthe/HertzBeat/tree/master/scheduler)** 提供监控任务调度服务
+> 采集任务管理，一次性任务和周期性任务的调度分发。
+- **[warehouse](https://github.com/usthe/HertzBeat/tree/master/warehouse)** 提供监控数据仓储服务
+> 采集指标结果数据管理，数据落盘，查询，计算统计。
+- **[alerter](https://github.com/usthe/HertzBeat/tree/master/alerter)** 提供告警服务
+> 告警计算触发，监控状态联动，告警配置，告警通知。
+- **[web-app](https://github.com/usthe/HertzBeat/tree/master/web-app)** 提供可视化控制台页面
+> 监控告警系统可视化控制台前端(angular+ts+zorro)  
+
+![hertzBeat](/img/docs/hertzbeat-stru.svg)    
+
+

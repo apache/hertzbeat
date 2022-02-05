@@ -14,4 +14,4 @@ sidebar_label: 私有化部署
 #### HertzBeat的集群SAAS版本-TanCloud(付费)      
 
 此版本即[TanCloud官网](https://console.tancloud.cn)环境对应版本，对比HertzBeat拥有集群，用户，租户等功能，适合中大型团队企业。  
-此版本为付费版本，关于TanCloud私有化部署方案及价格，请加我们工作人员微信 tomsun28 咨询，加微信请备注：私有化+团队名   
+此版本为付费版本，关于TanCloud私有化部署方案及价格，请加我们微信 tomsun28 咨询，加微信请备注：私有化+团队名   
