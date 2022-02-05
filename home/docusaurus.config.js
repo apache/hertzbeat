@@ -4,12 +4,12 @@ const organizationName = 'usthe' // Usually your GitHub org/user name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/usthe/${projectName}`
-const cdnUrl = '/'
+const cdnUrl = 'https://tancloud.gd2.qingstor.com/'
 
 module.exports = {
     title: 'TANCLOUD探云',
     tagline: '易用友好的高性能监控云',
-    url: 'https://tancloud.cn',
+    url: 'https://hertzbeat.com',
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'throw',
@@ -143,7 +143,7 @@ module.exports = {
                         },
                         {
                             label: '帮助文档',
-                            to: 'docs/help/help'
+                            to: 'docs/help/guide'
                         },
                     ],
                 },
@@ -191,7 +191,7 @@ module.exports = {
                 src: cdnUrl + 'img/tancloud-brand.svg',
                 href: 'https://tancloud.cn',
             },
-            copyright: `蜀ICP备2022002218号 | Copyright TANCLOUD© ${new Date().getFullYear()}`,
+            copyright: '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' + ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,
         },
     },
     presets: [

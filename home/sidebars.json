@@ -23,19 +23,19 @@
       "type": "category",
       "label": "帮助文档",
       "items": [
-        "help/help",
+        "help/guide",
         {
           "type": "category",
           "label": "应用服务监控",
           "items": [
-            "help/help"
+            "help/guide"
           ]
         },
         {
           "type": "category",
           "label": "数据库监控",
           "items": [
-            "help/help"
+            "help/guide"
           ]
         }
       ]
