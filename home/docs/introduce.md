@@ -7,13 +7,13 @@ slug: /
 
 > 易用友好的高性能监控告警系统。
 
-![tan-cloud](https://img.shields.io/badge/网站监控-4EB1BA.svg)
-![tan-cloud](https://img.shields.io/badge/PING连通性监控-blue.svg)
-![tan-cloud](https://img.shields.io/badge/端口可用性监控-green.svg)
-![tan-cloud](https://img.shields.io/badge/数据库监控-yellow.svg)
-![tan-cloud](https://img.shields.io/badge/自定义监控-orange.svg)
-![tan-cloud](https://img.shields.io/badge/阈值告警-red.svg)
-![tan-cloud](https://img.shields.io/badge/告警转发通知-blueviolet.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/port-available.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/threshold.svg)
+![tan-cloud](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/badge/alert.svg)
 
 ## 📫 前言   
 
@@ -52,5 +52,7 @@ slug: /
 - **[web-app](https://github.com/usthe/HertzBeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
-![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
 
+## 🛡️ License
+[`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
