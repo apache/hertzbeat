@@ -65,16 +65,6 @@
               "text": "Mysql",
               "link": "/monitors?app=mysql",
               "i18n": "monitor.app.mysql"
-            },
-            {
-              "text": "Oracle",
-              "link": "/monitors",
-              "i18n": "monitor.app.oracle"
-            },
-            {
-              "text": "Redis",
-              "link": "/monitors",
-              "i18n": "monitor.app.redis"
             }
           ]
         }
