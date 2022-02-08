@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
-    <springProperty scope="context" name="application_name" source="spring.application.name" defaultValue="collector"/>
+    <springProperty scope="context" name="application_name" source="spring.application.name" defaultValue="server"/>
     <!-- 输出日志到控制台 ConsoleAppender -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <!--<pattern>%d %p (%file:%line\)- %m%n</pattern>-->
             <!--格式化输出：%d:表示日期    %thread:表示线程名     %-5level:级别从左显示5个字符宽度  %msg:日志消息    %n:是换行符-->
-            <pattern>1-%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
@@ -25,7 +25,7 @@
         <append>true</append>
         <!-- 日志文件的格式 -->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>===%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger Line:%-3L - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger Line:%-3L - %msg%n</pattern>
             <charset>utf-8</charset>
         </encoder>
     </appender>
@@ -41,7 +41,7 @@
         <append>true</append>
         <!-- 日志文件的格式 -->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>===%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger Line:%-3L - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger Line:%-3L - %msg%n</pattern>
             <charset>utf-8</charset>
         </encoder>
         <!-- 此日志文件记录error及以上级别的 -->
