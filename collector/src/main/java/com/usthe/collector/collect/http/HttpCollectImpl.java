@@ -72,19 +72,16 @@ public class HttpCollectImpl extends AbstractCollect {
             int statusCode = response.getStatusLine().getStatusCode();
             log.debug("http response status: {}", statusCode);
             if (statusCode < HttpStatus.SC_OK || statusCode >= HttpStatus.SC_BAD_REQUEST) {
-                // 1XX 3XX 4XX 5XX 状态码 失败
+                // 1XX 4XX 5XX 状态码 失败
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
             } else {
-                // 2xx 状态码 成功
+                // 2xx 3xx 状态码 成功
                 String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                 // 根据不同的解析方式解析
                 if (resp == null || "".equals(resp)) {
                     log.info("http response entity is empty, status: {}.", statusCode);
-                    builder.setCode(CollectRep.Code.SUCCESS);
-                    builder.setMsg("statusCode: " + statusCode + ",entity empty.");
-                    return;
                 }
                 Long responseTime  = System.currentTimeMillis() - startTime;
                 String parseType = metrics.getHttp().getParseType();
