@@ -5,6 +5,7 @@ import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.Param;
+import com.usthe.common.util.GsonUtil;
 import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.dao.ParamDao;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,8 @@ public class JobSchedulerInit implements CommandLineRunner {
             try {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
+                // todo 这里暂时是深拷贝处理
+                appDefine = GsonUtil.fromJson(GsonUtil.toJson(appDefine), Job.class);
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());
