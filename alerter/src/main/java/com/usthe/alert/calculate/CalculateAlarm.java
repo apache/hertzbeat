@@ -102,6 +102,9 @@ public class CalculateAlarm {
                     // 发送告警恢复
                     Alert resumeAlert = Alert.builder()
                             .monitorId(monitorId)
+                            .target(CommonConstants.AVAILABLE)
+                            .content("告警恢复通知, 此监控状态已恢复正常")
+                            .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                             .status(CommonConstants.ALERT_STATUS_CODE_RESTORED).build();
                     dataQueue.addAlertData(resumeAlert);
                 }
