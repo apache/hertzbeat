@@ -59,7 +59,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (appDefine == null) {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
-        return appDefine;
+        return appDefine.clone();
     }
 
     @Override
@@ -123,7 +123,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public void run(String... args) throws Exception {
         // 读取app定义配置加载到内存中 define/app/*.yml
         Yaml yaml = new Yaml();
-        String classpath = this.getClass().getResource(File.separator).getPath();
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
         String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
         File directory = new File(defineAppPath);
         if (!directory.exists() || directory.listFiles() == null) {
