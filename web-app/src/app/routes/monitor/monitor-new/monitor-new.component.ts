@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { TitleService } from '@delon/theme';
@@ -21,7 +21,6 @@ export class MonitorNewComponent implements OnInit {
   paramDefines!: ParamDefine[];
   params!: Param[];
   monitor!: Monitor;
-  profileForm: FormGroup = new FormGroup({});
   detected: boolean = false;
   passwordVisible: boolean = false;
   // 是否显示加载中
@@ -84,7 +83,16 @@ export class MonitorNewComponent implements OnInit {
     this.monitor.name = `${this.monitor.app.toUpperCase()}_${hostValue}`;
   }
 
-  onSubmit() {
+  onSubmit(formGroup: FormGroup) {
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
@@ -114,7 +122,16 @@ export class MonitorNewComponent implements OnInit {
     );
   }
 
-  onDetect() {
+  onDetect(formGroup: FormGroup) {
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {

@@ -102,7 +102,16 @@ export class MonitorEditComponent implements OnInit {
       });
   }
 
-  onSubmit() {
+  onSubmit(formGroup: FormGroup) {
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
@@ -132,7 +141,16 @@ export class MonitorEditComponent implements OnInit {
     );
   }
 
-  onDetect() {
+  onDetect(formGroup: FormGroup) {
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
