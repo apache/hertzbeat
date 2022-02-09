@@ -27,6 +27,9 @@ public class IpDomainUtil {
      * @return true-yes false-no
      */
     public static boolean validateIpDomain(String ipDomain) {
+        if (ipDomain == null || "".equals(ipDomain)) {
+            return false;
+        }
         if (LOCALHOST.equalsIgnoreCase(ipDomain)) {
             return true;
         }
