@@ -2,6 +2,7 @@ package com.usthe.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.Gson;
 import com.usthe.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -179,5 +180,12 @@ public class Job {
             responseDataTemp = new LinkedList<>();
         }
         responseDataTemp.add(metricsData);
+    }
+
+    private static final Gson GSON = new Gson();
+
+    public Job clone(){
+        // 深度克隆
+        return GSON.fromJson(GSON.toJsonTree(this), Job.class);
     }
 }
