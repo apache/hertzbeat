@@ -21,19 +21,19 @@
 
 <nz-spin [nzSpinning]="isSpinning">
   <div class="-inner-content">
-    <form nz-form>
+    <form nz-form #editForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="host" nzRequired="true" nzTooltipTitle="被监控的对端IP或域名"> 监控Host </nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host" placeholder="请输入域名或IP" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host" required placeholder="请输入域名或IP" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true" nzTooltipTitle="标识此监控的名称,名称需要保证唯一性">
           监控名称
         </nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <input [(ngModel)]="monitor.name" nz-input name="name" type="text" id="name" placeholder="监控名称需要保证唯一性" />
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="monitor.name" nz-input required name="name" type="text" id="name" placeholder="监控名称需要保证唯一性" />
         </nz-form-control>
       </nz-form-item>
 
@@ -47,10 +47,15 @@
           [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'" nzSpan="8">
+        <nz-form-control
+          *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+          nzSpan="8"
+          [nzErrorTip]="'validation.required' | i18n"
+        >
           <input
             nz-input
             [(ngModel)]="params[i].value"
+            [required]="paramDefine.required"
             [name]="paramDefine.field"
             [type]="paramDefine.type"
             [id]="paramDefine.field"
@@ -61,12 +66,13 @@
         <nz-form-label *ngIf="paramDefine.type === 'password'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8">
+        <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-input-group [nzSuffix]="suffixTemplate">
             <input
               [type]="passwordVisible ? 'text' : 'password'"
               nz-input
               placeholder="input password"
+              [required]="paramDefine.required"
               [(ngModel)]="params[i].value"
               [id]="paramDefine.field"
               [name]="paramDefine.field"
@@ -81,9 +87,10 @@
         <nz-form-label *ngIf="paramDefine.type === 'number'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8">
+        <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-input-number
             [(ngModel)]="params[i].value"
+            [required]="paramDefine.required"
             [nzMin]="-1000"
             [nzMax]="65535"
             [nzStep]="1"
@@ -96,15 +103,26 @@
         <nz-form-label *ngIf="paramDefine.type === 'boolean'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8">
-          <nz-switch [(ngModel)]="params[i].value" [name]="paramDefine.field" [id]="paramDefine.field"></nz-switch>
+        <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-switch
+            [(ngModel)]="params[i].value"
+            [required]="paramDefine.required"
+            [name]="paramDefine.field"
+            [id]="paramDefine.field"
+          ></nz-switch>
         </nz-form-control>
 
         <nz-form-label *ngIf="paramDefine.type === 'radio'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8">
-          <nz-radio-group [(ngModel)]="params[i].value" nzButtonStyle="solid" [name]="paramDefine.field" [id]="paramDefine.field">
+        <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="params[i].value"
+            [required]="paramDefine.required"
+            nzButtonStyle="solid"
+            [name]="paramDefine.field"
+            [id]="paramDefine.field"
+          >
             <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
               {{ optionItem.label }}
             </label>
@@ -140,8 +158,8 @@
 
       <div nz-row>
         <div nz-col nzSpan="8" nzOffset="9">
-          <button nz-button nzType="primary" type="submit" (click)="onDetect()"> 探测 </button>
-          <button nz-button nzType="primary" type="submit" (click)="onSubmit()"> 确定 </button>
+          <button nz-button nzType="primary" type="submit" (click)="onDetect(editForm.form)"> 探测 </button>
+          <button nz-button nzType="primary" type="submit" (click)="onSubmit(editForm.form)"> 确定 </button>
           <button nz-button nzType="primary" type="reset" (click)="onCancel()"> 取消 </button>
         </div>
       </div>

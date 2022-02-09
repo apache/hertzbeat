@@ -33,6 +33,7 @@
 
 > `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。         
 
+<iframe src="//player.bilibili.com/player.html?aid=551403148&bvid=BV1Vi4y1f7i8&cid=504787541&page=1" scrolling="no" width="800px" height="600px" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>  
 
 ## 🥐 模块
 
