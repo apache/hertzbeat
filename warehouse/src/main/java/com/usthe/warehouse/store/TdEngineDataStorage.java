@@ -138,7 +138,7 @@ public class TdEngineDataStorage implements DisposableBean {
                     if (CommonConstants.NULL_VALUE.equals(value)) {
                         sqlRowBuffer.append("NULL");
                     } else {
-                        sqlRowBuffer.append("'").append(value).append("'");
+                        sqlRowBuffer.append("'").append(formatStringValue(value)).append("'");
                     }
                 }
                 if (index != fields.size() - 1) {
@@ -197,7 +197,9 @@ public class TdEngineDataStorage implements DisposableBean {
         }
     }
 
-
+    private String formatStringValue(String value){
+        return value.replaceAll("(\\\\)|(')","\\\\$0");
+    }
     @Override
     public void destroy() throws Exception {
         if (hikariDataSource != null) {
