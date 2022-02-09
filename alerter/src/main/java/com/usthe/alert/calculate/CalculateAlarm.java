@@ -78,7 +78,13 @@ public class CalculateAlarm {
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
                         .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                         .times(1);
-                if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
+                if (metricsData.getCode() == CollectRep.Code.UN_AVAILABLE) {
+                    // 采集器不可用
+                    alertBuilder.target(CommonConstants.AVAILABLE)
+                            .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                    triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_AVAILABLE);
+                    dataQueue.addAlertData(alertBuilder.build());
+                } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                     // UN_REACHABLE 对端不可达(网络层icmp)
                     alertBuilder.target(CommonConstants.REACHABLE)
                             .content("监控紧急可达性告警: " + metricsData.getCode().name());
@@ -91,8 +97,11 @@ public class CalculateAlarm {
                     triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_CONNECTABLE);
                     dataQueue.addAlertData(alertBuilder.build());
                 } else {
-                    // todo 其它规范异常 TIMEOUT ...
-                    return;
+                    // 其他异常
+                    alertBuilder.target(CommonConstants.AVAILABLE)
+                            .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                    triggeredMonitorStateAlertMap.put(monitorId, metricsData.getCode());
+                    dataQueue.addAlertData(alertBuilder.build());
                 }
                 return;
             } else {
