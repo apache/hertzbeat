@@ -132,7 +132,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 log.error("[Metrics Collect]: {}.", msg, e);
                 response.setCode(CollectRep.Code.FAIL);
                 if (msg != null) {
-                    response.setMsg(e.getMessage());
+                    response.setMsg(msg);
                 }
             }
         }

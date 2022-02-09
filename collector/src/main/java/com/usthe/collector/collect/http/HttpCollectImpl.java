@@ -58,10 +58,12 @@ public class HttpCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 简单校验必有参数
-        if (metrics == null || metrics.getHttp() == null) {
+        // 校验参数
+        try {
+            validateParams(metrics);
+        } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Http/Https collect must has http params");
+            builder.setMsg(e.getMessage());
             return;
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
@@ -103,42 +105,54 @@ public class HttpCollectImpl extends AbstractCollect {
                     log.info("parse error: {}.", e.getMessage(), e);
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("parse response data error:" + e.getMessage());
-                    return;
                 }
             }
         } catch (ClientProtocolException e1) {
-            log.error(e1.getCause().getMessage(), e1);
+            String errorMsg;
+            if (e1.getCause() != null) {
+                errorMsg = e1.getCause().getMessage();
+            } else {
+                errorMsg = e1.getMessage();
+            }
+            log.error(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(e1.getCause().getMessage());
-            return;
+            builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
             // 对端不可达
             log.info(e2.getMessage());
             builder.setCode(CollectRep.Code.UN_REACHABLE);
             builder.setMsg("unknown host");
-            return;
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             // 对端连接失败
             log.info(e3.getMessage());
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e3.getMessage());
-            return;
         } catch (IOException e4) {
             // 其它IO异常
             log.info(e4.getMessage());
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e4.getMessage());
-            return;
         } catch (Exception e) {
             // 其它异常
             log.error(e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
-            return;
         } finally {
             if (request != null) {
                 request.abort();
             }
+        }
+    }
+
+    private void validateParams(Metrics metrics) throws Exception {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new Exception("Http/Https collect must has http params");
+        }
+        HttpProtocol httpProtocol = metrics.getHttp();
+        if (httpProtocol.getUrl() == null
+                || "".equals(httpProtocol.getUrl())
+                || !httpProtocol.getUrl().startsWith("/")) {
+            httpProtocol.setUrl(httpProtocol.getUrl() == null ? "/" : "/" + httpProtocol.getUrl().trim());
         }
     }
 
@@ -162,7 +176,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
-        List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp,http. getParseScript());
+        List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         for (Map<String, Object> stringMap : results) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
