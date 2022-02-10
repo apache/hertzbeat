@@ -123,12 +123,18 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public void run(String... args) throws Exception {
         // 读取app定义配置加载到内存中 define/app/*.yml
         Yaml yaml = new Yaml();
-        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String classpath = this.getClass().getResource(File.separator).getPath();
         String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
         File directory = new File(defineAppPath);
         if (!directory.exists() || directory.listFiles() == null) {
-            throw new  IllegalArgumentException("define app directory not exist: " + defineAppPath);
+            classpath = this.getClass().getResource("").getPath();
+            defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+            directory = new File(defineAppPath);
+            if (!directory.exists() || directory.listFiles() == null) {
+                throw new  IllegalArgumentException("define app directory not exist: " + defineAppPath);
+            }
         }
+        log.info("query define path {}", defineAppPath);
         for (File appFile : Objects.requireNonNull(directory.listFiles())) {
             if (appFile.exists()) {
                 try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
