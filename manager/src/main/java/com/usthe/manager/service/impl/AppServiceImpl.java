@@ -123,11 +123,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public void run(String... args) throws Exception {
         // 读取app定义配置加载到内存中 define/app/*.yml
         Yaml yaml = new Yaml();
-        String classpath = this.getClass().getResource(File.separator).getPath();
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
         String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
         File directory = new File(defineAppPath);
         if (!directory.exists() || directory.listFiles() == null) {
-            classpath = this.getClass().getResource("").getPath();
+            classpath = this.getClass().getResource(File.separator).getPath();
             defineAppPath = classpath + File.separator + "define" + File.separator + "app";
             directory = new File(defineAppPath);
             if (!directory.exists() || directory.listFiles() == null) {
