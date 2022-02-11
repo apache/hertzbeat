@@ -51,8 +51,8 @@ export const features = [{
         description: (
             <>
                 <Translate values={{
-                    github: <a href={'https://github.com/usthe/hertzbeat'}><strong>HertzBeat Github 代码仓库</strong></a>,
-                    gitee: <a href={'https://gitee.com/usthe/hertzbeat'}><strong>HertzBeat Gitee 代码仓库</strong></a>,
+                    github: <a href={'https://github.com/dromara/hertzbeat'}><strong>HertzBeat Github 代码仓库</strong></a>,
+                    gitee: <a href={'https://gitee.com/dromara/hertzbeat'}><strong>HertzBeat Gitee 代码仓库</strong></a>,
                     br: <br/>
                 }}>
                     {'TANCLOUD监控系统代码开源，非常欢迎任何对此有兴趣的同学参与中来，我们一起进步，丰富的资源文档正在完善中。{br}' +

@@ -25,6 +25,6 @@ MYSQL是一款值得信赖的关系型数据库，HertzBeat使用其存储监控
 ### SQL脚本执行   
 1. 进入MYSQL或使用客户端连接MYSQL服务
 2. 创建名称为hertzbeat的数据库
-3. 执行位于项目仓库/script/sql/目录下的数据库建表初始化脚本 [schema.sql](https://gitee.com/usthe/hertzbeat/raw/master/script/sql/schema.sql)  
+3. 执行位于项目仓库/script/sql/目录下的数据库建表初始化脚本 [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql)  
 4. 查看hertzbeat数据库是否成功建表
 
