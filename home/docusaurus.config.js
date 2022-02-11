@@ -1,10 +1,10 @@
 const path = require('path')
 
-const organizationName = 'usthe' // Usually your GitHub org/user name.
+const organizationName = 'dromara' // Usually your GitHub org/user name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
-const repoUrl = `https://github.com/usthe/${projectName}`
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/'
+const repoUrl = `https://github.com/dromara/${projectName}`
+const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/'
 
 module.exports = {
     title: 'TANCLOUD探云',
@@ -60,7 +60,7 @@ module.exports = {
         announcementBar: {
             id: "github-star",
             content:
-                '<font style="font-size: medium; font-weight: bolder">如果您喜欢TANCLOUD的开源产品HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/usthe/hertzbeat">欢迎在 GitHub </a> <font style="font-size: medium; font-weight: bolder"> 或 </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/usthe/hertzbeat">Gitee 给我们点赞! </a>⭐️',
+                '<font style="font-size: medium; font-weight: bolder">如果您喜欢TANCLOUD的开源产品HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">欢迎在 GitHub </a> <font style="font-size: medium; font-weight: bolder"> 或 </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee 给我们点赞! </a>⭐️',
             backgroundColor: '#7228B5',
             textColor: '#fafbfc',
             isCloseable: true,
@@ -148,7 +148,7 @@ module.exports = {
                     ],
                 },
                 {
-                    title: '探云科技',
+                    title: 'TanCloud探云',
                     items: [
                         {
                             label: '交流联系',
@@ -159,11 +159,11 @@ module.exports = {
                             href: 'https://support.qq.com/products/379369',
                         },
                         {
-                            label: 'TANCLOUD探云',
+                            label: 'TanCloud探云',
                             href: 'https://tancloud.cn',
                         },
                         {
-                            label: 'HertzBeat赫兹节拍',
+                            label: 'HertzBeat赫兹跳动',
                             href: 'https://hertzbeat.com',
                         },
                     ],
@@ -173,11 +173,11 @@ module.exports = {
                     items: [
                         {
                             label: 'Github仓库',
-                            href: 'https://github.com/usthe/hertzbeat',
+                            href: 'https://github.com/dromara/hertzbeat',
                         },
                         {
                             label: 'Gitee仓库',
-                            href: 'https://gitee.com/usthe/hertzbeat',
+                            href: 'https://gitee.com/dromara/hertzbeat',
                         },
                         {
                             label: '相关资源',

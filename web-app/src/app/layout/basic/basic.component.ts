@@ -8,12 +8,12 @@ import { environment } from '@env/environment';
   template: `
     <layout-default [options]="options" [asideUser]="asideUserTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//github.com/usthe/hertzbeat" target="_blank">
+        <a layout-default-header-item-trigger href="//github.com/dromara/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
       <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//gitee.com/usthe/hertzbeat" target="_blank">
+        <a layout-default-header-item-trigger href="//gitee.com/dromara/hertzbeat" target="_blank">
           <i nz-icon nzIconfont="icon-gitee"></i>
         </a>
       </layout-default-header-item>

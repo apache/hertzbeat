@@ -21,7 +21,7 @@ sidebar_label: Docker方式部署
    ```
 3. 配置HertzBeat的配置文件  
    在主机目录下创建application.yml，eg:/opt/application.yml   
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/usthe/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
+   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
    具体替换参数如下:
    ``` 
    spring.datasource.url

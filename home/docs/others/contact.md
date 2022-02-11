@@ -7,19 +7,19 @@ sidebar_label: 交流联系
 
 ## BUG问题报告，功能建议相关建议通过仓库ISSUE
 
-[GITEE仓库ISSUES](https://gitee.com/usthe/hertzbeat/issues)   
-[GITHUB仓库ISSUES](https://github.com/usthe/hertzbeat/issues)
+[GITEE仓库ISSUES](https://gitee.com/dromara/hertzbeat/issues)   
+[GITHUB仓库ISSUES](https://github.com/dromara/hertzbeat/issues)
 
 ## 微信交流群   
 
 加微信号 tan-cloud 或 扫描下面账号二维码拉您进微信群。
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="400"/>       
+<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="400"/>       
 
 ## QQ交流群   
 
 加QQ群号 718618151 或 扫描下面的群二维码进群, 验证信息: tancloud        
 
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/usthe/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="400"/>          
+<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="400"/>          
 
 ## 社区交流网站
 
