@@ -91,7 +91,7 @@
 
 ##### 通过安装包安装
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. 配置HertzBeat的配置文件 hertz-beat/config/application.yml
+2. 配置HertzBeat的配置文件 hertzbeat/config/application.yml
 3. 部署启动 `$ ./startup.sh `
 
 详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)   

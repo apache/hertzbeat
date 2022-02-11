@@ -41,13 +41,13 @@ sidebar_label: Docker方式部署
 
 4. 启动HertzBeat Docker容器  
    ``` 
-   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertz-beat/config/application.yml --name hertzbeat tancloud/hertzbeat:latest
+   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml --name hertzbeat tancloud/hertzbeat:latest
    526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
    ```
    这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
    - docker run -d : 通过Docker运行一个容器,使其在后台运行
    - -p 1157:1157  : 映射容器端口到主机端口
-   - -v /opt/application.yml:/opt/hertz-beat/config/application.yml  : 挂载上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
+   - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : 挂载上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
    - --name hertzbeat : 命名容器名称 hertzbeat 
    - tancloud/hertzbeat:latest : 使用拉取的HertzBeat官方发布的应用镜像来启动容器 
    
