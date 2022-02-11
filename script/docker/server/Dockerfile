@@ -6,6 +6,6 @@ ADD hertzbeat-1.0-beta.2.tar /opt/
 
 EXPOSE 1157
 
-WORKDIR /opt/hertz-beat/
+WORKDIR /opt/hertzbeat/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
