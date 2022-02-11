@@ -148,24 +148,24 @@ module.exports = {
                     ],
                 },
                 {
-                    title: 'TanCloud探云',
+                    title: '社区交流',
                     items: [
+                        {
+                            label: 'Dromara开源社区',
+                            href: 'https://dromara.org/',
+                        },
                         {
                             label: '交流联系',
                             to: 'docs/others/contact',
                         },
                         {
-                            label: '社区网站',
+                            label: '用户交流网站',
                             href: 'https://support.qq.com/products/379369',
                         },
                         {
                             label: 'TanCloud探云',
                             href: 'https://tancloud.cn',
-                        },
-                        {
-                            label: 'HertzBeat赫兹跳动',
-                            href: 'https://hertzbeat.com',
-                        },
+                        }
                     ],
                 },
                 {
@@ -188,8 +188,8 @@ module.exports = {
             ],
             logo: {
                 alt: 'TANCLOUD探云-易用友好的高性能监控云',
-                src: cdnUrl + 'img/tancloud-brand.svg',
-                href: 'https://tancloud.cn',
+                src: 'img/icons/dromara.png',
+                href: 'https://dromara.org/zh/',
             },
             copyright: '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' + ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,
         },

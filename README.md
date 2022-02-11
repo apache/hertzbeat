@@ -100,6 +100,8 @@
 
 ## 💬 社区交流
 
+HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项目   
+
 ##### 微信交流群
 
 加微信号 tan-cloud 或 扫描下面账号二维码拉您进微信群。   
@@ -111,9 +113,10 @@
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
 
-##### 社区交流网站
+##### 交流网站
 
-[社区网站](https://support.qq.com/products/379369)  https://support.qq.com/products/379369   
+[Dromara社区网站](https://dromara.org/)    
+[HertzBeat用户网站](https://support.qq.com/products/379369)   
 
 
 ## 🛡️ License
