@@ -98,7 +98,7 @@
     </dependencies>
 
     <build>
-        <finalName>hertz-beat</finalName>
+        <finalName>hertzbeat</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>

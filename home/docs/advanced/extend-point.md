@@ -8,8 +8,8 @@ sidebar_label: 自定义监控
 ### 自定义步骤  
 
 配置自定义监控类型需新增配置两个YML文件
-1. 用监控类型命名的监控配置定义文件 - example.yml 需位于安装目录 /hertz-beat/define/app/ 下
-2. 用监控类型命名的监控参数定义文件 - example.yml 需位于安装目录 /hertz-beat/define/param/ 下
+1. 用监控类型命名的监控配置定义文件 - example.yml 需位于安装目录 /hertzbeat/define/app/ 下
+2. 用监控类型命名的监控参数定义文件 - example.yml 需位于安装目录 /hertzbeat/define/param/ 下
 3. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。  
 
 ------- 
@@ -20,7 +20,7 @@ sidebar_label: 自定义监控
 > 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数映射, 指标信息, 采集协议配置信息*等。  
 
 样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /hertz-beat/define/app/example.yml   
+文件名称: example.yml 位于 //define/app/example.yml   
 
 ```yaml
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
@@ -145,7 +145,7 @@ metrics:
 > 监控参数定义文件用于定义 *需要的输入参数字段结构定义(前端页面根据结构渲染输入参数框)*。   
 
 样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /hertz-beat/define/param/example.yml   
+文件名称: example.yml 位于 //define/param/example.yml   
 
 ```yaml
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
