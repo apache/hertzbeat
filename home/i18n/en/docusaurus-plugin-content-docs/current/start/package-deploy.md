@@ -17,8 +17,8 @@ sidebar_label: 安装包方式部署
    ```
 2. 下载HertzBeat安装包
    下载您系统环境对应的安装包
-   - 从[GITEE Release](https://gitee.com/usthe/hertzbeat/releases) 仓库下载
-   - 从[GITHUB Release](https://github.com/usthe/hertzbeat/releases) 仓库下载
+   - 从[GITEE Release](https://gitee.com/dromara/hertzbeat/releases) 仓库下载
+   - 从[GITHUB Release](https://github.com/dromara/hertzbeat/releases) 仓库下载
 
 3. 配置HertzBeat的配置文件    
    解压安装包到主机 eg: /opt/hertz-beat

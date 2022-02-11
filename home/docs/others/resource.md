@@ -10,10 +10,10 @@ sidebar_label: 相关资源
 
 ![logo](/img/tancloud-logo.svg)  
 
-下载: [SVG](https://gitee.com/usthe/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/usthe/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
+下载: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
 
 ### TANCLOUD 品牌 LOGO  
 
 ![logo](/img/tancloud-brand.svg)  
 
-下载: [SVG](https://gitee.com/usthe/hertzbeat/raw/master/home/static/img/tancloud-brand.svg)  [JPG](https://gitee.com/usthe/hertzbeat/raw/master/home/static/img/tancloud-brand.jpg)     
+下载: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.jpg)     
