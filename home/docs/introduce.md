@@ -43,8 +43,6 @@ slug: /
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
 - **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** 提供监控任务调度服务
-> 采集任务管理，一次性任务和周期性任务的调度分发。
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务

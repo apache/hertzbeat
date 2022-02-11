@@ -21,11 +21,11 @@ sidebar_label: 安装包方式部署
    - 从[GITHUB Release](https://github.com/dromara/hertzbeat/releases) 仓库下载
 
 3. 配置HertzBeat的配置文件    
-   解压安装包到主机 eg: /opt/hertz-beat
+   解压安装包到主机 eg: /opt/hertzbeat
    ``` 
-   $ tar zxvf hertz-beat-1.0.tar.gz 
+   $ tar zxvf hertzbeat-[版本号].tar.gz 
    ```
-   修改位于 hertz-beat/config/application.yml 的配置文件      
+   修改位于 hertzbeat/config/application.yml 的配置文件      
    需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
    具体替换参数如下:
    ``` 
@@ -45,7 +45,7 @@ sidebar_label: 安装包方式部署
    ```
 
 4. 部署启动
-   执行位于安装目录hertz-beat/bin/下的启动脚本 startup.sh 
+   执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh 
    ``` 
    $ ./startup.sh 
    ```

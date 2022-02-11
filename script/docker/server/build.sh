@@ -15,6 +15,6 @@ cd ../../../manager/target
 # 编译上下文目录
 CONTEXT_DIR=`pwd`
 
-echo "docker build -t tancloud/hertz-beat:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR"
+echo "docker build -t tancloud/hertzbeat:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR"
 
-docker build -t tancloud/hertz-beat:"$VERSION" -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR
+docker build -t tancloud/hertzbeat:"$VERSION" -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR

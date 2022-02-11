@@ -7,8 +7,8 @@ if [ ! -n "$TAG" ]; then
     exit 1
 fi
 
-echo "start pull and stop and replace hertz-beat container"
-docker pull registry.cn-hangzhou.aliyuncs.com/tomsun28/hertz-beat:"$TAG"
-docker stop hertz-beat
-docker rm hertz-beat
-docker run -d -p 11157:1157 --name hertz-beat registry.cn-hangzhou.aliyuncs.com/tomsun28/hertz-beat:"$TAG"
+echo "start pull and stop and replace hertzbeat container"
+docker pull registry.cn-hangzhou.aliyuncs.com/tomsun28/hertzbeat:"$TAG"
+docker stop hertzbeat
+docker rm hertzbeat
+docker run -d -p 11157:1157 --name hertzbeat registry.cn-hangzhou.aliyuncs.com/tomsun28/hertzbeat:"$TAG"
