@@ -16,6 +16,7 @@ param:
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
+    defaultValue: 80
   - field: uri
     name: 相对路径
     type: text
@@ -37,10 +38,11 @@ param:
         value: PUT
       - label: DELETE请求
         value: DELETE
-  - field: contentType
-    name: Content-Type
-    type: text
-    required: false
+  - field: ssl
+    name: 启用HTTPS
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: true
   - field: username
     name: 用户名
     type: text
@@ -51,12 +53,13 @@ param:
     name: 密码
     type: password
     required: false
-  - field: ssl
-    name: 启用HTTPS
-    # 当type为boolean时,前端用switch展示开关
-    type: boolean
-    required: true
+  - field: contentType
+    name: Content-Type
+    type: text
+    placeholder: '请求BODY资源类型'
+    required: false
   - field: payload
     name: 请求BODY
     type: textarea
+    placeholder: 'POST PUT请求时有效'
     required: false
