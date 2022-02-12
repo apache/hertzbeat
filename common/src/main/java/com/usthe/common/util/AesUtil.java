@@ -48,7 +48,6 @@ public class AesUtil {
     public static String aesEncode(String content, String encryptKey) {
         try {
             SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), "AES");
-
             //根据指定算法AES自成密码器
             Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
             //初始化密码器，第一个参数为加密(Encrypt_mode)或者解密解密(Decrypt_mode)操作，第二个参数为使用的KEY
@@ -59,14 +58,10 @@ public class AesUtil {
             byte[] byteAes = cipher.doFinal(byteEncode);
             //将加密后的byte[]数据转换为Base64字符串
             return new String(Base64.getEncoder().encode(byteAes),StandardCharsets.UTF_8);
-            //将字符串返回
         } catch (Exception e) {
-            log.error("密文加密失败"+e.getMessage(),e);
-            throw new RuntimeException("密文加密失败");
+            log.error("密文加密失败: {}", e.getMessage(), e);
+            return content;
         }
-        //如果有错就返加null
-
-
     }
 
     /**
@@ -86,9 +81,6 @@ public class AesUtil {
             cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
             //8.将加密并编码base64后的字符串内容base64解码成字节数组
             byte[] bytesContent = Base64.getDecoder().decode(content);
-            /*
-             * 解密
-             */
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
@@ -109,7 +101,20 @@ public class AesUtil {
      * @return true-是 false-否
      */
     public static boolean isCiphertext(String text) {
-        // 根据是否被base64来判断是否已经被加密
-        return Base64Util.isBase64(text);
+        // 先用是否被base64来判断是否已经被加密
+        if (Base64Util.isBase64(text)) {
+            // 若是base64 直接解密判断
+            try {
+                SecretKeySpec keySpec = new SecretKeySpec(ENCODE_RULES.getBytes(StandardCharsets.UTF_8), "AES");
+                Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
+                cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(ENCODE_RULES.getBytes(StandardCharsets.UTF_8)));
+                byte[] bytesContent = Base64.getDecoder().decode(text);
+                byte[] byteDecode = cipher.doFinal(bytesContent);
+                return byteDecode != null;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 }
