@@ -299,8 +299,6 @@ public class HttpCollectImpl extends AbstractCollect {
             return null;
         }
 
-        String contentType = null;
-
         // params
         Map<String, String> params = httpProtocol.getParams();
         if (params != null && !params.isEmpty()) {

@@ -2,8 +2,8 @@ package com.usthe.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.gson.Gson;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.util.GsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -182,10 +182,9 @@ public class Job {
         responseDataTemp.add(metricsData);
     }
 
-    private static final Gson GSON = new Gson();
-
-    public Job clone(){
+    @Override
+    public Job clone() {
         // 深度克隆
-        return GSON.fromJson(GSON.toJsonTree(this), Job.class);
+        return GsonUtil.fromJson(GsonUtil.toJson(this), Job.class);
     }
 }
