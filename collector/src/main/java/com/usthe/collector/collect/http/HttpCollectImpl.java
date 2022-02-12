@@ -25,10 +25,12 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.StringUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -296,6 +298,9 @@ public class HttpCollectImpl extends AbstractCollect {
             log.error("not support the http method: {}.", httpProtocol.getMethod());
             return null;
         }
+
+        String contentType = null;
+
         // params
         Map<String, String> params = httpProtocol.getParams();
         if (params != null && !params.isEmpty()) {
@@ -303,6 +308,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 requestBuilder.addParameter(param.getKey(), param.getValue());
             }
         }
+
         // headers
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
@@ -332,7 +338,11 @@ public class HttpCollectImpl extends AbstractCollect {
             String value = DispatchConstants.BEARER + " " + httpProtocol.getAuthorization().getBearerTokenToken();
             requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
         }
-        // todo 处理请求内容 body 暂不支持body
+
+        // 请求内容，会覆盖post协议的params
+        if(StringUtils.hasLength(httpProtocol.getPayload())){
+            requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(),"UTF-8"));
+        }
 
         // uri
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {

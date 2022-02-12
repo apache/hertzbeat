@@ -37,6 +37,10 @@ param:
         value: PUT
       - label: DELETE请求
         value: DELETE
+  - field: contentType
+    name: Content-Type
+    type: text
+    required: false
   - field: username
     name: 用户名
     type: text
@@ -52,3 +56,7 @@ param:
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: true
+  - field: payload
+    name: 请求BODY
+    type: textarea
+    required: false
