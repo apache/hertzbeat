@@ -63,19 +63,10 @@
           />
         </nz-form-control>
 
-
-        <nz-form-label
-          *ngIf="paramDefine.type === 'textarea'"
-          nzSpan="7"
-          [nzRequired]="paramDefine.required"
-          [nzFor]="paramDefine.field"
-        >{{ paramDefine.name }}
+        <nz-form-label *ngIf="paramDefine.type === 'textarea'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+          >{{ paramDefine.name }}
         </nz-form-label>
-        <nz-form-control
-          *ngIf="paramDefine.type === 'textarea'"
-          nzSpan="8"
-          [nzErrorTip]="'validation.required' | i18n"
-        >
+        <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <textarea
             nz-input
             [(ngModel)]="params[i].value"

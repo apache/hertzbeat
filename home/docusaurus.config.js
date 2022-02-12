@@ -98,6 +98,11 @@ module.exports = {
                     to: 'docs/others/private',
                 },
                 {
+                    label: '项目看板',
+                    position: 'left',
+                    href: 'https://github.com/dromara/hertzbeat/projects/1',
+                },
+                {
                     label: '其它',
                     position: 'left',
                     items: [
