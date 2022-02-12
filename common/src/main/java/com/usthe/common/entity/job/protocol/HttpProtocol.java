@@ -46,6 +46,11 @@ public class HttpProtocol {
      */
     private Map<String, String> params;
     /**
+     * http请求携带的请求体
+     */
+    private String payload;
+
+    /**
      * 认证信息
      */
     private Authorization authorization;

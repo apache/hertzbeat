@@ -169,6 +169,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
+                        case "textarea":
                         case "text":
                             Short limit = paramDefine.getLimit();
                             if (limit != null) {

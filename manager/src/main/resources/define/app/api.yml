@@ -20,6 +20,10 @@ configmap:
     type: 1
   - key: password
     type: 2
+  - key: contentType
+    type: 1
+  - key: payload
+    type: 1
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
@@ -48,6 +52,10 @@ metrics:
       method: ^_^method^_^
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
