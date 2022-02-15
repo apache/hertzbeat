@@ -60,6 +60,10 @@ public interface DispatchConstants {
      */
     String PARSE_WEBSITE = "website";
     /**
+     * 解析方式 网站地图全站可用性监控规则
+     */
+    String PARSE_SITE_MAP = "sitemap";
+    /**
      * 解析方式 prometheus规则
      */
     String PARSE_PROMETHEUS = "prometheus";

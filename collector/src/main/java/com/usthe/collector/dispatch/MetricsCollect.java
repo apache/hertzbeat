@@ -237,6 +237,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             // 设置实例instance
             realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
+            realValueRowBuilder.clear();
         }
     }
 

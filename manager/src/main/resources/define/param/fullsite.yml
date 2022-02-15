@@ -1,0 +1,22 @@
+app: fullsite
+param:
+  - field: host
+    name: 主机Host
+    type: host
+    required: true
+  - field: port
+    name: 端口
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+  - field: sitemap
+    name: 网站地图
+    type: text
+    limit: 200
+    required: true
+    placeholder: '网站SITEMAP地图地址 例如:/sitemap.xml'
+  - field: ssl
+    name: 启用HTTPS
+    type: boolean
+    required: true
