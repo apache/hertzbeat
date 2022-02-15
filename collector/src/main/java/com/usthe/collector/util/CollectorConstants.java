@@ -8,4 +8,10 @@ package com.usthe.collector.util;
 public interface CollectorConstants {
 
     String RESPONSE_TIME = "responseTime";
+
+    String STATUS_CODE = "statusCode";
+
+    String ERROR_MSG = "errorMsg";
+
+    String URL = "url";
 }
