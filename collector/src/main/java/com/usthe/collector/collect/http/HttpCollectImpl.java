@@ -22,6 +22,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -31,13 +32,21 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.StringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.net.ssl.SSLException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -100,6 +109,8 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
                         parseResponseByWebsite(resp, metrics.getAliasFields(), builder, responseTime);
+                    } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
+                        parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     } else {
                         parseResponseByDefault(resp, metrics.getAliasFields(), builder, responseTime);
                     }
@@ -170,6 +181,99 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
         builder.addValues(valueRowBuilder.build());
+    }
+
+    private void parseResponseBySiteMap(String resp, List<String> aliasFields,
+                                        CollectRep.MetricsData.Builder builder) {
+        List<String> siteUrls = new LinkedList<>();
+        // 使用xml解析
+        boolean isXmlFormat = true;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(new ByteArrayInputStream(resp.getBytes(StandardCharsets.UTF_8)));
+            NodeList urlList = document.getElementsByTagName("url");
+            for (int i = 0; i < urlList.getLength(); i++) {
+                Node urlNode = urlList.item(i);
+                NodeList childNodes = urlNode.getChildNodes();
+                for (int k = 0; k < childNodes.getLength(); k++) {
+                    Node currentNode = childNodes.item(k);
+                    // 区分出text类型的node以及element类型的node
+                    if (currentNode.getNodeType() == Node.ELEMENT_NODE && "loc".equals(currentNode.getNodeName())) {
+                        //获取了loc节点的值
+                        siteUrls.add(currentNode.getFirstChild().getNodeValue());
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn(e.getMessage(), e);
+            isXmlFormat = false;
+        }
+        // 若xml解析失败 用txt格式解析
+        if (!isXmlFormat) {
+            try {
+                String[] urls = resp.split("\n");
+                // 校验是否是URL
+                if (IpDomainUtil.isHasSchema(urls[0])) {
+                    siteUrls.addAll(Arrays.asList(urls));
+                }
+            } catch (Exception e) {
+                log.warn(e.getMessage(), e);
+            }
+        }
+        // todo siteUrl 限制数量
+        // 开始循环访问每个site url 采集其 http status code, responseTime, 异常信息
+        int maxUrlNum = 100;
+        for (String siteUrl : siteUrls) {
+            maxUrlNum --;
+            if (maxUrlNum <= 0) {
+                break;
+            }
+            String errorMsg = "";
+            Integer statusCode = null;
+            long startTime = System.currentTimeMillis();
+            try {
+                HttpGet httpGet = new HttpGet(siteUrl);
+                CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet);
+                statusCode = response.getStatusLine().getStatusCode();
+                EntityUtils.consume(response.getEntity());
+            } catch (ClientProtocolException e1) {
+                if (e1.getCause() != null) {
+                    errorMsg = e1.getCause().getMessage();
+                } else {
+                    errorMsg = e1.getMessage();
+                }
+            } catch (UnknownHostException e2) {
+                // 对端不可达
+                errorMsg = "unknown host";
+            } catch (InterruptedIOException | ConnectException | SSLException e3) {
+                // 对端连接失败
+                errorMsg = "connect error: " + e3.getMessage();
+            } catch (IOException e4) {
+                // 其它IO异常
+                errorMsg = "io error: " + e4.getMessage();
+            } catch (Exception e) {
+                errorMsg = "error: " + e.getMessage();
+            }
+            long responseTime = System.currentTimeMillis() - startTime;
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String alias : aliasFields) {
+                if (CollectorConstants.URL.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(siteUrl);
+                } else if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(statusCode == null ?
+                            CommonConstants.NULL_VALUE : String.valueOf(statusCode));
+                } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(String.valueOf(responseTime));
+                } else if (CollectorConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(errorMsg);
+                } else {
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                }
+            }
+            builder.addValues(valueRowBuilder.build());
+        }
     }
 
     private void parseResponseByXmlPath(String resp, List<String> aliasFields, HttpProtocol http,
@@ -298,7 +402,6 @@ public class HttpCollectImpl extends AbstractCollect {
             log.error("not support the http method: {}.", httpProtocol.getMethod());
             return null;
         }
-
         // params
         Map<String, String> params = httpProtocol.getParams();
         if (params != null && !params.isEmpty()) {
@@ -306,7 +409,6 @@ public class HttpCollectImpl extends AbstractCollect {
                 requestBuilder.addParameter(param.getKey(), param.getValue());
             }
         }
-
         // headers
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
@@ -339,7 +441,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
         // 请求内容，会覆盖post协议的params
         if(StringUtils.hasLength(httpProtocol.getPayload())){
-            requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(),"UTF-8"));
+            requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 
         // uri
