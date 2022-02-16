@@ -48,9 +48,6 @@ public class AlertDefineMonitorBind {
     @Column(name = "monitor_id")
     private Long monitorId;
 
-    @ApiModelProperty(value = "租户ID", example = "42343", accessMode = READ_WRITE, position = 3)
-    private Long tenantId;
-
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 4)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtCreate;
