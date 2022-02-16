@@ -207,7 +207,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             }
         } catch (Exception e) {
-            log.warn(e.getMessage(), e);
+            log.warn(e.getMessage());
             isXmlFormat = false;
         }
         // 若xml解析失败 用txt格式解析
@@ -222,14 +222,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 log.warn(e.getMessage(), e);
             }
         }
-        // todo siteUrl 限制数量
         // 开始循环访问每个site url 采集其 http status code, responseTime, 异常信息
-        int maxUrlNum = 100;
         for (String siteUrl : siteUrls) {
-            maxUrlNum --;
-            if (maxUrlNum <= 0) {
-                break;
-            }
             String errorMsg = "";
             Integer statusCode = null;
             long startTime = System.currentTimeMillis();

@@ -54,7 +54,8 @@
       "port": "端口可用性",
       "mysql": "Mysql",
       "oracle": "Oracle",
-      "redis": "Redis"
+      "redis": "Redis",
+      "fullsite": "全站监控"
     }
   },
   "alert": {
