@@ -96,7 +96,6 @@ CREATE TABLE  alert_define_monitor_bind
     id               bigint           not null auto_increment comment '告警定义与监控关联ID',
     alert_define_id  bigint           not null comment '告警定义ID',
     monitor_id       bigint           not null comment '监控ID',
-    monitor_name     varchar(100)     not null comment '监控的名称(拢余字段方便展示)',
     gmt_create       timestamp        default current_timestamp comment 'create time',
     gmt_update       datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
