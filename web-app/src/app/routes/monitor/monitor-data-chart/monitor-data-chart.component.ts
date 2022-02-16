@@ -213,17 +213,27 @@ export class MonitorDataChartComponent implements OnInit {
             if (legend.length > 1) {
               this.lineHistoryTheme.legend = {
                 orient: 'vertical',
+                align: 'auto',
+                right: '10%',
+                top: '10%',
                 data: legend
               };
             }
-            Object.keys(values).forEach(key => {
+            this.lineHistoryTheme.series = [];
+            let maxLegend = 5;
+            let valueKeyArr = Object.keys(values);
+            for (let index = 0; index < valueKeyArr.length; index++) {
+              if (maxLegend-- <= 0) {
+                break;
+              }
+              let key = valueKeyArr[index];
               let seriesData: Array<{ value: any }> = [];
               values[key].forEach((item: { time: number; origin: any }) => {
                 seriesData.push({
                   value: [item.time, item.origin]
                 });
               });
-              this.lineHistoryTheme.series = [];
+              // @ts-ignore
               this.lineHistoryTheme.series.push({
                 name: key,
                 type: 'line',
@@ -231,13 +241,13 @@ export class MonitorDataChartComponent implements OnInit {
                 showSymbol: false,
                 data: seriesData
               });
-              this.eChartOption = this.lineHistoryTheme;
-              if (this.echartsInstance != undefined) {
-                this.echartsInstance.setOption(this.eChartOption, {
-                  replaceMerge: ['xAxis', 'yAxis', 'series']
-                });
-              }
-            });
+            }
+            this.eChartOption = this.lineHistoryTheme;
+            if (this.echartsInstance != undefined) {
+              this.echartsInstance.setOption(this.eChartOption, {
+                replaceMerge: ['xAxis', 'yAxis', 'series']
+              });
+            }
           } else {
             this.eChartOption = this.lineHistoryTheme;
             this.eChartOption.title = {

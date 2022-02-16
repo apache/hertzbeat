@@ -53,6 +53,11 @@
               "text": "port",
               "link": "/monitors?app=port",
               "i18n": "monitor.app.port"
+            },
+            {
+              "text": "fullsite",
+              "link": "/monitors?app=fullsite",
+              "i18n": "monitor.app.fullsite"
             }
           ]
         },

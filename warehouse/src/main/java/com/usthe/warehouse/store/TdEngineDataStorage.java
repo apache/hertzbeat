@@ -113,9 +113,10 @@ public class TdEngineDataStorage implements DisposableBean {
         //组建DATA SQL
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         StringBuilder sqlBuffer = new StringBuilder();
+        int i = 0;
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             StringBuilder sqlRowBuffer = new StringBuilder("(");
-            sqlRowBuffer.append(metricsData.getTime()).append(", ");
+            sqlRowBuffer.append(metricsData.getTime() + i++).append(", ");
             sqlRowBuffer.append("'").append(valueRow.getInstance()).append("', ");
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);

@@ -19,7 +19,7 @@ public class IpDomainUtil {
 
     private static final String LOCALHOST = "localhost";
 
-    private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://)");
+    private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://){1}[^\\s]*");
 
     /**
      * 校验判断是否是 ip或者domain
