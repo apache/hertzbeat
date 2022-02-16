@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -150,7 +151,7 @@ public class TdEngineDataStorage implements DisposableBean {
             sqlBuffer.append(" ").append(sqlRowBuffer);
         }
         String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
-        log.info(insertDataSql);
+        log.debug(insertDataSql);
         Connection connection = null;
         Statement statement = null;
         try {
@@ -223,7 +224,7 @@ public class TdEngineDataStorage implements DisposableBean {
         String table = app + "_" + metrics + "_" + monitorId;
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
-        log.info(selectSql);
+        log.debug(selectSql);
         Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
@@ -242,6 +243,8 @@ public class TdEngineDataStorage implements DisposableBean {
             }
             resultSet.close();
             return instanceValuesMap;
+        } catch (SQLException sqlException) {
+          log.warn(sqlException.getMessage());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
@@ -293,7 +296,7 @@ public class TdEngineDataStorage implements DisposableBean {
         for (String instanceValue : instances) {
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                             metric, metric, metric, metric, table, instanceValue, history);
-            log.info(selectSql);
+            log.debug(selectSql);
             if ("''".equals(instanceValue)) {
                 instanceValue = "NULL";
             }
