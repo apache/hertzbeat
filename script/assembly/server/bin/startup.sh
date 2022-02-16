@@ -19,9 +19,8 @@ DEPLOY_DIR=`pwd`
 # 外部配置文件绝对目录,如果是目录需要/结尾，也可以直接指定文件
 # 如果指定的是目录,spring则会读取目录中的所有配置文件
 CONF_DIR=$DEPLOY_DIR/config
-# SERVER_PORT=`sed '/server.port/!d;s/.*=//' config/application.properties | tr -d '\r'`
-# 获取应用的端口号
-SERVER_PORT=`sed -nr '/port: [0-9]+/ s/.*port: +([0-9]+).*/\1/p' config/application.yml`
+# 应用的端口号
+SERVER_PORT=1157
 
 PIDS=`ps -f | grep java | grep "$CONF_DIR" |awk '{print $2}'`
 if [ "$1" = "status" ]; then
@@ -55,30 +54,15 @@ LOGS_DIR=$DEPLOY_DIR/logs
 if [ ! -d $LOGS_DIR ]; then
     mkdir $LOGS_DIR
 fi
-STDOUT_FILE=$LOGS_DIR/catalina.log
 
 # JVM Configuration
 JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true "
-JAVA_DEBUG_OPTS=""
-if [ "$1" = "debug" ]; then
-    JAVA_DEBUG_OPTS=" -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n "
-fi
 
-JAVA_JMX_OPTS=""
-if [ "$1" = "jmx" ]; then
-    JAVA_JMX_OPTS=" -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false "
-fi
+JAVA_MEM_OPTS=" -server -Xms512m -Xmx512m -XX:SurvivorRatio=2 -XX:+UseParallelGC "
 
-JAVA_MEM_OPTS=""
-BITS=`java -version 2>&1 | grep -i 64-bit`
-if [ -n "$BITS" ]; then
-    JAVA_MEM_OPTS=" -server -Xmx512m -Xms512m -Xmn256m -XX:PermSize=128m -Xss256k -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSCompactAtFullCollection -XX:LargePageSizeInBytes=128m -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 "
-else
-    JAVA_MEM_OPTS=" -server -Xms512m -Xmx512m -XX:PermSize=128m -XX:SurvivorRatio=2 -XX:+UseParallelGC "
-fi
 
-# 加载外部log4j2文件的配置
-LOG_IMPL_FILE=log4j2.xml
+# 加载外部log文件的配置
+LOG_IMPL_FILE=logback-spring.xml
 LOGGING_CONFIG=""
 if [ -f "$CONF_DIR/$LOG_IMPL_FILE" ]
 then
@@ -86,11 +70,11 @@ then
 fi
 CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
 echo -e "Starting the $SERVER_NAME ..."
-nohup java $JAVA_OPTS $JAVA_MEM_OPTS $JAVA_DEBUG_OPTS $JAVA_JMX_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/lib/$JAR_NAME > $STDOUT_FILE 2>&1 &
+nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >/dev/null 2>&1 &
 
 COUNT=0
 while [ $COUNT -lt 1 ]; do
-    echo -e ".\c"
+    echo "... "
     sleep 1
     if [ -n "$SERVER_PORT" ]; then
         COUNT=`netstat -an | grep $SERVER_PORT | wc -l`
@@ -102,8 +86,6 @@ while [ $COUNT -lt 1 ]; do
     fi
 done
 
-
-echo "OK!"
+echo "Service starting OK!"
 PIDS=`ps -f | grep java | grep "$DEPLOY_DIR" | awk '{print $2}'`
-echo "PID: $PIDS"
-echo "STDOUT: $STDOUT_FILE"
+echo "Service PID: $PIDS"
