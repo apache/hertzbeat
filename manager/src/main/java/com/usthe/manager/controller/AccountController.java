@@ -91,7 +91,7 @@ public class AccountController {
     @ApiOperation(value = "TOKEN刷新", notes = "使用刷新TOKEN重新获取TOKEN")
     public ResponseEntity<Message<Map<String, String>>> refreshToken(
             @ApiParam(value = "刷新TOKEN", example = "xxx")
-            @PathVariable("refreshToken") @NotNull String refreshToken) {
+            @PathVariable("refreshToken") @NotNull final String refreshToken) {
         String userId;
         boolean isRefresh;
         try {
