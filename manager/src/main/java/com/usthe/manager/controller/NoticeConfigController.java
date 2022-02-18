@@ -57,7 +57,7 @@ public class NoticeConfigController {
     @DeleteMapping(path = "/receiver/{id}")
     @ApiOperation(value = "删除指定接收人", notes = "删除已存在的接收人信息")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
-            @ApiParam(value = "接收人ID", example = "6565463543") @PathVariable("id") Long receiverId) {
+            @ApiParam(value = "接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
         // 不存在或删除成功都返回成功
         noticeConfigService.deleteReceiver(receiverId);
         return ResponseEntity.ok(new Message<>("Delete success"));
@@ -66,7 +66,7 @@ public class NoticeConfigController {
     @GetMapping(path = "/receivers")
     @ApiOperation(value = "查询消息通知接收人", notes = "根据查询过滤项获取消息通知接收人列表")
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
-            @ApiParam(value = "接收人名称，模糊查询", example = "tom") @RequestParam(required = false) String name) {
+            @ApiParam(value = "接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
 
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
@@ -99,7 +99,7 @@ public class NoticeConfigController {
     @DeleteMapping(path = "/rule/{id}")
     @ApiOperation(value = "删除指定通知策略", notes = "删除已存在的通知策略信息")
     public ResponseEntity<Message<Void>> deleteNoticeRule(
-            @ApiParam(value = "通知策略ID", example = "6565463543") @PathVariable("id") Long ruleId) {
+            @ApiParam(value = "通知策略ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // 不存在或删除成功都返回成功
         noticeConfigService.deleteNoticeRule(ruleId);
         return ResponseEntity.ok(new Message<>("Delete success"));
@@ -108,7 +108,7 @@ public class NoticeConfigController {
     @GetMapping(path = "/rules")
     @ApiOperation(value = "查询消息通知策略", notes = "根据查询过滤项获取消息通知策略列表")
     public ResponseEntity<Message<List<NoticeRule>>> getRules(
-            @ApiParam(value = "接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) String name) {
+            @ApiParam(value = "接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
 
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();

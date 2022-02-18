@@ -64,7 +64,7 @@ public class MonitorController {
     @GetMapping(path = "/{id}")
     @ApiOperation(value = "查询监控", notes = "根据监控ID获取监控信息")
     public ResponseEntity<Message<MonitorDto>> getMonitor(
-            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") long id) {
+            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
@@ -79,7 +79,7 @@ public class MonitorController {
     @DeleteMapping(path = "/{id}")
     @ApiOperation(value = "删除监控", notes = "根据监控ID删除监控应用,监控不存在也是删除成功")
     public ResponseEntity<Message<Void>> deleteMonitor(
-            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") long id) {
+            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // 删除监控,监控不存在或删除成功都返回成功
         monitorService.deleteMonitor(id);
         return ResponseEntity.ok(new Message<>("Delete success"));

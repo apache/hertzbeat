@@ -44,12 +44,12 @@ public class MonitorsController {
     @GetMapping
     @ApiOperation(value = "查询监控列表", notes = "根据查询过滤项获取监控信息列表")
     public ResponseEntity<Message<Page<Monitor>>> getMonitors(
-            @ApiParam(value = "监控ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @ApiParam(value = "监控类型", example = "linux") @RequestParam(required = false) String app,
-            @ApiParam(value = "监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) String name,
-            @ApiParam(value = "监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) String host,
-            @ApiParam(value = "排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") String sort,
-            @ApiParam(value = "排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
+            @ApiParam(value = "监控ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
+            @ApiParam(value = "监控类型", example = "linux") @RequestParam(required = false) final String app,
+            @ApiParam(value = "监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
+            @ApiParam(value = "监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
+            @ApiParam(value = "排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") final String sort,
+            @ApiParam(value = "排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @ApiParam(value = "列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
@@ -94,7 +94,7 @@ public class MonitorsController {
     @GetMapping(path = "/{app}")
     @ApiOperation(value = "查询指定监控类型的监控列表", notes = "根据查询过滤指定监控类型的所有获取监控信息列表")
     public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
-            @ApiParam(value = "监控类型", example = "linux") @PathVariable(required = false) String app) {
+            @ApiParam(value = "监控类型", example = "linux") @PathVariable(required = false) final String app) {
         List<Monitor> monitors = monitorService.getAppMonitors(app);
         Message<List<Monitor>> message = new Message<>(monitors);
         return ResponseEntity.ok(message);
