@@ -36,6 +36,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <includes>
                 <include>application.yml</include>
                 <include>logback-spring.xml</include>
+                <include>sureness.yml</include>
             </includes>
             <filtered>true</filtered>
             <outputDirectory>${file.separator}config</outputDirectory>

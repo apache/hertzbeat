@@ -1,14 +1,14 @@
-## -- sureness.yml document dataSource-- ##
+## -- sureness.yml文本数据源 -- ##
 
-# load api resource which need be protected, config role who can access these resource.
-# resources that are not configured are also authenticated and protected by default, but not authorized
-# eg: /api/v2/host===post===[role2,role3,role4] means /api/v2/host===post can be access by role2,role3,role4
-# eg: /api/v1/getSource3===get===[] means /api/v1/getSource3===get can not be access by any role
+# 加载到匹配字典的资源,也就是需要被保护的,设置了所支持角色访问的资源
+# 没有配置的资源也默认被认证保护,但不鉴权
+# eg: /api/v1/source1===get===[role2] 表示 /api/v2/host===post 这条资源支持 role2 这一种角色访问
+# eg: /api/v1/source2===get===[] 表示 /api/v1/source2===get 这条资源不支持任何角色访问
 resourceRole:
   - /account/auth/refresh===post===[role1,role2,role3,role4]
 
-# load api resource which do not need protected, means them need be excluded.
-# these api resource can be access by everyone
+# 需要被过滤保护的资源,不认证鉴权直接访问
+# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
   - /account/auth/**===*
   - /===get
@@ -28,11 +28,11 @@ excludedResource:
   - /v2/api-docs===get
   - /v3/api-docs===get
 
-# account info
-# there are three account: admin, root, tom
-# eg: admin has [role1,role2] ROLE, unencrypted password is admin, encrypted password is 0192023A7BBD73250516F069DF18B500
-# eg: root has role1, unencrypted password is 23456
-# eg: tom has role3, unencrypted password is 32113
+# 用户账户信息
+# 下面有 admin root tom三个账户
+# eg: admin 拥有[role1,role2]角色,明文密码为admin,加盐密码为0192023A7BBD73250516F069DF18B500
+# eg: root 拥有[role1],密码为明文23456
+# eg: tom 拥有[role3],密码为明文32113
 account:
   - appId: admin
     credential: admin
