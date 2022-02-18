@@ -3,16 +3,16 @@
     <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
       <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
       <nz-form-item>
-        <nz-form-control nzErrorTip="Please enter username: admin or user">
+        <nz-form-control nzErrorTip="请输入用户名">
           <nz-input-group nzSize="large" nzPrefixIcon="user">
-            <input nz-input formControlName="userName" placeholder="username: admin or user" />
+            <input nz-input formControlName="userName" placeholder="请输入用户名" />
           </nz-input-group>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-control nzErrorTip="Please enter password">
+        <nz-form-control nzErrorTip="请输入密码">
           <nz-input-group nzSize="large" nzPrefixIcon="lock">
-            <input nz-input type="password" formControlName="password" placeholder="password: admin" />
+            <input nz-input type="password" formControlName="password" placeholder="请输入密码" />
           </nz-input-group>
         </nz-form-control>
       </nz-form-item>

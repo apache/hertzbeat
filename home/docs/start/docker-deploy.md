@@ -52,6 +52,6 @@ sidebar_label: Docker方式部署
    - tancloud/hertzbeat:latest : 使用拉取的HertzBeat官方发布的应用镜像来启动容器 
    
 5. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警。
+   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警。默认账户密码 admin/admin
 
 **HAVE FUN**

@@ -14,7 +14,6 @@
     <properties>
         <mysql.version>8.0.16</mysql.version>
         <snake.yaml.version>1.26</snake.yaml.version>
-        <sureness-core.version>1.0.5</sureness-core.version>
     </properties>
 
     <dependencies>
@@ -93,7 +92,7 @@
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot-starter-sureness</artifactId>
-            <version>1.0.6.beta1</version>
+            <version>1.0.7</version>
         </dependency>
     </dependencies>
 
