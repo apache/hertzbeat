@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -58,5 +60,6 @@ public class AlertDefineMonitorBind {
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "monitor_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Monitor monitor;
 }
