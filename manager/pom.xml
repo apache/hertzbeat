@@ -51,6 +51,16 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+        <!--thymeleaf依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.nekohtml</groupId>
+            <artifactId>nekohtml</artifactId>
+            <version>1.9.22</version>
+        </dependency>
         <!-- data jdbc -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -107,6 +117,7 @@
                     <include>sureness.yml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
+                    <include>**/*.html</include>
                 </includes>
             </resource>
         </resources>
