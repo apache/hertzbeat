@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -94,6 +95,7 @@ public class AlertDefineController {
     public ResponseEntity<Message<List<AlertDefineMonitorBind>>> getAlertDefineMonitorsBind(
             @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
         List<AlertDefineMonitorBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
+        defineBinds = defineBinds.stream().filter(item -> item.getMonitor() != null).collect(Collectors.toList());
         return ResponseEntity.ok(new Message<>(defineBinds));
     }
 
