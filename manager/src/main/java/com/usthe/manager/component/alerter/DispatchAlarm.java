@@ -146,15 +146,18 @@ public class DispatchAlarm {
         try{
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage,true,"UTF-8");
-            messageHelper.setSubject("TanCloud探云-监控告警"); //设置邮件主题
-            messageHelper.setFrom("gongchao@tancloud.cn"); //设置发件人Email
-            messageHelper.setTo(receiver.getEmail());        //设定收件人Email
+            messageHelper.setSubject("TanCloud探云-监控告警");
+            //设置发件人Email
+            messageHelper.setFrom("gongchao@tancloud.cn");
+            //设定收件人Email
+            messageHelper.setTo(receiver.getEmail());        
             messageHelper.setSentDate(new Date());
+            //构建邮件模版
             String process = mailService.buildHTMLTemplate(alert);
             messageHelper.setText(process,true);   //设置邮件内容模版
             javaMailSender.send(mimeMessage);
         }catch (Exception e){
-            log.error("[邮箱告警] error，Exception information={}",e);
+            log.error("[邮箱告警] error，Exception information={}",e.getMessage());
         }
     }
 
