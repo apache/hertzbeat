@@ -41,7 +41,6 @@
     "@delon/util": "^12.4.2",
     "ajv": "^8.6.2",
     "ajv-formats": "^2.1.1",
-    "ajv-keywords": "^5.1.0",
     "echarts": "^5.2.2",
     "ng-alain": "^12.4.2",
     "ng-zorro-antd": "^12.0.2",
