@@ -38,8 +38,8 @@ spring:
 
   mail:
     host: smtp.exmail.qq.com
-    username: gongchao@tancloud.cn
-    password: C7Roz9Qe3eGkiVM9
+    username: example@tancloud.cn
+    password: example
     port: 465
     default-encoding: UTF-8
     properties:
