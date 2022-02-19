@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+
+    <style id="table">
+
+        * {
+            margin: 0;
+            padding: 0
+        }
+
+        a {
+            color: #576b95;
+            text-decoration: none
+        }
+
+        html {
+            line-height: 1.6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0 ;
+            font-size: 17px;
+            color: #333;
+            width:100%;
+            max-width:750px
+        }
+
+
+        .view {
+            word-break: break-word;
+            cursor: text;
+            min-height: 440px;
+            word-wrap: break-word;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            hyphens: auto;
+        }
+
+        p {
+            clear: both
+        }
+
+        img {
+            *zoom: 1;
+            max-width: 100%;
+            *max-width: 96%;
+            height: auto !important
+        }
+
+        iframe {
+            width: 301px !important;
+            border: 0;
+            /*background-color: none;*/
+        }
+
+        .selectTdClass {
+            background-color: #edf5fa !important
+        }
+
+        table.noBorderTable td,
+        table.noBorderTable th,
+        table.noBorderTable caption {
+            border: 1px dashed #ddd !important
+        }
+
+        table {
+            margin-bottom: 10px;
+            border-collapse: collapse;
+            display: table;
+        }
+
+        td,
+        th {
+            padding: 5px 10px;
+            border: 1px solid #DDD;
+        }
+
+        caption {
+            border: 1px dashed #DDD;
+            border-bottom: 0;
+            padding: 3px;
+            text-align: center;
+        }
+
+        th {
+            border-top: 2px solid #BBB;
+            background: #F7F7F7;
+        }
+
+
+        td p {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <style id="list">
+        ol,
+        ul {
+            margin: 0;
+            padding: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            width: 99.9%
+        }
+
+        li {
+            clear: both;
+        }
+
+        .list-paddingleft-1 {
+            padding-left: 1.2em
+        }
+
+        .list-paddingleft-2 {
+            padding-left: 2.2em
+        }
+
+        .list-paddingleft-3 {
+            padding-left: 3.2em
+        }
+    </style>
+    <style>
+        body :not(img) {
+            max-width: 100% !important;
+            word-wrap: break-word !important;
+            box-sizing: border-box !important;
+        }
+
+        body img {
+            max-width: 100% !important;
+            word-wrap: break-word !important;
+        }
+
+        body table {
+            box-sizing: content-box !important;
+        }
+
+        body table * {
+            box-sizing: content-box !important;
+        }
+
+        body p {
+            clear: both;
+            min-height: 1em;
+        }
+
+        .mpa-black-tech {
+            cursor: default;
+            user-select: none;
+        }
+
+        .mpa-dynamic-material {
+            cursor: default;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="view" spellcheck="false" style="cursor: text">
+<section style="display: flex; justify-content: center; align-items: center; width: 100%; max-width:750px">
+    <section style="width: 1000vw;">
+        <p>&ZeroWidthSpace;<br></p>
+        <section
+                style="display: flex;justify-content: center;align-items: center;width: 100%;">
+            <section
+                    style="display: flex; justify-content: flex-start; align-items: center; flex-direction: column; width: 100%; padding: 16px 6px 16px 12px; border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0); background: url(https://pic.imgdb.cn/item/616572c82ab3f51d91208003.png) 0% 0% / 100% 100% no-repeat rgb(212, 234, 237);">
+                <section
+                        style="display: flex;justify-content: flex-start;align-items: center;flex-direction: column;width: 100%;">
+                    <section
+                            style="height: 0px;width: 52px;align-self: flex-start;z-index: 1;transform: translate(17px, -9px);">
+                        <img th:src="@{https://pic.imgdb.cn/item/61657b052ab3f51d912bcf60.png}"
+                             style="display: block;">
+                    </section>
+                    <section
+                            style="display: flex; justify-content: flex-start; align-items: center; flex-direction: column; width: 100%; background: rgb(232, 232, 232); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0);">
+                        <section
+                                style="background: rgb(255, 255, 255); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0); transform: translate(-5px, -5px); width: 100%;">
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;justify-content: space-between;">
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 1px 0px 0px 1px; border-top-style: solid; border-left-style: solid; border-top-color: rgb(151, 151, 151); border-left-color: rgb(151, 151, 151); border-right-style: initial; border-right-color: initial; border-bottom-style: initial; border-bottom-color: initial; margin-left: 4px; margin-top: 4px;">
+                                    <br>
+                                </section>
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 1px 1px 0px 0px; border-top-style: solid; border-right-style: solid; border-top-color: rgb(151, 151, 151); border-right-color: rgb(151, 151, 151); border-bottom-style: initial; border-bottom-color: initial; border-left-style: initial; border-left-color: initial; margin-right: 4px; margin-top: 4px;">
+                                    <br>
+                                </section>
+                            </section>
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;width: 100%;">
+                                <section style="width: 66px;margin: 0px 13px 0px 16px;"><img
+                                        th:src="@{https://pic.imgdb.cn/item/61656ad22ab3f51d9114d897.jpg}"
+                                        style="display: block; width: 110px; height: 110px;">
+                                </section>
+                                <section style="padding-right: 12px;">
+                                    <section style="margin-top: 15px;">
+                                        <p
+                                                style="font-size: 14px;font-family: PingFangSC-Semibold, PingFang SC;font-weight: bold;color: #B1B1B1;line-height: 20px;letter-spacing: 5px;">
+                                            TanCloud探云-监控告警
+                                        </p>
+                                    </section>
+                                    <section style="padding: 8px 0px 4px 0px;">
+                                        <p
+                                                style="font-size: 24px;font-family: PingFangSC-Semibold, PingFang SC;font-weight: bold;color: #000000;line-height: 33px;letter-spacing: 2px;">
+                                            告警通知
+                                        </p>
+                                    </section>
+                                    <section style="margin-bottom: 15px;">
+                                        <p
+                                                style="font-size: 16px;font-family: PingFangSC-Semibold, PingFang SC;font-weight: bold;color: #B1B1B1;line-height: 22px;">
+                                            Alarm notification
+                                        </p>
+                                    </section>
+                                </section>
+                            </section>
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;justify-content: space-between;">
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 0px 0px 1px 1px; border-bottom-style: solid; border-left-style: solid; border-bottom-color: rgb(151, 151, 151); border-left-color: rgb(151, 151, 151); border-top-style: initial; border-top-color: initial; border-right-style: initial; border-right-color: initial; margin-left: 4px; margin-bottom: 4px;">
+                                    <br>
+                                </section>
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 0px 1px 1px 0px; border-right-style: solid; border-bottom-style: solid; border-right-color: rgb(151, 151, 151); border-bottom-color: rgb(151, 151, 151); border-top-style: initial; border-top-color: initial; border-left-style: initial; border-left-color: initial; margin-right: 4px; margin-bottom: 4px;">
+                                    <br>
+                                </section>
+                            </section>
+                        </section>
+                    </section>
+                    <section
+                            style="width: 100%; background: rgb(203, 221, 230); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0); margin-left: -8px; margin-top: 6px; z-index: 1;">
+                        <section
+                                style="background: rgb(227, 245, 255); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0); transform: translate(4px, 4px); text-align: center; padding: 12px 28px; white-space: nowrap;">
+                            <p
+                                    style="font-size: 16px;font-family: PingFangSC-Medium, PingFang SC;font-weight: bold;color: #000000;line-height: 22px;">
+                                TanCloud探云
+                            </p>
+                        </section>
+                    </section>
+                    <section
+                            style="width: 52px;height: 0px;z-index: 1;align-self: flex-end;transform: translate(-10px, -3px);">
+                        <img th:src="@{https://pic.imgdb.cn/item/61657b052ab3f51d912bcf60.png}"
+                             style="display: block;">
+                    </section>
+                </section>
+            </section>
+        </section>
+        <p><br></p>
+        <section
+                style="display: flex;justify-content: center;align-items: center;width: 100%;padding:0;">
+            <section
+                    style="display: flex; justify-content: flex-start; align-items: center; flex-direction: column; width: 100%; padding: 16px; background: rgb(212, 234, 237); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0);">
+                <section
+                        style="display: flex;justify-content: flex-start;align-items: center;flex-direction: column;width: 100%;">
+                    <section
+                            style="display: flex; justify-content: flex-start; align-items: center; flex-direction: column; width: 100%; background: rgb(232, 232, 232); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0);">
+                        <section
+                                style="background: rgb(255, 255, 255); border-width: 1px; border-style: solid; border-color: rgb(0, 0, 0); transform: translate(-5px, -5px); width: 100%;">
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;justify-content: space-between;">
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 1px 0px 0px 1px; border-top-style: solid; border-left-style: solid; border-top-color: rgb(151, 151, 151); border-left-color: rgb(151, 151, 151); border-right-style: initial; border-right-color: initial; border-bottom-style: initial; border-bottom-color: initial; margin-left: 4px; margin-top: 4px;">
+                                    <br>
+                                </section>
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 1px 1px 0px 0px; border-top-style: solid; border-right-style: solid; border-top-color: rgb(151, 151, 151); border-right-color: rgb(151, 151, 151); border-bottom-style: initial; border-bottom-color: initial; border-left-style: initial; border-left-color: initial; margin-right: 4px; margin-top: 4px;">
+                                    <br>
+                                </section>
+                            </section>
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;width: 100%;padding: 6px 0px;">
+                                <section style="text-align: center;">
+                                    <p style="font-size: 14px; font-family: PingFangSC-Medium,PingFang SC; font-weight: bold; color: rgb(0, 0, 0); line-height: 22px; letter-spacing: 1px;text-align: left;padding-left: 5px;">
+                                        告警目标对象:<span th:text="${target}"></span><br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;所属监控ID:<span th:text="${ID}"></span><br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;所属监控名称:<span th:text="${name}"></span><br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;告警级别:<span th:text="${priority}"></span><br>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;告警详情:<br>
+                                    <span th:text="${content}"></span><br>
+                                    </p>
+                                    <p
+                                            style="font-size: 14px; font-family: PingFangSC-Medium,PingFang SC; font-weight: bold; color: rgb(0, 0, 0); line-height: 22px; letter-spacing: 1px;">
+                                        <br>
+                                    </p>
+                                </section>
+                            </section>
+                            <section
+                                    style="display: flex;justify-content: center;align-items: center;justify-content: space-between;">
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 0px 0px 1px 1px; border-bottom-style: solid; border-left-style: solid; border-bottom-color: rgb(151, 151, 151); border-left-color: rgb(151, 151, 151); border-top-style: initial; border-top-color: initial; border-right-style: initial; border-right-color: initial; margin-left: 4px; margin-bottom: 4px;">
+                                    <br>
+                                </section>
+                                <section
+                                        style="width: 11px; height: 11px; border-width: 0px 1px 1px 0px; border-right-style: solid; border-bottom-style: solid; border-right-color: rgb(151, 151, 151); border-bottom-color: rgb(151, 151, 151); border-top-style: initial; border-top-color: initial; border-left-style: initial; border-left-color: initial; margin-right: 4px; margin-bottom: 4px;">
+                                    <br>
+                                </section>
+                            </section>
+                        </section>
+                    </section>
+                </section>
+            </section>
+        </section>
+        <p><br></p>
+        <p><br></p>
+
+    </section>
+</section>
+</section>
+</section>
+</section>
+</section>
+</section>
+</body>
+</html>
