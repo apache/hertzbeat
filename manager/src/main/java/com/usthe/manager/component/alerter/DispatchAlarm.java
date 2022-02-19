@@ -7,17 +7,19 @@ import com.usthe.alert.service.AlertService;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.manager.service.MailService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.mail.internet.MimeMessage;
 import java.util.Date;
 import java.util.List;
 
@@ -37,10 +39,11 @@ public class DispatchAlarm {
     private NoticeConfigService noticeConfigService;
     private JavaMailSender javaMailSender;
     private RestTemplate restTemplate;
+    private MailService mailService;
 
     public DispatchAlarm(AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
-                         JavaMailSender javaMailSender,NoticeConfigService noticeConfigService,
-                         AlertService alertService, MonitorService monitorService, RestTemplate restTemplate) {
+                         JavaMailSender javaMailSender, NoticeConfigService noticeConfigService,
+                         AlertService alertService, MonitorService monitorService, RestTemplate restTemplate, MailService mailService) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alertService = alertService;
@@ -48,6 +51,7 @@ public class DispatchAlarm {
         this.noticeConfigService = noticeConfigService;
         this.javaMailSender = javaMailSender;
         this.restTemplate = restTemplate;
+        this.mailService = mailService;
         startDispatch();
     }
 
@@ -137,19 +141,24 @@ public class DispatchAlarm {
         }
     }
 
-    private void sendEmailAlert(NoticeReceiver receiver, Alert alert) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setSubject("TanCloud探云-监控告警");
-        message.setFrom("gongchao@tancloud.cn");
-        message.setTo(receiver.getEmail());
-        message.setSentDate(new Date());
-        message.setText("探云TanCloud-监控告警\n" +
-                "告警目标对象: " + alert.getTarget() + "\n" +
-                "所属监控ID: " + alert.getMonitorId() + "\n" +
-                "所属监控名称: " + alert.getMonitorName() + "\n" +
-                "告警级别: " + alert.getPriority() + "\n" +
-                "告警详情: \n" + alert.getContent());
-        javaMailSender.send(message);
+
+    private void sendEmailAlert(final NoticeReceiver receiver,final Alert alert){
+        try{
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage,true,"UTF-8");
+            messageHelper.setSubject("TanCloud探云-监控告警");
+            //设置发件人Email
+            messageHelper.setFrom("gongchao@tancloud.cn");
+            //设定收件人Email
+            messageHelper.setTo(receiver.getEmail());        
+            messageHelper.setSentDate(new Date());
+            //构建邮件模版
+            String process = mailService.buildHTMLTemplate(alert);
+            messageHelper.setText(process,true);   //设置邮件内容模版
+            javaMailSender.send(mimeMessage);
+        }catch (Exception e){
+            log.error("[邮箱告警] error，Exception information={}",e.getMessage());
+        }
     }
 
     private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
