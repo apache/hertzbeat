@@ -155,7 +155,7 @@ public class DispatchAlarm {
             //构建邮件模版
             String process = mailService.buildHTMLTemplate(alert);
             //设置邮件内容模版
-            messageHelper.setText(process,true);
+            messageHelper.setText(process,true);   
             javaMailSender.send(mimeMessage);
         }catch (Exception e){
             log.error("[邮箱告警] error，Exception information={}",e.getMessage());
