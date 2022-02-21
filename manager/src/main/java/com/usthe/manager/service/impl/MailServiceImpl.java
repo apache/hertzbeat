@@ -1,9 +1,9 @@
 package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.util.CommonUtil;
 import com.usthe.manager.service.MailService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -16,7 +16,6 @@ import javax.annotation.Resource;
  *
  * @version 1.0
  *
- * @Description
  */
 @Slf4j
 @Service
@@ -26,13 +25,13 @@ public class MailServiceImpl implements MailService {
     private TemplateEngine templateEngine;
 
     @Override
-    public String buildHTMLTemplate(final Alert alert) {
-        //引入thymeleaf上下文参数渲染页面
+    public String buildAlertHtmlTemplate(final Alert alert) {
+        // 引入thymeleaf上下文参数渲染页面
         Context context = new Context();
         context.setVariable("target",alert.getTarget());
-        context.setVariable("ID",alert.getMonitorId());
-        context.setVariable("name",alert.getMonitorName());
-        context.setVariable("priority",alert.getPriority());
+        context.setVariable("monitorId",alert.getMonitorId());
+        context.setVariable("monitorName",alert.getMonitorName());
+        context.setVariable("priority", CommonUtil.transferAlertPriority(alert.getPriority()));
         context.setVariable("content",alert.getContent());
         return templateEngine.process("mailAlarm", context);
     }
