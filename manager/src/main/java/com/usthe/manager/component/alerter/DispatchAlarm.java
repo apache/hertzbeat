@@ -11,6 +11,7 @@ import com.usthe.manager.service.MailService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -40,6 +41,9 @@ public class DispatchAlarm {
     private JavaMailSender javaMailSender;
     private RestTemplate restTemplate;
     private MailService mailService;
+
+    @Value("${spring.mail.username}")
+    private String emailFromUser;
 
     public DispatchAlarm(AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
                          JavaMailSender javaMailSender, NoticeConfigService noticeConfigService,
@@ -148,12 +152,12 @@ public class DispatchAlarm {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage,true,"UTF-8");
             messageHelper.setSubject("TanCloud探云-监控告警");
             //设置发件人Email
-            messageHelper.setFrom("gongchao@tancloud.cn");
+            messageHelper.setFrom(emailFromUser);
             //设定收件人Email
             messageHelper.setTo(receiver.getEmail());        
             messageHelper.setSentDate(new Date());
             //构建邮件模版
-            String process = mailService.buildHTMLTemplate(alert);
+            String process = mailService.buildAlertHtmlTemplate(alert);
             //设置邮件内容模版
             messageHelper.setText(process,true);   
             javaMailSender.send(mimeMessage);
