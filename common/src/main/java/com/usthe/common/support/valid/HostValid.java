@@ -21,7 +21,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = HostParamValidator.class)
 public @interface HostValid {
 
-    String message() default "Host value is invalid,must ipv4, ipv6 or domain";
+    String message() default "监控Host必须是ipv4,ipv6或域名";
 
     Class<?>[] groups() default {};
 

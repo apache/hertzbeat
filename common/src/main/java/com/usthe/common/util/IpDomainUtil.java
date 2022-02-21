@@ -15,10 +15,13 @@ public class IpDomainUtil {
      * 域名校验正则
      */
     private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://)?(([A-Za-z0-9-~]+).)+([A-Za-z0-9-~\\/])+$");
+            Pattern.compile("^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$");
 
     private static final String LOCALHOST = "localhost";
 
+    /**
+     * HTTP协议头校验规则
+     */
     private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://){1}[^\\s]*");
 
     /**
