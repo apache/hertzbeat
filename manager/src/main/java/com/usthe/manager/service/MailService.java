@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
  * @author 花城
  * @version 1.0
  * @date 2022/2/19 6:11 下午
- * @Description
  */
 public interface MailService {
 
@@ -20,5 +19,5 @@ public interface MailService {
      * @param alert     告警信息
      * @return          邮件内容
      */
-    String buildHTMLTemplate(Alert alert);
+    String buildAlertHtmlTemplate(Alert alert);
 }

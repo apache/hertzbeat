@@ -26,8 +26,8 @@ public class MailServiceImpl implements MailService {
     private TemplateEngine templateEngine;
 
     @Override
-    public String buildHTMLTemplate(final Alert alert) {
-        //引入thymeleaf上下文参数渲染页面
+    public String buildAlertHtmlTemplate(final Alert alert) {
+        // 引入thymeleaf上下文参数渲染页面
         Context context = new Context();
         context.setVariable("target",alert.getTarget());
         context.setVariable("ID",alert.getMonitorId());
