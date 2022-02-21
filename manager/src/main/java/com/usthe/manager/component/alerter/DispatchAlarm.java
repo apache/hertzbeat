@@ -1,9 +1,14 @@
 package com.usthe.manager.component.alerter;
 
+import com.alibaba.fastjson.JSON;
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
+import com.usthe.collector.collect.common.http.HttpUtils;
+import com.usthe.common.util.CommonUtil;
+import com.usthe.common.util.PriorityLevelEnum;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
+import com.usthe.common.entity.dto.WeChatWebHookDTO;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -121,9 +126,37 @@ public class DispatchAlarm {
                 case 1: sendEmailAlert(receiver, alert); break;
                 case 2: sendWebHookAlert(receiver, alert); break;
                 case 3: sendWeChatAlert(receiver, alert); break;
+                case 4: sendWeChatWebHookAlert(receiver, alert);break;
                 default: break;
             }
         }
+    }
+
+    /**
+     * 通过企业微信发送告警信息
+     * @param receiver  通知配置信息
+     * @param alert     告警信息
+     */
+    private void sendWeChatWebHookAlert(NoticeReceiver receiver, Alert alert) {
+        WeChatWebHookDTO weChatWebHookDTO = new WeChatWebHookDTO();
+        weChatWebHookDTO.setMsgtype("markdown");
+        WeChatWebHookDTO.MarkdownDTO markdownDTO = new WeChatWebHookDTO.MarkdownDTO();
+        StringBuilder content = new StringBuilder();
+        content.append("\t\t\t\t<font color=\"info\">[TanCloud探云告警]</font>\n" +
+                "告警目标对象 : <font color=\"info\">" + alert.getTarget() + "</font>\n" +
+                "所属监控ID : " + alert.getMonitorId() + "\n" +
+                "所属监控名称 : " + alert.getMonitorName() + "\n");
+        if (alert.getPriority() < PriorityLevelEnum.WARNING.getLevel()){
+            content.append("告警级别 <font color=\"warning\">: " +  CommonUtil.transferAlertPriority(alert.getPriority()) + "</font>\n");
+        }else {
+            content.append("告警级别 <font color=\"comment\">: " +  CommonUtil.transferAlertPriority(alert.getPriority()) + "</font>\n");
+        }
+        content.append("内容详情 : " + alert.getContent());
+        markdownDTO.setContent(content.toString());
+        weChatWebHookDTO.setMarkdown(markdownDTO);
+        //TODO 以后转移到实体类中
+        String webHookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=fcf9ddxxx-ebaf-48a2-810c-404xxxxxxd3bf";
+        HttpUtils.sendPostJsonBody(webHookUrl, JSON.toJSONString(weChatWebHookDTO));
     }
 
     private void sendWeChatAlert(NoticeReceiver receiver, Alert alert) {
