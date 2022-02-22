@@ -20,7 +20,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FlyBookWebHookDto {
-    public static final String WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/873f1a93-0517-4590-a335-da64e48d6d48";
+    //TODO  hook后面是特有的地址
+    public static final String WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/";
 
     private static final String MARKDOWN = "post";
 
