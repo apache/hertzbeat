@@ -1,14 +1,11 @@
 package com.usthe.manager.component.alerter;
 
-import com.alibaba.fastjson.JSON;
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
-import com.usthe.collector.collect.common.http.HttpUtils;
 import com.usthe.common.util.CommonUtil;
-import com.usthe.common.util.PriorityLevelEnum;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
-import com.usthe.common.entity.dto.WeChatWebHookDTO;
+import com.usthe.manager.pojo.dto.WeWorkWebHookDTO;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -120,13 +117,14 @@ public class DispatchAlarm {
         List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
         // todo 发送通知这里暂时单线程
         for (NoticeReceiver receiver : receivers) {
+            sendWeWorkRobotAlert(receiver, alert);
             switch (receiver.getType()) {
                 // todo 短信通知
                 case 0: break;
                 case 1: sendEmailAlert(receiver, alert); break;
                 case 2: sendWebHookAlert(receiver, alert); break;
                 case 3: sendWeChatAlert(receiver, alert); break;
-                case 4: sendWeChatWebHookAlert(receiver, alert);break;
+                case 4: sendWeWorkRobotAlert(receiver, alert);break;
                 default: break;
             }
         }
@@ -137,26 +135,37 @@ public class DispatchAlarm {
      * @param receiver  通知配置信息
      * @param alert     告警信息
      */
-    private void sendWeChatWebHookAlert(NoticeReceiver receiver, Alert alert) {
-        WeChatWebHookDTO weChatWebHookDTO = new WeChatWebHookDTO();
-        weChatWebHookDTO.setMsgtype("markdown");
-        WeChatWebHookDTO.MarkdownDTO markdownDTO = new WeChatWebHookDTO.MarkdownDTO();
+    private void sendWeWorkRobotAlert(NoticeReceiver receiver, Alert alert) {
+        WeWorkWebHookDTO weWorkWebHookDTO = new WeWorkWebHookDTO();
+        WeWorkWebHookDTO.MarkdownDTO markdownDTO = new WeWorkWebHookDTO.MarkdownDTO();
         StringBuilder content = new StringBuilder();
-        content.append("\t\t\t\t<font color=\"info\">[TanCloud探云告警]</font>\n" +
-                "告警目标对象 : <font color=\"info\">" + alert.getTarget() + "</font>\n" +
-                "所属监控ID : " + alert.getMonitorId() + "\n" +
-                "所属监控名称 : " + alert.getMonitorName() + "\n");
-        if (alert.getPriority() < PriorityLevelEnum.WARNING.getLevel()){
-            content.append("告警级别 <font color=\"warning\">: " +  CommonUtil.transferAlertPriority(alert.getPriority()) + "</font>\n");
+        content.append("<font color=\"info\">[TanCloud探云告警通知]</font>\n告警目标对象 : <font color=\"info\">")
+                .append(alert.getTarget()).append("</font>\n")
+                .append("所属监控ID : ").append(alert.getMonitorId()).append("\n")
+                .append("所属监控名称 : ").append(alert.getMonitorName()).append("\n");
+        if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
+            content.append("告警级别 : <font color=\"warning\">")
+                    .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
         }else {
-            content.append("告警级别 <font color=\"comment\">: " +  CommonUtil.transferAlertPriority(alert.getPriority()) + "</font>\n");
+            content.append("告警级别 : <font color=\"comment\">")
+                    .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
         }
-        content.append("内容详情 : " + alert.getContent());
+        content.append("内容详情 : ").append(alert.getContent());
         markdownDTO.setContent(content.toString());
-        weChatWebHookDTO.setMarkdown(markdownDTO);
-        //TODO 以后转移到实体类中
-        String webHookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=fcf9ddxxx-ebaf-48a2-810c-404xxxxxxd3bf";
-        HttpUtils.sendPostJsonBody(webHookUrl, JSON.toJSONString(weChatWebHookDTO));
+        weWorkWebHookDTO.setMarkdown(markdownDTO);
+        String webHookUrl = WeWorkWebHookDTO.WEBHOOK_URL + receiver.getWechatId();
+        try {
+            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, String.class);
+            if (entity.getStatusCode() == HttpStatus.OK) {
+                log.debug("Send weWork webHook: {} Success", webHookUrl);
+            } else {
+                log.warn("Send weWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
+            }
+        } catch (ResourceAccessException e) {
+            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     private void sendWeChatAlert(NoticeReceiver receiver, Alert alert) {
