@@ -60,12 +60,17 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>微信公众号</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 4" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>企业微信机器人</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
             <span *ngIf="data.type == 1">{{ data.email }}</span>
             <span *ngIf="data.type == 2">{{ data.hookUrl }}</span>
             <span *ngIf="data.type == 3">{{ data.wechatId }}</span>
+            <span *ngIf="data.type == 4">{{ data.wechatId }}</span>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
           <td nzAlign="center">
@@ -158,24 +163,25 @@
     <form nz-form #receiverForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">接收人名称</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.name" nz-input required name="name" type="text" id="name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="type">通知方式 </nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select [(ngModel)]="receiver.type" nzPlaceHolder="Choose" required name="type" id="type">
             <nz-option [nzValue]="0" nzDisabled nzLabel="短信"></nz-option>
             <nz-option [nzValue]="1" nzLabel="邮箱"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
             <nz-option [nzValue]="3" nzDisabled nzLabel="微信公众号"></nz-option>
+            <nz-option [nzValue]="4" nzLabel="企业微信机器人"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 0">
         <nz-form-label [nzSpan]="7" nzFor="phone" [nzRequired]="receiver.type === 0">手机号</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.phone.invalid' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.phone.invalid' | i18n">
           <input
             [(ngModel)]="receiver.phone"
             nz-input
@@ -189,20 +195,26 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 1">
         <nz-form-label [nzSpan]="7" nzFor="email" [nzRequired]="receiver.type === 1">邮箱</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.email.invalid' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.email.invalid' | i18n">
           <input [(ngModel)]="receiver.email" nz-input [required]="receiver.type === 1" email name="email" type="email" id="email" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 2">
         <nz-form-label [nzSpan]="7" nzFor="hookUrl" [nzRequired]="receiver.type === 2">URL地址</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.hookUrl" nz-input [required]="receiver.type === 2" name="hookUrl" type="url" id="hookUrl" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 3">
         <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 3">微信OPENID</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 3" name="wechatId" type="text" id="wechatId" />
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 3" name="wechatId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 4">
+        <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 4">企业微信机器人KEY</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 4" name="wechatId" type="text" />
         </nz-form-control>
       </nz-form-item>
     </form>
