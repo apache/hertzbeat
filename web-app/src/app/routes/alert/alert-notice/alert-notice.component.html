@@ -64,6 +64,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>企业微信机器人</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 6" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>飞书机器人</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -71,6 +75,7 @@
             <span *ngIf="data.type == 2">{{ data.hookUrl }}</span>
             <span *ngIf="data.type == 3">{{ data.wechatId }}</span>
             <span *ngIf="data.type == 4">{{ data.wechatId }}</span>
+            <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
           <td nzAlign="center">
@@ -176,6 +181,7 @@
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
             <nz-option [nzValue]="3" nzDisabled nzLabel="微信公众号"></nz-option>
             <nz-option [nzValue]="4" nzLabel="企业微信机器人"></nz-option>
+            <nz-option [nzValue]="6" nzLabel="飞书机器人"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -215,6 +221,12 @@
         <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 4">企业微信机器人KEY</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 4" name="wechatId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 6">
+        <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 6">飞书机器人KEY</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 6" name="wechatId" type="text" />
         </nz-form-control>
       </nz-form-item>
     </form>
