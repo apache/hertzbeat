@@ -30,7 +30,7 @@ fi
 # JVM Configuration
 JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true "
 
-JAVA_MEM_OPTS=" -server -Xms512m -Xmx512m -XX:SurvivorRatio=2 -XX:+UseParallelGC "
+JAVA_MEM_OPTS=" -server -Xms256m -Xmx1024m -XX:SurvivorRatio=2 -XX:+UseParallelGC "
 
 # 加载外部log文件的配置
 LOG_IMPL_FILE=logback-spring.xml
