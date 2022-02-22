@@ -1,10 +1,13 @@
 package com.usthe.manager.component.alerter;
 
+import com.alibaba.fastjson.JSON;
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
+import com.usthe.collector.collect.common.http.HttpUtils;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
+import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
 import com.usthe.manager.pojo.dto.WeWorkWebHookDTO;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.entity.manager.Monitor;
@@ -23,6 +26,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.mail.internet.MimeMessage;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -120,13 +124,67 @@ public class DispatchAlarm {
             switch (receiver.getType()) {
                 // todo 短信通知
                 case 0: break;
-                case 1: sendEmailAlert(receiver, alert); break;
+//                case 1: sendEmailAlert(receiver, alert); break;
                 case 2: sendWebHookAlert(receiver, alert); break;
                 case 3: sendWeChatAlert(receiver, alert); break;
                 case 4: sendWeWorkRobotAlert(receiver, alert);break;
+                case 1: sendFlyBookAlert(receiver,alert); break;
                 default: break;
             }
         }
+    }
+
+    /**
+     * 通过飞书发送告警信息
+     * @param receiver
+     * @param alert
+     */
+    private void sendFlyBookAlert(NoticeReceiver receiver, Alert alert) {
+        FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
+        FlyBookWebHookDto.Content content = new FlyBookWebHookDto.Content();
+        FlyBookWebHookDto.Post post = new FlyBookWebHookDto.Post();
+        FlyBookWebHookDto.zh_cn zh_cn = new FlyBookWebHookDto.zh_cn();
+        content.setPost(post);
+        post.setZh_cn(zh_cn);
+        flyBookWebHookDto.setMsg_type("post");
+        List<List<FlyBookWebHookDto.FlyBookContent>> contents = new ArrayList<>();
+        List<FlyBookWebHookDto.FlyBookContent> contents1 = new ArrayList<>();
+        FlyBookWebHookDto.FlyBookContent flyBookContent = new FlyBookWebHookDto.FlyBookContent();
+        flyBookContent.setTag("text");
+        StringBuilder text = new StringBuilder();
+        text.append("告警目标对象 :" + alert.getTarget())
+             .append("\n所属监控ID :" + alert.getMonitorId())
+             .append("\n所属监控名称 :" + alert.getMonitorName())
+             .append("\n告警级别 :" + CommonUtil.transferAlertPriority(alert.getPriority()))
+             .append("\n内容详情 : " + alert.getContent());
+        flyBookContent.setText(text.toString());
+        contents1.add(flyBookContent);
+        FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
+        bookContent.setTag("a");
+        bookContent.setText("点击查看");
+        bookContent.setHref("https://www.baidu.com");
+        contents1.add(bookContent);
+        contents.add(contents1);
+        zh_cn.setTitle("[TanCloud探云告警]");
+        zh_cn.setContent(contents);
+        flyBookWebHookDto.setContent(content);
+        //TODO 这个地方要加新的字段
+        String webHookUrl = FlyBookWebHookDto.WEBHOOK_URL + receiver.getWechatId();
+        try {
+            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, flyBookWebHookDto, String.class);
+            if (entity.getStatusCode() == HttpStatus.OK) {
+                log.debug("Send weWork webHook: {} Success", webHookUrl);
+            } else {
+                log.warn("Send weWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
+            }
+        } catch (ResourceAccessException e) {
+            log.warn("Send WebHook: {} Failed: {}.", webHookUrl, e.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
+
+
     }
 
     /**
