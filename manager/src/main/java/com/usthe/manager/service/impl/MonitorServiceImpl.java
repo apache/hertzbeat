@@ -1,5 +1,6 @@
 package com.usthe.manager.service.impl;
 
+import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
@@ -59,6 +60,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private ParamDao paramDao;
+
+    @Autowired
+    private AlertDefineBindDao alertDefineBindDao;
 
     @Override
     @Transactional(readOnly = true)
@@ -279,6 +283,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
             paramDao.deleteParamsByMonitorId(id);
+            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobService.cancelAsyncCollectJob(monitor.getJobId());
         }
     }
@@ -290,6 +295,8 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitors != null) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
+            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitors.stream()
+                    .map(Monitor::getId).collect(Collectors.toList()));
             for (Monitor monitor : monitors) {
                 collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             }
