@@ -117,7 +117,6 @@ public class DispatchAlarm {
         List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
         // todo 发送通知这里暂时单线程
         for (NoticeReceiver receiver : receivers) {
-            sendWeWorkRobotAlert(receiver, alert);
             switch (receiver.getType()) {
                 // todo 短信通知
                 case 0: break;
@@ -162,7 +161,7 @@ public class DispatchAlarm {
                 log.warn("Send weWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
             }
         } catch (ResourceAccessException e) {
-            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
+            log.warn("Send WebHook: {} Failed: {}.", webHookUrl, e.getMessage());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
