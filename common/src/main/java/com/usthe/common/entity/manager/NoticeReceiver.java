@@ -46,7 +46,7 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @ApiModelProperty(value = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人", accessMode = READ_WRITE, position = 2)
     @Min(0)
     @Max(8)
     @NotNull
