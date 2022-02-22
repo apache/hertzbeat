@@ -4,17 +4,20 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.alert.AlerterDataQueue;
+import com.usthe.alert.dao.AlertMonitorDao;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.alert.util.AlertTemplateUtil;
 import com.usthe.collector.dispatch.export.MetricsDataExporter;
+import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +40,21 @@ public class CalculateAlarm {
     private Map<Long, CollectRep.Code> triggeredMonitorStateAlertMap;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
-                           AlertDefineService alertDefineService, MetricsDataExporter dataExporter) {
+                           AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
+                           AlertMonitorDao monitorDao) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         this.triggeredMonitorStateAlertMap = new ConcurrentHashMap<>(128);
+        // 初始化stateAlertMap
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList((byte)2, (byte)3));
+        if (monitors != null) {
+            for (Monitor monitor : monitors) {
+                this.triggeredMonitorStateAlertMap.put(monitor.getId(), CollectRep.Code.UN_AVAILABLE);
+            }
+        }
         startCalculate();
     }
 
