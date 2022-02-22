@@ -7,6 +7,7 @@ export class NoticeReceiver {
   email!: string;
   hookUrl!: string;
   wechatId!: string;
+  accessToken!: string;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;

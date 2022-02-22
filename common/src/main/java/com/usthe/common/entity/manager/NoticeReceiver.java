@@ -46,9 +46,9 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @ApiModelProperty(value = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人", accessMode = READ_WRITE, position = 2)
     @Min(0)
-    @Max(3)
+    @Max(8)
     @NotNull
     private Byte type;
 
@@ -61,12 +61,16 @@ public class NoticeReceiver {
     private String email;
 
     @ApiModelProperty(value = "URL地址, 通知方式为webhook有效", example = "https://www.tancloud.cn", accessMode = READ_WRITE, position = 5)
-    @Length(max = 100)
+    @Length(max = 300)
     private String hookUrl;
 
-    @ApiModelProperty(value = "wechat用户openId, 通知方式为微信公众号有效", example = "343432", accessMode = READ_WRITE, position = 6)
-    @Length(max = 100)
+    @ApiModelProperty(value = "openId, 通知方式为微信公众号或企业微信机器人有效", example = "343432", accessMode = READ_WRITE, position = 6)
+    @Length(max = 300)
     private String wechatId;
+
+    @ApiModelProperty(value = "访问token, 通知方式为钉钉机器人有效", example = "34823984635647", accessMode = READ_WRITE, position = 7)
+    @Length(max = 300)
+    private String accessToken;
 
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 7)
     private String creator;
