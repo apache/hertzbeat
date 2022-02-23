@@ -150,7 +150,7 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="intervals" nzTooltipTitle="监控周期性采集数据间隔时间,单位秒"> 采集间隔 </nz-form-label>
         <nz-form-control nzSpan="10">
-          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="10000" [nzStep]="8" name="intervals" id="intervals">
+          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="604800" [nzStep]="60" name="intervals" id="intervals">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>
