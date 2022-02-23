@@ -18,6 +18,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@SuppressWarnings("PMD")
 public class FlyBookWebHookDto {
 
     public static final String WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/";

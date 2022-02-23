@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class WeWorkWebHookDTO {
+public class WeWorkWebHookDto {
 
     public static final String WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
     private static final String MARKDOWN = "markdown";
