@@ -29,10 +29,10 @@ excludedResource:
   - /v3/api-docs===get
 
 # 用户账户信息
-# 下面有 admin root tom三个账户
-# eg: admin 拥有[role1,role2]角色,明文密码为admin,加盐密码为0192023A7BBD73250516F069DF18B500
-# eg: root 拥有[role1],密码为明文23456
-# eg: tom 拥有[role3],密码为明文32113
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[role1,role2]角色,密码为admin
+# eg: tom 拥有[role1,role2,role3],密码为tom@123
+# eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
   - appId: admin
     credential: admin
