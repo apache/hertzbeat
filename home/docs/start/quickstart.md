@@ -32,7 +32,7 @@ sidebar_label: 快速开始
 > HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署。  
 
 #### Docker方式快速安装
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat:latest`  
+`docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml --name hertzbeat tancloud/hertzbeat:[版本tag]`  
 
 详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
 
