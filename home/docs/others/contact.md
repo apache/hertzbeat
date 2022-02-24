@@ -21,11 +21,16 @@ sidebar_label: 交流联系
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="400"/>          
 
-##### 交流网站
+## 交流网站    
 
 [Dromara社区网站](https://dromara.org/)    
 
 [HertzBeat用户网站](https://support.qq.com/products/379369)
+
+## 微信公众号    
+
+<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>  
+
 
 ## 其它联系  
 其它工作联系，联系电话：18781603458 微信: tomsun28     
