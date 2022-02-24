@@ -262,6 +262,9 @@ export class AlertNoticeComponent implements OnInit {
               case 4:
                 label = `${label}WeWork`;
                 break;
+              case 5:
+                label = `${label}DingDing`;
+                break;
               case 6:
                 label = `${label}FeiShu`;
                 break;

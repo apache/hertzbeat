@@ -5,6 +5,7 @@ import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
+import com.usthe.manager.pojo.dto.DingTalkWebHookDto;
 import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
 import com.usthe.manager.pojo.dto.WeWorkWebHookDto;
 import com.usthe.common.util.CommonConstants;
@@ -126,6 +127,7 @@ public class DispatchAlarm {
                 case 2: sendWebHookAlert(receiver, alert); break;
                 case 3: sendWeChatAlert(receiver, alert); break;
                 case 4: sendWeWorkRobotAlert(receiver, alert); break;
+                case 5: sendDingTalkRobotAlert(receiver, alert); break;
                 case 6: sendFlyBookAlert(receiver,alert); break;
                 default: break;
             }
@@ -175,6 +177,39 @@ public class DispatchAlarm {
             }
         } catch (ResourceAccessException e) {
             log.warn("Send WebHook: {} Failed: {}.", webHookUrl, e.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 通过钉钉机器人发送告警信息
+     * @param receiver  通知配置信息
+     * @param alert     告警信息
+     */
+    private void sendDingTalkRobotAlert(NoticeReceiver receiver, Alert alert) {
+        DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
+        DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
+        String content = "#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
+                alert.getTarget() + "\n   " +
+                "##### **所属监控ID** : " + alert.getMonitorId() + "\n   " +
+                "##### **所属监控名称** : " + alert.getMonitorName() + "\n   " +
+                "##### **告警级别** : " +
+                CommonUtil.transferAlertPriority(alert.getPriority()) + "\n   " +
+                "##### **内容详情** : " + alert.getContent();
+        markdownDTO.setText(content);
+        markdownDTO.setTitle("TanCloud探云告警通知");
+        dingTalkWebHookDto.setMarkdown(markdownDTO);
+        String webHookUrl = DingTalkWebHookDto.WEBHOOK_URL + receiver.getAccessToken();
+        try {
+            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, dingTalkWebHookDto, String.class);
+            if (entity.getStatusCode() == HttpStatus.OK) {
+                log.debug("Send dingTalk webHook: {} Success", webHookUrl);
+            } else {
+                log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, entity.getBody());
+            }
+        } catch (ResourceAccessException e) {
+            log.warn("Send dingTalk: {} Failed: {}.", webHookUrl, e.getMessage());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
