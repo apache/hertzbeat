@@ -164,8 +164,8 @@ module.exports = {
                             to: 'docs/others/contact',
                         },
                         {
-                            label: '用户交流网站',
-                            href: 'https://support.qq.com/products/379369',
+                            label: '我们的故事',
+                            href: 'https://support.qq.com/products/379369/team',
                         },
                         {
                             label: 'TanCloud探云',
@@ -193,7 +193,7 @@ module.exports = {
             ],
             logo: {
                 alt: 'TANCLOUD探云-易用友好的高性能监控云',
-                src: 'img/icons/dromara.png',
+                src: 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png',
                 href: 'https://dromara.org/zh/',
             },
             copyright: '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' + ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,
