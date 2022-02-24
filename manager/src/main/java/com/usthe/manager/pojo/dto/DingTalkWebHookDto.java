@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@SuppressWarnings("PMD")
 public class DingTalkWebHookDto {
 
     public static final String WEBHOOK_URL = "https://oapi.dingtalk.com/robot/send?access_token=";
