@@ -30,6 +30,9 @@ export class StartupService {
     private router: Router
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
+    iconSrv.fetchFromIconfont({
+      scriptUrl: 'https://at.alicdn.com/t/font_3113282_flj0py4g7ft.js'
+    });
   }
 
   private viaHttp(): Observable<void> {
