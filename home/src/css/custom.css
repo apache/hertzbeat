@@ -115,6 +115,10 @@ html[data-theme=dark] {
     font-size: .8em;
     text-align: left;
 }
+.footer__logo {
+    margin-top: 1rem;
+    max-width: 20rem;
+}
 
 /*.footer__link-item[target="_blank"]:after {*/
 /*    padding: 0 4px;*/
