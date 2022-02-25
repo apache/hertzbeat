@@ -100,6 +100,21 @@
           "link": "/alert/notice"
         }
       ]
+    },
+    {
+      "text": "More",
+      "i18n": "menu.extras",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "helpCenter",
+          "externalLink": "https://tancloud.cn/docs/help/guide",
+          "target": "_blank",
+          "i18n": "menu.extras.help",
+          "icon": "anticon-global"
+        }
+      ]
     }
   ]
 }
