@@ -28,14 +28,29 @@
           "type": "category",
           "label": "应用服务监控",
           "items": [
-            "help/guide"
+            "help/website",
+            "help/api",
+            "help/ping",
+            "help/port",
+            "help/fullsite"
           ]
         },
         {
           "type": "category",
           "label": "数据库监控",
           "items": [
-            "help/guide"
+            "help/mysql"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "告警通知配置",
+          "items": [
+            "help/alert_email",
+            "help/alert_webhook",
+            "help/alert_wework",
+            "help/alert_dingtalk",
+            "help/alert_feishu"
           ]
         }
       ]
