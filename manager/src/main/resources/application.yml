@@ -53,9 +53,9 @@ spring:
         debug: false
 
   thymeleaf:
-    prefix: classpath:/templates/  #prefix：指定模板所在的目录
-    check-template-location: true  #check-tempate-location: 检查模板路径是否存在
-    cache: false  #cache: 是否缓存，开发模式下设置为false，避免改了模板还要重启服务器，线上设置为true，可以提高性能。
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
     suffix: .html
     #encoding: UTF-8
     #content-type: text/html
