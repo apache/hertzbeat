@@ -345,6 +345,7 @@ export class AlertSettingComponent implements OnInit {
       .pipe(
         finalize(() => {
           applyBind$.unsubscribe();
+          this.isConnectModalOkLoading = false;
         })
       )
       .subscribe(
@@ -359,6 +360,7 @@ export class AlertSettingComponent implements OnInit {
           }
         },
         error => {
+          this.isConnectModalOkLoading = false;
           this.notifySvc.error('应用失败！', error.msg);
         }
       );
