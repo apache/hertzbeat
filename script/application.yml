@@ -41,7 +41,7 @@ spring:
     host: smtp.exmail.qq.com
     username: example@qq.com
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
-    password: woshigongchao123
+    password: example
     port: 465
     default-encoding: UTF-8
     properties:
@@ -50,6 +50,15 @@ spring:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    #encoding: UTF-8
+    #content-type: text/html
+    mode: LEGACYHTML5
 
 warehouse:
   store:
