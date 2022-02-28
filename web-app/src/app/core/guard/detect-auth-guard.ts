@@ -18,7 +18,7 @@ export class DetectAuthGuard implements CanActivate {
     let activate = this.localStorageSvc.hasAuthorizationToken();
     if (!activate) {
       setTimeout(() => {
-        this.notifySvc.warning('请先登陆!', '');
+        this.notifySvc.warning('请先登录!', '');
         this.router.navigateByUrl('/passport/login');
       });
     }

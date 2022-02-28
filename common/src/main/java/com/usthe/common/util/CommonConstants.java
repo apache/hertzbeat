@@ -38,7 +38,7 @@ public interface CommonConstants {
     byte MONITOR_CONFLICT_CODE = 0x04;
 
     /**
-     * 响应状态码: 登陆账户密码错误
+     * 响应状态码: 登录账户密码错误
      */
     byte MONITOR_LOGIN_FAILED_CODE = 0x05;
 
@@ -160,17 +160,17 @@ public interface CommonConstants {
     byte AUTH_TYPE_PASSWORD = 1;
 
     /**
-     * 认证类型 GITHUB三方登陆
+     * 认证类型 GITHUB三方登录
      */
     byte AUTH_TYPE_GITHUB = 2;
 
     /**
-     * 认证类型 微信三方登陆
+     * 认证类型 微信三方登录
      */
     byte AUTH_TYPE_WEIXIN = 3;
 
     /**
-     * 认证类型 GITEE三方登陆
+     * 认证类型 GITEE三方登录
      */
     byte AUTH_TYPE_GITEE = 5;
 }

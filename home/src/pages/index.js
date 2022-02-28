@@ -45,7 +45,7 @@ function Home() {
                                 'button button--outline button--secondary button--lg',
                                 styles.getStarted,
                             )}>
-                            <Translate>即刻登陆免费使用</Translate>
+                            <Translate>即刻登录免费使用</Translate>
                         </Link>
                     </div>
                 </div>
