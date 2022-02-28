@@ -19,7 +19,7 @@ tags: [opensource]
 既然想做开源为啥不能全职去做呢，想着年轻就要折腾，何况还是自己很想做的。于是乎21年底放弃激励裸辞开始全职开源了，也是第一次全职创业(虽然大概率失败，但搏一搏，单车变摩托🤓)       
 自己在APM领域做了多年，当然这次创业加开源的方向也就是老本行监控系统，我们开发一个支持多种监控指标(更多监控类型指标正在适配中)，拥有自定义监控，支持阈值告警通知等功能，面向开发者友好的开源监控项目-HertzBeat赫兹跳动。   
 为了感谢老婆大人的全力支持，hertzbeat服务端口默认为**1157**(遥遥无期)-老婆叫尧尧，我个人希望未来的宝宝叫午期(没有话语权可能性不大😂)    
-想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署繁杂的监控系统(往往有时候那套监控系统比我们自身服务消耗的服务器资源还多😅)，我们也提供了可以直接登陆使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
+想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署繁杂的监控系统(往往有时候那套监控系统比我们自身服务消耗的服务器资源还多😅)，我们也提供了可以直接登录使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
 希望老铁们多多支持了解试用点赞，非常感谢。     
 
 
@@ -31,7 +31,7 @@ tags: [opensource]
 在监控领域，监控需求指标啊这些往往千奇百怪，作为一个面向开发者的开源软件，[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) 肯定是要安排上的，大家可以只通过配置YML文件就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
 HertzBeat 也是模块化的，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解上手和定制开发。         
 我们也提供了更自由化的告警阈值配置，阈值触发表达式，三种告警级别，触发次数配置，支持告警通知模版，邮件webhook等方式告警通知，实时感知业务状态。              
-更多功能欢迎登陆 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) https://console.tancloud.cn 试用发现。    
+更多功能欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) https://console.tancloud.cn 试用发现。    
 项目正在快速迭代中，欢迎参与加入进来我们一起共建项目开源生态。           
 
 **关于HertzBeat的云SAAS环境TanCloud - https://console.tancloud.cn**        
@@ -40,7 +40,7 @@ HertzBeat 也是模块化的，`manager, collector, scheduler, warehouse, alerte
 如果是去自己部署一套监控系统在服务器上自己用，抛开学习成本和时间成本，往往有时候，那套监控系统比我们的自身网站消耗的服务器资源还大，这让原本紧张的服务器资源就更紧张了。  
 
 对此，我们提供了一个SAAS云监控服务，我们开发者或者中小团队个人无需再为了监控自己的网站等云上资源，而去部署一套繁琐的监控系统。   
-[登陆即可免费开始使用](https://console.tancloud.cn) https://console.tancloud.cn。目前云环境功能还在快速迭代中，租户，权限等功能都会安排上，欢迎试用提需求提意见。   
+[登录即可免费开始使用](https://console.tancloud.cn) https://console.tancloud.cn。目前云环境功能还在快速迭代中，租户，权限等功能都会安排上，欢迎试用提需求提意见。   
 
 
 

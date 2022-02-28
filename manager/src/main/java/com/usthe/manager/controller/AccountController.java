@@ -50,7 +50,7 @@ public class AccountController {
     private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
     @PostMapping("/form")
-    @ApiOperation(value = "账户登陆", notes = "账户密码登陆获取关联用户信息")
+    @ApiOperation(value = "账户登录", notes = "账户密码登录获取关联用户信息")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@RequestBody LoginDto loginDto) {
 
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());

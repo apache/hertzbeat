@@ -121,7 +121,7 @@ module.exports = {
                     ],
                 },
                 {
-                    label: '登陆/注册',
+                    label: '登录/注册',
                     href: 'https://console.tancloud.cn',
                     position: 'right',
                     className: 'header-console-link'

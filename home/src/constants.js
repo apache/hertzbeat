@@ -12,7 +12,7 @@ export const features = [{
             <Translate values={{
                 TANCLOUD: <strong>TANCLOUD</strong>,
                 SAAS: <strong>SAAS</strong>,
-                console: <a href={'https://www.console.tancloud.cn'}><strong>注册登陆</strong></a>,
+                console: <a href={'https://www.console.tancloud.cn'}><strong>注册登录</strong></a>,
                 doc: <strong>文档</strong>,
                 br: <br/>
             }}>

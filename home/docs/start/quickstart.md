@@ -6,7 +6,7 @@ sidebar_label: 快速开始
 
 ### 🐕 开始使用
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登陆注册](https://console.tancloud.cn)免费使用。  
+- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登录注册](https://console.tancloud.cn)免费使用。  
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
 
 ### 🐵 依赖服务部署   
