@@ -15,11 +15,11 @@
 ## 🎡 <font color="green">介绍</font>
 
 > [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由[Dromara](https://dromara.org)孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
-> 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登陆即可免费开始](https://console.tancloud.cn)**。     
+> 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
 > HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
 > HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达          
-> 欢迎登陆 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。          
+> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。          
 > 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。       
 
 > `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。            
@@ -50,7 +50,7 @@
 
 ## 🐕 快速开始  
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻 **[登陆注册](https://console.tancloud.cn)** 免费使用。
+- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻 **[登录注册](https://console.tancloud.cn)** 免费使用。
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的[部署文档](https://hertzbeat.com/docs/start/quickstart)进行操作。   
 
 ### 🐵 依赖服务部署

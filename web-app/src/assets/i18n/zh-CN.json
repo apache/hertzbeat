@@ -93,7 +93,7 @@
   "app.register-result.msg": "你的账户：{{email}} 注册成功",
   "app.register-result.activation-email":
     "额外赠送监控额度邮件已发送到你的邮箱中。请及时登录邮箱，点击邮件中的链接领取。",
-  "app.register-result.login": "开始登陆",
+  "app.register-result.login": "开始登录",
   "app.register-result.back-home": "返回首页",
   "app.register-result.view-mailbox": "查看邮箱",
   "validation.email.required": "请输入邮箱地址！",
