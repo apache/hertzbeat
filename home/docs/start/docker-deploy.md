@@ -99,3 +99,6 @@ sidebar_label: Docker方式部署
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
 > 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
 
+3. **日志报错TDengine连接或插入SQL失败**  
+> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
+> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
