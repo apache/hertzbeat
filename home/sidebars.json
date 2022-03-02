@@ -52,7 +52,8 @@
             "help/alert_dingtalk",
             "help/alert_feishu"
           ]
-        }
+        },
+        "help/issue"
       ]
     },
     {
