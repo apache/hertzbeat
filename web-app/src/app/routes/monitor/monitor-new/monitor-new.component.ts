@@ -21,7 +21,7 @@ export class MonitorNewComponent implements OnInit {
   paramDefines!: ParamDefine[];
   params!: Param[];
   monitor!: Monitor;
-  detected: boolean = false;
+  detected: boolean = true;
   passwordVisible: boolean = false;
   // 是否显示加载中
   isSpinning: boolean = false;
@@ -45,7 +45,7 @@ export class MonitorNewComponent implements OnInit {
         switchMap((paramMap: ParamMap) => {
           this.monitor.app = paramMap.get('app') || '';
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = false;
+          this.detected = true;
           this.passwordVisible = false;
           this.isSpinning = false;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
