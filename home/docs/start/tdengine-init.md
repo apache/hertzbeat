@@ -48,3 +48,6 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
    taos> show databases;
    taos> use hertzbeat;
    ```
+
+**注意⚠️若是安装包安装的TDengine2.3+版本**       
+> 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    

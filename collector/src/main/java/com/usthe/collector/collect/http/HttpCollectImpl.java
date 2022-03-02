@@ -350,15 +350,16 @@ public class HttpCollectImpl extends AbstractCollect {
         HttpProtocol.Authorization auth = httpProtocol.getAuthorization();
         if (auth != null && !DispatchConstants.BEARER_TOKEN.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
-            if (DispatchConstants.BASIC_AUTH.equals(auth.getType()) && auth.getBasicAuthUsername() != null
-                    && auth.getBasicAuthPassword() != null) {
+            if (DispatchConstants.BASIC_AUTH.equals(auth.getType())
+                    && StringUtils.hasText(auth.getBasicAuthUsername())
+                    && StringUtils.hasText(auth.getBasicAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials
                         = new UsernamePasswordCredentials(auth.getBasicAuthUsername(), auth.getBasicAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 clientContext.setCredentialsProvider(provider);
-            } else if (DispatchConstants.DIGEST_AUTH.equals(auth.getType()) && auth.getDigestAuthUsername() != null
-                    && auth.getDigestAuthPassword() != null) {
+            } else if (DispatchConstants.DIGEST_AUTH.equals(auth.getType()) && StringUtils.hasText(auth.getDigestAuthUsername())
+                    && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials
                         = new UsernamePasswordCredentials(auth.getBasicAuthUsername(), auth.getBasicAuthPassword());
@@ -400,14 +401,18 @@ public class HttpCollectImpl extends AbstractCollect {
         Map<String, String> params = httpProtocol.getParams();
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
-                requestBuilder.addParameter(param.getKey(), param.getValue());
+                if (StringUtils.hasText(param.getValue())) {
+                    requestBuilder.addParameter(param.getKey(), param.getValue());
+                }
             }
         }
         // headers
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
-                requestBuilder.addHeader(header.getKey(), header.getValue());
+                if (StringUtils.hasText(header.getValue())) {
+                    requestBuilder.addHeader(header.getKey(), header.getValue());
+                }
             }
         }
         // keep-alive

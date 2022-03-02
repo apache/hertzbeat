@@ -11,7 +11,7 @@ sidebar_label: 快速开始
 
 ### 🐵 依赖服务部署   
 
-> HertzBeat最少依赖于 关系型数据库[MYSQL8+](https://www.mysql.com/) 和 时序性数据库[TDengine2+](https://www.taosdata.com/getting-started)
+> HertzBeat最少依赖于 关系型数据库[MYSQL5+](https://www.mysql.com/) 和 时序性数据库[TDengine2+](https://www.taosdata.com/getting-started)
 
 ##### 安装MYSQL  
 1. docker安装MYSQl  
