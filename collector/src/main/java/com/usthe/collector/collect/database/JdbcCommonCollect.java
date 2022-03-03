@@ -1,5 +1,6 @@
 package com.usthe.collector.collect.database;
 
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
@@ -68,9 +69,12 @@ public class JdbcCommonCollect extends AbstractCollect {
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
                     break;
             }
+        } catch (CommunicationsException communicationsException) {
+            log.warn("Jdbc sql error: {}, code: {}.", communicationsException.getMessage(), communicationsException.getErrorCode());
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("Query Error: " + communicationsException.getMessage() + " Code: " + communicationsException.getErrorCode());
         } catch (SQLException sqlException) {
-            log.error("Jdbc sql error: {}, code: {}.", sqlException.getMessage(),
-                    sqlException.getErrorCode(), sqlException);
+            log.warn("Jdbc sql error: {}, code: {}.", sqlException.getMessage(), sqlException.getErrorCode());
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
         } catch (Exception e) {
