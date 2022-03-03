@@ -70,7 +70,7 @@ public class RedisDataStorage implements DisposableBean {
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
         if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse] redis flush metrics data {}:{} is null, ignore.", key, hashKey);
+            log.info("[warehouse redis] redis flush metrics data {} - {} is null, ignore.", key, hashKey);
             return;
         }
         RedisAsyncCommands<String, CollectRep.MetricsData> commands = connection.async();

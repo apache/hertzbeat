@@ -65,3 +65,76 @@ metrics:
       # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port';
       url: ^_^url^_^
+
+  - name: status
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: threads_created
+        type: 0
+      - field: threads_connected
+        type: 0
+      - field: threads_cached
+        type: 0
+      - field: threads_running
+        type: 0
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - threads_created
+      - threads_connected
+      - threads_cached
+      - threads_running
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - threads_created=threads_created
+      - threads_connected=threads_connected
+      - threads_cached=threads_cached
+      - threads_running=threads_running
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'thread%' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';
+      url: ^_^url^_^
+
+  - name: innodb
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: innodb_data_reads
+        type: 0
+        unit: 次数
+      - field: innodb_data_writes
+        type: 0
+        unit: 次数
+      - field: innodb_data_read
+        type: 0
+        unit: kb
+      - field: innodb_data_written
+        type: 0
+        unit: kb
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'innodb%';
+      url: ^_^url^_^
