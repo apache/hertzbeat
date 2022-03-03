@@ -62,7 +62,7 @@ public class MemoryDataStorage implements DisposableBean {
     private void saveData(CollectRep.MetricsData metricsData) {
         String hashKey = metricsData.getId() + metricsData.getMetrics();
         if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse] redis flush metrics data {} is null, ignore.", hashKey);
+            log.debug("[warehouse memory] redis flush metrics data {} is null, ignore.", hashKey);
             return;
         }
         metricsDataMap.put(hashKey, metricsData);

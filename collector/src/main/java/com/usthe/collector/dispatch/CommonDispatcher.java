@@ -144,7 +144,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         if (job.isCyclic()) {
             // 若是异步的周期性循环任务,直接发送指标组的采集数据到消息中间件
             kafkaDataExporter.send(metricsData);
-            if (metricsSet == null) {
+            // 若metricsSet为null表示执行完成
+            // 或判断采集指标组是否优先级为0，即为可用性采集指标组 若可用性采集失败 则取消后面的指标组调度直接进入下一轮调度
+            if (metricsSet == null
+                    || (metrics.getPriority() == (byte)0 && metricsData.getCode() != CollectRep.Code.SUCCESS)) {
                 // 此Job所有指标组采集执行完成
                 // 周期性任务再次将任务push到时间轮
                 // 先判断此次任务执行时间与任务采集间隔时间
