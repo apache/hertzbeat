@@ -126,9 +126,15 @@ public class MonitorServiceImpl implements MonitorService {
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // 请求监控参数与监控参数定义映射校验匹配
         Monitor monitor = monitorDto.getMonitor();
+        monitor.setHost(monitor.getHost().trim());
+        monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
-                .peek(param -> param.setMonitorId(monitor.getId()))
+                .peek(param -> {
+                    param.setMonitorId(monitor.getId());
+                    String value = param.getValue() == null ? null : param.getValue().trim();
+                    param.setValue(value);
+                })
                 .collect(Collectors.toMap(Param::getField, param -> param));
         // 校验名称唯一性
         if (isModify != null) {
