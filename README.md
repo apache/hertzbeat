@@ -1,4 +1,10 @@
-<img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="300">
+<p align="center">
+  <a href="https://hertzbeat.com">
+     <img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="260">
+  </a>
+</p>
+
+[comment]: <> (<img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="300">)
 
 ## HertzBeat 赫兹跳动         
 
