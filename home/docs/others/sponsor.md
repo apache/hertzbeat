@@ -12,9 +12,7 @@ sidebar_label: 赞助
 ![wechat-alipay](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/pay.png)          
 
 
-### paypal
-
-[https://paypal.me/tomsun28](https://paypal.me/tomsun28)    
+感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com)赞助服务器采集节点    
 
 
 
