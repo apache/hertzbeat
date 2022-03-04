@@ -112,10 +112,15 @@ export class MonitorEditComponent implements OnInit {
       });
       return;
     }
+    this.monitor.host = this.monitor.host.trim();
+    this.monitor.name = this.monitor.name.trim();
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
         param.value = this.monitor.host;
+      }
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
       }
     });
     let addMonitor = {
@@ -151,10 +156,15 @@ export class MonitorEditComponent implements OnInit {
       });
       return;
     }
+    this.monitor.host = this.monitor.host.trim();
+    this.monitor.name = this.monitor.name.trim();
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
         param.value = this.monitor.host;
+      }
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
       }
     });
     let detectMonitor = {
