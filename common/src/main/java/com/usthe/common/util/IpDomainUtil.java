@@ -33,6 +33,7 @@ public class IpDomainUtil {
         if (ipDomain == null || "".equals(ipDomain)) {
             return false;
         }
+        ipDomain = ipDomain.trim();
         if (LOCALHOST.equalsIgnoreCase(ipDomain)) {
             return true;
         }
