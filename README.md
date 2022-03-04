@@ -1,3 +1,5 @@
+<img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="300">
+
 ## HertzBeat 赫兹跳动         
 
 > 易用友好的高性能监控告警系统。
