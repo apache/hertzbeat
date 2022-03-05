@@ -16,7 +16,23 @@
       "type": "category",
       "label": "自定义监控",
       "items": [
-        "advanced/extend-point"
+        "advanced/extend-point",
+        {
+          "type": "category",
+          "label": "HTTP协议",
+          "items": [
+            "advanced/extend-http",
+            "advanced/extend-http-default",
+            "advanced/extend-http-jsonpath"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "MYSQL协议",
+          "items": [
+            "advanced/extend-mysql"
+          ]
+        }
       ]
     },
     {
@@ -40,6 +56,14 @@
           "label": "数据库监控",
           "items": [
             "help/mysql"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "阈值告警配置",
+          "items": [
+            "help/alert_threshold",
+            "help/alert_threshold_expr"
           ]
         },
         {
