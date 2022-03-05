@@ -248,6 +248,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         String url;
         switch (jdbcProtocol.getPlatform()) {
             case "mysql":
+            case "mariadb":
                 url = "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
                         + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
