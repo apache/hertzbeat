@@ -84,6 +84,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         List<Hierarchy> hierarchies = new LinkedList<>();
         for (Job job : appDefines.values()) {
             Hierarchy hierarchyApp = new Hierarchy();
+            hierarchyApp.setCategory(job.getCategory());
             hierarchyApp.setValue(job.getApp());
             Map<String, String> nameMap = job.getName();
             if (nameMap != null) {

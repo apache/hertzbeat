@@ -3,7 +3,7 @@ import { Injectable, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ACLService } from '@delon/acl';
 import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
-import { ALAIN_I18N_TOKEN, MenuService, SettingsService, TitleService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, Menu, MenuService, SettingsService, TitleService } from '@delon/theme';
 import type { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzIconService } from 'ng-zorro-antd/icon';
 import { Observable, zip, of } from 'rxjs';
@@ -37,13 +37,17 @@ export class StartupService {
 
   private viaHttp(): Observable<void> {
     const defaultLang = this.i18n.defaultLang;
-    return zip(this.i18n.loadLangData(defaultLang), this.httpClient.get('./assets/app-data.json')).pipe(
+    return zip(
+      this.i18n.loadLangData(defaultLang),
+      this.httpClient.get('./assets/app-data.json'),
+      this.httpClient.get('/apps/hierarchy')
+    ).pipe(
       catchError((res: NzSafeAny) => {
         console.warn(`StartupService.load: Network request failed`, res);
         setTimeout(() => this.router.navigateByUrl(`/exception/500`));
         return [];
       }),
-      map(([langData, appData]: [Record<string, string>, NzSafeAny]) => {
+      map(([langData, appData, menuData]: [Record<string, string>, NzSafeAny, NzSafeAny]) => {
         // setting language data
         this.i18n.use(defaultLang, langData);
 
@@ -56,6 +60,20 @@ export class StartupService {
         this.aclService.setFull(true);
         // Menu data, https://ng-alain.com/theme/menu
         this.menuService.add(appData.menu);
+        menuData.data.forEach((item: { category: string; value: string }) => {
+          let category = item.category;
+          let app = item.value;
+          let menu: Menu | null = this.menuService.getItem(category);
+          if (menu != null) {
+            menu.children?.push({
+              text: app,
+              link: `/monitors?app=${app}`,
+              i18n: `monitor.app.${app}`
+            });
+          }
+        });
+        // 刷新菜单
+        this.menuService.resume();
         // Can be set page suffix title, https://ng-alain.com/theme/title
         this.titleService.suffix = appData.app.name;
       })

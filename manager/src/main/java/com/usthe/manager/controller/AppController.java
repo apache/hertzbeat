@@ -50,7 +50,7 @@ public class AppController {
     }
 
     @GetMapping(path = "/hierarchy")
-    @ApiOperation(value = "查询全部层级的监控类型", notes = "查询所有监控类型,以层级结构输出")
+    @ApiOperation(value = "查询全部监控指标层级", notes = "查询所有监控的类型-指标组-指标层级,以层级结构输出")
     public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchy(
             @ApiParam(value = "语言类型", example = "zh-CN", defaultValue = "zh-CN")
             @RequestParam(name = "lang", required = false) String lang) {

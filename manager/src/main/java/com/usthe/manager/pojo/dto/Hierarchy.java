@@ -21,15 +21,18 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Data
 public class Hierarchy {
 
-    @ApiModelProperty(value = "属性值", example = "linux", accessMode = READ_WRITE, position = 0)
+    @ApiModelProperty(value = "类别值", example = "os", accessMode = READ_WRITE, position = 0)
+    String category;
+
+    @ApiModelProperty(value = "属性值", example = "linux", accessMode = READ_WRITE, position = 1)
     String value;
 
-    @ApiModelProperty(value = "属性国际化标签", example = "Linux系统", accessMode = READ_WRITE, position = 1)
+    @ApiModelProperty(value = "属性国际化标签", example = "Linux系统", accessMode = READ_WRITE, position = 2)
     String label;
 
-    @ApiModelProperty(value = "是否是叶子节点", example = "true", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "是否是叶子节点", example = "true", accessMode = READ_WRITE, position = 3)
     Boolean isLeaf = false;
 
-    @ApiModelProperty(value = "下一关联层级", accessMode = READ_WRITE, position = 3)
+    @ApiModelProperty(value = "下一关联层级", accessMode = READ_WRITE, position = 4)
     private List<Hierarchy> children;
 }

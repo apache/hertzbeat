@@ -43,6 +43,11 @@ public class Job {
      */
     private long monitorId;
     /**
+     * 监控的大类别
+     * service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+     */
+    private String category;
+    /**
      * 监控的类型 eg: linux | mysql | jvm
      */
     private String app;
