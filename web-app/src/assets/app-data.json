@@ -30,48 +30,29 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "key": "service",
           "text": "应用服务",
           "i18n": "menu.monitor.service",
-          "icon": "anticon-cloud",
-          "children": [
-            {
-              "text": "website",
-              "link": "/monitors?app=website",
-              "i18n": "monitor.app.website"
-            },
-            {
-              "text": "api",
-              "link": "/monitors?app=api",
-              "i18n": "monitor.app.api"
-            },
-            {
-              "text": "ping",
-              "link": "/monitors?app=ping",
-              "i18n": "monitor.app.ping"
-            },
-            {
-              "text": "port",
-              "link": "/monitors?app=port",
-              "i18n": "monitor.app.port"
-            },
-            {
-              "text": "fullsite",
-              "link": "/monitors?app=fullsite",
-              "i18n": "monitor.app.fullsite"
-            }
-          ]
+          "icon": "anticon-cloud"
         },
         {
+          "key": "db",
           "text": "数据库",
           "i18n": "menu.monitor.db",
-          "icon": "anticon-database",
-          "children": [
-            {
-              "text": "Mysql",
-              "link": "/monitors?app=mysql",
-              "i18n": "monitor.app.mysql"
-            }
-          ]
+          "icon": "anticon-database"
+        },
+        {
+          "key": "os",
+          "text": "操作系统",
+          "hide": true,
+          "i18n": "menu.monitor.os",
+          "icon": "anticon-windows"
+        },
+        {
+          "key": "custom",
+          "text": "自定义",
+          "i18n": "menu.monitor.custom",
+          "icon": "anticon-skin"
         }
       ]
     },

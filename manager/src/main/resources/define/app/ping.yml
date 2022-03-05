@@ -1,3 +1,5 @@
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+category: service
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: ping
 name:
