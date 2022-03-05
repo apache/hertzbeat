@@ -204,7 +204,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      * 查询多行数据, 通过查询返回结果集的列名称，和查询的字段映射
      * eg:
      * 查询字段：one tow three four
-     * 查询SQL：select one, tow, three, four from book limit 1;
+     * 查询SQL：select one, tow, three, four from book;
      * @param statement 执行器
      * @param sql sql
      * @param columns 查询的列头(一般是数据库表字段，也可能包含特殊字段,eg: responseTime)
