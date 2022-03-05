@@ -1,20 +1,29 @@
 ---
-id: extend-point  
-title: 自定义监控  
-sidebar_label: 自定义监控    
+id: extend-http  
+title: HTTP协议自定义监控  
+sidebar_label: HTTP协议自定义监控    
 ---
-> HertzBeat拥有自定义监控能力，您只需配置两个YML文件就能适配一款自定义的监控类型。  
-> 目前自定义监控支持[HTTP协议](extend-http)，MYSQL协议，后续会支持更多通用协议(ssh telnet wmi snmp)。        
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用HTTP协议自定义指标监控。   
+
+### HTTP协议采集流程    
+【**HTTP接口调用**】->【**响应校验**】->【**响应数据解析**】->【**默认方式解析｜JsonPath脚本解析 | XmlPath解析(todo) | Prometheus解析(todo)**】->【**指标数据提取**】
+
+由流程可见，我们自定义一个HTTP协议的监控类型，需要配置HTTP请求参数，配置获取哪些指标，对响应数据配置解析方式和解析脚本。      
+HTTP协议支持我们自定义HTTP请求路径，请求header，请求参数，请求方式，请求体等。   
+
+**系统默认解析方式**：http接口返回hertzbeat规定的json数据结构，即可用默认解析方式解析数据提取对应的指标数据，详细介绍见 [**系统默认解析**](extend-http-default)    
+**JsonPath脚本解析方式**：用JsonPath脚本对响应的json数据进行解析，返回系统指定的数据结构，然后提供对应的指标数据，详细介绍见 [**JsonPath脚本解析**](extend-http-jsonpath)    
+  
 
 ### 自定义步骤  
 
 配置自定义监控类型需新增配置两个YML文件
 1. 用监控类型命名的监控配置定义文件 - 例如：example.yml 需位于安装目录 /hertzbeat/define/app/ 下
 2. 用监控类型命名的监控参数定义文件 - 例如：example.yml 需位于安装目录 /hertzbeat/define/param/ 下
-3. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。  
+3. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。
 
 ------- 
-下面详细介绍下这俩文件的配置用法。   
+下面详细介绍下这俩文件的配置用法，请注意看使用注释。   
 
 ### 监控配置定义文件   
 
@@ -149,7 +158,7 @@ metrics:
 > 监控参数定义文件用于定义 *需要的输入参数字段结构定义(前端页面根据结构渲染输入参数框)*。   
 
 样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /define/param/example.yml   
+文件名称: example.yml 位于 //define/param/example.yml   
 
 ```yaml
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
