@@ -18,7 +18,7 @@ sidebar_label: 帮助入门
 
 ### 数据库监控  
 
-[MYSQL数据库监控](mysql)   
+[MYSQL数据库监控](mysql) &emsp;&emsp;&emsp;&emsp; [MariaDB数据库监控](mariadb)    
 
 ## 💡 告警服务  
 
@@ -32,6 +32,8 @@ sidebar_label: 帮助入门
 ### 告警配置  
 
 > 指标阈值配置，提供表达式形式的指标阈值配置，可设置告警级别，触发次数，告警通知模版和是否启用，关联监控等功能。
+
+详见 [阈值告警](alert_threshold) &emsp;&emsp;&emsp;&emsp; [阈值表达式](alert_threshold_expr)   
 
 ### 告警通知  
 

@@ -55,7 +55,8 @@
           "type": "category",
           "label": "数据库监控",
           "items": [
-            "help/mysql"
+            "help/mysql",
+            "help/mariadb"
           ]
         },
         {
