@@ -1,3 +1,106 @@
+<div nz-row nzGutter="16" style="margin-top: 70px">
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
+    <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
+      <div nz-col nzSpan="10" class="p-md text-white">
+        <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
+        <p class="h5 text-nowrap mb0">
+          <i nz-icon nzType="cloud" nzTheme="outline"></i>
+          {{ 'monitor.category.service' | i18n }}
+        </p>
+      </div>
+      <div nz-col nzSpan="14" class="p-md text-white">
+        <nz-tag class="mb-xs">
+          <span>正常 </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可用 </span><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可达 </span><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>未监控 </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+        </nz-tag>
+      </div>
+    </div>
+  </div>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
+    <div nz-row nzAlign="middle" class="bg-success rounded-lg">
+      <div nz-col nzSpan="10" class="p-md text-white">
+        <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
+        <p class="h5 text-nowrap mb0">
+          <i nz-icon nzType="database" nzTheme="outline"></i>
+          {{ 'monitor.category.db' | i18n }}
+        </p>
+      </div>
+      <div nz-col nzSpan="14">
+        <nz-tag class="mb-xs">
+          <span>正常 </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可用 </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可达 </span><span style="font-weight: bolder">{{ appCountDb.unReachableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>未监控 </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+        </nz-tag>
+      </div>
+    </div>
+  </div>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
+    <div nz-row nzAlign="middle" class="bg-orange rounded-lg">
+      <div nz-col nzSpan="10" class="p-md text-white">
+        <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
+        <p class="h5 text-nowrap mb0">
+          <i nz-icon nzType="windows" nzTheme="outline"></i>
+          {{ 'monitor.category.os' | i18n }}
+        </p>
+      </div>
+      <div nz-col nzSpan="14">
+        <nz-tag class="mb-xs">
+          <span>正常 </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可用 </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可达 </span><span style="font-weight: bolder">{{ appCountOs.unReachableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>未监控 </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+        </nz-tag>
+      </div>
+    </div>
+  </div>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
+    <div nz-row nzAlign="middle" class="bg-magenta rounded-lg">
+      <div nz-col nzSpan="10" class="p-md text-white">
+        <div class="h2 mt0 font-weight-bold">{{ appCountCustom.size }}</div>
+        <p class="h5 text-nowrap mb0">
+          <i nz-icon nzType="skin" nzTheme="outline"></i>
+          {{ 'monitor.category.custom' | i18n }}
+        </p>
+      </div>
+      <div nz-col nzSpan="14">
+        <nz-tag class="mb-xs">
+          <span>正常 </span><span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可用 </span><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>不可达 </span><span style="font-weight: bolder">{{ appCountCustom.unReachableSize }}</span>
+        </nz-tag>
+        <nz-tag class="mb-xs">
+          <span>未监控 </span><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
+        </nz-tag>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div
   echarts
   [options]="appsCountEChartOption"
@@ -5,6 +108,59 @@
   [autoResize]="true"
   [loading]="appsCountLoading"
   (chartClick)="onChartClick($event)"
-  (chartInit)="onChartInit($event)"
-  style="width: 100%; height: 400px; margin-top: 5%"
+  (chartInit)="onAppsCountChartInit($event)"
+  style="width: 100%; height: 400px; margin-top: 1%"
 ></div>
+
+<div nz-row nzGutter="16" style="margin-top: 10px">
+  <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md">
+    <nz-card nzHoverable nzTitle="最近告警列表" [nzExtra]="extraTemplate">
+      <nz-timeline nzMode="left">
+        <nz-timeline-item *ngFor="let alert of alerts; let i = index" [nzLabel]="alert.gmtCreate.toString()">
+          <p style="font-weight: 400">
+            <nz-tag *ngIf="alert.priority == 0" nzColor="red">
+              <i nz-icon nzType="bell" nzTheme="outline"></i>
+              <span>紧急告警</span>
+            </nz-tag>
+            <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
+              <i nz-icon nzType="bell" nzTheme="outline"></i>
+              <span>严重告警</span>
+            </nz-tag>
+            <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
+              <i nz-icon nzType="bell" nzTheme="outline"></i>
+              <span>警告告警</span>
+            </nz-tag>
+            <span>[{{ alert.monitorName }}] </span>
+            {{ alert.content }}
+          </p>
+        </nz-timeline-item>
+      </nz-timeline>
+    </nz-card>
+  </div>
+  <div nz-col nzXs="24" nzSm="12" nzMd="7" class="mb-md">
+    <div
+      echarts
+      [options]="alertsEChartOption"
+      theme="default"
+      [autoResize]="true"
+      [loading]="alertsLoading"
+      (chartInit)="onAlertNumChartInit($event)"
+      style="width: 100%; height: 100%"
+    ></div>
+  </div>
+  <div nz-col nzXs="24" nzSm="12" nzMd="5" class="mb-md">
+    <div
+      echarts
+      [options]="alertsDealEChartOption"
+      theme="default"
+      [autoResize]="true"
+      [loading]="alertsDealLoading"
+      (chartInit)="onAlertRateChartInit($event)"
+      style="width: 100%; height: 100%"
+    ></div>
+  </div>
+</div>
+
+<ng-template #extraTemplate>
+  <a [routerLink]="['/alert/center']">进入告警中心</a>
+</ng-template>

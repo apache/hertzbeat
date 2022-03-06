@@ -55,11 +55,11 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
     Optional<Monitor> findMonitorByNameEquals(String name);
 
     /**
-     * 查询监控类别及其对应的监控数量
-     * @return 监控类别与监控数量映射
+     * 查询监控类别-状态对应的监控数量
+     * @return 监控类别-状态与监控数量映射
      */
-    @Query("select new com.usthe.manager.pojo.dto.AppCount(mo.app, COUNT(mo.id)) from Monitor mo group by mo.app")
-    List<AppCount> findAppsCount();
+    @Query("select new com.usthe.manager.pojo.dto.AppCount(mo.app, mo.status, COUNT(mo.id)) from Monitor mo group by mo.app, mo.status")
+    List<AppCount> findAppsStatusCount();
 
     /**
      * 更新指定监控的状态
