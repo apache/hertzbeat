@@ -1,3 +1,97 @@
-.demo-chart {
-  height: auto;
+@import '~@delon/theme/index';
+:host ::ng-deep {
+  .ant-timeline {
+    .ant-timeline-label {
+      left: 20%;
+      width: calc(20% - 12px);
+    }
+    .ant-timeline-item-tail {
+      left: 20%;
+    }
+    .ant-timeline-item-head {
+      left: 20%;
+    }
+    .ant-timeline-item-label {
+      width: calc(20% - 12px);
+    }
+    .ant-timeline-item-left {
+      .ant-timeline-item-content {
+        left: calc(20% - 4px);
+        width: calc(80% - 14px);
+      }
+    }
+  }
+  .ant-card-head-title {
+    padding-top: 6px;
+    padding-right: 0;
+    padding-bottom: 6px;
+    padding-left: 0;
+  }
+  .ant-card-head {
+    min-height: 24px;
+    padding: 0 12px;
+    font-weight: 400;
+    font-size: 12px;
+  }
+  .ant-card-body {
+    padding-top: 24px;
+    padding-right: 24px;
+    padding-bottom: 6px;
+    padding-left: 24px;
+  }
+  .ant-timeline-item {
+    padding-bottom: 10px;
+  }
+  }
+
+[data-theme='dark'] {
+  :host ::ng-deep {
+    .ant-timeline {
+      .ant-timeline-label {
+        left: 20%;
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-tail {
+        left: 20%;
+      }
+      .ant-timeline-item-head {
+        left: 20%;
+      }
+      .ant-timeline-item-label {
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-left {
+        .ant-timeline-item-content {
+          left: calc(20% - 4px);
+          width: calc(80% - 14px);
+        }
+      }
+    }
+  }
+}
+
+[data-theme='compact'] {
+  :host ::ng-deep {
+    .ant-timeline {
+      .ant-timeline-label {
+        left: 20%;
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-tail {
+        left: 20%;
+      }
+      .ant-timeline-item-head {
+        left: 20%;
+      }
+      .ant-timeline-item-label {
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-left {
+        .ant-timeline-item-content {
+          left: calc(20% - 4px);
+          width: calc(80% - 14px);
+        }
+      }
+    }
+  }
 }

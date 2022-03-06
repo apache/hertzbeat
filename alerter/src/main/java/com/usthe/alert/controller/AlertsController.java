@@ -1,5 +1,6 @@
 package com.usthe.alert.controller;
 
+import com.usthe.alert.dto.AlertSummary;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
 import com.usthe.common.entity.dto.Message;
@@ -114,4 +115,11 @@ public class AlertsController {
         return ResponseEntity.ok(message);
     }
 
+    @GetMapping(path = "/summary")
+    @ApiOperation(value = "获取告警统计信息", notes = "获取告警统计信息")
+    public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
+        AlertSummary alertSummary = alertService.getAlertsSummary();
+        Message<AlertSummary> message = new Message<>(alertSummary);
+        return ResponseEntity.ok(message);
+    }
 }
