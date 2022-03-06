@@ -7,7 +7,7 @@ import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
 
 const alerts_uri = '/alerts';
-
+const alerts_summary_uri = '/alerts/summary';
 const alerts_status_uri = '/alerts/status';
 
 @Injectable({
@@ -81,5 +81,9 @@ export class AlertService {
     });
     const options = { params: httpParams };
     return this.http.put<Message<any>>(`${alerts_status_uri}/${status}`, null, options);
+  }
+
+  public getAlertsSummary(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(alerts_summary_uri);
   }
 }
