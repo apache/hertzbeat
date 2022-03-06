@@ -1,5 +1,6 @@
 package com.usthe.alert.service;
 
+import com.usthe.alert.dto.AlertSummary;
 import com.usthe.common.entity.alerter.Alert;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,4 +43,11 @@ public interface AlertService {
      * @param ids 待修改的告警IDs
      */
     void editAlertStatus(Byte status, List<Long> ids);
+
+    /**
+     * 获取告警统计信息
+     * @return 告警统计
+     */
+    AlertSummary getAlertsSummary();
+
 }

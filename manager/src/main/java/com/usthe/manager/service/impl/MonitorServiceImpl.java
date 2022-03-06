@@ -30,6 +30,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -379,8 +380,40 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public List<AppCount> getAllAppMonitorsCount() {
-        return monitorDao.findAppsCount();
-
+        List<AppCount> appCounts = monitorDao.findAppsStatusCount();
+        if (appCounts == null) {
+            return null;
+        }
+        // 关联大类别信息 计算每个状态对应数量
+        Map<String, AppCount> appCountMap = new HashMap<>(appCounts.size());
+        for (AppCount item : appCounts) {
+            AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
+            appCount.setApp(item.getApp());
+            switch (item.getStatus()) {
+                case CommonConstants.AVAILABLE_CODE:
+                    appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                    break;
+                case CommonConstants.UN_AVAILABLE_CODE:
+                    appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                    break;
+                case CommonConstants.UN_MANAGE_CODE:
+                    appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                    break;
+                case CommonConstants.UN_REACHABLE_CODE:
+                    appCount.setUnReachableSize(appCount.getUnReachableSize() + item.getSize());
+                    break;
+                default: break;
+            }
+            appCountMap.put(item.getApp(), appCount);
+        }
+        return appCountMap.values().stream().peek(item -> {
+            item.setSize(item.getAvailableSize() + item.getUnManageSize()
+                    + item.getUnReachableSize() + item.getUnAvailableSize());
+            Job job = appService.getAppDefine(item.getApp());
+            if (job != null) {
+                item.setCategory(job.getCategory());
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override

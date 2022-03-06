@@ -1,5 +1,6 @@
 package com.usthe.alert.dao;
 
+import com.usthe.alert.dto.AlertPriorityNum;
 import com.usthe.common.entity.alerter.Alert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -32,4 +33,10 @@ public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationEx
     @Query("update Alert set status = :status where id in :ids")
     void updateAlertsStatus(@Param(value = "status") Byte status, @Param(value = "ids") List<Long> ids);
 
+    /**
+     * 查询各个告警级别的未处理告警数量
+     * @return 告警数量
+     */
+    @Query("select new com.usthe.alert.dto.AlertPriorityNum(mo.priority, count(mo.id)) from Alert mo where mo.status = 0 group by mo.priority")
+    List<AlertPriorityNum> findAlertPriorityNum();
 }
