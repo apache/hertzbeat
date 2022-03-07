@@ -69,7 +69,13 @@ import { environment } from '@env/environment';
     </layout-default>
 
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
-    <theme-btn></theme-btn>
+    <theme-btn
+      [types]="[
+        { key: 'default', text: '浅色主题' },
+        { key: 'dark', text: '深色主题' },
+        { key: 'compact', text: '紧凑主题' }
+      ]"
+    ></theme-btn>
   `
 })
 export class LayoutBasicComponent {
