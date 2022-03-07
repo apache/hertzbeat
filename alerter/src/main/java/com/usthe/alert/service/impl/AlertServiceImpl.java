@@ -75,10 +75,14 @@ public class AlertServiceImpl implements AlertService {
                 - alertSummary.getPriorityEmergencyNum() - alertSummary.getPriorityWarningNum();
         alertSummary.setDealNum(dealNum);
         try {
-            float rate = BigDecimal.valueOf(100 * (float) dealNum / total)
-                    .setScale(2, RoundingMode.HALF_UP)
-                    .floatValue();
-            alertSummary.setRate(rate);
+            if (total == 0) {
+                alertSummary.setRate(100);
+            } else {
+                float rate = BigDecimal.valueOf(100 * (float) dealNum / total)
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .floatValue();
+                alertSummary.setRate(rate);
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
