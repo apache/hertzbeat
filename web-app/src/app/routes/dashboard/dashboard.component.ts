@@ -195,7 +195,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           },
           data: [
             {
-              value: 0,
+              value: 100,
               name: '告警处理率'
             }
           ]
