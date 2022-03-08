@@ -28,9 +28,9 @@
         },
         {
           "type": "category",
-          "label": "MYSQL协议",
+          "label": "JDBC协议",
           "items": [
-            "advanced/extend-mysql"
+            "advanced/extend-jdbc"
           ]
         }
       ]
@@ -56,7 +56,8 @@
           "label": "数据库监控",
           "items": [
             "help/mysql",
-            "help/mariadb"
+            "help/mariadb",
+            "help/postgresql"
           ]
         },
         {
