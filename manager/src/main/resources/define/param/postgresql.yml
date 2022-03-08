@@ -1,0 +1,30 @@
+app: postgresql
+param:
+  - field: host
+    name: 主机Host
+    type: host
+    required: true
+  - field: port
+    name: 端口
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 5432
+    placeholder: '请输入端口'
+  - field: database
+    name: 数据库名称
+    type: text
+    required: false
+  - field: username
+    name: 用户名
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name: 密码
+    type: password
+    required: false
+  - field: url
+    name: URL
+    type: text
+    required: false
