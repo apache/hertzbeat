@@ -14,4 +14,9 @@ public interface CollectorConstants {
     String ERROR_MSG = "errorMsg";
 
     String URL = "url";
+
+    /**
+     * POSTGRESQL状态码 不可达
+     */
+    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
 }
