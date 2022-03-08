@@ -12,7 +12,7 @@ sidebar_label: MYSQL数据库
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 网站对外提供的端口，http一般默认为80，https一般默认为443。  |
+| 端口        | 数据库对外提供的端口，默认为3306。  |
 | 数据库名称   | 数据库实例名称，可选。  |
 | 用户名      | 数据库连接用户名，可选 |
 | 密码        | 数据库连接密码，可选 |
@@ -40,8 +40,6 @@ sidebar_label: MYSQL数据库
 | threads_connected            | 无 | MySql已经连接的连接数 |
 | threads_cached         | 无 | MySql当前缓存的连接数 |
 | threads_running | 无 | MySql当前活跃的连接数 |
-| qps         | 无 | 每秒请求查询次数。`QPS = questions/uptimes` |   
-| tps | 无 | 每秒事务数据 `TPS= (commit+rollback)/seconds`|  
 
 
 #### 指标集合：innodb

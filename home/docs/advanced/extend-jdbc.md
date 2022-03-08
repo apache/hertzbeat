@@ -1,15 +1,15 @@
 ---
-id: extend-mysql  
-title: MYSQL协议自定义监控  
-sidebar_label: MYSQL协议自定义监控    
+id: extend-jdbc  
+title: JDBC协议自定义监控  
+sidebar_label: JDBC协议自定义监控    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用MYSQL协议自定义指标监控。 
-> mysql协议自定义监控可以让我们很方便的通过写SQL查询语句就能监控到我们想监控的指标     
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JDBC(目前支持mysql,mariadb,postgresql)自定义指标监控。 
+> JDBC协议自定义监控可以让我们很方便的通过写SQL查询语句就能监控到我们想监控的指标     
 
-### MYSQL协议采集流程    
+### JDBC协议采集流程    
 【**系统直连MYSQL**】->【**运行SQL查询语句**】->【**响应数据解析:oneRow, multiRow, columns**】->【**指标数据提取**】   
 
-由流程可见，我们自定义一个MYSQL协议的监控类型，需要配置MYSQL请求参数，配置获取哪些指标，配置查询SQL语句。
+由流程可见，我们自定义一个JDBC协议的监控类型，需要配置JDBC请求参数，配置获取哪些指标，配置查询SQL语句。
 
 ### 数据解析方式   
 SQL查询回来的数据字段和我们需要的指标映射，就能获取对应的指标数据，目前映射解析方式有三种：oneRow, multiRow, columns
