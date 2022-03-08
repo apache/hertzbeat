@@ -127,7 +127,14 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">指标对象</nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <nz-cascader required name="target" id="target" [nzOptions]="appHierarchies" [(ngModel)]="cascadeValues"></nz-cascader>
+          <nz-cascader
+            required
+            name="target"
+            id="target"
+            [nzOptions]="appHierarchies"
+            [(ngModel)]="cascadeValues"
+            (ngModelChange)="cascadeOnChange($event)"
+          ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -138,8 +145,11 @@
                 <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>{{ cascadeValues[2] }} : 选中的指标对象</code>
                 </nz-list-item>
-                <nz-list-item>
-                  <code>instance : 所属行实例值</code>
+                <nz-list-item *ngFor="let item of otherMetrics">
+                  <code>{{ item }} : 所属行其它指标对象</code>
+                </nz-list-item>
+                <nz-list-item *ngIf="otherMetrics.length != 0">
+                  <code>instance : 所属行实例</code>
                 </nz-list-item>
                 <nz-list-item>
                   <code>支持操作符函数 : equals(str1,str2), ==, <, <=, >, >=, !=, ( ), +, -, &&, ||</code>
@@ -167,7 +177,7 @@
               nz-input
               name="expr"
               id="expr"
-              placeholder='根据此表达式计算判断是否触发阈值.&#10;示例: equals&#40;instance,"cpu1"&#41; &amp;&amp; usage&gt;40'
+              placeholder="根据此表达式计算判断是否触发阈值.&#10;示例: responseTime&gt;40"
             >
             </textarea>
           </nz-textarea-count>
@@ -204,20 +214,23 @@
           <nz-collapse>
             <nz-collapse-panel [nzActive]="isManageModalAdd" nzHeader="支持的通知模版环境变量">
               <nz-list nzSize="small" nzSplit="false">
+                <nz-list-item>
+                  <code>&#36;&#123;app&#125; : 监控类型名称</code>
+                </nz-list-item>
+                <nz-list-item>
+                  <code>&#36;&#123;metrics&#125; : 监控指标集合名称</code>
+                </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#123;metric&#125; : 选中的指标对象名称</code>
+                  <code>&#36;&#123;metric&#125; : 监控指标名称</code>
                 </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : 选中的指标对象值</code>
+                  <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : 监控指标对象值</code>
+                </nz-list-item>
+                <nz-list-item *ngFor="let item of otherMetrics">
+                  <code>&#36;{{ '{' + item + '}' }} : 所属行其它指标值</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>&#36;&#123;instance&#125; : 所在行实例值</code>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>&#36;&#123;app&#125; : 所属监控类型名称</code>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>&#36;&#123;metrics&#125; : 所属监控指标组名称</code>
+                  <code>&#36;&#123;instance&#125; : 所属行实例值</code>
                 </nz-list-item>
               </nz-list>
             </nz-collapse-panel>

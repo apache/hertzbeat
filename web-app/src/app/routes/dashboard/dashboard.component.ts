@@ -127,7 +127,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.alertsTheme = {
       title: {
-        subtext: '告警等级分布',
+        subtext: '告警分布',
         left: 'center'
       },
       tooltip: {

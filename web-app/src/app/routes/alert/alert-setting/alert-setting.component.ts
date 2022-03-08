@@ -136,6 +136,7 @@ export class AlertSettingComponent implements OnInit {
           if (message.code === 0) {
             this.define = message.data;
             this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
+            this.cascadeOnChange(this.cascadeValues);
           } else {
             this.notifySvc.error('查询此监控定义详情失败！', message.msg);
           }
@@ -234,6 +235,26 @@ export class AlertSettingComponent implements OnInit {
   isManageModalAdd = true;
   define!: AlertDefine;
   cascadeValues: string[] = [];
+  otherMetrics: string[] = [];
+  cascadeOnChange(values: string[]): void {
+    if (values == null || values.length != 3) {
+      return;
+    }
+    this.appHierarchies.forEach(hierarchy => {
+      if (hierarchy.value == values[0]) {
+        hierarchy.children.forEach((metrics: { value: string; children: any[]}) => {
+          if (metrics.value == values[1]) {
+            this.otherMetrics = [];
+            metrics.children.forEach(item => {
+              if (item.value != values[2]) {
+                this.otherMetrics.push(item.value);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
   onManageModalCancel() {
     this.isManageModalVisible = false;
   }

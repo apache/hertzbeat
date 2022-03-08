@@ -138,32 +138,24 @@ public class CalculateAlarm {
         }
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Map<String, Object> fieldValueMap = new HashMap<>(16);
-        fieldValueMap.put("app", app);
-        fieldValueMap.put("metrics", metrics);
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             if (!valueRow.getColumnsList().isEmpty()) {
+                fieldValueMap.clear();
                 String instance = valueRow.getInstance();
                 if (!"".equals(instance)) {
                     fieldValueMap.put("instance", instance);
-                } else {
-                    fieldValueMap.remove("instance");
                 }
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                     String valueStr = valueRow.getColumns(index);
                     CollectRep.Field field = fields.get(index);
-                    fieldValueMap.put("metric", field.getName());
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
                         Double doubleValue = CommonUtil.parseDoubleStr(valueStr);
                         if (doubleValue != null) {
                             fieldValueMap.put(field.getName(), doubleValue);
-                        } else {
-                            fieldValueMap.remove(field.getName());
                         }
                     } else {
                         if (!"".equals(valueStr)) {
                             fieldValueMap.put(field.getName(), valueStr);
-                        } else {
-                            fieldValueMap.remove(field.getName());
                         }
                     }
                 }
@@ -187,6 +179,9 @@ public class CalculateAlarm {
                                     }
                                 } else {
                                     int times = 1;
+                                    fieldValueMap.put("app", app);
+                                    fieldValueMap.put("metrics", metrics);
+                                    fieldValueMap.put("metric", define.getField());
                                     Alert alert = Alert.builder()
                                             .monitorId(monitorId)
                                             .alertDefineId(define.getId())
