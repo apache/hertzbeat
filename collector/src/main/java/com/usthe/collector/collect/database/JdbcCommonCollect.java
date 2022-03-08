@@ -11,6 +11,7 @@ import com.usthe.common.entity.job.protocol.JdbcProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -72,7 +73,16 @@ public class JdbcCommonCollect extends AbstractCollect {
         } catch (CommunicationsException communicationsException) {
             log.warn("Jdbc sql error: {}, code: {}.", communicationsException.getMessage(), communicationsException.getErrorCode());
             builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("Query Error: " + communicationsException.getMessage() + " Code: " + communicationsException.getErrorCode());
+            builder.setMsg("Error: " + communicationsException.getMessage() + " Code: " + communicationsException.getErrorCode());
+        } catch (PSQLException psqlException) {
+            // for PostgreSQL 08001
+            if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {
+                // 对端链接失败 不可达
+                builder.setCode(CollectRep.Code.UN_REACHABLE);
+            } else {
+                builder.setCode(CollectRep.Code.FAIL);
+            }
+            builder.setMsg("Error: " + psqlException.getMessage() + " Code: " + psqlException.getSQLState());
         } catch (SQLException sqlException) {
             log.warn("Jdbc sql error: {}, code: {}.", sqlException.getMessage(), sqlException.getErrorCode());
             builder.setCode(CollectRep.Code.FAIL);
@@ -252,6 +262,10 @@ public class JdbcCommonCollect extends AbstractCollect {
                 url = "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
                         + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
+                break;
+            case "postgresql":
+                url = "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
                 break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
