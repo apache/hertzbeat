@@ -406,7 +406,11 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             }
         }
-        // headers
+        //The default request header can be overridden if customized
+        // keep-alive
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT,"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
+        // headers  The custom request header is overwritten here
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
