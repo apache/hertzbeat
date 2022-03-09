@@ -2,7 +2,7 @@ FROM openjdk:8-alpine
 
 MAINTAINER tomsun28 "tomsun28@outlook.com"
 
-ADD hertzbeat-1.0-beta.4.tar /opt/
+ADD hertzbeat-1.0-beta.5.tar /opt/
 
 EXPOSE 1157
 
