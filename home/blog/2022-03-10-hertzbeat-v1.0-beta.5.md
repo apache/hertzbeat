@@ -1,5 +1,5 @@
 ---
-title: HertzBeat赫兹节拍 v1.0.beta.4 发布，易用友好的监控告警系统   
+title: HertzBeat赫兹节拍 v1.0.beta.5 发布，易用友好的监控告警系统   
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -11,44 +11,30 @@ HertzBeat赫兹跳动是由Dromara孵化，TanCloud开源的一个支持网站�
 
 官网:hertzbeat.com | tancloud.cn
 
-此升级版本包含了大量特性与修复，包括用户急需的账户用户配置，丰富了主流第三方告警通知(企业微信机器人，钉钉机器人，飞书机器人)，更好看的邮件模版，自定义邮件服务器等，欢迎使用。
+此升级版本包含了dashboard仪表盘重新设计，阈值表达式支持多指标，丰富了数据库监控类型，新增mariaDB和postgreSQL数据库的监控，控制台页面新增帮助文档等，欢迎使用。   
 
 版本特性：
 
-1. 告警通知：集成飞书官方WebHook实现推送告警信息 #PR9 由 @learning-code 贡献 thanks
-2. 告警通知：实现企业微信WebHook告警信息推送 #PR8 由 @learning-code 贡献 thanks
-3. 告警通知：告警邮件通知模版优化 由 @learning-code 贡献 thanks
-4. 告警通知：集成钉钉群机器人实现推送告警信息
-5. 账户：暴露支持YML文件配置登陆用户账户信息
-6. 支持自定义邮件服务器
-7. 新增帮助中心，监控告警等功能使用过程中的帮助文档. https://tancloud.cn/docs/help/guide
-8. DOC其它文档更新，本地启动帮助
-9. 新LOGO更新
-10. 监控采集间隔时间放开为7天
-11. 新增controller接口入参限定修饰符 由 @learning-code 贡献 thanks
+1. feature 支持mariadb监控类型 (#11)
+2. feature dashboard仪表盘重构 (#13)
+3. feature 告警配置支持多指标集合 !10 由 @pengliren 提出 thanks
+4. feature 支持postgresql数据库的监控 (#16)
+5. 新增监控默认开启探测.
+6. 新增mysql采集指标.
+7. 新增监控大类别，支持自定义监控页面菜单自动渲染
+8. 操作页面新增帮助链接，完善自定义和阈值帮助文档
+9. feat: 模拟浏览器设置为chrome浏览器 #Issues 14 由@learning-code 贡献 thanks
 
 BUG修复
-1. 监控host参数修复校验.
-2. fixBug自定义邮件服务器未生效
-3. 邮件页面优化，fix告警级别未转译
-4. fix监控删除后告警定义关联未删除
-5. 调整jvm启动内存大小,fixOOM
-6. fixbug重启后状态异常监控无法触发恢复告警
-7. fix pmd error
-8. bugfix告警设置确定后异常,按钮还在旋转
-9. fix多余租户ID依赖
-10. fix receiver的email类型错误，调整弹出框大小
-11. fixbug告警定义关联监控不存在时异常
+1. 登陆改登录，傻傻分不清.
+2. 文档新增常见问题，采集器http参数优化校验.
+3. 采集器调度第0优先级失败则取消后续的优化.
+4. bugfix website monitor path Illegal character in path at index
+5. bugfix深色主题适配问题 (#10)
+6. fix国际化异常 放开hierarchy接口认证保护
 
 欢迎在线试用 https://console.tancloud.cn
 
-版本升级注意⚠️
-
-1.0-beta2升级上来，MYSQL的数据库需执行。   
-ALTER TABLE alert_define_monitor_bind DROP monitor_name;
-
-1.0-beta2,1.0-beta3升级上来，MYSQL的数据库需执行。   
-ALTER TABLE notice_receiver ADD access_token varchar(255);
 
 -----------------------
 
