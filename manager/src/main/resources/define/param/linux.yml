@@ -1,0 +1,22 @@
+app: linux
+param:
+  - field: host
+    name: 主机Host
+    type: host
+    required: true
+  - field: port
+    name: 端口
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 22
+    placeholder: '请输入端口'
+  - field: username
+    name: 用户名
+    type: text
+    limit: 20
+    required: true
+  - field: password
+    name: 密码
+    type: password
+    required: true
