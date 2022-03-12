@@ -154,7 +154,7 @@ export class MonitorListComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量取消纳管！',
+      nzTitle: '请确认是否批量取消监控！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -167,7 +167,7 @@ export class MonitorListComponent implements OnInit {
     let monitors = new Set<number>();
     monitors.add(monitorId);
     this.modal.confirm({
-      nzTitle: '请确认是否取消纳管！',
+      nzTitle: '请确认是否取消监控！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -182,28 +182,28 @@ export class MonitorListComponent implements OnInit {
       message => {
         cancelManage$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('取消纳管成功！', '');
+          this.notifySvc.success('取消监控成功！', '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('取消纳管失败！', message.msg);
+          this.notifySvc.error('取消监控失败！', message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         cancelManage$.unsubscribe();
-        this.notifySvc.error('取消纳管失败！', error.msg);
+        this.notifySvc.error('取消监控失败！', error.msg);
       }
     );
   }
 
   onEnableManageMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning('未选中任何待启用纳管项！', '');
+      this.notifySvc.warning('未选中任何待启用监控项！', '');
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量启用纳管！',
+      nzTitle: '请确认是否批量启用监控！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -216,7 +216,7 @@ export class MonitorListComponent implements OnInit {
     let monitors = new Set<number>();
     monitors.add(monitorId);
     this.modal.confirm({
-      nzTitle: '请确认是否启用纳管！',
+      nzTitle: '请确认是否启用监控！',
       nzOkText: '确定',
       nzCancelText: '取消',
       nzOkDanger: true,
@@ -231,17 +231,17 @@ export class MonitorListComponent implements OnInit {
       message => {
         enableManage$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('启用纳管成功！', '');
+          this.notifySvc.success('启用监控成功！', '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('启用纳管失败！', message.msg);
+          this.notifySvc.error('启用监控失败！', message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         enableManage$.unsubscribe();
-        this.notifySvc.error('启用纳管失败！', error.msg);
+        this.notifySvc.error('启用监控失败！', error.msg);
       }
     );
   }
