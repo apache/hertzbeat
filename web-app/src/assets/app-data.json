@@ -44,7 +44,7 @@
         {
           "key": "os",
           "text": "操作系统",
-          "hide": true,
+          "hide": false,
           "i18n": "menu.monitor.os",
           "icon": "anticon-windows"
         },
