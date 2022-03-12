@@ -57,23 +57,23 @@ public class SshCollectImpl extends AbstractCollect {
         }
         SshProtocol sshProtocol = metrics.getSsh();
         // 超时时间默认300毫秒
-        int timeout = 300;
+        int timeout = 3000;
         try {
             timeout = Integer.parseInt(sshProtocol.getTimeout());
         } catch (Exception e) {
             log.warn(e.getMessage());
         }
         try {
-            ClientSession clientSession = getConnectSession(sshProtocol);
+            ClientSession clientSession = getConnectSession(sshProtocol, timeout);
             ClientChannel channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
-            if (!channel.open().verify(Integer.parseInt(sshProtocol.getTimeout())).isOpened()) {
+            if (!channel.open().verify(timeout).isOpened()) {
                 throw new Exception("open failed");
             }
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
-            channel.waitFor(list, Integer.parseInt(sshProtocol.getTimeout()));
+            channel.waitFor(list, timeout);
             Long responseTime  = System.currentTimeMillis() - startTime;
             channel.close();
             String result = response.toString();
@@ -109,8 +109,16 @@ public class SshCollectImpl extends AbstractCollect {
             log.error("ssh response data not enough: {}",  result);
         }
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String value : lines) {
-            valueRowBuilder.addColumns(value);
+        int aliasIndex = 0;
+        int lineIndex = 0;
+        while (aliasIndex < aliasFields.size()) {
+            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
+                valueRowBuilder.addColumns(responseTime.toString());
+            } else {
+                valueRowBuilder.addColumns(lines[lineIndex].trim());
+                lineIndex++;
+            }
+            aliasIndex++;
         }
         builder.addValues(valueRowBuilder.build());
     }
@@ -145,7 +153,7 @@ public class SshCollectImpl extends AbstractCollect {
         }
     }
 
-    private ClientSession getConnectSession(SshProtocol sshProtocol) throws IOException {
+    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
                 .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
@@ -170,15 +178,15 @@ public class SshCollectImpl extends AbstractCollect {
         }
         SshClient sshClient = CommonSshClient.getSshClient();
         clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                .verify(Long.parseLong(sshProtocol.getTimeout()), TimeUnit.MILLISECONDS).getSession();
+                .verify(timeout, TimeUnit.MILLISECONDS).getSession();
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
         }
         // 进行认证
-        if (!clientSession.auth().verify(Long.parseLong(sshProtocol.getTimeout()), TimeUnit.MILLISECONDS).isSuccess()) {
+        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             throw new IllegalArgumentException("认证失败");
         }
-        CommonCache.getInstance().addCache(identifier, clientSession, 10000L);
+        CommonCache.getInstance().addCache(identifier, clientSession);
         return clientSession;
     }
 

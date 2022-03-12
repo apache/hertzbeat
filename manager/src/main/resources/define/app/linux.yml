@@ -56,12 +56,15 @@ metrics:
         type: 1
       - field: cores
         type: 0
+        unit: 核数
       - field: interrupt
         type: 0
+        unit: 个数
       - field: load
         type: 1
       - field: context_switch
         type: 0
+        unit: 个数
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # 当protocol为http协议时具体的采集配置
@@ -74,3 +77,92 @@ metrics:
       password: ^_^password^_^
       script: "LANG=C lscpu | awk -F: '/Model name/ {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}'"
       parseType: oneRow
+
+  - name: memory
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: total
+        type: 0
+        unit: Mb
+      - field: used
+        type: 0
+        unit: Mb
+      - field: free
+        type: 0
+        unit: Mb
+      - field: buff_cache
+        type: 0
+        unit: Mb
+      - field: available
+        type: 0
+        unit: Mb
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      script: free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'
+      parseType: multiRow
+
+  - name: disk
+    priority: 3
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: disk_num
+        type: 0
+        unit: 块数
+      - field: partition_num
+        type: 0
+        unit: 分区数
+      - field: block_write
+        type: 0
+        unit: 块数
+      - field: block_read
+        type: 0
+        unit: 块数
+      - field: write_rate
+        type: 0
+        unit: iops
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
+      parseType: oneRow
+
+  - name: interface
+    priority: 4
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: interface_name
+        type: 1
+      - field: receive_bytes
+        type: 0
+        unit: byte
+      - field: transmit_bytes
+        type: 0
+        unit: byte
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
+      parseType: multiRow
