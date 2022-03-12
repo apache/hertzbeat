@@ -62,6 +62,13 @@
         },
         {
           "type": "category",
+          "label": "操作系统",
+          "items": [
+            "help/linux"
+          ]
+        },
+        {
+          "type": "category",
           "label": "阈值告警配置",
           "items": [
             "help/alert_threshold",

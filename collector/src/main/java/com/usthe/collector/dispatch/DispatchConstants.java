@@ -24,6 +24,10 @@ public interface DispatchConstants {
      * 协议 jdbc
      */
     String PROTOCOL_JDBC = "jdbc";
+    /**
+     * 协议 ssh
+     */
+    String PROTOCOL_SSH = "ssh";
     // 协议类型相关 - end //
 
     // http协议相关 - start 需尽可能先复用 HttpHeaders //

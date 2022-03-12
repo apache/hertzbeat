@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class CommonCache {
 
     /**
-     * 默认缓存时间 30minute
+     * 默认缓存时间 10minute
      */
-    private static final long DEFAULT_CACHE_TIMEOUT = 30 * 60 * 1000L;
+    private static final long DEFAULT_CACHE_TIMEOUT = 10 * 60 * 1000L;
 
     /**
      * 默认最大缓存数量
@@ -153,6 +153,15 @@ public class CommonCache {
                 log.error(e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     * 新增或更新cache
+     * @param key 存储对象key
+     * @param value 存储对象
+     */
+    public void addCache(Object key, Object value) {
+        addCache(key, value, DEFAULT_CACHE_TIMEOUT);
     }
 
     /**
