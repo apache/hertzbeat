@@ -1,10 +1,8 @@
-<h1 align="center">HertzBeat</h1>   
-
 > 前端工程    
 
-**面向开发者，易用友好的高性能监控云服务**
+**面向开发者，易用友好的监控告警系统**
 
-## 本地启动
+## 前端本地启动
 
 ### npm 方式
 1. 需要nodejs npm环境   
@@ -21,13 +19,13 @@
 4. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 
-## 编译打包  
+## hertzbeat 编译打包  
 
-web-app目录下执行
+1. web-app目录下执行
 
 ```ng build --prod --base-href /console/```
 
-manager目录下执行
+2. manager目录下执行
 
 ```mvn package```
 
