@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 
 /**
- * icmp协议采集实现 - ping
+ * telnet协议采集实现
  * @author tom
  * @date 2021/12/4 12:32
  */

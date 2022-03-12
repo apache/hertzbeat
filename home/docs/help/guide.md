@@ -20,6 +20,10 @@ sidebar_label: 帮助入门
 
 [MYSQL数据库监控](mysql) &emsp;&emsp;&emsp;&emsp; [MariaDB数据库监控](mariadb)  &emsp;&emsp;&emsp;&emsp; [PostgreSQL数据库监控](postgresql)        
 
+### 操作系统监控     
+
+[Linux操作系统监控](linux) &emsp;&emsp;&emsp;&emsp;
+
 ## 💡 告警服务  
 
 > 更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。     
