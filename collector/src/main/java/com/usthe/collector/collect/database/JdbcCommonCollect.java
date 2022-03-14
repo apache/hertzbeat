@@ -134,7 +134,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         // 设置查询最大行数1000行
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        CommonCache.getInstance().addCache(identifier, jdbcConnect, 10000L);
+        CommonCache.getInstance().addCache(identifier, jdbcConnect);
         return statement;
     }
 
