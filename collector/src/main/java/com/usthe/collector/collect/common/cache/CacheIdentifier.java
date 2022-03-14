@@ -2,6 +2,7 @@ package com.usthe.collector.collect.common.cache;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * 缓存key唯一标识符
@@ -10,6 +11,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@ToString
 public class CacheIdentifier {
 
     private String ip;
