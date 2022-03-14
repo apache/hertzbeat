@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class CommonCache {
 
     /**
-     * 默认缓存时间 10minute
+     * 默认缓存时间 800s
      */
-    private static final long DEFAULT_CACHE_TIMEOUT = 10 * 60 * 1000L;
+    private static final long DEFAULT_CACHE_TIMEOUT = 800 * 1000L;
 
     /**
      * 默认最大缓存数量
@@ -173,9 +173,11 @@ public class CommonCache {
     public Optional<Object> getCache(Object key, boolean refreshCache) {
         Long[] cacheTime = timeoutMap.get(key);
         if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
+            log.warn("[cache] not hit the cache, key {}.", key);
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {
+            log.warn("[cache] is timeout, key {}.", key);
             timeoutMap.remove(key);
             cacheMap.remove(key);
             return Optional.empty();
