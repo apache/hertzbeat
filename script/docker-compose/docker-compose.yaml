@@ -22,7 +22,7 @@ services:
       - heartzbeat
 
   TDengine:
-    image: "tdengine/tdengine:latest"
+    image: "tdengine/tdengine:2.4.0.12"
     container_name: tdengine
     hostname: tdengine
     restart: always
