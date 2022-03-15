@@ -1,0 +1,50 @@
+version: "3.7"
+
+networks:
+  heartzbeat:
+    driver: bridge
+
+services:
+  mysql:
+    image: "mysql:5.7"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./dbdata/mysqldata:/var/lib/mysql/
+      - ./conf/sql:/docker-entrypoint-initdb.d/
+    networks:
+      - heartzbeat
+
+  TDengine:
+    image: "tdengine/tdengine:latest"
+    container_name: tdengine
+    hostname: tdengine
+    restart: always
+    ports:
+      - "6030-6049:6030-6049"
+      - "6030-6049:6030-6049/udp"
+    volumes:
+      - ./dbdata/taosdata:/var/lib/taos/
+    networks:
+      - heartzbeat
+
+  hertzbeat:
+    image: "tancloud/hertzbeat:1.0-beta.5"
+    container_name: hertzbeat
+    hostname: hertzbeat
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./conf/application.yml:/opt/hertzbeat/config/application.yml
+      - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
+    ports:
+      - "1157:1157"
+    networks:
+      - heartzbeat
