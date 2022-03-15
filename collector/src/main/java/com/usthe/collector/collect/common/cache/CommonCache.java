@@ -121,15 +121,17 @@ public class CommonCache {
                     timeoutMap.put(key, new Long[]{currentTime, DEFAULT_CACHE_TIMEOUT});
                 } else if (cacheTime[0] + cacheTime[1] < currentTime) {
                     // 过期了 discard 关闭这个cache的资源
+                    log.warn("[cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
                     if (value instanceof CacheCloseable) {
+                        log.warn("[cache] close the timeout cache, key {}", key);
                         ((CacheCloseable)value).close();
                     }
                 }
             });
         } catch (Exception e) {
-            log.error("clean timeout cache error: {}.", e.getMessage(), e);
+            log.error("[cache] clean timeout cache error: {}.", e.getMessage(), e);
         }
     }
 
@@ -177,13 +179,14 @@ public class CommonCache {
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {
-            log.warn("[cache] is timeout, key {}.", key);
+            log.warn("[cache] is timeout, remove it, key {}.", key);
             timeoutMap.remove(key);
             cacheMap.remove(key);
             return Optional.empty();
         }
         Object value = cacheMap.get(key);
         if (value == null) {
+            log.error("[cache] value is null, remove it, key {}.", key);
             cacheMap.remove(key);
             timeoutMap.remove(key);
         } else if (refreshCache) {

@@ -79,9 +79,17 @@ public class MonitorsController {
                 orList.add(predicateName);
             }
             Predicate[] orPredicates = new Predicate[orList.size()];
-            Predicate orPredicate = criteriaBuilder.and(orList.toArray(orPredicates));
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            return query.where(andPredicate,orPredicate).getRestriction();
+            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+                return query.where().getRestriction();
+            } else if (andPredicate.getExpressions().isEmpty()) {
+                return query.where(orPredicate).getRestriction();
+            } else if (orPredicate.getExpressions().isEmpty()) {
+                return query.where(andPredicate).getRestriction();
+            } else {
+                return query.where(andPredicate,orPredicate).getRestriction();
+            }
         };
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
