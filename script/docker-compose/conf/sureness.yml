@@ -13,6 +13,7 @@ excludedResource:
   - /account/auth/**===*
   - /===get
   - /i18n/**===get
+  - /apps/hierarchy===get
   # web ui 静态资源
   - /console/**===get
   - /**/*.html===get
