@@ -37,6 +37,7 @@
     type="text"
     placeholder="搜索告警内容"
     nzSize="default"
+    (keyup.enter)="onFilterSearchAlerts()"
     [(ngModel)]="filterContent"
   />
   <nz-select

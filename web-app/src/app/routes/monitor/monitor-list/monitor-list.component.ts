@@ -30,6 +30,9 @@ export class MonitorListComponent implements OnInit {
   monitors!: Monitor[];
   tableLoading: boolean = true;
   checkedMonitorIds = new Set<number>();
+  // 过滤搜索
+  filterContent!: string;
+  filterStatus: number = 9;
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(paramMap => {
@@ -40,6 +43,33 @@ export class MonitorListComponent implements OnInit {
       this.tableLoading = true;
       this.loadMonitorTable();
     });
+  }
+
+  onFilterSearchMonitors() {
+    this.tableLoading = true;
+    let filter$ = this.monitorSvc
+      .searchMonitors(this.app, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
+      .subscribe(
+        message => {
+          filter$.unsubscribe();
+          this.tableLoading = false;
+          this.checkedAll = false;
+          this.checkedMonitorIds.clear();
+          if (message.code === 0) {
+            let page = message.data;
+            this.monitors = page.content;
+            this.pageIndex = page.number + 1;
+            this.total = page.totalElements;
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          this.tableLoading = false;
+          filter$.unsubscribe();
+          console.error(error.msg);
+        }
+      );
   }
 
   sync() {
