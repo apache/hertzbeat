@@ -12,31 +12,57 @@
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
-<button nz-button nzType="primary">
-  <a routerLink="/monitors/new" [queryParams]="{ app: app }">
-    <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-    新增 {{ 'monitor.app.' + app | i18n }}
-  </a>
-</button>
-<button nz-button nzType="primary" (click)="onEditMonitor()">
-  <i nz-icon nzType="edit" nzTheme="outline"></i>
-  编辑
-</button>
-<button nz-button nzType="primary" (click)="onDeleteMonitors()">
-  <i nz-icon nzType="delete" nzTheme="outline"></i>
-  删除
-</button>
-<button nz-button nzType="primary" (click)="onEnableManageMonitors()">
-  <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-  启用监控
-</button>
-<button nz-button nzType="primary" (click)="onCancelManageMonitors()">
-  <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-  取消监控
-</button>
-<button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
-  <i nz-icon nzType="sync" nzTheme="outline"></i>
-</button>
+
+<div>
+  <button nz-button nzType="primary">
+    <a routerLink="/monitors/new" [queryParams]="{ app: app }">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      新增 {{ 'monitor.app.' + app | i18n }}
+    </a>
+  </button>
+  <button nz-button nzType="primary" (click)="onEditMonitor()">
+    <i nz-icon nzType="edit" nzTheme="outline"></i>
+    编辑
+  </button>
+  <button nz-button nzType="primary" (click)="onDeleteMonitors()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    删除
+  </button>
+  <button nz-button nzType="primary" (click)="onEnableManageMonitors()">
+    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+    启用监控
+  </button>
+  <button nz-button nzType="primary" (click)="onCancelManageMonitors()">
+    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+    取消监控
+  </button>
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()"> 搜索 </button>
+  <input
+    style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
+    nz-input
+    type="text"
+    placeholder="搜索监控"
+    nzSize="default"
+    (keyup.enter)="onFilterSearchMonitors()"
+    [(ngModel)]="filterContent"
+  />
+  <nz-select
+    style="margin-right: 10px; float: right; width: 120px"
+    nzAllowClear
+    [nzPlaceHolder]="'监控状态过滤'"
+    [(ngModel)]="filterStatus"
+  >
+    <nz-option nzLabel="全部状态" nzValue="9"></nz-option>
+    <nz-option nzLabel="监控正常" nzValue="1"></nz-option>
+    <nz-option nzLabel="不可用" nzValue="2"></nz-option>
+    <nz-option nzLabel="不可达" nzValue="3"></nz-option>
+    <nz-option nzLabel="未监控" nzValue="0"></nz-option>
+  </nz-select>
+</div>
 
 <nz-table
   #fixedTable

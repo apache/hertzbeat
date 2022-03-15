@@ -88,17 +88,28 @@ export class MonitorService {
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
 
-  public searchMonitors(monitorName: string, monitorHost: string, pageIndex: number, pageSize: number): Observable<Message<Page<Monitor>>> {
+  public searchMonitors(
+    app: string | null,
+    searchValue: string,
+    status: number,
+    pageIndex: number,
+    pageSize: number
+  ): Observable<Message<Page<Monitor>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
+    status = status ? status : 9;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      name: monitorName,
-      host: monitorHost,
+      name: searchValue,
+      host: searchValue,
+      status: status,
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (app != undefined) {
+      httpParams = httpParams.append('app', app);
+    }
     const options = { params: httpParams };
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
