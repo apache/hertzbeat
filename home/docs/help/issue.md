@@ -10,7 +10,12 @@ sidebar_label: 常见问题
 > 如信息所示，输入的监控Host须是ipv4,ipv6或域名，不能携带协议头，例如协议头http   
 
 2. ** 网站API等监控反馈statusCode:403或401，但对端服务本身无需认证，浏览器直接访问是OK **       
-> 请排查是否是被防火墙拦截，如宝塔等默认设置了对请求header中`User-Agent=Apache-HttpClient`的拦截，若被拦截请删除此拦截规则。(v1.0.beat5版本已将user-agent模拟成浏览器此问题不存在)         
+> 请排查是否是被防火墙拦截，如宝塔等默认设置了对请求header中`User-Agent=Apache-HttpClient`的拦截，若被拦截请删除此拦截规则。(v1.0.beat5版本已将user-agent模拟成浏览器此问题不存在)        
+
+3. 安装包部署的hertzbeat下ping连通性监控异常  
+安装包安装部署的hertzbeat,对ping连通性监控不可用，但本地直接ping是可用的。     
+> 安装包部署需要配置java虚拟机root权限启动hertzbeat从而使用ICMP，若未启用root权限则是判断telnet对端7号端口是否开通     
+> docker安装默认启用无此问题   
 
 ### Docker部署常见问题   
 
