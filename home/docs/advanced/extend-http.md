@@ -29,14 +29,14 @@ HTTP协议支持我们自定义HTTP请求路径，请求header，请求参数，
 
 > 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数映射, 指标信息, 采集协议配置信息*等。  
 
-样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /define/app/example.yml   
+样例：自定义一个名称为example_http的自定义监控类型，其使用HTTP协议采集指标数据。    
+文件名称: example_http.yml 位于 /define/app/example_http.yml   
 
 ```yaml
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: example
+app: example_http
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
@@ -157,12 +157,12 @@ metrics:
 
 > 监控参数定义文件用于定义 *需要的输入参数字段结构定义(前端页面根据结构渲染输入参数框)*。   
 
-样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 //define/param/example.yml   
+样例：自定义一个名称为example_http的自定义监控类型，其使用HTTP协议采集指标数据。    
+文件名称: example_http.yml 位于 //define/param/example_http.yml   
 
 ```yaml
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: example
+app: example_http
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
     # field-字段名称标识符

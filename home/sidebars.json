@@ -32,6 +32,13 @@
           "items": [
             "advanced/extend-jdbc"
           ]
+        },
+        {
+          "type": "category",
+          "label": "SSH协议",
+          "items": [
+            "advanced/extend-ssh"
+          ]
         }
       ]
     },
