@@ -35,6 +35,9 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @ApiModel(description = "监控实体")
 public class Monitor {
 
+    /**
+     * 主键ID
+     */
     @Id
     @ApiModelProperty(value = "监控ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
