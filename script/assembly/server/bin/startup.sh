@@ -22,7 +22,7 @@ CONF_DIR=$DEPLOY_DIR/config
 # 应用的端口号
 SERVER_PORT=1157
 
-PIDS=`ps -f | grep java | grep "$CONF_DIR" |awk '{print $2}'`
+PIDS=`ps -ef | grep java | grep "$CONF_DIR" | awk '{print $2}'`
 if [ "$1" = "status" ]; then
     if [ -n "$PIDS" ]; then
         echo "The $SERVER_NAME is running...!"
@@ -41,10 +41,20 @@ if [ -n "$PIDS" ]; then
 fi
 
 if [ -n "$SERVER_PORT" ]; then
-    SERVER_PORT_COUNT=`netstat -tln | grep $SERVER_PORT | wc -l`
+    # linux 下查询端口是否占用
+    SERVER_PORT_COUNT=`netstat -tln | grep :$SERVER_PORT | wc -l`
     if [ $SERVER_PORT_COUNT -gt 0 ]; then
-        echo "ERROR: The $SERVER_NAME port $SERVER_PORT already used!"
+        echo "ERROR: netstat the $SERVER_NAME port $SERVER_PORT already used!"
         exit 1
+    fi
+    # mac 下查询端口是否占用
+    LSOF_AVA=`command -v lsof | wc -l`
+    if [ $LSOF_AVA -gt 0 ]; then
+        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | wc -l`
+        if [ $SERVER_PORT_COUNT -gt 0 ]; then
+            echo "ERROR: lsof the $SERVER_NAME port $SERVER_PORT already used!"
+            exit 1
+        fi
     fi
 fi
 
