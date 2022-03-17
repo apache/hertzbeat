@@ -15,7 +15,6 @@ public class JsonOptionListAttributeConverter implements AttributeConverter<List
     @Override
     public String convertToDatabaseColumn(List<ParamDefine.Option> attribute) {
         return GsonUtil.toJson(attribute);
-
     }
 
     @Override
