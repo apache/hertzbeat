@@ -18,8 +18,6 @@ configmap:
     type: 1
   - key: timeout
     type: 0
-    required: false
-    defaultValue: 3
   - key: url
     type: 1
 # 指标组列表
@@ -107,6 +105,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
+      timeout: ^_^timeout^_^
       # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
       # sql
@@ -139,6 +138,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
+      timeout: ^_^timeout^_^
       # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
       # sql
