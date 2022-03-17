@@ -52,9 +52,11 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
+        //获取查询语句/获取链接最大超时时间
+        int timeout = metrics.getJdbc().getTimeout().intValue();
         try {
             Statement statement = getConnection(jdbcProtocol.getUsername(),
-                    jdbcProtocol.getPassword(), databaseUrl);
+                    jdbcProtocol.getPassword(), databaseUrl,timeout);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW:
                     queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
@@ -95,7 +97,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url) throws Exception {
+    private Statement getConnection(String username, String password, String url,Integer timeout) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
@@ -106,7 +108,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // 设置查询超时时间10秒
-                statement.setQueryTimeout(10);
+                statement.setQueryTimeout(timeout);
                 // 设置查询最大行数1000行
                 statement.setMaxRows(1000);
             } catch (Exception e) {
@@ -130,7 +132,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         Connection connection = DriverManager.getConnection(url, username, password);
         statement = connection.createStatement();
         // 设置查询超时时间10秒
-        statement.setQueryTimeout(10);
+        statement.setQueryTimeout(timeout);
         // 设置查询最大行数1000行
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
