@@ -18,7 +18,7 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
    ```
 2. Docker安装TDengine
    ```
-   $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine
+   $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12
    526aa188da767ae94b244226a2b2eec2b5f17dd8eff594533d9ec0cd0f3a1ccd
    ```
    使用```$ docker ps```查看数据库是否启动成功
@@ -50,4 +50,4 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
    ```
 
 **注意⚠️若是安装包安装的TDengine2.3+版本**       
-> 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+> 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter      
