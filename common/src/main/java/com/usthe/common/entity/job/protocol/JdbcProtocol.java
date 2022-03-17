@@ -36,6 +36,10 @@ public class JdbcProtocol {
      */
     private String database;
     /**
+     * 超时时间
+     */
+    private Long timeout;
+    /**
      * 数据库类型 mysql oracle ...
      */
     private String platform;
