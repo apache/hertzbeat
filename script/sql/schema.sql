@@ -1,3 +1,6 @@
+set names utf8mb4;
+drop database if exists hertzbeat;
+create database hertzbeat;
 use hertzbeat;
 
 -- ----------------------------

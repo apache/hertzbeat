@@ -127,7 +127,7 @@
           <span>{{ 'monitor.app.' + data.app | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip nzTooltipTitle="修改监控">
           <i nz-icon nzType="edit" nzTheme="outline"></i>

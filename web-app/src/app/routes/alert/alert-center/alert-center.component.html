@@ -117,7 +117,7 @@
       <td nzAlign="center">
         {{ data.status === 0 ? '未处理' : '已处理' }}
       </td>
-      <td nzAlign="center">{{ data.gmtCreate }}</td>
+      <td nzAlign="center">{{ data.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
