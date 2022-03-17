@@ -86,7 +86,7 @@
             <span *ngIf="data.type == 5">{{ data.accessToken }}</span>
             <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
           </td>
-          <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
+          <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
             <button nz-button nzType="primary" (click)="onEditOneNoticeReceiver(data)" nz-tooltip nzTooltipTitle="修改接收人">
               <i nz-icon nzType="edit" nzTheme="outline"></i>
@@ -148,7 +148,7 @@
               <span>关闭</span>
             </nz-tag>
           </td>
-          <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
+          <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
             <button nz-button nzType="primary" (click)="onEditOneNoticeRule(data)" nz-tooltip nzTooltipTitle="修改告警策略">
               <i nz-icon nzType="edit" nzTheme="outline"></i>

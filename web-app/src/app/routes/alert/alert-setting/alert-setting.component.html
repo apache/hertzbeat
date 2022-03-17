@@ -94,7 +94,7 @@
           <span>否</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.gmtUpdate ? data.gmtUpdate : data.gmtCreate }}</td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onOpenConnectModal(data.id, data.app)" nz-tooltip nzTooltipTitle="配置关联监控">
           <i nz-icon nzType="link" nzTheme="outline"></i>
