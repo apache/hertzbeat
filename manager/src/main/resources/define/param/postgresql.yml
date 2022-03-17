@@ -11,6 +11,12 @@ param:
     required: true
     defaultValue: 5432
     placeholder: '请输入端口'
+  - field: timeout
+    name: 查询超时时间
+    type: number
+    required: false
+    defaultValue: 3000
+    placeholder: '查询超时时间'
   - field: database
     name: 数据库名称
     type: text

@@ -18,6 +18,8 @@ configmap:
     type: 1
   - key: url
     type: 1
+  - key: timeout
+    type: 0
 # 指标组列表
 metrics:
   - name: basic
@@ -45,6 +47,7 @@ metrics:
       host: ^_^host^_^
       # 端口
       port: ^_^port^_^
+      timeout: ^_^timeout^_^
       platform: postgresql
       username: ^_^username^_^
       password: ^_^password^_^
@@ -87,6 +90,7 @@ metrics:
       host: ^_^host^_^
       # 端口
       port: ^_^port^_^
+      timeout: ^_^timeout^_^
       platform: postgresql
       username: ^_^username^_^
       password: ^_^password^_^
@@ -110,6 +114,7 @@ metrics:
       host: ^_^host^_^
       # 端口
       port: ^_^port^_^
+      timeout: ^_^timeout^_^
       platform: postgresql
       username: ^_^username^_^
       password: ^_^password^_^
