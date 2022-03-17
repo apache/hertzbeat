@@ -52,11 +52,17 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
-        //获取查询语句/获取链接最大超时时间
-        int timeout = metrics.getJdbc().getTimeout().intValue();
+        // 查询超时时间默认3000毫秒
+        int timeout = 3000;
+        try {
+            // 获取查询语句超时时间
+            timeout = Integer.parseInt(jdbcProtocol.getTimeout());
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
         try {
             Statement statement = getConnection(jdbcProtocol.getUsername(),
-                    jdbcProtocol.getPassword(), databaseUrl,timeout);
+                    jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW:
                     queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
@@ -108,7 +114,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // 设置查询超时时间10秒
-                statement.setQueryTimeout(timeout);
+                int timeoutSecond = timeout / 1000;
+                timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+                statement.setQueryTimeout(timeoutSecond);
                 // 设置查询最大行数1000行
                 statement.setMaxRows(1000);
             } catch (Exception e) {
