@@ -90,13 +90,13 @@
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">创建时间</p></div>
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtCreate }}</p></div
+          ><p style="text-align: left">{{ monitor?.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss'  }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">最近更新时间</p></div>
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtUpdate }}</p></div
+          ><p style="text-align: left">{{ monitor?.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss'  }}</p></div
         >
       </div>
     </nz-card>
