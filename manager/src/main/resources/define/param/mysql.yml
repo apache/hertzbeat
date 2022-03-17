@@ -28,3 +28,9 @@ param:
     name: URL
     type: text
     required: false
+  - field: timeout
+    name: 超时时间
+    type: number
+    required: false
+    defaultValue: 3
+    placeholder: '请输入mysql可接受的超时时间'
