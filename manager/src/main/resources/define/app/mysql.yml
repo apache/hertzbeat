@@ -19,7 +19,7 @@ configmap:
   - key: timeout
     type: 0
     required: false
-    defaultValue: 3000
+    defaultValue: 3
   - key: url
     type: 1
 # 指标组列表
