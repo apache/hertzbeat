@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * influxdb存储采集数据
@@ -39,6 +40,7 @@ public class TdEngineDataStorage implements DisposableBean {
     private HikariDataSource hikariDataSource;
     private WarehouseWorkerPool workerPool;
     private MetricsDataExporter dataExporter;
+    private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO %s USING %s TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS %s %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
@@ -200,8 +202,9 @@ public class TdEngineDataStorage implements DisposableBean {
     }
 
     private String formatStringValue(String value){
-        return value.replaceAll("(\\\\)|(')","\\\\$0");
+        return SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
     }
+
     @Override
     public void destroy() throws Exception {
         if (hikariDataSource != null) {
