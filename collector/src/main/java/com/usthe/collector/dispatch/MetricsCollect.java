@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -172,14 +173,23 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
+        // eg: database_pages=Database pages 非常规映射
+        Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
                 .map(cal -> {
                     int splitIndex = cal.indexOf("=");
                     String field = cal.substring(0, splitIndex);
                     String expressionStr = cal.substring(splitIndex + 1);
-                    Expression expression = AviatorEvaluator.compile(expressionStr, true);
+                    Expression expression = null;
+                    try {
+                        expression = AviatorEvaluator.compile(expressionStr, true);
+                    } catch (Exception e) {
+                        fieldAliasMap.put(field, expressionStr);
+                        return null;
+                    }
                     return new Object[]{field, expression}; })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String)arr[0], arr -> (Expression) arr[1]));
 
         List<Metrics.Field> fields = metrics.getFields();
@@ -226,7 +236,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     }
                 } else {
                     // 不存在 则映射别名值
-                    value = aliasFieldValueMap.get(realField);
+                    String aliasField = fieldAliasMap.get(realField);
+                    if (aliasField != null) {
+                        value = aliasFieldValueMap.get(aliasField);
+                    } else {
+                        value = aliasFieldValueMap.get(realField);
+                    }
                 }
                 if (value == null) {
                     value = CommonConstants.NULL_VALUE;

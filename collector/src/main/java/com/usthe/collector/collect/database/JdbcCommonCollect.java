@@ -56,7 +56,9 @@ public class JdbcCommonCollect extends AbstractCollect {
         int timeout = 3000;
         try {
             // 获取查询语句超时时间
-            timeout = Integer.parseInt(jdbcProtocol.getTimeout());
+            if (jdbcProtocol.getTimeout() != null) {
+                timeout = Integer.parseInt(jdbcProtocol.getTimeout());
+            }
         } catch (Exception e) {
             log.warn(e.getMessage());
         }
@@ -140,7 +142,9 @@ public class JdbcCommonCollect extends AbstractCollect {
         Connection connection = DriverManager.getConnection(url, username, password);
         statement = connection.createStatement();
         // 设置查询超时时间10秒
-        statement.setQueryTimeout(timeout);
+        int timeoutSecond = timeout / 1000;
+        timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+        statement.setQueryTimeout(timeoutSecond);
         // 设置查询最大行数1000行
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
@@ -200,7 +204,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             HashMap<String, String> values = new HashMap<>(columns.size());
             while (resultSet.next()) {
                 if (resultSet.getString(1) != null) {
-                    values.put(resultSet.getString(1).toLowerCase(), resultSet.getString(2));
+                    values.put(resultSet.getString(1).toLowerCase().trim(), resultSet.getString(2));
                 }
             }
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -276,6 +280,10 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "postgresql":
                 url = "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                break;
+            case "sqlserver":
+                url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                        + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase());
                 break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
