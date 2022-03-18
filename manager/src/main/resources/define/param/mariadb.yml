@@ -9,7 +9,7 @@ param:
     type: number
     range: '[0,65535]'
     required: true
-    defaultValue: 80
+    defaultValue: 3306
     placeholder: '请输入端口'
   - field: timeout
     name: 查询超时时间
