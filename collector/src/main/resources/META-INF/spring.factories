@@ -6,4 +6,5 @@ com.usthe.collector.dispatch.MetricsCollectorQueue,\
 com.usthe.collector.dispatch.WorkerPool,\
 com.usthe.collector.dispatch.entrance.internal.CollectJobService,\
 com.usthe.collector.dispatch.export.MetricsDataExporter,\
-com.usthe.collector.util.SpringContextHolder
+com.usthe.collector.util.SpringContextHolder,\
+com.usthe.collector.collect.database.JdbcSpiLoader
