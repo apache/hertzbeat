@@ -160,7 +160,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="detect" nzTooltipTitle="新增监控前是否先探测检查监控可用性"> 是否探测 </nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="detect" nzTooltipTitle="新增监控前是否先探测检查监控可用性"> 测试连接 </nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
         </nz-form-control>
@@ -177,7 +177,7 @@
 
       <div nz-row>
         <div nz-col nzSpan="8" nzOffset="9">
-          <button nz-button nzType="primary" type="submit" (click)="onDetect(editForm.form)"> 探测 </button>
+          <button nz-button nzType="primary" type="submit" (click)="onDetect(editForm.form)"> 测试 </button>
           <button nz-button nzType="primary" type="submit" (click)="onSubmit(editForm.form)"> 确定 </button>
           <button nz-button nzType="primary" type="reset" (click)="onCancel()"> 取消 </button>
         </div>
