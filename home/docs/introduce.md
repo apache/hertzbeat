@@ -5,7 +5,7 @@ sidebar_label: 介绍
 slug: /
 ---
 
-> 易用友好的高性能监控告警系统。
+> 易用友好的监控告警系统。
 
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
