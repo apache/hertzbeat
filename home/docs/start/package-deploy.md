@@ -76,7 +76,7 @@ sidebar_label: 安装包方式部署
    $ ./startup.sh 
    ```
 6. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警。
+   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
 
 **HAVE FUN**
 
