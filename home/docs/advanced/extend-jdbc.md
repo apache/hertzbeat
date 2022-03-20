@@ -3,7 +3,7 @@ id: extend-jdbc
 title: JDBC协议自定义监控  
 sidebar_label: JDBC协议自定义监控    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JDBC(目前支持mysql,mariadb,postgresql)自定义指标监控。 
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JDBC(目前支持mysql,mariadb,postgresql,sqlserver)自定义指标监控。 
 > JDBC协议自定义监控可以让我们很方便的通过写SQL查询语句就能监控到我们想监控的指标     
 
 ### JDBC协议采集流程    

@@ -64,7 +64,8 @@
           "items": [
             "help/mysql",
             "help/mariadb",
-            "help/postgresql"
+            "help/postgresql",
+            "help/sqlserver"
           ]
         },
         {
