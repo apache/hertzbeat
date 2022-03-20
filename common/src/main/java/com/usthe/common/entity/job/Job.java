@@ -166,7 +166,7 @@ public class Job {
             return null;
         }
         if (!metricsSet.remove(metrics)) {
-            log.error("Job {} appId {} app {} metrics {} remove empty error in priorMetrics.",
+            log.warn("Job {} appId {} app {} metrics {} remove empty error in priorMetrics.",
                     id, monitorId, app, metrics.getName());
         }
         if (metricsSet.isEmpty()) {

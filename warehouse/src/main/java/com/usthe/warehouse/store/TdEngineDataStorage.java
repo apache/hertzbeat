@@ -183,6 +183,7 @@ public class TdEngineDataStorage implements DisposableBean {
                 String createTableSql = String.format(CREATE_SUPER_TABLE_SQL, superTable, fieldSqlBuilder);
                 try {
                     assert statement != null;
+                    log.info("[tdengine-data]: create {} use sql: {}.", superTable, createTableSql);
                     statement.execute(createTableSql);
                     statement.execute(insertDataSql);
                 } catch (Exception createTableException) {
