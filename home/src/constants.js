@@ -36,7 +36,7 @@ export const features = [{
                 custom: <a href={'/docs/advanced/extend-point'}><strong>自定义监控</strong></a>,
                 br: <br/>
             }}>
-                {'HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，MYSQL数据库等的监控，不久我们将兼容 prometheus 协议，提供更多的监控类型和性能指标。{br}' +
+                {'HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，数据库，操作系统等的监控，快速迭代提供更多的监控类型和性能指标。{br}' +
                 '我们提供了更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}' +
                 '不同团队的监控需求千变万化，我们提供{custom}，仅需配置YML就能快速接入监控系统。'
                 }
