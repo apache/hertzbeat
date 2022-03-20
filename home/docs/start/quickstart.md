@@ -47,7 +47,7 @@ sidebar_label: 快速开始
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
 2. 后端：需要`maven3+`和`java8+`环境，修改YML配置信息并启动manager服务
 3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在web-app目录下启动 `ng serve --open`
-4. 浏览器访问 localhost:4200 即可开始
+4. 浏览器访问 localhost:4200 即可开始，默认账户密码 admin/admin  
 
 详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
 
