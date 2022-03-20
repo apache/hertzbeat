@@ -14,7 +14,7 @@ services:
       - "3306:3306"
     environment:
       TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: 123456
     volumes:
       - ./dbdata/mysqldata:/var/lib/mysql/
       - ./conf/sql:/docker-entrypoint-initdb.d/

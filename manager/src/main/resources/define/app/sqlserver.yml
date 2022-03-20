@@ -115,7 +115,7 @@ metrics:
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: connection
+      - field: user_connection
         type: 0
         unit: 连接数
     protocol: jdbc
@@ -132,5 +132,5 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: SELECT cntr_value as connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
+      sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
       url: ^_^url^_^
