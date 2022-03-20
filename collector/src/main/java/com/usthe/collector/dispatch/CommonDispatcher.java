@@ -32,7 +32,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     /**
      * 指标组采集任务超时时间值
      */
-    private static final long DURATION_TIME = 120_000L;
+    private static final long DURATION_TIME = 240_000L;
     /**
      * 指标组采集任务优先级队列
      */
@@ -94,7 +94,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             Thread.currentThread().setName("metrics-task-monitor");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    // 检测每个指标组采集单元是否超时2分钟,超时则丢弃并返回异常
+                    // 检测每个指标组采集单元是否超时4分钟,超时则丢弃并返回异常
                     long deadline = System.currentTimeMillis() - DURATION_TIME;
                     for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
                         MetricsTime metricsTime = entry.getValue();
@@ -165,7 +165,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 metricsSet.forEach(metricItem -> {
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
                     jobRequestQueue.addJob(metricsCollect);
-                    metricsTimeoutMonitorMap.put(job.getId() + metrics.getName(),
+                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
                             new MetricsTime(System.currentTimeMillis(), metrics, timeout));
                 });
             } else {
@@ -185,7 +185,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 metricsSet.forEach(metricItem -> {
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
                     jobRequestQueue.addJob(metricsCollect);
-                    metricsTimeoutMonitorMap.put(job.getId() + metrics.getName(),
+                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
                             new MetricsTime(System.currentTimeMillis(), metrics, timeout));
                 });
             } else {
