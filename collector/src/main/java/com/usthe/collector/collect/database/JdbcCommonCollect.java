@@ -285,6 +285,10 @@ public class JdbcCommonCollect extends AbstractCollect {
                 url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase());
                 break;
+            case "oracle":
+                url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
 
