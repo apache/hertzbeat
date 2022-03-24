@@ -29,11 +29,36 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: DST_PRIMARY_TT_VERSION
+      - field: database_version
         type: 1
         instance: true
-      - field: NLS_RDBMS_VERSION
+      - field: database_type
         type: 1
+      - field: hostname
+        type: 1
+      - field: instance_name
+        type: 1
+      - field: startup_time
+        type: 1
+      - field: status
+        type: 1
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - VERSION
+      - DATABASE_TYPE
+      - HOST_NAME
+      - INSTANCE_NAME
+      - STARTUP_TIME
+      - STATUS
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - database_version=VERSION
+      - database_type=DATABASE_TYPE
+      - hostname=HOST_NAME
+      - instance_name=INSTANCE_NAME
+      - startup_time=STARTUP_TIME
+      - status=STATUS
     protocol: jdbc
     jdbc:
       # 主机host: ipv4 ipv6 域名
@@ -46,7 +71,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       # SQL查询方式： oneRow, multiRow, columns
-      queryType: columns
+      queryType: oneRow
       # sql
-      sql: select * from sys.props$
+      sql: select * from sys.v_$instance
       url: ^_^url^_^
