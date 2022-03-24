@@ -109,12 +109,11 @@
             <artifactId>mssql-jdbc</artifactId>
             <version>10.2.0.jre8</version>
         </dependency>
-
         <!-- oracle -->
         <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc6</artifactId>
-            <version>11.2.0.3</version>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>21.5.0.0</version>
         </dependency>
     </dependencies>
 
