@@ -75,3 +75,108 @@ metrics:
       # sql
       sql: select * from sys.v_$instance
       url: ^_^url^_^
+
+  - name: tablespace
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: file_id
+        type: 1
+        instance: true
+      - field: file_name
+        type: 1
+      - field: tablespace_name
+        type: 1
+      - field: status
+        type: 1
+      - field: bytes
+        type: 0
+        unit: MB
+      - field: blocks
+        type: 0
+        unit: 块数
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
+      url: ^_^url^_^
+
+  - name: user_connect
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: username
+        type: 1
+        instance: true
+      - field: counts
+        type: 0
+        unit: 连接数
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: SELECT username, count( username ) as counts FROM v$session WHERE username IS NOT NULL GROUP BY username
+      url: ^_^url^_^
+
+  - name: performace
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: qps
+        type: 0
+        unit: qps
+      - field: tps
+        type: 0
+        unit: tps
+      - field: mbps
+        type: 0
+        unit: mbps
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - I/O Requests per Second
+      - User Transaction Per Sec
+      - I/O Megabytes per Second
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - qps=I/O Requests per Second
+      - tps=User Transaction Per Sec
+      - mbps=I/O Megabytes per Second
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
+      url: ^_^url^_^
