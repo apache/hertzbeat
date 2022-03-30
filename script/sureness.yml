@@ -23,7 +23,7 @@ excludedResource:
   - /**/*.ttf===get
   - /**/*.png===get
   - /**/*.gif===get
-    - /**/*.png===*
+  - /**/*.png===*
   # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get
