@@ -65,7 +65,8 @@
             "help/mysql",
             "help/mariadb",
             "help/postgresql",
-            "help/sqlserver"
+            "help/sqlserver",
+            "help/oracle"
           ]
         },
         {
