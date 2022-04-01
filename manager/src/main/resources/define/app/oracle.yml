@@ -140,7 +140,7 @@ metrics:
       sql: SELECT username, count( username ) as counts FROM v$session WHERE username IS NOT NULL GROUP BY username
       url: ^_^url^_^
 
-  - name: performace
+  - name: performance
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
