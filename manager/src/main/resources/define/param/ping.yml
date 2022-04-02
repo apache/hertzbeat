@@ -17,4 +17,4 @@ param:
     range: '[0,100000]'
     required: true
     placeholder: '请输入超时时间,单位毫秒'
-    defaultValue: 3000
+    defaultValue: 6000
