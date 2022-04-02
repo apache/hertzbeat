@@ -1,12 +1,12 @@
 package com.usthe.collector.util;
 
 import lombok.extern.slf4j.Slf4j;
-import sun.misc.BASE64Decoder;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 /**
  * 密钥工具类
@@ -35,7 +35,7 @@ public class KeyPairUtil {
                 return null;
             }
             // todo fix 公钥解析
-            byte[] publicKeyBytes = (new BASE64Decoder()).decodeBuffer(publicKeyStr);
+            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyStr);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             PublicKey publicKey = keyFactory.generatePublic(keySpec);
             return new KeyPair(publicKey, null);
