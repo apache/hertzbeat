@@ -59,7 +59,7 @@ public class Param {
      * 参数值
      */
     @ApiModelProperty(value = "参数值", example = "8080", accessMode = READ_WRITE, position = 3)
-    @Length(max = 255)
+    @Length(max = 8126)
     private String value;
 
     /**
