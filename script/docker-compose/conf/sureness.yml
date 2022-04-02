@@ -36,10 +36,10 @@ excludedResource:
 # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
   - appId: admin
-    credential: admin@123.
+    credential: admin
     role: [role1,role2]
   - appId: tom
-    credential: tom@123.
+    credential: tom
     role: [role1,role2,role3]
   - appId: lili
     # 注意 Digest认证不支持加盐加密的密码账户
