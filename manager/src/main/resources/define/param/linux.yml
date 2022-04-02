@@ -11,6 +11,12 @@ param:
     required: true
     defaultValue: 22
     placeholder: '请输入端口'
+  - field: timeout
+    name: 超时时间
+    type: number
+    required: false
+    defaultValue: 6000
+    placeholder: '超时时间'
   - field: username
     name: 用户名
     type: text
@@ -19,4 +25,4 @@ param:
   - field: password
     name: 密码
     type: password
-    required: true
+    required: false
