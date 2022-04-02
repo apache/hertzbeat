@@ -38,8 +38,8 @@ public class TelnetCollectImpl extends AbstractCollect {
         }
 
         TelnetProtocol telnet = metrics.getTelnet();
-        // 超时时间默认300毫秒
-        int timeout = 300;
+        // 超时时间默认6000毫秒
+        int timeout = 6000;
         try {
             timeout = Integer.parseInt(telnet.getTimeout());
         } catch (Exception e) {
