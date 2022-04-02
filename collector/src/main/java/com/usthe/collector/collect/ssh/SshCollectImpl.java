@@ -5,6 +5,7 @@ import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.ssh.CommonSshClient;
 import com.usthe.collector.util.CollectorConstants;
+import com.usthe.collector.util.KeyPairUtil;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.SshProtocol;
 import com.usthe.common.entity.message.CollectRep;
@@ -19,6 +20,7 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,8 +58,8 @@ public class SshCollectImpl extends AbstractCollect {
             return;
         }
         SshProtocol sshProtocol = metrics.getSsh();
-        // 超时时间默认300毫秒
-        int timeout = 3000;
+        // 超时时间默认6000毫秒
+        int timeout = 6000;
         try {
             timeout = Integer.parseInt(sshProtocol.getTimeout());
         } catch (Exception e) {
@@ -181,6 +183,13 @@ public class SshCollectImpl extends AbstractCollect {
                 .verify(timeout, TimeUnit.MILLISECONDS).getSession();
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
+        } else if (StringUtils.hasText(sshProtocol.getPublicKey())) {
+            KeyPair keyPair = KeyPairUtil.getKeyPairFromPublicKey(sshProtocol.getPublicKey());
+            if (keyPair != null) {
+                clientSession.addPublicKeyIdentity(keyPair);
+            }
+        } else {
+            throw new IllegalArgumentException("需填写账户登陆密码或公钥");
         }
         // 进行认证
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
