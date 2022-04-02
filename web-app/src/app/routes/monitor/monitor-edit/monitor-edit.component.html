@@ -86,7 +86,7 @@
           >{{ paramDefine.name }}
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <nz-input-group [nzSuffix]="suffixTemplate">
+          <nz-input-group [nzSuffix]="suffixTemplate" style="width: 100%">
             <input
               [type]="passwordVisible ? 'text' : 'password'"
               nz-input

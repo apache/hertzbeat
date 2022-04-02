@@ -52,8 +52,8 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
-        // 查询超时时间默认3000毫秒
-        int timeout = 3000;
+        // 查询超时时间默认6000毫秒
+        int timeout = 6000;
         try {
             // 获取查询语句超时时间
             if (jdbcProtocol.getTimeout() != null) {

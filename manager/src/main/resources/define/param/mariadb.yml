@@ -15,7 +15,7 @@ param:
     name: 查询超时时间
     type: number
     required: false
-    defaultValue: 3000
+    defaultValue: 6000
     placeholder: '查询超时时间'
   - field: database
     name: 数据库名称

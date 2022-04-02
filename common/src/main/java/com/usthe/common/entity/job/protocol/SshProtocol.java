@@ -29,7 +29,7 @@ public class SshProtocol {
     /**
      * 超时时间
      */
-    private String timeout = "6000";
+    private String timeout;
 
     /**
      * 用户名

@@ -37,8 +37,8 @@ public class IcmpCollectImpl extends AbstractCollect {
             return;
         }
         IcmpProtocol icmp = metrics.getIcmp();
-        // 超时时间默认300毫秒
-        int timeout = 300;
+        // 超时时间默认6000毫秒
+        int timeout = 6000;
         try {
             timeout = Integer.parseInt(icmp.getTimeout());
         } catch (Exception e) {
