@@ -17,7 +17,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,7 +77,18 @@ public class CommonHttpClient {
                 @Override
                 public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException { }
                 @Override
-                public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException { }
+                public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                    // 判断服务器证书有效期时间
+                    Date now = new Date();
+                    if (x509Certificates != null && x509Certificates.length > 0) {
+                        for (X509Certificate certificate : x509Certificates) {
+                            Date deadline = certificate.getNotAfter();
+                            if (deadline != null && now.after(deadline)) {
+                                throw new CertificateExpiredException();
+                            }
+                        }
+                    }
+                }
                 @Override
                 public X509Certificate[] getAcceptedIssuers() { return null; }
             };
