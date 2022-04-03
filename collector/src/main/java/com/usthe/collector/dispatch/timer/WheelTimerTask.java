@@ -12,6 +12,7 @@ import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.GsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -84,6 +85,26 @@ public class WheelTimerTask implements TimerTask {
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonElement> entry = iterator.next();
                 JsonElement element = entry.getValue();
+                String key = entry.getKey();
+                // 替换KEY-VALUE情况的属性 比如http headers params
+                if (key != null && key.startsWith("^_^") && key.endsWith("^_^")) {
+                    key = key.replaceAll("\\^_\\^", "");
+                    Configmap param = configmap.get(key);
+                    if (param.getType() == (byte) 3) {
+                        String jsonValue = (String) param.getValue();
+                         Map<String, String> map = GsonUtil.fromJson(jsonValue, Map.class);
+                         if (map != null) {
+                             map.forEach((name, value) -> {
+                                 if (name != null && !"".equals(name.trim())) {
+                                     jsonObject.addProperty(name, value);
+                                 }
+                             });
+                         }
+                    }
+                    iterator.remove();
+                    continue;
+                }
+                // 替换正常的VALUE值
                 if (element.isJsonPrimitive()) {
                     // 判断是否含有特殊字符 替换
                     String value = element.getAsString();

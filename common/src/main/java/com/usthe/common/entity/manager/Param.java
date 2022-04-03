@@ -63,11 +63,11 @@ public class Param {
     private String value;
 
     /**
-     * 参数类型 0:数字 1:字符串 2:加密串
+     * 参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串
      */
-    @ApiModelProperty(value = "参数类型 0:数字 1:字符串 2:加密串", accessMode = READ_WRITE, position = 4)
+    @ApiModelProperty(value = "参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串", accessMode = READ_WRITE, position = 4)
     @Min(0)
-    @Max(2)
+    @Max(3)
     private byte type;
 
     /**

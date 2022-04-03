@@ -111,28 +111,40 @@ public class ParamDefine {
     private List<Option> options;
 
     /**
+     * 当type为key-value时有效,表示key的别名描述
+     */
+    @ApiModelProperty(value = "当type为key-value时有效,表示key的别名描述", example = "Name", accessMode = READ_WRITE, position = 9)
+    private String keyAlias;
+
+    /**
+     * 当type为key-value时有效,表示value的别名描述
+     */
+    @ApiModelProperty(value = "当type为key-value时有效,表示value的别名描述", example = "Value", accessMode = READ_WRITE, position = 10)
+    private String valueAlias;
+
+    /**
      * 此条记录创建者
      */
-    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 9)
+    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 11)
     private String creator;
 
     /**
      * 此条记录最新修改者
      */
-    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 10)
+    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 12)
     private String modifier;
 
     /**
      * 记录创建时间
      */
-    @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 11)
+    @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 13)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtCreate;
 
     /**
      * 记录最新修改时间
      */
-    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 12)
+    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 14)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
 

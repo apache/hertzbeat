@@ -49,3 +49,9 @@ param:
         value: PUT
       - label: DELETE请求
         value: DELETE
+  - field: headers
+    name: 请求头
+    type: key-value
+    required: false
+    keyAlias: Header Name
+    valueAlias: Header Value
