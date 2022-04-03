@@ -147,6 +147,18 @@
             </label>
           </nz-radio-group>
         </nz-form-control>
+
+        <nz-form-label *ngIf="paramDefine.type === 'key-value'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+          >{{ paramDefine.name }}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-key-value-input
+            [(value)]="params[i].value"
+            [id]="paramDefine.field"
+            keyAlias="Header Name"
+            valueAlias="Header Value"
+          ></app-key-value-input>
+        </nz-form-control>
       </nz-form-item>
 
       <nz-divider></nz-divider>

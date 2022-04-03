@@ -5,7 +5,7 @@ app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串, 3-map映射的json串
 # 强制固定必须参数 - host
 configmap:
   - key: host
@@ -16,6 +16,8 @@ configmap:
     type: 1
   - key: password
     type: 2
+  - key: headers
+    type: 3
 # 指标组列表
 metrics:
 # 第一个监控指标组 cpu
@@ -69,7 +71,7 @@ metrics:
       ssl: false
       # 请求头内容
       headers:
-        apiVersion: v1
+        ^_^headers^_^: ^_^headers^_^
       # 请求参数内容
       params:
         param1: param1
