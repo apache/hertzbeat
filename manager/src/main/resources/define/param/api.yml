@@ -17,13 +17,6 @@ param:
     range: '[0,65535]'
     required: true
     defaultValue: 80
-  - field: uri
-    name: 相对路径
-    type: text
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 200
-    required: false
-    placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
   - field: method
     name: 请求方式
     type: radio
@@ -38,21 +31,24 @@ param:
         value: PUT
       - label: DELETE请求
         value: DELETE
+  - field: uri
+    name: 相对路径
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 200
+    required: false
+    placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
   - field: ssl
     name: 启用HTTPS
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: true
-  - field: username
-    name: 用户名
-    type: text
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 20
+  - field: headers
+    name: 请求Headers
+    type: key-value
     required: false
-  - field: password
-    name: 密码
-    type: password
-    required: false
+    keyAlias: Header Name
+    valueAlias: Header Value
   - field: contentType
     name: Content-Type
     type: text
@@ -62,4 +58,14 @@ param:
     name: 请求BODY
     type: textarea
     placeholder: 'POST PUT请求时有效'
+    required: false
+  - field: username
+    name: 用户名
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    required: false
+  - field: password
+    name: 密码
+    type: password
     required: false
