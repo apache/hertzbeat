@@ -50,7 +50,7 @@ param:
       - label: DELETE请求
         value: DELETE
   - field: headers
-    name: 请求头
+    name: 请求Headers
     type: key-value
     required: false
     keyAlias: Header Name

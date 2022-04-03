@@ -26,6 +26,8 @@ configmap:
     type: 1
   - key: payload
     type: 1
+  - key: headers
+    type: 3
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
@@ -58,6 +60,7 @@ metrics:
       # 请求头内容
       headers:
         content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
