@@ -58,7 +58,13 @@ export class MonitorNewComponent implements OnInit {
           this.paramDefines.forEach(define => {
             let param = new Param();
             param.field = define.field;
-            param.type = define.type === 'number' ? 0 : 1;
+            if (define.type === 'number') {
+              param.type = 0;
+            } else if (define.type === 'key-value') {
+              param.type = 3;
+            } else {
+              param.type = 1;
+            }
             if (define.type === 'boolean') {
               param.value = false;
             }

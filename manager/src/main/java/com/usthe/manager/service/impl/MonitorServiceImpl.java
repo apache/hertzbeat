@@ -236,6 +236,9 @@ public class MonitorServiceImpl implements MonitorService {
                         case "checkbox":
                             // todo checkbox校验
                             break;
+                        case "key-value":
+                            // todo key-value校验
+                            break;
                         // todo 更多参数定义与实际值格式校验
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
