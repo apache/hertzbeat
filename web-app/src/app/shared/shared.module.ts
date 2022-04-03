@@ -6,6 +6,7 @@ import { DelonACLModule } from '@delon/acl';
 import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 
+import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
@@ -18,7 +19,7 @@ const THIRDMODULES: Array<Type<void>> = [];
 
 // #region your components & directives
 
-const COMPONENTS: Array<Type<void>> = [];
+const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
 
 // #endregion
