@@ -61,11 +61,11 @@ public class TdEngineDataStorage implements DisposableBean {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        initTdEngineDatasource(properties.getStore().getTdEngine());
-        startStorageData();
+        boolean success = initTdEngineDatasource(properties.getStore().getTdEngine());
+        startStorageData(success);
     }
 
-    private void initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
+    private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
         HikariConfig config = new HikariConfig();
         // jdbc properties
         config.setJdbcUrl(tdEngineProperties.getUrl());
@@ -84,16 +84,28 @@ public class TdEngineDataStorage implements DisposableBean {
         config.setIdleTimeout(0);
         //validation query
         config.setConnectionTestQuery("select server_status()");
-        this.hikariDataSource =  new HikariDataSource(config);
+        try {
+            this.hikariDataSource =  new HikariDataSource(config);
+        } catch (Exception e) {
+            log.error("\n\t------------------WARN WARN WARN------------------\n" +
+                    "\t---------------Init TdEngine Failed---------------\n" +
+                    "\t---------------Init TdEngine Failed---------------\n" +
+                    "\t--------------Please Config Tdengine--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
+            return false;
+        }
+        return true;
     }
 
-    private void startStorageData() {
+    private void startStorageData(boolean consume) {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-tdEngine-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = dataExporter.pollPersistentStorageMetricsData();
-                    if (metricsData != null) {
+                    if (consume && metricsData != null) {
                         saveData(metricsData);
                     }
                 } catch (InterruptedException e) {
@@ -232,6 +244,12 @@ public class TdEngineDataStorage implements DisposableBean {
         Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
+            if (hikariDataSource == null) {
+                log.error("\n\t---------------TdEngine Init Failed---------------\n" +
+                        "\t--------------Please Config Tdengine--------------\n" +
+                        "\t----------Can Not Use Metric History Now----------\n");
+                return instanceValuesMap;
+            }
             connection = hikariDataSource.getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(selectSql);
