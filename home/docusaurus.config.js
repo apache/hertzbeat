@@ -7,8 +7,8 @@ const repoUrl = `https://github.com/dromara/${projectName}`
 const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/'
 
 module.exports = {
-    title: 'TANCLOUD探云',
-    tagline: '易用友好的高性能监控云',
+    title: 'HertzBeat',
+    tagline: '易用友好的云监控系统',
     url: 'https://hertzbeat.com',
     baseUrl: '/',
     onBrokenLinks: 'throw',
