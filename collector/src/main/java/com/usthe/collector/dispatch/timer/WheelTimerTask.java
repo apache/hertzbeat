@@ -90,7 +90,7 @@ public class WheelTimerTask implements TimerTask {
                 if (key != null && key.startsWith("^_^") && key.endsWith("^_^")) {
                     key = key.replaceAll("\\^_\\^", "");
                     Configmap param = configmap.get(key);
-                    if (param.getType() == (byte) 3) {
+                    if (param != null && param.getType() == (byte) 3) {
                         String jsonValue = (String) param.getValue();
                          Map<String, String> map = GsonUtil.fromJson(jsonValue, Map.class);
                          if (map != null) {
