@@ -125,6 +125,7 @@
         <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-switch
             [(ngModel)]="params[i].value"
+            (ngModelChange)="onParamBooleanChanged($event, paramDefine.field)"
             [required]="paramDefine.required"
             [name]="paramDefine.field"
             [id]="paramDefine.field"
