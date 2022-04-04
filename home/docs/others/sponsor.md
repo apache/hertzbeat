@@ -11,8 +11,9 @@ sidebar_label: 赞助
 
 ![wechat-alipay](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/pay.png)          
 
-
-感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com)赞助服务器采集节点    
+     
+感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点      
+感谢[天上云计算(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点   
 
 
 
