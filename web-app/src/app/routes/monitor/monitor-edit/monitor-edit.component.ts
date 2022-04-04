@@ -108,6 +108,21 @@ export class MonitorEditComponent implements OnInit {
       });
   }
 
+  onParamBooleanChanged(booleanValue: boolean, field: string) {
+    // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
+    if (field === 'ssl') {
+      this.params.forEach(param => {
+        if (param.field === 'port') {
+          if (booleanValue) {
+            param.value = '443';
+          } else {
+            param.value = '80';
+          }
+        }
+      });
+    }
+  }
+
   onSubmit(formGroup: FormGroup) {
     if (formGroup.invalid) {
       Object.values(formGroup.controls).forEach(control => {
