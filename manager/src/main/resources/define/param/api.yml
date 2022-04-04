@@ -49,6 +49,12 @@ param:
     required: false
     keyAlias: Header Name
     valueAlias: Header Value
+  - field: params
+    name: 查询Params
+    type: key-value
+    required: false
+    keyAlias: Param Key
+    valueAlias: Param Value
   - field: contentType
     name: Content-Type
     type: text
