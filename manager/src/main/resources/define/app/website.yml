@@ -12,6 +12,12 @@ configmap:
     type: 1
   - key: ssl
     type: 1
+  - key: authType
+    type: 1
+  - key: username
+    type: 1
+  - key: password
+    type: 2
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
@@ -40,6 +46,13 @@ metrics:
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: website
