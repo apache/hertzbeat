@@ -31,7 +31,7 @@ public class WxWorkWebHookDto {
     /**
      * 消息类型
      */
-    private String msgType = MARKDOWN;
+    private String msgtype = MARKDOWN;
 
     /**
      * markdown消息
