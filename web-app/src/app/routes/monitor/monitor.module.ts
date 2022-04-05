@@ -16,6 +16,7 @@ import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
 import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 import { MonitorRoutingModule } from './monitor-routing.module';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 
 const COMPONENTS: Array<Type<void>> = [
   MonitorNewComponent,
@@ -37,7 +38,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzRadioModule,
     NgxEchartsModule,
     NzLayoutModule,
-    NzSpaceModule
+    NzSpaceModule,
+    NzCollapseModule
   ],
   declarations: COMPONENTS
 })
