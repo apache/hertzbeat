@@ -16,7 +16,7 @@ import { MonitorService } from '../../../service/monitor.service';
 @Component({
   selector: 'app-monitor-modify',
   templateUrl: './monitor-edit.component.html',
-  styles: []
+  styleUrls: ['./monitor-edit.component.less']
 })
 export class MonitorEditComponent implements OnInit {
   constructor(
@@ -30,6 +30,8 @@ export class MonitorEditComponent implements OnInit {
 
   paramDefines!: ParamDefine[];
   params!: Param[];
+  advancedParamDefines!: ParamDefine[];
+  advancedParams!: Param[];
   paramValueMap = new Map<String, Param>();
   monitor = new Monitor();
   profileForm: FormGroup = new FormGroup({});
@@ -59,7 +61,6 @@ export class MonitorEditComponent implements OnInit {
                 this.paramValueMap.set(item.field, item);
               });
             }
-            this.params = message.data.params;
             this.detected = message.data.detected ? message.data.detected : true;
           } else {
             console.warn(message.msg);
@@ -73,7 +74,10 @@ export class MonitorEditComponent implements OnInit {
         if (message.code === 0) {
           this.paramDefines = message.data;
           this.params = [];
-          this.paramDefines.forEach(define => {
+          this.advancedParams = [];
+          this.paramDefines = [];
+          this.advancedParamDefines = [];
+          message.data.forEach(define => {
             let param = this.paramValueMap.get(define.field);
             if (param === undefined) {
               param = new Param();
@@ -100,7 +104,13 @@ export class MonitorEditComponent implements OnInit {
                 }
               }
             }
-            this.params.push(param);
+            if (define.hide) {
+              this.advancedParams.push(param);
+              this.advancedParamDefines.push(define);
+            } else {
+              this.params.push(param);
+              this.paramDefines.push(define);
+            }
           });
         } else {
           console.warn(message.msg);
@@ -144,10 +154,15 @@ export class MonitorEditComponent implements OnInit {
         param.value = (param.value as string).trim();
       }
     });
+    this.advancedParams.forEach(param => {
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
+      }
+    });
     let addMonitor = {
       detected: this.detected,
       monitor: this.monitor,
-      params: this.params
+      params: this.params.concat(this.advancedParams)
     };
     this.isSpinning = true;
     this.monitorSvc.editMonitor(addMonitor).subscribe(
@@ -188,10 +203,15 @@ export class MonitorEditComponent implements OnInit {
         param.value = (param.value as string).trim();
       }
     });
+    this.advancedParams.forEach(param => {
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
+      }
+    });
     let detectMonitor = {
       detected: this.detected,
       monitor: this.monitor,
-      params: this.params
+      params: this.params.concat(this.advancedParams)
     };
     this.isSpinning = true;
     this.monitorSvc.detectMonitor(detectMonitor).subscribe(

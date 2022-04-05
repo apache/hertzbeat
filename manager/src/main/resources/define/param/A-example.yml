@@ -26,10 +26,12 @@ param:
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
     required: false
+    hide: true
   - field: password
     name: 密码
     type: password
     required: false
+    hide: true
   - field: ssl
     name: 启动SSL
     # 当type为boolean时,前端用switch展示开关
