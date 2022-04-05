@@ -105,9 +105,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                                     .setId(timerJob.getJob().getMonitorId())
                                     .setApp(timerJob.getJob().getApp())
                                     .setMetrics(metricsTime.getMetrics().getName())
+                                    .setPriority(metricsTime.getMetrics().getPriority())
                                     .setTime(System.currentTimeMillis())
                                     .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
-                            dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                            log.error("[Collect Timeout]: \n{}", metricsData);
+                            if (metricsData.getPriority() == 0) {
+                                dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                            }
                             metricsTimeoutMonitorMap.remove(entry.getKey());
                         }
                     }
@@ -165,8 +169,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 metricsSet.forEach(metricItem -> {
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
                     jobRequestQueue.addJob(metricsCollect);
-                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
+                            new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
                 });
             } else {
                 // 当前执行级别的指标组列表未全执行完成,
@@ -185,8 +189,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 metricsSet.forEach(metricItem -> {
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
                     jobRequestQueue.addJob(metricsCollect);
-                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
+                            new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
                 });
             } else {
                 // 当前执行级别的指标组列表未全执行完成,

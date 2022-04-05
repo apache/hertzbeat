@@ -35,6 +35,10 @@ import java.util.stream.Collectors;
 @Data
 public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
+     * 调度告警阈值时间 100ms
+     */
+    private static final long WARN_DISPATCH_TIME = 100;
+    /**
      * 监控ID
      */
     protected long monitorId;
@@ -267,11 +271,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     private CollectRep.MetricsData validateResponse(CollectRep.MetricsData.Builder builder) {
         long endTime = System.currentTimeMillis();
         builder.setTime(endTime);
-        log.debug("[Collect]: newTime: {}, startTime: {}, spendTime: {}.", newTime, startTime, endTime - startTime);
+        long runningTime = endTime - startTime;
+        long allTime = endTime - newTime;
+        if (startTime - newTime >= WARN_DISPATCH_TIME) {
+            log.warn("[Collector Dispatch Warn, Dispatch Use {}ms.", startTime - newTime);
+        }
         if (builder.getCode() != CollectRep.Code.SUCCESS) {
-            log.info("[Collect Fail] Reason: {}", builder.getMsg());
+            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, builder.getMsg());
         } else {
-            log.info("[Collect Success].");
+            log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
         }
         return builder.build();
     }
