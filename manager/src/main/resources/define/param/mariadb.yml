@@ -17,6 +17,7 @@ param:
     required: false
     defaultValue: 6000
     placeholder: '查询超时时间'
+    hide: true
   - field: database
     name: 数据库名称
     type: text
@@ -34,3 +35,4 @@ param:
     name: URL
     type: text
     required: false
+    hide: true
