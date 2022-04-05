@@ -123,6 +123,12 @@ public class ParamDefine {
     private String valueAlias;
 
     /**
+     * 是否是高级隐藏参数 true-是 false-否
+     */
+    @ApiModelProperty(value = "是否是高级隐藏参数 true-是 false-否", example = "true", accessMode = READ_WRITE, position = 11)
+    private boolean hide = false;
+
+    /**
      * 此条记录创建者
      */
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 11)

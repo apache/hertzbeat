@@ -20,6 +20,8 @@ import { MonitorService } from '../../../service/monitor.service';
 export class MonitorNewComponent implements OnInit {
   paramDefines!: ParamDefine[];
   params!: Param[];
+  advancedParamDefines!: ParamDefine[];
+  advancedParams!: Param[];
   monitor!: Monitor;
   detected: boolean = true;
   passwordVisible: boolean = false;
@@ -53,9 +55,11 @@ export class MonitorNewComponent implements OnInit {
       )
       .subscribe(message => {
         if (message.code === 0) {
-          this.paramDefines = message.data;
           this.params = [];
-          this.paramDefines.forEach(define => {
+          this.advancedParams = [];
+          this.paramDefines = [];
+          this.advancedParamDefines = [];
+          message.data.forEach(define => {
             let param = new Param();
             param.field = define.field;
             if (define.type === 'number') {
@@ -77,7 +81,13 @@ export class MonitorNewComponent implements OnInit {
                 param.value = define.defaultValue;
               }
             }
-            this.params.push(param);
+            if (define.hide) {
+              this.advancedParams.push(param);
+              this.advancedParamDefines.push(define);
+            } else {
+              this.params.push(param);
+              this.paramDefines.push(define);
+            }
           });
         } else {
           console.warn(message.msg);
@@ -125,10 +135,15 @@ export class MonitorNewComponent implements OnInit {
         param.value = (param.value as string).trim();
       }
     });
+    this.advancedParams.forEach(param => {
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
+      }
+    });
     let addMonitor = {
       detected: this.detected,
       monitor: this.monitor,
-      params: this.params
+      params: this.params.concat(this.advancedParams)
     };
     this.isSpinning = true;
     this.monitorSvc.newMonitor(addMonitor).subscribe(
@@ -169,10 +184,15 @@ export class MonitorNewComponent implements OnInit {
         param.value = (param.value as string).trim();
       }
     });
+    this.advancedParams.forEach(param => {
+      if (param.value != null && typeof param.value == 'string') {
+        param.value = (param.value as string).trim();
+      }
+    });
     let detectMonitor = {
       detected: true,
       monitor: this.monitor,
-      params: this.params
+      params: this.params.concat(this.advancedParams)
     };
     this.isSpinning = true;
     this.monitorSvc.detectMonitor(detectMonitor).subscribe(
