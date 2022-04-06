@@ -7,7 +7,7 @@ import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
 import com.usthe.manager.pojo.dto.DingTalkWebHookDto;
 import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
-import com.usthe.manager.pojo.dto.WxWorkWebHookDto;
+import com.usthe.manager.pojo.dto.WeWorkWebHookDto;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -239,8 +239,8 @@ public class DispatchAlarm {
      * @param alert    告警信息
      */
     private void sendWeWorkRobotAlert(NoticeReceiver receiver, Alert alert) {
-        WxWorkWebHookDto wxWorkWebHookDTO = new WxWorkWebHookDto();
-        WxWorkWebHookDto.MarkdownDTO markdownDTO = new WxWorkWebHookDto.MarkdownDTO();
+        WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
+        WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
         StringBuilder content = new StringBuilder();
         content.append("<font color=\"info\">[TanCloud探云告警通知]</font>\n告警目标对象 : <font color=\"info\">")
                 .append(alert.getTarget()).append("</font>\n")
@@ -255,10 +255,10 @@ public class DispatchAlarm {
         }
         content.append("内容详情 : ").append(alert.getContent());
         markdownDTO.setContent(content.toString());
-        wxWorkWebHookDTO.setMarkdown(markdownDTO);
-        String webHookUrl = WxWorkWebHookDto.WEBHOOK_URL + receiver.getWechatId();
+        weWorkWebHookDTO.setMarkdown(markdownDTO);
+        String webHookUrl = WeWorkWebHookDto.WEBHOOK_URL + receiver.getWechatId();
         try {
-            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, wxWorkWebHookDTO, String.class);
+            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, String.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 log.debug("Send weWork webHook: {} Success", webHookUrl);
             } else {
