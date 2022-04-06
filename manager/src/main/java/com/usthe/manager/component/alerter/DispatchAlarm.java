@@ -31,6 +31,7 @@ import java.util.List;
 
 /**
  * 告警信息入库分发
+ *
  * @author tom
  * @date 2021/12/10 12:58
  */
@@ -107,9 +108,9 @@ public class DispatchAlarm {
             }
         } else {
             // 若是恢复告警 需对监控状态进行恢复
-           if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
-               monitorService.updateMonitorStatus(alert.getMonitorId(), CommonConstants.AVAILABLE_CODE);
-           }
+            if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+                monitorService.updateMonitorStatus(alert.getMonitorId(), CommonConstants.AVAILABLE_CODE);
+            }
         }
         // 告警落库
         alertService.addAlert(alert);
@@ -122,22 +123,37 @@ public class DispatchAlarm {
         for (NoticeReceiver receiver : receivers) {
             switch (receiver.getType()) {
                 // todo 短信通知
-                case 0: break;
-                case 1: sendEmailAlert(receiver, alert); break;
-                case 2: sendWebHookAlert(receiver, alert); break;
-                case 3: sendWeChatAlert(receiver, alert); break;
-                case 4: sendWeWorkRobotAlert(receiver, alert); break;
-                case 5: sendDingTalkRobotAlert(receiver, alert); break;
-                case 6: sendFlyBookAlert(receiver,alert); break;
-                default: break;
+                case 0:
+                    break;
+                case 1:
+                    sendEmailAlert(receiver, alert);
+                    break;
+                case 2:
+                    sendWebHookAlert(receiver, alert);
+                    break;
+                case 3:
+                    sendWeChatAlert(receiver, alert);
+                    break;
+                case 4:
+                    sendWeWorkRobotAlert(receiver, alert);
+                    break;
+                case 5:
+                    sendDingTalkRobotAlert(receiver, alert);
+                    break;
+                case 6:
+                    sendFlyBookAlert(receiver, alert);
+                    break;
+                default:
+                    break;
             }
         }
     }
 
     /**
      * 通过飞书发送告警信息
+     *
      * @param receiver 接收人
-     * @param alert 告警信息
+     * @param alert    告警信息
      */
     private void sendFlyBookAlert(NoticeReceiver receiver, Alert alert) {
         FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
@@ -184,8 +200,9 @@ public class DispatchAlarm {
 
     /**
      * 通过钉钉机器人发送告警信息
-     * @param receiver  通知配置信息
-     * @param alert     告警信息
+     *
+     * @param receiver 通知配置信息
+     * @param alert    告警信息
      */
     private void sendDingTalkRobotAlert(NoticeReceiver receiver, Alert alert) {
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
@@ -217,8 +234,9 @@ public class DispatchAlarm {
 
     /**
      * 通过企业微信发送告警信息
-     * @param receiver  通知配置信息
-     * @param alert     告警信息
+     *
+     * @param receiver 通知配置信息
+     * @param alert    告警信息
      */
     private void sendWeWorkRobotAlert(NoticeReceiver receiver, Alert alert) {
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
@@ -231,7 +249,7 @@ public class DispatchAlarm {
         if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
             content.append("告警级别 : <font color=\"warning\">")
                     .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
-        }else {
+        } else {
             content.append("告警级别 : <font color=\"comment\">")
                     .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
         }
@@ -273,23 +291,23 @@ public class DispatchAlarm {
     }
 
 
-    private void sendEmailAlert(final NoticeReceiver receiver,final Alert alert){
-        try{
+    private void sendEmailAlert(final NoticeReceiver receiver, final Alert alert) {
+        try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage,true,"UTF-8");
+            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject("TanCloud探云-监控告警");
             //设置发件人Email
             messageHelper.setFrom(emailFromUser);
             //设定收件人Email
-            messageHelper.setTo(receiver.getEmail());        
+            messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
             //构建邮件模版
             String process = mailService.buildAlertHtmlTemplate(alert);
             //设置邮件内容模版
-            messageHelper.setText(process,true);   
+            messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
-        }catch (Exception e){
-            log.error("[邮箱告警] error，Exception information={}",e.getMessage());
+        } catch (Exception e) {
+            log.error("[邮箱告警] error，Exception information={}", e.getMessage());
         }
     }
 
