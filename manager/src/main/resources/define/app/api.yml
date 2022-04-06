@@ -32,6 +32,8 @@ configmap:
     type: 3
   - key: params
     type: 3
+  - key: keyword
+    type: 1
 # 指标组列表
 metrics:
   # 第一个监控指标组 cpu
@@ -46,6 +48,9 @@ metrics:
       - field: responseTime
         type: 0
         unit: ms
+      - field: keyword
+        type: 0
+        unit: 次数
 # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
 # 当protocol为http协议时具体的采集配置
@@ -79,3 +84,4 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: website
+      keyword: ^_^keyword^_^

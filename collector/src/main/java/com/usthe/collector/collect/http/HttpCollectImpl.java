@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.http.CommonHttpClient;
 import com.usthe.collector.dispatch.DispatchConstants;
+import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.collector.util.JsonPathParser;
 import com.usthe.common.entity.job.Metrics;
@@ -100,7 +101,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 String parseType = metrics.getHttp().getParseType();
                 try {
                     if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
-                        parseResponseByDefault(resp, metrics.getAliasFields(), builder, responseTime);
+                        parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
@@ -108,11 +109,11 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
-                        parseResponseByWebsite(resp, metrics.getAliasFields(), builder, responseTime);
+                        parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
                         parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     } else {
-                        parseResponseByDefault(resp, metrics.getAliasFields(), builder, responseTime);
+                        parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     }
                 } catch (Exception e) {
                     log.info("parse error: {}.", e.getMessage(), e);
@@ -169,13 +170,16 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseByWebsite(String resp, List<String> aliasFields,
+    private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        // todo resp 网站关键字监测
+        // 网站关键词数量监测
+        int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : aliasFields) {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                 valueRowBuilder.addColumns(responseTime.toString());
+            } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                valueRowBuilder.addColumns(Integer.toString(keywordNum));
             } else {
                 valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
             }
@@ -277,6 +281,7 @@ public class HttpCollectImpl extends AbstractCollect {
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
+        int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (Map<String, Object> stringMap : results) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
@@ -286,6 +291,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 } else {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumns(Integer.toString(keywordNum));
                     } else {
                         valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                     }
@@ -300,9 +307,10 @@ public class HttpCollectImpl extends AbstractCollect {
 
     }
 
-    private void parseResponseByDefault(String resp, List<String> aliasFields,
+    private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         JsonElement element = JsonParser.parseString(resp);
+        int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
             for (JsonElement jsonElement : array) {
@@ -317,6 +325,8 @@ public class HttpCollectImpl extends AbstractCollect {
                         } else {
                             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                                 valueRowBuilder.addColumns(responseTime.toString());
+                            } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                                valueRowBuilder.addColumns(Integer.toString(keywordNum));
                             } else {
                                 valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                             }
