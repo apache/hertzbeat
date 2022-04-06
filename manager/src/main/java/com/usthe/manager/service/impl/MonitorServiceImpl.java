@@ -79,6 +79,10 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
+        // 探测可用性只需要采集优先级为0的可用性指标集合
+        List<Metrics> availableMetrics = appDefine.getMetrics().stream()
+                .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
+        appDefine.setMetrics(availableMetrics);
         List<CollectRep.MetricsData> collectRep = collectJobService.collectSyncJobData(appDefine);
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
