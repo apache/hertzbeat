@@ -108,8 +108,8 @@ public class CommonHttpClient {
                     .setConnectTimeout(CONNECT_TIMEOUT)
                     // 数据传输最大响应间隔时间
                     .setSocketTimeout(SOCKET_TIMEOUT)
-                    // 遇到301 302不自动重定向跳转
-                    .setRedirectsEnabled(false)
+                    // 遇到301 302自动重定向跳转
+                    .setRedirectsEnabled(true)
                     .build();
             // 连接池
             connectionManager = new PoolingHttpClientConnectionManager(registry);
