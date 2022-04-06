@@ -49,7 +49,6 @@ public class HttpProtocol {
      * http请求携带的请求体
      */
     private String payload;
-
     /**
      * 认证信息
      */
@@ -66,6 +65,10 @@ public class HttpProtocol {
      * 数据解析脚本 当解析方式为 jsonPath or xmlPath时存在
      */
     private String parseScript;
+    /**
+     * 内容关键字
+     */
+    private String keyword;
 
     /**
      * 认证信息

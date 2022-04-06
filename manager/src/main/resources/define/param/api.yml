@@ -90,3 +90,8 @@ param:
     type: password
     required: false
     hide: true
+  - field: keyword
+    name: 关键字
+    type: text
+    required: false
+    hide: true
