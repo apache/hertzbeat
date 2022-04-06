@@ -9,6 +9,8 @@ public interface CollectorConstants {
 
     String RESPONSE_TIME = "responseTime";
 
+    String KEYWORD = "keyword";
+
     String STATUS_CODE = "statusCode";
 
     String ERROR_MSG = "errorMsg";
