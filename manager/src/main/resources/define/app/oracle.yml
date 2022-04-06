@@ -32,8 +32,6 @@ metrics:
       - field: database_version
         type: 1
         instance: true
-      - field: database_type
-        type: 1
       - field: hostname
         type: 1
       - field: instance_name
@@ -45,7 +43,6 @@ metrics:
     # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - VERSION
-      - DATABASE_TYPE
       - HOST_NAME
       - INSTANCE_NAME
       - STARTUP_TIME
@@ -54,7 +51,6 @@ metrics:
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - database_version=VERSION
-      - database_type=DATABASE_TYPE
       - hostname=HOST_NAME
       - instance_name=INSTANCE_NAME
       - startup_time=STARTUP_TIME
