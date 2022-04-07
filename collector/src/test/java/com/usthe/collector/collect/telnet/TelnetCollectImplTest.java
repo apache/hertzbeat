@@ -4,6 +4,7 @@ import org.apache.commons.net.telnet.TelnetClient;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.ConnectException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,7 +21,7 @@ class TelnetCollectImplTest {
             telnetClient = new TelnetClient("vt200");
             telnetClient.setConnectTimeout(5000);
             TelnetClient finalTelnetClient = telnetClient;
-            assertDoesNotThrow(() -> finalTelnetClient.connect("baidu.com",80));
+            assertThrows(ConnectException.class,() -> finalTelnetClient.connect("127.0.0.1",0));
             telnetClient.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
