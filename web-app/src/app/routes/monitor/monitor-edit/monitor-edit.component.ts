@@ -16,7 +16,7 @@ import { MonitorService } from '../../../service/monitor.service';
 @Component({
   selector: 'app-monitor-modify',
   templateUrl: './monitor-edit.component.html',
-  styleUrls: ['./monitor-edit.component.less']
+  styles: []
 })
 export class MonitorEditComponent implements OnInit {
   constructor(
@@ -72,7 +72,6 @@ export class MonitorEditComponent implements OnInit {
       )
       .subscribe(message => {
         if (message.code === 0) {
-          this.paramDefines = message.data;
           this.params = [];
           this.advancedParams = [];
           this.paramDefines = [];
