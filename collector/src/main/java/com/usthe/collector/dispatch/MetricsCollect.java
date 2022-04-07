@@ -247,6 +247,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         value = aliasFieldValueMap.get(realField);
                     }
                 }
+                // 处理可能带单位的指标数值 比如 34%, 34Mb，并将数值小数点限制到4位
+                if (CommonConstants.TYPE_NUMBER == field.getType()) {
+                    value = CommonUtil.parseDoubleStr(value, field.getUnit());
+                }
                 if (value == null) {
                     value = CommonConstants.NULL_VALUE;
                 }
