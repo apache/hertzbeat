@@ -28,9 +28,7 @@ if [ ! -d $LOGS_DIR ]; then
 fi
 
 # JVM Configuration
-JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true "
-
-JAVA_MEM_OPTS=" -server -Xms256m -Xmx1024m -XX:SurvivorRatio=2 -XX:+UseParallelGC "
+JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC "
 
 # 加载外部log文件的配置
 LOG_IMPL_FILE=logback-spring.xml
@@ -41,4 +39,4 @@ then
 fi
 CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
 echo -e "Starting the $SERVER_NAME ..."
-java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME --spring.profiles.active=prod
+java $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME --spring.profiles.active=prod
