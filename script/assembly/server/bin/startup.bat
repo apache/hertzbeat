@@ -34,9 +34,9 @@ rem 项目日志输出绝对路径
 set LOGS_DIR=%DEPLOY_DIR%\logs
 
 rem JVM Configuration
-set JAVA_OPTS= -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Duser.timezone=Asia/Shanghai
+set JAVA_OPTS= -Duser.timezone=Asia/Shanghai
 
-set JAVA_MEM_OPTS= -server -Xms256m -Xmx1024m -XX:SurvivorRatio=2 -XX:+UseParallelGC
+set JAVA_MEM_OPTS= -server -XX:SurvivorRatio=6 -XX:+UseParallelGC
 
 rem 加载外部log文件的配置
 set LOGGING_CONFIG=-Dlogging.config=%CONF_DIR%\logback-spring.xml
