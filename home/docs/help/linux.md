@@ -38,6 +38,7 @@ sidebar_label: Linux操作系统
 | interrupt      | 个数 | CPU中断数量 |
 | load           | 无 | CPU最近1/5/15分钟的平均负载 |
 | context_switch | 个数 | 当前上下文切换数量 |
+| usage          | %  | CPU使用率 |  
 
 
 #### 指标集合：memory
@@ -49,6 +50,7 @@ sidebar_label: Linux操作系统
 | free          | Mb | 空闲内存容量 |
 | buff_cache    | Mb | 缓存占用内存 |  
 | available     | Mb | 剩余可用内存容 |   
+| usage          | %  | 内存使用率 |  
 
 #### 指标集合：disk
 
@@ -68,3 +70,12 @@ sidebar_label: Linux操作系统
 | receive_bytes          | byte | 入站数据流量(bytes)  |
 | transmit_bytes         | byte | 出站数据流量(bytes)  |
 
+#### 指标集合：disk_free
+
+| 指标名称      | 指标单位 | 指标帮助描述 |
+| ----------- | ----------- | ----------- |
+| filesystem     | 无  | 文件系统的名称 |
+| used           | Mb  | 已使用磁盘大小 |
+| available      | Mb  | 可用磁盘大小 |
+| usage          | %   | 使用率 |  
+| mounted        | 无  | 挂载点目录 |   
