@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * Alarm information storage and distribution
  * 告警信息入库分发
  *
  * @author tom
@@ -71,7 +72,7 @@ public class DispatchAlarm {
                 try {
                     Alert alert = dataQueue.pollAlertData();
                     if (alert != null) {
-                        // 判断告警类型入库
+                        // Determining alarm type storage   判断告警类型入库
                         storeAlertData(alert);
                         // 通知分发
                         sendAlertDataListener(alert);
@@ -87,7 +88,7 @@ public class DispatchAlarm {
     }
 
     private void storeAlertData(Alert alert) {
-        // todo 使用缓存不直接操作库
+        // todo Using the cache does not directly manipulate the library    使用缓存不直接操作库
         Monitor monitor = monitorService.getMonitor(alert.getMonitorId());
         if (monitor == null) {
             log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", alert.getMonitorId());
@@ -95,34 +96,38 @@ public class DispatchAlarm {
         }
         alert.setMonitorName(monitor.getName());
         if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+            // When monitoring is not managed, ignore and silence its alarm messages
             // 当监控未管理时  忽略静默其告警信息
             return;
         }
         if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
             if (CommonConstants.AVAILABLE.equals(alert.getTarget())) {
+                // Availability Alarm Need to change the monitoring status to unavailable
                 // 可用性告警 需变更监控状态为不可用
                 monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
             } else if (CommonConstants.REACHABLE.equals(alert.getTarget())) {
+                // Reachability alarm The monitoring status needs to be changed to unreachable
                 // 可达性告警 需变更监控状态为不可达
                 monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_REACHABLE_CODE);
             }
         } else {
+            // If the alarm is restored, the monitoring state needs to be restored
             // 若是恢复告警 需对监控状态进行恢复
             if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
                 monitorService.updateMonitorStatus(alert.getMonitorId(), CommonConstants.AVAILABLE_CODE);
             }
         }
-        // 告警落库
+        // Alarm drop library  告警落库
         alertService.addAlert(alert);
     }
 
     private void sendAlertDataListener(Alert alert) {
-        // todo 转发配置的邮件 微信 webhook
+        // todo Forward configured email WeChat webhook              转发配置的邮件 微信 webhook
         List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
-        // todo 发送通知这里暂时单线程
+        // todo Send notification here temporarily single thread     发送通知这里暂时单线程
         for (NoticeReceiver receiver : receivers) {
             switch (receiver.getType()) {
-                // todo 短信通知
+                // todo SMS notification    短信通知
                 case 0:
                     break;
                 case 1:
@@ -150,10 +155,11 @@ public class DispatchAlarm {
     }
 
     /**
+     * Send alert information through FeiShu
      * 通过飞书发送告警信息
      *
-     * @param receiver 接收人
-     * @param alert    告警信息
+     * @param receiver Notification configuration information   通知配置信息
+     * @param alert    Alarm information                        告警信息
      */
     private void sendFlyBookAlert(NoticeReceiver receiver, Alert alert) {
         FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
@@ -199,10 +205,11 @@ public class DispatchAlarm {
     }
 
     /**
+     * Send alarm information through DingTalk robot
      * 通过钉钉机器人发送告警信息
      *
-     * @param receiver 通知配置信息
-     * @param alert    告警信息
+     * @param receiver Notification configuration information   通知配置信息
+     * @param alert    Alarm information                        告警信息
      */
     private void sendDingTalkRobotAlert(NoticeReceiver receiver, Alert alert) {
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
@@ -233,10 +240,11 @@ public class DispatchAlarm {
     }
 
     /**
+     * Send alarm information through enterprise WeChat
      * 通过企业微信发送告警信息
      *
-     * @param receiver 通知配置信息
-     * @param alert    告警信息
+     * @param receiver Notification configuration information   通知配置信息
+     * @param alert    Alarm information                        告警信息
      */
     private void sendWeWorkRobotAlert(NoticeReceiver receiver, Alert alert) {
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
@@ -296,23 +304,23 @@ public class DispatchAlarm {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject("TanCloud探云-监控告警");
-            //设置发件人Email
+            //Set sender Email 设置发件人Email
             messageHelper.setFrom(emailFromUser);
-            //设定收件人Email
+            //Set recipient Email 设定收件人Email
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
-            //构建邮件模版
+            //Build email templates 构建邮件模版
             String process = mailService.buildAlertHtmlTemplate(alert);
-            //设置邮件内容模版
+            //Set Email Content Template 设置邮件内容模版
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
-            log.error("[邮箱告警] error，Exception information={}", e.getMessage());
+            log.error("[Email Alert] Exception，Exception information={}", e.getMessage());
         }
     }
 
     private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
-        // todo 使用缓存
+        // todo use cache 使用缓存
         return noticeConfigService.getReceiverFilterRule(alert);
     }
 

@@ -20,7 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * 告警信息服务实现
+ * Realization of Alarm Information Service 告警信息服务实现
+ *
  * @author tom
  * @date 2021/12/10 15:39
  */
@@ -55,18 +56,24 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public AlertSummary getAlertsSummary() {
         AlertSummary alertSummary = new AlertSummary();
+        //Statistics on the alarm information in the alarm state
+        //统计正在告警状态下的告警信息
         List<AlertPriorityNum> priorityNums = alertDao.findAlertPriorityNum();
         if (priorityNums != null) {
             for (AlertPriorityNum priorityNum : priorityNums) {
                 switch (priorityNum.getPriority()) {
                     case CommonConstants
                             .ALERT_PRIORITY_CODE_WARNING:
-                        alertSummary.setPriorityWarningNum(priorityNum.getNum());break;
+                        alertSummary.setPriorityWarningNum(priorityNum.getNum());
+                        break;
                     case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL:
-                        alertSummary.setPriorityCriticalNum(priorityNum.getNum());break;
+                        alertSummary.setPriorityCriticalNum(priorityNum.getNum());
+                        break;
                     case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY:
-                        alertSummary.setPriorityEmergencyNum(priorityNum.getNum());break;
-                    default: break;
+                        alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
+                        break;
+                    default:
+                        break;
                 }
             }
         }
