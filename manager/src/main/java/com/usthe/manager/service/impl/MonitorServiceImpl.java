@@ -22,6 +22,7 @@ import com.usthe.manager.service.AppService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
+import jdk.nashorn.internal.runtime.regexp.joni.constants.Traverse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 /**
  * 监控管理服务实现
+ *
  *
  *
  */
@@ -391,7 +393,8 @@ public class MonitorServiceImpl implements MonitorService {
         if (appCounts == null) {
             return null;
         }
-        // 关联大类别信息 计算每个状态对应数量
+        //Statistical category information, calculate the number of corresponding states for each monitor
+        //统计类别信息，计算每个监控分别对应状态的数量
         Map<String, AppCount> appCountMap = new HashMap<>(appCounts.size());
         for (AppCount item : appCounts) {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
@@ -409,10 +412,13 @@ public class MonitorServiceImpl implements MonitorService {
                 case CommonConstants.UN_REACHABLE_CODE:
                     appCount.setUnReachableSize(appCount.getUnReachableSize() + item.getSize());
                     break;
-                default: break;
+                default:
+                    break;
             }
             appCountMap.put(item.getApp(), appCount);
         }
+        //Traverse the map obtained by statistics and convert it into a List<App Count> result set
+        //遍历统计得到的map，转换成List<App Count>结果集
         return appCountMap.values().stream().peek(item -> {
             item.setSize(item.getAvailableSize() + item.getUnManageSize()
                     + item.getUnReachableSize() + item.getUnAvailableSize());
