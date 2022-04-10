@@ -18,11 +18,13 @@ import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * System Summary Statistics API
  * 系统摘要统计API
+ *
  * @author tom
  * @date 2021/12/7 15:57
  */
-@Api(tags = "系统摘要统计API")
+@Api(tags = "en: System Summary Statistics API,zh: 系统摘要统计API")
 @RestController
 @RequestMapping(path = "/summary", produces = {APPLICATION_JSON_VALUE})
 public class SummaryController {
@@ -31,7 +33,7 @@ public class SummaryController {
     private MonitorService monitorService;
 
     @GetMapping
-    @ApiOperation(value = "查询应用类别监控统计", notes = "查询所有应用类别监控统计信息")
+    @ApiOperation(value = "Query all application category monitoring statistics", notes = "查询所有应用类别监控统计信息")
     public ResponseEntity<Message<Dashboard>> appMonitors() {
         List<AppCount> appsCount = monitorService.getAllAppMonitorsCount();
         Message<Dashboard> message = new Message<>(new Dashboard(appsCount));
