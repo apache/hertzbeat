@@ -23,7 +23,7 @@ sidebar_label: Docker方式部署
    在主机目录下创建application.yml，eg:/opt/application.yml   
    配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
    具体替换参数如下:
-   ``` 
+```
    spring.datasource.url
    spring.datasource.username
    spring.datasource.password
@@ -36,8 +36,7 @@ sidebar_label: Docker方式部署
    spring.mail.port
    spring.mail.username
    spring.mail.password
-   
-   ```
+```
 
 4. 配置用户配置文件(非必须,配置账户需要)     
    HertzBeat默认内置三个用户账户,分别为 admin/admin tom/tom@123 lili/lili   
@@ -45,74 +44,82 @@ sidebar_label: Docker方式部署
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
    配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
    
-   ```yaml
-   
-   resourceRole:
-   - /account/auth/refresh===post===[role1,role2,role3,role4]
-   
-   excludedResource:
-   - /account/auth/**===*
-   - /===get
-   - /i18n/**===get
-   - /apps/hierarchy===get
-   - /console/**===get
-   - /**/*.html===get
-   - /**/*.js===get
-   - /**/*.css===get
-   - /**/*.ico===get
-   - /**/*.ttf===get
-   - /**/*.png===get
-   - /**/*.gif===get
-   - /**/*.png===*
-   - /swagger-resources/**===get
-   - /v2/api-docs===get
-   - /v3/api-docs===get
-   
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为admin
-   # eg: tom 拥有[role1,role2,role3],密码为tom@123
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
-   account:
-   - appId: admin
-     credential: admin
-     role: [role1,role2]
-   - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
-   ```
+```yaml
+
+resourceRole:
+  - /api/account/auth/refresh===post===[role1,role2,role3,role4]
+
+excludedResource:
+  - /api/account/auth/**===*
+  - /api/i18n/**===get
+  - /api/apps/hierarchy===get
+  # web ui
+  - /===get
+  - /dashboard/**===get
+  - /monitors/**===get
+  - /alert/**===get
+  - /account/**===get
+  - /setting/**===get
+  - /passport/**===get
+  - /**/*.html===get
+  - /**/*.js===get
+  - /**/*.css===get
+  - /**/*.ico===get
+  - /**/*.ttf===get
+  - /**/*.png===get
+  - /**/*.gif===get
+  - /**/*.jpg===get
+  - /**/*.svg===get
+  - /**/*.json===get
+  # swagger ui
+  - /swagger-resources/**===get
+  - /v2/api-docs===get
+  - /v3/api-docs===get
+
+# 用户账户信息
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[role1,role2]角色,密码为admin
+# eg: tom 拥有[role1,role2,role3],密码为tom@123
+# eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+account:
+  - appId: admin
+    credential: admin
+    role: [role1,role2]
+  - appId: tom
+    credential: tom@123
+    role: [role1,role2,role3]
+  - appId: lili
+    # 注意 Digest认证不支持加盐加密的密码账户
+    # 加盐加密的密码，通过 MD5(password+salt)计算
+    # 此账户的原始密码为 lili
+    credential: 1A676730B0C7F54654B0E09184448289
+    salt: 123
+    role: [role1,role2]
+```
    
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
-   
-   ```yaml
-   
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为admin
-   # eg: tom 拥有[role1,role2,role3],密码为tom@123
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289  
-   account:
-   - appId: admin
-     credential: admin
-     role: [role1,role2]
-   - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
-   ```
+
+```yaml
+# 用户账户信息
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[role1,role2]角色,密码为admin
+# eg: tom 拥有[role1,role2,role3],密码为tom@123
+# eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+account:
+  - appId: admin
+    credential: admin
+    role: [role1,role2]
+  - appId: tom
+    credential: tom@123
+    role: [role1,role2,role3]
+  - appId: lili
+    # 注意 Digest认证不支持加盐加密的密码账户
+    # 加盐加密的密码，通过 MD5(password+salt)计算
+    # 此账户的原始密码为 lili
+    credential: 1A676730B0C7F54654B0E09184448289
+    salt: 123
+    role: [role1,role2]
+```
 
 6. 启动HertzBeat Docker容器  
    ``` 
@@ -128,7 +135,7 @@ sidebar_label: Docker方式部署
    - tancloud/hertzbeat:[版本tag] : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
 
 7. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
+   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
 
 **HAVE FUN**   
 
@@ -139,7 +146,7 @@ sidebar_label: Docker方式部署
 > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
 > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
 
-2. **按照流程部署，访问 http://ip:1157/console 无界面**   
+2. **按照流程部署，访问 http://ip:1157/ 无界面**   
 请参考下面几点排查问题：  
 > 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  

@@ -23,7 +23,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "I18N国际化资源API")
 @RestController
-@RequestMapping(path = "/i18n", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/i18n", produces = {APPLICATION_JSON_VALUE})
 public class I18nController {
 
     @Autowired

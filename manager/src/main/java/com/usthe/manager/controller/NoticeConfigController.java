@@ -34,7 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "消息通知配置API")
 @RestController()
-@RequestMapping(value = "/notice", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(value = "/api/notice", produces = {APPLICATION_JSON_VALUE})
 public class NoticeConfigController {
 
     @Autowired

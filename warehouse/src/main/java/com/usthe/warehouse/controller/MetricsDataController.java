@@ -45,7 +45,7 @@ public class MetricsDataController {
     @Autowired
     private TdEngineDataStorage tdEngineDataStorage;
 
-    @GetMapping("/monitor/{monitorId}/metrics/{metrics}")
+    @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
     @ApiOperation(value = "查询监控指标组的指标数据", notes = "查询监控指标组的指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @ApiParam(value = "监控ID", example = "343254354")
@@ -75,7 +75,7 @@ public class MetricsDataController {
         }
     }
 
-    @GetMapping("/monitor/{monitorId}/metric/{metricFull}")
+    @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
     @ApiOperation(value = "查询监控指标组的指定指标的历史数据", notes = "查询监控指标组下的指定指标的历史数据")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
             @ApiParam(value = "监控ID", example = "343254354")

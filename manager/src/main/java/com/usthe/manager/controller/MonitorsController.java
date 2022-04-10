@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "监控列表API")
 @RestController
-@RequestMapping(path = "/monitors", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
 
     private static final byte ALL_MONITOR_STATUS = 9;

@@ -5,17 +5,22 @@
 # eg: /api/v1/source1===get===[role2] 表示 /api/v2/host===post 这条资源支持 role2 这一种角色访问
 # eg: /api/v1/source2===get===[] 表示 /api/v1/source2===get 这条资源不支持任何角色访问
 resourceRole:
-  - /account/auth/refresh===post===[role1,role2,role3,role4]
+  - /api/account/auth/refresh===post===[role1,role2,role3,role4]
 
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-  - /account/auth/**===*
+  - /api/account/auth/**===*
+  - /api/i18n/**===get
+  - /api/apps/hierarchy===get
+  # web ui 前端静态资源
   - /===get
-  - /i18n/**===get
-  - /apps/hierarchy===get
-  # web ui 静态资源
-  - /console/**===get
+  - /dashboard/**===get
+  - /monitors/**===get
+  - /alert/**===get
+  - /account/**===get
+  - /setting/**===get
+  - /passport/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
@@ -23,7 +28,9 @@ excludedResource:
   - /**/*.ttf===get
   - /**/*.png===get
   - /**/*.gif===get
-    - /**/*.png===*
+  - /**/*.jpg===get
+  - /**/*.svg===get
+  - /**/*.json===get
   # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get

@@ -36,7 +36,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "告警批量管理API")
 @RestController
-@RequestMapping(path = "/alerts", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
 
     @Autowired
