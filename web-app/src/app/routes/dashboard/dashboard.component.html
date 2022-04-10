@@ -10,16 +10,19 @@
       </div>
       <div nz-col nzSpan="14" class="p-md text-white">
         <nz-tag class="mb-xs">
-          <span>正常 </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+          <span>{{ 'dashboard.status.available' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可用 </span><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+          <span>{{ 'dashboard.status.unavailable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可达 </span><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
+          <span>{{ 'dashboard.status.unreachable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>未监控 </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+          <span>{{ 'dashboard.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
