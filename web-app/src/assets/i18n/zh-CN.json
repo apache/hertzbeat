@@ -39,6 +39,8 @@
   },
   "monitor": {
     "": "监控",
+    "name": "监控名称",
+    "host": "监控Host",
     "category": {
       "": "监控类别",
       "service": "应用服务",
@@ -58,6 +60,14 @@
       "oracle": "Oracle",
       "redis": "Redis",
       "fullsite": "全站监控"
+    },
+    "status": {
+      "": "监控状态",
+      "all": "全部状态",
+      "available": "正常监控",
+      "unavailable": "不可用",
+      "unreachable": "不可达",
+      "un-manage": "未管理"
     }
   },
   "alert": {
@@ -75,10 +85,32 @@
       "2": "警告告警"
     }
   },
-  "dashboard.status.available": "正常",
-  "dashboard.status.unavailable": "不可用",
-  "dashboard.status.unreachable": "不可达",
-  "dashboard.status.un-manage": "未管理",
+  "dashboard.alerts.title": "最近告警列表",
+  "dashboard.alerts.enter": "进入告警中心",
+  "dashboard.alerts.distribute": "告警分布",
+  "dashboard.alerts.num": "告警数量",
+  "dashboard.alerts.deal": "告警处理",
+  "dashboard.alerts.deal-percent": "告警处理率",
+  "dashboard.monitors.total": "监控总量",
+  "dashboard.monitors.title": "监控总览",
+  "dashboard.monitors.sub-title": "监控类型纳管数量分布",
+  "dashboard.monitors.formatter": "个监控 占比",
+  "dashboard.monitors.distribute": "纳管数量分布",
+  "monitors.list": "监控列表",
+  "monitors.new": "新增",
+  "monitors.edit": "编辑",
+  "monitors.delete": "删除",
+  "monitors.edit-monitor": "编辑监控",
+  "monitors.delete-monitor": "删除监控",
+  "monitors.enable": "启用监控",
+  "monitors.cancel": "取消监控",
+  "monitors.search.placeholder": "搜索监控",
+  "monitors.search.filter": "监控状态过滤",
+  "monitors.total": "总量",
+  "common.search": "搜索",
+  "common.refresh": "刷新",
+  "common.edit-time": "最新修改时间",
+  "common.edit": "操作",
   "app.lock": "锁屏",
   "app.passport.desc": "TanCloud-易用友好的高性能监控云服务",
   "app.passport.welcome": "欢迎使用TanCloud探云-监控云服务-tancloud.cn",

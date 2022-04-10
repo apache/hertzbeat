@@ -2,7 +2,7 @@
   "menu": {
     "main": "Main",
     "lang": "Language",
-    "dashboard": "Dashboard",
+    "dashboard": "DashBoard",
     "search.placeholder": "Search：Monitor Name、IP",
     "fullscreen": "Full Screen",
     "fullscreen.exit": "Exit",
@@ -39,6 +39,8 @@
   },
   "monitor": {
     "": "Monitor",
+    "name": "Monitor Name",
+    "host": "Monitor Host",
     "category": {
       "": "Category",
       "service": "Service",
@@ -58,6 +60,14 @@
       "oracle": "Oracle",
       "redis": "Redis",
       "fullsite": "SiteMap Monitor"
+    },
+    "status": {
+      "": "Monitor Status",
+      "all": "All Status",
+      "available": "Available",
+      "unavailable": "UnAvailable",
+      "unreachable": "UnReachable",
+      "un-manage": "UnManaged"
     }
   },
   "alert": {
@@ -70,15 +80,37 @@
     },
     "priority": {
       "": "Alarm Level",
-      "0": "Emergency Alert",
-      "1": "Serious Alert",
-      "2": "Warning Alert"
+      "0": "Emergency",
+      "1": "Critical",
+      "2": "Warning"
     }
   },
-  "dashboard.status.available": "Available",
-  "dashboard.status.unavailable": "Unavailable",
-  "dashboard.status.unreachable": "Unreachable",
-  "dashboard.status.un-manage": "UnManaged",
+  "dashboard.alerts.title": "Recently Alerts List",
+  "dashboard.alerts.enter": "Go Alert Center",
+  "dashboard.alerts.distribute": "The Distribution Of Alerts",
+  "dashboard.alerts.num": "Alerts Num",
+  "dashboard.alerts.deal": "Alerts Dealing",
+  "dashboard.alerts.deal-percent": "Dealing Rate",
+  "dashboard.monitors.total": "Monitor Total",
+  "dashboard.monitors.title": "Monitoring Overview",
+  "dashboard.monitors.sub-title": "The Distribution Of Monitors",
+  "dashboard.monitors.formatter": " Monitors ",
+  "dashboard.monitors.distribute": "Monitor Distribution",
+  "monitors.list": "Monitor List",
+  "monitors.new": "New",
+  "monitors.edit": "Edit",
+  "monitors.delete": "Delete",
+  "monitors.edit-monitor": "Edit Monitor",
+  "monitors.delete-monitor": "Delete Monitor",
+  "monitors.enable": "Enable Monitor",
+  "monitors.cancel": "Cancel Monitor",
+  "monitors.search.placeholder": "Search Monitor",
+  "monitors.search.filter": "Filter Monitor Status",
+  "monitors.total": "Total",
+  "common.search": "Search",
+  "common.refresh": "Refresh",
+  "common.edit-time": "Last Update Time",
+  "common.edit": "Operate",
   "app.login.message-need-identifier": "Please enter your email or mobile number",
   "app.login.message-need-credential": "Please enter password",
   "app.password.forgot": "Forgot password",
