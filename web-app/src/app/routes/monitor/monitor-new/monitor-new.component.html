@@ -171,6 +171,146 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-collapse [nzGhost]="true">
+        <nz-collapse-panel nzHeader="高级" [nzHeader]="extraColHeader" [nzShowArrow]="false">
+          <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
+            <nz-form-label
+              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              nzSpan="7"
+              [nzRequired]="paramDefine.required"
+              [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control
+              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              nzSpan="8"
+              [nzErrorTip]="'validation.required' | i18n"
+            >
+              <input
+                nz-input
+                [(ngModel)]="advancedParams[i].value"
+                [required]="paramDefine.required"
+                [name]="paramDefine.field"
+                [type]="paramDefine.type"
+                [id]="paramDefine.field"
+                [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+              />
+            </nz-form-control>
+
+            <nz-form-label
+              *ngIf="paramDefine.type === 'textarea'"
+              nzSpan="7"
+              [nzRequired]="paramDefine.required"
+              [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <textarea
+                nz-input
+                [(ngModel)]="advancedParams[i].value"
+                [required]="paramDefine.required"
+                [name]="paramDefine.field"
+                [id]="paramDefine.field"
+                [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+                rows="3"
+              ></textarea>
+            </nz-form-control>
+
+            <nz-form-label
+              *ngIf="paramDefine.type === 'password'"
+              nzSpan="7"
+              [nzRequired]="paramDefine.required"
+              [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <nz-input-group [nzSuffix]="suffixTemplate" style="width: 100%">
+                <input
+                  [type]="passwordVisible ? 'text' : 'password'"
+                  nz-input
+                  placeholder="input password"
+                  [required]="paramDefine.required"
+                  [(ngModel)]="advancedParams[i].value"
+                  [id]="paramDefine.field"
+                  [name]="paramDefine.field"
+                  [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+                />
+              </nz-input-group>
+              <ng-template #suffixTemplate>
+                <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
+              </ng-template>
+            </nz-form-control>
+
+            <nz-form-label *ngIf="paramDefine.type === 'number'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <nz-input-number
+                [(ngModel)]="advancedParams[i].value"
+                [required]="paramDefine.required"
+                [nzMin]="-1000"
+                [nzMax]="65535"
+                [nzStep]="1"
+                [nzPlaceHolder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+                [name]="paramDefine.field"
+                [id]="paramDefine.field"
+              ></nz-input-number>
+            </nz-form-control>
+
+            <nz-form-label *ngIf="paramDefine.type === 'boolean'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <nz-switch
+                [(ngModel)]="advancedParams[i].value"
+                [required]="paramDefine.required"
+                [name]="paramDefine.field"
+                [id]="paramDefine.field"
+              ></nz-switch>
+            </nz-form-control>
+
+            <nz-form-label *ngIf="paramDefine.type === 'radio'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <nz-radio-group
+                [(ngModel)]="advancedParams[i].value"
+                [required]="paramDefine.required"
+                nzButtonStyle="solid"
+                [name]="paramDefine.field"
+                [id]="paramDefine.field"
+              >
+                <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
+                  {{ optionItem.label }}
+                </label>
+              </nz-radio-group>
+            </nz-form-control>
+
+            <nz-form-label
+              *ngIf="paramDefine.type === 'key-value'"
+              nzSpan="7"
+              [nzRequired]="paramDefine.required"
+              [nzFor]="paramDefine.field"
+              >{{ paramDefine.name }}
+            </nz-form-label>
+            <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <app-key-value-input
+                [(value)]="advancedParams[i].value"
+                [id]="paramDefine.field"
+                keyAlias="Header Name"
+                valueAlias="Header Value"
+              ></app-key-value-input>
+            </nz-form-control>
+          </nz-form-item>
+        </nz-collapse-panel>
+      </nz-collapse>
+      <ng-template #extraColHeader>
+        <button style="top: -10px; margin-left: 40%" nz-button nzType="dashed" nz-tooltip nzTooltipTitle="设置高级可选参数">
+          <span>高级设置</span>
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+      </ng-template>
+
       <nz-divider></nz-divider>
 
       <nz-form-item>

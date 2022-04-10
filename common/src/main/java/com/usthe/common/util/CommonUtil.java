@@ -2,6 +2,8 @@ package com.usthe.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +17,7 @@ public class CommonUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^(((13[0-9])|(15[0-9])|(18[0-9])|(17[0-9]))+\\d{8})?$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^(((13[0-9])|(14[0-9])|(15[0-9])|(16[0-9])|(19[0-9])|(18[0-9])|(17[0-9]))+\\d{8})?$");
 
     private static final int PHONE_LENGTH = 11;
 
@@ -30,6 +32,30 @@ public class CommonUtil {
         }
         try {
             return Double.parseDouble(str);
+        } catch (Exception e) {
+            log.debug(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 将字符串str,此字符串可能带单位,转换为double数字类型
+     * 将数值小数点限制到4位
+     * @param str string
+     * @param unit 字符串单位
+     * @return string格式的 double 数字 小数点最大到4位
+     */
+    public static String parseDoubleStr(String str, String unit) {
+        if (str == null || "".equals(str)) {
+            return null;
+        }
+        try {
+            if (unit != null && str.endsWith(unit)) {
+                str = str.substring(0, str.length() - unit.length());
+            }
+            BigDecimal bigDecimal = new BigDecimal(str);
+            double value = bigDecimal.setScale(4, RoundingMode.HALF_UP).doubleValue();
+            return String.valueOf(value);
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             return null;

@@ -110,7 +110,7 @@ public class CalculateAlarm {
                 } else {
                     // 其他异常
                     alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                            .content("监控可用性告警: " + metricsData.getCode().name() + " : " + metricsData.getMsg());
                     triggeredMonitorStateAlertMap.put(monitorId, metricsData.getCode());
                     dataQueue.addAlertData(alertBuilder.build());
                 }

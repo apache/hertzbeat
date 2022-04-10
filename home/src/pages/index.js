@@ -28,7 +28,7 @@ function Home() {
                     <h1 className="hero__title">
                         <img style={{width: '500px', marginTop: '100px'}} src={cdnTransfer('img/hertzbeat-brand.svg')} alt={'#'}/>
                     </h1>
-                    <p className="hero__subtitle"><Translate>易用友好的监控告警系统</Translate></p>
+                    <p className="hero__subtitle"><Translate>易用友好的云监控系统</Translate></p>
                     <div className={styles.social}>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/web-monitor.svg')} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/ping-connect.svg')} alt={''}/></a>

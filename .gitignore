@@ -37,4 +37,10 @@ nbdist/
 ### VS Code ###
 .vscode/
 
+# dependencies
+node_modules
+.docusaurus
+yarn.lock
+
+# debug env
 application-dev.yml

@@ -35,7 +35,7 @@
 
 ----   
 
-[![tancloud](tancloud.gif)](https://www.bilibili.com/video/BV1Vi4y1f7i8)           
+[![tancloud](tancloud.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
 
 ----   
 
@@ -76,7 +76,7 @@
 
 ##### 安装TDengine
 1. docker安装TDengine   
-   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/tcp -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
+   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
 2. 创建名称为hertzbeat的数据库
 
 详细步骤参考 [依赖服务TDengine安装初始化](https://hertzbeat.com/docs/start/tdengine-init)    
@@ -93,6 +93,7 @@
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. 配置HertzBeat的配置文件 hertzbeat/config/application.yml
 3. 部署启动 `$ ./startup.sh `
+4. 浏览器访问 localhost:1157 即可开始，默认账号密码 admin/admin
 
 详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)   
 

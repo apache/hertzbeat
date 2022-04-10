@@ -60,15 +60,18 @@ param:
     type: text
     placeholder: '请求BODY资源类型'
     required: false
+    hide: true
   - field: payload
     name: 请求BODY
     type: textarea
     placeholder: 'POST PUT请求时有效'
     required: false
+    hide: true
   - field: authType
     name: 认证方式
     type: radio
     required: false
+    hide: true
     # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: Basic Auth
@@ -81,7 +84,14 @@ param:
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
     required: false
+    hide: true
   - field: password
     name: 密码
     type: password
     required: false
+    hide: true
+  - field: keyword
+    name: 关键字
+    type: text
+    required: false
+    hide: true
