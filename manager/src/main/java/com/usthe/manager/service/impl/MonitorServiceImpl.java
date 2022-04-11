@@ -22,7 +22,6 @@ import com.usthe.manager.service.AppService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
-import jdk.nashorn.internal.runtime.regexp.joni.constants.Traverse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
