@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -25,7 +27,8 @@ export class AlertSettingComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
-    private alertDefineSvc: AlertDefineService
+    private alertDefineSvc: AlertDefineService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   pageIndex: number = 1;
@@ -98,7 +101,7 @@ export class AlertSettingComponent implements OnInit {
 
   onEditOneAlertDefine(alertDefineId: number) {
     if (alertDefineId == null) {
-      this.notifySvc.warning('未选中任何待编辑项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
     this.editAlertDefine(alertDefineId);
@@ -107,11 +110,11 @@ export class AlertSettingComponent implements OnInit {
   onEditAlertDefine() {
     // 编辑时只能选中一个
     if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
-      this.notifySvc.warning('未选中任何待编辑项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
     if (this.checkedDefineIds.size > 1) {
-      this.notifySvc.warning('只能对一个选中项进行编辑！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
       return;
     }
     let alertDefineId = 0;
@@ -138,24 +141,24 @@ export class AlertSettingComponent implements OnInit {
             this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
             this.cascadeOnChange(this.cascadeValues);
           } else {
-            this.notifySvc.error('查询此监控定义详情失败！', message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
         },
         error => {
-          this.notifySvc.error('查询此监控定义详情失败！', error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
         }
       );
   }
 
   onDeleteAlertDefines() {
     if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
-      this.notifySvc.warning('未选中任何待删除项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteAlertDefines(this.checkedDefineIds)
@@ -166,9 +169,9 @@ export class AlertSettingComponent implements OnInit {
     let defineIds = new Set<number>();
     defineIds.add(alertDefineId);
     this.modal.confirm({
-      nzTitle: '请确认是否删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteAlertDefines(defineIds)
@@ -177,7 +180,7 @@ export class AlertSettingComponent implements OnInit {
 
   deleteAlertDefines(defineIds: Set<number>) {
     if (defineIds == null || defineIds.size == 0) {
-      this.notifySvc.warning('未选中任何待删除项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.tableLoading = true;
@@ -185,17 +188,17 @@ export class AlertSettingComponent implements OnInit {
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('删除成功！', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
           this.loadAlertDefineTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('删除失败！', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         deleteDefines$.unsubscribe();
-        this.notifySvc.error('删除失败！', error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
   }
@@ -242,7 +245,7 @@ export class AlertSettingComponent implements OnInit {
     }
     this.appHierarchies.forEach(hierarchy => {
       if (hierarchy.value == values[0]) {
-        hierarchy.children.forEach((metrics: { value: string; children: any[]}) => {
+        hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
           if (metrics.value == values[1]) {
             this.otherMetrics = [];
             metrics.children.forEach(item => {
@@ -276,14 +279,14 @@ export class AlertSettingComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageModalVisible = false;
-              this.notifySvc.success('新增成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadAlertDefineTable();
             } else {
-              this.notifySvc.error('新增失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('新增失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
           }
         );
     } else {
@@ -299,14 +302,14 @@ export class AlertSettingComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageModalVisible = false;
-              this.notifySvc.success('修改成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadAlertDefineTable();
             } else {
-              this.notifySvc.error('修改失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('修改失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
     }
@@ -373,16 +376,16 @@ export class AlertSettingComponent implements OnInit {
         message => {
           this.isConnectModalOkLoading = false;
           if (message.code === 0) {
-            this.notifySvc.success('应用成功！', '');
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
             this.isConnectModalVisible = false;
             this.loadAlertDefineTable();
           } else {
-            this.notifySvc.error('应用失败！', message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }
         },
         error => {
           this.isConnectModalOkLoading = false;
-          this.notifySvc.error('应用失败！', error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
   }
