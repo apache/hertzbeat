@@ -115,6 +115,11 @@
             <artifactId>ojdbc8</artifactId>
             <version>21.5.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.oracle.database.nls</groupId>
+            <artifactId>orai18n</artifactId>
+            <version>21.5.0.0</version>
+        </dependency>
     </dependencies>
 
 </project>
