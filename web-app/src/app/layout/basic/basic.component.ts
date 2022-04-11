@@ -71,9 +71,9 @@ import { environment } from '@env/environment';
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
     <theme-btn
       [types]="[
-        { key: 'default', text: '浅色主题' },
-        { key: 'dark', text: '深色主题' },
-        { key: 'compact', text: '紧凑主题' }
+        { key: 'default', text: 'app.theme.default' | i18n },
+        { key: 'dark', text: 'app.theme.dark' | i18n },
+        { key: 'compact', text: 'app.theme.compact' | i18n }
       ]"
     ></theme-btn>
   `

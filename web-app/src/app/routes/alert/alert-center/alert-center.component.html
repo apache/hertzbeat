@@ -3,12 +3,12 @@
   <nz-breadcrumb-item>
     <a [routerLink]="['/']">
       <i nz-icon nzType="home"></i>
-      <span>仪表盘</span>
+      <span>{{ 'menu.dashboard' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="alert"></i>
-    <span>告警中心</span>
+    <span>{{ 'menu.alert.center' | i18n }}</span>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
@@ -16,26 +16,28 @@
 <div>
   <button nz-button nzType="primary" (click)="onDeleteAlerts()">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
-    删除告警
+    {{ 'alert.center.delete' | i18n }}
   </button>
   <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    标记已处理
+    {{ 'alert.center.deal' | i18n }}
   </button>
   <button nz-button nzType="primary" (click)="onMarkUnReadAlerts()">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    标记未处理
+    {{ 'alert.center.no-deal' | i18n }}
   </button>
-  <button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchAlerts()"> 搜索 </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchAlerts()">
+    {{ 'common.search' | i18n }}
+  </button>
   <input
     style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
-    placeholder="搜索告警内容"
+    [placeholder]="'alert.center.search' | i18n"
     nzSize="default"
     (keyup.enter)="onFilterSearchAlerts()"
     [(ngModel)]="filterContent"
@@ -43,23 +45,24 @@
   <nz-select
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
-    [nzPlaceHolder]="'告警状态过滤'"
+    [nzPlaceHolder]="'alert.center.filter-status' | i18n"
     [(ngModel)]="filterStatus"
   >
-    <nz-option nzLabel="全部状态" nzValue="9"></nz-option>
-    <nz-option nzLabel="未处理" nzValue="0"></nz-option>
-    <nz-option nzLabel="已处理" nzValue="3"></nz-option>
+    <nz-option [nzLabel]="'alert.status.all' | i18n" nzValue="9"></nz-option>
+    <nz-option [nzLabel]="'alert.status.0' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'alert.status.2' | i18n" nzValue="2"></nz-option>
+    <nz-option [nzLabel]="'alert.status.3' | i18n" nzValue="3"></nz-option>
   </nz-select>
   <nz-select
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
-    [nzPlaceHolder]="'告警级别过滤'"
+    [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
     [(ngModel)]="filterPriority"
   >
-    <nz-option nzLabel="全部级别" nzValue="9"></nz-option>
-    <nz-option nzLabel="警告级别" nzValue="2"></nz-option>
-    <nz-option nzLabel="严重级别" nzValue="1"></nz-option>
-    <nz-option nzLabel="紧急级别" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.all' | i18n" nzValue="9"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.2' | i18n" nzValue="2"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.1' | i18n" nzValue="1"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.0' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -81,13 +84,13 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>告警指标</th>
-      <th nzAlign="center">所属监控</th>
-      <th nzAlign="center">级别</th>
-      <th nzAlign="center">告警内容</th>
-      <th nzAlign="center">状态</th>
-      <th nzAlign="center">告警时间</th>
-      <th nzAlign="center">操作</th>
+      <th nzAlign="center" nzLeft>{{ 'alert.center.target' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.monitor' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.priority' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.content' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.status' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.time' | i18n }}</th>
+      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -102,30 +105,36 @@
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>紧急告警</span>
+          <span>{{ 'alert.priority.0' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.priority == 1" nzColor="orange">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>严重告警</span>
+          <span>{{ 'alert.priority.1' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>警告告警</span>
+          <span>{{ 'alert.priority.2' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.content }}</td>
       <td nzAlign="center">
-        {{ data.status === 0 ? '未处理' : '已处理' }}
+        {{ 'alert.status.' + data.status | i18n }}
       </td>
       <td nzAlign="center">{{ data.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
-        <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip nzTooltipTitle="删除告警">
+        <button nz-button nzType="primary" (click)="onDeleteOneAlert(data.id)" nz-tooltip [nzTooltipTitle]="'alert.center.delete' | i18n">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>
-        <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记已处理">
+        <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip [nzTooltipTitle]="'alert.center.deal' | i18n">
           <i nz-icon nzType="down-circle" nzTheme="outline"></i>
         </button>
-        <button nz-button nzType="primary" (click)="onMarkUnReadOneAlert(data.id)" nz-tooltip nzTooltipTitle="标记未处理">
+        <button
+          nz-button
+          nzType="primary"
+          (click)="onMarkUnReadOneAlert(data.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
+        >
           <i nz-icon nzType="up-circle" nzTheme="outline"></i>
         </button>
       </td>
@@ -133,4 +142,4 @@
   </tbody>
 </nz-table>
 
-<ng-template #rangeTemplate> 总量 {{ total }} </ng-template>
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>

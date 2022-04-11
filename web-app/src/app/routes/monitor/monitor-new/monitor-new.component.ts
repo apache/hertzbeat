@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { TitleService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
@@ -34,7 +34,7 @@ export class MonitorNewComponent implements OnInit {
     private router: Router,
     private notifySvc: NzNotificationService,
     private cdr: ChangeDetectorRef,
-    private i18n: I18NService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
     private formBuilder: FormBuilder
   ) {
@@ -150,15 +150,15 @@ export class MonitorNewComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('新增监控成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.new.success'), '');
           this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`);
         } else {
-          this.notifySvc.error('新增监控失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('新增监控失败', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.error.msg);
       }
     );
   }
@@ -199,14 +199,14 @@ export class MonitorNewComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('探测成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.detect.success'), '');
         } else {
-          this.notifySvc.error('探测失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('探测异常', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
       }
     );
   }
