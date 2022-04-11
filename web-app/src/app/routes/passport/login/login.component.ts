@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, Optional } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StartupService } from '@core';
+import { I18NService, StartupService } from '@core';
 import { ReuseTabService } from '@delon/abc/reuse-tab';
-import { DA_SERVICE_TOKEN, ITokenService, SocialOpenType, SocialService } from '@delon/auth';
-import { SettingsService, _HttpClient } from '@delon/theme';
+import { DA_SERVICE_TOKEN, ITokenService, SocialService } from '@delon/auth';
+import { SettingsService, _HttpClient, ALAIN_I18N_TOKEN } from '@delon/theme';
 import { User } from '@delon/theme/src/services/settings/types';
 import { NzTabChangeEvent } from 'ng-zorro-antd/tabs';
 import { finalize } from 'rxjs/operators';
@@ -29,6 +29,7 @@ export class UserLoginComponent implements OnDestroy {
     @Inject(ReuseTabService)
     private reuseTabService: ReuseTabService,
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private startupSrv: StartupService,
     private http: _HttpClient,
     private cdr: ChangeDetectorRef,
@@ -125,7 +126,7 @@ export class UserLoginComponent implements OnDestroy {
         let user: User = {
           name: this.userName.value,
           avatar: './assets/img/avatar.svg',
-          email: '管理员'
+          email: this.i18nSvc.fanyi('app.role.admin')
         };
         this.settingsService.setUser(user);
         // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响

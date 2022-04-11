@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { TitleService } from '@delon/theme';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -25,7 +26,8 @@ export class MonitorEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private titleSvc: TitleService,
-    private notifySvc: NzNotificationService
+    private notifySvc: NzNotificationService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   paramDefines!: ParamDefine[];
@@ -64,8 +66,8 @@ export class MonitorEditComponent implements OnInit {
             this.detected = message.data.detected ? message.data.detected : true;
           } else {
             console.warn(message.msg);
-            this.notifySvc.error('查询异常，此监控不存在', message.msg);
-            return throwError('查询此监控异常');
+            this.notifySvc.error(this.i18nSvc.fanyi('monitors.not-found'), message.msg);
+            return throwError(this.i18nSvc.fanyi('monitors.not-found'));
           }
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
@@ -168,15 +170,15 @@ export class MonitorEditComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('修改监控成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.edit.success'), '');
           this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`);
         } else {
-          this.notifySvc.error('修改监控失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('修改监控失败', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.error.msg);
       }
     );
   }
@@ -217,14 +219,14 @@ export class MonitorEditComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('探测成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.detect.success'), '');
         } else {
-          this.notifySvc.error('探测失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('探测异常', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
       }
     );
   }

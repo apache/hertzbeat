@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
@@ -18,7 +20,8 @@ export class AlertNoticeComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private noticeReceiverSvc: NoticeReceiverService,
     private modal: NzModalService,
-    private noticeRuleSvc: NoticeRuleService
+    private noticeRuleSvc: NoticeRuleService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   receivers!: NoticeReceiver[];
@@ -78,9 +81,9 @@ export class AlertNoticeComponent implements OnInit {
 
   onDeleteOneNoticeReceiver(receiveId: number) {
     this.modal.confirm({
-      nzTitle: '请确认是否删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteOneNoticeReceiver(receiveId)
@@ -98,23 +101,23 @@ export class AlertNoticeComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.notifySvc.success('删除成功！', '');
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
             this.loadReceiversTable();
           } else {
-            this.notifySvc.error('删除失败！', message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
           }
         },
         error => {
-          this.notifySvc.error('删除失败！', error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
         }
       );
   }
 
   onDeleteOneNoticeRule(ruleId: number) {
     this.modal.confirm({
-      nzTitle: '请确认是否删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteOneNoticeRule(ruleId)
@@ -132,14 +135,14 @@ export class AlertNoticeComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.notifySvc.success('删除成功！', '');
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
             this.loadRulesTable();
           } else {
-            this.notifySvc.error('删除失败！', message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
           }
         },
         error => {
-          this.notifySvc.error('删除失败！', error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
         }
       );
   }
@@ -179,14 +182,14 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageReceiverModalVisible = false;
-              this.notifySvc.success('新增成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadReceiversTable();
             } else {
-              this.notifySvc.error('新增失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('新增失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
           }
         );
     } else {
@@ -202,14 +205,14 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageReceiverModalVisible = false;
-              this.notifySvc.success('修改成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadReceiversTable();
             } else {
-              this.notifySvc.error('修改失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('修改失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
     }
@@ -310,14 +313,14 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageRuleModalVisible = false;
-              this.notifySvc.success('新增成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadRulesTable();
             } else {
-              this.notifySvc.error('新增失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('新增失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
           }
         );
     } else {
@@ -333,14 +336,14 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageRuleModalVisible = false;
-              this.notifySvc.success('修改成功！', '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadRulesTable();
             } else {
-              this.notifySvc.error('修改失败！', message.msg);
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
           },
           error => {
-            this.notifySvc.error('修改失败！', error.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
     }
