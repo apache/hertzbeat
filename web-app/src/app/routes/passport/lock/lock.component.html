@@ -7,11 +7,11 @@
       <nz-form-item>
         <nz-form-control [nzErrorTip]="'validation.password.required' | i18n">
           <nz-input-group nzSuffixIcon="lock">
-            <input type="text" nz-input formControlName="password" placeholder="输入任意解锁" />
+            <input type="text" nz-input formControlName="password" [placeholder]="'app.lock.placeholder' | i18n" />
           </nz-input-group>
         </nz-form-control>
       </nz-form-item>
-      <nz-row nzType="flex" nzAlign="middle">
+      <nz-row nzAlign="middle">
         <nz-col [nzOffset]="12" [nzSpan]="12" style="text-align: right">
           <button nz-button [disabled]="!f.valid" nzType="primary">{{ 'app.lock' | i18n }}</button>
         </nz-col>

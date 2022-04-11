@@ -2,7 +2,7 @@ category: service
 app: fullsite
 name:
   zh-CN: 全站监控
-  en-US: FULL WEBSITE MONITOR
+  en-US: SITE MAP
 configmap:
   - key: host
     type: 1

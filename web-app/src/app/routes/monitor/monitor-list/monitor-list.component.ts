@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -20,7 +22,8 @@ export class MonitorListComponent implements OnInit {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private msg: NzMessageService,
-    private monitorSvc: MonitorService
+    private monitorSvc: MonitorService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   app!: string;
@@ -102,7 +105,7 @@ export class MonitorListComponent implements OnInit {
 
   onEditOneMonitor(monitorId: number) {
     if (monitorId == null) {
-      this.notifySvc.warning('未选中任何待编辑项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
@@ -113,11 +116,11 @@ export class MonitorListComponent implements OnInit {
   onEditMonitor() {
     // 编辑时只能选中一个监控
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning('未选中任何待编辑项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
     if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning('只能对一个选中项进行编辑！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
       return;
     }
     let monitorId = 0;
@@ -129,9 +132,9 @@ export class MonitorListComponent implements OnInit {
     let monitors = new Set<number>();
     monitors.add(monitorId);
     this.modal.confirm({
-      nzTitle: '请确认是否删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteMonitors(monitors)
@@ -140,13 +143,13 @@ export class MonitorListComponent implements OnInit {
 
   onDeleteMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning('未选中任何待删除项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量删除！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.deleteMonitors(this.checkedMonitorIds)
@@ -155,7 +158,7 @@ export class MonitorListComponent implements OnInit {
 
   deleteMonitors(monitors: Set<number>) {
     if (monitors == null || monitors.size == 0) {
-      this.notifySvc.warning('未选中任何待删除项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.tableLoading = true;
@@ -163,30 +166,30 @@ export class MonitorListComponent implements OnInit {
       message => {
         deleteMonitors$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('删除成功！', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('删除失败！', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         deleteMonitors$.unsubscribe();
-        this.notifySvc.error('删除失败！', error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
   }
 
   onCancelManageMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning('未选中任何待取消项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-cancel'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量取消监控！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.cancel-batch'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.cancelManageMonitors(this.checkedMonitorIds)
@@ -197,9 +200,9 @@ export class MonitorListComponent implements OnInit {
     let monitors = new Set<number>();
     monitors.add(monitorId);
     this.modal.confirm({
-      nzTitle: '请确认是否取消监控！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.cancel'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.cancelManageMonitors(monitors)
@@ -212,30 +215,30 @@ export class MonitorListComponent implements OnInit {
       message => {
         cancelManage$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('取消监控成功！', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.cancel-success'), '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('取消监控失败！', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         cancelManage$.unsubscribe();
-        this.notifySvc.error('取消监控失败！', error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
       }
     );
   }
 
   onEnableManageMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning('未选中任何待启用监控项！', '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-enable'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: '请确认是否批量启用监控！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.enable-batch'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.enableManageMonitors(this.checkedMonitorIds)
@@ -246,9 +249,9 @@ export class MonitorListComponent implements OnInit {
     let monitors = new Set<number>();
     monitors.add(monitorId);
     this.modal.confirm({
-      nzTitle: '请确认是否启用监控！',
-      nzOkText: '确定',
-      nzCancelText: '取消',
+      nzTitle: this.i18nSvc.fanyi('common.confirm.enable'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
       nzOnOk: () => this.enableManageMonitors(monitors)
@@ -261,17 +264,17 @@ export class MonitorListComponent implements OnInit {
       message => {
         enableManage$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success('启用监控成功！', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.enable-success'), '');
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error('启用监控失败！', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         enableManage$.unsubscribe();
-        this.notifySvc.error('启用监控失败！', error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
       }
     );
   }

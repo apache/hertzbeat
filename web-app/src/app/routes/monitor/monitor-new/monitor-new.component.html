@@ -3,20 +3,20 @@
   <nz-breadcrumb-item>
     <a [routerLink]="['/']">
       <i nz-icon nzType="home"></i>
-      <span>仪表盘</span>
+      <span>{{ 'menu.dashboard' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <a [routerLink]="['/monitors']" [queryParams]="{ app: monitor.app ? monitor.app : '' }">
       <i nz-icon nzType="monitor"></i>
-      <span>监控列表</span>
+      <span>{{ 'monitors.list' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="plus-circle"></i>
-    <span>新增 {{ 'monitor.app.' + monitor.app | i18n }} 监控</span>
+    <span>{{ 'monitors.new' | i18n }} {{ 'monitor.app.' + monitor.app | i18n }} {{ 'monitor' | i18n }}</span>
     <a [href]="'https://tancloud.cn/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%">
-      <span>帮助&nbsp;</span>
+      <span>{{ 'common.button.help' | i18n }} </span>
       <i nz-icon nzType="question-circle" nzTheme="outline"></i>
     </a>
   </nz-breadcrumb-item>
@@ -27,7 +27,9 @@
   <div class="-inner-content">
     <form nz-form #newForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="host" nzRequired="true" nzTooltipTitle="被监控的对端IP或域名"> 监控Host </nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="host" nzRequired="true" [nzTooltipTitle]="'monitor.host.tip' | i18n">
+          {{ 'monitor.host' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
             [(ngModel)]="monitor.host"
@@ -36,17 +38,17 @@
             type="text"
             id="host"
             required
-            placeholder="请输入域名或IP"
+            [placeholder]="'monitor.host.tip' | i18n"
             (ngModelChange)="onHostChange($event)"
           />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true" nzTooltipTitle="标识此监控的名称,名称需要保证唯一性">
-          监控名称
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true" [nzTooltipTitle]="'monitor.name.tip' | i18n">
+          {{ 'monitor.name' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="monitor.name" nz-input required name="name" type="text" id="name" placeholder="监控名称需要保证唯一性" />
+          <input [(ngModel)]="monitor.name" nz-input required name="name" type="text" id="name" [placeholder]="'monitor.name.tip' | i18n" />
         </nz-form-control>
       </nz-form-item>
 
@@ -172,7 +174,7 @@
       </nz-form-item>
 
       <nz-collapse [nzGhost]="true">
-        <nz-collapse-panel nzHeader="高级" [nzHeader]="extraColHeader" [nzShowArrow]="false">
+        <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
             <nz-form-label
               *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
@@ -305,8 +307,8 @@
         </nz-collapse-panel>
       </nz-collapse>
       <ng-template #extraColHeader>
-        <button style="top: -10px; margin-left: 40%" nz-button nzType="dashed" nz-tooltip nzTooltipTitle="设置高级可选参数">
-          <span>高级设置</span>
+        <button style="top: -10px; margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
+          <span>{{ 'monitors.advanced' | i18n }}</span>
           <i nz-icon nzType="down-circle" nzTheme="outline"></i>
         </button>
       </ng-template>
@@ -314,7 +316,9 @@
       <nz-divider></nz-divider>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="intervals" nzTooltipTitle="监控周期性采集数据间隔时间,单位秒"> 采集间隔 </nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="intervals" [nzTooltipTitle]="'monitor.intervals.tip' | i18n">
+          {{ 'monitor.intervals' | i18n }}
+        </nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="604800" [nzStep]="60" name="intervals" id="intervals">
           </nz-input-number>
@@ -322,14 +326,18 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="detect" nzTooltipTitle="新增监控前是否先探测检查监控可用性"> 测试连接 </nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="detect" [nzTooltipTitle]="'monitors.detect.tip' | i18n">
+          {{ 'monitors.detect' | i18n }}
+        </nz-form-label>
         <nz-form-control nzSpan="8">
           <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="description" nzTooltipTitle="更多标识和描述此监控的备注信息"> 描述备注 </nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="description" [nzTooltipTitle]="'monitor.description.tip' | i18n">
+          {{ 'monitor.description' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea [(ngModel)]="monitor.description" rows="3" nz-input name="description" id="description"></textarea>
@@ -339,9 +347,9 @@
 
       <div nz-row>
         <div nz-col nzSpan="8" nzOffset="9">
-          <button nz-button nzType="primary" type="submit" (click)="onDetect(newForm.form)"> 测试 </button>
-          <button nz-button nzType="primary" type="submit" (click)="onSubmit(newForm.form)"> 确定 </button>
-          <button nz-button nzType="primary" type="reset" (click)="onCancel()"> 取消 </button>
+          <button nz-button nzType="primary" type="submit" (click)="onDetect(newForm.form)"> {{ 'common.button.detect' | i18n }} </button>
+          <button nz-button nzType="primary" type="submit" (click)="onSubmit(newForm.form)"> {{ 'common.button.ok' | i18n }} </button>
+          <button nz-button nzType="primary" type="reset" (click)="onCancel()"> {{ 'common.button.cancel' | i18n }} </button>
         </div>
       </div>
     </form>
