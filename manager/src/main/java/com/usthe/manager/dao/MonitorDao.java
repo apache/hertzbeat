@@ -22,33 +22,37 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
 
 
     /**
+     * Delete monitor based on monitor ID list
      * 根据监控ID列表删除监控
      *
-     * @param monitorIds 监控ID列表
+     * @param monitorIds Monitoring ID List 监控ID列表
      */
     void deleteAllByIdIn(Set<Long> monitorIds);
 
     /**
+     * Query monitoring based on monitoring ID list
      * 根据监控ID列表查询监控
      *
-     * @param monitorIds 监控ID列表
-     * @return 监控列表
+     * @param monitorIds Monitoring ID List 监控ID列表
+     * @return Monitor List     监控列表
      */
     List<Monitor> findMonitorsByIdIn(Set<Long> monitorIds);
 
     /**
+     * Query monitoring by monitoring type
      * 根据监控类型查询监控
      *
-     * @param app 监控类型
-     * @return 监控列表
+     * @param app Monitor Type   监控类型
+     * @return Monitor List     监控列表
      */
     List<Monitor> findMonitorsByAppEquals(String app);
 
     /**
+     * Querying Monitoring of Sent Collection Tasks
      * 查询已下发采集任务的监控
      *
-     * @param status 监控状态
-     * @return 监控列表
+     * @param status Monitor Status     监控状态
+     * @return Monitor List     监控列表
      */
     List<Monitor> findMonitorsByStatusNotInAndAndJobIdNotNull(List<Byte> status);
 
