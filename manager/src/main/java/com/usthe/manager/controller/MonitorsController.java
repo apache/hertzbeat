@@ -29,11 +29,13 @@ import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * Monitor and manage batch API
  * 监控管理批量API
  *
  *
+ *
  */
-@Api(tags = "监控列表API")
+@Api(tags = "en: Monitor and manage batch API,zh: 监控列表API")
 @RestController
 @RequestMapping(path = "/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
@@ -44,22 +46,23 @@ public class MonitorsController {
     private MonitorService monitorService;
 
     @GetMapping
-    @ApiOperation(value = "查询监控列表", notes = "根据查询过滤项获取监控信息列表")
+    @ApiOperation(value = "Obtain a list of monitoring information based on query filter items",
+            notes = "根据查询过滤项获取监控信息列表")
     public ResponseEntity<Message<Page<Monitor>>> getMonitors(
-            @ApiParam(value = "监控ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
-            @ApiParam(value = "监控类型", example = "linux") @RequestParam(required = false) final String app,
-            @ApiParam(value = "监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
-            @ApiParam(value = "监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
-            @ApiParam(value = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
-            @ApiParam(value = "排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") final String sort,
-            @ApiParam(value = "排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
-            @ApiParam(value = "列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @ApiParam(value = "列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+            @ApiParam(value = "en: Monitor ID,zh: 监控ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
+            @ApiParam(value = "en: Monitor Type,zh: 监控类型", example = "linux") @RequestParam(required = false) final String app,
+            @ApiParam(value = "en: Monitor Name,zh: 监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
+            @ApiParam(value = "en: Monitor Host,zh: 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
+            @ApiParam(value = "en: Monitor Status,zh: 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
+            @ApiParam(value = "en: Sort Field,default id,zh: 排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") final String sort,
+            @ApiParam(value = "en: Sort by,zh: 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
+            @ApiParam(value = "en: List current page,zh: 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @ApiParam(value = "en: Number of list pagination,zh: 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
@@ -95,10 +98,10 @@ public class MonitorsController {
             } else if (orPredicate.getExpressions().isEmpty()) {
                 return query.where(andPredicate).getRestriction();
             } else {
-                return query.where(andPredicate,orPredicate).getRestriction();
+                return query.where(andPredicate, orPredicate).getRestriction();
             }
         };
-        // 分页是必须的
+        // Pagination is a must         分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Monitor> monitorPage = monitorService.getMonitors(specification, pageRequest);
@@ -107,18 +110,20 @@ public class MonitorsController {
     }
 
     @GetMapping(path = "/{app}")
-    @ApiOperation(value = "查询指定监控类型的监控列表", notes = "根据查询过滤指定监控类型的所有获取监控信息列表")
+    @ApiOperation(value = "Filter all acquired monitoring information lists of the specified monitoring type according to the query",
+            notes = "根据查询过滤指定监控类型的所有获取监控信息列表")
     public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
-            @ApiParam(value = "监控类型", example = "linux") @PathVariable(required = false) final String app) {
+            @ApiParam(value = "en: Monitoring type,zh: 监控类型", example = "linux") @PathVariable(required = false) final String app) {
         List<Monitor> monitors = monitorService.getAppMonitors(app);
         Message<List<Monitor>> message = new Message<>(monitors);
         return ResponseEntity.ok(message);
     }
 
     @DeleteMapping
-    @ApiOperation(value = "批量删除监控", notes = "根据监控ID列表批量删除监控项")
+    @ApiOperation(value = "Delete monitoring items in batches according to the monitoring ID list",
+            notes = "根据监控ID列表批量删除监控项")
     public ResponseEntity<Message<Void>> deleteMonitors(
-            @ApiParam(value = "监控IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @ApiParam(value = "en: Monitoring ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.deleteMonitors(new HashSet<>(ids));
@@ -128,9 +133,10 @@ public class MonitorsController {
     }
 
     @DeleteMapping("manage")
-    @ApiOperation(value = "批量取消纳管监控", notes = "根据监控ID列表批量取消纳管监控项")
+    @ApiOperation(value = "Unmanaged monitoring items in batches according to the monitoring ID list",
+            notes = "根据监控ID列表批量取消纳管监控项")
     public ResponseEntity<Message<Void>> cancelManageMonitors(
-            @ApiParam(value = "监控IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @ApiParam(value = "en: Monitoring ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.cancelManageMonitors(new HashSet<>(ids));
@@ -140,9 +146,10 @@ public class MonitorsController {
     }
 
     @GetMapping("manage")
-    @ApiOperation(value = "批量启动纳管监控", notes = "根据监控ID列表批量启动纳管监控项")
+    @ApiOperation(value = "Start the managed monitoring items in batches according to the monitoring ID list",
+            notes = "根据监控ID列表批量启动纳管监控项")
     public ResponseEntity<Message<Void>> enableManageMonitors(
-            @ApiParam(value = "监控IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @ApiParam(value = "en: Monitor ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.enableManageMonitors(new HashSet<>(ids));

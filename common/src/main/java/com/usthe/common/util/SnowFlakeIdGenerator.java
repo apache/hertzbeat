@@ -1,7 +1,9 @@
 package com.usthe.common.util;
 
 /**
+ * Snowflake Algorithm Generator Tool
  * 雪花算法生成器工具
+ *
  *
  *
  */
