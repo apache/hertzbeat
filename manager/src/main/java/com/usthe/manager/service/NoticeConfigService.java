@@ -90,4 +90,22 @@ public interface NoticeConfigService {
      * @return Receiver     接收人
      */
     List<NoticeReceiver> getReceiverFilterRule(Alert alert);
+
+    /**
+     * Query recipient information based on recipient ID (primary key Id)
+     * 根据接收人ID(主键Id)查询接收人信息
+     *
+     * @param receiverId Receiver ID (primary key ID)  接收人ID(主键ID)
+     * @return Recipient Entity        接收人实体
+     */
+    NoticeReceiver getReceiverById(Long receiverId);
+
+    /**
+     * Query specific notification rules according to the rule ID (primary key ID)
+     * 根据规则ID(主键ID)查询具体通知规则
+     *
+     * @param ruleId Rule ID     规则ID(主键ID)
+     * @return Notification Rule Entity    通知规则实体
+     */
+    NoticeRule getNoticeRulesById(Long ruleId);
 }
