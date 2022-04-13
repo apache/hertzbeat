@@ -60,8 +60,10 @@ public class NoticeConfigController {
     @ApiOperation(value = "Delete existing recipient information", notes = "删除已存在的接收人信息")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
             @ApiParam(value = "en: Recipient ID,zh: 接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
-        // Returns success if it does not exist or if the deletion is successful
-        // todo 不存在或删除成功都返回成功
+        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
+        if (noticeReceiver == null) {
+            return ResponseEntity.ok(new Message<>("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
+        }
         noticeConfigService.deleteReceiver(receiverId);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
@@ -72,7 +74,6 @@ public class NoticeConfigController {
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
             @ApiParam(value = "en: Recipient name,zh: 接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
 
-        //todo Writing can be optimized 写法可优化
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (name != null && !"".equals(name)) {
@@ -107,6 +108,10 @@ public class NoticeConfigController {
             @ApiParam(value = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // Returns success if it does not exist or if the deletion is successful
         // todo 不存在或删除成功都返回成功
+        NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
+        if (noticeRule == null) {
+            return ResponseEntity.ok(new Message<>("The specified notification rule could not be queried, please check whether the parameters are correct"));
+        }
         noticeConfigService.deleteNoticeRule(ruleId);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
