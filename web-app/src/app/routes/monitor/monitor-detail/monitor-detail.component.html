@@ -3,20 +3,20 @@
   <nz-breadcrumb-item>
     <a [routerLink]="['/']">
       <i nz-icon nzType="home"></i>
-      <span>仪表盘</span>
+      <span>{{ 'menu.dashboard' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <a [routerLink]="['/monitors']" [queryParams]="{ app: app ? app : '' }">
       <i nz-icon nzType="monitor"></i>
-      <span>监控列表</span>
+      <span>{{ 'monitors.list' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="pie-chart"></i>
-    <span>{{ 'monitor.app.' + app | i18n }} 监控详情</span>
+    <span>{{ 'monitor.app.' + app | i18n }} {{ 'monitors.detail' | i18n }}</span>
     <a [href]="'https://tancloud.cn/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%">
-      <span>帮助&nbsp;</span>
+      <span>{{ 'common.button.help' | i18n }} </span>
       <i nz-icon nzType="question-circle" nzTheme="outline"></i>
     </a>
   </nz-breadcrumb-item>
@@ -33,7 +33,9 @@
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">名称</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ monitor?.name }}</p></div
         >
@@ -45,58 +47,66 @@
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">端口</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.port' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ port }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">描述</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ monitor?.description }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">状态</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16">
           <nz-tag *ngIf="monitor?.status == 0" nzColor="default">
             <i nz-icon nzType="robot" nzTheme="outline"></i>
-            <span>未监控</span>
+            <span>{{ 'monitor.status.un-manage' | i18n }}</span>
           </nz-tag>
           <nz-tag *ngIf="monitor?.status == 1" nzColor="success">
             <i nz-icon nzType="smile" nzTheme="outline"></i>
-            <span>正常监控</span>
+            <span>{{ 'monitor.status.available' | i18n }}</span>
           </nz-tag>
           <nz-tag *ngIf="monitor?.status == 2" nzColor="warning">
             <i nz-icon nzType="meh" nzTheme="outline"></i>
-            <span>监控不可用</span>
+            <span>{{ 'monitor.status.unavailable' | i18n }}</span>
           </nz-tag>
           <nz-tag *ngIf="monitor?.status == 3" nzColor="error">
             <i nz-icon nzType="frown" nzTheme="outline"></i>
-            <span>监控不可达</span>
-          </nz-tag>
-          <nz-tag *ngIf="monitor?.status == 4" nzColor="default">
-            <i nz-icon nzType="sync"></i>
-            <span>监控已挂起</span>
+            <span>{{ 'monitor.status.unreachable' | i18n }}</span>
           </nz-tag>
         </div>
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">采集间隔</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ monitor?.intervals }}s</p></div
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">创建时间</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss'  }}</p></div
+          ><p style="text-align: left">{{ monitor?.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss' }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">更新时间</p></div>
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
+        >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss'  }}</p></div
+          ><p style="text-align: left">{{ monitor?.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss' }}</p></div
         >
       </div>
     </nz-card>
@@ -107,7 +117,7 @@
         <nz-tab [nzTitle]="titleTemplate">
           <ng-template #titleTemplate>
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
-            监控实时数据详情
+            {{ 'monitors.detail.realtime' | i18n }}
           </ng-template>
           <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
             <div *ngFor="let metric of metrics; let i = index">
@@ -118,7 +128,7 @@
         <nz-tab [nzTitle]="title2Template" (nzClick)="initMetricChart()">
           <ng-template #title2Template>
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
-            监控历史图表详情
+            {{ 'monitors.detail.history' | i18n }}
           </ng-template>
           <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
             <div *ngFor="let item of chartMetrics; let i = index">
@@ -138,5 +148,5 @@
 </nz-layout>
 
 <ng-template #monitor_basic_card_title>
-  <p style="font-size: small; text-align: left; margin-bottom: 3px">监控基本属性</p>
+  <p style="font-size: small; text-align: left; margin-bottom: 3px">{{ 'monitors.detail.basic' | i18n }}</p>
 </ng-template>
