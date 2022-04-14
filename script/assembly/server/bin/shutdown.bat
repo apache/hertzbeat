@@ -2,11 +2,9 @@
 @echo off 
 setlocal enabledelayedexpansion
 
-rem 项目名称
 set SERVER_NAME="${project.artifactId}"
 
 
-rem 应用的端口号
 set SERVER_PORT=1157
 
 echo Start shutdown HertzBeat %SERVER_NAME% 
