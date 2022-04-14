@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * Timer Task implementation
  * TimerTask实现
+ *
  * @author tomsun28
  * @date 2021/11/1 17:18
  */
@@ -36,12 +38,15 @@ public class WheelTimerTask implements TimerTask {
     public WheelTimerTask(Job job) {
         this.metricsTaskDispatch = SpringContextHolder.getBean(MetricsTaskDispatch.class);
         this.job = job;
+        // The initialization job will monitor the actual parameter value and replace the collection field
         // 初始化job 将监控实际参数值对采集字段进行替换
         initJobMetrics(job);
     }
 
     /**
+     * Initialize job fill information
      * 初始化job填充信息
+     *
      * @param job job
      */
     private void initJobMetrics(Job job) {
@@ -73,9 +78,10 @@ public class WheelTimerTask implements TimerTask {
     }
 
     /**
-     * json参数替换
+     * json parameter replacement       json参数替换
+     *
      * @param jsonElement json
-     * @param configmap 参数map
+     * @param configmap   parameter map   参数map
      * @return json
      */
     private JsonElement replaceSpecialValue(JsonElement jsonElement, Map<String, Configmap> configmap) {
@@ -86,26 +92,29 @@ public class WheelTimerTask implements TimerTask {
                 Map.Entry<String, JsonElement> entry = iterator.next();
                 JsonElement element = entry.getValue();
                 String key = entry.getKey();
+                // Replace the attributes of the KEY-VALUE case such as http headers params
                 // 替换KEY-VALUE情况的属性 比如http headers params
                 if (key != null && key.startsWith("^_^") && key.endsWith("^_^")) {
                     key = key.replaceAll("\\^_\\^", "");
                     Configmap param = configmap.get(key);
                     if (param != null && param.getType() == (byte) 3) {
                         String jsonValue = (String) param.getValue();
-                         Map<String, String> map = GsonUtil.fromJson(jsonValue, Map.class);
-                         if (map != null) {
-                             map.forEach((name, value) -> {
-                                 if (name != null && !"".equals(name.trim())) {
-                                     jsonObject.addProperty(name, value);
-                                 }
-                             });
-                         }
+                        Map<String, String> map = GsonUtil.fromJson(jsonValue, Map.class);
+                        if (map != null) {
+                            map.forEach((name, value) -> {
+                                if (name != null && !"".equals(name.trim())) {
+                                    jsonObject.addProperty(name, value);
+                                }
+                            });
+                        }
                     }
                     iterator.remove();
                     continue;
                 }
+                // Replace normal VALUE value
                 // 替换正常的VALUE值
                 if (element.isJsonPrimitive()) {
+                    // Check if there are special characters Replace
                     // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     if (value.startsWith("^_^") && value.endsWith("^_^")) {
@@ -129,6 +138,7 @@ public class WheelTimerTask implements TimerTask {
             while (iterator.hasNext()) {
                 JsonElement element = iterator.next();
                 if (element.isJsonPrimitive()) {
+                    // Check if there are special characters Replace
                     // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     if (value.startsWith("^_^") && value.endsWith("^_^")) {
