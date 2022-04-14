@@ -35,10 +35,12 @@ public interface TimerDispatch {
     void cyclicJob(WheelTimerTask timerTask, long interval, TimeUnit timeUnit);
 
     /**
+     * Delete existing job
      * 删除存在的job
      *
      * @param jobId    jobId
-     * @param isCyclic 是否是周期性任务,true是, false为临时性任务
+     * @param isCyclic Whether it is a periodic task, true is, false is a temporary task
+     *                 是否是周期性任务,true是, false为临时性任务
      */
     void deleteJob(long jobId, boolean isCyclic);
 

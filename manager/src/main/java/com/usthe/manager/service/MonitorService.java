@@ -23,46 +23,50 @@ public interface MonitorService {
 
 
     /**
+     * Monitoring Availability Probes
      * 监控可用性探测
      *
-     * @param monitor 监控实体信息
-     * @param params  参数信息
-     * @throws MonitorDetectException 探测失败抛出
+     * @param monitor Monitoring entity information    监控实体信息
+     * @param params  Parameter information            参数信息
+     * @throws MonitorDetectException Probe failure throws  探测失败抛出
      */
     void detectMonitor(Monitor monitor, List<Param> params) throws MonitorDetectException;
 
     /**
-     * 新增监控
+     * Add monitoring       新增监控
      *
-     * @param monitor 监控实体
-     * @param params  参数信息
-     * @throws RuntimeException 新增过程异常抛出
+     * @param monitor Monitoring Entity     监控实体
+     * @param params  Parameter information 参数信息
+     * @throws RuntimeException Add process exception throw     新增过程异常抛出
      */
     void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException;
 
     /**
+     * Verify the correctness of request data parameters
      * 校验请求数据参数正确性
      *
      * @param monitorDto monitorDto
-     * @param isModify   是否是修改监控
-     * @throws IllegalArgumentException 校验参数错误抛出
+     * @param isModify   Whether it is a modification monitoring    是否是修改监控
+     * @throws IllegalArgumentException Validation parameter error thrown   校验参数错误抛出
      */
     void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException;
 
     /**
+     * Modify update monitoring
      * 修改更新监控
      *
-     * @param monitor 监控实体
-     * @param params  参数信息
-     * @throws RuntimeException 修改过程中异常抛出
+     * @param monitor Monitor Entity        监控实体
+     * @param params  Parameter information 参数信息
+     * @throws RuntimeException Exception thrown during modification    修改过程中异常抛出
      */
     void modifyMonitor(Monitor monitor, List<Param> params) throws RuntimeException;
 
     /**
+     * Delete Monitor
      * 删除监控
      *
-     * @param id 监控ID
-     * @throws RuntimeException 删除过程中异常抛出
+     * @param id Monitor ID         监控ID
+     * @throws RuntimeException Exception thrown during deletion    删除过程中异常抛出
      */
     void deleteMonitor(long id) throws RuntimeException;
 
