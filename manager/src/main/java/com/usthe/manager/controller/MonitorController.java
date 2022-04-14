@@ -1,6 +1,7 @@
 package com.usthe.manager.controller;
 
 import com.usthe.common.entity.dto.Message;
+import com.usthe.common.entity.manager.Monitor;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.service.MonitorService;
 import io.swagger.annotations.Api;
@@ -23,11 +24,13 @@ import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * Monitoring management API
  * 监控管理API
  *
  *
+ *
  */
-@Api(tags = "监控管理API")
+@Api(tags = "en: Monitoring management API,zh: 监控管理API")
 @RestController
 @RequestMapping(path = "/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
@@ -36,12 +39,12 @@ public class MonitorController {
     private MonitorService monitorService;
 
     @PostMapping
-    @ApiOperation(value = "新增监控", notes = "新增一个监控应用")
+    @ApiOperation(value = "Add a monitoring application", notes = "新增一个监控应用")
     public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
-        // 校验请求数据
+        // Verify request data  校验请求数据
         monitorService.validate(monitorDto, false);
         if (monitorDto.isDetected()) {
-            // 进行探测
+            // Probe    进行探测
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         }
         monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams());
@@ -49,12 +52,12 @@ public class MonitorController {
     }
 
     @PutMapping
-    @ApiOperation(value = "修改监控", notes = "修改一个已存在监控应用")
+    @ApiOperation(value = "Modify an existing monitoring application", notes = "修改一个已存在监控应用")
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
-        // 校验请求数据
+        // Verify request data  校验请求数据
         monitorService.validate(monitorDto, true);
         if (monitorDto.isDetected()) {
-            // 进行探测
+            // Probe    进行探测
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         }
         monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams());
@@ -62,9 +65,10 @@ public class MonitorController {
     }
 
     @GetMapping(path = "/{id}")
-    @ApiOperation(value = "查询监控", notes = "根据监控ID获取监控信息")
+    @ApiOperation(value = "Obtain monitoring information based on monitoring ID", notes = "根据监控ID获取监控信息")
     public ResponseEntity<Message<MonitorDto>> getMonitor(
             @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
+        // Get monitoring information
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
@@ -77,16 +81,20 @@ public class MonitorController {
     }
 
     @DeleteMapping(path = "/{id}")
-    @ApiOperation(value = "删除监控", notes = "根据监控ID删除监控应用,监控不存在也是删除成功")
+    @ApiOperation(value = "Delete monitoring application based on monitoring ID", notes = "根据监控ID删除监控应用")
     public ResponseEntity<Message<Void>> deleteMonitor(
-            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
-        // 删除监控,监控不存在或删除成功都返回成功
+            @ApiParam(value = "en: Monitor ID,zh: 监控ID", example = "6565463543") @PathVariable("id") final long id) {
+        // delete monitor 删除监控
+        Monitor monitor = monitorService.getMonitor(id);
+        if (monitor == null) {
+            return ResponseEntity.ok(new Message<>("The specified monitoring was not queried, please check whether the parameters are correct"));
+        }
         monitorService.deleteMonitor(id);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
 
     @PostMapping(path = "/detect")
-    @ApiOperation(value = "探测监控", notes = "根据监控信息去对此监控进行可用性探测")
+    @ApiOperation(value = "Perform availability detection on this monitoring based on monitoring information", notes = "根据监控信息去对此监控进行可用性探测")
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());

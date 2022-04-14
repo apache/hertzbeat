@@ -18,18 +18,22 @@ import java.util.concurrent.TimeUnit;
 public class TimerDispatcher implements TimerDispatch {
 
     /**
+     * time round schedule
      * 时间轮调度
      */
     private Timer wheelTimer;
     /**
+     * Existing periodic scheduled tasks
      * 已存在的周期性调度任务
      */
     private Map<Long, Timeout> currentCyclicTaskMap;
     /**
+     * Existing temporary scheduled tasks
      * 已存在的临时性调度任务
      */
     private Map<Long, Timeout> currentTempTaskMap;
     /**
+     * One-time task response listener holds
      * 一次性任务响应监听器持有
      * jobId - listener
      */

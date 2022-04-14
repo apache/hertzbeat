@@ -27,10 +27,11 @@ public class CollectJobService {
     private TimerDispatch timerDispatch;
 
     /**
+     * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
      *
-     * @param job 采集任务详情
-     * @return 采集结果
+     * @param job Collect task details  采集任务详情
+     * @return Collection results       采集结果
      */
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         final List<CollectRep.MetricsData> metricsData = new LinkedList<>();
