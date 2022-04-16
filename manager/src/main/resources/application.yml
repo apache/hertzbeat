@@ -69,3 +69,8 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
+
+#自定义告警控制台地址
+alerter:
+  #这里就是我们的自定义控制台地址
+  console-url: https://console.tancloud.cn
