@@ -125,14 +125,14 @@
   },
   "theme.docs.versions.latestVersionSuggestionLabel": {
     "message": "For up-to-date documentation, see the {latestVersionLink} ({versionLabel}).",
-    "description": "The label userd to tell the user that he's browsing an unmaintained doc version"
+    "description": "The label used to tell the user to check the latest version"
   },
   "theme.docs.versions.latestVersionLinkLabel": {
     "message": "latest version",
     "description": "The label used for the latest version suggestion link label"
   },
   "theme.common.editThisPage": {
-    "message": "帮助我们修改文档",
+    "message": "Edit this page",
     "description": "The link label to edit the current page"
   },
   "theme.common.headingLinkTitle": {
@@ -192,7 +192,7 @@
     "description": "The ARIA label and placeholder for search button"
   },
   "Get Started": {
-    "message": "快速开始"
+    "message": "Get Started"
   },
   "theme.PwaReloadPopup.info": {
     "message": "New version available",
@@ -214,61 +214,76 @@
     "message": "Live Editor",
     "description": "The live editor label of the live codeblocks"
   },
-  "Support for Jvm Modern Frameworks": {
-    "message": "适用大部分Jvm Web框架"
+  "开箱即用": {
+    "message": "Convenient"
   },
-  "Focus on Protection of API": {
-    "message": "面向API的高性能认证鉴权框架"
+  "中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统。往往有时候，那套监控系统比自身网站消耗的资源还大。{TANCLOUD} 提供{SAAS}云版本，{console}即可开始您的服务监控。{br}安全是最重要的，我们对账户密钥和监控密钥全链路加密。": {
+    "message": "Micro-teams no longer need to deploy a cumbersome monitoring system in order to monitor their own website resources. Often times, that monitoring system consumes more resources than its own website. {TANCLOUD} provides {SAAS} cloud, {console} can start your service monitoring. {br}Security is the most important, we encrypt the whole link of account key and monitoring key."
   },
-  "Extendable": {
-    "message": "可扩展"
+  "多支持与自定义": {
+    "message": "Custom Monitor"
   },
-  "Compatible": {
-    "message": "原生兼容"
+  "HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，数据库，操作系统等的监控，快速迭代提供更多的监控类型和性能指标。{br}我们提供了更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}不同团队的监控需求千变万化，我们提供{custom}，仅需配置YML就能快速接入监控系统。": {
+    "message": "HertzBeat supports monitoring of website, api, ping connectivity, port availability, sitemap, database, operating system, etc., and provides more monitoring types and metrics. {br}We provide a more liberalized threshold alarm configuration, support email, SMS, webhook, DingTalk, WeChat, Feishu robot and other alarm notifications. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, which can quickly access the monitoring system only by configuring YML."
   },
-  "Multi And Fast": {
-    "message": "多支持与高性能"
+  "拥抱开源": {
+    "message": "Opensource Friendly"
   },
-  "Multi Support Samples": {
-    "message": "大量集成样例"
+  "HertzBeat监控系统代码开源，非常欢迎任何对此有兴趣的同学参与中来，我们一起进步，丰富的资源文档正在完善中。{br}中二的我们相信开源改变世界！{br}{github} {br}{gitee}": {
+    "message": "The HertzBeat code is open source, and anyone who are interested in it are very welcome to participate. We will make progress together, and the rich resource documents are being improved. {br}We believe that open source can change the world! {br}{github} {br}{gitee}."
   },
-  "Benchmark Compare": {
-    "message": "基准性能测试"
+  "易用友好的云监控系统": {
+    "message": "Friendly Cloud Monitor System"
   },
-  "Why Is High Performance": {
-    "message": "为什么高性能"
+  "即刻登录免费使用": {
+    "message": "Login Now"
   },
-  "Get Started With Sureness within Minutes": {
-    "message": "几分钟入门Sureness"
+  "theme.ErrorPageContent.title": {
+    "message": "This page crashed.",
+    "description": "The title of the fallback page when the page crashed"
   },
-  "Focus on the protection of {restApi}. Based on {rbac}.{br}Provides {authentication} and {authorization}, etc.{br}Extension custom interface is {simple} and really {useful}.": {
-    "message": "基于 {rbac} (用户-角色-资源)主要关注于对 {restApi} 的安全 (认证与鉴权) 保护。{br} 自定义Subject,Subject Creator,Processor和自定义数据源等良好的{interface}, {sample}和{doc}助急速理解扩展使用。"
+  "theme.ErrorPageContent.tryAgain": {
+    "message": "Try again",
+    "description": "The label of the button to try again when the page crashed"
   },
-  "Support {WebSockets}, HTTP containers ({Servlet} and {JaxRs}).{br}No framework dependency.{native} supports {SpringBoot}, {SpringWebFlux}, {Javalin}, {Quarkus},{Ktor}, {Solon}, {Jfinal}, {Micronaut} etc.": {
-    "message": "支持 {WebSockets} ,主流 HTTP 容器 {Servlet} 和 {JaxRs}。{br} 无特定Web框架依赖, 原生支持 {SpringBoot}, {SpringWebFlux}, {Javalin}, {Quarkus}, {Ktor}, {Solon}, {Jfinal}, {Micronaut} 等。"
+  "theme.BackToTopButton.buttonAriaLabel": {
+    "message": "Scroll back to top",
+    "description": "The ARIA label for the back to top button"
   },
-  "Supports {jwt}, {basic}, {digest} etc.{br}{dynamic} modification of {perm}.{br}{high} with {tree}.": {
-    "message": "原生拥有 {jwt}, {basic}, {digest} 等认证方式。{br} 支持{dynamicCn}(动态配置每个 API 谁有权访问)。{br} 基于{treeCn}拥有的{highCn}。"
+  "theme.blog.archive.title": {
+    "message": "Archive",
+    "description": "The page & hero title of the blog archive page"
   },
-  "Sureness allows you to security any server written with jvm modern frameworks such as {Spring}, {SpringBoot}, {SpringWebFlux}, {Javalin}, {Quarkus}, {Micronaut}, {Solon}, {Jfinal} or {Ktor} as well as frameworks for Kotlin.": {
-    "message": "您可以通过使用Sureness来保护大部分JVM系语言的现代化框架搭建的后台服务,比如：Java 语言的 {Spring}, {SpringBoot}, {SpringWebFlux}, {Javalin}, {Quarkus}, {Micronaut}, {Solon}, {Jfinal} 和 Kotlin 语言的 {Ktor}."
+  "theme.blog.archive.description": {
+    "message": "Archive",
+    "description": "The page & hero description of the blog archive page"
   },
-  "The essence of Sureness is to use {interceptor}(like servlet filter or Spring interceptor)  to intercept all rest requests for authenticating and authorizing.{br}So no matter any framework, as long as it has a interceptor, it can integrate with sureness. Sureness uses {handling}, {checkIn} will return {SubjectSum}(user information) when auth success, or throw different types of auth exceptions when auth error.": {
-    "message": "Sureness的本质是使用{interceptor}(如 servlet filter or Spring interceptor)拦截所有API请求对其认证鉴权判断。{br} 所以对于任何Web框架，只要其支持拦截器{interceptor}, 就能轻松和Sureness集成。Sureness使用异常处理流程即{handling}, {checkIn} 方法会在认证鉴权成功后返回带有用户信息的 {SubjectSum} 对象，但认证鉴权失败时抛出不同类型的异常，用户根据这些异常来继续后面的流程。"
+  "theme.blog.sidebar.navAriaLabel": {
+    "message": "Blog recent posts navigation",
+    "description": "The ARIA label for recent posts in the blog sidebar"
   },
-  "{Benchmark} test shows Sureness to lose 0.026ms performance compared to frameless application, Shiro lose 0.088ms, Spring Security lose 0.116ms.{br}In contrast, Sureness basically does not consume performance, and the performance (TPS loss) is {times3} that of Shiro and {times4} that of Spring Security.{br}{increases}.": {
-    "message": "基准测试显示 Sureness 对比无权限框架应用损耗 0.026ms 性能，Shiro 损耗 0.088ms,Spring Security 损耗 0.116ms，相比之下 Sureness 性能(参考TPS损耗)是 Shiro 的 {times3cn}，Spring Security 的 {times4cn}。{br}{increaseCn}。"
+  "theme.DocSidebarItem.toggleCollapsedCategoryAriaLabel": {
+    "message": "Toggle the collapsible sidebar category '{label}'",
+    "description": "The ARIA label to toggle the collapsible sidebar category"
   },
-  "In a large number of requests, we found that the {linear} of the {filter} is a performance bottleneck. {br}So we used a {tree} instead of {ant}.{br}Practice has proved that it is very {effective}.": {
-    "message": "在大量的请求和过滤链匹配下，我们发现主要的性能瓶颈在{linearCn}这。{br} 所以我们使用了{treeCn}来代替其它安全框架常用的{antCn}。{br} 实践效果证明这有效，提升了{effCn}。"
+  "theme.docs.tagDocListPageTitle.nDocsTagged": {
+    "message": "One doc tagged|{count} docs tagged",
+    "description": "Pluralized label for \"{count} docs tagged\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
-  "We provide many tutorials and samples, you can refer to them to builda complete permission project within 10 minutes.{br}Have Fun!": {
-    "message": "我们提供了很多教程和集成样例，您可以参考其中在10分钟之内使用 Sureness 做一个完整功能的认证鉴权项目。{br} Have Fun!"
+  "theme.docs.tagDocListPageTitle": {
+    "message": "{nDocsTagged} with \"{tagName}\"",
+    "description": "The title of the page for a docs tag"
   },
-  "Friend Links": {
-    "message": "友情链接"
+  "theme.navbar.mobileSidebarSecondaryMenu.backButtonLabel": {
+    "message": "← Back to main menu",
+    "description": "The label of the back button to return to main menu, inside the mobile navbar sidebar secondary menu (notably used to display the docs sidebar)"
   },
-  "Media Partners": {
-    "message": "合作媒体"
+  "theme.navbar.mobileVersionsDropdown.label": {
+    "message": "Versions",
+    "description": "The label for the navbar versions dropdown on mobile view"
+  },
+  "theme.TOCCollapsible.toggleButtonLabel": {
+    "message": "On this page",
+    "description": "The label used by the button on the collapsible TOC component"
   }
 }
