@@ -54,7 +54,7 @@ export class HeaderNotifyComponent implements OnInit {
       return;
     }
     this.loading = true;
-    let loadAlerts$ = this.alertSvc.searchAlerts(0, undefined, undefined, 0, 5).subscribe(
+    let loadAlerts$ = this.alertSvc.loadAlerts(0, undefined, undefined, 0, 5).subscribe(
       message => {
         loadAlerts$.unsubscribe();
         if (message.code === 0) {
