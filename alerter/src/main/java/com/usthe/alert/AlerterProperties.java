@@ -1,5 +1,6 @@
 package com.usthe.alert;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -7,15 +8,27 @@ import org.springframework.stereotype.Component;
  * 数据仓储配置属性
  *
  *
+ *
  */
 @Component
 @ConfigurationProperties(prefix = "alerter")
 public class AlerterProperties {
 
+    private String consoleUrl = "https://console.tancloud.cn";
+
+    public String getConsoleUrl() {
+        return consoleUrl;
+    }
+
+    public void setConsoleUrl(String url) {
+        this.consoleUrl = url;
+    }
+
     /**
      * 数据入口配置属性
      */
     private EntranceProperties entrance;
+
 
     public EntranceProperties getEntrance() {
         return entrance;
@@ -24,6 +37,7 @@ public class AlerterProperties {
     public void setEntrance(EntranceProperties entrance) {
         this.entrance = entrance;
     }
+
 
     /**
      * 数据入口配置属性
@@ -97,5 +111,6 @@ public class AlerterProperties {
         }
 
     }
+
 
 }
