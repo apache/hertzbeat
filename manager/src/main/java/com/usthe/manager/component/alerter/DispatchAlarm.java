@@ -1,6 +1,7 @@
 package com.usthe.manager.component.alerter;
 
 import com.usthe.alert.AlerterDataQueue;
+import com.usthe.alert.AlerterProperties;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.common.entity.alerter.Alert;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,6 +50,8 @@ public class DispatchAlarm {
     private JavaMailSender javaMailSender;
     private RestTemplate restTemplate;
     private MailService mailService;
+    @Resource
+    private AlerterProperties alerterProperties;
 
     @Value("${spring.mail.username}")
     private String emailFromUser;
@@ -177,13 +181,13 @@ public class DispatchAlarm {
                 "\n所属监控ID :" + alert.getMonitorId() +
                 "\n所属监控名称 :" + alert.getMonitorName() +
                 "\n告警级别 :" + CommonUtil.transferAlertPriority(alert.getPriority()) +
-                "\n内容详情 : " + alert.getContent();
+                "\n内容详情 : " + alert.getContent() + "\n";
         flyBookContent.setText(text);
         contents1.add(flyBookContent);
         FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
         bookContent.setTag("a");
         bookContent.setText("登入控制台");
-        bookContent.setHref("https://www.tancloud.cn");
+        bookContent.setHref(alerterProperties.getConsoleUrl());
         contents1.add(bookContent);
         contents.add(contents1);
         zhCn.setTitle("[TanCloud探云告警通知]");
@@ -214,14 +218,16 @@ public class DispatchAlarm {
     private void sendDingTalkRobotAlert(NoticeReceiver receiver, Alert alert) {
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
         DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
-        String content = "#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
+        StringBuilder content = new StringBuilder();
+        content.append("#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
                 alert.getTarget() + "\n   " +
                 "##### **所属监控ID** : " + alert.getMonitorId() + "\n   " +
                 "##### **所属监控名称** : " + alert.getMonitorName() + "\n   " +
                 "##### **告警级别** : " +
                 CommonUtil.transferAlertPriority(alert.getPriority()) + "\n   " +
-                "##### **内容详情** : " + alert.getContent();
-        markdownDTO.setText(content);
+                "##### **内容详情** : " + alert.getContent());
+        content.append("[点击跳转查看详情](" + alerterProperties.getConsoleUrl() + ")");
+        markdownDTO.setText(content.toString());
         markdownDTO.setTitle("TanCloud探云告警通知");
         dingTalkWebHookDto.setMarkdown(markdownDTO);
         String webHookUrl = DingTalkWebHookDto.WEBHOOK_URL + receiver.getAccessToken();
@@ -261,8 +267,10 @@ public class DispatchAlarm {
             content.append("告警级别 : <font color=\"comment\">")
                     .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
         }
-        content.append("内容详情 : ").append(alert.getContent());
+        content.append("内容详情 : ").append(alert.getContent() + "\n");
+        content.append("[点击跳转查看详情](" + alerterProperties.getConsoleUrl() + ")");
         markdownDTO.setContent(content.toString());
+        //TODO 增加控制台地址登录可控制
         weWorkWebHookDTO.setMarkdown(markdownDTO);
         String webHookUrl = WeWorkWebHookDto.WEBHOOK_URL + receiver.getWechatId();
         try {
