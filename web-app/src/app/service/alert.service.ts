@@ -16,22 +16,7 @@ const alerts_status_uri = '/alerts/status';
 export class AlertService {
   constructor(private http: HttpClient) {}
 
-  public getAlerts(pageIndex: number, pageSize: number): Observable<Message<Page<Alert>>> {
-    pageIndex = pageIndex ? pageIndex : 0;
-    pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
-    let httpParams = new HttpParams();
-    httpParams = httpParams.appendAll({
-      sort: 'id',
-      order: 'desc',
-      pageIndex: pageIndex,
-      pageSize: pageSize
-    });
-    const options = { params: httpParams };
-    return this.http.get<Message<Page<Alert>>>(alerts_uri, options);
-  }
-
-  public searchAlerts(
+  public loadAlerts(
     status: number | undefined,
     priority: number | undefined,
     content: string | undefined,

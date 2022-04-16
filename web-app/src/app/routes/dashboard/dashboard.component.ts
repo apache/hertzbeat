@@ -347,7 +347,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   alertsDealLoading: boolean = true;
 
   refreshAlertContentList(): void {
-    let alertsInit$ = this.alertSvc.getAlerts(0, 4).subscribe(
+    let alertsInit$ = this.alertSvc.loadAlerts(undefined, undefined, undefined, 0, 4).subscribe(
       message => {
         if (message.code === 0) {
           let page = message.data;

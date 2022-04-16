@@ -36,13 +36,16 @@ export class AlertCenterComponent implements OnInit {
     this.loadAlertsTable();
   }
 
-  onFilterSearchAlerts() {
+  sync() {
+    this.loadAlertsTable();
+  }
+
+  loadAlertsTable() {
     this.tableLoading = true;
-    let filterAlerts$ = this.alertSvc
-      .searchAlerts(this.filterStatus, this.filterPriority, this.filterContent, this.pageIndex - 1, this.pageSize)
+    let alertsInit$ = this.alertSvc
+      .loadAlerts(this.filterStatus, this.filterPriority, this.filterContent, this.pageIndex - 1, this.pageSize)
       .subscribe(
         message => {
-          filterAlerts$.unsubscribe();
           this.tableLoading = false;
           this.checkedAll = false;
           this.checkedAlertIds.clear();
@@ -54,42 +57,14 @@ export class AlertCenterComponent implements OnInit {
           } else {
             console.warn(message.msg);
           }
+          alertsInit$.unsubscribe();
         },
         error => {
           this.tableLoading = false;
-          filterAlerts$.unsubscribe();
+          alertsInit$.unsubscribe();
           console.error(error.msg);
         }
       );
-  }
-
-  sync() {
-    this.loadAlertsTable();
-  }
-
-  loadAlertsTable() {
-    this.tableLoading = true;
-    let alertsInit$ = this.alertSvc.getAlerts(this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedAlertIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.alerts = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
-        }
-        alertsInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        alertsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
   }
 
   onDeleteAlerts() {
