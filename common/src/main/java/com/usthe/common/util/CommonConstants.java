@@ -1,7 +1,5 @@
 package com.usthe.common.util;
 
-import org.springframework.beans.factory.annotation.Value;
-
 /**
  * Public Constant
  * 公共常量
