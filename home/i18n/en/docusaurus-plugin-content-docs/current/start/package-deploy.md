@@ -23,9 +23,9 @@ sidebar_label: 安装包方式部署
 3. 配置HertzBeat的配置文件    
    解压安装包到主机 eg: /opt/hertzbeat
    ``` 
-   $ tar zxvf hertzbeat-1.0.tar.gz 
+   $ tar zxvf hertzbeat-[版本号].tar.gz 
    ```
-   修改位于 hertzbeat/config/application.yml 的配置文件      
+   修改位于 `hertzbeat/config/application.yml` 的配置文件      
    需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
    具体替换参数如下:
    ``` 
@@ -43,13 +43,51 @@ sidebar_label: 安装包方式部署
    spring.mail.password
    
    ```
+4. 配置用户配置文件(非必须,配置账户需要)     
+   HertzBeat默认内置三个用户账户,分别为 admin/admin tom/tom@123 lili/lili   
+   若需要新增删除修改账户或密码，可以通过修改位于 `hertzbeat/config/sureness.yml` 的配置文件实现，若无此需求可忽略此步骤 
+   修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
 
-4. 部署启动
+   ```yaml
+   # 用户账户信息
+   # 下面有 admin tom lili 三个账户
+   # eg: admin 拥有[role1,role2]角色,密码为admin
+   # eg: tom 拥有[role1,role2,role3],密码为tom@123
+   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289  
+   account:
+   - appId: admin
+     credential: admin
+     role: [role1,role2]
+   - appId: tom
+     credential: tom@123
+     role: [role1,role2,role3]
+   - appId: lili
+     # 注意 Digest认证不支持加盐加密的密码账户
+     # 加盐加密的密码，通过 MD5(password+salt)计算
+     # 此账户的原始密码为 lili
+     credential: 1A676730B0C7F54654B0E09184448289
+     salt: 123
+     role: [role1,role2]
+   ```
+
+5. 部署启动
    执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh 
    ``` 
    $ ./startup.sh 
    ```
-5. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157 开始使用HertzBeat进行监控告警。
+6. 开始探索HertzBeat  
+   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
 
 **HAVE FUN**
+
+### 安装包部署常见问题
+
+1. **按照流程部署，访问 http://ip:1157/console 无界面**   
+   请参考下面几点排查问题：
+> 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
+> 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确    
+> 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
+
+2. **日志报错TDengine连接或插入SQL失败**
+> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
+> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    

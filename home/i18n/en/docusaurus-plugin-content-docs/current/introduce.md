@@ -1,57 +1,51 @@
 ---
 id: introduce  
-title: HertzBeat赫兹跳动     
-sidebar_label: 介绍
+title: HertzBeat     
+sidebar_label: Introduce
 slug: /
 ---
 
-> 易用友好的高性能监控告警系统。
+> Friendly cloud monitoring system.   
 
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
-
-## 📫 前言   
-
-> 毕业后投入很多业余时间也做了一些开源项目,[Sureness](https://github.com/dromara/sureness) [Bootshiro](https://gitee.com/tomsun28/bootshiro) [Issues-translate-action](https://github.com/usthe/issues-translate-action) ,
-> 当时上班有空就回答网友问题，下班回家写开源代码，远程帮人看问题，还总感觉时间不够用，当时想如果不去上班能做自己热爱的该多好。  
-> 年轻就要折腾，何况还是自己很想做的。于是乎，21年底我放弃激励裸辞开始全职开源了(这里感谢老婆大人的全力支持)，也是第一次全职创业。
-> 自己在APM领域做了多年，当然这次创业加开源的方向也就是老本行APM监控系统，我们开发一个支持多种监控指标(更多监控类型指标正在适配中)，拥有自定义监控，支持阈值告警通知等功能，面向开发者友好的开源监控项目-HertzBeat赫兹跳动。
-> 想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署监控系统，我们也提供了可以直接登录使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
-> 希望大家多多支持点赞，非常感谢。 
-
-## 🎡 <font color="green">介绍</font>
-
-> [HertzBeat赫兹跳动](https://github.com/dromara/sureness) 是由[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
-> 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
-> HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版    
-> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。   
-> 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
-
-> `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
+![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
+![tan-cloud](https://img.shields.io/badge/api-monitor-lightgrey)
+![tan-cloud](https://img.shields.io/badge/ping-connect-brightgreen)
+![tan-cloud](https://img.shields.io/badge/port-available-green)
+![tan-cloud](https://img.shields.io/badge/database-monitor-yellowgreen)
+![tan-cloud](https://img.shields.io/badge/os-monitor-yellow)
+![tan-cloud](https://img.shields.io/badge/custom-monitor-orange)
+![tan-cloud](https://img.shields.io/badge/threshold-red)
+![tan-cloud](https://img.shields.io/badge/alert-bule)
 
 
-## 🥐 模块  
+## 🎡 <font color="green">Introduction</font>
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
-> 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
-> 使用通用协议远程采集获取对端指标数据。
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** 提供监控任务调度服务
-> 采集任务管理，一次性任务和周期性任务的调度分发。
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
-> 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
-> 监控告警系统可视化控制台前端(angular+ts+zorro)  
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.        
+> We also provide **[Monitoring Cloud For Saas](https://console.tancloud.cn)**, people no longer need to deploy a cumbersome monitoring system in order to monitor their website resources. **[Sign in to get started for free](https://console.tancloud.cn)**.   
+> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, DingDing, WeChat FeiShu and WebHook.    
+> Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.      
+> HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.  
+> Welcome to HertzBeat's [Cloud Environment TanCloud](https://console.tancloud.cn) to try and discover more.    
+> Welcome to join us to build hertzbeat together.
 
-![hertzBeat](/img/docs/hertzbeat-stru.svg)    
+> `HertzBeat`'s multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
+----   
+
+## 🥐 Architecture
+
+- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+> Provides monitoring management, monitoring configuration management, system user management, etc.
+- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+> Use common protocols to remotely collect and obtain peer-to-peer metrics data.
+- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** Provide monitoring task scheduling service.
+> Collection task management, scheduling and distribution of one-time tasks and periodic tasks.
+- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+> Metrics data management, data query, calculation and statistics.
+- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.
+> Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
+- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
+> Angular Web UI.   
+
+![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-stru-en.svg)     
 
