@@ -12,8 +12,7 @@ export const features = [{
             <Translate values={{
                 TANCLOUD: <strong>TANCLOUD</strong>,
                 SAAS: <strong>SAAS</strong>,
-                console: <a href={'https://www.console.tancloud.cn'}><strong>注册登录</strong></a>,
-                doc: <strong>文档</strong>,
+                console: <a href={'https://www.console.tancloud.cn'}><strong>Login Now</strong></a>,
                 br: <br/>
             }}>
                 {'中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统。往往有时候，那套监控系统比自身网站消耗的资源还大。' +
@@ -30,10 +29,7 @@ export const features = [{
     description: (
         <>
             <Translate values={{
-                WebSockets: <strong>WebSockets</strong>,
-                Servlet: <strong>Servlet</strong>,
-                JaxRs: <strong>JAX-RS</strong>,
-                custom: <a href={'/docs/advanced/extend-point'}><strong>自定义监控</strong></a>,
+                custom: <a href={'/docs/advanced/extend-point'}><strong>Custom-Monitoring 自定义监控</strong></a>,
                 br: <br/>
             }}>
                 {'HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，数据库，操作系统等的监控，快速迭代提供更多的监控类型和性能指标。{br}' +
@@ -51,8 +47,8 @@ export const features = [{
         description: (
             <>
                 <Translate values={{
-                    github: <a href={'https://github.com/dromara/hertzbeat'}><strong>HertzBeat Github 代码仓库</strong></a>,
-                    gitee: <a href={'https://gitee.com/dromara/hertzbeat'}><strong>HertzBeat Gitee 代码仓库</strong></a>,
+                    github: <a href={'https://github.com/dromara/hertzbeat'}><strong>HertzBeat Code Github</strong></a>,
+                    gitee: <a href={'https://gitee.com/dromara/hertzbeat'}><strong>HertzBeat Code Gitee</strong></a>,
                     br: <br/>
                 }}>
                     {'HertzBeat监控系统代码开源，非常欢迎任何对此有兴趣的同学参与中来，我们一起进步，丰富的资源文档正在完善中。{br}' +

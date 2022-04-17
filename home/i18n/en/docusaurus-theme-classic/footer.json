@@ -1,62 +1,62 @@
 {
-  "link.title.About Sureness": {
-    "message": "关于 Sureness",
-    "description": "The title of the footer links column with title=About Sureness in the footer"
+  "link.title.产品介绍": {
+    "message": "Introduction",
+    "description": "The title of the footer links column with title=产品介绍 in the footer"
   },
-  "link.title.Community": {
-    "message": "社区与交流",
-    "description": "The title of the footer links column with title=Community in the footer"
+  "link.title.社区交流": {
+    "message": "Community",
+    "description": "The title of the footer links column with title=社区交流 in the footer"
   },
-  "link.title.More": {
-    "message": "更多相关",
-    "description": "The title of the footer links column with title=More in the footer"
+  "link.title.相关资源": {
+    "message": "More",
+    "description": "The title of the footer links column with title=相关资源 in the footer"
   },
-  "link.item.label.High Performance": {
-    "message": "高性能",
-    "description": "The label of footer link with label=High Performance linking to https://github.com/tomsun28/sureness-shiro-spring-security-benchmark"
+  "link.item.label.使用介绍": {
+    "message": "Introduction",
+    "description": "The label of footer link with label=使用介绍 linking to docs/"
   },
-  "link.item.label.Dashboard": {
-    "message": "看板",
-    "description": "The label of footer link with label=Dashboard linking to https://github.com/dromara/sureness/projects/1"
+  "link.item.label.安装文档": {
+    "message": "Quick Start",
+    "description": "The label of footer link with label=安装文档 linking to docs/start/quickstart"
   },
-  "link.item.label.Github": {
+  "link.item.label.自定义监控": {
+    "message": "Custom Monitor",
+    "description": "The label of footer link with label=自定义监控 linking to docs/advanced/extend-point"
+  },
+  "link.item.label.帮助文档": {
+    "message": "Help Doc",
+    "description": "The label of footer link with label=帮助文档 linking to docs/help/guide"
+  },
+  "link.item.label.Dromara开源社区": {
+    "message": "Dromara",
+    "description": "The label of footer link with label=Dromara开源社区 linking to https://dromara.org/"
+  },
+  "link.item.label.交流联系": {
+    "message": "Contact",
+    "description": "The label of footer link with label=交流联系 linking to docs/others/contact"
+  },
+  "link.item.label.我们的故事": {
+    "message": "About Us",
+    "description": "The label of footer link with label=我们的故事 linking to https://support.qq.com/products/379369/team"
+  },
+  "link.item.label.TanCloud探云": {
+    "message": "TanCloud",
+    "description": "The label of footer link with label=TanCloud探云 linking to https://tancloud.cn"
+  },
+  "link.item.label.Github仓库": {
     "message": "Github",
-    "description": "The label of footer link with label=Github linking to https://github.com/dromara/sureness"
+    "description": "The label of footer link with label=Github仓库 linking to https://github.com/dromara/hertzbeat"
   },
-  "link.item.label.Gitee": {
+  "link.item.label.Gitee仓库": {
     "message": "Gitee",
-    "description": "The label of footer link with label=Gitee linking to https://gitee.com/dromara/sureness"
+    "description": "The label of footer link with label=Gitee仓库 linking to https://gitee.com/dromara/hertzbeat"
   },
-  "link.item.label.Github Discussion": {
-    "message": "Github Discussion",
-    "description": "The label of footer link with label=Github Discussion linking to https://github.com/dromara/sureness/discussions"
-  },
-  "link.item.label.Gitter Channel": {
-    "message": "Gitter Channel",
-    "description": "The label of footer link with label=Gitter Channel linking to https://gitter.im/usthe/sureness"
-  },
-  "link.item.label.USTHE": {
-    "message": "USTHE",
-    "description": "The label of footer link with label=USTHE linking to https://github.com/usthe"
+  "link.item.label.相关资源": {
+    "message": "Resource",
+    "description": "The label of footer link with label=相关资源 linking to docs/others/resource"
   },
   "copyright": {
-    "message": "Apache License 2.0 | Copyright © 2021",
+    "message": "<a target=\"_blank\" href=\"https://beian.miit.gov.cn/\">蜀ICP备2022002218号</a> | Copyright TANCLOUD© 2022",
     "description": "The footer copyright"
-  },
-  "link.item.label.Dromara": {
-    "message": "Dromara 社区",
-    "description": "The label of footer link with label=Dromara linking to https://dromara.org"
-  },
-  "link.item.label.QQ Group - 390083213": {
-    "message": "QQ 群 - 390083213",
-    "description": "The label of footer link with label=QQ Group - 390083213 linking to https://qm.qq.com/cgi-bin/qm/qr?k=3IpzQjFOztJe464_eMBmDHfT0YTWK5Qa&jump_from=webapi"
-  },
-  "link.item.label.Tom Blog": {
-    "message": "Tom 博客",
-    "description": "The label of footer link with label=Tom Blog linking to https://blog.usthe.com"
-  },
-  "link.item.label.Tom": {
-    "message": "Tom",
-    "description": "The label of footer link with label=Tom linking to https://github.com/tomsun28"
   }
 }
