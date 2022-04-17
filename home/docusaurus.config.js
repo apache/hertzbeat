@@ -60,7 +60,7 @@ module.exports = {
         announcementBar: {
             id: "github-star",
             content:
-                '<font style="font-size: medium; font-weight: bolder">如果您喜欢TANCLOUD的开源产品HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">欢迎在 GitHub </a> <font style="font-size: medium; font-weight: bolder"> 或 </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee 给我们点赞! </a>⭐️',
+                '<font style="font-size: medium; font-weight: bolder">If you like TANCLOUD-HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">give us a star on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee please! </a>⭐️⭐️',
             backgroundColor: '#7228B5',
             textColor: '#fafbfc',
             isCloseable: true,
@@ -119,6 +119,10 @@ module.exports = {
                             to: 'docs/others/resource',
                         },
                     ],
+                },
+                {
+                    type: 'localeDropdown',
+                    position: 'right',
                 },
                 {
                     label: '登录/注册',

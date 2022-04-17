@@ -1,54 +1,50 @@
 {
   "title": {
-    "message": " ",
+    "message": "HertzBeat",
     "description": "The title in the navbar"
   },
-  "item.label.Document": {
-    "message": "文档",
-    "description": "Navbar item with label Document"
+  "item.label.首页": {
+    "message": "Home",
+    "description": "Navbar item with label 首页"
   },
-  "item.label.Dashboard": {
-    "message": "看板",
-    "description": "Navbar item with label Dashboard"
+  "item.label.文档": {
+    "message": "Document",
+    "description": "Navbar item with label 文档"
   },
-  "item.label.High Performance": {
-    "message": "高性能",
-    "description": "Navbar item with label High Performance"
+  "item.label.博客": {
+    "message": "Blog",
+    "description": "Navbar item with label 博客"
   },
-  "item.label.Discuss": {
-    "message": "讨论",
-    "description": "Navbar item with label Discuss"
+  "item.label.讨论交流": {
+    "message": "Discuss",
+    "description": "Navbar item with label 讨论交流"
   },
-  "item.label.Github Discussion": {
-    "message": "Github Discussion",
-    "description": "Navbar item with label Github Discussion"
+  "item.label.私有化部署": {
+    "message": "Enterprise",
+    "description": "Navbar item with label 私有化部署"
   },
-  "item.label.Gitter Channel": {
-    "message": "Gitter Channel",
-    "description": "Navbar item with label Gitter Channel"
+  "item.label.项目看板": {
+    "message": "Dashboard",
+    "description": "Navbar item with label 项目看板"
   },
-  "item.label.QQ Group - 390083213": {
-    "message": "QQ 群 - 390083213",
-    "description": "Navbar item with label QQ Group - 390083213"
+  "item.label.其它": {
+    "message": "Others",
+    "description": "Navbar item with label 其它"
   },
-  "item.label.Blog": {
-    "message": "博客",
-    "description": "Navbar item with label Blog"
+  "item.label.登录/注册": {
+    "message": "Login Now",
+    "description": "Navbar item with label 登录/注册"
   },
-  "item.label.Other": {
-    "message": "其它",
-    "description": "Navbar item with label Other"
+  "item.label.设计文档": {
+    "message": "Design",
+    "description": "Navbar item with label 设计文档"
   },
-  "item.label.Design": {
-    "message": "设计文档",
-    "description": "Navbar item with label Design"
+  "item.label.赞助我们": {
+    "message": "Sponsor",
+    "description": "Navbar item with label 赞助我们"
   },
-  "item.label.Contributing": {
-    "message": "参与贡献",
-    "description": "Navbar item with label Contributing"
-  },
-  "item.label.Sponsor": {
-    "message": "赞助",
-    "description": "Navbar item with label Sponsor"
+  "item.label.相关资源": {
+    "message": "Resource",
+    "description": "Navbar item with label 相关资源"
   }
 }
