@@ -24,6 +24,7 @@ export class AlertService {
     httpParams = httpParams.appendAll({
       sort: 'id',
       order: 'desc',
+      status: '0',
       pageIndex: pageIndex,
       pageSize: pageSize
     });
