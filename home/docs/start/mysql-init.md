@@ -5,6 +5,8 @@ sidebar_label: MYSQL安装初始化
 ---
 MYSQL是一款值得信赖的关系型数据库，HertzBeat使用其存储监控信息，告警信息，配置信息等结构化关系数据。  
 
+安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)  
+
 > 如果您已有MYSQL环境，可直接跳到SQL脚本执行那一步。  
 
 ### 通过Docker方式安装MYSQL   

@@ -3,7 +3,9 @@ id: package-deploy
 title: 通过安装包安装HertzBeat    
 sidebar_label: 安装包方式部署    
 ---
-> HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X64/ARM64。由于安装包自身不包含JAVA运行环境，需您提前准备JAVA运行环境。
+> HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。由于安装包自身不包含JAVA运行环境，需您提前准备JAVA运行环境。
+
+安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)   
 
 1. 安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
    要求：JDK8+(已验证JDK8)   
