@@ -30,7 +30,7 @@
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchAlerts()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()">
     {{ 'common.search' | i18n }}
   </button>
   <input
@@ -39,7 +39,7 @@
     type="text"
     [placeholder]="'alert.center.search' | i18n"
     nzSize="default"
-    (keyup.enter)="onFilterSearchAlerts()"
+    (keyup.enter)="loadAlertsTable()"
     [(ngModel)]="filterContent"
   />
   <nz-select
