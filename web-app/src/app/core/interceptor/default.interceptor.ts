@@ -26,8 +26,8 @@ const CODE_MESSAGE: { [key: number]: string } = {
   202: '一个请求已经进入后台排队（异步任务）。',
   204: '删除数据成功。',
   400: '发出的请求有错误，服务器没有进行新建或修改数据的操作。',
-  401: '用户没有权限（令牌、用户名、密码错误）。',
-  403: '用户无权限访问此资源。',
+  401: '用户认证信息异常。',
+  403: '用户无此操作权限。',
   404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
   406: '请求的格式不可得。',
   409: '请求与服务器端目标资源的当前状态相冲突',
@@ -65,7 +65,11 @@ export class DefaultInterceptor implements HttpInterceptor {
   private checkStatus(ev: HttpResponseBase): void {
     const errorText = CODE_MESSAGE[ev.status] || ev.statusText;
     console.warn(` ${ev.status}: ${ev.url}`, errorText);
-    this.notification.error(` ${ev.status}: ${ev.url}`, errorText);
+    if (ev.status == 403) {
+      this.notification.error(` ${ev.status}: ${errorText}`, '');
+    } else {
+      this.notification.error(` ${ev.status}: ${ev.url}`, errorText);
+    }
   }
 
   /**
