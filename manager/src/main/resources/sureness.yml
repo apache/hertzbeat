@@ -2,10 +2,35 @@
 
 # 加载到匹配字典的资源,也就是需要被保护的,设置了所支持角色访问的资源
 # 没有配置的资源也默认被认证保护,但不鉴权
-# eg: /api/v1/source1===get===[role2] 表示 /api/v2/host===post 这条资源支持 role2 这一种角色访问
+# eg: /api/v1/source1===get===[admin] 表示 /api/v2/host===post 这条资源支持 admin 这一种角色访问
 # eg: /api/v1/source2===get===[] 表示 /api/v1/source2===get 这条资源不支持任何角色访问
 resourceRole:
-  - /account/auth/refresh===post===[role1,role2,role3,role4]
+  - /account/auth/refresh===post===[admin,user,guest]
+  - /apps/**===get===[admin,user,guest]
+  - /monitor/**===get===[admin,user,guest]
+  - /monitor/**===post===[admin,user]
+  - /monitor/**===put===[admin,user]
+  - /monitor/**===delete==[admin]
+  - /monitors/**===get===[admin,user,guest]
+  - /monitors/**===post===[admin,user]
+  - /monitors/**===put===[admin,user]
+  - /monitors/**===delete===[admin]
+  - /alert/**===get===[admin,user,guest]
+  - /alert/**===post===[admin,user]
+  - /alert/**===put===[admin,user]
+  - /alert/**===delete===[admin]
+  - /alerts/**===get===[admin,user,guest]
+  - /alerts/**===post===[admin,user]
+  - /alerts/**===put===[admin,user]
+  - /alerts/**===delete===[admin]
+  - /notice/**===get===[admin,user,guest]
+  - /notice/**===post===[admin,user]
+  - /notice/**===put===[admin,user]
+  - /notice/**===delete===[admin]
+  - /summary/**===get===[admin,user,guest]
+  - /summary/**===post===[admin,user]
+  - /summary/**===put===[admin,user]
+  - /summary/**===delete===[admin]
 
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
@@ -31,20 +56,23 @@ excludedResource:
 
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
-# eg: admin 拥有[role1,role2]角色,密码为admin
-# eg: tom 拥有[role1,role2,role3],密码为tom@123
-# eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+# eg: admin 拥有[admin,user]角色,密码为admin
+# eg: tom 拥有[user],密码为tom@123
+# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
   - appId: admin
     credential: admin
-    role: [role1,role2]
+    role: [admin,user]
   - appId: tom
     credential: tom@123
-    role: [role1,role2,role3]
+    role: [user]
+  - appId: guest
+    credential: guest
+    role: [guest]
   - appId: lili
     # 注意 Digest认证不支持加盐加密的密码账户
     # 加盐加密的密码，通过 MD5(password+salt)计算
     # 此账户的原始密码为 lili
     credential: 1A676730B0C7F54654B0E09184448289
     salt: 123
-    role: [role1,role2]
+    role: [guest]

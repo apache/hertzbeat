@@ -51,25 +51,30 @@ sidebar_label: 安装包方式部署
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
 
    ```yaml
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为admin
-   # eg: tom 拥有[role1,role2,role3],密码为tom@123
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289  
-   account:
-   - appId: admin
-     credential: admin
-     role: [role1,role2]
-   - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
+   
+# 用户账户信息
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[admin,user]角色,密码为admin
+# eg: tom 拥有[user],密码为tom@123
+# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+account:
+- appId: admin
+  credential: admin
+  role: [admin,user]
+- appId: tom
+  credential: tom@123
+  role: [user]
+- appId: guest
+  credential: guest
+  role: [guest]
+- appId: lili
+  # 注意 Digest认证不支持加盐加密的密码账户
+  # 加盐加密的密码，通过 MD5(password+salt)计算
+  # 此账户的原始密码为 lili
+  credential: 1A676730B0C7F54654B0E09184448289
+  salt: 123
+  role: [guest]
+ 
    ```
 
 5. 部署启动
