@@ -6,6 +6,8 @@ sidebar_label: Docker方式部署
 
 > 推荐使用docker部署HertzBeat  
 
+安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)  
+
 1. 下载安装Docker环境   
    Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
    安装完毕后终端查看Docker版本是否正常输出。
