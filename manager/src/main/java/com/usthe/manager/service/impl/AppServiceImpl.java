@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
@@ -18,6 +21,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -122,6 +126,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        boolean loadFromFile = true;
+        final List<InputStream> inputStreams = new LinkedList<>();
         // 读取app定义配置加载到内存中 define/app/*.yml
         Yaml yaml = new Yaml();
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
@@ -132,36 +138,81 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             defineAppPath = classpath + File.separator + "define" + File.separator + "app";
             directory = new File(defineAppPath);
             if (!directory.exists() || directory.listFiles() == null) {
-                throw new  IllegalArgumentException("define app directory not exist: " + defineAppPath);
-            }
-        }
-        log.info("query define path {}", defineAppPath);
-        for (File appFile : Objects.requireNonNull(directory.listFiles())) {
-            if (appFile.exists()) {
-                try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
-                    Job app = yaml.loadAs(fileInputStream, Job.class);
-                    appDefines.put(app.getApp().toLowerCase(), app);
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                    throw new IOException(e);
+                // load define app yml in jar
+                log.info("load define app yml in internal jar");
+                loadFromFile = false;
+                try {
+                    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                    Resource[] resources = resolver.getResources("classpath:define/app/*.yml");
+                    for (Resource resource : resources) {
+                        inputStreams.add(resource.getInputStream());
+                    }
+                } catch (Exception e) {
+                    log.error("define app yml not exist");
+                    throw e;
                 }
             }
         }
+        if (loadFromFile) {
+            log.info("load define path {}", defineAppPath);
+            for (File appFile : Objects.requireNonNull(directory.listFiles())) {
+                if (appFile.exists()) {
+                    try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
+                        Job app = yaml.loadAs(fileInputStream, Job.class);
+                        appDefines.put(app.getApp().toLowerCase(), app);
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                        throw new IOException(e);
+                    }
+                }
+            }
+        } else {
+            if (inputStreams.isEmpty()) {
+                throw new IllegalArgumentException("define app directory not exist");
+            } else {
+                inputStreams.forEach(stream -> {
+                    try {
+                        Job app = yaml.loadAs(stream, Job.class);
+                        appDefines.put(app.getApp().toLowerCase(), app);
+                        stream.close();
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                });
+            }
+        }
+
         // 读取监控参数定义配置加载到数据库中 define/param/*.yml
-        String defineParamPath = classpath + File.separator + "define" + File.separator + "param";
-        directory = new File(defineParamPath);
-        if (!directory.exists() || directory.listFiles() == null) {
-            throw new  IllegalArgumentException("define param directory not exist: " + defineParamPath);
-        }
-        for (File appFile : Objects.requireNonNull(directory.listFiles())) {
-            if (appFile.exists()) {
-                try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
-                    ParamDefineDto paramDefine = yaml.loadAs(fileInputStream, ParamDefineDto.class);
-                    paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                    throw new IOException(e);
+        if (loadFromFile) {
+            String defineParamPath = classpath + File.separator + "define" + File.separator + "param";
+            directory = new File(defineParamPath);
+            if (!directory.exists() || directory.listFiles() == null) {
+                throw new  IllegalArgumentException("define param directory not exist: " + defineParamPath);
+            }
+            for (File appFile : Objects.requireNonNull(directory.listFiles())) {
+                if (appFile.exists()) {
+                    try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
+                        ParamDefineDto paramDefine = yaml.loadAs(fileInputStream, ParamDefineDto.class);
+                        paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                        throw new IOException(e);
+                    }
                 }
+            }
+        } else {
+            try {
+                ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                Resource[] resources = resolver.getResources("classpath:define/param/*.yml");
+                for (Resource resource : resources) {
+                    InputStream stream = resource.getInputStream();
+                    ParamDefineDto paramDefine = yaml.loadAs(stream, ParamDefineDto.class);
+                    paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
+                    stream.close();
+                }
+            } catch (Exception e) {
+                log.error("define param yml not exist");
+                throw e;
             }
         }
     }

@@ -22,6 +22,8 @@
 
 **Home: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
+Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community - [Doc](https://osrc.com/user/articles/wiki_776513931985080320)   
+
 ## 🎡 <font color="green">Introduction</font>
 
 > [HertzBeat](https://github.com/dromara/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.        
