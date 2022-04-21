@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author tomsun28
  * @date 13:11 2019-05-26
  */
-@Api(tags = "en: Authentication registration TOKEN management API,zh: 认证注册TOKEN管理API")
+@Api(tags = "Auth Manage API | 认证注册TOKEN管理API")
 @RestController()
 @RequestMapping(value = "/account/auth", produces = {APPLICATION_JSON_VALUE})
 @Slf4j

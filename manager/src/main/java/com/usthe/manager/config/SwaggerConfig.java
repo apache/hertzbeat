@@ -26,7 +26,7 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.OAS_30)
                 .apiInfo(apiInfo())
                 .enable(true)
-                .groupName("TanCloud")
+                .groupName("HertzBeat")
                 .select()
                 .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.regex("(?!/error.*).*"))
@@ -35,7 +35,7 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo(){
         return new ApiInfo(
-                "TanCloud",
+                "HertzBeat",
                 null,
                 "v1.0",
                 null,

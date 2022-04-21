@@ -21,7 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author tom
  * @date 2021/12/4 21:40
  */
-@Api(tags = "I18N国际化资源API")
+@Api(tags = "I18N API | I18N国际化资源API")
 @RestController
 @RequestMapping(path = "/i18n", produces = {APPLICATION_JSON_VALUE})
 public class I18nController {
