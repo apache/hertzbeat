@@ -47,9 +47,7 @@ Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community 
 - **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.  
 > Provides monitoring management, monitoring configuration management, system user management, etc.  
 - **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
-> Use common protocols to remotely collect and obtain peer-to-peer metrics data.  
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** Provide monitoring task scheduling service. 
-> Collection task management, scheduling and distribution of one-time tasks and periodic tasks.   
+> Use common protocols to remotely collect and obtain peer-to-peer metrics data.   
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services. 
 > Metrics data management, data query, calculation and statistics.  
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.  

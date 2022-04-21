@@ -34,7 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @RestController
 @RequestMapping(produces = {APPLICATION_JSON_VALUE})
-@Api(tags = "监控指标数据API")
+@Api(tags = "Metrics Data API | 监控指标数据API")
 public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;

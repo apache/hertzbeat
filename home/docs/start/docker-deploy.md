@@ -47,7 +47,7 @@ sidebar_label: Docker方式部署
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
    配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
    
-   ```yaml
+```yaml
 
 resourceRole:
 - /account/auth/refresh===post===[admin,user,guest]
@@ -115,11 +115,11 @@ account:
   salt: 123
   role: [guest]
 
-   ```
+```
    
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
    
-   ```yaml
+```yaml
    
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
@@ -144,7 +144,7 @@ account:
   salt: 123
   role: [guest]
 
-   ```
+```
 
 6. 启动HertzBeat Docker容器  
    ``` 
