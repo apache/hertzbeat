@@ -29,17 +29,20 @@ import static com.usthe.common.util.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * Authentication registration TOKEN management API
  * 认证注册TOKEN管理API
+ *
  * @author tomsun28
  * @date 13:11 2019-05-26
  */
-@Api(tags = "认证注册TOKEN管理API")
+@Api(tags = "en: Authentication registration TOKEN management API,zh: 认证注册TOKEN管理API")
 @RestController()
 @RequestMapping(value = "/account/auth", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AccountController {
 
     /**
+     * Token validity time in seconds
      * TOKEN有效期时间 单位秒
      */
     private static final long PERIOD_TIME = 3600L;
@@ -50,7 +53,7 @@ public class AccountController {
     private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
     @PostMapping("/form")
-    @ApiOperation(value = "账户登录", notes = "账户密码登录获取关联用户信息")
+    @ApiOperation(value = "Account password login to obtain associated user information", notes = "账户密码登录获取关联用户信息")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@RequestBody LoginDto loginDto) {
 
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
@@ -76,7 +79,7 @@ public class AccountController {
         }
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
-        // 签发TOKEN
+        // Issue TOKEN      签发TOKEN
         String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
@@ -88,9 +91,9 @@ public class AccountController {
     }
 
     @GetMapping("/refresh/{refreshToken}")
-    @ApiOperation(value = "TOKEN刷新", notes = "使用刷新TOKEN重新获取TOKEN")
+    @ApiOperation(value = "Use refresh TOKEN to re-acquire TOKEN", notes = "使用刷新TOKEN重新获取TOKEN")
     public ResponseEntity<Message<Map<String, String>>> refreshToken(
-            @ApiParam(value = "刷新TOKEN", example = "xxx")
+            @ApiParam(value = "en: Refresh TOKEN,zh: 刷新TOKEN", example = "xxx")
             @PathVariable("refreshToken") @NotNull final String refreshToken) {
         String userId;
         boolean isRefresh;
@@ -116,7 +119,7 @@ public class AccountController {
             return ResponseEntity.ok(message);
         }
         List<String> roles = account.getOwnRoles();
-        // 签发TOKEN
+        // Issue TOKEN      签发TOKEN
         String issueToken = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
