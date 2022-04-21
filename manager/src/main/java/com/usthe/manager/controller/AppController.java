@@ -27,7 +27,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  *
  */
-@Api(tags = "en: Monitoring Type Management API,zh: 监控类型管理API")
+@Api(tags = "Monitor Type Manage API | 监控类型管理API")
 @RestController
 @RequestMapping(path = "/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {

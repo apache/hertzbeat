@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  *
  */
-@Api(tags = "en: Monitor and manage batch API,zh: 监控列表API")
+@Api(tags = "Monitor Manage Batch API | 监控列表API")
 @RestController
 @RequestMapping(path = "/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {

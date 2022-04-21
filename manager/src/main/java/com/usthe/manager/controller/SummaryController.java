@@ -24,7 +24,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  *
  */
-@Api(tags = "en: System Summary Statistics API,zh: 系统摘要统计API")
+@Api(tags = "Summary Statistics API | 系统摘要统计API")
 @RestController
 @RequestMapping(path = "/summary", produces = {APPLICATION_JSON_VALUE})
 public class SummaryController {

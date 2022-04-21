@@ -30,7 +30,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  *
  */
-@Api(tags = "en: Monitoring management API,zh: 监控管理API")
+@Api(tags = "Monitor Manage API | 监控管理API")
 @RestController
 @RequestMapping(path = "/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {

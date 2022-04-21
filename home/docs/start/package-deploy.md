@@ -50,7 +50,7 @@ sidebar_label: 安装包方式部署
    若需要新增删除修改账户或密码，可以通过修改位于 `hertzbeat/config/sureness.yml` 的配置文件实现，若无此需求可忽略此步骤 
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
 
-   ```yaml
+```yaml
    
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
@@ -75,7 +75,7 @@ account:
   salt: 123
   role: [guest]
  
-   ```
+```
 
 5. 部署启动
    执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh 
