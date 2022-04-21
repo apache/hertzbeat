@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author tom
  * @date 2021/12/9 10:32
  */
-@Api(tags = "en: Alarm batch management API, zh:告警批量管理API")
+@Api(tags = "Alarm Manage Batch API | 告警批量管理API")
 @RestController
 @RequestMapping(path = "/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
