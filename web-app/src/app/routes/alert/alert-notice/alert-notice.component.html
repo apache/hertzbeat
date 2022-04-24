@@ -19,13 +19,16 @@
 
 <nz-tabset nzSize="large">
   <nz-tab [nzTitle]="'alert.notice.receiver' | i18n">
+    <button nz-button nzType="primary" (click)="syncReceiver()">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+      {{ 'common.refresh' | i18n }}
+    </button>
+
     <button nz-button nzType="primary" (click)="onNewNoticeReceiver()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'alert.notice.receiver.new' | i18n }}
     </button>
-    <button nz-button nzType="primary" (click)="syncReceiver()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-      <i nz-icon nzType="sync" nzTheme="outline"></i>
-    </button>
+    
     <nz-table
       #fixedTable
       [nzData]="receivers"
@@ -100,6 +103,7 @@
             <button
               nz-button
               nzType="primary"
+              nzDanger
               (click)="onDeleteOneNoticeReceiver(data.id)"
               nz-tooltip
               [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
@@ -112,13 +116,16 @@
     </nz-table>
   </nz-tab>
   <nz-tab [nzTitle]="'alert.notice.rule' | i18n">
-    <button nz-button nzType="primary" (click)="onNewNoticeRule()">
+    <button nz-button nzType="primary" (click)="syncRule()" >
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+      {{ 'common.refresh' | i18n }}
+    </button>
+
+    <button nz-button nzType="primary" (click)="onNewNoticeRule()" >
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'alert.notice.rule.new' | i18n }}
     </button>
-    <button nz-button nzType="primary" (click)="syncRule()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-      <i nz-icon nzType="sync" nzTheme="outline"></i>
-    </button>
+    
     <nz-table
       #ruleFixedTable
       [nzData]="rules"
@@ -174,6 +181,7 @@
             <button
               nz-button
               nzType="primary"
+              nzDanger
               (click)="onDeleteOneNoticeRule(data.id)"
               nz-tooltip
               [nzTooltipTitle]="'alert.notice.rule.delete' | i18n"
