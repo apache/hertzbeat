@@ -17,7 +17,7 @@ import { environment } from '@env/environment';
           <i nz-icon nzIconfont="icon-gitee"></i>
         </a>
       </layout-default-header-item>
-      
+
       <layout-default-header-item direction="left" hidden="pc">
         <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
           <i nz-icon nzType="search"></i>

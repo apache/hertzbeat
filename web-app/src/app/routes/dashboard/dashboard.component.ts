@@ -352,6 +352,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (message.code === 0) {
           let page = message.data;
           this.alerts = page.content;
+          this.cdr.detectChanges();
         } else {
           console.warn(message.msg);
         }
