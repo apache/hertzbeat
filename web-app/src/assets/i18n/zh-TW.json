@@ -22,7 +22,7 @@
       "security": "安全設置",
       "binding": "賬號綁定",
       "trigger": "觸發錯誤",
-      "logout": "退出登錄"
+      "logout": "退出"
     },
     "alert": {
       "": "告警",
