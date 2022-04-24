@@ -17,11 +17,7 @@ import { environment } from '@env/environment';
           <i nz-icon nzIconfont="icon-gitee"></i>
         </a>
       </layout-default-header-item>
-      <layout-default-header-item direction="left" hidden="mobile">
-        <a layout-default-header-item-trigger routerLink="/passport/lock">
-          <i nz-icon nzType="lock"></i>
-        </a>
-      </layout-default-header-item>
+      
       <layout-default-header-item direction="left" hidden="pc">
         <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
           <i nz-icon nzType="search"></i>
@@ -32,6 +28,11 @@ import { environment } from '@env/environment';
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">
         <header-notify></header-notify>
+      </layout-default-header-item>
+      <layout-default-header-item direction="right" hidden="mobile">
+        <a layout-default-header-item-trigger routerLink="/passport/lock">
+          <i nz-icon nzType="lock"></i>
+        </a>
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">
         <div layout-default-header-item-trigger nz-dropdown [nzDropdownMenu]="settingsMenu" nzTrigger="click" nzPlacement="bottomRight">
