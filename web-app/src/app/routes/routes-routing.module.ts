@@ -22,7 +22,7 @@ const routes: Routes = [
     children: [
       // todo 根据路由自动生成面包屑
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent, data: { title: '仪表盘' } },
+      { path: 'dashboard', component: DashboardComponent, data: { titleI18n: 'menu.dashboard' } },
       { path: 'exception', loadChildren: () => import('./exception/exception.module').then(m => m.ExceptionModule) },
       { path: 'monitors', loadChildren: () => import('./monitor/monitor.module').then(m => m.MonitorModule) },
       { path: 'alert', loadChildren: () => import('./alert/alert.module').then(m => m.AlertModule) }
@@ -40,8 +40,8 @@ const routes: Routes = [
     path: 'passport',
     component: LayoutPassportComponent,
     children: [
-      { path: 'login', component: UserLoginComponent, data: { title: '登录' } },
-      { path: 'lock', component: UserLockComponent, data: { title: '锁屏' } }
+      { path: 'login', component: UserLoginComponent, data: { titleI18n: 'app.login.login' } },
+      { path: 'lock', component: UserLockComponent, data: { titleI18n: 'app.lock' } }
     ]
   },
   { path: '**', redirectTo: 'exception/404' }
