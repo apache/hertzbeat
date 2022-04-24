@@ -28,7 +28,7 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'alert.notice.receiver.new' | i18n }}
     </button>
-    
+
     <nz-table
       #fixedTable
       [nzData]="receivers"
@@ -116,16 +116,16 @@
     </nz-table>
   </nz-tab>
   <nz-tab [nzTitle]="'alert.notice.rule' | i18n">
-    <button nz-button nzType="primary" (click)="syncRule()" >
+    <button nz-button nzType="primary" (click)="syncRule()">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
       {{ 'common.refresh' | i18n }}
     </button>
 
-    <button nz-button nzType="primary" (click)="onNewNoticeRule()" >
+    <button nz-button nzType="primary" (click)="onNewNoticeRule()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'alert.notice.rule.new' | i18n }}
     </button>
-    
+
     <nz-table
       #ruleFixedTable
       [nzData]="rules"
