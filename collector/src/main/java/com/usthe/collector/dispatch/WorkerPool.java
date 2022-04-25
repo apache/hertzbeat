@@ -12,7 +12,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Collection task worker thread pool
  * 采集任务工作线程池
+ *
  * @author tomsun28
  * @date 2021/10/15 0:01
  */
@@ -27,11 +29,12 @@ public class WorkerPool implements DisposableBean {
     }
 
     private void initWorkExecutor() {
-        // 线程工厂
+        // thread factory       线程工厂
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable); })
+                    log.error(throwable.getMessage(), throwable);
+                })
                 .setDaemon(true)
                 .setNameFormat("collect-worker-%d")
                 .build();
@@ -45,9 +48,11 @@ public class WorkerPool implements DisposableBean {
     }
 
     /**
+     * Run the collection task thread
      * 运行采集任务线程
-     * @param runnable 任务
-     * @throws RejectedExecutionException when 线程池满
+     *
+     * @param runnable Task     任务
+     * @throws RejectedExecutionException when thread pool full     线程池满
      */
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);

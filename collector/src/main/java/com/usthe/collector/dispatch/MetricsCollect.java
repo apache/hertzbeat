@@ -27,7 +27,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
+ * Index group collection
  * 指标组采集
+ *
  * @author tomsun28
  * @date 2021/10/10 15:35
  */
@@ -35,42 +37,52 @@ import java.util.stream.Collectors;
 @Data
 public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
+     * Scheduling alarm threshold time 100ms
      * 调度告警阈值时间 100ms
      */
     private static final long WARN_DISPATCH_TIME = 100;
     /**
+     * Monitor ID
      * 监控ID
      */
     protected long monitorId;
     /**
+     * Monitoring type name
      * 监控类型名称
      */
     protected String app;
     /**
+     * Metric group configuration
      * 指标组配置
      */
     protected Metrics metrics;
     /**
+     * time wheel timeout
      * 时间轮timeout
      */
     protected Timeout timeout;
     /**
+     * Task and Data Scheduling
      * 任务和数据调度
      */
     protected CollectDataDispatch collectDataDispatch;
     /**
+     * task execution priority
      * 任务执行优先级
      */
     protected byte runPriority;
     /**
+     * Periodic collection or one-time collection true-periodic false-one-time
      * 是周期性采集还是一次性采集 true-周期性 false-一次性
      */
     protected boolean isCyclic;
     /**
+     * Time for creating an indicator group collection task
      * 指标组采集任务新建时间
      */
     protected long newTime;
     /**
+     * Start time of the index group collection task
      * 指标组采集任务开始执行时间
      */
     protected long startTime;
@@ -85,6 +97,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
+        // Temporary one-time tasks are executed with high priority
         // 临时一次性任务执行优先级高
         if (isCyclic) {
             runPriority = (byte) -1;
@@ -102,6 +115,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         response.setId(monitorId);
         response.setMetrics(metrics.getName());
 
+        // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
         AbstractCollect abstractCollect = null;
         switch (metrics.getProtocol()) {
@@ -120,8 +134,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             case DispatchConstants.PROTOCOL_SSH:
                 abstractCollect = SshCollectImpl.getInstance();
                 break;
-                // todo
-            default: break;
+            // todo
+            default:
+                break;
         }
         if (abstractCollect == null) {
             log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
@@ -136,7 +151,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
-                     msg = e.getCause().getMessage();
+                    msg = e.getCause().getMessage();
                 }
                 log.error("[Metrics Collect]: {}.", msg, e);
                 response.setCode(CollectRep.Code.FAIL);
@@ -145,6 +160,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
             }
         }
+        // Alias attribute expression replacement calculation
         // 别名属性表达式替换计算
         if (fastFailed()) {
             return;
@@ -156,10 +172,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
 
     /**
+     * Calculate the real indicator (fields) value according to the calculates and aliasFields configuration
+     * Calculate instance instance value
+     * <p>
      * 根据 calculates 和 aliasFields 配置计算出真正的指标(fields)值
      * 计算instance实例值
-     * @param metrics 指标组配置
-     * @param collectData 采集数据
+     *
+     * @param metrics     Metric group configuration        指标组配置
+     * @param collectData Data collection       采集数据
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
@@ -173,11 +193,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         collectData.clearValues();
-        // 先预处理 calculates
+        // Preprocess calculates first      先预处理 calculates
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
-        // eg: database_pages=Database pages 非常规映射
+        // eg: database_pages=Database pages unconventional mapping   非常规映射
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
@@ -192,9 +212,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         fieldAliasMap.put(field, expressionStr);
                         return null;
                     }
-                    return new Object[]{field, expression}; })
+                    return new Object[]{field, expression};
+                })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(arr -> (String)arr[0], arr -> (Expression) arr[1]));
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1]));
 
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
@@ -214,6 +235,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 Expression expression = fieldExpressionMap.get(realField);
                 String value = null;
                 if (expression != null) {
+                    // If there is a calculation expression, calculate the value
                     // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
                         for (String variable : expression.getVariableNames()) {
@@ -239,6 +261,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         log.warn(e.getMessage());
                     }
                 } else {
+                    // does not exist then map the alias value
                     // 不存在 则映射别名值
                     String aliasField = fieldAliasMap.get(realField);
                     if (aliasField != null) {
@@ -247,6 +270,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         value = aliasFieldValueMap.get(realField);
                     }
                 }
+                // Handle indicator values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
                 // 处理可能带单位的指标数值 比如 34%, 34Mb，并将数值小数点限制到4位
                 if (CommonConstants.TYPE_NUMBER == field.getType()) {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
@@ -261,7 +285,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
             }
             aliasFieldValueMap.clear();
-            // 设置实例instance
+            // set instance         设置实例instance
             realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
