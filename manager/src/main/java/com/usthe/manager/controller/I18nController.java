@@ -17,11 +17,13 @@ import java.util.Map;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * Internationalization I 18 N
  * 国际化I18N
+ *
  * @author tom
  * @date 2021/12/4 21:40
  */
-@Api(tags = "I18N API | I18N国际化资源API")
+@Api(tags = "en:I18N API | I18N Internationalization Resource API,zh: I18N API | I18N国际化资源API")
 @RestController
 @RequestMapping(path = "/i18n", produces = {APPLICATION_JSON_VALUE})
 public class I18nController {
@@ -30,15 +32,15 @@ public class I18nController {
     private AppService appService;
 
     @GetMapping("/{lang}")
-    @ApiOperation(value = "查询总的i18n资源", notes = "查询总的i18n国际化文本资源")
+    @ApiOperation(value = "Query total i 18 n internationalized text resources", notes = "查询总的i18n国际化文本资源")
     public ResponseEntity<Message<Map<String, String>>> queryI18n(
-            @ApiParam(value = "语言类型", example = "zh-CN", defaultValue = "zh-CN")
+            @ApiParam(value = "en: language type,zh: 语言类型", example = "zh-CN", defaultValue = "zh-CN")
             @PathVariable(name = "lang", required = false) String lang) {
         if (lang == null || "".equals(lang)) {
             lang = "zh-CN";
         }
-        lang = "zh-cn".equalsIgnoreCase(lang)? "zh-CN" : lang;
-        lang = "en-us".equalsIgnoreCase(lang)? "en-US" : lang;
+        lang = "zh-cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
+        lang = "en-us".equalsIgnoreCase(lang) ? "en-US" : lang;
         Map<String, String> i18nResource = appService.getI18nResources(lang);
         return ResponseEntity.ok(new Message<>(i18nResource));
     }
