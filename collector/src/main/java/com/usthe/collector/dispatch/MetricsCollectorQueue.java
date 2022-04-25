@@ -7,7 +7,9 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * queue of jobs to run
  * 待运行的job队列
+ *
  *
  *
  */
