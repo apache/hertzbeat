@@ -34,7 +34,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Monitor Entity,zh: 监控实体")
+@ApiModel(description = "Monitor Entity | 监控实体")
 public class Monitor {
 
     /**
