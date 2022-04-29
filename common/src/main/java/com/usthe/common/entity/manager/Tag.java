@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -42,10 +41,6 @@ public class Tag {
     private String name;
 
     @ApiModelProperty(value = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE, position = 2)
-    private String field;
-
-    @ApiModelProperty(value = "参数值", example = "8080", accessMode = READ_WRITE, position = 3)
-    @Length(max = 8126)
     private String value;
 
     @ApiModelProperty(value = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成", accessMode = READ_WRITE, position = 4)

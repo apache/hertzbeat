@@ -38,6 +38,7 @@ public class TagMonitorBind {
     private Long id;
 
     @ApiModelProperty(value = "TAG ID", example = "87432674384", accessMode = READ_WRITE, position = 1)
+    @Column(name = "tag_id")
     private Long tagId;
 
     @ApiModelProperty(value = "监控ID", example = "87432674336", accessMode = READ_WRITE, position = 2)

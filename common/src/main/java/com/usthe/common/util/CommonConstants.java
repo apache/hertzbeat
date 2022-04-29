@@ -206,4 +206,19 @@ public interface CommonConstants {
      * 认证类型 GITEE三方登录
      */
     byte AUTH_TYPE_GITEE = 5;
+
+    /**
+     * 内有标签: monitorId 监控ID
+     */
+    String TAG_MONITOR_ID = "monitorId";
+
+    /**
+     * 内有标签: monitorName 监控名称
+     */
+    String TAG_MONITOR_NAME = "monitorName";
+
+    /**
+     * 内有标签: app 监控类型
+     */
+    String TAG_MONITOR_APP = "app";
 }
