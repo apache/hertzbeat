@@ -104,7 +104,7 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       parseType: default
-  - name: stats
+  - name: nodes
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
