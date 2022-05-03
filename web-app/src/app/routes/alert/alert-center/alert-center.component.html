@@ -89,6 +89,7 @@
       <th nzAlign="center">{{ 'alert.center.monitor' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.priority' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.content' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.tags' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.status' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.time' | i18n }}</th>
       <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
@@ -99,8 +100,8 @@
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center" nzLeft>{{ data.target }}</td>
       <td nzAlign="center">
-        <a [routerLink]="['/monitors/' + data.monitorId]">
-          <span>{{ data.monitorName }}</span>
+        <a [routerLink]="['/monitors/' + data.tags?.monitorId]">
+          <span>{{ data.tags?.monitorName }}</span>
         </a>
       </td>
       <td nzAlign="center">
@@ -118,6 +119,11 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.content }}</td>
+      <td nzAlign="center">
+        <nz-tag style="margin-top: 2px" *ngFor="let tag of data.tmp; let i = index">
+          {{ sliceTagName(tag) }}
+        </nz-tag>
+      </td>
       <td nzAlign="center">
         {{ 'alert.status.' + data.status | i18n }}
       </td>

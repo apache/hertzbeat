@@ -2,6 +2,7 @@ package com.usthe.common.entity.manager;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.usthe.common.support.valid.HostValid;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -139,10 +140,9 @@ public class Monitor {
      *           JoinColumn  name 中间表的关联字段名称
      *                       referencedColumnName 关联表的映射字段名称
      */
-    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "tag_monitor_bind",
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
-    @JsonBackReference("roles")
     private List<Tag> tags;
 }

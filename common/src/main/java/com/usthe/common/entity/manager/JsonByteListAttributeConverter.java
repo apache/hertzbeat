@@ -3,6 +3,7 @@ package com.usthe.common.entity.manager;
 import com.usthe.common.util.GsonUtil;
 
 import javax.persistence.AttributeConverter;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -19,6 +20,14 @@ public class JsonByteListAttributeConverter implements AttributeConverter<List<B
 
     @Override
     public List<Byte> convertToEntityAttribute(String dbData) {
-        return GsonUtil.fromJson(dbData, List.class);
+        List list = GsonUtil.fromJson(dbData, List.class);
+        List<Byte> bytes = new LinkedList<>();
+        if (list != null) {
+            for (Object item : list) {
+                byte value = Double.valueOf(String.valueOf(item)).byteValue();
+                bytes.add(value);
+            }
+        }
+        return bytes;
     }
 }

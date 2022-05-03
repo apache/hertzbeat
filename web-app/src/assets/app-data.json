@@ -89,6 +89,12 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "tags",
+          "i18n": "menu.extras.tags",
+          "icon": "anticon-tags",
+          "link": "/setting/tags"
+        },
+        {
           "text": "helpCenter",
           "externalLink": "https://tancloud.cn/docs/help/guide",
           "target": "_blank",

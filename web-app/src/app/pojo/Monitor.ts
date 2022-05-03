@@ -1,3 +1,5 @@
+import { Tag } from './Tag';
+
 export class Monitor {
   id!: number;
   name!: string;
@@ -11,4 +13,5 @@ export class Monitor {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
+  tags!: Tag[];
 }

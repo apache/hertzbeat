@@ -71,7 +71,7 @@ public class NoticeRule {
             example = "false", accessMode = READ_WRITE, position = 5)
     private boolean filterAll = true;
 
-    @ApiModelProperty(value = "过滤匹配告警级别，空为全部告警级别", example = "[1]", accessMode = READ_WRITE, position = 8)
+    @ApiModelProperty(value = "过滤匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色", example = "[1]", accessMode = READ_WRITE, position = 8)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 

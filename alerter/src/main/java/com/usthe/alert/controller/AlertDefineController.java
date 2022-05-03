@@ -3,7 +3,6 @@ package com.usthe.alert.controller;
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
 import com.usthe.alert.service.AlertDefineService;
-import com.usthe.common.entity.dto.AlertReport;
 import com.usthe.common.entity.dto.Message;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -98,15 +97,6 @@ public class AlertDefineController {
         List<AlertDefineMonitorBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
         defineBinds = defineBinds.stream().filter(item -> item.getMonitor() != null).collect(Collectors.toList());
         return ResponseEntity.ok(new Message<>(defineBinds));
-    }
-
-
-    @PostMapping("/report")
-    @ApiOperation(value = "对外上报告警信息 接口", notes = "对外 新增一个告警")
-    public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
-        // 校验请求数据 TODO
-        alertDefineService.addNewAlertReport(alertReport);
-        return ResponseEntity.ok(new Message<>("Add report success"));
     }
 
 }

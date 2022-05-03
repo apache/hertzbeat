@@ -1,15 +1,12 @@
 package com.usthe.common.entity.dto;
 
-import com.usthe.common.entity.alerter.JsonMapAttributeConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.*;
 import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -49,7 +46,6 @@ public class AlertReport {
 
     @ApiModelProperty(value = " Alarm marking (monitorId:xxx,monitorName:xxx)", notes = "告警标注", example = "{key1:value1}", accessMode = READ_WRITE, position = 7)
     private Map<String, String> annotations;
-
 
     @ApiModelProperty(value = " Alarm content", notes = "告警内容", example = "对外报警内容", accessMode = READ_WRITE, position = 8)
     private String content;

@@ -2,7 +2,6 @@ package com.usthe.alert.service;
 
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
-import com.usthe.common.entity.dto.AlertReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -101,10 +100,4 @@ public interface AlertDefineService {
      * @return 监控列表关联信息
      */
     List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId);
-
-    /**
-     * 第三方 上报告警信息
-     * @param alertReport 告警信息
-     */
-    void addNewAlertReport(AlertReport alertReport);
 }

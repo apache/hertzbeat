@@ -8,7 +8,6 @@ import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.manager.service.NoticeConfigService;
-import io.netty.util.internal.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -88,14 +87,21 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
                 .filter(NoticeRule::isFilterAll)
                 .map(NoticeRule::getReceiverId)
                 .collect(Collectors.toSet());
-        //除了全部转发的 其他的按照tags 看看是否匹配
+        // 除了全部转发的 其他的按照tags标签和告警级别过滤匹配
         Set<Long> receiverIdsByMatch = rules.stream()
+                .filter(rule -> !rule.isFilterAll())
                 .filter(rule -> {
                     MapDifference<String, Object> difference = Maps.difference(alert.getTags(), rule.getTags() == null ? Maps.newHashMap() : rule.getTags());
                     Map<String, Object> difMap= difference.entriesInCommon();
-                    return !rule.isFilterAll() && (difMap != null && difMap.size() > 0);
+                    if (rule.getPriorities() == null || rule.getPriorities().isEmpty()) {
+                        return !difMap.isEmpty();
+                    } else {
+                        boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
+                        return priorityMatch && !difMap.isEmpty();
+                    }
                 }).map(NoticeRule::getReceiverId)
                 .collect(Collectors.toSet());
+
         receiverIds.addAll(receiverIdsByMatch);
         return noticeReceiverDao.findAllById(receiverIds);
     }
