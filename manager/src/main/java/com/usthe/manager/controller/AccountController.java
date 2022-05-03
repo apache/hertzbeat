@@ -93,7 +93,7 @@ public class AccountController {
     @GetMapping("/refresh/{refreshToken}")
     @ApiOperation(value = "Use refresh TOKEN to re-acquire TOKEN", notes = "使用刷新TOKEN重新获取TOKEN")
     public ResponseEntity<Message<Map<String, String>>> refreshToken(
-            @ApiParam(value = "en: Refresh TOKEN,zh: 刷新TOKEN", example = "xxx")
+            @ApiParam(value = "Refresh TOKEN | 刷新TOKEN", example = "xxx")
             @PathVariable("refreshToken") @NotNull final String refreshToken) {
         String userId;
         boolean isRefresh;

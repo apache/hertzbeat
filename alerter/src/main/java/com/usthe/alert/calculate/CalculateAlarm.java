@@ -84,8 +84,11 @@ public class CalculateAlarm {
         if (metricsData.getPriority() == 0) {
             if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
                 // 采集异常
+                Map<String, String> tags = new HashMap<>(6);
+                tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+                tags.put(CommonConstants.TAG_MONITOR_APP, app);
                 Alert.AlertBuilder alertBuilder = Alert.builder()
-                        .monitorId(monitorId)
+                        .tags(tags)
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
                         .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                         .times(1);
@@ -120,8 +123,11 @@ public class CalculateAlarm {
                 CollectRep.Code stateCode = triggeredMonitorStateAlertMap.remove(monitorId);
                 if (stateCode != null) {
                     // 发送告警恢复
+                    Map<String, String> tags = new HashMap<>(6);
+                    tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+                    tags.put(CommonConstants.TAG_MONITOR_APP, app);
                     Alert resumeAlert = Alert.builder()
-                            .monitorId(monitorId)
+                            .tags(tags)
                             .target(CommonConstants.AVAILABLE)
                             .content("告警恢复通知, 此监控状态已恢复正常")
                             .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
@@ -182,8 +188,11 @@ public class CalculateAlarm {
                                     fieldValueMap.put("app", app);
                                     fieldValueMap.put("metrics", metrics);
                                     fieldValueMap.put("metric", define.getField());
+                                    Map<String, String> tags = new HashMap<>(6);
+                                    tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+                                    tags.put(CommonConstants.TAG_MONITOR_APP, app);
                                     Alert alert = Alert.builder()
-                                            .monitorId(monitorId)
+                                            .tags(tags)
                                             .alertDefineId(define.getId())
                                             .priority(define.getPriority())
                                             .status(CommonConstants.ALERT_STATUS_CODE_PENDING)

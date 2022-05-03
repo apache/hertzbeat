@@ -46,6 +46,10 @@ import { environment } from '@env/environment';
             <div nz-menu-item>
               <header-clear-storage></header-clear-storage>
             </div>
+            <div nz-menu-item routerLink="/setting/tags">
+              <i nz-icon nzType="tag"></i>
+              <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
+            </div>
             <div nz-menu-item>
               <header-i18n></header-i18n>
             </div>
