@@ -7,6 +7,7 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { Alert } from '../../../pojo/Alert';
 import { AlertService } from '../../../service/alert.service';
+import { Tag } from '../../../pojo/Tag';
 
 @Component({
   selector: 'app-alert-center',
@@ -54,6 +55,17 @@ export class AlertCenterComponent implements OnInit {
             this.alerts = page.content;
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
+            this.alerts.forEach(item => {
+              item.tmp = [];
+              if (item.tags != undefined) {
+                Object.keys(item.tags).forEach(name => {
+                  item.tmp.push({
+                    name: name,
+                    value: item.tags[name]
+                  });
+                });
+              }
+            })
           } else {
             console.warn(message.msg);
           }
@@ -215,4 +227,12 @@ export class AlertCenterComponent implements OnInit {
     this.loadAlertsTable();
   }
   // end: 列表多选分页逻辑
+
+  sliceTagName(tag: Tag): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
 }

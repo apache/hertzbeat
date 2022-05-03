@@ -2,6 +2,7 @@ package com.usthe.alert.service;
 
 import com.usthe.alert.dto.AlertSummary;
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.entity.dto.AlertReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -60,5 +61,11 @@ public interface AlertService {
      * @return Alarm statistics information 告警统计
      */
     AlertSummary getAlertsSummary();
+
+    /**
+     * 第三方 上报告警信息
+     * @param alertReport 告警信息
+     */
+    void addNewAlertReport(AlertReport alertReport);
 
 }

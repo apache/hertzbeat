@@ -69,7 +69,7 @@ export class HeaderNotifyComponent implements OnInit {
             let item = {
               id: alert.id,
               avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-              title: `${alert.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
+              title: `${alert.tags['monitorName']}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
               datetime: alert.gmtCreate,
               color: 'blue',
               type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
