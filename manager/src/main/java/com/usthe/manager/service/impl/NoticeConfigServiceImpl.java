@@ -1,11 +1,14 @@
 package com.usthe.manager.service.impl;
 
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.manager.service.NoticeConfigService;
+import io.netty.util.internal.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,12 +81,22 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
         // todo use cache   使用缓存
         List<NoticeRule> rules = noticeRuleDao.findNoticeRulesByEnableTrue();
+
         // todo The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         // 暂时规则是全部转发 后面实现更多匹配规则：告警状态选择 监控类型选择等
         Set<Long> receiverIds = rules.stream()
                 .filter(NoticeRule::isFilterAll)
                 .map(NoticeRule::getReceiverId)
                 .collect(Collectors.toSet());
+        //除了全部转发的 其他的按照tags 看看是否匹配
+        Set<Long> receiverIdsByMatch = rules.stream()
+                .filter(rule -> {
+                    MapDifference<String, Object> difference = Maps.difference(alert.getTags(), rule.getTags() == null ? Maps.newHashMap() : rule.getTags());
+                    Map<String, Object> difMap= difference.entriesInCommon();
+                    return !rule.isFilterAll() && (difMap != null && difMap.size() > 0);
+                }).map(NoticeRule::getReceiverId)
+                .collect(Collectors.toSet());
+        receiverIds.addAll(receiverIdsByMatch);
         return noticeReceiverDao.findAllById(receiverIds);
     }
 

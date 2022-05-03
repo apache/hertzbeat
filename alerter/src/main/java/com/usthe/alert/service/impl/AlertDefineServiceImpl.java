@@ -1,10 +1,15 @@
 package com.usthe.alert.service.impl;
 
+import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.alert.dao.AlertDefineDao;
+import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
 import com.usthe.alert.service.AlertDefineService;
+import com.usthe.common.entity.dto.AlertReport;
+import com.usthe.common.util.CommonConstants;
+import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,6 +40,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+
+    @Autowired
+    private AlerterDataQueue alerterDataQueue;
 
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
@@ -101,5 +109,43 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId) {
         return alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
+    }
+
+    @Override
+    public void addNewAlertReport(AlertReport alertReport)  {
+        alerterDataQueue.addAlertData(buildAlertData(alertReport));
+    }
+
+    /**
+     * 对外告警信息 转换为Alert
+     * @param alertReport 对外告警信息
+     * @return Alert实体
+     */
+    private Alert buildAlertData(AlertReport alertReport){
+        Map<String, String> annotations = alertReport.getAnnotations();
+        StringBuilder sb = new StringBuilder();
+        if(alertReport.getContent() == null || alertReport.getContent().length() <= 0){
+            StringBuilder finalSb = sb;
+            annotations.forEach((k, v) -> {
+                finalSb.append(k).append(":").append(v).append("\n");
+            });
+        }else{
+            sb = new StringBuilder(alertReport.getContent());
+        }
+
+       return Alert.builder()
+//                .alertDefineId()
+                .content("对外报警\n" + sb.toString())
+                .creator("SYS")
+//                .gmtCreate()
+//                .id()
+//                .gmtUpdate()
+                .modifier("SYS")
+                .priority(alertReport.getPriority().byteValue())
+                .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
+                .tags(alertReport.getLabels())
+                .target(CommonConstants.AVAILABLE)
+                .times(3)
+                .build();
     }
 }
