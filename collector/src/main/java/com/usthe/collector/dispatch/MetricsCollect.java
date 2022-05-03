@@ -203,8 +203,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .stream()
                 .map(cal -> {
                     int splitIndex = cal.indexOf("=");
-                    String field = cal.substring(0, splitIndex);
-                    String expressionStr = cal.substring(splitIndex + 1);
+                    String field = cal.substring(0, splitIndex).trim();
+                    String expressionStr = cal.substring(splitIndex + 1).trim();
                     Expression expression = null;
                     try {
                         expression = AviatorEvaluator.compile(expressionStr, true);
