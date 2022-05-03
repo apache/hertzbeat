@@ -27,6 +27,10 @@ resourceRole:
   - /notice/**===post===[admin,user]
   - /notice/**===put===[admin,user]
   - /notice/**===delete===[admin]
+  - /tag/**===get===[admin,user,guest]
+  - /tag/**===post===[admin,user]
+  - /tag/**===put===[admin,user]
+  - /tag/**===delete===[admin]
   - /summary/**===get===[admin,user,guest]
   - /summary/**===post===[admin,user]
   - /summary/**===put===[admin,user]
@@ -61,13 +65,13 @@ excludedResource:
 # eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
   - appId: admin
-    credential: admin
+    credential: hertzbeat
     role: [admin,user]
   - appId: tom
-    credential: tom@123
+    credential: hertzbeat
     role: [user]
   - appId: guest
-    credential: guest
+    credential: hertzbeat
     role: [guest]
   - appId: lili
     # 注意 Digest认证不支持加盐加密的密码账户

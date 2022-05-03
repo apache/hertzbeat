@@ -29,13 +29,19 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
+        String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+        String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
         WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
         StringBuilder content = new StringBuilder();
         content.append("<font color=\"info\">[TanCloud探云告警通知]</font>\n告警目标对象 : <font color=\"info\">")
-                .append(alert.getTarget()).append("</font>\n")
-                .append("所属监控ID : ").append(alert.getMonitorId()).append("\n")
-                .append("所属监控名称 : ").append(alert.getMonitorName()).append("\n");
+                .append(alert.getTarget()).append("</font>\n");
+        if (monitorId != null) {
+            content.append("所属监控ID : ").append(monitorId).append("\n");
+        }
+        if (monitorName != null) {
+            content.append("所属监控名称 : ").append(monitorName).append("\n");
+        }
         if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
             content.append("告警级别 : <font color=\"warning\">")
                     .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
