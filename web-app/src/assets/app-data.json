@@ -6,7 +6,7 @@
   "user": {
     "name": "Admin",
     "avatar": "./assets/img/avatar.svg",
-    "email": "管理员"
+    "email": "Administrator"
   },
   "menu": [
     {
