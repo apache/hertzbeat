@@ -8,16 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -34,7 +30,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Alarm record entity zh: 告警记录实体")
+@ApiModel(description = "Alarm record entity | 告警记录实体")
 public class Alert {
 
     @Id
@@ -49,16 +45,6 @@ public class Alert {
             example = "1", accessMode = READ_WRITE, position = 1)
     @Length(max = 255)
     private String target;
-
-    @ApiModelProperty(value = "Monitoring ID associated with the alarm object",
-            notes = "告警对象关联的监控ID",
-            example = "87432674336", accessMode = READ_WRITE, position = 2)
-    private Long monitorId;
-
-    @ApiModelProperty(value = "Monitoring name associated with the alarm object",
-            notes = "告警对象关联的监控名称",
-            example = "Linux_192.132.23.1", accessMode = READ_WRITE, position = 3)
-    private String monitorName;
 
     @ApiModelProperty(value = "Alarm definition ID associated with the alarm",
             notes = "告警关联的告警定义ID",
@@ -93,10 +79,24 @@ public class Alert {
     @Max(10)
     private int times;
 
+    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 8)
+    @Convert(converter = JsonMapAttributeConverter.class)
+    @SuppressWarnings("JpaAttributeTypeInspection")
+    private Map<String, String> tags;
+
+    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 8)
+    private String creator;
+
+    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 9)
+    private String modifier;
+
     @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
             notes = "告警触发时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY, position = 9)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtCreate;
 
+    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 11)
+    @Column(insertable = false, updatable = false)
+    private LocalDateTime gmtUpdate;
 }

@@ -1,5 +1,6 @@
 package com.usthe.common.entity.manager;
 
+import com.usthe.common.entity.alerter.JsonMapAttributeConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -8,14 +9,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -72,6 +70,15 @@ public class NoticeRule {
             notes = "是否转发所有",
             example = "false", accessMode = READ_WRITE, position = 5)
     private boolean filterAll = true;
+
+    @ApiModelProperty(value = "过滤匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色", example = "[1]", accessMode = READ_WRITE, position = 8)
+    @Convert(converter = JsonByteListAttributeConverter.class)
+    private List<Byte> priorities;
+
+    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 8)
+    @Convert(converter = JsonMapAttributeConverter.class)
+    @SuppressWarnings("JpaAttributeTypeInspection")
+    private Map<String, String> tags;
 
     @ApiModelProperty(value = "The creator of this record",
             notes = "此条记录创建者",

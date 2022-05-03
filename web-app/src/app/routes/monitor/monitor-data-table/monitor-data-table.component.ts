@@ -34,7 +34,7 @@ export class MonitorDataTableComponent {
     let metricData$ = this.monitorSvc.getMonitorMetricsData(this.monitorId, this.metrics).subscribe(
       message => {
         metricData$.unsubscribe();
-        if (message.code === 0) {
+        if (message.code === 0 && message.data) {
           this.time = message.data.time;
           this.fields = message.data.fields;
           this.valueRows = message.data.valueRows;
@@ -43,7 +43,7 @@ export class MonitorDataTableComponent {
             this.rowValues = this.valueRows[0].values;
           }
         } else {
-          console.error(message.msg);
+          console.info(`${this.metrics}:${message.msg}`);
         }
       },
       error => {
