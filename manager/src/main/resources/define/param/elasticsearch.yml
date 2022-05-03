@@ -1,0 +1,36 @@
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws middleware ...
+app: elasticsearch
+# 强制固定必须参数 - host(ipv4,ipv6,域名)
+param:
+  - field: host
+    name: 主机Host
+    type: host
+    required: true
+  - field: port
+    name: 端口
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9200
+    placeholder: '请输入端口'
+  - field: timeout
+    name: 查询超时时间
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+    placeholder: '查询超时时间'
+  - field: index
+    name: 索引名称
+    type: text
+    hide: true
+    required: false
+  - field: username
+    name: 用户名
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name: 密码
+    type: password
+    required: false
