@@ -5,6 +5,7 @@ import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
+import com.usthe.common.entity.manager.Tag;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
@@ -30,12 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -101,6 +97,14 @@ public class MonitorServiceImpl implements MonitorService {
     public void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
         // Apply for monitor id         申请 monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
+        // Init Set Default Tags: monitorId monitorName app
+        List<Tag> tags = monitor.getTags();
+        if (tags == null) {
+            tags = new LinkedList<>();
+            monitor.setTags(tags);
+        }
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
         // Construct the collection task Job entity     构造采集任务Job实体
         Job appDefine = appService.getAppDefine(monitor.getApp());
         appDefine.setMonitorId(monitorId);
@@ -162,6 +166,7 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
+        // todo 校验标签
 
         // Parameter definition structure verification  参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
@@ -265,7 +270,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Transactional(rollbackFor = Exception.class)
     public void modifyMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
         long monitorId = monitor.getId();
-        // Check to determine whether the monitor corresponding to the monitor Id exists
+        // Check to determine whether the monitor corresponding to the monitor id exists
         // 查判断monitorId对应的此监控是否存在
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
         if (!queryOption.isPresent()) {
@@ -276,6 +281,17 @@ public class MonitorServiceImpl implements MonitorService {
             // The type of monitoring cannot be modified
             // 监控的类型不能修改
             throw new IllegalArgumentException("Can not modify monitor's app type");
+        }
+        // Auto Update Default Tags: monitorName
+        List<Tag> tags = monitor.getTags();
+        if (tags == null) {
+            tags = new LinkedList<>();
+            monitor.setTags(tags);
+        }
+        for (Tag tag : tags) {
+            if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
+                tag.setValue(monitor.getName());
+            }
         }
         // Construct the collection task Job entity
         // 构造采集任务Job实体
