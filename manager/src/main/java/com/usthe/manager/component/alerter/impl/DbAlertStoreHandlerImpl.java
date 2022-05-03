@@ -70,7 +70,6 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
                 monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
             }
         }
-
         // Alarm drop library  告警落库
         alertService.addAlert(alert);
     }
