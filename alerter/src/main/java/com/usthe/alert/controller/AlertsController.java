@@ -3,6 +3,7 @@ package com.usthe.alert.controller;
 import com.usthe.alert.dto.AlertSummary;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
+import com.usthe.common.entity.dto.AlertReport;
 import com.usthe.common.entity.dto.Message;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -13,16 +14,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -121,5 +117,13 @@ public class AlertsController {
         AlertSummary alertSummary = alertService.getAlertsSummary();
         Message<AlertSummary> message = new Message<>(alertSummary);
         return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/report")
+    @ApiOperation(value = "对外上报告警信息 接口", notes = "对外 新增一个告警")
+    public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
+        // 校验请求数据 TODO
+        alertService.addNewAlertReport(alertReport);
+        return ResponseEntity.ok(new Message<>("Add report success"));
     }
 }

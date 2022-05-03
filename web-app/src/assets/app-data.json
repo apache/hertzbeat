@@ -6,7 +6,7 @@
   "user": {
     "name": "Admin",
     "avatar": "./assets/img/avatar.svg",
-    "email": "管理员"
+    "email": "Administrator"
   },
   "menu": [
     {
@@ -88,6 +88,12 @@
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
+        {
+          "text": "tags",
+          "i18n": "menu.extras.tags",
+          "icon": "anticon-tags",
+          "link": "/setting/tags"
+        },
         {
           "text": "helpCenter",
           "externalLink": "https://tancloud.cn/docs/help/guide",

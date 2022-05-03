@@ -9,5 +9,8 @@ export class Alert {
   status!: number;
   content!: string;
   times!: number;
+  tags!: Record<string, string>;
   gmtCreate!: number;
+  gmtUpdate!: number;
+  tmp!: any;
 }

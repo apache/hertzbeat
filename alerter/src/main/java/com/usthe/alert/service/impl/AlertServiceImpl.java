@@ -1,10 +1,12 @@
 package com.usthe.alert.service.impl;
 
+import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.dao.AlertDao;
 import com.usthe.alert.dto.AlertPriorityNum;
 import com.usthe.alert.dto.AlertSummary;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.alert.service.AlertService;
+import com.usthe.common.entity.dto.AlertReport;
 import com.usthe.common.util.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Realization of Alarm Information Service 告警信息服务实现
@@ -32,6 +38,9 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlertDao alertDao;
+
+    @Autowired
+    private AlerterDataQueue alerterDataQueue;
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
@@ -94,6 +103,40 @@ public class AlertServiceImpl implements AlertService {
             log.error(e.getMessage(), e);
         }
         return alertSummary;
+    }
+
+    @Override
+    public void addNewAlertReport(AlertReport alertReport) {
+        alerterDataQueue.addAlertData(buildAlertData(alertReport));
+    }
+
+    /**
+     * 对外告警信息 转换为Alert
+     * @param alertReport 对外告警信息
+     * @return Alert实体
+     */
+    private Alert buildAlertData(AlertReport alertReport){
+        Map<String, String> annotations = alertReport.getAnnotations();
+        StringBuilder sb = new StringBuilder();
+        if(alertReport.getContent() == null || alertReport.getContent().length() <= 0){
+            StringBuilder finalSb = sb;
+            annotations.forEach((k, v) -> {
+                finalSb.append(k).append(":").append(v).append("\n");
+            });
+        }else{
+            sb = new StringBuilder(alertReport.getContent());
+        }
+
+        return Alert.builder()
+                .content("Alert Center\n" + sb)
+                .priority(alertReport.getPriority().byteValue())
+                .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
+                .tags(alertReport.getLabels())
+                .target(CommonConstants.AVAILABLE)
+                .times(3)
+                // todo 时区问题
+                .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneOffset.of("+8")))
+                .build();
     }
 
 }
