@@ -17,11 +17,7 @@ import { environment } from '@env/environment';
           <i nz-icon nzIconfont="icon-gitee"></i>
         </a>
       </layout-default-header-item>
-      <layout-default-header-item direction="left" hidden="mobile">
-        <a layout-default-header-item-trigger routerLink="/passport/lock">
-          <i nz-icon nzType="lock"></i>
-        </a>
-      </layout-default-header-item>
+
       <layout-default-header-item direction="left" hidden="pc">
         <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
           <i nz-icon nzType="search"></i>
@@ -34,6 +30,11 @@ import { environment } from '@env/environment';
         <header-notify></header-notify>
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">
+        <a layout-default-header-item-trigger routerLink="/passport/lock">
+          <i nz-icon nzType="lock"></i>
+        </a>
+      </layout-default-header-item>
+      <layout-default-header-item direction="right" hidden="mobile">
         <div layout-default-header-item-trigger nz-dropdown [nzDropdownMenu]="settingsMenu" nzTrigger="click" nzPlacement="bottomRight">
           <i nz-icon nzType="setting"></i>
         </div>
@@ -44,6 +45,10 @@ import { environment } from '@env/environment';
             </div>
             <div nz-menu-item>
               <header-clear-storage></header-clear-storage>
+            </div>
+            <div nz-menu-item routerLink="/setting/tags">
+              <i nz-icon nzType="tag"></i>
+              <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
             </div>
             <div nz-menu-item>
               <header-i18n></header-i18n>
@@ -71,9 +76,9 @@ import { environment } from '@env/environment';
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
     <theme-btn
       [types]="[
-        { key: 'default', text: '浅色主题' },
-        { key: 'dark', text: '深色主题' },
-        { key: 'compact', text: '紧凑主题' }
+        { key: 'default', text: 'app.theme.default' | i18n },
+        { key: 'dark', text: 'app.theme.dark' | i18n },
+        { key: 'compact', text: 'app.theme.compact' | i18n }
       ]"
     ></theme-btn>
   `

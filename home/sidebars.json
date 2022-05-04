@@ -92,7 +92,8 @@
             "help/alert_webhook",
             "help/alert_wework",
             "help/alert_dingtalk",
-            "help/alert_feishu"
+            "help/alert_feishu",
+            "help/alert_console"
           ]
         },
         "help/issue"

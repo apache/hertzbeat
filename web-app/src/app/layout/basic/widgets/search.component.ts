@@ -38,10 +38,15 @@ import { MonitorService } from '../../../service/monitor.service';
       />
     </nz-input-group>
     <nz-autocomplete nzBackfill="false" nzDefaultActiveFirstOption #auto>
-      <nz-auto-option *ngFor="let option of options" [nzValue]="option.id" [nzLabel]="option.name">
-        <a [routerLink]="['/monitors/' + option.id]">
-          监控名称: {{ option.name }}
-          <span style="left:50% ; position: absolute;">监控Host: {{ option.host }}</span>
+      <nz-auto-option
+        *ngFor="let option of options"
+        [nzValue]="option.id"
+        [nzLabel]="option.name"
+        [routerLink]="['/monitors/' + option.id]"
+      >
+        <a>
+          {{ 'monitor.name' | i18n }} : {{ option.name }}
+          <span style="left:50% ; position: absolute;">{{ 'monitor.host' | i18n }} : {{ option.host }}</span>
           <span style="right: 10px; position: absolute;"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
         </a>
       </nz-auto-option>

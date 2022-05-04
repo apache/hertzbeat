@@ -10,16 +10,18 @@
       </div>
       <div nz-col nzSpan="14" class="p-md text-white">
         <nz-tag class="mb-xs">
-          <span>正常 </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可用 </span><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可达 </span><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>未监控 </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -35,16 +37,16 @@
       </div>
       <div nz-col nzSpan="14">
         <nz-tag class="mb-xs">
-          <span>正常 </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可用 </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可达 </span><span style="font-weight: bolder">{{ appCountDb.unReachableSize }}</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>未监控 </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -60,16 +62,16 @@
       </div>
       <div nz-col nzSpan="14">
         <nz-tag class="mb-xs">
-          <span>正常 </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可用 </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可达 </span><span style="font-weight: bolder">{{ appCountOs.unReachableSize }}</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>未监控 </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -85,16 +87,18 @@
       </div>
       <div nz-col nzSpan="14">
         <nz-tag class="mb-xs">
-          <span>正常 </span><span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可用 </span><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>不可达 </span><span style="font-weight: bolder">{{ appCountCustom.unReachableSize }}</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountCustom.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>未监控 </span><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -114,23 +118,23 @@
 
 <div nz-row nzGutter="16" style="margin-top: 10px">
   <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md">
-    <nz-card nzHoverable nzTitle="最近告警列表" [nzExtra]="extraTemplate">
+    <nz-card nzHoverable [nzTitle]="'dashboard.alerts.title' | i18n" [nzExtra]="extraTemplate">
       <nz-timeline nzMode="left">
         <nz-timeline-item *ngFor="let alert of alerts; let i = index" [nzLabel]="(alert.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss')?.trim()">
           <p style="font-weight: 400">
             <nz-tag *ngIf="alert.priority == 0" nzColor="red">
               <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>紧急告警</span>
+              <span>{{ 'alert.priority.0' | i18n }}</span>
             </nz-tag>
             <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
               <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>严重告警</span>
+              <span>{{ 'alert.priority.1' | i18n }}</span>
             </nz-tag>
             <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
               <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>警告告警</span>
+              <span>{{ 'alert.priority.2' | i18n }}</span>
             </nz-tag>
-            <span>[{{ alert.monitorName }}] </span>
+            <span>[{{ alert.tags.monitorName }}] </span>
             {{ alert.content }}
           </p>
         </nz-timeline-item>
@@ -162,5 +166,5 @@
 </div>
 
 <ng-template #extraTemplate>
-  <a [routerLink]="['/alert/center']">进入告警中心</a>
+  <a [routerLink]="['/alert/center']">{{ 'dashboard.alerts.enter' | i18n }}</a>
 </ng-template>

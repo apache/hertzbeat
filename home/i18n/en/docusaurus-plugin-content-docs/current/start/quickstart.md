@@ -1,46 +1,63 @@
 ---
 id: quickstart  
-title: 快速开始    
-sidebar_label: 快速开始    
+title: Quick Start    
+sidebar_label: Quick Start    
 ---
 
-### 🐕 开始使用
+### 🐕 Quick Start
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登录注册](https://console.tancloud.cn)免费使用。  
-- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
+- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn) **.
+- If you want to deploy HertzBeat local, please refer to the following [Deployment Documentation](https://hertzbeat.com/docs/start/quickstart) for operation.
 
-### 🐵 依赖服务部署   
+### 🐵 Dependency Service Deployment   
 
-> HertzBeat最少依赖于 关系型数据库[MYSQL8+](https://www.mysql.com/) 和 时序性数据库[TDengine2+](https://www.taosdata.com/getting-started)
+> HertzBeat depends at least on relational database [MYSQL5+](https://www.mysql.com/) and time series database [TDengine2+](https://www.taosdata.com/getting-started)
 
-##### 安装MYSQL  
-1. docker安装MYSQl  
-`docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql`   
-2. 创建名称为hertzbeat的数据库  
-3. 执行位于项目仓库/script/sql/目录下的数据库脚本 [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql)      
 
-详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init.md)    
+##### Install MYSQL
+1. Install mysql with docker    
+   `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`
+2. Create database names `hertzbeat`
+3. Run the database sql script [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql) located in the project repository `/script/sql/` directory.
 
-##### 安装TDengine   
-1. docker安装TDengine   
-`docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine`     
-2. 创建名称为hertzbeat的数据库
+For detailed steps, refer to [MYSQL Installation And Initialization](https://hertzbeat.com/docs/start/mysql-init)
 
-详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init.md)   
+##### Install TDengine
+1. Install TDengine with docker     
+   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
+2. Create database names `hertzbeat`
 
-### 🍞 HertzBeat安装   
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署。  
+For detailed steps, refer to [TDengine Installation And Initialization](https://hertzbeat.com/docs/start/tdengine-init).
 
-#### Docker方式快速安装
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat:latest`  
+### 🍞 Install HertzBeat
 
-详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
+> HertzBeat supports installation through source code, docker or package.
 
-#### 通过安装包安装    
-1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)  
-2. 配置HertzBeat的配置文件 hertzbeat/config/application.yml   
-3. 部署启动 `$ ./startup.sh `   
+##### 1：Install quickly via docker
+`docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml --name hertzbeat tancloud/hertzbeat:[版本tag]`
 
-详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
+Detailed steps refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
+
+##### 2：Install via package
+1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`
+3. Run shell `$ ./startup.sh `
+4. Access `localhost:1157` to start, default account: `admin/admin`
+
+Detailed steps refer to [Install HertzBeat via package](https://hertzbeat.com/docs/start/package-deploy)
+
+##### 3：Start via source code
+1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.
+2. Backend：need `maven3+`, `java8+`, start the manager service.
+3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
+4. Access `localhost:4200` to start, default account: `admin/admin`
+
+Detailed steps refer to [CONTRIBUTING](../others/contributing)
+
+##### 4：Install All(mysql+tdengine+hertzbeat) via Docker-compose
+
+Install and deploy the mysql database, tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
+
+Detailed steps refer to [docker-compose install](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)  
 
 **HAVE FUN**

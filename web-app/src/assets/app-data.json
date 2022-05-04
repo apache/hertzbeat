@@ -6,7 +6,7 @@
   "user": {
     "name": "Admin",
     "avatar": "./assets/img/avatar.svg",
-    "email": "管理员"
+    "email": "Administrator"
   },
   "menu": [
     {
@@ -49,6 +49,13 @@
           "icon": "anticon-windows"
         },
         {
+          "key": "mid",
+          "text": "中间件",
+          "hide": false,
+          "i18n": "menu.monitor.mid",
+          "icon": "anticon-merge-cells"
+        },
+        {
           "key": "custom",
           "text": "自定义",
           "i18n": "menu.monitor.custom",
@@ -88,6 +95,12 @@
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
+        {
+          "text": "tags",
+          "i18n": "menu.extras.tags",
+          "icon": "anticon-tags",
+          "link": "/setting/tags"
+        },
         {
           "text": "helpCenter",
           "externalLink": "https://tancloud.cn/docs/help/guide",

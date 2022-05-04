@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { TitleService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
@@ -11,6 +11,8 @@ import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { TagService } from '../../../service/tag.service';
+import { Tag } from '../../../pojo/Tag';
 
 @Component({
   selector: 'app-monitor-add',
@@ -34,11 +36,13 @@ export class MonitorNewComponent implements OnInit {
     private router: Router,
     private notifySvc: NzNotificationService,
     private cdr: ChangeDetectorRef,
-    private i18n: I18NService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
+    private tagSvc: TagService,
     private formBuilder: FormBuilder
   ) {
     this.monitor = new Monitor();
+    this.monitor.tags = [];
   }
 
   ngOnInit(): void {
@@ -150,15 +154,15 @@ export class MonitorNewComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('新增监控成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.new.success'), '');
           this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`);
         } else {
-          this.notifySvc.error('新增监控失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('新增监控失败', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.error.msg);
       }
     );
   }
@@ -199,14 +203,14 @@ export class MonitorNewComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('探测成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.detect.success'), '');
         } else {
-          this.notifySvc.error('探测失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('探测异常', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
       }
     );
   }
@@ -216,4 +220,78 @@ export class MonitorNewComponent implements OnInit {
     app = app ? app : '';
     this.router.navigateByUrl(`/monitors?app=${app}`);
   }
+
+  onRemoveTag(tag: Tag) {
+    if (this.monitor != undefined && this.monitor.tags != undefined) {
+      this.monitor.tags = this.monitor.tags.filter(item => item !== tag);
+    }
+  }
+
+  sliceTagName(tag: Tag): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
+
+  // start Tag model
+  isManageModalVisible = false;
+  isManageModalOkLoading = false;
+  tagCheckedAll: boolean = false;
+  tagTableLoading = false;
+  tagSearch!: string;
+  tags!: Tag[];
+  checkedTags = new Set<Tag>();
+  loadTagsTable() {
+    this.tagTableLoading = true;
+    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
+      message => {
+        this.tagTableLoading = false;
+        this.tagCheckedAll = false;
+        this.checkedTags.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.tags = page.content;
+        } else {
+          console.warn(message.msg);
+        }
+        tagsReq$.unsubscribe();
+      },
+      error => {
+        this.tagTableLoading = false;
+        tagsReq$.unsubscribe();
+      }
+    );
+  }
+  onShowTagsModal() {
+    this.isManageModalVisible = true;
+    this.loadTagsTable();
+  }
+  onManageModalCancel() {
+    this.isManageModalVisible = false;
+  }
+  onManageModalOk() {
+    this.isManageModalOkLoading = true;
+    this.checkedTags.forEach(item => {
+      this.monitor.tags.push(item);
+    });
+    this.isManageModalOkLoading = false;
+    this.isManageModalVisible = false;
+  }
+  onAllChecked(checked: boolean) {
+    if (checked) {
+      this.tags.forEach(tag => this.checkedTags.add(tag));
+    } else {
+      this.checkedTags.clear();
+    }
+  }
+  onItemChecked(tag: Tag, checked: boolean) {
+    if (checked) {
+      this.checkedTags.add(tag);
+    } else {
+      this.checkedTags.delete(tag);
+    }
+  }
+  // end tag model
 }

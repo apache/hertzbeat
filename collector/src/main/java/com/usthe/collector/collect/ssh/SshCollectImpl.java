@@ -21,15 +21,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.security.KeyPair;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
+ * Ssh protocol collection implementation
  * ssh协议采集实现
+ *
  * @author tom
  * @date 2022/03/11 15:10
  */
@@ -38,8 +37,10 @@ public class SshCollectImpl extends AbstractCollect {
 
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
+    private static final String PARSE_TYPE_NETCAT = "netcat";
 
-    private SshCollectImpl(){}
+    private SshCollectImpl() {
+    }
 
     public static SshCollectImpl getInstance() {
         return SshCollectImpl.Singleton.INSTANCE;
@@ -76,7 +77,7 @@ public class SshCollectImpl extends AbstractCollect {
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
             channel.waitFor(list, timeout);
-            Long responseTime  = System.currentTimeMillis() - startTime;
+            Long responseTime = System.currentTimeMillis() - startTime;
             channel.close();
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
@@ -84,11 +85,18 @@ public class SshCollectImpl extends AbstractCollect {
                 builder.setMsg("采集数据失败");
             }
             switch (sshProtocol.getParseType()) {
+                case PARSE_TYPE_NETCAT:
+                    parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
+                    break;
                 case PARSE_TYPE_ONE_ROW:
                     parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
                     break;
-                default: parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
-                break;
+                case PARSE_TYPE_MULTI_ROW:
+                    parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                    break;
+                default:
+                    parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                    break;
             }
         } catch (ConnectException connectException) {
             log.debug(connectException.getMessage());
@@ -105,10 +113,40 @@ public class SshCollectImpl extends AbstractCollect {
         }
     }
 
+
+    private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+        String[] lines = result.split("\n");
+        if (lines.length + 1 < aliasFields.size()) {
+            log.error("ssh response data not enough: {}", result);
+        }
+        boolean contains = lines[0].contains("=");
+        Map<String, String> mapValue = Arrays.stream(lines)
+                .map(item -> {
+                    if (contains) {
+                        return item.split("=");
+                    } else {
+                        return item.split("\t");
+                    }
+                })
+                .filter(item -> item.length == 2)
+                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String field : aliasFields) {
+            String fieldValue = mapValue.get(field);
+            if (fieldValue == null) {
+                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+            } else {
+                valueRowBuilder.addColumns(fieldValue);
+            }
+        }
+        builder.addValues(valueRowBuilder.build());
+    }
+
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
-            log.error("ssh response data not enough: {}",  result);
+            log.error("ssh response data not enough: {}", result);
         }
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int aliasIndex = 0;
@@ -129,7 +167,7 @@ public class SshCollectImpl extends AbstractCollect {
                                           CollectRep.MetricsData.Builder builder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length <= 1) {
-            log.error("ssh response data only has header: {}",  result);
+            log.error("ssh response data only has header: {}", result);
         }
         String[] fields = lines[0].split(" ");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);

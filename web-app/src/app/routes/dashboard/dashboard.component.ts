@@ -48,13 +48,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.appsCountTheme = {
       title: {
-        text: '监控总览',
-        subtext: '监控类型纳管数量分布',
+        text: this.i18nSvc.fanyi('dashboard.monitors.title'),
+        subtext: this.i18nSvc.fanyi('dashboard.monitors.sub-title'),
         left: 'center'
       },
       tooltip: {
         trigger: 'item',
-        formatter: '{a} <br/>{b} : {c}个监控 占比({d}%)'
+        formatter: `{a} <br/>{b} : {c}${this.i18nSvc.fanyi('dashboard.monitors.formatter')}({d}%)`
       },
       legend: {
         show: false,
@@ -66,7 +66,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       calculable: true,
       series: [
         {
-          name: '总量',
+          name: this.i18nSvc.fanyi('dashboard.monitors.total'),
           type: 'pie',
           selectedMode: 'single',
           color: '#722ED1',
@@ -81,10 +81,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
           labelLine: {
             show: false
           },
-          data: [{ value: 0, name: '监控总量' }]
+          data: [{ value: 0, name: this.i18nSvc.fanyi('dashboard.monitors.total') }]
         },
         {
-          name: '纳管数量分布',
+          name: this.i18nSvc.fanyi('dashboard.monitors.distribute'),
           type: 'pie',
           radius: ['45%', '65%'],
           labelLine: {
@@ -127,7 +127,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.alertsTheme = {
       title: {
-        subtext: '告警分布',
+        subtext: this.i18nSvc.fanyi('dashboard.alerts.distribute'),
         left: 'center'
       },
       tooltip: {
@@ -138,14 +138,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: ['警告告警', '严重告警', '紧急告警']
+        data: [this.i18nSvc.fanyi('alert.priority.2'), this.i18nSvc.fanyi('alert.priority.1'), this.i18nSvc.fanyi('alert.priority.0')]
       },
       yAxis: {
         type: 'value'
       },
       series: [
         {
-          name: '告警数量',
+          name: this.i18nSvc.fanyi('dashboard.alerts.num'),
           type: 'bar',
           data: [
             {
@@ -176,7 +176,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.alertsDealTheme = {
       title: {
-        subtext: '告警处理',
+        subtext: this.i18nSvc.fanyi('dashboard.alerts.deal'),
         left: 'center'
       },
       tooltip: {
@@ -184,7 +184,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       series: [
         {
-          name: '告警处理率',
+          name: this.i18nSvc.fanyi('dashboard.alerts.deal-percent'),
           type: 'gauge',
           progress: {
             show: true
@@ -196,7 +196,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           data: [
             {
               value: 100,
-              name: '告警处理率'
+              name: this.i18nSvc.fanyi('dashboard.alerts.deal-percent')
             }
           ]
         }
@@ -279,7 +279,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             }
           });
           // @ts-ignore
-          this.appsCountTheme.series[0].data = [{ value: total, name: '监控总量' }];
+          this.appsCountTheme.series[0].data = [{ value: total, name: this.i18nSvc.fanyi('dashboard.monitors.total') }];
           // @ts-ignore
           this.appsCountTheme.series[1].data = this.appsCountTableData;
           this.appsCountEChartOption = this.appsCountTheme;
@@ -347,11 +347,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   alertsDealLoading: boolean = true;
 
   refreshAlertContentList(): void {
-    let alertsInit$ = this.alertSvc.getAlerts(0, 4).subscribe(
+    let alertsInit$ = this.alertSvc.loadAlerts(undefined, undefined, undefined, 0, 4).subscribe(
       message => {
         if (message.code === 0) {
           let page = message.data;
           this.alerts = page.content;
+          this.cdr.detectChanges();
         } else {
           console.warn(message.msg);
         }
@@ -397,7 +398,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.alertsDealTheme.series[0].data = [
             {
               value: summary.rate,
-              name: '告警处理率'
+              name: this.i18nSvc.fanyi('dashboard.alerts.deal-percent')
             }
           ];
           this.alertsEChartOption = this.alertsTheme;

@@ -6,9 +6,9 @@
 
 [comment]: <> (<img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="300">)
 
-## HertzBeat 赫兹跳动         
+## HertzBeat 赫兹跳动 | [English Documentation](README_EN.md)           
 
-> 易用友好的监控告警系统。
+> 易用友好的云监控系统，无需Agent，强大自定义监控能力。
 
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
@@ -21,12 +21,14 @@
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
+在开源运行时社区[OSCR.COM](https://osrc.com)快速运行HertzBeat - [部署流程](https://osrc.com/user/articles/wiki_776513931985080320)   
+
 ## 🎡 <font color="green">介绍</font>
 
 > [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由[Dromara](https://dromara.org)孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
 > 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
 > HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
+> HertzBeat 模块化，`manager, collector, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
 > HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达          
 > 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。          
 > 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。       
@@ -45,8 +47,6 @@
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
 - **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** 提供监控任务调度服务
-> 采集任务管理，一次性任务和周期性任务的调度分发。
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
@@ -61,6 +61,8 @@
 
 - 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻 **[登录注册](https://console.tancloud.cn)** 免费使用。
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的 [部署文档](https://hertzbeat.com/docs/start/quickstart) 进行操作。   
+
+安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)    
 
 ### 🐵 依赖服务部署
 

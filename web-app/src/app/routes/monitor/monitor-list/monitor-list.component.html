@@ -3,49 +3,48 @@
   <nz-breadcrumb-item>
     <a [routerLink]="['/']">
       <i nz-icon nzType="home"></i>
-      <span>仪表盘</span>
+      <span>{{ 'menu.dashboard' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="monitor"></i>
-    <span>{{ 'monitor.app.' + app | i18n }} 监控列表</span>
+    <span>{{ 'monitor.app.' + app | i18n }} {{ 'monitors.list' | i18n }}</span>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
 <div>
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
   <button nz-button nzType="primary">
     <a routerLink="/monitors/new" [queryParams]="{ app: app }">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      新增 {{ 'monitor.app.' + app | i18n }}
+      {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
     </a>
   </button>
-  <button nz-button nzType="primary" (click)="onEditMonitor()">
-    <i nz-icon nzType="edit" nzTheme="outline"></i>
-    编辑
-  </button>
-  <button nz-button nzType="primary" (click)="onDeleteMonitors()">
-    <i nz-icon nzType="delete" nzTheme="outline"></i>
-    删除
-  </button>
+
   <button nz-button nzType="primary" (click)="onEnableManageMonitors()">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    启用监控
+    {{ 'monitors.enable' | i18n }}
   </button>
-  <button nz-button nzType="primary" (click)="onCancelManageMonitors()">
+  <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()">
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    取消监控
+    {{ 'monitors.cancel' | i18n }}
   </button>
-  <button nz-button nzType="primary" (click)="sync()" nz-tooltip nzTooltipTitle="刷新">
-    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    {{ 'monitors.delete' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()"> 搜索 </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+    {{ 'common.search' | i18n }}
+  </button>
   <input
     style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
-    placeholder="搜索监控"
+    [placeholder]="'monitors.search.placeholder' | i18n"
     nzSize="default"
     (keyup.enter)="onFilterSearchMonitors()"
     [(ngModel)]="filterContent"
@@ -53,14 +52,14 @@
   <nz-select
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
-    [nzPlaceHolder]="'监控状态过滤'"
+    [nzPlaceHolder]="'monitors.search.filter' | i18n"
     [(ngModel)]="filterStatus"
   >
-    <nz-option nzLabel="全部状态" nzValue="9"></nz-option>
-    <nz-option nzLabel="监控正常" nzValue="1"></nz-option>
-    <nz-option nzLabel="不可用" nzValue="2"></nz-option>
-    <nz-option nzLabel="不可达" nzValue="3"></nz-option>
-    <nz-option nzLabel="未监控" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.unreachable' | i18n" nzValue="3"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.un-manage' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -82,12 +81,12 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>监控名称</th>
-      <th nzAlign="center">监控状态</th>
-      <th nzAlign="center">监控Host</th>
-      <th nzAlign="center">监控类型</th>
-      <th nzAlign="center">最新修改时间</th>
-      <th nzAlign="center">操作</th>
+      <th nzAlign="center" nzLeft>{{ 'monitor.name' | i18n }}</th>
+      <th nzAlign="center">{{ 'monitor.status' | i18n }}</th>
+      <th nzAlign="center">{{ 'monitor.host' | i18n }}</th>
+      <th nzAlign="center">{{ 'monitor.app' | i18n }}</th>
+      <th nzAlign="center">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -101,23 +100,19 @@
       <td nzAlign="center">
         <nz-tag *ngIf="data.status == 0" nzColor="default">
           <i nz-icon nzType="robot" nzTheme="outline"></i>
-          <span>未监控</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 1" nzColor="success">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
-          <span>正常监控</span>
+          <span>{{ 'monitor.status.available' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 2" nzColor="warning">
           <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>监控不可用</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 3" nzColor="error">
           <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>监控不可达</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.status == 4" nzColor="default">
-          <i nz-icon nzType="sync"></i>
-          <span>监控已挂起</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.host }}</td>
@@ -129,21 +124,41 @@
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
-        <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip nzTooltipTitle="修改监控">
+        <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitors.edit-monitor' | i18n">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
         </button>
-        <button nz-button nzType="primary" (click)="onDeleteOneMonitor(data.id)" nz-tooltip nzTooltipTitle="删除监控">
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
-        <button nz-button nzType="primary" (click)="onEnableManageOneMonitor(data.id)" nz-tooltip nzTooltipTitle="启用监控">
+        <button
+          nz-button
+          nzType="primary"
+          (click)="onEnableManageOneMonitor(data.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'monitors.enable' | i18n"
+        >
           <i nz-icon nzType="up-circle" nzTheme="outline"></i>
         </button>
-        <button nz-button nzType="primary" (click)="onCancelManageOneMonitor(data.id)" nz-tooltip nzTooltipTitle="取消监控">
+        <button
+          nz-button
+          nzDanger
+          nzType="primary"
+          (click)="onCancelManageOneMonitor(data.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'monitors.cancel' | i18n"
+        >
           <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          nz-button
+          nzDanger
+          nzType="primary"
+          (click)="onDeleteOneMonitor(data.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'monitors.delete-monitor' | i18n"
+        >
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>
       </td>
     </tr>
   </tbody>
 </nz-table>
 
-<ng-template #rangeTemplate> 总量 {{ total }} </ng-template>
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>

@@ -26,11 +26,11 @@ import { AlertService } from '../../../service/alert.service';
 export class HeaderNotifyComponent implements OnInit {
   data: NoticeItem[] = [
     {
-      title: '近期未处理告警',
+      title: this.i18nSvc.fanyi('dashboard.alerts.title-no'),
       list: [],
-      emptyText: '暂无未处理告警',
+      emptyText: this.i18nSvc.fanyi('dashboard.alerts.no'),
       emptyImage: 'https://gw.alipayobjects.com/zos/rmsportal/wAhyIChODzsoKIOBHcBk.svg',
-      clearText: '进入告警中心'
+      clearText: this.i18nSvc.fanyi('dashboard.alerts.enter')
     }
   ];
   count = 0;
@@ -54,7 +54,7 @@ export class HeaderNotifyComponent implements OnInit {
       return;
     }
     this.loading = true;
-    let loadAlerts$ = this.alertSvc.searchAlerts(0, undefined, undefined, 0, 5).subscribe(
+    let loadAlerts$ = this.alertSvc.loadAlerts(0, undefined, undefined, 0, 5).subscribe(
       message => {
         loadAlerts$.unsubscribe();
         if (message.code === 0) {
@@ -69,10 +69,10 @@ export class HeaderNotifyComponent implements OnInit {
             let item = {
               id: alert.id,
               avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
-              title: `监控-${alert.monitorName}-发出${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
+              title: `${alert.tags['monitorName']}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
               datetime: alert.gmtCreate,
               color: 'blue',
-              type: '近期未处理告警'
+              type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
             };
             this.data[0].list.push(item);
           });

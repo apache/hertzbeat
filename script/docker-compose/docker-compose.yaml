@@ -26,6 +26,8 @@ services:
     container_name: tdengine
     hostname: tdengine
     restart: always
+    environment:
+      TZ: Asia/Shanghai
     ports:
       - "6030-6049:6030-6049"
       - "6030-6049:6030-6049/udp"

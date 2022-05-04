@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { TitleService } from '@delon/theme';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -10,8 +11,10 @@ import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
+import { Tag } from '../../../pojo/Tag';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-monitor-modify',
@@ -25,7 +28,9 @@ export class MonitorEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private titleSvc: TitleService,
-    private notifySvc: NzNotificationService
+    private notifySvc: NzNotificationService,
+    private tagSvc: TagService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   paramDefines!: ParamDefine[];
@@ -62,10 +67,13 @@ export class MonitorEditComponent implements OnInit {
               });
             }
             this.detected = message.data.detected ? message.data.detected : true;
+            if (this.monitor.tags == undefined) {
+              this.monitor.tags = [];
+            }
           } else {
             console.warn(message.msg);
-            this.notifySvc.error('查询异常，此监控不存在', message.msg);
-            return throwError('查询此监控异常');
+            this.notifySvc.error(this.i18nSvc.fanyi('monitors.not-found'), message.msg);
+            return throwError(this.i18nSvc.fanyi('monitors.not-found'));
           }
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
@@ -168,15 +176,15 @@ export class MonitorEditComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('修改监控成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.edit.success'), '');
           this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`);
         } else {
-          this.notifySvc.error('修改监控失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('修改监控失败', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.error.msg);
       }
     );
   }
@@ -217,14 +225,14 @@ export class MonitorEditComponent implements OnInit {
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success('探测成功', '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.detect.success'), '');
         } else {
-          this.notifySvc.error('探测失败', message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error('探测异常', error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
       }
     );
   }
@@ -234,4 +242,78 @@ export class MonitorEditComponent implements OnInit {
     app = app ? app : '';
     this.router.navigateByUrl(`/monitors?app=${app}`);
   }
+
+  onRemoveTag(tag: Tag) {
+    if (this.monitor != undefined && this.monitor.tags != undefined) {
+      this.monitor.tags = this.monitor.tags.filter(item => item !== tag);
+    }
+  }
+
+  sliceTagName(tag: Tag): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
+
+  // start Tag model
+  isManageModalVisible = false;
+  isManageModalOkLoading = false;
+  tagCheckedAll: boolean = false;
+  tagTableLoading = false;
+  tagSearch!: string;
+  tags!: Tag[];
+  checkedTags = new Set<Tag>();
+  loadTagsTable() {
+    this.tagTableLoading = true;
+    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
+      message => {
+        this.tagTableLoading = false;
+        this.tagCheckedAll = false;
+        this.checkedTags.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.tags = page.content;
+        } else {
+          console.warn(message.msg);
+        }
+        tagsReq$.unsubscribe();
+      },
+      error => {
+        this.tagTableLoading = false;
+        tagsReq$.unsubscribe();
+      }
+    );
+  }
+  onShowTagsModal() {
+    this.isManageModalVisible = true;
+    this.loadTagsTable();
+  }
+  onManageModalCancel() {
+    this.isManageModalVisible = false;
+  }
+  onManageModalOk() {
+    this.isManageModalOkLoading = true;
+    this.checkedTags.forEach(item => {
+      this.monitor.tags.push(item);
+    });
+    this.isManageModalOkLoading = false;
+    this.isManageModalVisible = false;
+  }
+  onAllChecked(checked: boolean) {
+    if (checked) {
+      this.tags.forEach(tag => this.checkedTags.add(tag));
+    } else {
+      this.checkedTags.clear();
+    }
+  }
+  onItemChecked(tag: Tag, checked: boolean) {
+    if (checked) {
+      this.checkedTags.add(tag);
+    } else {
+      this.checkedTags.delete(tag);
+    }
+  }
+  // end tag model
 }

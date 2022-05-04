@@ -5,6 +5,7 @@ import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
+import com.usthe.common.entity.manager.Tag;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
@@ -30,16 +31,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 监控管理服务实现
+ *
  * @author tomsun28
  * @date 2021/11/14 13:06
  */
@@ -79,11 +76,13 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
+        // To detect availability, you only need to collect the set of availability indicators with a priority of 0.
         // 探测可用性只需要采集优先级为0的可用性指标集合
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
         List<CollectRep.MetricsData> collectRep = collectJobService.collectSyncJobData(appDefine);
+        // If the detection result fails, a detection exception is thrown
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
             throw new MonitorDetectException("No collector response");
@@ -96,9 +95,17 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
-        // 申请 monitor id
+        // Apply for monitor id         申请 monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
-        // 构造采集任务Job实体
+        // Init Set Default Tags: monitorId monitorName app
+        List<Tag> tags = monitor.getTags();
+        if (tags == null) {
+            tags = new LinkedList<>();
+            monitor.setTags(tags);
+        }
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        // Construct the collection task Job entity     构造采集任务Job实体
         Job appDefine = appService.getAppDefine(monitor.getApp());
         appDefine.setMonitorId(monitorId);
         appDefine.setInterval(monitor.getIntervals());
@@ -109,8 +116,10 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
+        // Send the collection task to get the job ID
         // 下发采集任务得到jobId
         long jobId = collectJobService.addAsyncCollectJob(appDefine);
+        // Brush the library after the download is successful
         // 下发成功后刷库
         try {
             monitor.setId(monitorId);
@@ -120,6 +129,7 @@ public class MonitorServiceImpl implements MonitorService {
             paramDao.saveAll(params);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            // Repository brushing abnormally cancels the previously delivered task
             // 刷库异常取消之前的下发任务
             collectJobService.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
@@ -129,6 +139,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(readOnly = true)
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
+        // The request monitoring parameter matches the monitoring parameter definition mapping check
         // 请求监控参数与监控参数定义映射校验匹配
         Monitor monitor = monitorDto.getMonitor();
         monitor.setHost(monitor.getHost().trim());
@@ -141,7 +152,7 @@ public class MonitorServiceImpl implements MonitorService {
                     param.setValue(value);
                 })
                 .collect(Collectors.toMap(Param::getField, param -> param));
-        // 校验名称唯一性
+        // Check name uniqueness    校验名称唯一性
         if (isModify != null) {
             Optional<Monitor> monitorOptional = monitorDao.findMonitorByNameEquals(monitor.getName());
             if (monitorOptional.isPresent()) {
@@ -155,8 +166,9 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
+        // todo 校验标签
 
-        // 参数定义结构校验
+        // Parameter definition structure verification  参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (paramDefines != null) {
             for (ParamDefine paramDefine : paramDefines) {
@@ -202,6 +214,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "password":
+                            // The plaintext password needs to be encrypted for transmission and storage
                             // 明文密码需加密传输存储
                             String passwordValue = param.getValue();
                             if (!AesUtil.isCiphertext(passwordValue)) {
@@ -211,7 +224,7 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
                             break;
                         case "boolean":
-                            // boolean校验
+                            // boolean check
                             String booleanValue = param.getValue();
                             try {
                                 Boolean.parseBoolean(booleanValue);
@@ -221,7 +234,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "radio":
-                            // radio单选值校验
+                            // radio single value check  radio单选值校验
                             List<ParamDefine.Option> options = paramDefine.getOptions();
                             boolean invalid = true;
                             if (options != null) {
@@ -243,7 +256,8 @@ public class MonitorServiceImpl implements MonitorService {
                         case "key-value":
                             // todo key-value校验
                             break;
-                        // todo 更多参数定义与实际值格式校验
+                        // todo More parameter definitions and actual value format verification
+                        //  更多参数定义与实际值格式校验
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
                     }
@@ -253,8 +267,10 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void modifyMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
         long monitorId = monitor.getId();
+        // Check to determine whether the monitor corresponding to the monitor id exists
         // 查判断monitorId对应的此监控是否存在
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
         if (!queryOption.isPresent()) {
@@ -262,9 +278,22 @@ public class MonitorServiceImpl implements MonitorService {
         }
         Monitor preMonitor = queryOption.get();
         if (!preMonitor.getApp().equals(monitor.getApp())) {
+            // The type of monitoring cannot be modified
             // 监控的类型不能修改
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
+        // Auto Update Default Tags: monitorName
+        List<Tag> tags = monitor.getTags();
+        if (tags == null) {
+            tags = new LinkedList<>();
+            monitor.setTags(tags);
+        }
+        for (Tag tag : tags) {
+            if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
+                tag.setValue(monitor.getName());
+            }
+        }
+        // Construct the collection task Job entity
         // 构造采集任务Job实体
         Job appDefine = appService.getAppDefine(monitor.getApp());
         appDefine.setId(preMonitor.getJobId());
@@ -275,14 +304,16 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        // 更新采集任务
-        collectJobService.updateAsyncCollectJob(appDefine);
+        // After the update is successfully released, refresh the library
         // 下发更新成功后刷库
         try {
             monitor.setJobId(preMonitor.getJobId());
             monitor.setStatus(preMonitor.getStatus());
             monitorDao.save(monitor);
             paramDao.saveAll(params);
+            // Update the collection task after the storage is completed
+            // 入库完成后更新采集任务
+            collectJobService.updateAsyncCollectJob(appDefine);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new MonitorDatabaseException(e.getMessage());
@@ -343,7 +374,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
+        // Update monitoring status Delete corresponding monitoring periodic task
         // 更新监控状态  删除对应的监控周期性任务
+        // The jobId is not deleted, and the jobId is reused again after the management is started.
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
@@ -360,6 +393,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void enableManageMonitors(HashSet<Long> ids) {
+        // Update monitoring status Add corresponding monitoring periodic task
         // 更新监控状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
@@ -369,6 +403,7 @@ public class MonitorServiceImpl implements MonitorService {
         if (!unManagedMonitors.isEmpty()) {
             monitorDao.saveAll(unManagedMonitors);
             for (Monitor monitor : unManagedMonitors) {
+                // Construct the collection task Job entity
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 appDefine.setMonitorId(monitor.getId());
@@ -379,7 +414,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<Configmap> configmaps = params.stream().map(param ->
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
-                // 下发采集任务
+                // Issue collection tasks       下发采集任务
                 collectJobService.addAsyncCollectJob(appDefine);
             }
         }
@@ -391,7 +426,8 @@ public class MonitorServiceImpl implements MonitorService {
         if (appCounts == null) {
             return null;
         }
-        // 关联大类别信息 计算每个状态对应数量
+        //Statistical category information, calculate the number of corresponding states for each monitor
+        //统计类别信息，计算每个监控分别对应状态的数量
         Map<String, AppCount> appCountMap = new HashMap<>(appCounts.size());
         for (AppCount item : appCounts) {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
@@ -409,10 +445,13 @@ public class MonitorServiceImpl implements MonitorService {
                 case CommonConstants.UN_REACHABLE_CODE:
                     appCount.setUnReachableSize(appCount.getUnReachableSize() + item.getSize());
                     break;
-                default: break;
+                default:
+                    break;
             }
             appCountMap.put(item.getApp(), appCount);
         }
+        //Traverse the map obtained by statistics and convert it into a List<App Count> result set
+        //遍历统计得到的map，转换成List<App Count>结果集
         return appCountMap.values().stream().peek(item -> {
             item.setSize(item.getAvailableSize() + item.getUnManageSize()
                     + item.getUnReachableSize() + item.getUnAvailableSize());

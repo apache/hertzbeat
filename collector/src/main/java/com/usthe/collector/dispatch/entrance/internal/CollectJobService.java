@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 采集job管理提供api接口
+ *
  * @author tomsun28
  * @date 2021/11/6 13:58
  */
@@ -26,9 +27,11 @@ public class CollectJobService {
     private TimerDispatch timerDispatch;
 
     /**
+     * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
-     * @param job 采集任务详情
-     * @return 采集结果
+     *
+     * @param job Collect task details  采集任务详情
+     * @return Collection results       采集结果
      */
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         final List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -52,9 +55,11 @@ public class CollectJobService {
     }
 
     /**
+     * Issue periodic asynchronous collection tasks
      * 下发周期性异步采集任务
-     * @param job 采集任务详情
-     * @return long 任务ID
+     *
+     * @param job Collect task details      采集任务详情
+     * @return long Job ID      任务ID
      */
     public long addAsyncCollectJob(Job job) {
         if (job.getId() == 0L) {
@@ -66,8 +71,10 @@ public class CollectJobService {
     }
 
     /**
+     * Update the periodic asynchronous collection tasks that have been delivered
      * 更新已经下发的周期性异步采集任务
-     * @param modifyJob 采集任务详情
+     *
+     * @param modifyJob Collect task details        采集任务详情
      */
     public void updateAsyncCollectJob(Job modifyJob) {
         timerDispatch.deleteJob(modifyJob.getId(), true);
@@ -75,8 +82,10 @@ public class CollectJobService {
     }
 
     /**
+     * Cancel periodic asynchronous collection tasks
      * 取消周期性异步采集任务
-     * @param jobId 任务ID
+     *
+     * @param jobId Job ID      任务ID
      */
     public void cancelAsyncCollectJob(Long jobId) {
         timerDispatch.deleteJob(jobId, true);
