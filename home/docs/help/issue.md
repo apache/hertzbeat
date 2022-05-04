@@ -24,7 +24,7 @@ sidebar_label: 常见问题
 > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
 > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
 
-2. **按照流程部署，访问 http://ip:1157/console 无界面**   
+2. **按照流程部署，访问 http://ip:1157/ 无界面**   
 请参考下面几点排查问题：  
 > 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
@@ -36,7 +36,7 @@ sidebar_label: 常见问题
 
 ### 安装包部署常见问题
 
-1. **按照流程部署，访问 http://ip:1157/console 无界面**   
+1. **按照流程部署，访问 http://ip:1157/ 无界面**   
    请参考下面几点排查问题：
 > 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
 > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确    
