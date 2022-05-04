@@ -34,7 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "Tag Manage API | 标签管理API")
 @RestController
-@RequestMapping(path = "/tag", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/tag", produces = {APPLICATION_JSON_VALUE})
 public class TagController {
 
     @Autowired
