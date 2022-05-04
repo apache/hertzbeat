@@ -25,7 +25,7 @@ sidebar_label: Docker方式部署
    在主机目录下创建application.yml，eg:/opt/application.yml   
    配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
    具体替换参数如下:
-   ``` 
+```
    spring.datasource.url
    spring.datasource.username
    spring.datasource.password
@@ -38,11 +38,10 @@ sidebar_label: Docker方式部署
    spring.mail.port
    spring.mail.username
    spring.mail.password
-   
-   ```
+```
 
 4. 配置用户配置文件(非必须,配置账户需要)     
-   HertzBeat默认内置三个用户账户,分别为 admin/admin tom/tom@123 lili/lili   
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat    
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
    配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
@@ -50,100 +49,102 @@ sidebar_label: Docker方式部署
 ```yaml
 
 resourceRole:
-- /account/auth/refresh===post===[admin,user,guest]
-- /apps/**===get===[admin,user,guest]
-- /monitor/**===get===[admin,user,guest]
-- /monitor/**===post===[admin,user]
-- /monitor/**===put===[admin,user]
-- /monitor/**===delete==[admin]
-- /monitors/**===get===[admin,user,guest]
-- /monitors/**===post===[admin,user]
-- /monitors/**===put===[admin,user]
-- /monitors/**===delete===[admin]
-- /alert/**===get===[admin,user,guest]
-- /alert/**===post===[admin,user]
-- /alert/**===put===[admin,user]
-- /alert/**===delete===[admin]
-- /alerts/**===get===[admin,user,guest]
-- /alerts/**===post===[admin,user]
-- /alerts/**===put===[admin,user]
-- /alerts/**===delete===[admin]
-- /notice/**===get===[admin,user,guest]
-- /notice/**===post===[admin,user]
-- /notice/**===put===[admin,user]
-- /notice/**===delete===[admin]
-- /summary/**===get===[admin,user,guest]
-- /summary/**===post===[admin,user]
-- /summary/**===put===[admin,user]
-- /summary/**===delete===[admin]
+   - /api/account/auth/refresh===post===[admin,user,guest]
+   - /api/apps/**===get===[admin,user,guest]
+   - /api/monitor/**===get===[admin,user,guest]
+   - /api/monitor/**===post===[admin,user]
+   - /api/monitor/**===put===[admin,user]
+   - /api/monitor/**===delete==[admin]
+   - /api/monitors/**===get===[admin,user,guest]
+   - /api/monitors/**===post===[admin,user]
+   - /api/monitors/**===put===[admin,user]
+   - /api/monitors/**===delete===[admin]
+   - /api/alert/**===get===[admin,user,guest]
+   - /api/alert/**===post===[admin,user]
+   - /api/alert/**===put===[admin,user]
+   - /api/alert/**===delete===[admin]
+   - /api/alerts/**===get===[admin,user,guest]
+   - /api/alerts/**===post===[admin,user]
+   - /api/alerts/**===put===[admin,user]
+   - /api/alerts/**===delete===[admin]
+   - /api/notice/**===get===[admin,user,guest]
+   - /api/notice/**===post===[admin,user]
+   - /api/notice/**===put===[admin,user]
+   - /api/notice/**===delete===[admin]
+   - /api/tag/**===get===[admin,user,guest]
+   - /api/tag/**===post===[admin,user]
+   - /api/tag/**===put===[admin,user]
+   - /api/tag/**===delete===[admin]
+   - /api/summary/**===get===[admin,user,guest]
+   - /api/summary/**===post===[admin,user]
+   - /api/summary/**===put===[admin,user]
+   - /api/summary/**===delete===[admin]
 
+# 需要被过滤保护的资源,不认证鉴权直接访问
+# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-- /account/auth/**===*
-- /===get
-- /i18n/**===get
-- /apps/hierarchy===get
-# web ui 静态资源
-- /console/**===get
-- /**/*.html===get
-- /**/*.js===get
-- /**/*.css===get
-- /**/*.ico===get
-- /**/*.ttf===get
-- /**/*.png===get
-- /**/*.gif===get
-   - /**/*.png===*
-# swagger ui 资源
-- /swagger-resources/**===get
-- /v2/api-docs===get
-- /v3/api-docs===get
+   - /api/account/auth/**===*
+   - /api/i18n/**===get
+   - /api/apps/hierarchy===get
+   # web ui 前端静态资源
+   - /===get
+   - /dashboard/**===get
+   - /monitors/**===get
+   - /alert/**===get
+   - /account/**===get
+   - /setting/**===get
+   - /passport/**===get
+   - /**/*.html===get
+   - /**/*.js===get
+   - /**/*.css===get
+   - /**/*.ico===get
+   - /**/*.ttf===get
+   - /**/*.png===get
+   - /**/*.gif===get
+   - /**/*.jpg===get
+   - /**/*.svg===get
+   - /**/*.json===get
+   # swagger ui 资源
+   - /swagger-resources/**===get
+   - /v2/api-docs===get
+   - /v3/api-docs===get
 
+# 用户账户信息
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
+# eg: tom 拥有[user],密码为hertzbeat
+# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
-- appId: admin
-  credential: admin
-  role: [admin,user]
-- appId: tom
-  credential: tom@123
-  role: [user]
-- appId: guest
-  credential: guest
-  role: [guest]
-- appId: lili
-  # 注意 Digest认证不支持加盐加密的密码账户
-  # 加盐加密的密码，通过 MD5(password+salt)计算
-  # 此账户的原始密码为 lili
-  credential: 1A676730B0C7F54654B0E09184448289
-  salt: 123
-  role: [guest]
-
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
 ```
    
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
-   
+
 ```yaml
-   
+
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
 # eg: admin 拥有[admin,user]角色,密码为admin
 # eg: tom 拥有[user],密码为tom@123
 # eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
-- appId: admin
-  credential: admin
-  role: [admin,user]
-- appId: tom
-  credential: tom@123
-  role: [user]
-- appId: guest
-  credential: guest
-  role: [guest]
-- appId: lili
-  # 注意 Digest认证不支持加盐加密的密码账户
-  # 加盐加密的密码，通过 MD5(password+salt)计算
-  # 此账户的原始密码为 lili
-  credential: 1A676730B0C7F54654B0E09184448289
-  salt: 123
-  role: [guest]
-
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
 ```
 
 6. 启动HertzBeat Docker容器  
@@ -160,7 +161,7 @@ account:
    - tancloud/hertzbeat:[版本tag] : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
 
 7. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
+   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
 
 **HAVE FUN**   
 
@@ -171,7 +172,7 @@ account:
 > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
 > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
 
-2. **按照流程部署，访问 http://ip:1157/console 无界面**   
+2. **按照流程部署，访问 http://ip:1157/ 无界面**   
 请参考下面几点排查问题：  
 > 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  

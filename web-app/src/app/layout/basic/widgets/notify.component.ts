@@ -85,7 +85,7 @@ export class HeaderNotifyComponent implements OnInit {
       },
       error => {
         loadAlerts$.unsubscribe();
-        console.error(error.msg);
+        console.error(error);
         this.loading = false;
       }
     );
