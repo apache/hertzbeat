@@ -95,7 +95,7 @@ Detailed steps refer to [Install HertzBeat via Docker](https://hertzbeat.com/doc
 1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`  
 3. Run shell `$ ./startup.sh `
-4. Access `localhost:1157` to start, default account: `admin/admin`  
+4. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
 Detailed steps refer to [Install HertzBeat via package](https://hertzbeat.com/docs/start/package-deploy)   
 
@@ -103,7 +103,7 @@ Detailed steps refer to [Install HertzBeat via package](https://hertzbeat.com/do
 1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.  
 2. Backend：need `maven3+`, `java8+`, start the manager service.  
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
-4. Access `localhost:4200` to start, default account: `admin/admin`  
+4. Access `localhost:4200` to start, default account: `admin/hertzbeat`  
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
 

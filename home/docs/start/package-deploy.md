@@ -46,34 +46,27 @@ sidebar_label: 安装包方式部署
 ```
 
 4. 配置用户配置文件(非必须,配置账户需要)     
-   HertzBeat默认内置三个用户账户,分别为 admin/admin tom/tom@123 lili/lili   
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat   
    若需要新增删除修改账户或密码，可以通过修改位于 `hertzbeat/config/sureness.yml` 的配置文件实现，若无此需求可忽略此步骤 
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
 
 ```yaml
-   
+
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为admin
-# eg: tom 拥有[user],密码为tom@123
+# eg: admin 拥有[admin,user]角色,密码为hertzbeat
+# eg: tom 拥有[user],密码为hertzbeat
 # eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
-- appId: admin
-  credential: admin
-  role: [admin,user]
-- appId: tom
-  credential: tom@123
-  role: [user]
-- appId: guest
-  credential: guest
-  role: [guest]
-- appId: lili
-  # 注意 Digest认证不支持加盐加密的密码账户
-  # 加盐加密的密码，通过 MD5(password+salt)计算
-  # 此账户的原始密码为 lili
-  credential: 1A676730B0C7F54654B0E09184448289
-  salt: 123
-  role: [guest]
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
  
 ```
 
@@ -83,7 +76,7 @@ account:
    $ ./startup.sh 
    ```
 6. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
+   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
 
 **HAVE FUN**
 

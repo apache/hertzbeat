@@ -41,7 +41,7 @@ sidebar_label: Docker方式部署
 ```
 
 4. 配置用户配置文件(非必须,配置账户需要)     
-   HertzBeat默认内置三个用户账户,分别为 admin/admin tom/tom@123 lili/lili   
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat    
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
    配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
@@ -49,80 +49,103 @@ sidebar_label: Docker方式部署
 ```yaml
 
 resourceRole:
-  - /api/account/auth/refresh===post===[role1,role2,role3,role4]
+   - /api/account/auth/refresh===post===[admin,user,guest]
+   - /api/apps/**===get===[admin,user,guest]
+   - /api/monitor/**===get===[admin,user,guest]
+   - /api/monitor/**===post===[admin,user]
+   - /api/monitor/**===put===[admin,user]
+   - /api/monitor/**===delete==[admin]
+   - /api/monitors/**===get===[admin,user,guest]
+   - /api/monitors/**===post===[admin,user]
+   - /api/monitors/**===put===[admin,user]
+   - /api/monitors/**===delete===[admin]
+   - /api/alert/**===get===[admin,user,guest]
+   - /api/alert/**===post===[admin,user]
+   - /api/alert/**===put===[admin,user]
+   - /api/alert/**===delete===[admin]
+   - /api/alerts/**===get===[admin,user,guest]
+   - /api/alerts/**===post===[admin,user]
+   - /api/alerts/**===put===[admin,user]
+   - /api/alerts/**===delete===[admin]
+   - /api/notice/**===get===[admin,user,guest]
+   - /api/notice/**===post===[admin,user]
+   - /api/notice/**===put===[admin,user]
+   - /api/notice/**===delete===[admin]
+   - /api/tag/**===get===[admin,user,guest]
+   - /api/tag/**===post===[admin,user]
+   - /api/tag/**===put===[admin,user]
+   - /api/tag/**===delete===[admin]
+   - /api/summary/**===get===[admin,user,guest]
+   - /api/summary/**===post===[admin,user]
+   - /api/summary/**===put===[admin,user]
+   - /api/summary/**===delete===[admin]
 
+# 需要被过滤保护的资源,不认证鉴权直接访问
+# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-  - /api/account/auth/**===*
-  - /api/i18n/**===get
-  - /api/apps/hierarchy===get
-  # web ui
-  - /===get
-  - /dashboard/**===get
-  - /monitors/**===get
-  - /alert/**===get
-  - /account/**===get
-  - /setting/**===get
-  - /passport/**===get
-  - /**/*.html===get
-  - /**/*.js===get
-  - /**/*.css===get
-  - /**/*.ico===get
-  - /**/*.ttf===get
-  - /**/*.png===get
-  - /**/*.gif===get
-  - /**/*.jpg===get
-  - /**/*.svg===get
-  - /**/*.json===get
-  # swagger ui
-  - /swagger-resources/**===get
-  - /v2/api-docs===get
-  - /v3/api-docs===get
+   - /api/account/auth/**===*
+   - /api/i18n/**===get
+   - /api/apps/hierarchy===get
+   # web ui 前端静态资源
+   - /===get
+   - /dashboard/**===get
+   - /monitors/**===get
+   - /alert/**===get
+   - /account/**===get
+   - /setting/**===get
+   - /passport/**===get
+   - /**/*.html===get
+   - /**/*.js===get
+   - /**/*.css===get
+   - /**/*.ico===get
+   - /**/*.ttf===get
+   - /**/*.png===get
+   - /**/*.gif===get
+   - /**/*.jpg===get
+   - /**/*.svg===get
+   - /**/*.json===get
+   # swagger ui 资源
+   - /swagger-resources/**===get
+   - /v2/api-docs===get
+   - /v3/api-docs===get
 
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
-# eg: admin 拥有[role1,role2]角色,密码为admin
-# eg: tom 拥有[role1,role2,role3],密码为tom@123
-# eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
+# eg: tom 拥有[user],密码为hertzbeat
+# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
-  - appId: admin
-    credential: admin
-    role: [role1,role2]
-  - appId: tom
-    credential: tom@123
-    role: [role1,role2,role3]
-  - appId: lili
-    # 注意 Digest认证不支持加盐加密的密码账户
-    # 加盐加密的密码，通过 MD5(password+salt)计算
-    # 此账户的原始密码为 lili
-    credential: 1A676730B0C7F54654B0E09184448289
-    salt: 123
-    role: [role1,role2]
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
 ```
    
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
-   
-   ```yaml
-   
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为admin
-   # eg: tom 拥有[role1,role2,role3],密码为tom@123
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289  
-   account:
+
+```yaml
+
+# 用户账户信息
+# 下面有 admin tom lili 三个账户
+# eg: admin 拥有[admin,user]角色,密码为admin
+# eg: tom 拥有[user],密码为tom@123
+# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+account:
    - appId: admin
-     credential: admin
-     role: [role1,role2]
+     credential: hertzbeat
+     role: [admin,user]
    - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
-   ```
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
+```
 
 6. 启动HertzBeat Docker容器  
    ``` 
@@ -138,7 +161,7 @@ account:
    - tancloud/hertzbeat:[版本tag] : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
 
 7. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/admin。  
+   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
 
 **HAVE FUN**   
 
