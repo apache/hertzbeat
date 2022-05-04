@@ -23,7 +23,7 @@
 
 1. web-app目录下执行
 
-```ng build --prod --base-href /console/```
+```ng build --prod```
 
 2. manager目录下执行
 

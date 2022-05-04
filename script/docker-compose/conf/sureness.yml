@@ -39,12 +39,17 @@ resourceRole:
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-  - /account/auth/**===*
+  - /api/account/auth/**===*
+  - /api/i18n/**===get
+  - /api/apps/hierarchy===get
+  # web ui 前端静态资源
   - /===get
-  - /i18n/**===get
-  - /apps/hierarchy===get
-  # web ui 静态资源
-  - /console/**===get
+  - /dashboard/**===get
+  - /monitors/**===get
+  - /alert/**===get
+  - /account/**===get
+  - /setting/**===get
+  - /passport/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
@@ -52,7 +57,9 @@ excludedResource:
   - /**/*.ttf===get
   - /**/*.png===get
   - /**/*.gif===get
-    - /**/*.png===*
+  - /**/*.jpg===get
+  - /**/*.svg===get
+  - /**/*.json===get
   # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get

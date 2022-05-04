@@ -33,7 +33,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "Alert Define API | 告警定义管理API")
 @RestController
-@RequestMapping(path = "/alert/define", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/alert/define", produces = {APPLICATION_JSON_VALUE})
 public class AlertDefineController {
 
     @Autowired
