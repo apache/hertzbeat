@@ -37,7 +37,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "Auth Manage API | 认证注册TOKEN管理API")
 @RestController()
-@RequestMapping(value = "/account/auth", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(value = "/api/account/auth", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AccountController {
 
