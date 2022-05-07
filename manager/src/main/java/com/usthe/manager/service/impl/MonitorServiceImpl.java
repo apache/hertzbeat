@@ -167,6 +167,9 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
         // todo 校验标签
+        if (monitor.getTags() != null) {
+            monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
+        }
 
         // Parameter definition structure verification  参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
