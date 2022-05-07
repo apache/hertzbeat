@@ -3,6 +3,8 @@ package com.usthe.manager.service.impl;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.util.CommonConstants;
+import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -10,6 +12,7 @@ import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Autowired
     private NoticeRuleDao noticeRuleDao;
 
+    @Autowired
+    @Lazy
+    private DispatcherAlarm dispatcherAlarm;
+
     @Override
     public List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification) {
         return noticeReceiverDao.findAll(specification);
@@ -50,6 +57,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     public void addReceiver(NoticeReceiver noticeReceiver) {
         noticeReceiverDao.save(noticeReceiver);
     }
+    @Override
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Alert alert = new Alert();
+        alert.setContent(CommonConstants.TEST_SEND_MSG);
+        alert.setId(0L);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+    }
+
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {

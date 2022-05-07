@@ -82,13 +82,25 @@ public class DispatcherAlarm implements InitializingBean {
             List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
-                byte type = receiver.getType();
-                if (alertNotifyHandlerMap.containsKey(type)) {
-                    alertNotifyHandlerMap.get(type).send(receiver, alert);
-                }
+                sendNoticeMsg(receiver, alert);
                 // 暂未支持的通知类型
             }
         }
 
+
+
+    }
+
+    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert){
+        if(receiver == null || receiver.getType() == null){
+            log.warn("DispatcherAlarm-sendNoticeMsg params is emtry alert:[{}], receiver:[{}]", alert, receiver);
+            return false;
+        }
+        byte type = receiver.getType();
+        if (alertNotifyHandlerMap.containsKey(type)) {
+            alertNotifyHandlerMap.get(type).send(receiver, alert);
+            return true;
+        }
+        return false;
     }
 }
