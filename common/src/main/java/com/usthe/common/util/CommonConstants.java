@@ -206,4 +206,10 @@ public interface CommonConstants {
      * 认证类型 GITEE三方登录
      */
     byte AUTH_TYPE_GITEE = 5;
+
+    /**
+     * alert send test msg content
+     * 告警 发送测试消息的内容
+     */
+    String TEST_SEND_MSG = "test send msg! \n This is the test data. It is proved that it can be received successfully";
 }

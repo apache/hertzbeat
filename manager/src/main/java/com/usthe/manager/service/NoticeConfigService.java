@@ -108,4 +108,12 @@ public interface NoticeConfigService {
      * @return Notification Rule Entity    通知规则实体
      */
     NoticeRule getNoticeRulesById(Long ruleId);
+
+    /**
+     * alert Send test message
+     * 告警 发送测试消息
+     * @param noticeReceiver recipient information  接收人信息
+     * @return true send success | false send fail
+     */
+    boolean sendTestMsg(NoticeReceiver noticeReceiver);
 }
