@@ -296,7 +296,9 @@ export class MonitorEditComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.checkedTags.forEach(item => {
-      this.monitor.tags.push(item);
+      if (this.monitor.tags.find(tag => tag.id == item.id) == undefined) {
+        this.monitor.tags.push(item);
+      }
     });
     this.isManageModalOkLoading = false;
     this.isManageModalVisible = false;
