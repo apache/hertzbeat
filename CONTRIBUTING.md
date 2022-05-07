@@ -9,8 +9,6 @@
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
 - **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** 提供监控任务调度服务
-> 采集任务管理，一次性任务和周期性任务的调度分发。
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
@@ -40,7 +38,7 @@ https://gitee.com/dromara/hertzbeat/pulls
 1. 部署启动依赖服务`MYSQL`和`TDengine`数据库    
 2. 需要`maven3+`和`java8+`环境    
 3. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`   
-4. 启动`manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`   
+4. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`   
 
 ### 前端启动   
 
