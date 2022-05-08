@@ -33,6 +33,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class NoticeConfigServiceImpl implements NoticeConfigService {
 
+    private static final String ALERT_TEST_TARGET = "Test Target";
+
+    private static final String ALERT_TEST_CONTENT = "test send msg! \n This is the test data. It is proved that it can be received successfully";
+
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
@@ -57,14 +61,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     public void addReceiver(NoticeReceiver noticeReceiver) {
         noticeReceiverDao.save(noticeReceiver);
     }
-    @Override
-    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
-        Alert alert = new Alert();
-        alert.setContent(CommonConstants.TEST_SEND_MSG);
-        alert.setId(0L);
-        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
-    }
-
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
@@ -129,5 +125,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
         return noticeRuleDao.getOne(ruleId);
+    }
+
+    @Override
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Alert alert = new Alert();
+        alert.setTarget(ALERT_TEST_TARGET);
+        alert.setContent(ALERT_TEST_CONTENT);
+        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
     }
 }

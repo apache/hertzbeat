@@ -53,6 +53,25 @@ public class DispatcherAlarm implements InitializingBean {
         }
     }
 
+    /**
+     * send alert msg to receiver
+     * @param receiver receiver
+     * @param alert alert msg
+     * @return send success or failed
+     */
+    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert){
+        if(receiver == null || receiver.getType() == null){
+            log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
+            return false;
+        }
+        byte type = receiver.getType();
+        if (alertNotifyHandlerMap.containsKey(type)) {
+            alertNotifyHandlerMap.get(type).send(receiver, alert);
+            return true;
+        }
+        return false;
+    }
+
     private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
         // todo use cache 使用缓存
         return noticeConfigService.getReceiverFilterRule(alert);
@@ -83,24 +102,8 @@ public class DispatcherAlarm implements InitializingBean {
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
                 sendNoticeMsg(receiver, alert);
-                // 暂未支持的通知类型
             }
         }
-
-
-
     }
 
-    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert){
-        if(receiver == null || receiver.getType() == null){
-            log.warn("DispatcherAlarm-sendNoticeMsg params is emtry alert:[{}], receiver:[{}]", alert, receiver);
-            return false;
-        }
-        byte type = receiver.getType();
-        if (alertNotifyHandlerMap.containsKey(type)) {
-            alertNotifyHandlerMap.get(type).send(receiver, alert);
-            return true;
-        }
-        return false;
-    }
 }

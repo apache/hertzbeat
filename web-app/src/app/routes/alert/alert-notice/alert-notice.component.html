@@ -285,6 +285,14 @@
           <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 6" name="wechatId" type="text" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzOffset]="7" [nzSpan]="12">
+          <button nz-button nzDanger nzType="primary" [nzLoading]="isSendTestButtonLoading" (click)="onSendAlertTestMsg()">
+            <i nz-icon nzType="send" nzTheme="outline"></i>
+            {{ 'alert.notice.send-test' | i18n }}
+          </button>
+        </nz-form-control>
+      </nz-form-item>
     </form>
   </div>
 </nz-modal>
