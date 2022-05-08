@@ -3,6 +3,8 @@ package com.usthe.manager.service.impl;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.util.CommonConstants;
+import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -10,6 +12,7 @@ import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +33,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class NoticeConfigServiceImpl implements NoticeConfigService {
 
+    private static final String ALERT_TEST_TARGET = "Test Target";
+
+    private static final String ALERT_TEST_CONTENT = "test send msg! \n This is the test data. It is proved that it can be received successfully";
+
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
+
+    @Autowired
+    @Lazy
+    private DispatcherAlarm dispatcherAlarm;
 
     @Override
     public List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification) {
@@ -50,6 +61,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     public void addReceiver(NoticeReceiver noticeReceiver) {
         noticeReceiverDao.save(noticeReceiver);
     }
+    @Override
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Alert alert = new Alert();
+        alert.setContent(CommonConstants.TEST_SEND_MSG);
+        alert.setId(0L);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+    }
+
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
@@ -114,5 +133,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
         return noticeRuleDao.getOne(ruleId);
+    }
+
+    @Override
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Alert alert = new Alert();
+        alert.setTarget(ALERT_TEST_TARGET);
+        alert.setContent(ALERT_TEST_CONTENT);
+        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
     }
 }

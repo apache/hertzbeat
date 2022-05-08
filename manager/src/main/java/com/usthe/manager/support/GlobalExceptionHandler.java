@@ -1,6 +1,7 @@
 package com.usthe.manager.support;
 
 import com.usthe.common.entity.dto.Message;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.lang.reflect.Field;
 
-import static com.usthe.common.util.CommonConstants.DETECT_FAILED_CODE;
-import static com.usthe.common.util.CommonConstants.MONITOR_CONFLICT_CODE;
-import static com.usthe.common.util.CommonConstants.PARAM_INVALID_CODE;
+import static com.usthe.common.util.CommonConstants.*;
 
 /**
  * controller exception handler
@@ -79,6 +78,13 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleIllegalArgumentException(IllegalArgumentException exception) {
         Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
+        return ResponseEntity.ok(message);
+    }
+
+    @ExceptionHandler(AlertNoticeException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleAlertNoticeException(AlertNoticeException noticeException) {
+        Message<Void> message = Message.<Void>builder().msg(noticeException.getMessage()).code(FAIL_CODE).build();
         return ResponseEntity.ok(message);
     }
 

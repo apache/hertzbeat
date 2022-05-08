@@ -10,7 +10,6 @@ import { NoticeRule } from '../../../pojo/NoticeRule';
 import { NoticeReceiverService } from '../../../service/notice-receiver.service';
 import { NoticeRuleService } from '../../../service/notice-rule.service';
 import { TagService } from '../../../service/tag.service';
-import { Tag } from '../../../pojo/Tag';
 
 @Component({
   selector: 'app-alert-notice',
@@ -154,6 +153,7 @@ export class AlertNoticeComponent implements OnInit {
   isManageReceiverModalVisible: boolean = false;
   isManageReceiverModalAdd: boolean = true;
   isManageReceiverModalOkLoading: boolean = false;
+  isSendTestButtonLoading: boolean = false;
   receiver!: NoticeReceiver;
 
   onNewNoticeReceiver() {
@@ -165,6 +165,32 @@ export class AlertNoticeComponent implements OnInit {
     this.receiver = receiver;
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = false;
+  }
+
+  onSendAlertTestMsg() {
+    this.isSendTestButtonLoading = true;
+    const sendReq$ = this.noticeReceiverSvc
+      .sendAlertMsgToReceiver(this.receiver)
+      .pipe(
+        finalize(() => {
+          sendReq$.unsubscribe();
+          this.isSendTestButtonLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.isSendTestButtonLoading = false;
+            this.notifySvc.success(this.i18nSvc.fanyi('alert.notice.send-test.notify.success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('alert.notice.send-test.notify.failed'), message.msg);
+          }
+        },
+        error => {
+          this.isSendTestButtonLoading = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('alert.notice.send-test.notify.failed'), error.msg);
+        }
+      );
   }
 
   onManageReceiverModalCancel() {
@@ -192,6 +218,7 @@ export class AlertNoticeComponent implements OnInit {
             }
           },
           error => {
+            this.isManageReceiverModalVisible = false;
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
           }
         );
@@ -215,6 +242,7 @@ export class AlertNoticeComponent implements OnInit {
             }
           },
           error => {
+            this.isManageReceiverModalVisible = false;
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
