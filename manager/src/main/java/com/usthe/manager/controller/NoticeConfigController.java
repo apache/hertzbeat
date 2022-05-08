@@ -136,4 +136,12 @@ public class NoticeConfigController {
         return ResponseEntity.ok(message);
     }
 
+
+    @PostMapping(path = "/receiver/send-test-msg")
+    @ApiOperation(value = "Send test msg to receiver", notes = "给指定接收人发送测试消息")
+    public ResponseEntity<Message<Boolean>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
+        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
+        return ResponseEntity.ok(new Message<>(sendFlag));
+    }
+
 }
