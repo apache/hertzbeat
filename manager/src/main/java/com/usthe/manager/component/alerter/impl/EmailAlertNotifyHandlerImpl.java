@@ -4,6 +4,7 @@ import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.service.MailService;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +47,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
             log.error("[Email Alert] Exception，Exception information={}", e.getMessage());
+            throw new AlertNoticeException("[Email Alert] failed: " + e.getMessage());
         }
     }
 
