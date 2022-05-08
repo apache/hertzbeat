@@ -61,6 +61,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     public void addReceiver(NoticeReceiver noticeReceiver) {
         noticeReceiverDao.save(noticeReceiver);
     }
+    @Override
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Alert alert = new Alert();
+        alert.setContent(CommonConstants.TEST_SEND_MSG);
+        alert.setId(0L);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+    }
+
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
