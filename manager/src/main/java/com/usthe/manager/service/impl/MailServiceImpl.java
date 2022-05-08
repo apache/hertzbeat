@@ -31,8 +31,12 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public String buildAlertHtmlTemplate(final Alert alert) {
-        String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-        String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         monitorId = monitorId == null? "External alarm, no ID" : monitorId;
         monitorName = monitorName == null? "External alarm, no Name" : monitorName;
         // Introduce thymeleaf context parameters to render pages
