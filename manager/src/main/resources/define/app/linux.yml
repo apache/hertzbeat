@@ -75,8 +75,8 @@ metrics:
     aliasFields:
       - info
       - cores
-      - interrupt
       - load
+      - interrupt
       - context_switch
       - idle
     # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
@@ -84,8 +84,8 @@ metrics:
     calculates:
       - info=info
       - cores=cores
-      - interrupt=interrupt
       - load=load
+      - interrupt=interrupt
       - context_switch=context_switch
       - usage=100-idle
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
