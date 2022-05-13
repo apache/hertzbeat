@@ -13,7 +13,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
 
@@ -47,8 +46,7 @@ public class TagController {
         tags = tags.stream().peek(tag -> {
             tag.setType((byte) 1);
             tag.setId(null);
-            }).filter(tag -> tag.getValue() != null)
-            .distinct().collect(Collectors.toList());
+            }).distinct().collect(Collectors.toList());
         tagService.addTags(tags);
         return ResponseEntity.ok(new Message<>("Add success"));
     }

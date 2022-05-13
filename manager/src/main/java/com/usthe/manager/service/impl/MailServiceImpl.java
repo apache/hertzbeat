@@ -26,6 +26,7 @@ public class MailServiceImpl implements MailService {
 
     @Resource
     private TemplateEngine templateEngine;
+
     @Resource
     private AlerterProperties alerterProperties;
 

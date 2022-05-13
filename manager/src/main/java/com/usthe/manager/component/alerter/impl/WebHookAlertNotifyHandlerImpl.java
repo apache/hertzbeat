@@ -30,10 +30,8 @@ final class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
             } else {
                 log.warn("Send WebHook: {} Failed", receiver.getHookUrl());
             }
-        } catch (ResourceAccessException e) {
-            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
         }
     }
 
