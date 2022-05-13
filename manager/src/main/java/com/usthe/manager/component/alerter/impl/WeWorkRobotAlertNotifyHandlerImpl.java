@@ -29,8 +29,12 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-        String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
         WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
         StringBuilder content = new StringBuilder();

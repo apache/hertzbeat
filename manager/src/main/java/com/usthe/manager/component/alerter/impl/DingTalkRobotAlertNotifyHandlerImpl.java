@@ -29,8 +29,12 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-        String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
         DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
         StringBuilder contentBuilder = new StringBuilder("#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +

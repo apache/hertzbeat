@@ -1,5 +1,6 @@
 package com.usthe.manager.component.alerter.impl;
 
+import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
@@ -28,12 +29,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final RestTemplate restTemplate;
+
+    private final AlerterProperties alerterProperties;
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-        String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
         FlyBookWebHookDto.Content content = new FlyBookWebHookDto.Content();
         FlyBookWebHookDto.Post post = new FlyBookWebHookDto.Post();
@@ -61,7 +69,7 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
         bookContent.setTag("a");
         bookContent.setText("登入控制台");
-        bookContent.setHref("https://www.tancloud.cn");
+        bookContent.setHref(alerterProperties.getConsoleUrl());
         contents1.add(bookContent);
         contents.add(contents1);
         zhCn.setTitle("[TanCloud探云告警通知]");
