@@ -68,3 +68,11 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
+
+alerter:
+  # custom console url
+  console-url: https://console.tancloud.cn
+  # base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
+  alert-eval-interval-base: 600000
+  # max of alert eval interval time, unit:ms
+  max-alert-eval-interval: 86400000
