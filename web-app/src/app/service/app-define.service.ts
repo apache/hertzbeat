@@ -28,8 +28,11 @@ export class AppDefineService {
     return this.http.get<Message<any>>(`/apps/${app}/define`);
   }
 
-  public getAppHierarchy(): Observable<Message<any>> {
-    let httpParams = new HttpParams().append('lang', 'zh-CN');
+  public getAppHierarchy(lang: string | undefined): Observable<Message<any>> {
+    if (lang == undefined) {
+      lang = 'en_US';
+    }
+    let httpParams = new HttpParams().append('lang', lang);
     const options = { params: httpParams };
     return this.http.get<Message<any>>(app_hierarchy, options);
   }
