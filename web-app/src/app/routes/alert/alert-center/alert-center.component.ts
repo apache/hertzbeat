@@ -55,17 +55,19 @@ export class AlertCenterComponent implements OnInit {
             this.alerts = page.content;
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
-            this.alerts.forEach(item => {
-              item.tmp = [];
-              if (item.tags != undefined) {
-                Object.keys(item.tags).forEach(name => {
-                  item.tmp.push({
-                    name: name,
-                    value: item.tags[name]
+            if (this.alerts) {
+              this.alerts.forEach(item => {
+                item.tmp = [];
+                if (item.tags != undefined) {
+                  Object.keys(item.tags).forEach(name => {
+                    item.tmp.push({
+                      name: name,
+                      value: item.tags[name]
+                    });
                   });
-                });
-              }
-            })
+                }
+              });
+            }
           } else {
             console.warn(message.msg);
           }
