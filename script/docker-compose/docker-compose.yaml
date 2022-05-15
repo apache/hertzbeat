@@ -37,7 +37,7 @@ services:
       - heartzbeat
 
   hertzbeat:
-    image: "tancloud/hertzbeat:1.0-beta.7"
+    image: "tancloud/hertzbeat:v1.0-beta.8"
     container_name: hertzbeat
     hostname: hertzbeat
     restart: always
