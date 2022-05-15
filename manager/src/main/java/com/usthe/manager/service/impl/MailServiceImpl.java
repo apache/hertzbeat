@@ -40,8 +40,8 @@ public class MailServiceImpl implements MailService {
             monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
             monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
         }
-        monitorId = monitorId == null? "External alarm, no ID" : monitorId;
-        monitorName = monitorName == null? "External alarm, no Name" : monitorName;
+        monitorId = monitorId == null? "External Alarm, No ID" : monitorId;
+        monitorName = monitorName == null? "External Alarm, No Name" : monitorName;
         // Introduce thymeleaf context parameters to render pages
         // 引入thymeleaf上下文参数渲染页面
         Context context = new Context();
