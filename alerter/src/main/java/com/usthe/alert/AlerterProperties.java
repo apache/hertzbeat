@@ -19,12 +19,14 @@ public class AlerterProperties {
     private String consoleUrl = "https://console.tancloud.cn";
 
     /**
-     * 告警评估时间间隔起始基数 每下一次乘2
+     * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
+     * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
      */
     private long alertEvalIntervalBase = 1000 * 60 * 10L;
 
     /**
-     * 最大告警评估时间间隔
+     * 最大告警评估时间间隔 单位毫秒
+     * max of alert eval interval time, unit:ms
      */
     private long maxAlertEvalInterval = 1000 * 60 * 60 * 24L;
 

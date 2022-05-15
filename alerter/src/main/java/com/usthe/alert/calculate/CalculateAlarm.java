@@ -13,6 +13,7 @@ import com.usthe.alert.util.AlertTemplateUtil;
 import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.support.ResourceBundleUtf8Control;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class CalculateAlarm {
         this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.alerterProperties = alerterProperties;
-        this.bundle = ResourceBundle.getBundle("alerter", Locale.getDefault());
+        this.bundle = ResourceBundle.getBundle("alerter", new ResourceBundleUtf8Control());
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         // 初始化stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
