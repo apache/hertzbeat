@@ -95,25 +95,25 @@ public class CalculateAlarm {
                 if (metricsData.getCode() == CollectRep.Code.UN_AVAILABLE) {
                     // 采集器不可用
                     alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name());
                     triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_AVAILABLE);
                     dataQueue.addAlertData(alertBuilder.build());
                 } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                     // UN_REACHABLE 对端不可达(网络层icmp)
                     alertBuilder.target(CommonConstants.REACHABLE)
-                            .content("监控紧急可达性告警: " + metricsData.getCode().name());
+                            .content("Monitoring Reachability Emergency Alert: " + metricsData.getCode().name());
                     triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_REACHABLE);
                     dataQueue.addAlertData(alertBuilder.build());
                 } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
                     // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
                     alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("监控紧急可用性告警: " + metricsData.getCode().name());
+                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name());
                     triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_CONNECTABLE);
                     dataQueue.addAlertData(alertBuilder.build());
                 } else {
                     // 其他异常
                     alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("监控可用性告警: " + metricsData.getCode().name() + " : " + metricsData.getMsg());
+                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name() + " : " + metricsData.getMsg());
                     triggeredMonitorStateAlertMap.put(monitorId, metricsData.getCode());
                     dataQueue.addAlertData(alertBuilder.build());
                 }
@@ -126,10 +126,16 @@ public class CalculateAlarm {
                     Map<String, String> tags = new HashMap<>(6);
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                     tags.put(CommonConstants.TAG_MONITOR_APP, app);
+                    String target = CommonConstants.AVAILABLE;
+                    String content = "Availability Alert Resolved, monitoring status has returned to normal";
+                    if (stateCode == CollectRep.Code.UN_REACHABLE) {
+                        target = CommonConstants.REACHABLE;
+                        content = "Reachability Alert Resolved, monitoring status has returned to normal";
+                    }
                     Alert resumeAlert = Alert.builder()
                             .tags(tags)
-                            .target(CommonConstants.AVAILABLE)
-                            .content("告警恢复通知, 此监控状态已恢复正常")
+                            .target(target)
+                            .content(content)
                             .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                             .status(CommonConstants.ALERT_STATUS_CODE_RESTORED).build();
                     dataQueue.addAlertData(resumeAlert);
