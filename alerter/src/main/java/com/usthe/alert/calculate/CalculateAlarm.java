@@ -70,7 +70,9 @@ public class CalculateAlarm {
                         .target(CommonConstants.AVAILABLE)
                         .content(this.bundle.getString("alerter.availability.emergency") + ": " + CollectRep.Code.UN_AVAILABLE.name())
                         .firstTriggerTime(System.currentTimeMillis())
-                        .lastTriggerTime(System.currentTimeMillis());
+                        .lastTriggerTime(System.currentTimeMillis())
+                        .nextEvalInterval(0L)
+                        .times(0);
                 if (monitor.getStatus() == CommonConstants.UN_REACHABLE_CODE) {
                     alertBuilder
                             .target(CommonConstants.REACHABLE)
@@ -194,7 +196,8 @@ public class CalculateAlarm {
                                     int times = triggeredAlert.getTimes() + 1;
                                     triggeredAlert.setTimes(times);
                                     triggeredAlert.setLastTriggerTime(currentTimeMilli);
-                                    if (times >= define.getTimes()) {
+                                    int defineTimes = define.getTimes() == null ? 0 : define.getTimes();
+                                    if (times >= defineTimes) {
                                         triggeredAlertMap.remove(monitorAlertKey);
                                         dataQueue.addAlertData(triggeredAlert);
                                     }
@@ -218,7 +221,8 @@ public class CalculateAlarm {
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                             .build();
-                                    if (times >= define.getTimes()) {
+                                    int defineTimes = define.getTimes() == null ? 0 : define.getTimes();
+                                    if (times >= defineTimes) {
                                         dataQueue.addAlertData(alert);
                                     } else {
                                         triggeredAlertMap.put(monitorAlertKey, alert);
@@ -272,7 +276,7 @@ public class CalculateAlarm {
             preAlert.setTimes(preAlert.getTimes() + 1);
             preAlert.setLastTriggerTime(currentTimeMill);
             long nextEvalInterval  = preAlert.getNextEvalInterval() * 2;
-            if (preAlert.getNextEvalInterval() == 0) {
+            if (preAlert.getNextEvalInterval() == 0L) {
                 nextEvalInterval = alerterProperties.getAlertEvalIntervalBase();
             }
             nextEvalInterval = Math.min(nextEvalInterval, alerterProperties.getMaxAlertEvalInterval());
