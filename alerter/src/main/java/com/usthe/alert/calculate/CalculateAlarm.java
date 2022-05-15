@@ -18,10 +18,7 @@ import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -45,6 +42,8 @@ public class CalculateAlarm {
      */
     private Map<String, Alert> triggeredAlertMap;
 
+    private ResourceBundle bundle;
+
     public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
                            AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
                            AlertMonitorDao monitorDao, AlerterProperties alerterProperties) {
@@ -53,6 +52,7 @@ public class CalculateAlarm {
         this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.alerterProperties = alerterProperties;
+        this.bundle = ResourceBundle.getBundle("alerter", Locale.getDefault());
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         // 初始化stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
@@ -67,13 +67,13 @@ public class CalculateAlarm {
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
                         .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                         .target(CommonConstants.AVAILABLE)
-                        .content("Monitoring Availability Emergency Alert: " + CollectRep.Code.UN_AVAILABLE.name())
+                        .content(this.bundle.getString("alerter.availability.emergency") + ": " + CollectRep.Code.UN_AVAILABLE.name())
                         .firstTriggerTime(System.currentTimeMillis())
                         .lastTriggerTime(System.currentTimeMillis());
                 if (monitor.getStatus() == CommonConstants.UN_REACHABLE_CODE) {
                     alertBuilder
                             .target(CommonConstants.REACHABLE)
-                            .content("Monitoring Reachability Emergency Alert: " + CollectRep.Code.UN_REACHABLE.name());
+                            .content(this.bundle.getString("alerter.reachability.emergency") + ": " + CollectRep.Code.UN_REACHABLE.name());
                 }
                 this.triggeredAlertMap.put(String.valueOf(monitor.getId()), alertBuilder.build());
             }
@@ -130,10 +130,10 @@ public class CalculateAlarm {
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                     tags.put(CommonConstants.TAG_MONITOR_APP, app);
                     String target = CommonConstants.AVAILABLE;
-                    String content = "Availability Alert Resolved, Monitor Status Normal Now";
+                    String content = this.bundle.getString("alerter.availability.resolved");
                     if (CommonConstants.REACHABLE.equals(preAlert.getTarget())) {
                         target = CommonConstants.REACHABLE;
-                        content = "Reachability Alert Resolved, Monitor Status Normal Now";
+                        content = this.bundle.getString("alerter.reachability.resolved");
                     }
                     Alert resumeAlert = Alert.builder()
                             .tags(tags)
@@ -248,7 +248,7 @@ public class CalculateAlarm {
                     .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
                     .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                     .target(CommonConstants.AVAILABLE)
-                    .content("Monitoring Availability Emergency Alert: " + code.name())
+                    .content(this.bundle.getString("alerter.availability.emergency") + ": " + code.name())
                     .firstTriggerTime(currentTimeMill)
                     .lastTriggerTime(currentTimeMill)
                     .nextEvalInterval(alerterProperties.getAlertEvalIntervalBase())
@@ -256,7 +256,7 @@ public class CalculateAlarm {
             if (code == CollectRep.Code.UN_REACHABLE) {
                 alertBuilder
                         .target(CommonConstants.REACHABLE)
-                        .content("Monitoring Reachability Emergency Alert: " + code.name());
+                        .content(this.bundle.getString("alerter.reachability.emergency") + ": " + code.name());
             }
             Alert alert = alertBuilder.build();
             dataQueue.addAlertData(alert.clone());
