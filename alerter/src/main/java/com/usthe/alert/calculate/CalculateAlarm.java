@@ -123,17 +123,17 @@ public class CalculateAlarm {
                 return;
             } else {
                 // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
-                Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
+                Alert preAlert = triggeredAlertMap.remove(String.valueOf(monitorId));
                 if (preAlert != null) {
                     // 发送告警恢复
                     Map<String, String> tags = new HashMap<>(6);
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                     tags.put(CommonConstants.TAG_MONITOR_APP, app);
                     String target = CommonConstants.AVAILABLE;
-                    String content = "Availability Alert Resolved, monitoring status has returned to normal";
+                    String content = "Availability Alert Resolved, Monitor Status Normal Now";
                     if (CommonConstants.REACHABLE.equals(preAlert.getTarget())) {
                         target = CommonConstants.REACHABLE;
-                        content = "Reachability Alert Resolved, monitoring status has returned to normal";
+                        content = "Reachability Alert Resolved, Monitor Status Normal Now";
                     }
                     Alert resumeAlert = Alert.builder()
                             .tags(tags)
