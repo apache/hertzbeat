@@ -2,6 +2,7 @@ package com.usthe.alert.calculate;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import com.usthe.alert.AlerterProperties;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.alert.AlerterDataQueue;
 import com.usthe.alert.dao.AlertMonitorDao;
@@ -36,23 +37,45 @@ public class CalculateAlarm {
     private AlerterDataQueue dataQueue;
     private MetricsDataExporter dataExporter;
     private AlertDefineService alertDefineService;
+    private AlerterProperties alerterProperties;
+    /**
+     * 触发中告警信息
+     * key - monitorId+alertDefineId 为普通阈值告警
+     * key - monitorId 为监控状态可用性可达性告警
+     */
     private Map<String, Alert> triggeredAlertMap;
-    private Map<Long, CollectRep.Code> triggeredMonitorStateAlertMap;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
                            AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
-                           AlertMonitorDao monitorDao) {
+                           AlertMonitorDao monitorDao, AlerterProperties alerterProperties) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
+        this.alerterProperties = alerterProperties;
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
-        this.triggeredMonitorStateAlertMap = new ConcurrentHashMap<>(128);
         // 初始化stateAlertMap
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList((byte)2, (byte)3));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
+                CommonConstants.UN_REACHABLE_CODE));
         if (monitors != null) {
             for (Monitor monitor : monitors) {
-                this.triggeredMonitorStateAlertMap.put(monitor.getId(), CollectRep.Code.UN_AVAILABLE);
+                Map<String, String> tags = new HashMap<>(6);
+                tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitor.getId()));
+                tags.put(CommonConstants.TAG_MONITOR_APP, monitor.getApp());
+                Alert.AlertBuilder alertBuilder = Alert.builder()
+                        .tags(tags)
+                        .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                        .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
+                        .target(CommonConstants.AVAILABLE)
+                        .content("Monitoring Availability Emergency Alert: " + CollectRep.Code.UN_AVAILABLE.name())
+                        .firstTriggerTime(System.currentTimeMillis())
+                        .lastTriggerTime(System.currentTimeMillis());
+                if (monitor.getStatus() == CommonConstants.UN_REACHABLE_CODE) {
+                    alertBuilder
+                            .target(CommonConstants.REACHABLE)
+                            .content("Monitoring Reachability Emergency Alert: " + CollectRep.Code.UN_REACHABLE.name());
+                }
+                this.triggeredAlertMap.put(String.valueOf(monitor.getId()), alertBuilder.build());
             }
         }
         startCalculate();
@@ -77,6 +100,7 @@ public class CalculateAlarm {
     }
 
     private void calculate(CollectRep.MetricsData metricsData) {
+        long currentTimeMilli = System.currentTimeMillis();
         long monitorId = metricsData.getId();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
@@ -84,51 +108,30 @@ public class CalculateAlarm {
         if (metricsData.getPriority() == 0) {
             if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
                 // 采集异常
-                Map<String, String> tags = new HashMap<>(6);
-                tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-                tags.put(CommonConstants.TAG_MONITOR_APP, app);
-                Alert.AlertBuilder alertBuilder = Alert.builder()
-                        .tags(tags)
-                        .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
-                        .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
-                        .times(1);
                 if (metricsData.getCode() == CollectRep.Code.UN_AVAILABLE) {
-                    // 采集器不可用
-                    alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name());
-                    triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_AVAILABLE);
-                    dataQueue.addAlertData(alertBuilder.build());
+                    // todo 采集器不可用
                 } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                     // UN_REACHABLE 对端不可达(网络层icmp)
-                    alertBuilder.target(CommonConstants.REACHABLE)
-                            .content("Monitoring Reachability Emergency Alert: " + metricsData.getCode().name());
-                    triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_REACHABLE);
-                    dataQueue.addAlertData(alertBuilder.build());
+                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
                     // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
-                    alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name());
-                    triggeredMonitorStateAlertMap.put(monitorId, CollectRep.Code.UN_CONNECTABLE);
-                    dataQueue.addAlertData(alertBuilder.build());
+                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 } else {
                     // 其他异常
-                    alertBuilder.target(CommonConstants.AVAILABLE)
-                            .content("Monitoring Availability Emergency Alert: " + metricsData.getCode().name() + " : " + metricsData.getMsg());
-                    triggeredMonitorStateAlertMap.put(monitorId, metricsData.getCode());
-                    dataQueue.addAlertData(alertBuilder.build());
+                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 }
                 return;
             } else {
                 // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
-                CollectRep.Code stateCode = triggeredMonitorStateAlertMap.remove(monitorId);
-                if (stateCode != null) {
+                Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
+                if (preAlert != null) {
                     // 发送告警恢复
                     Map<String, String> tags = new HashMap<>(6);
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                     tags.put(CommonConstants.TAG_MONITOR_APP, app);
                     String target = CommonConstants.AVAILABLE;
                     String content = "Availability Alert Resolved, monitoring status has returned to normal";
-                    if (stateCode == CollectRep.Code.UN_REACHABLE) {
+                    if (CommonConstants.REACHABLE.equals(preAlert.getTarget())) {
                         target = CommonConstants.REACHABLE;
                         content = "Reachability Alert Resolved, monitoring status has returned to normal";
                     }
@@ -137,7 +140,11 @@ public class CalculateAlarm {
                             .target(target)
                             .content(content)
                             .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
-                            .status(CommonConstants.ALERT_STATUS_CODE_RESTORED).build();
+                            .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
+                            .firstTriggerTime(currentTimeMilli)
+                            .lastTriggerTime(currentTimeMilli)
+                            .times(1)
+                            .build();
                     dataQueue.addAlertData(resumeAlert);
                 }
             }
@@ -185,6 +192,7 @@ public class CalculateAlarm {
                                 if (triggeredAlert != null) {
                                     int times = triggeredAlert.getTimes() + 1;
                                     triggeredAlert.setTimes(times);
+                                    triggeredAlert.setLastTriggerTime(currentTimeMilli);
                                     if (times >= define.getTimes()) {
                                         triggeredAlertMap.remove(monitorAlertKey);
                                         dataQueue.addAlertData(triggeredAlert);
@@ -204,6 +212,8 @@ public class CalculateAlarm {
                                             .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                                             .target(app + "." + metrics + "." + define.getField())
                                             .times(times)
+                                            .firstTriggerTime(currentTimeMilli)
+                                            .lastTriggerTime(currentTimeMilli)
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                             .build();
@@ -223,6 +233,51 @@ public class CalculateAlarm {
                 }
 
             }
+        }
+    }
+
+    private void handlerMonitorStatusAlert(String monitorId, String app, CollectRep.Code code) {
+        Alert preAlert = triggeredAlertMap.get(monitorId);
+        long currentTimeMill = System.currentTimeMillis();
+        if (preAlert == null) {
+            Map<String, String> tags = new HashMap<>(6);
+            tags.put(CommonConstants.TAG_MONITOR_ID, monitorId);
+            tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            Alert.AlertBuilder alertBuilder = Alert.builder()
+                    .tags(tags)
+                    .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                    .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
+                    .target(CommonConstants.AVAILABLE)
+                    .content("Monitoring Availability Emergency Alert: " + code.name())
+                    .firstTriggerTime(currentTimeMill)
+                    .lastTriggerTime(currentTimeMill)
+                    .nextEvalInterval(alerterProperties.getAlertEvalIntervalBase())
+                    .times(1);
+            if (code == CollectRep.Code.UN_REACHABLE) {
+                alertBuilder
+                        .target(CommonConstants.REACHABLE)
+                        .content("Monitoring Reachability Emergency Alert: " + code.name());
+            }
+            Alert alert = alertBuilder.build();
+            dataQueue.addAlertData(alert.clone());
+            triggeredAlertMap.put(monitorId, alert);
+            return;
+        }
+        if (preAlert.getLastTriggerTime() + preAlert.getNextEvalInterval() >= currentTimeMill) {
+            // 还在告警评估时间间隔静默期
+            preAlert.setTimes(preAlert.getTimes() + 1);
+            triggeredAlertMap.put(monitorId, preAlert);
+        } else {
+            preAlert.setTimes(preAlert.getTimes() + 1);
+            preAlert.setLastTriggerTime(currentTimeMill);
+            long nextEvalInterval  = preAlert.getNextEvalInterval() * 2;
+            if (preAlert.getNextEvalInterval() == 0) {
+                nextEvalInterval = alerterProperties.getAlertEvalIntervalBase();
+            }
+            nextEvalInterval = Math.min(nextEvalInterval, alerterProperties.getMaxAlertEvalInterval());
+            preAlert.setNextEvalInterval(nextEvalInterval);
+            triggeredAlertMap.put(monitorId, preAlert);
+            dataQueue.addAlertData(preAlert.clone());
         }
     }
 }

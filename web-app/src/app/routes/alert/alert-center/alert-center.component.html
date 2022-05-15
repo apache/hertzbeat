@@ -127,7 +127,7 @@
       <td nzAlign="center">
         {{ 'alert.status.' + data.status | i18n }}
       </td>
-      <td nzAlign="center">{{ data.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">{{ data.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onMarkReadOneAlert(data.id)" nz-tooltip [nzTooltipTitle]="'alert.center.deal' | i18n">
           <i nz-icon nzType="down-circle" nzTheme="outline"></i>
