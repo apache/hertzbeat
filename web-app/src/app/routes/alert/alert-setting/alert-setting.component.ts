@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -28,6 +28,7 @@ export class AlertSettingComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
+    private settingsSvc: SettingsService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -44,7 +45,7 @@ export class AlertSettingComponent implements OnInit {
     this.loadAlertDefineTable();
     // 查询监控层级
     const getHierarchy$ = this.appDefineSvc
-      .getAppHierarchy()
+      .getAppHierarchy(this.settingsSvc.layout.lang)
       .pipe(
         finalize(() => {
           getHierarchy$.unsubscribe();
