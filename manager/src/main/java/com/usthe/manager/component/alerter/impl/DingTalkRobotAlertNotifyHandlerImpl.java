@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Send alarm information through DingTalk robot
  * 通过钉钉机器人发送告警信息
@@ -50,6 +53,11 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         contentBuilder.append("##### **告警级别** : ")
             .append(CommonUtil.transferAlertPriority(alert.getPriority()))
             .append("\n   ");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        contentBuilder.append("##### **告警触发时间** : ")
+                .append(triggerTime)
+                .append("\n   ");
         contentBuilder.append("##### **内容详情** : ").append(alert.getContent());
         markdownDTO.setText(contentBuilder.toString());
         markdownDTO.setTitle("TanCloud探云告警通知");

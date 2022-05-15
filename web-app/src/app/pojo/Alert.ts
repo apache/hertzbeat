@@ -9,6 +9,9 @@ export class Alert {
   status!: number;
   content!: string;
   times!: number;
+  firstTriggerTime!: number;
+  lastTriggerTime!: number;
+  nextEvalInterval!: number;
   tags!: Record<string, string>;
   gmtCreate!: number;
   gmtUpdate!: number;
