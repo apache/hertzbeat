@@ -77,22 +77,22 @@ public class Alert {
             notes = "告警阈值触发次数",
             example = "3", accessMode = READ_WRITE, position = 8)
     @Min(0)
-    private int times;
+    private Integer times;
 
     @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
             notes = "首次告警触发时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY, position = 9)
-    private long firstTriggerTime;
+    private Long firstTriggerTime;
 
     @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
             notes = "最近告警触发时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY, position = 9)
-    private long lastTriggerTime;
+    private Long lastTriggerTime;
 
     @ApiModelProperty(value = "Alarm evaluation interval (milliseconds)",
             notes = "告警评估时间间隔(单位毫秒)",
             example = "2000", accessMode = READ_ONLY, position = 10)
-    private long nextEvalInterval;
+    private Long nextEvalInterval;
 
     @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 11)
     @Convert(converter = JsonMapAttributeConverter.class)

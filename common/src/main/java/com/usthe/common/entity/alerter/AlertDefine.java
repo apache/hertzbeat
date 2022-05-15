@@ -73,7 +73,7 @@ public class AlertDefine {
     @ApiModelProperty(value = "阈值触发次数,即达到次数要求后才触发告警", example = "3", accessMode = READ_WRITE, position = 7)
     @Min(0)
     @Max(10)
-    private int times;
+    private Integer times;
 
     @ApiModelProperty(value = "告警阈值开关", example = "true", accessMode = READ_WRITE, position = 8)
     private boolean enable = true;
