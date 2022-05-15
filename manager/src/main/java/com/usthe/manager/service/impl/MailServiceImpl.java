@@ -11,6 +11,8 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Mailbox sending service interface implementation class
@@ -49,6 +51,9 @@ public class MailServiceImpl implements MailService {
         context.setVariable("priority", CommonUtil.transferAlertPriority(alert.getPriority()));
         context.setVariable("content", alert.getContent());
         context.setVariable("consoleUrl", alerterProperties.getConsoleUrl());
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        context.setVariable("lastTriggerTime", triggerTime);
         return templateEngine.process("mailAlarm", context);
     }
 }

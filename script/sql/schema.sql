@@ -144,18 +144,21 @@ CREATE TABLE  alert_define_monitor_bind
 DROP TABLE IF EXISTS  alert ;
 CREATE TABLE  alert
 (
-    id               bigint           not null auto_increment comment '告警ID',
-    target           varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
-    alert_define_id  bigint           comment '告警关联的告警定义ID',
-    priority         tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
-    content          varchar(4000)    not null comment '告警通知实际内容',
-    status           tinyint          not null default 0 comment '告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理',
-    times            int              not null comment '触发次数,即达到告警定义的触发阈值次数要求后才会发告警',
-    tags             varchar(4000)    comment '告警信息标签(monitorId:xxx,monitorName:xxx)',
-    creator          varchar(100)     comment '创建者',
-    modifier         varchar(100)     comment '最新修改者',
-    gmt_create       timestamp        default current_timestamp comment 'create time',
-    gmt_update       datetime         default current_timestamp on update current_timestamp comment 'update time',
+    id                   bigint           not null auto_increment comment '告警ID',
+    target               varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
+    alert_define_id      bigint           comment '告警关联的告警定义ID',
+    priority             tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    content              varchar(4000)    not null comment '告警通知实际内容',
+    status               tinyint          not null default 0 comment '告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理',
+    times                int              not null comment '触发次数,即达到告警定义的触发阈值次数要求后才会发告警',
+    first_trigger_time   bigint           comment '首次告警触发时间(毫秒时间戳)',
+    last_trigger_time    bigint           comment '最近告警触发时间(毫秒时间戳)',
+    next_eval_interval   bigint           comment '告警评估时间间隔(单位毫秒)',
+    tags                 varchar(4000)    comment '告警信息标签(monitorId:xxx,monitorName:xxx)',
+    creator              varchar(100)     comment '创建者',
+    modifier             varchar(100)     comment '最新修改者',
+    gmt_create           timestamp        default current_timestamp comment 'create time',
+    gmt_update           datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
