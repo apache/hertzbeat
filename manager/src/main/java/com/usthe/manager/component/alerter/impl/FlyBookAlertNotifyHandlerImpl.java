@@ -15,7 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -63,6 +65,9 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         }
         textBuilder.append("\n告警级别 :")
             .append(CommonUtil.transferAlertPriority(alert.getPriority()));
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        textBuilder.append("\n告警触发时间 : ").append(triggerTime);
         textBuilder.append("\n内容详情 : ").append(alert.getContent());
         flyBookContent.setText(textBuilder.toString());
         contents1.add(flyBookContent);

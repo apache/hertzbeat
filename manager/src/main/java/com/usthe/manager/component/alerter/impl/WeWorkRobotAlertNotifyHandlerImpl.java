@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Send alarm information through enterprise WeChat
  * 通过企业微信发送告警信息
@@ -53,6 +56,9 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
             content.append("告警级别 : <font color=\"comment\">")
                     .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
         }
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        content.append("告警触发时间 : ").append(triggerTime).append("\n");
         content.append("内容详情 : ").append(alert.getContent());
         markdownDTO.setContent(content.toString());
         weWorkWebHookDTO.setMarkdown(markdownDTO);

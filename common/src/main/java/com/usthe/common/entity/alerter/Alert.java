@@ -1,5 +1,6 @@
 package com.usthe.common.entity.alerter;
 
+import com.usthe.common.util.GsonUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -76,27 +77,47 @@ public class Alert {
             notes = "告警阈值触发次数",
             example = "3", accessMode = READ_WRITE, position = 8)
     @Min(0)
-    @Max(10)
     private int times;
 
-    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 8)
+    @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
+            notes = "首次告警触发时间(毫秒时间戳)",
+            example = "1612198922000", accessMode = READ_ONLY, position = 9)
+    private long firstTriggerTime;
+
+    @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
+            notes = "最近告警触发时间(毫秒时间戳)",
+            example = "1612198922000", accessMode = READ_ONLY, position = 9)
+    private long lastTriggerTime;
+
+    @ApiModelProperty(value = "Alarm evaluation interval (milliseconds)",
+            notes = "告警评估时间间隔(单位毫秒)",
+            example = "2000", accessMode = READ_ONLY, position = 10)
+    private long nextEvalInterval;
+
+    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 11)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
     private Map<String, String> tags;
 
-    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 8)
+    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 12)
     private String creator;
 
-    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 9)
+    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 13)
     private String modifier;
 
-    @ApiModelProperty(value = "Alarm trigger time (timestamp in milliseconds)",
-            notes = "告警触发时间(毫秒时间戳)",
-            example = "1612198922000", accessMode = READ_ONLY, position = 9)
+    @ApiModelProperty(value = "Record the latest creation time (timestamp in milliseconds)",
+            notes = "记录最新创建时间(毫秒时间戳)",
+            example = "1612198922000", accessMode = READ_ONLY, position = 14)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtCreate;
 
-    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 11)
+    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 15)
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
+
+    @Override
+    public Alert clone() {
+        // deep clone
+        return GsonUtil.fromJson(GsonUtil.toJson(this), Alert.class);
+    }
 }

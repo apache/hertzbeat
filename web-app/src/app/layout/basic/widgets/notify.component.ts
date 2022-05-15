@@ -70,7 +70,7 @@ export class HeaderNotifyComponent implements OnInit {
               id: alert.id,
               avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
               title: `${alert.tags['monitorName']}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
-              datetime: alert.gmtCreate,
+              datetime: new Date(alert.lastTriggerTime).toLocaleString(),
               color: 'blue',
               type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
             };
