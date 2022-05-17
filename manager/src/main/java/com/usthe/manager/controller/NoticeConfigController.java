@@ -36,7 +36,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "Notification Config API | 消息通知配置API")
 @RestController()
-@RequestMapping(value = "/notice", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(value = "/api/notice", produces = {APPLICATION_JSON_VALUE})
 public class NoticeConfigController {
 
     @Autowired
@@ -134,6 +134,14 @@ public class NoticeConfigController {
         List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(specification);
         Message<List<NoticeRule>> message = new Message<>(receiverPage);
         return ResponseEntity.ok(message);
+    }
+
+
+    @PostMapping(path = "/receiver/send-test-msg")
+    @ApiOperation(value = "Send test msg to receiver", notes = "给指定接收人发送测试消息")
+    public ResponseEntity<Message<Boolean>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
+        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
+        return ResponseEntity.ok(new Message<>(sendFlag));
     }
 
 }

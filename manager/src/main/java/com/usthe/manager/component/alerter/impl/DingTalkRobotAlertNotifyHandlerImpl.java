@@ -2,6 +2,7 @@ package com.usthe.manager.component.alerter.impl;
 
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.DingTalkWebHookDto;
@@ -12,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Send alarm information through DingTalk robot
@@ -28,16 +32,34 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
         DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
-        String content = "#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
-                alert.getTarget() + "\n   " +
-                "##### **所属监控ID** : " + alert.getMonitorId() + "\n   " +
-                "##### **所属监控名称** : " + alert.getMonitorName() + "\n   " +
-                "##### **告警级别** : " +
-                CommonUtil.transferAlertPriority(alert.getPriority()) + "\n   " +
-                "##### **内容详情** : " + alert.getContent();
-        markdownDTO.setText(content);
+        StringBuilder contentBuilder = new StringBuilder("#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
+                alert.getTarget() + "\n   ");
+        if (monitorId != null) {
+            contentBuilder.append("##### **所属监控ID** : ").append(monitorId)
+                .append("\n   ");
+        }
+        if (monitorName != null) {
+            contentBuilder.append("##### **所属监控名称** : ").append(monitorName)
+                .append("\n   ");
+        }
+        contentBuilder.append("##### **告警级别** : ")
+            .append(CommonUtil.transferAlertPriority(alert.getPriority()))
+            .append("\n   ");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        contentBuilder.append("##### **告警触发时间** : ")
+                .append(triggerTime)
+                .append("\n   ");
+        contentBuilder.append("##### **内容详情** : ").append(alert.getContent());
+        markdownDTO.setText(contentBuilder.toString());
         markdownDTO.setTitle("TanCloud探云告警通知");
         dingTalkWebHookDto.setMarkdown(markdownDTO);
         String webHookUrl = DingTalkWebHookDto.WEBHOOK_URL + receiver.getAccessToken();

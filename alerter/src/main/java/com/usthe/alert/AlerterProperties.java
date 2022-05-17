@@ -1,6 +1,5 @@
 package com.usthe.alert;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,27 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "alerter")
 public class AlerterProperties {
 
+    /**
+     * 告警内容控制台链接
+     */
     private String consoleUrl = "https://console.tancloud.cn";
+
+    /**
+     * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
+     * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
+     */
+    private long alertEvalIntervalBase = 1000 * 60 * 10L;
+
+    /**
+     * 最大告警评估时间间隔 单位毫秒
+     * max of alert eval interval time, unit:ms
+     */
+    private long maxAlertEvalInterval = 1000 * 60 * 60 * 24L;
+
+    /**
+     * 数据入口配置属性
+     */
+    private EntranceProperties entrance;
 
     public String getConsoleUrl() {
         return consoleUrl;
@@ -24,11 +43,21 @@ public class AlerterProperties {
         this.consoleUrl = url;
     }
 
-    /**
-     * 数据入口配置属性
-     */
-    private EntranceProperties entrance;
+    public long getAlertEvalIntervalBase() {
+        return alertEvalIntervalBase;
+    }
 
+    public void setAlertEvalIntervalBase(long alertEvalIntervalBase) {
+        this.alertEvalIntervalBase = alertEvalIntervalBase;
+    }
+
+    public long getMaxAlertEvalInterval() {
+        return maxAlertEvalInterval;
+    }
+
+    public void setMaxAlertEvalInterval(long maxAlertEvalInterval) {
+        this.maxAlertEvalInterval = maxAlertEvalInterval;
+    }
 
     public EntranceProperties getEntrance() {
         return entrance;

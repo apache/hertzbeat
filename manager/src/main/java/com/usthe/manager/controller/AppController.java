@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Locale;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -29,7 +30,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Api(tags = "Monitor Type Manage API | 监控类型管理API")
 @RestController
-@RequestMapping(path = "/apps", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
     @Autowired
@@ -60,8 +61,13 @@ public class AppController {
         if (lang == null || "".equals(lang)) {
             lang = "zh-CN";
         }
-        lang = "zh-cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
-        lang = "en-us".equalsIgnoreCase(lang) ? "en-US" : lang;
+        if (lang.contains(Locale.ENGLISH.getLanguage())) {
+            lang = "en-US";
+        } else if (lang.contains(Locale.CHINESE.getLanguage())) {
+            lang = "zh-CN";
+        } else {
+            lang = "en-US";
+        }
         List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
         return ResponseEntity.ok(new Message<>(appHierarchies));
     }

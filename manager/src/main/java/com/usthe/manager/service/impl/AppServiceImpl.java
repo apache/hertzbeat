@@ -31,8 +31,11 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Monitoring Type Management Implementation
  * 监控类型管理实现
- * TODO 暂时将监控配置和参数配置存放内存 之后存入数据库
+ * TODO temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
+ * 暂时将监控配置和参数配置存放内存 之后存入数据库
+ *
  * @author tomsun28
  * @date 2021/11/14 17:17
  */
@@ -70,7 +73,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(32);
         for (Job job : appDefines.values()) {
-            // todo 暂时只国际化监控类型名称  后面需要支持指标名称
+            // todo Todo temporarily only internationalizes the monitoring type name, after which it needs to support the indicator name
+            //  暂时只国际化监控类型名称  后面需要支持指标名称
             Map<String, String> name = job.getName();
             if (name != null && !name.isEmpty()) {
                 String i18nName = name.get(lang);
@@ -187,7 +191,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             String defineParamPath = classpath + File.separator + "define" + File.separator + "param";
             directory = new File(defineParamPath);
             if (!directory.exists() || directory.listFiles() == null) {
-                throw new  IllegalArgumentException("define param directory not exist: " + defineParamPath);
+                throw new IllegalArgumentException("define param directory not exist: " + defineParamPath);
             }
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists()) {

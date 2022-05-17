@@ -1,7 +1,9 @@
 package com.usthe.manager.component.alerter.impl;
 
+import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
@@ -13,7 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,10 +31,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final RestTemplate restTemplate;
+
+    private final AlerterProperties alerterProperties;
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
+        String monitorId = null;
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
         FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
         FlyBookWebHookDto.Content content = new FlyBookWebHookDto.Content();
         FlyBookWebHookDto.Post post = new FlyBookWebHookDto.Post();
@@ -42,17 +55,26 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         List<FlyBookWebHookDto.FlyBookContent> contents1 = new ArrayList<>();
         FlyBookWebHookDto.FlyBookContent flyBookContent = new FlyBookWebHookDto.FlyBookContent();
         flyBookContent.setTag("text");
-        String text = "告警目标对象 :" + alert.getTarget() +
-                "\n所属监控ID :" + alert.getMonitorId() +
-                "\n所属监控名称 :" + alert.getMonitorName() +
-                "\n告警级别 :" + CommonUtil.transferAlertPriority(alert.getPriority()) +
-                "\n内容详情 : " + alert.getContent();
-        flyBookContent.setText(text);
+        StringBuilder textBuilder = new StringBuilder("告警目标对象 :");
+        textBuilder.append(alert.getTarget());
+        if (monitorId != null) {
+            textBuilder.append("\n所属监控ID :").append(monitorId);
+        }
+        if (monitorName != null) {
+            textBuilder.append("\n所属监控名称 :").append(monitorName);
+        }
+        textBuilder.append("\n告警级别 :")
+            .append(CommonUtil.transferAlertPriority(alert.getPriority()));
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        textBuilder.append("\n告警触发时间 : ").append(triggerTime);
+        textBuilder.append("\n内容详情 : ").append(alert.getContent());
+        flyBookContent.setText(textBuilder.toString());
         contents1.add(flyBookContent);
         FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
         bookContent.setTag("a");
         bookContent.setText("登入控制台");
-        bookContent.setHref("https://www.tancloud.cn");
+        bookContent.setHref(alerterProperties.getConsoleUrl());
         contents1.add(bookContent);
         contents.add(contents1);
         zhCn.setTitle("[TanCloud探云告警通知]");

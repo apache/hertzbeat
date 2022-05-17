@@ -285,6 +285,14 @@
           <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 6" name="wechatId" type="text" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzOffset]="7" [nzSpan]="12">
+          <button nz-button nzDanger nzType="primary" [nzLoading]="isSendTestButtonLoading" (click)="onSendAlertTestMsg()">
+            <i nz-icon nzType="send" nzTheme="outline"></i>
+            {{ 'alert.notice.send-test' | i18n }}
+          </button>
+        </nz-form-control>
+      </nz-form-item>
     </form>
   </div>
 </nz-modal>
@@ -308,12 +316,6 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="filterAll">{{ 'alert.notice.rule.all' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-switch [(ngModel)]="rule.filterAll" disabled name="filterAll" id="filterAll"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="receiver">{{ 'alert.notice.receiver.people' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
@@ -327,6 +329,54 @@
             name="receiver"
             id="receiver"
           >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="filterAll">{{ 'alert.notice.rule.all' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="rule.filterAll" name="filterAll" id="filterAll"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.notice.rule.tag' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-select
+            [(ngModel)]="filterTags"
+            (nzOpenChange)="loadTagsOption()"
+            [nzOptions]="tagsOption"
+            [nzMaxTagCount]="5"
+            [nzDisabled]="rule.filterAll"
+            nzShowSearch
+            nzMode="multiple"
+            nzAllowClear
+            nzPlaceHolder="Select Tags"
+            required
+            name="tags"
+            id="tags"
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.notice.rule.priority' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-select
+            [(ngModel)]="rule.priorities"
+            [nzDisabled]="rule.filterAll"
+            (ngModelChange)="onPrioritiesChange()"
+            nzShowSearch
+            nzMode="multiple"
+            nzAllowClear
+            nzPlaceHolder="Select Priorities"
+            required
+            name="priorities"
+            id="priorities"
+          >
+            <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

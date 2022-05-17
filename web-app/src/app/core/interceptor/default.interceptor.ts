@@ -44,6 +44,7 @@ const CODE_MESSAGE: { [key: number]: string } = {
  */
 @Injectable()
 export class DefaultInterceptor implements HttpInterceptor {
+  private notified = false;
   // 是否正在刷新TOKEN过程
   private refreshToking = false;
   private refreshToken$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
@@ -59,7 +60,10 @@ export class DefaultInterceptor implements HttpInterceptor {
   }
 
   private goTo(url: string): void {
-    setTimeout(() => this.injector.get(Router).navigateByUrl(url));
+    setTimeout(() => {
+      this.injector.get(Router).navigateByUrl(url);
+      this.notified = false;
+    });
   }
 
   private checkStatus(ev: HttpResponseBase): void {
@@ -144,8 +148,11 @@ export class DefaultInterceptor implements HttpInterceptor {
   }
 
   private toLogin(): void {
-    this.notification.error(`未登录或登录已过期，请重新登录。`, ``);
-    this.goTo('/passport/login');
+    if (!this.notified) {
+      this.notified = true;
+      this.notification.error(`未登录或登录已过期，请重新登录。`, ``);
+      this.goTo('/passport/login');
+    }
   }
 
   private fillHeaders(headers?: HttpHeaders): { [name: string]: string } {

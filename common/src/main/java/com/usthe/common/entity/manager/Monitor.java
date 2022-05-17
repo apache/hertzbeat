@@ -1,6 +1,8 @@
 package com.usthe.common.entity.manager;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.usthe.common.support.valid.HostValid;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -10,13 +12,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -34,7 +34,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Monitor Entity,zh: 监控实体")
+@ApiModel(description = "Monitor Entity | 监控实体")
 public class Monitor {
 
     /**
@@ -132,4 +132,17 @@ public class Monitor {
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
 
+    /**
+     * 多对多关联中，需设置第三张关联中间表JoinTable
+     * JoinTable name 为关联关系中间表名称
+     *           joinColumns：中间表的外键字段关联当前实体类所对应表的主键字段
+     *           inverseJoinColumn：中间表的外键字段关联对方表的主键字段
+     *           JoinColumn  name 中间表的关联字段名称
+     *                       referencedColumnName 关联表的映射字段名称
+     */
+    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "tag_monitor_bind",
+        joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
+        inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
+    private List<Tag> tags;
 }
