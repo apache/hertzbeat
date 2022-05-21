@@ -60,13 +60,14 @@ sidebar_label: Zookeeper监控
 
 # 注意
 ## zookeeper四字命令
->因为目前的实现方案有限，使用的是zookeeper提供的四字命令来收集指标
+>目前的实现方案使用的是zookeeper提供的四字命令来收集指标
 需要用户自己将zookeeper的四字命令加入白名单
 
 加白步骤
->1.找到我们zookeeper的配置文件，一般是zoo.cfg 
+> 1.找到我们zookeeper的配置文件，一般是zoo.cfg 
 > 
->2.配置文件中加入以下命令
+> 2.配置文件中加入以下命令   
+
 ```shell
 # 将需要的命令添加到白名单中
 4lw.commands.whitelist=stat, ruok, conf, isro
@@ -74,21 +75,23 @@ sidebar_label: Zookeeper监控
 # 将所有命令添加到白名单中
 4lw.commands.whitelist=*
 ```
->3.重启服务
-```shell
+
+> 3.重启服务   
+
+```shell 
 zkServer.sh restart
 ```
 
 ## netcat协议
-限于目前实现方案的原因，目前需要我们部署zookeeper的linux服务器
-安装netcat的命令环境(后期我们会寻找其他的解决方案)
+目前实现方案需要我们部署zookeeper的linux服务器
+安装netcat的命令环境
 
->netcat安装步骤
+> netcat安装步骤   
 ```shell
 yum install -y nc
 ```
 
-如果终端显示以下信息则说明安装成功
+如果终端显示以下信息则说明安装成功   
 ```shell
 Complete!
 ```
