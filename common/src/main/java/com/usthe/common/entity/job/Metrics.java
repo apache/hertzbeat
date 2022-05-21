@@ -3,6 +3,7 @@ package com.usthe.common.entity.job;
 import com.usthe.common.entity.job.protocol.HttpProtocol;
 import com.usthe.common.entity.job.protocol.IcmpProtocol;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
+import com.usthe.common.entity.job.protocol.RedisProtocol;
 import com.usthe.common.entity.job.protocol.SshProtocol;
 import com.usthe.common.entity.job.protocol.TcpUdpProtocol;
 import com.usthe.common.entity.job.protocol.TelnetProtocol;
@@ -95,6 +96,12 @@ public class Metrics {
      * 使用公共的ssh协议的监控配置信息
      */
     private SshProtocol ssh;
+
+    /**
+     * Monitoring configuration information using the public redis protocol
+     * 使用公共的redis协议的监控配置信息
+     */
+    private RedisProtocol redis;
 
     @Override
     public boolean equals(Object o) {
