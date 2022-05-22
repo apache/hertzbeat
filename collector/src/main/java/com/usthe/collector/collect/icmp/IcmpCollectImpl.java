@@ -61,7 +61,7 @@ public class IcmpCollectImpl extends AbstractCollect {
                 builder.addValues(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_REACHABLE);
-                builder.setMsg("对端不可达，Timeout " + timeout + "ms");
+                builder.setMsg("Un Reachable, Timeout " + timeout + "ms");
                 return;
             }
         } catch (UnknownHostException unknownHostException) {

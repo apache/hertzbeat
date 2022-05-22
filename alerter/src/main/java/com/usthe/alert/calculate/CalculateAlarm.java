@@ -127,7 +127,7 @@ public class CalculateAlarm {
             } else {
                 // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
                 Alert preAlert = triggeredAlertMap.remove(String.valueOf(monitorId));
-                if (preAlert != null) {
+                if (preAlert != null && preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
                     // 发送告警恢复
                     Map<String, String> tags = new HashMap<>(6);
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
@@ -263,9 +263,16 @@ public class CalculateAlarm {
                         .target(CommonConstants.REACHABLE)
                         .content(this.bundle.getString("alerter.reachability.emergency") + ": " + code.name());
             }
-            Alert alert = alertBuilder.build();
-            dataQueue.addAlertData(alert.clone());
-            triggeredAlertMap.put(monitorId, alert);
+            if (alerterProperties.getSystemAlertTriggerTimes() > 1) {
+                alertBuilder.nextEvalInterval(0L);
+                alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
+                Alert alert = alertBuilder.build();
+                triggeredAlertMap.put(monitorId, alert);
+            } else {
+                Alert alert = alertBuilder.build();
+                dataQueue.addAlertData(alert.clone());
+                triggeredAlertMap.put(monitorId, alert);
+            }
             return;
         }
         if (preAlert.getLastTriggerTime() + preAlert.getNextEvalInterval() >= currentTimeMill) {
@@ -274,15 +281,20 @@ public class CalculateAlarm {
             triggeredAlertMap.put(monitorId, preAlert);
         } else {
             preAlert.setTimes(preAlert.getTimes() + 1);
-            preAlert.setLastTriggerTime(currentTimeMill);
-            long nextEvalInterval  = preAlert.getNextEvalInterval() * 2;
-            if (preAlert.getNextEvalInterval() == 0L) {
-                nextEvalInterval = alerterProperties.getAlertEvalIntervalBase();
+            if (preAlert.getTimes() >= alerterProperties.getSystemAlertTriggerTimes()) {
+                preAlert.setLastTriggerTime(currentTimeMill);
+                long nextEvalInterval  = preAlert.getNextEvalInterval() * 2;
+                if (preAlert.getNextEvalInterval() == 0L) {
+                    nextEvalInterval = alerterProperties.getAlertEvalIntervalBase();
+                }
+                nextEvalInterval = Math.min(nextEvalInterval, alerterProperties.getMaxAlertEvalInterval());
+                preAlert.setNextEvalInterval(nextEvalInterval);
+                preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
+                triggeredAlertMap.put(monitorId, preAlert);
+                dataQueue.addAlertData(preAlert.clone());
+            } else {
+                triggeredAlertMap.put(monitorId, preAlert);
             }
-            nextEvalInterval = Math.min(nextEvalInterval, alerterProperties.getMaxAlertEvalInterval());
-            preAlert.setNextEvalInterval(nextEvalInterval);
-            triggeredAlertMap.put(monitorId, preAlert);
-            dataQueue.addAlertData(preAlert.clone());
         }
     }
 }
