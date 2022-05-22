@@ -9,6 +9,7 @@ import com.usthe.common.util.CommonConstants;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
@@ -31,7 +32,7 @@ public class RedisSingleCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
-        preCheck(builder, appId, app, metrics);
+        preCheck(metrics);
         RedisClient redisClient = buildClient(metrics.getRedis());
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
@@ -63,11 +64,13 @@ public class RedisSingleCollectImpl extends AbstractCollect {
     /**
      * pre check params
      */
-    private void preCheck(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    private void preCheck(Metrics metrics) {
         if (metrics == null || metrics.getRedis() == null) {
             throw new IllegalArgumentException("Redis collect must has redis params");
         }
-        // fixme hibernate-validator
+        RedisProtocol redisProtocol = metrics.getRedis();
+        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
+        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
     }
 
     /**
