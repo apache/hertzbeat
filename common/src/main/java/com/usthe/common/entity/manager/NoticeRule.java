@@ -1,6 +1,5 @@
 package com.usthe.common.entity.manager;
 
-import com.usthe.common.entity.alerter.JsonMapAttributeConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -10,10 +9,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -75,10 +74,9 @@ public class NoticeRule {
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE, position = 8)
-    @Convert(converter = JsonMapAttributeConverter.class)
-    @SuppressWarnings("JpaAttributeTypeInspection")
-    private Map<String, String> tags;
+    @ApiModelProperty(value = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}", accessMode = READ_WRITE, position = 8)
+    @Convert(converter = JsonTagListAttributeConverter.class)
+    private List<TagItem> tags;
 
     @ApiModelProperty(value = "The creator of this record",
             notes = "此条记录创建者",
@@ -102,4 +100,17 @@ public class NoticeRule {
     @Column(insertable = false, updatable = false)
     private LocalDateTime gmtUpdate;
 
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Data
+    public static class TagItem {
+
+        @ApiModelProperty(value = "Tag Name")
+        @NotBlank
+        private String name;
+
+        @ApiModelProperty(value = "Tag Value")
+        private String value;
+    }
 }

@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import io.etcd.jetcd.ByteSequence;
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -29,6 +30,10 @@ public class GsonUtil {
 
     public static <T> T fromJson(String jsonStr, Class<T> clazz) {
         return gson.fromJson(jsonStr, clazz);
+    }
+
+    public static <T> T fromJson(String jsonStr, Type typeOfT) {
+        return gson.fromJson(jsonStr, typeOfT);
     }
 
     public static <T> T fromJson(ByteSequence byteSequence, Class<T> clazz) {
