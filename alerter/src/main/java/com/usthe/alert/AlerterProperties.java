@@ -31,6 +31,12 @@ public class AlerterProperties {
     private long maxAlertEvalInterval = 1000 * 60 * 60 * 24L;
 
     /**
+     * 系统内置告警(available alert, reachable alert...)触发次数
+     * system alert(available alert, reachable alert...) trigger times
+     */
+    private int systemAlertTriggerTimes = 1;
+
+    /**
      * 数据入口配置属性
      */
     private EntranceProperties entrance;
@@ -57,6 +63,14 @@ public class AlerterProperties {
 
     public void setMaxAlertEvalInterval(long maxAlertEvalInterval) {
         this.maxAlertEvalInterval = maxAlertEvalInterval;
+    }
+
+    public int getSystemAlertTriggerTimes() {
+        return systemAlertTriggerTimes;
+    }
+
+    public void setSystemAlertTriggerTimes(int systemAlertTriggerTimes) {
+        this.systemAlertTriggerTimes = systemAlertTriggerTimes;
     }
 
     public EntranceProperties getEntrance() {
