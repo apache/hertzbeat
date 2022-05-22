@@ -120,6 +120,11 @@
             <artifactId>orai18n</artifactId>
             <version>21.5.0.0</version>
         </dependency>
+        <!--redis-->
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
