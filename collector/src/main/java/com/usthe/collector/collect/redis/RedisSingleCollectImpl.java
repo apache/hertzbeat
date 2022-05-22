@@ -1,12 +1,14 @@
 package com.usthe.collector.collect.redis;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
@@ -80,14 +82,26 @@ public class RedisSingleCollectImpl extends AbstractCollect {
      * @return redis single client
      */
     private RedisClient buildClient(RedisProtocol redisProtocol) {
-        String uri = String.format("redis://%s:%d", redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
+        RedisURI redisUri = RedisURI.create(redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
+        if (StringUtils.hasText(redisProtocol.getUsername())) {
+            redisUri.setUsername(redisProtocol.getUsername());
+        }
+        if (StringUtils.hasText(redisProtocol.getPassword())) {
+            redisUri.setPassword(redisProtocol.getPassword().toCharArray());
+        }
+        CacheIdentifier identifier = CacheIdentifier.builder()
+                .ip(redisProtocol.getHost())
+                .port(redisProtocol.getPort())
+                .username(redisProtocol.getUsername())
+                .password(redisProtocol.getPassword())
+                .build();
         CommonCache commonCache = CommonCache.getInstance();
-        return commonCache.getCache(uri, true)
+        return commonCache.getCache(identifier, true)
                 .map(r -> (RedisClient) r)
                 .orElseGet(() -> {
                     // create new redis client
-                    RedisClient redisClient = RedisClient.create(uri);
-                    commonCache.addCache(uri, redisClient);
+                    RedisClient redisClient = RedisClient.create(redisUri);
+                    commonCache.addCache(identifier, redisClient);
                     return redisClient;
                 });
     }
@@ -100,10 +114,10 @@ public class RedisSingleCollectImpl extends AbstractCollect {
      */
     private Map<String, String> parseInfo(String info) {
         String[] lines = info.split("\n");
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>(16);
         Arrays.stream(lines)
                 .filter(it -> StringUtils.hasText(it) && !it.startsWith("#") && it.contains(":"))
-                .map(this::removeCR)
+                .map(this::removeCr)
                 .map(r -> r.split(":"))
                 .forEach(it -> {
                     if (it.length > 1) {
@@ -113,7 +127,7 @@ public class RedisSingleCollectImpl extends AbstractCollect {
         return result;
     }
 
-    private String removeCR(String value) {
+    private String removeCr(String value) {
         return value.replace("\r", "");
     }
 
