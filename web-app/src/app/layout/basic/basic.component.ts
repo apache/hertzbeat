@@ -75,9 +75,9 @@ import { CONSTS } from 'src/app/shared/consts';
     </layout-default>
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; text-shadow: 0 1px 0 #fff;margin:0;">
       <div style="margin-top: 30px">
-      HertzBeat {{ version }}<br />
+        HertzBeat {{ version }}<br />
         Copyright
-        <i nz-icon nzType="copyright"></i> 2022 
+        <i nz-icon nzType="copyright"></i> 2022
         <a href="https://hertzbeat.com" target="_blank">https://www.hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
