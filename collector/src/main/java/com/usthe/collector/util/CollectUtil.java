@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
  */
 public class CollectUtil {
 
+    private static final int DEFAULT_TIMEOUT = 60000;
+
     /**
      * 关键字匹配计数
      * @param content 内容
@@ -30,6 +32,32 @@ public class CollectUtil {
             return count;
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    /**
+     * get timeout integer
+     * @param timeout timeout str
+     * @return timeout
+     */
+    public static int getTimeout(String timeout) {
+        return getTimeout(timeout, DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * get timeout integer or default value
+     * @param timeout timeout str
+     * @param defaultTimeout default timeout
+     * @return timeout
+     */
+    public static int getTimeout(String timeout, int defaultTimeout) {
+        if (timeout == null || "".equals(timeout.trim())) {
+            return defaultTimeout;
+        }
+        try {
+            return Integer.parseInt(timeout);
+        } catch (Exception e) {
+            return defaultTimeout;
         }
     }
 }
