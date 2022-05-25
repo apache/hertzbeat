@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 
 /**
+ * jdbc common connection
  * @author tomsun28
  * @date 2022/1/1 21:24
  */
