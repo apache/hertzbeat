@@ -84,6 +84,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "goo-kits",
+      "name": "goo-kits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13163673?v=4",
+      "profile": "https://github.com/goo-kits",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
