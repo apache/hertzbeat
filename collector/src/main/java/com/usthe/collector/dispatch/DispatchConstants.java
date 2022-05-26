@@ -29,6 +29,10 @@ public interface DispatchConstants {
      * protocol  协议 ssh
      */
     String PROTOCOL_SSH = "ssh";
+    /**
+     * protocol  协议 ssh
+     */
+    String PROTOCOL_REDIS = "redis";
     // Protocol type related - end
     // 协议类型相关 - end //
 

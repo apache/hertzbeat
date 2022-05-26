@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
+import { CONSTS } from 'src/app/shared/consts';
 
 @Component({
   selector: 'layout-basic',
@@ -72,7 +73,16 @@ import { environment } from '@env/environment';
         <router-outlet></router-outlet>
       </ng-template>
     </layout-default>
-
+    <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; text-shadow: 0 1px 0 #fff;margin:0;">
+      <div style="margin-top: 30px">
+        HertzBeat {{ version }}<br />
+        Copyright
+        <i nz-icon nzType="copyright"></i> 2022
+        <a href="https://hertzbeat.com" target="_blank">https://www.hertzbeat.com</a>
+        <br />
+        Licensed under the Apache License, Version 2.0
+      </div>
+    </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
     <theme-btn
       [types]="[
@@ -91,6 +101,7 @@ export class LayoutBasicComponent {
   avatar: string = `./assets/logo.svg`;
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
+  version = CONSTS.VERSION;
   get user(): User {
     return this.settings.user;
   }

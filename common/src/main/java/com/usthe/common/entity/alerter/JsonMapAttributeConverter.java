@@ -1,8 +1,10 @@
 package com.usthe.common.entity.alerter;
 
+import com.google.gson.reflect.TypeToken;
 import com.usthe.common.util.GsonUtil;
 
 import javax.persistence.AttributeConverter;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -19,6 +21,7 @@ public class JsonMapAttributeConverter implements AttributeConverter<Map<String,
 
     @Override
     public Map<String, String> convertToEntityAttribute(String dbData) {
-        return GsonUtil.fromJson(dbData, Map.class);
+        Type type = new TypeToken<Map<String, String>>(){}.getType();
+        return GsonUtil.fromJson(dbData, type);
     }
 }

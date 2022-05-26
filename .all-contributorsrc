@@ -1,0 +1,130 @@
+{
+  "projectName": "hertzbeat",
+  "projectOwner": "tomsun28",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md",
+    "README_CN.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "tomsun28",
+      "name": "tomsun28",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24788200?v=4",
+      "profile": "https://github.com/tomsun28",
+      "contributions": [
+        "code",
+        "doc",
+        "design"
+      ]
+    },
+    {
+      "login": "wang1027-wqh",
+      "name": "会编程的王学长",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71161318?v=4",
+      "profile": "https://github.com/wang1027-wqh",
+      "contributions": [
+        "code",
+        "doc",
+        "design"
+      ]
+    },
+    {
+      "login": "shimingxy",
+      "name": "MaxKey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1563377?v=4",
+      "profile": "https://www.maxkey.top/",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
+    },
+    {
+      "login": "gcdd1993",
+      "name": "观沧海",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26523525?v=4",
+      "profile": "https://blog.gcdd.top/",
+      "contributions": [
+        "code",
+        "design",
+        "bug"
+      ]
+    },
+    {
+      "login": "a25017012",
+      "name": "yuye",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32265356?v=4",
+      "profile": "https://github.com/a25017012",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "jx10086",
+      "name": "jx10086",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5323228?v=4",
+      "profile": "https://github.com/jx10086",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "winnerTimer",
+      "name": "winnerTimer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76024658?v=4",
+      "profile": "https://github.com/winnerTimer",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "goo-kits",
+      "name": "goo-kits",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13163673?v=4",
+      "profile": "https://github.com/goo-kits",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "brave4Time",
+      "name": "brave4Time",
+      "avatar_url": "https://avatars.githubusercontent.com/u/105094014?v=4",
+      "profile": "https://github.com/brave4Time",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "walkerlee-lab",
+      "name": "WalkerLee",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8426753?v=4",
+      "profile": "https://github.com/walkerlee-lab",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "fullofjoy",
+      "name": "jianghang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30247571?v=4",
+      "profile": "https://github.com/fullofjoy",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7
+}

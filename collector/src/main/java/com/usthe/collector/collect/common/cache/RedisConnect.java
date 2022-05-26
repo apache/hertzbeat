@@ -1,20 +1,20 @@
 package com.usthe.collector.collect.common.cache;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.Connection;
-
 /**
- * jdbc common connection
+ * redis connection
+ *
  *
  *
  */
 @Slf4j
-public class JdbcConnect implements CacheCloseable {
+public class RedisConnect implements CacheCloseable {
 
-    private Connection connection;
+    private StatefulRedisConnection<String, String> connection;
 
-    public JdbcConnect(Connection connection) {
+    public RedisConnect(StatefulRedisConnection<String, String> connection) {
         this.connection = connection;
     }
 
@@ -22,10 +22,10 @@ public class JdbcConnect implements CacheCloseable {
     public void close() {
         try {
             if (connection != null) {
-                connection.close();
+                connection.closeAsync();
             }
         } catch (Exception e) {
-            log.error("close jdbc connect error: {}", e.getMessage());
+            log.error("close redis connect error: {}", e.getMessage());
         }
     }
 
@@ -35,7 +35,7 @@ public class JdbcConnect implements CacheCloseable {
         super.finalize();
     }
 
-    public Connection getConnection() {
+    public StatefulRedisConnection<String, String> getConnection() {
         return connection;
     }
 }

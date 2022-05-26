@@ -10,11 +10,15 @@
     </div>
     <router-outlet></router-outlet>
     <global-footer [links]="links">
-      Copyright
-      <i nz-icon nzType="copyright" nzTheme="outline"></i>
-      2022
-      <a href="https://tancloud.cn" target="_blank">TanCloud tancloud.cn | </a>
-      <a href="https://hertzbeat.com" target="_blank">HertzBeat hertzbeat.com</a>
+      <div style="margin-top: 0px">
+        HertzBeat {{ version }}<br />
+        Copyright
+        <i nz-icon nzType="copyright" nzTheme="outline"></i>
+        2022
+        <a href="https://hertzbeat.com" target="_blank">https://www.hertzbeat.com</a>
+        <br />
+        Licensed under the Apache License, Version 2.0
+      </div>
     </global-footer>
   </div>
 </div>
