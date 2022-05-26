@@ -54,6 +54,16 @@
         "design",
         "bug"
       ]
+    },
+    {
+      "login": "a25017012",
+      "name": "yuye",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32265356?v=4",
+      "profile": "https://github.com/a25017012",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
