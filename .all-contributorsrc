@@ -64,6 +64,16 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "jx10086",
+      "name": "jx10086",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5323228?v=4",
+      "profile": "https://github.com/jx10086",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
