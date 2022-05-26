@@ -162,10 +162,6 @@ QQ group number `718618151` or scan the group QR code below, verify code: `tancl
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
 
-##### Github Discussion   
-
-Welcome to Discuss in [Github Discussion](https://github.com/dromara/hertzbeat/discussions)   
-
 ##### Public WeChat      
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>
