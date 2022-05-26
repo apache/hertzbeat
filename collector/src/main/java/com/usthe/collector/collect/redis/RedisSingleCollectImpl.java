@@ -73,7 +73,6 @@ public class RedisSingleCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(connectionException.getMessage());
         } catch (Exception e) {
-            // todo 根据不同的异常判断是连接失败还是采集失败
             log.warn("[redis collect] error: {}", e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
