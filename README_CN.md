@@ -1,9 +1,6 @@
 <p align="center">
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://hertzbeat.com">
-     <img alt="sureness" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="260">
+     <img alt="hertzbeat" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/hertzbeat-brand.svg" width="260">
   </a>
 </p>
 
@@ -13,6 +10,7 @@
 
 > 易用友好的云监控系统，无需Agent，强大自定义监控能力。
 
+[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
@@ -163,10 +161,13 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
 
-##### 交流网站
+##### Channel 
 
-[Dromara社区网站](https://dromara.org/)    
-[HertzBeat用户网站](https://support.qq.com/products/379369)   
+[Gitter Channel](https://gitter.im/hertzbeat/community)   
+
+[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+
+[User Club](https://support.qq.com/products/379369)    
 
 ##### 微信公众号   
 

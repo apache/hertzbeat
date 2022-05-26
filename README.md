@@ -10,6 +10,7 @@
 
 > Friendly cloud monitoring system. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
 
+[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
 ![tan-cloud](https://img.shields.io/badge/api-monitor-lightgrey)
 ![tan-cloud](https://img.shields.io/badge/ping-connect-brightgreen)
@@ -168,6 +169,14 @@ Welcome to Discuss in [Github Discussion](https://github.com/dromara/hertzbeat/d
 ##### Public WeChat      
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>
+
+##### Channel
+
+[Gitter Channel](https://gitter.im/hertzbeat/community)
+
+[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+
+[User Club](https://support.qq.com/products/379369)
 
 ##### Sponsor     
 
