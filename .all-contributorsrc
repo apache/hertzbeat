@@ -74,6 +74,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "winnerTimer",
+      "name": "winnerTimer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76024658?v=4",
+      "profile": "https://github.com/winnerTimer",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
