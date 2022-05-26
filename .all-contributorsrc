@@ -104,6 +104,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "walkerlee-lab",
+      "name": "WalkerLee",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8426753?v=4",
+      "profile": "https://github.com/walkerlee-lab",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
