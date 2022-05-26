@@ -32,6 +32,17 @@
         "doc",
         "design"
       ]
+    },
+    {
+      "login": "shimingxy",
+      "name": "MaxKey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1563377?v=4",
+      "profile": "https://www.maxkey.top/",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7
