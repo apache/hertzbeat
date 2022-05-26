@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> Friendly cloud monitoring system.  
+> Friendly cloud monitoring system. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
 
 ![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
 ![tan-cloud](https://img.shields.io/badge/api-monitor-lightgrey)
