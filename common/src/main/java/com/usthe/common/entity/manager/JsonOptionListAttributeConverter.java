@@ -1,8 +1,10 @@
 package com.usthe.common.entity.manager;
 
+import com.google.gson.reflect.TypeToken;
 import com.usthe.common.util.GsonUtil;
 
 import javax.persistence.AttributeConverter;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -19,6 +21,7 @@ public class JsonOptionListAttributeConverter implements AttributeConverter<List
 
     @Override
     public List<ParamDefine.Option> convertToEntityAttribute(String dbData) {
-        return GsonUtil.fromJson(dbData, List.class);
+        Type type = new TypeToken<List<ParamDefine.Option>>(){}.getType();
+        return GsonUtil.fromJson(dbData, type);
     }
 }

@@ -6,6 +6,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.database.JdbcCommonCollect;
 import com.usthe.collector.collect.http.HttpCollectImpl;
 import com.usthe.collector.collect.icmp.IcmpCollectImpl;
+import com.usthe.collector.collect.redis.RedisSingleCollectImpl;
 import com.usthe.collector.collect.ssh.SshCollectImpl;
 import com.usthe.collector.collect.telnet.TelnetCollectImpl;
 import com.usthe.collector.dispatch.timer.Timeout;
@@ -134,7 +135,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             case DispatchConstants.PROTOCOL_SSH:
                 abstractCollect = SshCollectImpl.getInstance();
                 break;
-            // todo
+            case DispatchConstants.PROTOCOL_REDIS:
+                abstractCollect = RedisSingleCollectImpl.getInstance();
+                // todo
             default:
                 break;
         }

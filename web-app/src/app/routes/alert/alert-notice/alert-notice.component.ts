@@ -6,7 +6,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
-import { NoticeRule } from '../../../pojo/NoticeRule';
+import { NoticeRule, TagItem } from '../../../pojo/NoticeRule';
 import { NoticeReceiverService } from '../../../service/notice-receiver.service';
 import { NoticeRuleService } from '../../../service/notice-rule.service';
 import { TagService } from '../../../service/tag.service';
@@ -275,8 +275,11 @@ export class AlertNoticeComponent implements OnInit {
     });
     this.filterTags = [];
     if (rule.tags != undefined) {
-      Object.keys(rule.tags).forEach(name => {
-        let tag = `${name}:${rule.tags[name]}`;
+      rule.tags.forEach(item => {
+        let tag = `${item.name}`;
+        if (item.value != undefined) {
+          tag = `${tag}:${item.value}`;
+        }
         this.filterTags.push(tag);
         this.tagsOption.push({
           value: tag,
@@ -344,9 +347,13 @@ export class AlertNoticeComponent implements OnInit {
           this.tagsOption = [];
           if (page.content != undefined) {
             page.content.forEach(item => {
+              let tag = `${item.name}`;
+              if (item.value != undefined) {
+                tag = `${tag}:${item.value}`;
+              }
               this.tagsOption.push({
-                value: `${item.name}:${item.value}`,
-                label: `${item.name}:${item.value}`
+                value: tag,
+                label: tag
               });
             });
           }
@@ -386,11 +393,17 @@ export class AlertNoticeComponent implements OnInit {
         this.rule.receiverName = option.label;
       }
     });
-    this.rule.tags = {};
+    this.rule.tags = [];
     this.filterTags.forEach(tag => {
       let tmp: string[] = tag.split(':');
-      if (tmp.length == 2) {
-        this.rule.tags[tmp[0]] = tmp[1];
+      let tagItem = new TagItem();
+      if (tmp.length == 1) {
+        tagItem.name = tmp[0];
+        this.rule.tags.push(tagItem);
+      } else if (tmp.length == 2) {
+        tagItem.name = tmp[0];
+        tagItem.value = tmp[1];
+        this.rule.tags.push(tagItem);
       }
     });
     if (this.rule.priorities != undefined) {

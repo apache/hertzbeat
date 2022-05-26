@@ -132,8 +132,8 @@ account:
 
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为admin
-# eg: tom 拥有[user],密码为tom@123
+# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
+# eg: tom 拥有[user],密码为hertzbeat
 # eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
 account:
    - appId: admin
