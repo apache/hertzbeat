@@ -5,6 +5,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.JdbcConnect;
+import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
@@ -53,15 +54,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
         // 查询超时时间默认6000毫秒
-        int timeout = 6000;
-        try {
-            // 获取查询语句超时时间
-            if (jdbcProtocol.getTimeout() != null) {
-                timeout = Integer.parseInt(jdbcProtocol.getTimeout());
-            }
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
+        int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
         try {
             Statement statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
@@ -128,10 +121,10 @@ public class JdbcCommonCollect extends AbstractCollect {
                         statement.close();
                     }
                     jdbcConnect.close();
-                    statement = null;
                 } catch (Exception e2) {
                     log.error(e2.getMessage());
                 }
+                statement = null;
                 CommonCache.getInstance().removeCache(identifier);
             }
         }

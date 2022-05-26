@@ -73,6 +73,13 @@
           "type": "category",
           "label": "操作系统",
           "items": [
+            "help/zookeeper"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "中间件",
+          "items": [
             "help/linux"
           ]
         },
