@@ -21,6 +21,17 @@
         "doc",
         "design"
       ]
+    },
+    {
+      "login": "wang1027-wqh",
+      "name": "会编程的王学长",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71161318?v=4",
+      "profile": "https://github.com/wang1027-wqh",
+      "contributions": [
+        "code",
+        "doc",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7
