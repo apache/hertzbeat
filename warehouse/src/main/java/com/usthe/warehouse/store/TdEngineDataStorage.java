@@ -53,6 +53,9 @@ public class TdEngineDataStorage implements DisposableBean {
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM %s WHERE ts >= now - 1w";
 
+    private static final String TABLE_NOT_EXIST
+            = "Table does not exist";
+
     public TdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
                                MetricsDataExporter dataExporter) {
         this.workerPool = workerPool;
@@ -266,7 +269,10 @@ public class TdEngineDataStorage implements DisposableBean {
             resultSet.close();
             return instanceValuesMap;
         } catch (SQLException sqlException) {
-          log.warn(sqlException.getMessage());
+          String msg = sqlException.getMessage();
+          if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
+              log.warn(sqlException.getMessage());
+          }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
