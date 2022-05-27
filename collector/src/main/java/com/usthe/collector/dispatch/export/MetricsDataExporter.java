@@ -32,7 +32,7 @@ public class MetricsDataExporter implements DisposableBean {
     }
 
     public CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException {
-        return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
+        return metricsDataToPersistentStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 
     public CollectRep.MetricsData pollMemoryStorageMetricsData() throws InterruptedException {
