@@ -26,6 +26,11 @@
     border-color: #ff4081;
 }
 
+// bugfix https://github.com/dromara/hertzbeat/issues/133
+.ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input, .ant-form-item-has-error :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper, .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:hover, .ant-form-item-has-error :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:hover {
+  background: inherit;
+}
+
 .ant-radio-wrapper:hover .ant-radio,
 .ant-radio:hover .ant-radio-inner,
 .ant-radio-input:focus + .ant-radio-inner {

@@ -9,10 +9,10 @@ import { switchMap } from 'rxjs/operators';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
+import { Tag } from '../../../pojo/Tag';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { TagService } from '../../../service/tag.service';
-import { Tag } from '../../../pojo/Tag';
 
 @Component({
   selector: 'app-monitor-add',

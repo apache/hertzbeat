@@ -98,6 +98,11 @@ module.exports = {
                     to: 'docs/others/private',
                 },
                 {
+                    label: '贡献者指南',
+                    position: 'left',
+                    to: 'docs/others/contributing',
+                },
+                {
                     label: '项目看板',
                     position: 'left',
                     href: 'https://github.com/dromara/hertzbeat/projects/1',
@@ -300,6 +305,9 @@ module.exports = {
     ],
     themes: ['@docusaurus/theme-live-codeblock'],
     scripts: [
-        'https://cdn.jsdelivr.net/gh/buttons/buttons.github.io/buttons.js'
+        {
+            src: 'https://cdn.jsdelivr.net/gh/buttons/buttons.github.io/buttons.js',
+            async: true
+        }
     ]
 }

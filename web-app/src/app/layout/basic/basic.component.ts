@@ -73,7 +73,7 @@ import { CONSTS } from 'src/app/shared/consts';
         <router-outlet></router-outlet>
       </ng-template>
     </layout-default>
-    <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; text-shadow: 0 1px 0 #fff;margin:0;">
+    <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
         HertzBeat {{ version }}<br />
         Copyright
