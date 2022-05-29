@@ -4,12 +4,12 @@ import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
+import { finalize } from 'rxjs/operators';
 
+import { AlertDefine } from '../../../pojo/AlertDefine';
+import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
-import { AlertDefine } from '../../../pojo/AlertDefine';
-import { finalize } from 'rxjs/operators';
-import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 
 @Component({
   selector: 'app-setting-tags',

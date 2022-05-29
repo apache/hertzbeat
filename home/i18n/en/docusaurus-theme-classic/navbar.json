@@ -46,5 +46,9 @@
   "item.label.相关资源": {
     "message": "Resource",
     "description": "Navbar item with label 相关资源"
+  },
+  "item.label.贡献者指南": {
+    "message": "Contributor Guide",
+    "description": "Navbar item with label 贡献者指南"
   }
 }

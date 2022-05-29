@@ -8,9 +8,8 @@ describe('KeyValueInputComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ KeyValueInputComponent ]
-    })
-    .compileComponents();
+      declarations: [KeyValueInputComponent]
+    }).compileComponents();
   });
 
   beforeEach(() => {

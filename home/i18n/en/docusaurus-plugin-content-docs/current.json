@@ -46,5 +46,13 @@
   "sidebar.docs.category.告警通知配置": {
     "message": "Alarm Notice Setting",
     "description": "The label for category 告警通知配置 in sidebar docs"
+  },
+  "sidebar.docs.category.中间件": {
+    "message": "中间件",
+    "description": "The label for category 中间件 in sidebar docs"
+  },
+  "sidebar.docs.category.Others": {
+    "message": "Others",
+    "description": "The label for category Others in sidebar docs"
   }
 }
