@@ -6,8 +6,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { Alert } from '../../../pojo/Alert';
-import { AlertService } from '../../../service/alert.service';
 import { Tag } from '../../../pojo/Tag';
+import { AlertService } from '../../../service/alert.service';
 
 @Component({
   selector: 'app-alert-center',

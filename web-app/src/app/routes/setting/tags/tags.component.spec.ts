@@ -1,4 +1,5 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { SettingTagsComponent } from './tags.component';
 
 describe('SettingTagsComponent', () => {
@@ -7,11 +8,11 @@ describe('SettingTagsComponent', () => {
 
   beforeEach(
     waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [ SettingTagsComponent ]
+      TestBed.configureTestingModule({
+        declarations: [SettingTagsComponent]
+      }).compileComponents();
     })
-    .compileComponents();
-  }));
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(SettingTagsComponent);
