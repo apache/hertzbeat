@@ -2,7 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
-
 import { CONSTS } from 'src/app/shared/consts';
 
 @Component({
