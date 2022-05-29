@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> Friendly cloud monitoring system. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
+> Friendly Cloud Monitoring System. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
 
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
@@ -39,29 +39,18 @@ Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community 
 
 ----   
 
-[![tancloud](tancloud.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
+[![hertzbeat](hertzbeat.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
 
 ----   
 
 ## 🥐 Architecture  
-
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.  
-> Provides monitoring management, monitoring configuration management, system user management, etc.  
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
-> Use common protocols to remotely collect and obtain peer-to-peer metrics data.   
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services. 
-> Metrics data management, data query, calculation and statistics.  
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.  
-> Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.   
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.  
-> Angular Web UI.    
 
 ![hertzBeat](home/static/img/docs/hertzbeat-stru-en.svg)     
 
 
 ## 🐕 Quick Start   
 
-- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn) **. 
+- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn)**.   
 - If you want to deploy HertzBeat local, please refer to the following [Deployment Documentation](https://hertzbeat.com/docs/start/quickstart) for operation.  
 
 ### 🐵 Dependency Service Deployment   
@@ -74,14 +63,14 @@ Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community 
 2. Create database names `hertzbeat`   
 3. Run the database sql script [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql) located in the project repository `/script/sql/` directory.     
 
-For detailed steps, refer to [MYSQL Installation And Initialization](https://hertzbeat.com/docs/start/mysql-init)   
+For detailed steps, refer to [MYSQL Install And Init](https://hertzbeat.com/docs/start/mysql-init)   
 
 ##### Install TDengine
 1. Install TDengine with docker     
    `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
 2. Create database names `hertzbeat`   
 
-For detailed steps, refer to [TDengine Installation And Initialization](https://hertzbeat.com/docs/start/tdengine-init).  
+For detailed steps, refer to [TDengine Install And Init](https://hertzbeat.com/docs/start/tdengine-init).  
 
 ### 🍞 Install HertzBeat   
 
@@ -98,11 +87,11 @@ Detailed steps refer to [Install HertzBeat via Docker](https://hertzbeat.com/doc
 3. Run shell `$ ./startup.sh `
 4. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
-Detailed steps refer to [Install HertzBeat via package](https://hertzbeat.com/docs/start/package-deploy)   
+Detailed steps refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
 
 ##### 3：Start via source code        
 1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.  
-2. Backend：need `maven3+`, `java8+`, start the manager service.  
+2. Backend：need `maven3+`, `java8+`, `lombok`, start the manager service.  
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
 4. Access `localhost:4200` to start, default account: `admin/hertzbeat`  
 
@@ -112,13 +101,14 @@ Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)
 
 Install and deploy the mysql database, tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
-Detailed steps refer to [docker-compose install](script/docker-compose/README.md)      
+Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
 **HAVE FUN**  
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:
+Thanks these wonderful people, welcome to join us:   
+[CONTRIBUTING](CONTRIBUTING.md)   
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

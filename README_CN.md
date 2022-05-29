@@ -38,22 +38,11 @@
 
 ----   
 
-[![tancloud](tancloud.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
+[![hertzbeat](hertzbeat.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
 
 ----   
 
-## 🥐 模块
-
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
-> 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
-> 使用通用协议远程采集获取对端指标数据。
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
-> 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
-> 监控告警系统可视化控制台前端  
+## 🥐 模块  
 
 ![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
 
@@ -112,7 +101,7 @@
 
 通过 [docker-compose部署脚本](script/docker-compose) 一次性把mysql数据库,tdengine数据库和hertzbeat安装部署。   
 
-详细步骤参考 [docker-compose安装](script/docker-compose/README.md)   
+详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)   
 
 **HAVE FUN**
 
