@@ -124,6 +124,15 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "ChineseTony",
+      "name": "ChineseTony",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24618786?v=4",
+      "profile": "https://github.com/ChineseTony",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
