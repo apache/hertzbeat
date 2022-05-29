@@ -19,6 +19,7 @@ import { features, SetupExample, SurenessIntegration, friendLinks, mediaPartners
 function Home() {
     const context = useDocusaurusContext()
     const {siteConfig = {}} = context
+    loadGitter();
     return (
         <Layout
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
@@ -78,3 +79,21 @@ function Home() {
 }
 
 export default Home
+
+function loadGitter() {
+    return new Promise(function (resolve, reject) {
+        var script = document.createElement('script')
+        script.type = 'text/javascript'
+        script.async = true;
+        script.src = 'https://sidecar.gitter.im/dist/sidecar.v1.js';
+        ((window.gitter = {}).chat = {}).options = {
+            room: 'hertzbeat/community'
+        };
+        script.onload = function () {
+            ((window.gitter = {}).chat = {}).options = {
+                room: 'hertzbeat/community'
+            };
+        }
+        document.body.appendChild(script)
+    })
+}
