@@ -107,8 +107,8 @@ Detailed steps refer to [Install via Docker-Compose](script/docker-compose/READM
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:   
-[CONTRIBUTING](CONTRIBUTING.md)   
+Thanks these wonderful people, welcome to join us:     
+[Contributor Guide](CONTRIBUTING.md)   
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
