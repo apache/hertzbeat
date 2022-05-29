@@ -107,7 +107,8 @@
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:
+Thanks these wonderful people, welcome to join us:   
+[贡献者指南](CONTRIBUTING.md)    
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
