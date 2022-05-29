@@ -175,7 +175,7 @@ public class CommonCache {
     public Optional<Object> getCache(Object key, boolean refreshCache) {
         Long[] cacheTime = timeoutMap.get(key);
         if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
-            log.warn("[cache] not hit the cache, key {}.", key);
+            log.info("[cache] not hit the cache, key {}.", key);
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {

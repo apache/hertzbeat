@@ -31,6 +31,7 @@ function Home() {
                     </h1>
                     <p className="hero__subtitle"><Translate>易用友好的云监控系统</Translate></p>
                     <div className={styles.social}>
+                        <a href="https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"><img src={'https://badges.gitter.im/hertzbeat/community.svg'} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/web-monitor.svg')} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/ping-connect.svg')} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/port-available.svg')} alt={''}/></a>
