@@ -2,7 +2,8 @@ package com.usthe.collector.collect.common.cache;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.ToString;
+
+import java.util.Objects;
 
 /**
  * 缓存key唯一标识符
@@ -11,7 +12,6 @@ import lombok.ToString;
  */
 @Data
 @Builder
-@ToString
 public class CacheIdentifier {
 
     private String ip;
@@ -22,4 +22,12 @@ public class CacheIdentifier {
 
     private String password;
 
+    @Override
+    public String toString() {
+        return "CacheIdentifier {" +
+                "ip='" + ip + '\'' +
+                ", port='" + port + '\'' +
+                ", username+password=>hash='" + Objects.hash(username, password) + '\'' +
+                '}';
+    }
 }
