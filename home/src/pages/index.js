@@ -19,7 +19,6 @@ import { features, SetupExample, SurenessIntegration, friendLinks, mediaPartners
 function Home() {
     const context = useDocusaurusContext()
     const {siteConfig = {}} = context
-    loadGitter();
     return (
         <Layout
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
@@ -31,6 +30,7 @@ function Home() {
                     </h1>
                     <p className="hero__subtitle"><Translate>易用友好的云监控系统</Translate></p>
                     <div className={styles.social}>
+                        <a href="https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"><img src={'https://badges.gitter.im/hertzbeat/community.svg'} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/web-monitor.svg')} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/ping-connect.svg')} alt={''}/></a>
                         <a href="https://console.tancloud.cn"><img src={cdnTransfer('img/badge/port-available.svg')} alt={''}/></a>
@@ -79,21 +79,3 @@ function Home() {
 }
 
 export default Home
-
-function loadGitter() {
-    return new Promise(function (resolve, reject) {
-        var script = document.createElement('script')
-        script.type = 'text/javascript'
-        script.async = true;
-        script.src = 'https://sidecar.gitter.im/dist/sidecar.v1.js';
-        ((window.gitter = {}).chat = {}).options = {
-            room: 'hertzbeat/community'
-        };
-        script.onload = function () {
-            ((window.gitter = {}).chat = {}).options = {
-                room: 'hertzbeat/community'
-            };
-        }
-        document.body.appendChild(script)
-    })
-}
