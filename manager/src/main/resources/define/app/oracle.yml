@@ -176,3 +176,33 @@ metrics:
       # sql
       sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
       url: ^_^url^_^
+ - name: percentage
+    priority: 1
+    fields:
+      - field: tablespace_name
+        type: 1
+        instance: true
+      - field: total
+        type: 1
+      - field: used
+        type: 1
+      - field: free
+        type: 1
+      - field: used_percentage
+        type: 0
+        unit: 百分比
+      - field: free_percentage
+        type: 0
+        unit: 百分比
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT a.tablespace_name AS tablespace_name, a.bytes AS total, b.bytes AS used, c.bytes AS free , b.bytes * 100 / a.bytes AS used_percentage , c.bytes * 100 / a.bytes AS free_percentage FROM sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c WHERE a.tablespace_name = b.tablespace_name AND a.tablespace_name = c.tablespace_name
+      url: ^_^url^_^
