@@ -1,0 +1,54 @@
+category: custom
+app: demo
+name:
+  zh-CN: Oracle 表空间
+  en-US: Oracle tablespace
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: username
+    type: 1
+  - key: password
+    type: 2
+  - key: database
+    type: 1
+  - key: timeout
+    type: 0
+  - key: url
+    type: 1
+# 指标组列表
+metrics:
+  - name: percentage
+    priority: 0
+    fields:
+      - field: tablespace_name
+        type: 1
+        instance: true
+      - field: total
+        type: 1
+      - field: used
+        type: 1
+      - field: free
+        type: 1
+      - field: used_percentage
+        type: 0
+        unit: 百分比
+      - field: free_percentage
+        type: 0
+        unit: 百分比
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT a.tablespace_name AS tablespace_name, a.bytes AS total, b.bytes AS used, c.bytes AS free , b.bytes * 100 / a.bytes AS used_percentage , c.bytes * 100 / a.bytes AS free_percentage FROM sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c WHERE a.tablespace_name = b.tablespace_name AND a.tablespace_name = c.tablespace_name
+      url: ^_^url^_^
