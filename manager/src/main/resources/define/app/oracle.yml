@@ -175,8 +175,10 @@ metrics:
       queryType: columns
       # sql
       sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
-      url: ^_^url^_^
- - name: percentage
+      url: ^_^url^_
+
+
+  - name: percentage
     priority: 1
     fields:
       - field: tablespace_name
