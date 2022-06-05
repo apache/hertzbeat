@@ -12,10 +12,8 @@ configmap:
     type: 1
   - key: port
     type: 0
-  - key: snmpVersion
+  - key: version
     type: 0
-  - key: oid
-    type: 1
   - key: community
     type: 1
   - key: timeout
@@ -33,7 +31,6 @@ metrics:
     snmp:
       host: ^_^host^_^
       port: ^_^port^_^
-      oid: ^_^oid^_^
       community: ^_^community^_^
-      snmpVersion: ^_^snmpVersion^_^
+      version: ^_^snmpVersion^_^
       timeout: ^_^timeout^_^

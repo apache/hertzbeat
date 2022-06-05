@@ -66,7 +66,6 @@ public class Metrics {
      * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
      */
     private List<String> calculates;
-
     /**
      * Monitoring configuration information using the http protocol
      * 使用http协议的监控配置信息
@@ -82,13 +81,6 @@ public class Metrics {
      * 使用telnet协议的监控配置信息
      */
     private TelnetProtocol telnet;
-
-    /**
-     * Monitoring configuration information using the telnet protocol
-     * 使用telnet协议的监控配置信息
-     */
-    private SnmpProtocol snmp;
-
     /**
      * Use tcp or ucp implemented by socket for service port detection configuration information
      * 使用socket实现的tcp或ucp进行服务端口探测配置信息
@@ -104,12 +96,16 @@ public class Metrics {
      * 使用公共的ssh协议的监控配置信息
      */
     private SshProtocol ssh;
-
     /**
      * Monitoring configuration information using the public redis protocol
      * 使用公共的redis协议的监控配置信息
      */
     private RedisProtocol redis;
+    /**
+     * Monitoring configuration information using the public snmp protocol
+     * 使用公共的snmp协议的监控配置信息
+     */
+    private SnmpProtocol snmp;
 
     @Override
     public boolean equals(Object o) {

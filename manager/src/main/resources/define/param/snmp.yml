@@ -20,7 +20,7 @@ param:
     defaultValue: 161
     # 参数输入框提示信息
     placeholder: '请输入端口'
-  - field: snmpVersion
+  - field: version
     name: 版本
     type: radio
     required: true

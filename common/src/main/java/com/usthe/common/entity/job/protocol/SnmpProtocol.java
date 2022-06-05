@@ -30,13 +30,44 @@ public class SnmpProtocol {
      */
     private String snmpVersion;
 
-    private String timeout;
-
-
     private  String oid;
 
+    /**
+     * 超时时间
+     */
+    private String timeout;
 
+    /**
+     * snmp version v1 v2c v3
+     * 0 = v1
+     * 1 = v2c
+     * 3 = v3
+     */
+    private Integer version = 1;
+
+    /**
+     * community name for v1 v2
+     * 团体字 v1 v2 版本需要
+     */
     private String community;
 
+    /**
+     * username (optional)
+     */
+    private String username;
 
+    /**
+     * auth password (optional)
+     */
+    private String authPassphrase;
+
+    /**
+     * password(optional)
+     */
+    private String privPassphrase;
+
+    /**
+     * oid map
+     */
+    private Map<String, String> oids;
 }
