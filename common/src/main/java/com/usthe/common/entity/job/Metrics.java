@@ -4,6 +4,7 @@ import com.usthe.common.entity.job.protocol.HttpProtocol;
 import com.usthe.common.entity.job.protocol.IcmpProtocol;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
+import com.usthe.common.entity.job.protocol.SnmpProtocol;
 import com.usthe.common.entity.job.protocol.SshProtocol;
 import com.usthe.common.entity.job.protocol.TcpUdpProtocol;
 import com.usthe.common.entity.job.protocol.TelnetProtocol;
@@ -81,6 +82,13 @@ public class Metrics {
      * 使用telnet协议的监控配置信息
      */
     private TelnetProtocol telnet;
+
+    /**
+     * Monitoring configuration information using the telnet protocol
+     * 使用telnet协议的监控配置信息
+     */
+    private SnmpProtocol snmp;
+
     /**
      * Use tcp or ucp implemented by socket for service port detection configuration information
      * 使用socket实现的tcp或ucp进行服务端口探测配置信息

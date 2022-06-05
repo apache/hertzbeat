@@ -33,6 +33,8 @@ public interface DispatchConstants {
      * protocol  协议 ssh
      */
     String PROTOCOL_REDIS = "redis";
+
+    String PROTOCOL_SNMP = "snmp";
     // Protocol type related - end
     // 协议类型相关 - end //
 
