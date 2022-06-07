@@ -20,6 +20,16 @@ param:
     hide: true
     defaultValue: 6000
     placeholder: '查询超时时间'
+  - field: authType
+    name: 认证方式
+    type: radio
+    required: false
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
   - field: index
     name: 索引名称
     type: text
