@@ -1,6 +1,7 @@
 package com.usthe.collector.collect.snmp;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.SnmpProtocol;
@@ -26,8 +27,6 @@ import java.io.IOException;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.ssh.CommonSshClient;
-import com.usthe.collector.util.CollectUtil;
-import com.usthe.collector.util.CollectorConstants;
 import com.usthe.collector.util.KeyPairUtil;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.SnmpProtocol;
@@ -99,12 +98,7 @@ public class SnmpCollectImpl extends AbstractCollect {
         SnmpProtocol snmp = metrics.getSnmp();
         String variableString = "";
         TransportMapping<UdpAddress> transport = null;
-        int timeout = 6000;
-        try {
-            timeout = Integer.parseInt(snmp.getTimeout());
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
+        int timeout = CollectUtil.getTimeout(snmp.getTimeout());
         try{
             CommunityTarget myTarget = new CommunityTarget();
             Address address = GenericAddress.parse("udp:"+snmp.getHost()+"/"+
@@ -114,7 +108,7 @@ public class SnmpCollectImpl extends AbstractCollect {
             //设置超时重试次数
             myTarget.setRetries(2);
             myTarget.setTimeout(timeout);
-            myTarget.setVersion(snmp.getVersion());
+            myTarget.setVersion(Integer.parseInt(snmp.getVersion()));
             transport = new DefaultUdpTransportMapping();
             transport.listen();
             Snmp protocol = new Snmp(transport);
@@ -158,30 +152,6 @@ public class SnmpCollectImpl extends AbstractCollect {
             }
         }
 
-    }
-
-    private Target createTarget(SnmpProtocol snmpProtocol, int timeout) {
-        Target target = null;
-        String address = "udp:" + snmpProtocol.getHost() + "/" + snmpProtocol.getPort();
-        Address targetAddress = GenericAddress.parse(address);
-        if (snmpProtocol.getVersion() == SnmpConstants.version3) {
-            target = new UserTarget();
-            //snmpV3需要设置安全级别和安全名称，其中安全名称是创建snmp指定user设置的new OctetString("SNMPV3")
-            target.setSecurityLevel(SecurityLevel.AUTH_PRIV);
-            target.setSecurityName(new OctetString(snmpProtocol.getUsername()));
-        } else {
-            target = new CommunityTarget();
-            //snmpV1和snmpV2需要指定团体名名称
-            target.setSecurityName(new OctetString(snmpProtocol.getCommunity()));
-            if (snmpProtocol.getVersion() == SnmpConstants.version2c) {
-                target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
-            }
-        }
-        target.setVersion(snmpProtocol.getVersion());
-        target.setAddress(targetAddress);
-        target.setRetries(1);
-        target.setTimeout(timeout);
-        return target;
     }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
@@ -233,9 +203,9 @@ public class SnmpCollectImpl extends AbstractCollect {
             throw new IllegalArgumentException("Snmp collect must has snmp params");
         }
         SnmpProtocol snmpProtocol = metrics.getSnmp();
-        Assert.hasText(snmpProtocol.getHost(), "snmp Protocol host is required.");
-        Assert.hasText(snmpProtocol.getPort(), "snmp Protocol port is required.");
-        Assert.notNull(snmpProtocol.getVersion(), "snmp version  is required.");
+        Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
+        Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
+        Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
     }
 
     private static class Singleton {

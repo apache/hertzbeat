@@ -43,7 +43,7 @@ public class SnmpProtocol {
      * 1 = v2c
      * 3 = v3
      */
-    private Integer version = 1;
+    private String version;
 
     /**
      * community name for v1 v2
