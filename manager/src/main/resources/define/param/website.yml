@@ -4,33 +4,42 @@ app: website
 param:
     # field-字段名称标识符
   - field: host
-    # name-参数字段显示名称
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # 是否是必输项 true-必填 false-可选
     required: true
   - field: port
-    name: 端口
+    name:
+      zh-CN: 端口
+      en-US: Port
     type: number
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
     defaultValue: 80
   - field: uri
-    name: 相对路径
+    name:
+      zh-CN: 相对路径
+      en-US: 相对路径
     type: text
     # 当type为text时,用limit表示字符串限制大小
     limit: 200
     required: false
     placeholder: '网站地址除IP端口外的路径 例如:/console'
   - field: ssl
-    name: 启用HTTPS
+    name:
+      zh-CN: 启用HTTPS
+      en-US: 启用HTTPS
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: true
   - field: authType
-    name: 认证方式
+    name:
+      zh-CN: 认证方式
+      en-US: 认证方式
     type: radio
     required: false
     hide: true
@@ -41,19 +50,25 @@ param:
       - label: Digest Auth
         value: Digest Auth
   - field: username
-    name: 用户名
+    name:
+      zh-CN: 用户名
+      en-US: 用户名
     type: text
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
     required: false
     hide: true
   - field: password
-    name: 密码
+    name:
+      zh-CN: 密码
+      en-US: 密码
     type: password
     required: false
     hide: true
   - field: keyword
-    name: 关键字
+    name:
+      zh-CN: 关键字
+      en-US: 关键字
     type: text
     required: false
     hide: true

@@ -3,25 +3,33 @@ app: elasticsearch
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
   - field: host
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     type: host
     required: true
   - field: port
-    name: 端口
+    name:
+      zh-CN: 端口
+      en-US: Port
     type: number
     range: '[0,65535]'
     required: true
     defaultValue: 9200
     placeholder: '请输入端口'
   - field: timeout
-    name: 查询超时时间
+    name:
+      zh-CN: 查询超时时间
+      en-US: 查询超时时间
     type: number
     required: false
     hide: true
     defaultValue: 6000
     placeholder: '查询超时时间'
   - field: authType
-    name: 认证方式
+    name:
+      zh-CN: 认证方式
+      en-US: 认证方式
     type: radio
     required: false
     # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
@@ -31,16 +39,22 @@ param:
       - label: Digest Auth
         value: Digest Auth
   - field: index
-    name: 索引名称
+    name:
+      zh-CN: 索引名称
+      en-US: 索引名称
     type: text
     hide: true
     required: false
   - field: username
-    name: 用户名
+    name:
+      zh-CN: 用户名
+      en-US: 用户名
     type: text
     limit: 20
     required: false
   - field: password
-    name: 密码
+    name:
+      zh-CN: 密码
+      en-US: 密码
     type: password
     required: false

@@ -1,5 +1,6 @@
 package com.usthe.common.entity.manager;
 
+import com.usthe.common.entity.alerter.JsonMapAttributeConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
@@ -54,10 +56,14 @@ public class ParamDefine {
 
     /**
      * Parameter field external display name
+     * zh-CN: 端口
+     * en-US: Port
      * 参数字段对外显示名称
      */
-    @ApiModelProperty(value = "参数字段显示名称", example = "端口", accessMode = READ_WRITE, position = 2)
-    private String name;
+    @ApiModelProperty(value = "参数字段显示国际化名称", example = "{zh-CN: '端口'}", accessMode = READ_WRITE, position = 2)
+    @Convert(converter = JsonMapAttributeConverter.class)
+    @SuppressWarnings("JpaAttributeTypeInspection")
+    private Map<String, String> name;
 
     /**
      * Parameter Field Identifier

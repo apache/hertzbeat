@@ -85,6 +85,7 @@ export class MonitorNewComponent implements OnInit {
                 param.value = define.defaultValue;
               }
             }
+            define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
             if (define.hide) {
               this.advancedParams.push(param);
               this.advancedParamDefines.push(define);

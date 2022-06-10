@@ -1,38 +1,52 @@
 app: sqlserver
 param:
   - field: host
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     type: host
     required: true
   - field: port
-    name: 端口
+    name:
+      zh-CN: 端口
+      en-US: Port
     type: number
     range: '[0,65535]'
     required: true
     defaultValue: 1433
     placeholder: '请输入端口'
   - field: timeout
-    name: 查询超时时间
+    name:
+      zh-CN: 查询超时时间
+      en-US: 查询超时时间
     type: number
     required: false
     hide: true
     defaultValue: 6000
     placeholder: '查询超时时间'
   - field: database
-    name: 数据库名称
+    name:
+      zh-CN: 数据库名称
+      en-US: 数据库名称
     type: text
     required: false
   - field: username
-    name: 用户名
+    name:
+      zh-CN: 用户名
+      en-US: 用户名
     type: text
     limit: 20
     required: false
   - field: password
-    name: 密码
+    name:
+      zh-CN: 密码
+      en-US: 密码
     type: password
     required: false
   - field: url
-    name: URL
+    name:
+      zh-CN: URL
+      en-US: URL
     type: text
     required: false
     hide: true

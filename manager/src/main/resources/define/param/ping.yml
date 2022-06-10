@@ -5,13 +5,17 @@ param:
     # field-字段名称标识符
   - field: host
     # name-参数字段显示名称
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # 是否是必输项 true-必填 false-可选
     required: true
   - field: timeout
-    name: Ping超时时间
+    name:
+      zh-CN: Ping超时时间
+      en-US: Ping超时时间
     type: number
     # 当type为number时,用range表示范围
     range: '[0,100000]'
