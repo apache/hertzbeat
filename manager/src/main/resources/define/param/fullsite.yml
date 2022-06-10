@@ -1,22 +1,30 @@
 app: fullsite
 param:
   - field: host
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     type: host
     required: true
   - field: port
-    name: 端口
+    name:
+      zh-CN: 端口
+      en-US: Port
     type: number
     range: '[0,65535]'
     required: true
     defaultValue: 80
   - field: sitemap
-    name: 网站地图
+    name:
+      zh-CN: 网站地图
+      en-US: Site Map
     type: text
     limit: 200
     required: true
-    placeholder: '网站SITEMAP地图地址 例如:/sitemap.xml'
+    placeholder: 'Web SITEMAP EG:/sitemap.xml'
   - field: ssl
-    name: 启用HTTPS
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
     type: boolean
     required: true
