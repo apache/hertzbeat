@@ -111,6 +111,7 @@ export class MonitorEditComponent implements OnInit {
                 }
               }
             }
+            define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
             if (define.hide) {
               this.advancedParams.push(param);
               this.advancedParamDefines.push(define);
