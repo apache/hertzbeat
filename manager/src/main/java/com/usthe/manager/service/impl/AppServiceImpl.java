@@ -71,10 +71,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Map<String, String> getI18nResources(String lang) {
-        Map<String, String> i18nMap = new HashMap<>(32);
+        Map<String, String> i18nMap = new HashMap<>(128);
         for (Job job : appDefines.values()) {
-            // todo Todo temporarily only internationalizes the monitoring type name, after which it needs to support the indicator name
-            //  暂时只国际化监控类型名称  后面需要支持指标名称
+            // todo needs to support the indicator name
+            // 后面需要支持指标名称
             Map<String, String> name = job.getName();
             if (name != null && !name.isEmpty()) {
                 String i18nName = name.get(lang);
@@ -82,6 +82,19 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     i18nName = name.values().stream().findFirst().get();
                 }
                 i18nMap.put("monitor.app." + job.getApp(), i18nName);
+            }
+        }
+        for (Map.Entry<String, List<ParamDefine>> entry : paramDefines.entrySet()) {
+            String app = entry.getKey();
+            for (ParamDefine paramDefine : entry.getValue()) {
+                Map<String, String> name = paramDefine.getName();
+                if (name != null && !name.isEmpty()) {
+                    String i18nName = name.get(lang);
+                    if (i18nName == null) {
+                        i18nName = name.values().stream().findFirst().get();
+                    }
+                    i18nMap.put("monitor.app." + app + ".param." + paramDefine.getField(), i18nName);
+                }
             }
         }
         return i18nMap;
