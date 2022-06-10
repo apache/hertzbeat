@@ -55,13 +55,13 @@ param:
     required: true
     # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
     options:
-      - label: GET请求
+      - label: GET
         value: GET
-      - label: POST请求
+      - label: POST
         value: POST
-      - label: PUT请求
+      - label: PUT
         value: PUT
-      - label: DELETE请求
+      - label: DELETE
         value: DELETE
   - field: headers
     name:

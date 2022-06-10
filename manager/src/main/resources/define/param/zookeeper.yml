@@ -1,5 +1,4 @@
 app: zookeeper
-# 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
   - field: host
     name:
@@ -15,26 +14,24 @@ param:
     range: '[0,65535]'
     required: true
     defaultValue: 2181
-    placeholder: '请输入端口'
   - field: timeout
     name:
       zh-CN: 查询超时时间
-      en-US: 查询超时时间
+      en-US: Query Timeout
     type: number
     required: false
     hide: true
     defaultValue: 6000
-    placeholder: '查询超时时间'
   - field: username
     name:
       zh-CN: 用户名
-      en-US: 用户名
+      en-US: Username
     type: text
     limit: 20
     required: true
   - field: password
     name:
       zh-CN: 密码
-      en-US: 密码
+      en-US: Password
     type: password
     required: false

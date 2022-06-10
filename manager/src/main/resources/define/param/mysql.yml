@@ -14,33 +14,31 @@ param:
     range: '[0,65535]'
     required: true
     defaultValue: 3306
-    placeholder: '请输入端口'
   - field: timeout
     name:
       zh-CN: 查询超时时间
-      en-US: 查询超时时间
+      en-US: Query Timeout
     type: number
     required: false
     hide: true
     defaultValue: 6000
-    placeholder: '查询超时时间'
   - field: database
     name:
       zh-CN: 数据库名称
-      en-US: 数据库名称
+      en-US: Database Name
     type: text
     required: false
   - field: username
     name:
       zh-CN: 用户名
-      en-US: 用户名
+      en-US: Username
     type: text
     limit: 20
     required: false
   - field: password
     name:
       zh-CN: 密码
-      en-US: 密码
+      en-US: Password
     type: password
     required: false
   - field: url

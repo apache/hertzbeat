@@ -1,6 +1,4 @@
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws middleware ...
 app: elasticsearch
-# 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
   - field: host
     name:
@@ -16,23 +14,20 @@ param:
     range: '[0,65535]'
     required: true
     defaultValue: 9200
-    placeholder: '请输入端口'
   - field: timeout
     name:
       zh-CN: 查询超时时间
-      en-US: 查询超时时间
+      en-US: Query Timeout
     type: number
     required: false
     hide: true
     defaultValue: 6000
-    placeholder: '查询超时时间'
   - field: authType
     name:
       zh-CN: 认证方式
-      en-US: 认证方式
+      en-US: Auth Type
     type: radio
     required: false
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: Basic Auth
         value: Basic Auth
@@ -41,20 +36,20 @@ param:
   - field: index
     name:
       zh-CN: 索引名称
-      en-US: 索引名称
+      en-US: Index Name
     type: text
     hide: true
     required: false
   - field: username
     name:
       zh-CN: 用户名
-      en-US: 用户名
+      en-US: Username
     type: text
     limit: 20
     required: false
   - field: password
     name:
       zh-CN: 密码
-      en-US: 密码
+      en-US: Password
     type: password
     required: false
