@@ -1,28 +1,36 @@
 app: centos
 param:
   - field: host
-    name: 主机Host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
     type: host
     required: true
   - field: port
-    name: 端口
+    name:
+      zh-CN: 端口
+      en-US: Port
     type: number
     range: '[0,65535]'
     required: true
     defaultValue: 22
-    placeholder: '请输入端口'
   - field: timeout
-    name: 超时时间
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
     type: number
     required: false
     defaultValue: 6000
-    placeholder: '超时时间'
   - field: username
-    name: 用户名
+    name:
+      zh-CN: 用户名
+      en-US: Username
     type: text
     limit: 20
     required: true
   - field: password
-    name: 密码
+    name:
+      zh-CN: 密码
+      en-US: Password
     type: password
     required: false
