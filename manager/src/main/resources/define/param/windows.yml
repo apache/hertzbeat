@@ -41,6 +41,7 @@ param:
       en-US: Timeout
     type: number
     range: '[0,100000]'
-    required: true
+    required: false
+    hide: true
     defaultValue: 6000
 

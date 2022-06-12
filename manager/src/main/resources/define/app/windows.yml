@@ -1,7 +1,7 @@
 category: os
 app: windwos
 name:
-  zh-CN: Windwos
+  zh-CN: Windwos操作系统
   en-US: Windwos
 configmap:
   - key: host
