@@ -8,57 +8,25 @@ import com.usthe.common.entity.job.protocol.SnmpProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.snmp4j.CommunityTarget;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
-import org.snmp4j.TransportMapping;
-import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.GenericAddress;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.VariableBinding;
-import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.snmp4j.smi.*;
 import org.springframework.util.Assert;
-
-import java.io.IOException;
-import com.usthe.collector.collect.common.cache.CacheIdentifier;
-import com.usthe.collector.collect.common.cache.CommonCache;
-import com.usthe.collector.collect.common.ssh.CommonSshClient;
-import com.usthe.collector.util.KeyPairUtil;
-import com.usthe.common.entity.job.Metrics;
-import com.usthe.common.entity.job.protocol.SnmpProtocol;
-import com.usthe.common.entity.job.protocol.SshProtocol;
-import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.util.CommonConstants;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.sshd.client.SshClient;
-import org.apache.sshd.client.channel.ClientChannel;
-import org.apache.sshd.client.channel.ClientChannelEvent;
-import org.apache.sshd.client.session.ClientSession;
 import org.snmp4j.*;
 import org.snmp4j.fluent.SnmpBuilder;
 import org.snmp4j.fluent.SnmpCompletableFuture;
 import org.snmp4j.fluent.TargetBuilder;
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
-import org.snmp4j.smi.Address;
-import org.snmp4j.smi.GenericAddress;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.VariableBinding;
 import org.springframework.util.StringUtils;
-import java.net.ConnectException;
-import java.security.KeyPair;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Snmp protocol collection implementation
  * snmp 协议采集实现
+ *
  * @author wangtao
  * @date 2022/6/3
  */
@@ -66,6 +34,11 @@ import java.util.concurrent.TimeUnit;
 public class SnmpCollectImpl extends AbstractCollect {
 
     private static final String DEFAULT_PROTOCOL = "udp";
+    private static final String FORMAT_PATTERN =
+            "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }" +
+                    "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }" +
+                    "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }" +
+                    "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
     private SnmpCollectImpl() {
     }
@@ -73,16 +46,6 @@ public class SnmpCollectImpl extends AbstractCollect {
     public static SnmpCollectImpl getInstance() {
         return SnmpCollectImpl.Singleton.INSTANCE;
     }
-
-    public final static String SYS_DESC = "1.3.6.1.2.1.1.1";
-    /**
-     * 获取机器名
-     */
-    public final static String SYS_NAME = "1.3.6.1.2.1.1.5";
-    /**
-     * 监控时间
-     */
-    public final static String SYS_UPTIME = "1.3.6.1.2.1.1.3";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -95,107 +58,87 @@ public class SnmpCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             return;
         }
-        SnmpProtocol snmp = metrics.getSnmp();
-        String variableString = "";
-        TransportMapping<UdpAddress> transport = null;
-        int timeout = CollectUtil.getTimeout(snmp.getTimeout());
-        try{
-            CommunityTarget myTarget = new CommunityTarget();
-            Address address = GenericAddress.parse("udp:"+snmp.getHost()+"/"+
-                    snmp.getPort());
-            myTarget.setAddress(address);
-            myTarget.setCommunity(new OctetString(snmp.getCommunity()));
-            //设置超时重试次数
-            myTarget.setRetries(2);
-            myTarget.setTimeout(timeout);
-            myTarget.setVersion(Integer.parseInt(snmp.getVersion()));
-            transport = new DefaultUdpTransportMapping();
-            transport.listen();
-            Snmp protocol = new Snmp(transport);
-            PDU request = new PDU();
-            request.add(new VariableBinding(new OID(SYS_NAME)));
-            request.setType(PDU.GETNEXT);
-            ResponseEvent responseEvent = protocol.send(request, myTarget);
-            PDU response=responseEvent.getResponse();
-            if(response != null){
-                VariableBinding vb = response.get(0);
-                variableString = String.valueOf(vb.getVariable());
-                log.info(variableString);
+        SnmpProtocol snmpProtocol = metrics.getSnmp();
+        int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
+        int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
+        try {
+            SnmpBuilder snmpBuilder = new SnmpBuilder();
+            Snmp snmpService;
+            if (snmpVersion == SnmpConstants.version3) {
+                snmpService = snmpBuilder.udp().v3().usm().threads(1).build();
+            } else if (snmpVersion == SnmpConstants.version1) {
+                snmpService = snmpBuilder.udp().v1().threads(1).build();
+            } else {
+                snmpService = snmpBuilder.udp().v2c().threads(1).build();
             }
+
+            Target<?> target;
+            Address targetAddress = GenericAddress.parse(DEFAULT_PROTOCOL + ":" + snmpProtocol.getHost()
+                    + "/" + snmpProtocol.getPort());
+            TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
+            if (snmpVersion == SnmpConstants.version3) {
+                target = targetBuilder
+                        .user(snmpProtocol.getUsername())
+                        .auth(TargetBuilder.AuthProtocol.hmac192sha256).authPassphrase(snmpProtocol.getAuthPassphrase())
+                        .priv(TargetBuilder.PrivProtocol.aes128).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .done()
+                        .timeout(timeout).retries(1)
+                        .build();
+            } else if (snmpVersion == SnmpConstants.version1) {
+                target = targetBuilder
+                        .v1()
+                        .community(new OctetString(snmpProtocol.getCommunity()))
+                        .timeout(timeout).retries(1)
+                        .build();
+                target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv1);
+            } else {
+                target = targetBuilder
+                        .v2c()
+                        .community(new OctetString(snmpProtocol.getCommunity()))
+                        .timeout(timeout).retries(1)
+                        .build();
+                target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
+            }
+
+            PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).build();
+            SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
+            List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
             long responseTime = System.currentTimeMillis() - startTime;
-            if (transport.isListening()) {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String alias : metrics.getAliasFields()) {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
+            Map<String, String> oidsMap = snmpProtocol.getOids();
+            Map<String, String> oidsValueMap = new HashMap<>(oidsMap.size());
+            for (VariableBinding binding : vbs) {
+                Variable variable = binding.getVariable();
+                if (variable instanceof TimeTicks) {
+                    String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                    oidsValueMap.put(binding.getOid().toDottedString(), value);
+                } else {
+                    oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
+                }
+            }
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String alias : metrics.getAliasFields()) {
+                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(Long.toString(responseTime));
+                } else {
+                    String oid = oidsMap.get(alias);
+                    String value = oidsValueMap.get(oid);
+                    if (value != null) {
+                        valueRowBuilder.addColumns(value);
                     } else {
                         valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
-            } else {
-                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-                builder.setMsg("对端连接失败，Timeout " + timeout + "ms");
-                return;
             }
-        }catch(IOException e){
+            builder.addValues(valueRowBuilder.build());
+        } catch (ExecutionException | InterruptedException ex) {
+            log.info("[snmp collect] error: {}", ex.getMessage());
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(ex.getMessage());
+        } catch (Exception e) {
             log.warn("[snmp collect] error: {}", e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
-        }finally {
-            if (transport != null){
-                try {
-                    transport.close();
-                } catch (IOException e) {
-                    log.warn("close transport error: {}", e.getMessage(), e);
-                }
-            }
         }
-
-    }
-
-    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                .build();
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
-        ClientSession clientSession = null;
-        if (cacheOption.isPresent()) {
-            clientSession = (ClientSession) cacheOption.get();
-            try {
-                if (clientSession.isClosed() || clientSession.isClosing()) {
-                    clientSession = null;
-                    CommonCache.getInstance().removeCache(identifier);
-                }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-                clientSession = null;
-                CommonCache.getInstance().removeCache(identifier);
-            }
-        }
-        if (clientSession != null) {
-            return clientSession;
-        }
-        SshClient sshClient = CommonSshClient.getSshClient();
-        clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        if (StringUtils.hasText(sshProtocol.getPassword())) {
-            clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPublicKey())) {
-            KeyPair keyPair = KeyPairUtil.getKeyPairFromPublicKey(sshProtocol.getPublicKey());
-            if (keyPair != null) {
-                clientSession.addPublicKeyIdentity(keyPair);
-            }
-        } else {
-            throw new IllegalArgumentException("需填写账户登陆密码或公钥");
-        }
-        // 进行认证
-        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            throw new IllegalArgumentException("认证失败");
-        }
-        CommonCache.getInstance().addCache(identifier, clientSession);
-        return clientSession;
     }
 
     private void validateParams(Metrics metrics) throws Exception {
@@ -206,6 +149,22 @@ public class SnmpCollectImpl extends AbstractCollect {
         Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
         Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
         Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
+    }
+
+    private int getSnmpVersion(String snmpVersion) {
+        int version = SnmpConstants.version2c;
+        if (!StringUtils.hasText(snmpVersion)) {
+            return version;
+        }
+        if (snmpVersion.equalsIgnoreCase(String.valueOf(SnmpConstants.version1))
+                || snmpVersion.equalsIgnoreCase(TargetBuilder.SnmpVersion.v1.name())) {
+            return SnmpConstants.version1;
+        }
+        if (snmpVersion.equalsIgnoreCase(String.valueOf(SnmpConstants.version3))
+                || snmpVersion.equalsIgnoreCase(TargetBuilder.SnmpVersion.v3.name())) {
+            return SnmpConstants.version3;
+        }
+        return version;
     }
 
     private static class Singleton {

@@ -24,19 +24,10 @@ public class SnmpProtocol {
      * 对端主机端口
      */
     private String port;
-
     /**
-     * 版本号
-     */
-    private String snmpVersion;
-
-    private  String oid;
-
-    /**
-     * 超时时间
+     * timeout
      */
     private String timeout;
-
     /**
      * snmp version v1 v2c v3
      * 0 = v1
@@ -44,28 +35,23 @@ public class SnmpProtocol {
      * 3 = v3
      */
     private String version;
-
     /**
      * community name for v1 v2
      * 团体字 v1 v2 版本需要
      */
     private String community;
-
     /**
      * username (optional)
      */
     private String username;
-
     /**
      * auth password (optional)
      */
     private String authPassphrase;
-
     /**
      * password(optional)
      */
     private String privPassphrase;
-
     /**
      * oid map
      */
