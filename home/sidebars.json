@@ -73,14 +73,16 @@
           "type": "category",
           "label": "操作系统",
           "items": [
-            "help/zookeeper"
+            "help/linux",
+            "help/ubuntu",
+            "help/centos"
           ]
         },
         {
           "type": "category",
           "label": "中间件",
           "items": [
-            "help/linux"
+            "help/zookeeper"
           ]
         },
         {
