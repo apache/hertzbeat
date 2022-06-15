@@ -19,7 +19,6 @@ import { features, SetupExample, SurenessIntegration, friendLinks, mediaPartners
 function Home() {
     const context = useDocusaurusContext()
     const {siteConfig = {}} = context
-    loadGitter();
     return (
         <Layout
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
