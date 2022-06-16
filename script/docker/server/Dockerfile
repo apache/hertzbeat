@@ -1,4 +1,4 @@
-FROM openjdk:8-alpine
+FROM openjdk:8-alpine3.9
 
 MAINTAINER tomsun28 "tomsun28@outlook.com"
 
