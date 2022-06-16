@@ -27,24 +27,25 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.h2.Driver
     username: sa
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
     platform: h2
     hikari:
       max-lifetime: 120000
-
   jpa:
     database: h2
     hibernate:
       ddl-auto: update
-    show-sql: false
 
   mail:
-    # 请注意邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
+
+    # Attention: this is mail server address.
+    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.exmail.qq.com
     username: example@tancloud.cn
+    # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: example
     port: 465
