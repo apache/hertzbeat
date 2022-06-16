@@ -132,6 +132,9 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/wyt199905"><img src="https://avatars.githubusercontent.com/u/85098809?v=4?s=100" width="100px;" alt=""/><br /><sub><b>wyt199905</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=wyt199905" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/weifuqing"><img src="https://avatars.githubusercontent.com/u/13931013?v=4?s=100" width="100px;" alt=""/><br /><sub><b>卫傅庆</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=weifuqing" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Aweifuqing" title="Bug reports">🐛</a></td>
   </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/zklmcookle"><img src="https://avatars.githubusercontent.com/u/107192352?v=4?s=100" width="100px;" alt=""/><br /><sub><b>zklmcookle</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=zklmcookle" title="Code">💻</a></td>
+  </tr>
 </table>
 
 <!-- markdownlint-restore -->
