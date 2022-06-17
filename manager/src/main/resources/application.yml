@@ -31,16 +31,14 @@ spring:
     username: sa
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
-    platform: h2
     hikari:
       max-lifetime: 120000
+
   jpa:
-    database: h2
     hibernate:
       ddl-auto: update
 
   mail:
-
     # Attention: this is mail server address.
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.exmail.qq.com
@@ -63,8 +61,6 @@ spring:
     check-template-location: true
     cache: true
     suffix: .html
-    #encoding: UTF-8
-    #content-type: text/html
     mode: HTML
 
 warehouse:
