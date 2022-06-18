@@ -126,6 +126,12 @@ module.exports = {
                     ],
                 },
                 {
+                    type: 'docsVersionDropdown',
+                    position: 'right',
+                    // dropdownItemsAfter: [{to: '/versions', label: '所有版本'}],
+                    dropdownActiveClassDisabled: true,
+                },
+                {
                     type: 'localeDropdown',
                     position: 'right',
                 },
