@@ -6,10 +6,10 @@
       "items": [
         "introduce",
         "start/quickstart",
-        "start/mysql-init",
         "start/tdengine-init",
         "start/docker-deploy",
-        "start/package-deploy"
+        "start/package-deploy",
+        "start/mysql-init"
       ]
     },
     {

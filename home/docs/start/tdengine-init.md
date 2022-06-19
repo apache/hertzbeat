@@ -1,11 +1,10 @@
 ---
 id: tdengine-init  
 title: 依赖服务TDengine安装初始化        
-sidebar_label: TDengine安装初始化    
+sidebar_label: TDengine安装初始化(可选)    
 ---
-TDengine是一款国产的开源物联网时序型数据库，我们使用其替换了InfluxDb，来存储采集到的监控指标数据。
-
-安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)  
+TDengine是一款国产的开源物联网时序型数据库，我们使用其替换了InfluxDb，来存储采集到的监控指标历史数据。  
+注意⚠️ TDengine为可选项，未配置则无历史图表数据。
 
 > 如果您已有TDengine环境，可直接跳到创建数据库实例那一步。
 
