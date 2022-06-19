@@ -40,7 +40,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         }
         DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
         DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
-        StringBuilder contentBuilder = new StringBuilder("#### [TanCloud探云告警通知]\n##### **告警目标对象** : " +
+        StringBuilder contentBuilder = new StringBuilder("#### [HertzBeat告警通知]\n##### **告警目标对象** : " +
                 alert.getTarget() + "\n   ");
         if (monitorId != null) {
             contentBuilder.append("##### **所属监控ID** : ").append(monitorId)
@@ -60,7 +60,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 .append("\n   ");
         contentBuilder.append("##### **内容详情** : ").append(alert.getContent());
         markdownDTO.setText(contentBuilder.toString());
-        markdownDTO.setTitle("TanCloud探云告警通知");
+        markdownDTO.setTitle("HertzBeat告警通知");
         dingTalkWebHookDto.setMarkdown(markdownDTO);
         String webHookUrl = DingTalkWebHookDto.WEBHOOK_URL + receiver.getAccessToken();
         try {
