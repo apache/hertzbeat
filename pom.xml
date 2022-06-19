@@ -54,7 +54,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- 工具 -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
