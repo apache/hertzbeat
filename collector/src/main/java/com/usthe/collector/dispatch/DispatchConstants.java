@@ -10,29 +10,33 @@ public interface DispatchConstants {
 
     // Protocol type related    协议类型相关 - start //
     /**
-     * protocol  协议 http
+     * protocol http
      */
     String PROTOCOL_HTTP = "http";
     /**
-     * protocol  协议 icmp
+     * protocol icmp
      */
     String PROTOCOL_ICMP = "icmp";
     /**
-     * protocol  协议 telnet
+     * protocol telnet
      */
     String PROTOCOL_TELNET = "telnet";
     /**
-     * protocol  协议 jdbc
+     * protocol jdbc
      */
     String PROTOCOL_JDBC = "jdbc";
     /**
-     * protocol  协议 ssh
+     * protocol ssh
      */
     String PROTOCOL_SSH = "ssh";
     /**
-     * protocol  协议 ssh
+     * protocol redis
      */
     String PROTOCOL_REDIS = "redis";
+    /**
+     * protocol snmp
+     */
+    String PROTOCOL_SNMP = "snmp";
     // Protocol type related - end
     // 协议类型相关 - end //
 

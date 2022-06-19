@@ -17,6 +17,10 @@ sidebar_label: 常见问题
 > 安装包部署需要配置java虚拟机root权限启动hertzbeat从而使用ICMP，若未启用root权限则是判断telnet对端7号端口是否开通     
 > docker安装默认启用无此问题   
 
+4. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]   
+> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - TDengine数据库
+> 安装初始化此数据库参考 [TDengine安装初始化](../start/tdengine-init)  
+
 ### Docker部署常见问题   
 
 1. **MYSQL,TDENGINE和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**     

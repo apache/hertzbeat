@@ -74,6 +74,7 @@
           "label": "操作系统",
           "items": [
             "help/linux",
+            "help/windows",
             "help/ubuntu",
             "help/centos"
           ]

@@ -214,6 +214,7 @@
   "monitors.detect.success": "Detect Success",
   "monitors.detect.failed": "Detect Failed",
   "monitors.detect.tip": "Detect monitor available before apply",
+  "monitors.detail.tdengine.unavailable": "Unable to provide historical chart, please configure the dependent service TDengine Database",
   "monitors.detail": "Monitor Detail",
   "monitors.detail.name": "Name",
   "monitors.detail.port": "Port",
