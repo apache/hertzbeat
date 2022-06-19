@@ -28,7 +28,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "param")
+@Table(name = "hzb_param")
 @Data
 @Builder
 @AllArgsConstructor

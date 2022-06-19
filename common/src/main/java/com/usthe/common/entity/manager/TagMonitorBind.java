@@ -23,7 +23,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "tag_monitor_bind")
+@Table(name = "hzb_tag_monitor_bind")
 @Data
 @Builder
 @AllArgsConstructor

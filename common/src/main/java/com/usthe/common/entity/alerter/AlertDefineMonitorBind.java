@@ -25,7 +25,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "alert_define_monitor_bind")
+@Table(name = "hzb_alert_define_monitor_bind")
 @Data
 @Builder
 @AllArgsConstructor

@@ -31,7 +31,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "alert")
+@Table(name = "hzb_alert")
 @Data
 @Builder
 @AllArgsConstructor
