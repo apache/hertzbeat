@@ -103,7 +103,7 @@
         },
         {
           "text": "helpCenter",
-          "externalLink": "https://tancloud.cn/docs/help/guide",
+          "externalLink": "https://hertzbeat.com/docs/help/guide",
           "target": "_blank",
           "i18n": "menu.extras.help",
           "icon": "anticon-global"
