@@ -34,7 +34,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            messageHelper.setSubject("TanCloud探云-监控告警");
+            messageHelper.setSubject("HertzBeat-监控告警");
             //Set sender Email 设置发件人Email
             messageHelper.setFrom(emailFromUser);
             //Set recipient Email 设定收件人Email

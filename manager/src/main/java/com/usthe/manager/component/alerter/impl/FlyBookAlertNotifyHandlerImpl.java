@@ -77,7 +77,7 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         bookContent.setHref(alerterProperties.getConsoleUrl());
         contents1.add(bookContent);
         contents.add(contents1);
-        zhCn.setTitle("[TanCloud探云告警通知]");
+        zhCn.setTitle("[HertzBeat告警通知]");
         zhCn.setContent(contents);
         flyBookWebHookDto.setContent(content);
         String webHookUrl = FlyBookWebHookDto.WEBHOOK_URL + receiver.getWechatId();

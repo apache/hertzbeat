@@ -41,7 +41,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
         WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
         StringBuilder content = new StringBuilder();
-        content.append("<font color=\"info\">[TanCloud探云告警通知]</font>\n告警目标对象 : <font color=\"info\">")
+        content.append("<font color=\"info\">[HertzBeat告警通知]</font>\n告警目标对象 : <font color=\"info\">")
                 .append(alert.getTarget()).append("</font>\n");
         if (monitorId != null) {
             content.append("所属监控ID : ").append(monitorId).append("\n");
