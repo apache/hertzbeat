@@ -25,8 +25,6 @@ param:
         value: 0
       - label: SNMPv2c
         value: 1
-      - label: SNMPv3
-        value: 3
   - field: community
     name:
       zh-CN: SNMP 团体字
