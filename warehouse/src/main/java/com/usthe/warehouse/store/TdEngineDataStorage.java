@@ -49,6 +49,7 @@ public class TdEngineDataStorage implements DisposableBean {
 
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
+    private static final Integer SQL_STRING_VALUE_MAX_LENGTH = 100;
 
     private HikariDataSource hikariDataSource;
     private WarehouseWorkerPool workerPool;
@@ -220,7 +221,12 @@ public class TdEngineDataStorage implements DisposableBean {
     }
 
     private String formatStringValue(String value){
-        return SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
+        String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
+        // bugfix Argument list too long
+        if (formatValue != null && formatValue.length() > SQL_STRING_VALUE_MAX_LENGTH) {
+            formatValue = formatValue.substring(0, SQL_STRING_VALUE_MAX_LENGTH);
+        }
+        return formatValue;
     }
 
     @Override
