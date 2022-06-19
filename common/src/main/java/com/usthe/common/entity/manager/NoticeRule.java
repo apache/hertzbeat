@@ -7,6 +7,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -30,7 +35,8 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Notify Policy Entity,zh: 通知策略实体")
+@ApiModel(description = "Notify Policy Entity | 通知策略实体")
+@EntityListeners(AuditingEntityListener.class)
 public class NoticeRule {
 
     @Id
@@ -78,26 +84,26 @@ public class NoticeRule {
     @Convert(converter = JsonTagListAttributeConverter.class)
     private List<TagItem> tags;
 
-    @ApiModelProperty(value = "The creator of this record",
-            notes = "此条记录创建者",
-            example = "tom", accessMode = READ_ONLY, position = 7)
+    @ApiModelProperty(value = "The creator of this record", notes = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 7)
+    @CreatedBy
     private String creator;
 
     @ApiModelProperty(value = "This record was last modified by",
             notes = "此条记录最新修改者",
             example = "tom", accessMode = READ_ONLY, position = 8)
+    @LastModifiedBy
     private String modifier;
 
     @ApiModelProperty(value = "This record creation time (millisecond timestamp)",
             notes = "记录创建时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY, position = 9)
-    @Column(insertable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime gmtCreate;
 
     @ApiModelProperty(value = "Record the latest modification time (timestamp in milliseconds)",
             notes = "记录最新修改时间(毫秒时间戳)",
             example = "1612198444000", accessMode = READ_ONLY, position = 10)
-    @Column(insertable = false, updatable = false)
+    @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
 

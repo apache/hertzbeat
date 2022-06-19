@@ -25,21 +25,25 @@ spring:
   config:
     activate:
       on-profile: prod
+
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
+    driver-class-name: org.h2.Driver
+    username: sa
     password: 123456
-    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
-    platform: mysql
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
     hikari:
       max-lifetime: 120000
+
   jpa:
-    database: mysql
+    hibernate:
+      ddl-auto: update
 
   mail:
-    # 请注意邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
+    # Attention: this is mail server address.
+    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.exmail.qq.com
-    username: example@qq.com
+    username: example@tancloud.cn
+    # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: example
     port: 465
@@ -50,14 +54,13 @@ spring:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
+        debug: false
 
   thymeleaf:
     prefix: classpath:/templates/
     check-template-location: true
     cache: true
     suffix: .html
-    #encoding: UTF-8
-    #content-type: text/html
     mode: HTML
 
 warehouse:

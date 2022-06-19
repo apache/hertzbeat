@@ -8,6 +8,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -32,6 +37,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(description = "Alarm record entity | 告警记录实体")
+@EntityListeners(AuditingEntityListener.class)
 public class Alert {
 
     @Id
@@ -100,19 +106,21 @@ public class Alert {
     private Map<String, String> tags;
 
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 12)
+    @CreatedBy
     private String creator;
 
     @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 13)
+    @LastModifiedBy
     private String modifier;
 
     @ApiModelProperty(value = "Record the latest creation time (timestamp in milliseconds)",
             notes = "记录最新创建时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY, position = 14)
-    @Column(insertable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime gmtCreate;
 
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 15)
-    @Column(insertable = false, updatable = false)
+    @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
     @Override

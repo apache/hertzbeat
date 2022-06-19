@@ -19,16 +19,14 @@ sidebar_label: Docker方式部署
 2. 拉取HertzBeat Docker镜像   
    镜像版本TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
    ``` 
-   $ docker pull tancloud/hertzbeat:[版本tag]   
+   $ docker pull tancloud/hertzbeat   
    ```
-3. 配置HertzBeat的配置文件  
+3. 配置HertzBeat的配置文件(可选)  
    在主机目录下创建application.yml，eg:/opt/application.yml   
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
+   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码
+   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数参见[H2数据库切换为MYSQL](mysql-init)）  
    具体替换参数如下:
 ```
-   spring.datasource.url
-   spring.datasource.username
-   spring.datasource.password
    
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
@@ -40,7 +38,7 @@ sidebar_label: Docker方式部署
    spring.mail.password
 ```
 
-4. 配置用户配置文件(非必须,配置账户需要)     
+4. 配置用户配置文件(可选,自定义配置用户密码)       
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat    
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
@@ -149,16 +147,16 @@ account:
 
 6. 启动HertzBeat Docker容器  
    ``` 
-   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml --name hertzbeat tancloud/hertzbeat:[版本tag]
+   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml --name hertzbeat tancloud/hertzbeat
    526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
    ```
    这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
    - docker run -d : 通过Docker运行一个容器,使其在后台运行
    - -p 1157:1157  : 映射容器端口到主机端口
-   - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : 挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
-   - -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml  : (非必须)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
+   - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
+   - -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
    - --name hertzbeat : 命名容器名称 hertzbeat 
-   - tancloud/hertzbeat:[版本tag] : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   - tancloud/hertzbeat : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,版本可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
@@ -174,10 +172,15 @@ account:
 
 2. **按照流程部署，访问 http://ip:1157/ 无界面**   
 请参考下面几点排查问题：  
-> 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
+> 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
 > 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
 
 3. **日志报错TDengine连接或插入SQL失败**  
 > 一：排查配置的数据库账户密码是否正确，数据库是否创建   
 > 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+
+4. **监控历史图表长时间都一直无数据**  
+> 一：Tdengine是否配置，未配置则无历史图表数据  
+> 二：Tdengine的数据库`hertzbeat`是否创建
+> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 Tdengine IP账户密码等配置是否正确  

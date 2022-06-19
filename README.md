@@ -51,45 +51,32 @@ Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community 
 ## 🐕 Quick Start   
 
 - If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn)**.   
-- If you want to deploy HertzBeat local, please refer to the following [Deployment Documentation](https://hertzbeat.com/docs/start/quickstart) for operation.  
-
-### 🐵 Dependency Service Deployment   
-
-> HertzBeat depends at least on relational database [MYSQL5+](https://www.mysql.com/) and time series database [TDengine2+](https://www.taosdata.com/getting-started)  
-
-##### Install MYSQL  
-1. Install mysql with docker    
-   `docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`
-2. Create database names `hertzbeat`   
-3. Run the database sql script [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql) located in the project repository `/script/sql/` directory.     
-
-For detailed steps, refer to [MYSQL Install And Init](https://hertzbeat.com/docs/start/mysql-init)   
-
-##### Install TDengine
-1. Install TDengine with docker     
-   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
-2. Create database names `hertzbeat`   
-
-For detailed steps, refer to [TDengine Install And Init](https://hertzbeat.com/docs/start/tdengine-init).  
+- If you want to deploy HertzBeat local, please refer to the following Deployment Documentation for operation.  
 
 ### 🍞 Install HertzBeat   
 
-> HertzBeat supports installation through source code, docker or package.   
+> HertzBeat supports installation through source code, docker or package, cpu support X86/ARM64.   
 
 ##### 1：Install quickly via docker   
-`docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml --name hertzbeat tancloud/hertzbeat:[version]`
 
-Detailed steps refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)   
+1. Just one command to get started: `docker run -d -p 1157:1157 -name hertzbeat tancloud/hertzbeat` 
+
+2. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
+
+Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)   
 
 ##### 2：Install via package  
-1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`  
-3. Run shell `$ ./startup.sh `
-4. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
-Detailed steps refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
+1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. Need Jdk Environment, `jdk8 -- jdk11`
+3. [optional]Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`  
+4. Run shell `$ ./startup.sh `
+5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
+
+Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
 
 ##### 3：Start via source code        
+
 1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.  
 2. Backend：need `maven3+`, `java8+`, `lombok`, start the manager service.  
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
@@ -128,7 +115,12 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/brave4Time"><img src="https://avatars.githubusercontent.com/u/105094014?v=4?s=100" width="100px;" alt=""/><br /><sub><b>brave4Time</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=brave4Time" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Abrave4Time" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/walkerlee-lab"><img src="https://avatars.githubusercontent.com/u/8426753?v=4?s=100" width="100px;" alt=""/><br /><sub><b>WalkerLee</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=walkerlee-lab" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Awalkerlee-lab" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/fullofjoy"><img src="https://avatars.githubusercontent.com/u/30247571?v=4?s=100" width="100px;" alt=""/><br /><sub><b>jianghang</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=fullofjoy" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Afullofjoy" title="Bug reports">🐛</a></td>
-    <td align="center"><a href="https://github.com/ChineseTony"><img src="https://avatars.githubusercontent.com/u/24618786?v=4?s=100" width="100px;" alt=""/><br /><sub><b>ChineseTony</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=ChineseTony" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/ChineseTony"><img src="https://avatars.githubusercontent.com/u/24618786?v=4?s=100" width="100px;" alt=""/><br /><sub><b>ChineseTony</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=ChineseTony" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3AChineseTony" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/wyt199905"><img src="https://avatars.githubusercontent.com/u/85098809?v=4?s=100" width="100px;" alt=""/><br /><sub><b>wyt199905</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=wyt199905" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/weifuqing"><img src="https://avatars.githubusercontent.com/u/13931013?v=4?s=100" width="100px;" alt=""/><br /><sub><b>卫傅庆</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=weifuqing" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Aweifuqing" title="Bug reports">🐛</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/zklmcookle"><img src="https://avatars.githubusercontent.com/u/107192352?v=4?s=100" width="100px;" alt=""/><br /><sub><b>zklmcookle</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=zklmcookle" title="Code">💻</a></td>
   </tr>
 </table>
 

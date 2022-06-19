@@ -7,14 +7,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,8 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Parameter structure definition entity,zh: 参数结构定义实体")
+@ApiModel(description = "Parameter structure definition entity | 参数结构定义实体")
+@EntityListeners(AuditingEntityListener.class)
 public class ParamDefine {
 
     /**
@@ -157,6 +157,7 @@ public class ParamDefine {
      * 此条记录创建者
      */
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 11)
+    @CreatedBy
     private String creator;
 
     /**
@@ -164,6 +165,7 @@ public class ParamDefine {
      * 此条记录最新修改者
      */
     @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 12)
+    @LastModifiedBy
     private String modifier;
 
     /**
@@ -171,7 +173,7 @@ public class ParamDefine {
      * 记录创建时间
      */
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 13)
-    @Column(insertable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
@@ -179,7 +181,7 @@ public class ParamDefine {
      * 记录最新修改时间
      */
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 14)
-    @Column(insertable = false, updatable = false)
+    @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
     @Data
