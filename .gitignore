@@ -42,5 +42,10 @@ node_modules
 .docusaurus
 yarn.lock
 
+# h2 data
+*.mv.db
+*.trace.db
+
 # debug env
 application-dev.yml
+application-mysql.yml
