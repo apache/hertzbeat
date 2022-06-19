@@ -455,14 +455,17 @@ public class MonitorServiceImpl implements MonitorService {
         }
         //Traverse the map obtained by statistics and convert it into a List<App Count> result set
         //遍历统计得到的map，转换成List<App Count>结果集
-        return appCountMap.values().stream().peek(item -> {
+        return appCountMap.values().stream().map(item -> {
             item.setSize(item.getAvailableSize() + item.getUnManageSize()
                     + item.getUnReachableSize() + item.getUnAvailableSize());
-            Job job = appService.getAppDefine(item.getApp());
-            if (job != null) {
+            try {
+                Job job = appService.getAppDefine(item.getApp());
                 item.setCategory(job.getCategory());
+            } catch (Exception ignored) {
+                return null;
             }
-        }).collect(Collectors.toList());
+            return item;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Override

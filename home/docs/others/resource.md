@@ -6,13 +6,19 @@ sidebar_label: 相关资源
 
 ## 图标资源  
 
-### TANCLOUD-HertzBeat LOGO   
+### HertzBeat LOGO   
 
 ![logo](/img/tancloud-logo.svg)  
 
 下载: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
 
-### TANCLOUD 品牌 LOGO  
+### HertzBeat Brand LOGO  
+
+![logo](/img/hertzbeat-brand.svg)
+
+下载: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/hertzbeat-brand.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/hertzbeat-brand.jpg)
+
+### TANCLOUD Brand LOGO  
 
 ![logo](/img/tancloud-brand.svg)  
 
