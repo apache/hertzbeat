@@ -56,4 +56,4 @@ spring:
     url: jdbc:mysql://localhost:3306/hertzbeat2?useUnicode=true&characterEncoding=utf-8&useSSL=false
 ```
 
-### 启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。 
+**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
