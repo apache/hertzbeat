@@ -22,7 +22,11 @@ sidebar_label: 帮助入门
 
 ### 操作系统监控     
 
-[Linux操作系统监控](linux) &emsp;&emsp;&emsp;&emsp;
+[Linux操作系统监控](linux) &emsp;&emsp;&emsp;&emsp; [Windows操作系统监控](windows) &emsp;&emsp;&emsp;&emsp; [Ubuntu操作系统监控](ubuntu) &emsp;&emsp;&emsp;&emsp; [Centos操作系统监控](centos) &emsp;&emsp;&emsp;&emsp;
+
+### 中间件监控
+
+[Zookeeper](zookeeper) &emsp;&emsp;&emsp;&emsp;  
 
 ## 💡 告警服务  
 
