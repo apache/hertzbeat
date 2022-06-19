@@ -1,11 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
+import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
+import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { I18NService } from '@core';
 
 @Component({
   selector: 'app-monitor-detail',
@@ -13,7 +18,13 @@ import { MonitorService } from '../../../service/monitor.service';
   styleUrls: ['./monitor-detail.component.less']
 })
 export class MonitorDetailComponent implements OnInit {
-  constructor(private monitorSvc: MonitorService, private route: ActivatedRoute, private appDefineSvc: AppDefineService) {}
+  constructor(
+    private monitorSvc: MonitorService,
+    private route: ActivatedRoute,
+    private notifySvc: NzNotificationService,
+    private appDefineSvc: AppDefineService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
+  ) {}
   isSpinning: boolean = false;
   monitorId!: number;
   app!: string;
@@ -60,12 +71,23 @@ export class MonitorDetailComponent implements OnInit {
   }
 
   initMetricChart() {
-    // 查询过滤出此监控下可计算聚合的数字指标
-    const define$ = this.appDefineSvc
-      .getAppDefine(this.app)
+    // 检测历史数据服务是否可用
+    const detectStatus$ = this.monitorSvc
+      .getWarehouseStorageServerStatus('tdengine')
+      .pipe(
+        switchMap((message: Message<any>) => {
+          if (message.code == 0) {
+            // 查询过滤出此监控下可计算聚合的数字指标
+            return this.appDefineSvc.getAppDefine(this.app);
+          } else {
+            // 不提供历史图表服务
+            return throwError(message.msg);
+          }
+        })
+      )
       .pipe(
         finalize(() => {
-          define$.unsubscribe();
+          detectStatus$.unsubscribe();
         })
       )
       .subscribe(
@@ -92,7 +114,7 @@ export class MonitorDetailComponent implements OnInit {
           }
         },
         error => {
-          console.error(error.msg);
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.tdengine.unavailable'), error);
         }
       );
   }

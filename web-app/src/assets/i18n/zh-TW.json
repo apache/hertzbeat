@@ -224,6 +224,7 @@
   "monitors.detail.history": "監控曆史圖表詳情",
   "monitors.collect.time": "采集時間",
   "monitors.collect.time.tip": "最近采集時間",
+  "monitors.detail.tdengine.unavailable": "無法提供曆史圖表數據，請配置依賴服務TDengine時序數據庫",
   "monitors.detail.chart.zoom": "區域縮放",
   "monitors.detail.chart.back": "縮放還原",
   "monitors.detail.chart.save": "保存圖片",

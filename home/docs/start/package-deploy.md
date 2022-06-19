@@ -22,15 +22,15 @@ sidebar_label: 安装包方式部署
    - 从[GITEE Release](https://gitee.com/dromara/hertzbeat/releases) 仓库下载
    - 从[GITHUB Release](https://github.com/dromara/hertzbeat/releases) 仓库下载
 
-3. 配置HertzBeat的配置文件(可选)     
-   解压安装包到主机 eg: /opt/hertzbeat
+3. 配置HertzBeat的配置文件(可选)       
+   解压安装包到主机 eg: /opt/hertzbeat  
    ``` 
-   $ tar zxvf hertzbeat-[版本号].tar.gz 
+   $ tar zxvf hertzbeat-[版本号].tar.gz   
    ```
-   修改位于 `hertzbeat/config/application.yml` 的配置文件      
-   替换里面的`td-engine`服务参数，IP端口账户密码
-   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数参见[H2数据库切换为MYSQL](mysql-init)）
-   具体替换参数如下:
+   修改位于 `hertzbeat/config/application.yml` 的配置文件        
+   替换里面的`td-engine`服务参数，IP端口账户密码   
+   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）
+   具体替换参数如下:   
 ```
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
@@ -43,7 +43,7 @@ sidebar_label: 安装包方式部署
 ```
 
 4. 配置用户配置文件(可选,自定义配置用户密码)     
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat   
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat     
    若需要新增删除修改账户或密码，可以通过修改位于 `hertzbeat/config/sureness.yml` 的配置文件实现，若无此需求可忽略此步骤 
    修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
 
@@ -90,6 +90,6 @@ account:
 > 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
 
 3. **监控历史图表长时间都一直无数据**
-> 一：Tdengine是否配置，未配置则无历史图表数据  
+> 一：Tdengine是否配置，未配置则无历史图表数据    
 > 二：Tdengine的数据库`hertzbeat`是否创建
 > 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 Tdengine IP账户密码等配置是否正确  
