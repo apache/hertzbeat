@@ -14,8 +14,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Collection job management provides api interface
  * 采集job管理提供api接口
- *
  *
  *
  */
@@ -49,7 +49,7 @@ public class CollectJobService {
         try {
             countDownLatch.await(100, TimeUnit.SECONDS);
         } catch (Exception e) {
-            log.info("同步任务运行100秒无响应，返回");
+            log.info("The sync task runs for 100 seconds with no response and returns");
         }
         return metricsData;
     }

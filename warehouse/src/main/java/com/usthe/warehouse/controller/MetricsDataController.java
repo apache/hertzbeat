@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.usthe.common.util.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -38,12 +39,29 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
+    private static final String TDENGINE = "tdengine";
 
     @Autowired
     private MemoryDataStorage memoryDataStorage;
 
     @Autowired
     private TdEngineDataStorage tdEngineDataStorage;
+
+    @GetMapping("/api/warehouse/storage/status")
+    @ApiOperation(value = "Query Warehouse Storage Server Status", notes = "查询仓储下存储服务的可用性状态")
+    public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus(
+            @ApiParam(value = "Storage Type", example = "Tdengine")
+            @RequestParam String storage) {
+        boolean available = true;
+        if (TDENGINE.equalsIgnoreCase(storage)) {
+            available = tdEngineDataStorage.isServerAvailable();
+        }
+        if (available) {
+            return ResponseEntity.ok(Message.<Void>builder().build());
+        } else {
+            return ResponseEntity.ok(new Message<>(FAIL_CODE, "Service not available!"));
+        }
+    }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
     @ApiOperation(value = "查询监控指标组的指标数据", notes = "查询监控指标组的指标数据")

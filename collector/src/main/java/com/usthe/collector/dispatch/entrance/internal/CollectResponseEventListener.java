@@ -6,6 +6,7 @@ import java.util.EventListener;
 import java.util.List;
 
 /**
+ * One-time collection task response result listener
  * 一次性采集任务响应结果监听器
  *
  *
@@ -13,8 +14,9 @@ import java.util.List;
 public interface CollectResponseEventListener extends EventListener {
 
     /**
+     * Collection task completion result notification
      * 采集任务完成结果通知
-     * @param responseMetrics 响应数据
+     * @param responseMetrics Response Metrics
      */
     default void response(List<CollectRep.MetricsData> responseMetrics) {}
 }
