@@ -3,6 +3,9 @@
 - 如果不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻 **[登录注册](https://console.tancloud.cn)** 免费使用。
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
+> docker-compose 部署方案默认使用了 Mysql + Tdengine 作为 Hertzbeat 依赖存储服务。   
+> 此方案会启动三个容器服务 Mysql, Tdengine, HertzBeat   
+
 ##### 安装Docker & Docker-compose
 
 1. 下载安装 docker 环境 & docker-compose 环境
@@ -44,8 +47,9 @@
 
 `docker-compose restart hertzbeat`
 
-##### 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警。
+##### 开始探索HertzBeat   
+
+浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`  
 
 ---   
 

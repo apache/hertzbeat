@@ -7,13 +7,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -35,7 +33,8 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "嗯： Parameter Entity,zh: 参数实体")
+@ApiModel(description = "Parameter Entity | 参数实体")
+@EntityListeners(AuditingEntityListener.class)
 public class Param {
 
     /**
@@ -68,6 +67,7 @@ public class Param {
      */
     @ApiModelProperty(value = "参数值", example = "8080", accessMode = READ_WRITE, position = 3)
     @Length(max = 8126)
+    @Column(name = "`value`")
     private String value;
 
     /**
@@ -84,7 +84,7 @@ public class Param {
      * 记录创建时间
      */
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 5)
-    @Column(insertable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
@@ -92,7 +92,7 @@ public class Param {
      * 记录最新修改时间
      */
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 6)
-    @Column(insertable = false, updatable = false)
+    @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
 }

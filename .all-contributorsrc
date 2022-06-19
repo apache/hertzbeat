@@ -131,6 +131,35 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/24618786?v=4",
       "profile": "https://github.com/ChineseTony",
       "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "wyt199905",
+      "name": "wyt199905",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85098809?v=4",
+      "profile": "https://github.com/wyt199905",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "weifuqing",
+      "name": "卫傅庆",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13931013?v=4",
+      "profile": "https://github.com/weifuqing",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "zklmcookle",
+      "name": "zklmcookle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107192352?v=4",
+      "profile": "https://github.com/zklmcookle",
+      "contributions": [
         "code"
       ]
     }

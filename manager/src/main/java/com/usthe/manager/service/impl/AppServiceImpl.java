@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 @Order(value = 1)
-@Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
