@@ -49,7 +49,7 @@ public class TdEngineDataStorage implements DisposableBean {
 
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
-    private static final Integer SQL_STRING_VALUE_MAX_LENGTH = 100;
+    private static final Integer SQL_STRING_VALUE_MAX_LENGTH = 200;
 
     private HikariDataSource hikariDataSource;
     private WarehouseWorkerPool workerPool;
@@ -184,14 +184,14 @@ public class TdEngineDataStorage implements DisposableBean {
                 // 超级表未创建 创建对应超级表
                 StringBuilder fieldSqlBuilder = new StringBuilder("(");
                 fieldSqlBuilder.append("ts TIMESTAMP, ");
-                fieldSqlBuilder.append("instance NCHAR(100), ");
+                fieldSqlBuilder.append("instance NCHAR(200), ");
                 for (int index = 0; index < fields.size(); index++) {
                     CollectRep.Field field = fields.get(index);
                     String fieldName = field.getName();
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
                         fieldSqlBuilder.append(fieldName).append(" ").append("DOUBLE");
                     } else {
-                        fieldSqlBuilder.append(fieldName).append(" ").append("NCHAR(100)");
+                        fieldSqlBuilder.append(fieldName).append(" ").append("NCHAR(200)");
                     }
                     if (index != fields.size() - 1) {
                         fieldSqlBuilder.append(", ");
