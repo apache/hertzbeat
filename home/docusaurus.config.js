@@ -225,6 +225,13 @@ module.exports = {
                 remarkPlugins: [
                     [require('@docusaurus/remark-plugin-npm2yarn'), {sync: true}],
                 ],
+                lastVersion: 'current',
+                versions: {
+                    current: {
+                        label: 'v1.1.x',
+                        path: '',
+                    }
+                }
             },
             blog: {
                 showReadingTime: true,
