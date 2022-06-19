@@ -30,7 +30,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  * @date 2021/11/13 21:49
  */
 @Entity
-@Table(name = "param_define")
+@Table(name = "hzb_param_define")
 @Data
 @Builder
 @AllArgsConstructor
