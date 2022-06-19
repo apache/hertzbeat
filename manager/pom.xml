@@ -13,6 +13,7 @@
 
     <properties>
         <mysql.version>8.0.16</mysql.version>
+        <h2.version>2.1.212</h2.version>
         <snake.yaml.version>1.26</snake.yaml.version>
     </properties>
 
@@ -103,6 +104,13 @@
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot-starter-sureness</artifactId>
             <version>1.0.7</version>
+        </dependency>
+        <!-- h2 database-->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

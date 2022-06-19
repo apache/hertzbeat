@@ -1,8 +1,5 @@
 package com.usthe.common.entity.manager;
 
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.usthe.common.support.valid.HostValid;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -11,6 +8,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -35,6 +37,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(description = "Monitor Entity | 监控实体")
+@EntityListeners(AuditingEntityListener.class)
 public class Monitor {
 
     /**
@@ -107,6 +110,7 @@ public class Monitor {
      * 此条记录创建者
      */
     @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 8)
+    @CreatedBy
     private String creator;
 
     /**
@@ -114,6 +118,7 @@ public class Monitor {
      * 此条记录最新修改者
      */
     @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 9)
+    @LastModifiedBy
     private String modifier;
 
     /**
@@ -121,7 +126,7 @@ public class Monitor {
      * 记录创建时间
      */
     @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 10)
-    @Column(insertable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
@@ -129,7 +134,7 @@ public class Monitor {
      * 记录最新修改时间
      */
     @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 11)
-    @Column(insertable = false, updatable = false)
+    @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
     /**
@@ -142,6 +147,8 @@ public class Monitor {
      */
     @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "tag_monitor_bind",
+        foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+        inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
