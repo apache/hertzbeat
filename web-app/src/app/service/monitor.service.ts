@@ -11,6 +11,7 @@ const monitors_uri = '/monitors';
 const detect_monitor_uri = '/monitor/detect';
 const manage_monitors_uri = '/monitors/manage';
 const summary_uri = '/summary';
+const warehouse_storage_status_uri = '/warehouse/storage/status';
 
 @Injectable({
   providedIn: 'root'
@@ -141,5 +142,14 @@ export class MonitorService {
 
   public getAppsMonitorSummary(): Observable<Message<any>> {
     return this.http.get<Message<any>>(summary_uri);
+  }
+
+  public getWarehouseStorageServerStatus(storage: string): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      storage: storage
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(warehouse_storage_status_uri, options);
   }
 }

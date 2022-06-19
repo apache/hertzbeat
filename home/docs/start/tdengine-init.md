@@ -55,3 +55,22 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
 
 **注意⚠️若是安装包安装的TDengine2.3+版本**       
 > 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter
+
+### 在hertzbeat的`application.yml`配置文件配置此数据库连接   
+
+1. 配置HertzBeat的配置文件
+   修改位于 `hertzbeat/config/application.yml` 的配置文件   
+   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
+   替换里面的`warehouse.store.td-engine`数据源参数，URL账户密码    
+
+```
+   warehouse.store.td-engine.url
+   warehouse.store.td-engine.username
+   warehouse.store.td-engine.password
+
+```
+
+### 常见问题   
+
+1. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
+> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - TDengine数据库

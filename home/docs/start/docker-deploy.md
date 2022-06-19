@@ -21,11 +21,11 @@ sidebar_label: Docker方式部署
    ``` 
    $ docker pull tancloud/hertzbeat   
    ```
-3. 配置HertzBeat的配置文件(可选)  
-   在主机目录下创建application.yml，eg:/opt/application.yml   
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码
-   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数参见[H2数据库切换为MYSQL](mysql-init)）  
-   具体替换参数如下:
+3. 配置HertzBeat的配置文件(可选)      
+   在主机目录下创建application.yml，eg:/opt/application.yml        
+   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码   
+   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）       
+   具体替换参数如下:     
 ```
    
    warehouse.store.td-engine.url
@@ -38,11 +38,11 @@ sidebar_label: Docker方式部署
    spring.mail.password
 ```
 
-4. 配置用户配置文件(可选,自定义配置用户密码)       
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat    
-   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
-   在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
-   配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
+4. 配置用户配置文件(可选,自定义配置用户密码)         
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
+   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
+   在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
+   配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
    
 ```yaml
 
@@ -145,12 +145,12 @@ account:
      role: [guest]
 ```
 
-6. 启动HertzBeat Docker容器  
+6. 启动HertzBeat Docker容器    
    ``` 
    $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml --name hertzbeat tancloud/hertzbeat
    526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
    ```
-   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
+   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
    - docker run -d : 通过Docker运行一个容器,使其在后台运行
    - -p 1157:1157  : 映射容器端口到主机端口
    - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
@@ -184,3 +184,7 @@ account:
 > 一：Tdengine是否配置，未配置则无历史图表数据  
 > 二：Tdengine的数据库`hertzbeat`是否创建
 > 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 Tdengine IP账户密码等配置是否正确  
+
+5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
+> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
+> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init)  
