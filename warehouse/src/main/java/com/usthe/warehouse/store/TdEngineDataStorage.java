@@ -19,10 +19,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -37,9 +34,6 @@ import java.util.regex.Pattern;
 @Slf4j
 public class TdEngineDataStorage implements DisposableBean {
 
-    private HikariDataSource hikariDataSource;
-    private WarehouseWorkerPool workerPool;
-    private MetricsDataExporter dataExporter;
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO %s USING %s TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS %s %s TAGS (monitor BIGINT)";
@@ -56,6 +50,11 @@ public class TdEngineDataStorage implements DisposableBean {
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
 
+    private HikariDataSource hikariDataSource;
+    private WarehouseWorkerPool workerPool;
+    private MetricsDataExporter dataExporter;
+    private boolean serverAvailable = false;
+
     public TdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
                                MetricsDataExporter dataExporter) {
         this.workerPool = workerPool;
@@ -64,8 +63,8 @@ public class TdEngineDataStorage implements DisposableBean {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        boolean success = initTdEngineDatasource(properties.getStore().getTdEngine());
-        startStorageData(success);
+        serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
+        startStorageData(serverAvailable);
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
@@ -120,6 +119,9 @@ public class TdEngineDataStorage implements DisposableBean {
         workerPool.executeJob(runnable);
     }
 
+    public boolean isServerAvailable() {
+        return serverAvailable;
+    }
 
     public void saveData(CollectRep.MetricsData metricsData) {
         if (metricsData == null || metricsData.getValuesList().isEmpty() || metricsData.getFieldsList().isEmpty()) {
@@ -247,7 +249,7 @@ public class TdEngineDataStorage implements DisposableBean {
         Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
-            if (hikariDataSource == null) {
+            if (!serverAvailable) {
                 log.error("\n\t---------------TdEngine Init Failed---------------\n" +
                         "\t--------------Please Config Tdengine--------------\n" +
                         "\t----------Can Not Use Metric History Now----------\n");
@@ -288,6 +290,12 @@ public class TdEngineDataStorage implements DisposableBean {
 
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                     String metric, String instance, String history) {
+        if (!serverAvailable) {
+            log.error("\n\t---------------TdEngine Init Failed---------------\n" +
+                    "\t--------------Please Config Tdengine--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
+            return Collections.emptyMap();
+        }
         String table = app + "_" + metrics + "_" + monitorId;
         List<String> instances = new LinkedList<>();
         if (instance != null) {
