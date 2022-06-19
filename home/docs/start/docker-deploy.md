@@ -146,17 +146,25 @@ account:
 ```
 
 6. 启动HertzBeat Docker容器    
-   ``` 
-   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml --name hertzbeat tancloud/hertzbeat
-   526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
-   ```
+
+```shell 
+$ docker run -d -p 1157:1157 \
+    -v /opt/data:/opt/hertzbeat/data \
+    -v /opt/logs:/opt/hertzbeat/logs \
+    -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
+    -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
+    --name hertzbeat tancloud/hertzbeat
+```
+
    这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
-   - docker run -d : 通过Docker运行一个容器,使其在后台运行
-   - -p 1157:1157  : 映射容器端口到主机端口
-   - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
-   - -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
-   - --name hertzbeat : 命名容器名称 hertzbeat 
-   - tancloud/hertzbeat : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,版本可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
+   - `-p 1157:1157`  : 映射容器端口到主机端口
+   - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
+   - `-v /opt/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
+   - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
+   - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
+   - `--name hertzbeat` : 命名容器名称 hertzbeat 
+   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,版本可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
