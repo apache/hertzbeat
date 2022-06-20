@@ -168,13 +168,17 @@ param:
     # field-字段名称标识符
   - field: host
     # name-参数字段显示名称
-    name: 主机Host
+    name: 
+      zh-CN: 主机Host
+      en-US: Host
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # 是否是必输项 true-必填 false-可选
     required: true
   - field: port
-    name: 端口
+    name: 
+      zh-CN: 端口
+      en-US: Port
     type: number
     # 当type为number时,用range表示范围
     range: '[0,65535]'
@@ -184,22 +188,30 @@ param:
     # 参数输入框提示信息
     placeholder: '请输入端口'
   - field: username
-    name: 用户名
+    name: 
+      zh-CN: 用户名
+      en-US: Username
     type: text
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
     required: false
   - field: password
-    name: 密码
+    name: 
+      zh-CN: 密码
+      en-US: Password
     type: password
     required: false
   - field: ssl
-    name: 启动SSL
+    name: 
+      zh-CN: 启动SSL
+      en-US: Enable SSL
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: false
   - field: method
-    name: 请求方式
+    name: 
+      zh-CN: 请求方式
+      en-US: Method
     type: radio
     required: true
     # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
