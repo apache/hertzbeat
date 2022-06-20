@@ -146,7 +146,7 @@ public class Monitor {
      *                       referencedColumnName 关联表的映射字段名称
      */
     @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "tag_monitor_bind",
+    @JoinTable(name = "hzb_tag_monitor_bind",
         foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
