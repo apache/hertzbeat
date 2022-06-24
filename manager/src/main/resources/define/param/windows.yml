@@ -1,4 +1,4 @@
-app: windwos
+app: windows
 param:
   - field: host
     name:

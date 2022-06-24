@@ -21,7 +21,6 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
 2. Docker安装TDengine
    ```
    $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp -v /opt/taosdata:/var/lib/taos --name tdengine -e TZ=Asia/Shanghai tdengine/tdengine:2.4.0.12
-   526aa188da767ae94b244226a2b2eec2b5f17dd8eff594533d9ec0cd0f3a1ccd
    ```
    `-v /opt/taosdata:/var/lib/taos` 为tdengine数据目录本地持久化挂载，需将`/opt/taosdata`替换为实际本地存在的目录  
    `-e TZ="Asia/Shanghai"` 为tdengine设置时区，这里可选设置对应的时区   
@@ -31,10 +30,9 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
 1. 进入数据库Docker容器  
    ```
    $ docker exec -it tdengine /bin/bash
-   root@tdengine-server:~/TDengine-server-2.4.0.4#
    ```
 2. 创建名称为hertzbeat的数据库
-   进入容器后，执行 taos shell 客户端程序。
+   进入容器后，执行 `taos` 命令, 如下: 
    ```
    root@tdengine-server:~/TDengine-server-2.4.0.4# taos
    Welcome to the TDengine shell from Linux, Client Version:2.4.0.4
