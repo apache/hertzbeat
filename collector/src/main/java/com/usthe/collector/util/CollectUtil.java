@@ -25,7 +25,7 @@ public class CollectUtil {
     private static final String SMILING_PLACEHOLDER = "^_^";
     private static final String SMILING_PLACEHOLDER_REGEX = "\\^_\\^";
     private static final String CRYING_PLACEHOLDER = "-_-";
-    private static final String CRYING_PLACEHOLDER_REGEX = "\\-_\\-";
+    private static final String CRYING_PLACEHOLDER_REGEX = "-_-";
 
     /**
      * 关键字匹配计数
@@ -70,7 +70,7 @@ public class CollectUtil {
             return defaultTimeout;
         }
         try {
-            return Integer.parseInt(timeout);
+            return Double.valueOf(timeout).intValue();
         } catch (Exception e) {
             return defaultTimeout;
         }
@@ -106,7 +106,7 @@ public class CollectUtil {
                         }
                     }
                 } else {
-                    jsonObject.add(entry.getKey(), replaceSmilingPlaceholder(entry.getValue(), configmap));
+                    jsonObject.add(entry.getKey(), replaceCryPlaceholder(entry.getValue(), configmap));
                 }
             }
         } else if (jsonElement.isJsonArray()) {
@@ -129,7 +129,7 @@ public class CollectUtil {
                         }
                     }
                 } else {
-                    jsonArray.set(index, replaceSmilingPlaceholder(element, configmap));
+                    jsonArray.set(index, replaceCryPlaceholder(element, configmap));
                 }
                 index++;
             }
