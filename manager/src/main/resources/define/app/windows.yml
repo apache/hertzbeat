@@ -1,8 +1,8 @@
 category: os
 app: windows
 name:
-  zh-CN: Windwos操作系统
-  en-US: OS Windwos
+  zh-CN: Windows操作系统
+  en-US: OS Windows
 configmap:
   - key: host
     type: 1
