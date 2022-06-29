@@ -1,13 +1,6 @@
 package com.usthe.common.entity.job;
 
-import com.usthe.common.entity.job.protocol.HttpProtocol;
-import com.usthe.common.entity.job.protocol.IcmpProtocol;
-import com.usthe.common.entity.job.protocol.JdbcProtocol;
-import com.usthe.common.entity.job.protocol.RedisProtocol;
-import com.usthe.common.entity.job.protocol.SnmpProtocol;
-import com.usthe.common.entity.job.protocol.SshProtocol;
-import com.usthe.common.entity.job.protocol.TcpUdpProtocol;
-import com.usthe.common.entity.job.protocol.TelnetProtocol;
+import com.usthe.common.entity.job.protocol.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -101,6 +94,13 @@ public class Metrics {
      * 使用公共的redis协议的监控配置信息
      */
     private RedisProtocol redis;
+
+    /**
+     * Get monitoring configuration information using public JMX protocol
+     * 使用公共JMX协议获取监控配置信息
+     */
+    private JmxProtocol jmxProtocol;
+
     /**
      * Monitoring configuration information using the public snmp protocol
      * 使用公共的snmp协议的监控配置信息
