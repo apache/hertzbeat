@@ -44,7 +44,7 @@ public class MetricsDataController {
     @Autowired
     private MemoryDataStorage memoryDataStorage;
 
-    @Autowired
+    @Autowired(required = false)
     private TdEngineDataStorage tdEngineDataStorage;
 
     @GetMapping("/api/warehouse/storage/status")
@@ -54,7 +54,11 @@ public class MetricsDataController {
             @RequestParam String storage) {
         boolean available = true;
         if (TDENGINE.equalsIgnoreCase(storage)) {
-            available = tdEngineDataStorage.isServerAvailable();
+            if (tdEngineDataStorage == null) {
+                available = false;
+            } else {
+                available = tdEngineDataStorage.isServerAvailable();
+            }
         }
         if (available) {
             return ResponseEntity.ok(Message.<Void>builder().build());
@@ -117,13 +121,17 @@ public class MetricsDataController {
         if (history == null) {
             history = "6h";
         }
-        Map<String, List<Value>> instanceValuesMap;
+        Map<String, List<Value>> instanceValuesMap = null;
         if (interval == null || !interval) {
-            instanceValuesMap = tdEngineDataStorage
-                    .getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
+            if (tdEngineDataStorage != null) {
+                instanceValuesMap = tdEngineDataStorage
+                        .getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
+            }
         } else {
-            instanceValuesMap = tdEngineDataStorage
-                    .getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
+            if (tdEngineDataStorage != null) {
+                instanceValuesMap = tdEngineDataStorage
+                        .getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
+            }
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
                 .id(monitorId).metric(metrics).values(instanceValuesMap)

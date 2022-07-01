@@ -88,15 +88,12 @@ public class TdEngineDataStorage implements DisposableBean {
         //validation query
         config.setConnectionTestQuery("select server_status()");
         try {
-            this.hikariDataSource =  new HikariDataSource(config);
+            this.hikariDataSource = new HikariDataSource(config);
         } catch (Exception e) {
-            log.error("\n\t------------------WARN WARN WARN------------------\n" +
-                    "\t---------------Init TdEngine Failed---------------\n" +
+            log.warn("\n\t------------------WARN WARN WARN------------------\n" +
                     "\t---------------Init TdEngine Failed---------------\n" +
                     "\t--------------Please Config Tdengine--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+                    "\t---------Or Can Not Use Metric History Now---------\n");
             return false;
         }
         return true;

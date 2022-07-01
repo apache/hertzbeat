@@ -1,9 +1,13 @@
 package com.usthe.collector.dispatch;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.TimerDispatch;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
+import com.usthe.collector.util.CollectUtil;
+import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
@@ -12,6 +16,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +41,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * 指标组采集任务超时时间值
      */
     private static final long DURATION_TIME = 240_000L;
+    private static final Gson GSON = new Gson();
     /**
      * Priority queue of index group collection tasks
      * 指标组采集任务优先级队列
@@ -186,7 +192,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level indicator group is completed, and the execution of the next level indicator group starts
                 // 当前级别指标组执行完成，开始执行下一级别的指标组
+                // use pre collect metrics data to replace next metrics config params
+                Map<String, Configmap> configmap = getConfigmapFromPreCollectData(metricsData);
                 metricsSet.forEach(metricItem -> {
+                    if (configmap != null && !configmap.isEmpty()) {
+                        JsonElement jsonElement = GSON.toJsonTree(metricItem);
+                        CollectUtil.replaceCryPlaceholder(jsonElement, configmap);
+                        metricItem = GSON.fromJson(jsonElement, Metrics.class);
+                    }
                     MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
                     jobRequestQueue.addJob(metricsCollect);
                     metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
@@ -226,6 +239,25 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // 需等待其它同级别指标组执行完成后进入下一级别执行
             }
         }
+    }
+
+    private Map<String, Configmap> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
+        if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
+            return null;
+        }
+        CollectRep.ValueRow valueRow = metricsData.getValues(0);
+        if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
+            return null;
+        }
+        Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
+        int index = 0;
+        for (CollectRep.Field field : metricsData.getFieldsList()) {
+            String value = valueRow.getColumns(index);
+            index++;
+            Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
+            configmapMap.put(field.getName(), configmap);
+        }
+        return configmapMap;
     }
 
     @Data
