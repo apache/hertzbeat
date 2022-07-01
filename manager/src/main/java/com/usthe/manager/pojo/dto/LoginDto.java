@@ -23,7 +23,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en: Account information transfer body,zh: 账户信息传输体")
+@ApiModel(description = "Account information transfer body | 账户信息传输体")
 public class LoginDto {
 
     /**
