@@ -99,7 +99,7 @@ public class Metrics {
      * Get monitoring configuration information using public JMX protocol
      * 使用公共JMX协议获取监控配置信息
      */
-    private JmxProtocol jmxProtocol;
+    private JmxProtocol jmx;
 
     /**
      * Monitoring configuration information using the public snmp protocol

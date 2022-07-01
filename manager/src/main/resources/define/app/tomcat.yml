@@ -1,8 +1,8 @@
-category: db
-app: sqlserver
+category: os
+app: tomcat
 name:
-  zh-CN: SqlServer数据库
-  en-US: SqlServer DB
+  zh-CN: Tomcat服务器
+  en-US: Tomcat OS
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -14,125 +14,222 @@ configmap:
     type: 1
   - key: password
     type: 2
-  - key: database
-    type: 1
-  - key: timeout
-    type: 0
   - key: url
     type: 1
 # 指标组列表
 metrics:
-  - name: basic
+  - name: server
+
+    priority: 0
+    fields:
+      - field: serverNumber
+        type: 1
+      - field: serverInfo
+        type: 1
+      - field: serverBuilt
+        type: 1
+      - field: port
+        type: 1
+      - field: address
+        type: 1
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: Catalina:type=Server
+      url: ^_^url^_^
+
+  - name: eden_space
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: Usage
-        type: 1
-        instance: true
-      - field: server_name
-        type: 1
-      - field: version
-        type: 1
-      - field: edition
-        type: 1
-      - field: start_time
-        type: 1
-    protocol: jdbc
-    jdbc:
+      - field: committed
+        type: 0
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    protocol: jmx
+    jmx:
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # 端口
       port: ^_^port^_^
-      platform: sqlserver
       username: ^_^username^_^
       password: ^_^password^_^
-      database: ^_^database^_^
-      timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
-      queryType: oneRow
-      # sql
-      sql: SELECT SERVERPROPERTY('MachineName') AS machine_name, SERVERPROPERTY('ServerName') AS server_name, SERVERPROPERTY('ProductVersion') AS version, SERVERPROPERTY('Edition') AS edition, sqlserver_start_time AS start_time FROM sys.dm_os_sys_info;
-      url: ^_^url^_^
-
-  - name: performance_counters
-    priority: 1
-    fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: database_pages
-        type: 0
-      - field: target_pages
-        type: 0
-      - field: page_life_expectancy
-        type: 0
-      - field: buffer_cache_hit_ratio
-        type: 0
-      - field: checkpoint_pages_sec
-        type: 0
-      - field: page_reads_sec
-        type: 0
-      - field: page_writes_sec
-        type: 0
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
-    aliasFields:
-      - Database pages
-      - Target pages
-      - Page life expectancy
-      - Buffer cache hit ratio
-      - Checkpoint pages/sec
-      - Page reads/sec
-      - Page writes/sec
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
-    calculates:
-      - database_pages=Database pages
-      - target_pages=Target pages
-      - page_life_expectancy=Page life expectancy
-      - buffer_cache_hit_ratio=Buffer cache hit ratio
-      - checkpoint_pages_sec=Checkpoint pages/sec
-      - page_reads_sec=Page reads/sec
-      - page_writes_sec=Page writes/sec
-    protocol: jdbc
-    jdbc:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      platform: sqlserver
-      username: ^_^username^_^
-      password: ^_^password^_^
-      database: ^_^database^_^
+      #外层类型
       objectName: java.lang:type=MemoryPool,name=Eden Space
-      attributName: Usage
-      timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
-      queryType: columns
-      # sql
-      sql: select counter_name, cntr_value from sys.dm_os_performance_counters where object_name = 'SQLServer:Buffer Manager';
+      attributeName: Usage
       url: ^_^url^_^
 
-  - name: connection
-    priority: 1
+  - name: meta_space
+    priority: 0
+    # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: user_connection
+      - field: committed
         type: 0
-        unit: 连接数
-    protocol: jdbc
-    jdbc:
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    protocol: jmx
+    jmx:
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # 端口
       port: ^_^port^_^
-      platform: sqlserver
       username: ^_^username^_^
       password: ^_^password^_^
-      database: ^_^database^_^
-      timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
-      queryType: oneRow
-      # sql
-      sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
+      #外层类型
+      objectName: java.lang:type=MemoryPool,name=Metaspace
+      attributeName: Usage
+      url: ^_^url^_^
+
+  - name: survivor_space
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: committed
+        type: 0
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: java.lang:type=MemoryPool,name=Survivor Space
+      attributeName: Usage
+      url: ^_^url^_^
+
+  - name: tenured_gen
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: committed
+        type: 0
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: java.lang:type=MemoryPool,name=Tenured Gen
+      attributeName: Usage
+      url: ^_^url^_^
+
+  - name: code_cache
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: committed
+        type: 0
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: java.lang:type=MemoryPool,name=Code Cache
+      attributeName: Usage
+      url: ^_^url^_^
+
+  - name: class_loading
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: LoadedClassCount
+        type: 0
+      - field: TotalLoadedClassCount
+        type: 0
+      - field: UnloadedClassCount
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: java.lang:type=ClassLoading
+      url: ^_^url^_^
+
+  - name: thread
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: TotalStartedThreadCount
+        type: 0
+        unit: 个
+      - field: ThreadCount
+        type: 0
+        unit: 个
+      - field: PeakThreadCount
+        type: 0
+        unit: 个
+      - field: DaemonThreadCount
+        type: 0
+        unit: 个
+      - field: CurrentThreadUserTime
+        type: 0
+        unit: 秒
+      - field: CurrentThreadCpuTime
+        type: 0
+        unit: 秒
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      #外层类型
+      objectName: java.lang:type=Threading
       url: ^_^url^_^

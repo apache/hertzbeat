@@ -7,15 +7,17 @@ import com.usthe.common.entity.job.protocol.JmxProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.remote.*;
+import java.io.IOException;
 import java.lang.management.*;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * jmx 采集实现类
@@ -37,14 +39,62 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) throws IOException {
         //从Metrics携带的jmx中拿到地址  端口
+        JMXConnector conn = null;
+        try {
+            JmxProtocol jmxProtocol = metrics.getJmx();
+            String url;
+            if (jmxProtocol.getUrl() != null) {
+                url = jmxProtocol.getUrl();
+            } else {
+                url = "service:jmx:rmi:///jndi/rmi://" + jmxProtocol.getHost() + ":" + jmxProtocol.getPort() + "/jmxrmi";
+            }
+            //创建一个jndi远程连接
+            JMXServiceURL jmxServiceURL = new JMXServiceURL(url);
+            conn = JMXConnectorFactory.connect(jmxServiceURL);
+            MBeanServerConnection jmxBean = conn.getMBeanServerConnection();
 
-        //创建一个jndi远程连接
+            ObjectName objectName = new ObjectName(jmxProtocol.getObjectName());
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
 
-        //获取指标  and  异常处理
-//        JMXServiceURL url
-        //指标结果收集
+            //是否存在二级嵌套
+            String attributeName;
+            if (jmxProtocol.getAttributeName() != null) {
+                attributeName = jmxProtocol.getAttributeName();
+                Object attribute = jmxBean.getAttribute(objectName, attributeName);
+                CompositeDataSupport support = null;
+                if (attribute instanceof CompositeDataSupport) {
+                    support = (CompositeDataSupport) attribute;
+                }
+                CompositeDataSupport finalSupport = support;
+                metrics.getFields().forEach(field -> {
+                    if (finalSupport.get(field.getField()) != null) {
+                        valueRowBuilder.addColumns(finalSupport.get(field.getField()).toString());
+                    }
+                });
+            } else {
+                List<String> attributeNames = metrics.getFields().stream().map(field -> field.getField()).collect(Collectors.toList());
+                List<Object> value = new ArrayList<>();
+                attributeNames.forEach(data -> {
+                    try {
+                        value.add(jmxBean.getAttribute(objectName, data));
+                    } catch (Exception e) {
+                        log.error("JMX value Error ：{}", e.getMessage());
+                    }
+                });
+                for (int i = 0; i < metrics.getFields().size(); i++) {
+                    valueRowBuilder.addColumns(value.get(i).toString());
+                }
+            }
+            builder.addValues(valueRowBuilder.build());
+        } catch (Exception e) {
+            log.error("JMX Error :{}", e.getMessage());
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
     }
 
     private static class Singleton {
