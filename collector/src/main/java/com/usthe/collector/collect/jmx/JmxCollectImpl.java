@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 /**
  * jmx 采集实现类
- *
+ * todo 参考其它class只带 @author @date标签 因为其它javadoc不识别
  * @ClassName JmxCollectImpl
  * @Description
  * @Author huacheng
@@ -48,10 +48,14 @@ public class JmxCollectImpl extends AbstractCollect {
             if (jmxProtocol.getUrl() != null) {
                 url = jmxProtocol.getUrl();
             } else {
+                // todo 考虑写成常量
                 url = "service:jmx:rmi:///jndi/rmi://" + jmxProtocol.getHost() + ":" + jmxProtocol.getPort() + "/jmxrmi";
             }
             //创建一个jndi远程连接
+            // todo jmxServiceURL 建议使用小驼峰命名
             JMXServiceURL jmxServiceURL = new JMXServiceURL(url);
+
+            // todo 可以参考其它采集类 复用一波链接
             conn = JMXConnectorFactory.connect(jmxServiceURL);
             MBeanServerConnection jmxBean = conn.getMBeanServerConnection();
 
@@ -69,28 +73,35 @@ public class JmxCollectImpl extends AbstractCollect {
                 }
                 CompositeDataSupport finalSupport = support;
                 metrics.getFields().forEach(field -> {
+                    // todo 查不到值的情况 需要置为 CommonConstants.NULL_VALUE
                     if (finalSupport.get(field.getField()) != null) {
                         valueRowBuilder.addColumns(finalSupport.get(field.getField()).toString());
                     }
                 });
             } else {
-                List<String> attributeNames = metrics.getFields().stream().map(field -> field.getField()).collect(Collectors.toList());
+                List<String> attributeNames = metrics.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList());
                 List<Object> value = new ArrayList<>();
                 attributeNames.forEach(data -> {
                     try {
+                        // todo 考虑 getAttribute获取null的情况
                         value.add(jmxBean.getAttribute(objectName, data));
                     } catch (Exception e) {
                         log.error("JMX value Error ：{}", e.getMessage());
                     }
                 });
                 for (int i = 0; i < metrics.getFields().size(); i++) {
+                    // todo 查不到值的情况 需要置为 CommonConstants.NULL_VALUE
                     valueRowBuilder.addColumns(value.get(i).toString());
                 }
             }
             builder.addValues(valueRowBuilder.build());
         } catch (Exception e) {
+            // todo 这里可以捕获不同的异常 来判断是链接可用性问题，网络问题还是其它采集问题
+            // todo      builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            //            builder.setMsg(errorMsg);
             log.error("JMX Error :{}", e.getMessage());
         } finally {
+            // todo 考虑复用链接时 这里就不用关闭
             if (conn != null) {
                 conn.close();
             }
