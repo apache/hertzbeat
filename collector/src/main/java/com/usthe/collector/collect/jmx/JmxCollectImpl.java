@@ -14,14 +14,11 @@ import javax.management.*;
 import javax.management.openmbean.CompositeDataSupport;
 import javax.management.remote.*;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * jmx 协议采集实现 - ping
+ * jmx 协议采集实现 - jmx
  *
  * @author huacheng
  * @date 2022/6/21 15:09
@@ -29,9 +26,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JmxCollectImpl extends AbstractCollect {
 
-    private final static String JMX_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://";
+    private static final String JMX_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://";
 
-    private final static String JMX_URL_SUFFIX = "/jmxrmi";
+    private static final String JMX_URL_SUFFIX = "/jmxrmi";
 
     private JmxCollectImpl() {
     }
@@ -68,26 +65,22 @@ public class JmxCollectImpl extends AbstractCollect {
                 }
                 CompositeDataSupport finalSupport = support;
                 metrics.getFields().forEach(field -> {
-                    if (finalSupport.get(field.getField()) != null) {
-                        valueRowBuilder.addColumns(finalSupport.get(field.getField()).toString());
+                    assert finalSupport != null;
+                    Object fieldValue = finalSupport.get(field.getField());
+                    if (fieldValue != null) {
+                        valueRowBuilder.addColumns(fieldValue.toString());
                     } else {
                         valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                     }
                 });
             } else {
-                List<String> attributeNames = metrics.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList());
-                List<Object> value = new ArrayList<>();
-                attributeNames.forEach(data -> {
-                    try {
-                        Object attributeValue = jmxBean.getAttribute(objectName, data);
-                        value.add(attributeValue != null ? attributeValue : CommonConstants.NULL_VALUE);
-                    } catch (Exception e) {
-                        log.error("JMX value Error ：{}", e.getMessage());
-                    }
-                });
-                for (int i = 0; i < metrics.getFields().size(); i++) {
-                    // todo 查不到值的情况 需要置为 CommonConstants.NULL_VALUE
-                    valueRowBuilder.addColumns(value.get(i).toString());
+                String[] attributes = new String[metrics.getAliasFields().size()];
+                attributes = metrics.getAliasFields().toArray(attributes);
+                AttributeList attributeList = jmxBean.getAttributes(objectName, attributes);
+                Map<String, Object> map = attributeList.asList().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+                for (String attribute : attributes) {
+                    Object attributeValue = map.get(attribute);
+                    valueRowBuilder.addColumns(attributeValue != null ? attributeValue.toString() : CommonConstants.NULL_VALUE);
                 }
             }
             builder.addValues(valueRowBuilder.build());
@@ -111,7 +104,10 @@ public class JmxCollectImpl extends AbstractCollect {
         if (cacheOption.isPresent()) {
             JmxConnect jmxConnect = (JmxConnect) cacheOption.get();
             conn = jmxConnect.getConnection();
-            if (conn == null) {
+            try {
+                conn.getMBeanServerConnection();
+            } catch (Exception e) {
+                conn = null;
                 CommonCache.getInstance().removeCache(identifier);
             }
         }
@@ -124,8 +120,8 @@ public class JmxCollectImpl extends AbstractCollect {
         } else {
             url = JMX_URL_PREFIX + jmxProtocol.getHost() + ":" + jmxProtocol.getPort() + JMX_URL_SUFFIX;
         }
-        JMXServiceURL jmxServiceURL = new JMXServiceURL(url);
-        conn = JMXConnectorFactory.connect(jmxServiceURL);
+        JMXServiceURL jmxServiceUrl = new JMXServiceURL(url);
+        conn = JMXConnectorFactory.connect(jmxServiceUrl);
         CommonCache.getInstance().addCache(identifier, new JmxConnect(conn));
         return conn;
     }
