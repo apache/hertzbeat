@@ -134,7 +134,6 @@ public class AlertServiceImpl implements AlertService {
                 .tags(alertReport.getLabels())
                 .target(CommonConstants.AVAILABLE)
                 .times(3)
-                // todo 时区问题
                 .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneOffset.of("+8")))
                 .build();
     }
