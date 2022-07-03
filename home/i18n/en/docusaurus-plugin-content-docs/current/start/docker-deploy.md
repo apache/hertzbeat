@@ -124,7 +124,7 @@ account:
      role: [guest]
 ```
    
-   modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**  
+   Modify the following **part parameters** in sureness.yml**[Note⚠️Other default sureness configuration parameters should be retained]**：  
 
 ```yaml
 
@@ -179,7 +179,7 @@ The problems lies in Docker container failed to visit and connect localhost port
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
 2. **According to the process deploy，visit http://ip:1157/ no interface**   
-please refer to the following points to troubleshoot issuess：  
+Please refer to the following points to troubleshoot issuess：  
 > one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
 > two：Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 > three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
@@ -189,10 +189,10 @@ please refer to the following points to troubleshoot issuess：
 > two：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.  
 
 4. **Historical monitoring charts have been missing data for a long time**  
-> one：Check whether you configure Tdengine. No configuration means no historical chart data  
-> two：Check whether Tdengine database `hertzbeat` is created 
-> three: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`
+> one：Check whether you configure Tdengine. No configuration means no historical chart data.  
+> two：Check whether Tdengine database `hertzbeat` is created. 
+> three: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 
 5. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
-> Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init)  
+> Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init).  

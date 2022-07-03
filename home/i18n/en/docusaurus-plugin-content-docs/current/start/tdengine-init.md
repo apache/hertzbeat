@@ -22,7 +22,7 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
    ```
    $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp -v /opt/taosdata:/var/lib/taos --name tdengine -e TZ=Asia/Shanghai tdengine/tdengine:2.4.0.12
    ```
-   `-v /opt/taosdata:/var/lib/taos` is local persistent mount TDengine data directory.`/opt/taosdata` should be replaced with the actual local directory  
+   `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory.`/opt/taosdata` should be replaced with the actual local directory.
    `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.
    use```$ docker ps``` to check if the database started successfully
 
@@ -31,7 +31,7 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
    ```
    $ docker exec -it tdengine /bin/bash
    ```
-2. Create database names hertzbeat
+2. Create database named hertzbeat
    After entering the container，execute `taos` command as follows: 
    ```
    root@tdengine-server:~/TDengine-server-2.4.0.4# taos
@@ -59,8 +59,8 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
 
 1. Configure HertzBeat's configuration file
    Modify `hertzbeat/config/application.yml` configuration file   
-   Note⚠️The docker container way need to mount application.yml file locally,while the installation package way is in `hertzbeat/config/application.yml`     
-   Replace data source parameters, URL account password in `warehouse.store.td-engine`    
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+   Replace `warehouse.store.td-engine` data source parameters, URL account and password.     
 
 ```
    warehouse.store.td-engine.url

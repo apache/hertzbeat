@@ -1,39 +1,39 @@
 ---
 id: extend-point  
-title: 自定义监控  
-sidebar_label: 自定义监控    
+title: Custom Monitoring  
+sidebar_label: Custom Monitoring    
 ---
-> HertzBeat拥有自定义监控能力，您只需配置两个YML文件就能适配一款自定义的监控类型。  
-> 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH协议](extend-ssh)，后续会支持更多通用协议(ssh telnet wmi snmp)。        
+> HertzBeat has custom monitoring ability. You only need to configure two YML file to fit a custom monitoring type.  
+> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH protocol](extend-ssh).And it will support more general protocols in the future(ssh telnet wmi snmp).。        
 
-### 自定义步骤  
+### Custom Steps  
 
-配置自定义监控类型需新增配置两个YML文件
-1. 用监控类型命名的监控配置定义文件 - 例如：example.yml 需位于安装目录 /hertzbeat/define/app/ 下
-2. 用监控类型命名的监控参数定义文件 - 例如：example.yml 需位于安装目录 /hertzbeat/define/param/ 下
-3. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。  
+In order to configure a custom monitoring type, you need to add and configure two YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example.yml should be in the installation directory /hertzbeat/define/app/
+2. Monitoring parameter definition file named after monitoring type - eg：example.yml should be in the installation directory /hertzbeat/define/param/
+3. Restart hertzbeat system, we successfully fit a new custom monitoring type.  
 
 ------- 
-下面详细介绍下这俩文件的配置用法。   
+Configuration usages of the two files are detailed below.
 
-### 监控配置定义文件   
+### Monitoring configuration definition file   
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数映射, 指标信息, 采集协议配置信息*等。  
+> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
-样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /define/app/example.yml   
+eg：Define a custom monitoring type named example which use the HTTP protocol to collect data.    
+The file name: example.yml in /define/app/example.yml   
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# Monitoring application type(consistent with the file name) eg: linux windows tomcat mysql aws...
 app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# 参数映射map. 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
-# 强制固定必须参数 - host
+# parameter mapping map. These are input parameter variables which can be written to the configuration in form of ^_^host^_^. The system automatically replace variable's value.
+# type means parameter type: 0-number number, 1-string cleartext string, 2-secret encrypted string
+# required parameters - host
 configmap:
   - key: host
     type: 1
@@ -43,17 +43,17 @@ configmap:
     type: 1
   - key: password
     type: 2
-# 指标组列表
+# indicator group list
 metrics:
-# 第一个监控指标组 cpu
-# 注意：内置监控指标有 (responseTime - 响应时间)
+# The first monitoring indicator group cpu
+# Note：: the built-in monitoring indicators have (responseTime - response time)
   - name: cpu
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
+    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # 指标组中的具体监控指标
+    # Specific monitoring indicators in the indicator group
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
       - field: hostname
         type: 1
         instance: true
@@ -65,7 +65,7 @@ metrics:
       - field: waitTime
         type: 0
         unit: s
-# (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+# (optional)Monitoring indicator alias mapping to the indicator name above. The field used to collect interface data is not the final indicator name directly. This alias is required for mapping conversion.
     aliasFields:
       - hostname
       - core1
@@ -73,42 +73,42 @@ metrics:
       - usage
       - allTime
       - runningTime
-# (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+# (optional)The indicator calculation expression works with the above alias to calculate the final required indicator value.
 # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - hostname=hostname
       - cores=core1+core2
       - usage=usage
       - waitTime=allTime-runningTime
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+# protocol for monitoring and collection  eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-# 当protocol为http协议时具体的采集配置
+# Specific collection configuration when the protocol is HTTP protocol 
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain name 
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path 
       url: /metrics/cpu
-      # 请求方式 GET POST PUT DELETE PATCH
+      # request mode  GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # enable ssl/tls or not, tthat is to say, HTTP or HTTPS. The default is false
       ssl: false
-      # 请求头内容
+      # request header content 
       headers:
         apiVersion: v1
-      # 请求参数内容
+      # request parameter content 
       params:
         param1: param1
         param2: param2
-      # 认证
+      # authorization 
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # authorization method : Basic Auth, Digest Auth, Bearer Token
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
+      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability indicator monitoring 
+      # todo xmlPath-xmlPath script,prometheus-Prometheus data rules
       parseType: jsonPath
       parseScript: '$'
 
@@ -144,63 +144,75 @@ metrics:
       parseType: default
 ```
 
-### 监控参数定义文件  
+### Monitoring parameter definition file
 
-> 监控参数定义文件用于定义 *需要的输入参数字段结构定义(前端页面根据结构渲染输入参数框)*。   
+> Monitoring parameter definition file is used to define *required input parameter field structure definition (Front-end page render input parameter box according to structure)*.   
 
-样例：自定义一个名称为example的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example.yml 位于 /define/param/example.yml   
+eg：Define a custom monitoring type named example which use the HTTP protocol to collect data.    
+The file name: example.yml in /define/param/example.yml   
 
 ```yaml
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# Monitoring application type name(consistent with the file name) eg: linux windows tomcat mysql aws...
 app: example
-# 强制固定必须参数 - host(ipv4,ipv6,域名)
+# required parameters - host(ipv4, ipv6, domain name)
 param:
-    # field-字段名称标识符
+    # field-field name identifier 
   - field: host
-    # name-参数字段显示名称
-    name: 主机Host
-    # type-字段类型,样式(大部分映射input标签type属性)
+    # name-parameter field display name 
+    name: 
+      zh-CN: 主机Host
+      en-US: Host
+    # type-field type, style(most mappings are input label type attribute)
     type: host
-    # 是否是必输项 true-必填 false-可选
+    # required or not  true-required  false-optional
     required: true
   - field: port
-    name: 端口
+    name: 
+      zh-CN: 端口
+      en-US: Port
     type: number
-    # 当type为number时,用range表示范围
+    # When type is number, range is used to represent the range.
     range: '[0,65535]'
     required: true
-    # 端口默认值
+    # port default
     defaultValue: 80
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    # Prompt information of parameter input box 
+    placeholder: 'Please enter the port'
   - field: username
-    name: 用户名
+    name: 
+      zh-CN: 用户名
+      en-US: Username
     type: text
-    # 当type为text时,用limit表示字符串限制大小
+    # When type is text, use limit to indicate the string limit size
     limit: 20
     required: false
   - field: password
-    name: 密码
+    name: 
+      zh-CN: 密码
+      en-US: Password
     type: password
     required: false
   - field: ssl
-    name: 启动SSL
-    # 当type为boolean时,前端用switch展示开关
+    name: 
+      zh-CN: 启动SSL
+      en-US: Enable SSL
+    # When type is boolean, front end uses switch to show the switch
     type: boolean
     required: false
   - field: method
-    name: 请求方式
+    name: 
+      zh-CN: 请求方式
+      en-US: Method
     type: radio
     required: true
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    # When type is radio or checkbox, option indicates the list of selectable values {name1:value1,name2:value2}
     options:
-      - label: GET请求
+      - label: GET request
         value: GET
-      - label: POST请求
+      - label: POST request
         value: POST
-      - label: PUT请求
+      - label: PUT request
         value: PUT
-      - label: DELETE请求
+      - label: DELETE request
         value: DELETE
 ```
