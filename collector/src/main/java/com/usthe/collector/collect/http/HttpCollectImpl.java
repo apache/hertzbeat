@@ -16,10 +16,13 @@ import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.IpDomainUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.util.Base64;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -28,6 +31,8 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.DigestScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -352,33 +357,27 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 创建httpContext
+     * create httpContext
+     *
      * @param httpProtocol http protocol
      * @return context
      */
     private HttpContext createHttpContext(HttpProtocol httpProtocol) {
         HttpProtocol.Authorization auth = httpProtocol.getAuthorization();
-        if (auth != null && !DispatchConstants.BEARER_TOKEN.equals(auth.getType())) {
+        if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
-            if (DispatchConstants.BASIC_AUTH.equals(auth.getType())
-                    && StringUtils.hasText(auth.getBasicAuthUsername())
-                    && StringUtils.hasText(auth.getBasicAuthPassword())) {
-                CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getBasicAuthUsername(), auth.getBasicAuthPassword());
-                provider.setCredentials(AuthScope.ANY, credentials);
-                clientContext.setCredentialsProvider(provider);
-            } else if (DispatchConstants.DIGEST_AUTH.equals(auth.getType()) && StringUtils.hasText(auth.getDigestAuthUsername())
+            if (StringUtils.hasText(auth.getDigestAuthUsername())
                     && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials
                         = new UsernamePasswordCredentials(auth.getBasicAuthUsername(), auth.getBasicAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
+                AuthCache authCache = new BasicAuthCache();
+                authCache.put(new HttpHost(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort())), new DigestScheme());
                 clientContext.setCredentialsProvider(provider);
-            } else {
-                clientContext = null;
+                clientContext.setAuthCache(authCache);
+                return clientContext;
             }
-            return clientContext;
         }
         return null;
     }
@@ -443,11 +442,20 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // 判断是否使用Bearer Token认证
-        if (httpProtocol.getAuthorization() != null
-                && DispatchConstants.BEARER_TOKEN.equals(httpProtocol.getAuthorization().getType())) {
-            // 若使用 将token放入到header里面
-            String value = DispatchConstants.BEARER + " " + httpProtocol.getAuthorization().getBearerTokenToken();
-            requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
+        if (httpProtocol.getAuthorization() != null) {
+            HttpProtocol.Authorization authorization = httpProtocol.getAuthorization();
+            if (DispatchConstants.BEARER_TOKEN.equals(authorization.getType())) {
+                // 若使用 将token放入到header里面
+                String value = DispatchConstants.BEARER + " " + authorization.getBearerTokenToken();
+                requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
+            } else if (DispatchConstants.BASIC_AUTH.equals(authorization.getType())) {
+                if (StringUtils.hasText(authorization.getBasicAuthUsername())
+                        && StringUtils.hasText(authorization.getBasicAuthPassword())) {
+                    String authStr = authorization.getBasicAuthUsername() + ":" + authorization.getBasicAuthPassword();
+                    String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                    requestBuilder.addHeader(HttpHeaders.AUTHORIZATION,  DispatchConstants.BASIC + " " + encodedAuth);
+                }
+            }
         }
 
         // 请求内容，会覆盖post协议的params

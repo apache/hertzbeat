@@ -52,6 +52,10 @@ public interface DispatchConstants {
      */
     String BEARER = "Bearer";
     /**
+     * Basic auth parameter
+     */
+    String BASIC = "Basic";
+    /**
      * verification method  认证方式 Basic Auth
      */
     String BASIC_AUTH = "Basic Auth";
