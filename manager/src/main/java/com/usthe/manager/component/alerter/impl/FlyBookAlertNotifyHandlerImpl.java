@@ -80,7 +80,7 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         zhCn.setTitle("[HertzBeat告警通知]");
         zhCn.setContent(contents);
         flyBookWebHookDto.setContent(content);
-        String webHookUrl = FlyBookWebHookDto.WEBHOOK_URL + receiver.getWechatId();
+        String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
         try {
             ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, flyBookWebHookDto, String.class);
             if (entity.getStatusCode() == HttpStatus.OK) {

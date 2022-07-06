@@ -1,5 +1,6 @@
 package com.usthe.manager.component.alerter.impl;
 
+import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
@@ -28,7 +29,10 @@ import java.util.Date;
 @RequiredArgsConstructor
 @Slf4j
 final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final RestTemplate restTemplate;
+
+    private final AlerterProperties alerterProperties;
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
@@ -62,7 +66,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         markdownDTO.setText(contentBuilder.toString());
         markdownDTO.setTitle("HertzBeat告警通知");
         dingTalkWebHookDto.setMarkdown(markdownDTO);
-        String webHookUrl = DingTalkWebHookDto.WEBHOOK_URL + receiver.getAccessToken();
+        String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
         try {
             ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, dingTalkWebHookDto, String.class);
             if (entity.getStatusCode() == HttpStatus.OK) {

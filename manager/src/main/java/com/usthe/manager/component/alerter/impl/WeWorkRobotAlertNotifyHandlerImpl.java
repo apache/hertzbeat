@@ -1,5 +1,6 @@
 package com.usthe.manager.component.alerter.impl;
 
+import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
@@ -28,7 +29,10 @@ import java.util.Date;
 @RequiredArgsConstructor
 @Slf4j
 final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final RestTemplate restTemplate;
+
+    private final AlerterProperties alerterProperties;
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
@@ -62,7 +66,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         content.append("内容详情 : ").append(alert.getContent());
         markdownDTO.setContent(content.toString());
         weWorkWebHookDTO.setMarkdown(markdownDTO);
-        String webHookUrl = WeWorkWebHookDto.WEBHOOK_URL + receiver.getWechatId();
+        String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
         try {
             ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, String.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
