@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 数据仓储配置属性
+ * alerter config
  *
  * @author tom
  * @date 2021/11/24 10:38
@@ -15,8 +15,24 @@ public class AlerterProperties {
 
     /**
      * 告警内容控制台链接
+     * Alarm content console link
      */
     private String consoleUrl = "https://console.tancloud.cn";
+
+    /**
+     * WeWork webhook url
+     */
+    private String weWorkWebHookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+
+    /**
+     * DingDing talk webhook url
+     */
+    private String dingTalkWebHookUrl = "https://oapi.dingtalk.com/robot/send?access_token=";
+
+    /**
+     * FlyBook webhook url
+     */
+    private String flyBookWebHookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/";
 
     /**
      * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
@@ -47,6 +63,30 @@ public class AlerterProperties {
 
     public void setConsoleUrl(String url) {
         this.consoleUrl = url;
+    }
+
+    public String getWeWorkWebHookUrl() {
+        return weWorkWebHookUrl;
+    }
+
+    public void setWeWorkWebHookUrl(String weWorkWebHookUrl) {
+        this.weWorkWebHookUrl = weWorkWebHookUrl;
+    }
+
+    public String getDingTalkWebHookUrl() {
+        return dingTalkWebHookUrl;
+    }
+
+    public void setDingTalkWebHookUrl(String dingTalkWebHookUrl) {
+        this.dingTalkWebHookUrl = dingTalkWebHookUrl;
+    }
+
+    public String getFlyBookWebHookUrl() {
+        return flyBookWebHookUrl;
+    }
+
+    public void setFlyBookWebHookUrl(String flyBookWebHookUrl) {
+        this.flyBookWebHookUrl = flyBookWebHookUrl;
     }
 
     public long getAlertEvalIntervalBase() {
