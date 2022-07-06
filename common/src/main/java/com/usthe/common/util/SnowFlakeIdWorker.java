@@ -1,11 +1,19 @@
 package com.usthe.common.util;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Random;
+
 /**
  * 雪花算法生成器实例
- * 注意 由于前端JS TS 在json解析大数会造成精度丢失 UUID 不能超过 9007199254740991（16位）
+ * 注意 由于前端JS TS 在json解析大数会造成精度丢失 UUID 不能超过 9007199254740991（10进制）16进制为 0x1FFFFFFFFFFFFF (小于53bit)
+ * 1位符号位+41位时间戳+4位机器ID+8位序列号 = 53位
+ * Note that because the front-end JS TS parses large numbers in json, the precision will be lost.
+ * UUID cannot exceed hexadecimal 0x1FFFFFFFFFFFFFF (less than 53bit)
  * @author from https://www.cnblogs.com/vchar/p/14857677.html
  * @date 2021/11/10 10:58
  */
+@Slf4j
 public class SnowFlakeIdWorker {
 
     /**
@@ -16,62 +24,42 @@ public class SnowFlakeIdWorker {
     /**
      * 机器 ID 所占的位数
      */
-    private static final long WORKER_ID_BITS = 2L;
+    private static final long WORKER_ID_BITS = 4L;
 
     /**
-     * 数据标识 ID 所占的位数
-     */
-    private static final long DATA_CENTER_ID_BITS = 4L;
-
-    /**
-     * 支持的最大机器ID，最大为31
+     * 支持的最大机器ID，0-15
      * <p>
      * PS. Twitter的源码是 -1L ^ (-1L << workerIdBits)；这里最后和-1进行异或运算，由于-1的二进制补码的特殊性，就相当于进行取反。
      */
     private static final long MAX_WORKER_ID = ~(-1L << WORKER_ID_BITS);
 
     /**
-     * 支持的最大机房ID，最大为31
-     */
-    private static final long MAX_DATA_CENTER_ID = ~(-1L << DATA_CENTER_ID_BITS);
-
-    /**
      * 序列在 ID 中占的位数
      */
-    private static final long SEQUENCE_BITS = 12L;
+    private static final long SEQUENCE_BITS = 8L;
 
     /**
-     * 机器 ID 向左移12位
+     * 机器 ID 向左移位数
      */
     private static final long WORKER_ID_SHIFT = SEQUENCE_BITS;
 
     /**
-     * 机房 ID 向左移17位
+     * 时间截向左移位数
      */
-    private static final long DATA_CENTER_ID_SHIFT = SEQUENCE_BITS + WORKER_ID_BITS;
+    private static final long TIMESTAMP_LEFT_SHIFT = SEQUENCE_BITS + WORKER_ID_BITS;
 
     /**
-     * 时间截向左移22位
-     */
-    private static final long TIMESTAMP_LEFT_SHIFT = SEQUENCE_BITS + WORKER_ID_BITS + DATA_CENTER_ID_BITS;
-
-    /**
-     * 生成序列的掩码最大值，最大为4095
+     * 生成序列的掩码最大值，256
      */
     private static final long SEQUENCE_MASK = ~(-1L << SEQUENCE_BITS);
 
     /**
-     * 工作机器 ID(0~31)
+     * 工作机器 ID(0~15)
      */
     private final long workerId;
 
     /**
-     * 机房 ID(0~31)
-     */
-    private final long dataCenterId;
-
-    /**
-     * 毫秒内序列(0~4095)
+     * 毫秒内序列(0~256)
      */
     private long sequence = 0L;
 
@@ -81,40 +69,33 @@ public class SnowFlakeIdWorker {
     private long lastTimestamp = -1L;
 
     /**
-     * 创建 ID 生成器的方式一: 使用工作机器的序号(也就是将机房的去掉给机器ID使用)，范围是 [0, 1023]，优点是方便给机器编号
+     * 创建 ID 生成器的方式: 使用工作机器的序号 范围是 [0, 15]
      *
      * @param workerId 工作机器 ID
      */
     public SnowFlakeIdWorker(long workerId) {
-        // 计算最大值
-        long maxMachineId = (MAX_DATA_CENTER_ID + 1) * (MAX_WORKER_ID + 1) - 1;
-
-        if (workerId < 0 || workerId > maxMachineId) {
-            throw new IllegalArgumentException(String.format("Worker ID can't be greater than %d or less than 0", maxMachineId));
+        if (workerId < 0 || workerId > MAX_WORKER_ID) {
+            Random random = new Random(workerId);
+            workerId = random.nextInt((int) MAX_WORKER_ID);
+            log.warn("Worker ID can't be greater than {} or less than 0, use random: {}.", MAX_WORKER_ID, workerId);
         }
-
-        // 取高位部分作为机房ID部分
-        this.dataCenterId = (workerId >> WORKER_ID_BITS) & MAX_DATA_CENTER_ID;
-        // 取低位部分作为机器ID部分
-        this.workerId = workerId & MAX_WORKER_ID;
+        this.workerId = workerId;
     }
 
     /**
-     * 创建 ID 生成器的方式二: 使用工作机器 ID 和机房 ID，优点是方便分机房管理
-     *
-     * @param dataCenterId 机房 ID (0~31)
-     * @param workerId     工作机器 ID (0~31)
+     * 创建 ID 生成器的方式: 使用本地IP作为机器ID创建生成器
      */
-    public SnowFlakeIdWorker(long dataCenterId, long workerId) {
-        if (workerId > MAX_WORKER_ID || workerId < 0) {
-            throw new IllegalArgumentException(String.format("Worker ID can't be greater than %d or less than 0", MAX_WORKER_ID));
+    public SnowFlakeIdWorker() {
+        int workerId = 0;
+        String host = IpDomainUtil.getLocalhostIp();
+        if (host == null) {
+            Random random = new Random(workerId);
+            workerId = random.nextInt((int) MAX_WORKER_ID);
+        } else {
+            workerId = host.hashCode() % (int) MAX_WORKER_ID;
+            workerId = Math.abs(workerId);
         }
-        if (dataCenterId > MAX_DATA_CENTER_ID || dataCenterId < 0) {
-            throw new IllegalArgumentException(String.format("DataCenter ID can't be greater than %d or less than 0", MAX_DATA_CENTER_ID));
-        }
-
         this.workerId = workerId;
-        this.dataCenterId = dataCenterId;
     }
 
     /**
@@ -124,11 +105,6 @@ public class SnowFlakeIdWorker {
      */
     public synchronized long nextId() {
         long timestamp = timeGen();
-        // 如果当前时间小于上一次 ID 生成的时间戳，说明发生时钟回拨，为保证ID不重复抛出异常。
-        if (timestamp < lastTimestamp) {
-            throw new RuntimeException(String.format("Clock moved backwards. Refusing to generate id for %d milliseconds", lastTimestamp - timestamp));
-        }
-
         if (lastTimestamp == timestamp) {
             // 同一时间生成的，则序号+1
             sequence = (sequence + 1) & SEQUENCE_MASK;
@@ -146,7 +122,6 @@ public class SnowFlakeIdWorker {
 
         // 移位并通过或运算拼到一起
         return ((timestamp - TW_EPOCH) << TIMESTAMP_LEFT_SHIFT)
-                | (dataCenterId << DATA_CENTER_ID_SHIFT)
                 | (workerId << WORKER_ID_SHIFT)
                 | sequence;
     }
