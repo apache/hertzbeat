@@ -12,7 +12,7 @@ public class SnowFlakeIdGenerator {
     private final static SnowFlakeIdWorker ID_WORKER;
 
     static {
-        ID_WORKER = new SnowFlakeIdWorker(0);
+        ID_WORKER = new SnowFlakeIdWorker();
     }
 
     public static long generateId() {
