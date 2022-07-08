@@ -181,6 +181,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yangshihui",
+      "name": "yangshihui",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28550208?v=4",
+      "profile": "https://github.com/yangshihui",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
