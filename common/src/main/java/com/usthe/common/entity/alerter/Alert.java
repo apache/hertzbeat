@@ -69,7 +69,7 @@ public class Alert {
             notes = "告警通知实际内容",
             example = "linux_192.134.32.1: 534543534 cpu usage high",
             accessMode = READ_WRITE, position = 6)
-    @Length(max = 1024)
+    @Length(max = 2048)
     private String content;
 
     @ApiModelProperty(value = "Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed",
