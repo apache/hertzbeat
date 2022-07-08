@@ -172,6 +172,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "djzeng",
+      "name": "tea",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14074864?v=4",
+      "profile": "https://github.com/djzeng",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
