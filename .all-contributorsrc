@@ -172,6 +172,25 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "djzeng",
+      "name": "tea",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14074864?v=4",
+      "profile": "https://github.com/djzeng",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yangshihui",
+      "name": "yangshihui",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28550208?v=4",
+      "profile": "https://github.com/yangshihui",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
