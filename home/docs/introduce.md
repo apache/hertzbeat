@@ -16,14 +16,6 @@ slug: /
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-## 📫 前言   
-
-> 毕业后投入很多业余时间也做了一些开源项目,[Sureness](https://github.com/dromara/sureness) [Bootshiro](https://gitee.com/tomsun28/bootshiro) [Issues-translate-action](https://github.com/usthe/issues-translate-action) ,
-> 当时上班有空就回答网友问题，下班回家写开源代码，远程帮人看问题，还总感觉时间不够用，当时想如果不去上班能做自己热爱的该多好。  
-> 年轻就要折腾，何况还是自己很想做的。于是乎，21年底我放弃激励裸辞开始全职开源了(这里感谢老婆大人的全力支持)，也是第一次全职创业。
-> 自己在APM领域做了多年，当然这次创业加开源的方向也就是老本行APM监控系统，我们开发一个支持多种监控指标(更多监控类型指标正在适配中)，拥有自定义监控，支持阈值告警通知等功能，面向开发者友好的开源监控项目-HertzBeat赫兹跳动。
-> 想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署监控系统，我们也提供了可以直接登录使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
-> 希望大家多多支持点赞，非常感谢。 
 
 ## 🎡 <font color="green">介绍</font>
 
