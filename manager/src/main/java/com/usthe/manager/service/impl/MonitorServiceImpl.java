@@ -410,6 +410,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 appDefine.setMonitorId(monitor.getId());
+                appDefine.setId(monitor.getJobId());
                 appDefine.setInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
