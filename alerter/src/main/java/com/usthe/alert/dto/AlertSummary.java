@@ -17,7 +17,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "en:Alarm Statistics Information,zh: 告警统计信息")
+@ApiModel(description = "Alarm Statistics Information | 告警统计信息")
 public class AlertSummary {
 
     @ApiModelProperty(value = "Total number of alerts (including processed and unprocessed alerts)",

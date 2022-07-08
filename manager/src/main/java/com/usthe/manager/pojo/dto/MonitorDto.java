@@ -21,7 +21,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  *
  */
 @Data
-@ApiModel(description = "en: Monitoring information entities,zh: 监控信息实体")
+@ApiModel(description = "Monitoring information entities | 监控信息实体")
 public class MonitorDto {
 
     /**
