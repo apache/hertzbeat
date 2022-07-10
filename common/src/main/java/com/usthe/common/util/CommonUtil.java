@@ -26,7 +26,7 @@ public class CommonUtil {
      * @param str string
      * @return double 数字
      */
-    public static Double parseDoubleStr(String str) {
+    public static Double parseStrDouble(String str) {
         if (str == null || "".equals(str)) {
             return null;
         }
@@ -54,8 +54,7 @@ public class CommonUtil {
                 str = str.substring(0, str.length() - unit.length());
             }
             BigDecimal bigDecimal = new BigDecimal(str);
-            double value = bigDecimal.setScale(4, RoundingMode.HALF_UP).doubleValue();
-            return String.valueOf(value);
+            return bigDecimal.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
             return null;
