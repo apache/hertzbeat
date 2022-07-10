@@ -2,9 +2,9 @@ package com.usthe.manager.component.alerter.impl;
 
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.service.MailService;
-import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -29,12 +30,14 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Value("${spring.mail.username}")
     private String emailFromUser;
 
+    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            messageHelper.setSubject("HertzBeat-监控告警");
+            messageHelper.setSubject(bundle.getString("alerter.notify.title"));
             //Set sender Email 设置发件人Email
             messageHelper.setFrom(emailFromUser);
             //Set recipient Email 设定收件人Email
