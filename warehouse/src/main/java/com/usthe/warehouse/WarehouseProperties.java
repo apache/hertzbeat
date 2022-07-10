@@ -218,25 +218,29 @@ public class WarehouseProperties {
 
         public static class TdEngineProperties {
             /**
-             * TdEngine数据存储是否启动
+             * Whether the TdEngine data store is enabled
              */
             private boolean enabled = true;
             /**
-             * TdEngine的连接服务器url
+             * TdEngine connect url
              */
             private String url = "jdbc:TAOS-RS://localhost:6041/demo";
             /**
-             * 驱动类路径
+             * tdengine driver, default restful driver
              */
             private String driverClassName = "com.taosdata.jdbc.rs.RestfulDriver";
             /**
-             * 数据库用户名
+             * tdengine username
              */
             private String username;
             /**
-             * 数据库密码
+             * tdengine password
              */
             private String password;
+            /**
+             * auto create table's string column define max length : NCHAR(200)
+             */
+            private int tableStrColumnDefineMaxLength = 200;
 
             public boolean isEnabled() {
                 return enabled;
@@ -276,6 +280,14 @@ public class WarehouseProperties {
 
             public void setPassword(String password) {
                 this.password = password;
+            }
+
+            public int getTableStrColumnDefineMaxLength() {
+                return tableStrColumnDefineMaxLength;
+            }
+
+            public void setTableStrColumnDefineMaxLength(int tableStrColumnDefineMaxLength) {
+                this.tableStrColumnDefineMaxLength = tableStrColumnDefineMaxLength;
             }
         }
 
