@@ -4,7 +4,7 @@ import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.CommonUtil;
+import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * Send alert information through FeiShu
@@ -35,6 +36,8 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final RestTemplate restTemplate;
 
     private final AlerterProperties alerterProperties;
+
+    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
@@ -55,29 +58,33 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         List<FlyBookWebHookDto.FlyBookContent> contents1 = new ArrayList<>();
         FlyBookWebHookDto.FlyBookContent flyBookContent = new FlyBookWebHookDto.FlyBookContent();
         flyBookContent.setTag("text");
-        StringBuilder textBuilder = new StringBuilder("告警目标对象 :");
+        StringBuilder textBuilder = new StringBuilder(bundle.getString("alerter.notify.target") + " :");
         textBuilder.append(alert.getTarget());
         if (monitorId != null) {
-            textBuilder.append("\n所属监控ID :").append(monitorId);
+            textBuilder.append("\n").append(bundle.getString("alerter.notify.monitorId"))
+                    .append(" :").append(monitorId);
         }
         if (monitorName != null) {
-            textBuilder.append("\n所属监控名称 :").append(monitorName);
+            textBuilder.append("\n").append(bundle.getString("alerter.notify.monitorName"))
+                    .append(" :").append(monitorName);
         }
-        textBuilder.append("\n告警级别 :")
-            .append(CommonUtil.transferAlertPriority(alert.getPriority()));
+        textBuilder.append("\n").append(bundle.getString("alerter.notify.priority")).append(" :")
+            .append(bundle.getString("alerter.priority." + alert.getPriority()));
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        textBuilder.append("\n告警触发时间 : ").append(triggerTime);
-        textBuilder.append("\n内容详情 : ").append(alert.getContent());
+        textBuilder.append("\n").append(bundle.getString("alerter.notify.triggerTime"))
+                .append(" : ").append(triggerTime);
+        textBuilder.append("\n").append(bundle.getString("alerter.notify.content"))
+                .append(" : ").append(alert.getContent());
         flyBookContent.setText(textBuilder.toString());
         contents1.add(flyBookContent);
         FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
         bookContent.setTag("a");
-        bookContent.setText("登入控制台");
+        bookContent.setText(bundle.getString("alerter.notify.console"));
         bookContent.setHref(alerterProperties.getConsoleUrl());
         contents1.add(bookContent);
         contents.add(contents1);
-        zhCn.setTitle("[HertzBeat告警通知]");
+        zhCn.setTitle("[" + bundle.getString("alerter.notify.title") + "]");
         zhCn.setContent(contents);
         flyBookWebHookDto.setContent(content);
         String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
