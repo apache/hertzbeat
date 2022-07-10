@@ -246,7 +246,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
                         for (String variable : expression.getVariableNames()) {
-                            Double doubleValue = CommonUtil.parseDoubleStr(aliasFieldValueMap.get(variable));
+                            Double doubleValue = CommonUtil.parseStrDouble(aliasFieldValueMap.get(variable));
                             if (doubleValue != null) {
                                 fieldValueMap.put(variable, doubleValue);
                             }

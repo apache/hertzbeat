@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,7 +24,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * influxdb存储采集数据
+ * tdengine 存储采集数据
  *
  *
  */
@@ -49,12 +50,12 @@ public class TdEngineDataStorage implements DisposableBean {
 
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
-    private static final Integer SQL_STRING_VALUE_MAX_LENGTH = 200;
 
     private HikariDataSource hikariDataSource;
     private WarehouseWorkerPool workerPool;
     private MetricsDataExporter dataExporter;
-    private boolean serverAvailable = false;
+    private boolean serverAvailable;
+    private int tableStrColumnDefineMaxLength;
 
     public TdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
                                MetricsDataExporter dataExporter) {
@@ -64,6 +65,7 @@ public class TdEngineDataStorage implements DisposableBean {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
+        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
         serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
         startStorageData(serverAvailable);
     }
@@ -181,14 +183,15 @@ public class TdEngineDataStorage implements DisposableBean {
                 // 超级表未创建 创建对应超级表
                 StringBuilder fieldSqlBuilder = new StringBuilder("(");
                 fieldSqlBuilder.append("ts TIMESTAMP, ");
-                fieldSqlBuilder.append("instance NCHAR(200), ");
+                fieldSqlBuilder.append("instance NCHAR(").append(tableStrColumnDefineMaxLength).append("), ");
                 for (int index = 0; index < fields.size(); index++) {
                     CollectRep.Field field = fields.get(index);
                     String fieldName = field.getName();
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
                         fieldSqlBuilder.append(fieldName).append(" ").append("DOUBLE");
                     } else {
-                        fieldSqlBuilder.append(fieldName).append(" ").append("NCHAR(200)");
+                        fieldSqlBuilder.append(fieldName).append(" ").append("NCHAR(")
+                                .append(tableStrColumnDefineMaxLength).append(")");
                     }
                     if (index != fields.size() - 1) {
                         fieldSqlBuilder.append(", ");
@@ -220,14 +223,14 @@ public class TdEngineDataStorage implements DisposableBean {
     private String formatStringValue(String value){
         String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
         // bugfix Argument list too long
-        if (formatValue != null && formatValue.length() > SQL_STRING_VALUE_MAX_LENGTH) {
-            formatValue = formatValue.substring(0, SQL_STRING_VALUE_MAX_LENGTH);
+        if (formatValue != null && formatValue.length() > tableStrColumnDefineMaxLength) {
+            formatValue = formatValue.substring(0, tableStrColumnDefineMaxLength);
         }
         return formatValue;
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         if (hikariDataSource != null) {
             hikariDataSource.close();
         }
@@ -268,8 +271,9 @@ public class TdEngineDataStorage implements DisposableBean {
                     instanceValue = "NULL";
                 }
                 double value = resultSet.getDouble(3);
+                String strValue = new BigDecimal(value).stripTrailingZeros().toPlainString();
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                valueList.add(new Value(String.valueOf(value), ts.getTime()));
+                valueList.add(new Value(strValue, ts.getTime()));
             }
             resultSet.close();
             return instanceValuesMap;
@@ -348,12 +352,16 @@ public class TdEngineDataStorage implements DisposableBean {
                 while (resultSet.next()) {
                     Timestamp ts = resultSet.getTimestamp(1);
                     double origin = resultSet.getDouble(2);
+                    String originStr = new BigDecimal(origin).stripTrailingZeros().toPlainString();
                     double avg = resultSet.getDouble(3);
+                    String avgStr = new BigDecimal(avg).stripTrailingZeros().toPlainString();
                     double min = resultSet.getDouble(4);
+                    String minStr = new BigDecimal(min).stripTrailingZeros().toPlainString();
                     double max = resultSet.getDouble(5);
+                    String maxStr = new BigDecimal(max).stripTrailingZeros().toPlainString();
                     Value value = Value.builder()
-                            .origin(String.valueOf(origin)).mean(String.valueOf(avg))
-                            .min(String.valueOf(min)).max(String.valueOf(max))
+                            .origin(originStr).mean(avgStr)
+                            .min(minStr).max(maxStr)
                             .time(ts.getTime())
                             .build();
                     values.add(value);

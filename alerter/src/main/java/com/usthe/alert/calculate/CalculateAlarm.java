@@ -171,7 +171,7 @@ public class CalculateAlarm {
                     String valueStr = valueRow.getColumns(index);
                     CollectRep.Field field = fields.get(index);
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                        Double doubleValue = CommonUtil.parseDoubleStr(valueStr);
+                        Double doubleValue = CommonUtil.parseStrDouble(valueStr);
                         if (doubleValue != null) {
                             fieldValueMap.put(field.getName(), doubleValue);
                         }
