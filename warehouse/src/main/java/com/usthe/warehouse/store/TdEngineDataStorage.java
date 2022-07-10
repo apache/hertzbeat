@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * tdengine 存储采集数据
+ * tdengine data storage
  *
  *
  */
@@ -37,7 +37,7 @@ public class TdEngineDataStorage implements DisposableBean {
 
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO %s USING %s TAGS (%s) VALUES %s";
-    private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS %s %s TAGS (monitor BIGINT)";
+    private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
             = "SELECT ts, instance, %s FROM %s WHERE instance = %s AND ts >= now - %s order by ts desc";
@@ -130,7 +130,6 @@ public class TdEngineDataStorage implements DisposableBean {
         String monitorId = String.valueOf(metricsData.getId());
         String superTable = metricsData.getApp() + "_" + metricsData.getMetrics() + "_super";
         String table = metricsData.getApp() + "_" + metricsData.getMetrics() + "_" + monitorId;
-        //组建DATA SQL
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         StringBuilder sqlBuffer = new StringBuilder();
         int i = 0;
@@ -180,7 +179,7 @@ public class TdEngineDataStorage implements DisposableBean {
             connection.close();
         } catch (Exception e) {
             if (e.getMessage().contains(NO_SUPER_TABLE_ERROR)) {
-                // 超级表未创建 创建对应超级表
+                // stable not exists, create it
                 StringBuilder fieldSqlBuilder = new StringBuilder("(");
                 fieldSqlBuilder.append("ts TIMESTAMP, ");
                 fieldSqlBuilder.append("instance NCHAR(").append(tableStrColumnDefineMaxLength).append("), ");
@@ -188,9 +187,9 @@ public class TdEngineDataStorage implements DisposableBean {
                     CollectRep.Field field = fields.get(index);
                     String fieldName = field.getName();
                     if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                        fieldSqlBuilder.append(fieldName).append(" ").append("DOUBLE");
+                        fieldSqlBuilder.append("`").append(fieldName).append("` ").append("DOUBLE");
                     } else {
-                        fieldSqlBuilder.append(fieldName).append(" ").append("NCHAR(")
+                        fieldSqlBuilder.append("`").append(fieldName).append("` ").append("NCHAR(")
                                 .append(tableStrColumnDefineMaxLength).append(")");
                     }
                     if (index != fields.size() - 1) {
