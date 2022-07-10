@@ -580,7 +580,9 @@
                                                                                         align="left" valign="top"
                                                                                         class="tblCell">
                                                                                         <div style="line-height: 150%;">
-                                                                                            <span style="font-size: 30px; line-height: 150%;"><strong>告警通知</strong></span>
+                                                                                            <span style="font-size: 30px; line-height: 150%;">
+                                                                                                <strong th:text="${nameTitle}">HertzBeat Alert Notify</strong>
+                                                                                            </span>
                                                                                         </div>
                                                                                     </td>
                                                                                 </tr>
@@ -623,8 +625,12 @@
                                                                                             <table>
                                                                                                 <tr>
                                                                                                     <td align="right"
-                                                                                                        style="padding-right: 10px; color: #817878; font-weight: 500;">
-                                                                                                        告警目标对象:
+                                                                                                        style="padding-right: 10px;
+                                                                                                        color: #817878;
+                                                                                                        font-weight: 500;">
+                                                                                                        <span th:text="${nameTarget}">
+                                                                                                            Monitor Target
+                                                                                                        </span>
                                                                                                     </td>
                                                                                                     <td><span
                                                                                                             th:text="${target}"></span>
@@ -633,7 +639,9 @@
                                                                                                 <tr>
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
-                                                                                                        所属监控ID:
+                                                                                                        <span th:text="${nameMonitorId}">
+                                                                                                            Monitor ID
+                                                                                                        </span>
                                                                                                     </td>
                                                                                                     <td>
                                                                                                         <span th:text="${monitorId}"></span>
@@ -642,7 +650,9 @@
                                                                                                 <tr>
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
-                                                                                                        所属监控名称:
+                                                                                                        <span th:text="${nameMonitorName}">
+                                                                                                            Monitor Name
+                                                                                                        </span>
                                                                                                     </td>
                                                                                                     <td>
                                                                                                         <span th:text="${monitorName}"></span>
@@ -651,7 +661,9 @@
                                                                                                 <tr>
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
-                                                                                                        告警级别:
+                                                                                                        <span th:text="${namePriority}">
+                                                                                                            Alert Priority
+                                                                                                        </span>
                                                                                                     </td>
                                                                                                     <td><span
                                                                                                             th:text="${priority}"></span>
@@ -660,7 +672,9 @@
                                                                                                 <tr>
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
-                                                                                                        告警触发时间:
+                                                                                                        <span th:text="${nameTriggerTime}">
+                                                                                                            Trigger Time
+                                                                                                        </span>
                                                                                                     </td>
                                                                                                     <td><span
                                                                                                             th:text="${lastTriggerTime}"></span>
@@ -709,8 +723,9 @@
                                                                                         <span style="font-family:Arial, Verdana; font-size:14px;color:#FFFFFF;"><a
                                                                                                 target="_blank"
                                                                                                 style="color:#FFFFFF;text-decoration:none;"
+                                                                                                th:text="${nameConsole}"
                                                                                                 th:href="${consoleUrl}"
-                                                                                                data-link-type="web">登入控制台</a></span>
+                                                                                                data-link-type="web">Console Login</a></span>
                                                                                     </td>
                                                                                 </tr>
                                                                                 </tbody>
@@ -795,7 +810,6 @@
                                                                                                        target="_blank"
                                                                                                        style="text-decoration:none;">
                                                                                                         <div style="font-family:Arial, Verdana; font-size:14px; font-weight:400; font-style:normal; text-decoration:none solid rgb(150,63,250);color:rgb(150,63,250);">
-                                                                                                            探云
                                                                                                             tancloud.cn
                                                                                                         </div>
                                                                                                     </a></td>
@@ -822,7 +836,6 @@
                                                                                                        target="_blank"
                                                                                                        style="text-decoration:none;">
                                                                                                         <div style="font-family:Arial, Verdana; font-size:14px; font-weight:400; font-style:normal; text-decoration:none solid rgb(150,63,250);color:rgb(150,63,250);">
-                                                                                                            赫兹跳动
                                                                                                             hertzbeat.com
                                                                                                         </div>
                                                                                                     </a></td>
@@ -846,40 +859,6 @@
                                         </tr>
                                         </tbody>
                                     </table>
-                                </td>
-                            </tr>
-                            <tr id="section_5" class="flexible-section" data-columns="1" data-section-type="bmeFooter">
-                                <td width="100%" class="blk_container bmeHolder" name="bmeFooter" valign="top"
-                                    align="center"
-                                    style="color: rgb(102, 102, 102); background-color: rgb(230, 230, 232);   "
-                                    bgcolor="#e6e6e8">
-                                    <div id="dv_7" class="blk_wrapper" style="">
-                                        <table width="600" cellspacing="0" cellpadding="0" border="0" class="blk"
-                                               name="blk_permission" style="">
-                                            <tbody>
-                                            <tr>
-                                                <td name="tblCell" class="tblCell"
-                                                    style="padding: 20px; word-break: break-word;" valign="top"
-                                                    align="left">
-                                                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                        <tbody>
-                                                        <tr>
-                                                            <td name="bmePermissionText" style="text-align:left;"
-                                                                align="left"><span
-                                                                    style="font-family: Arial, Helvetica, sans-serif; font-weight: normal; font-size: 11px;line-height: 140%;">
-<br>如果您不想再接收TanCloud的「告警通知」邮件，或者需要设置其他人接收，<a target="_new" style="color:#16a7e0;"
-                                             href="https://console.tancloud.cn/alert/notice">点此设置订阅</a>。  If you do not wish to receive any more emails, you can <a
-                                                                    target="_new" style="color:#16a7e0;"
-                                                                    href="https://console.tancloud.cn/alert/notice">unsubscribe here</a>.</span>
-                                                            </td>
-                                                        </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
                                 </td>
                             </tr>
                             </tbody>
