@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -270,9 +271,9 @@ public class TdEngineDataStorage implements DisposableBean {
                     instanceValue = "NULL";
                 }
                 double value = resultSet.getDouble(3);
+                String strValue = new BigDecimal(value).stripTrailingZeros().toPlainString();
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                // todo
-                valueList.add(new Value(String.valueOf(value), ts.getTime()));
+                valueList.add(new Value(strValue, ts.getTime()));
             }
             resultSet.close();
             return instanceValuesMap;
@@ -351,13 +352,16 @@ public class TdEngineDataStorage implements DisposableBean {
                 while (resultSet.next()) {
                     Timestamp ts = resultSet.getTimestamp(1);
                     double origin = resultSet.getDouble(2);
+                    String originStr = new BigDecimal(origin).stripTrailingZeros().toPlainString();
                     double avg = resultSet.getDouble(3);
+                    String avgStr = new BigDecimal(avg).stripTrailingZeros().toPlainString();
                     double min = resultSet.getDouble(4);
+                    String minStr = new BigDecimal(min).stripTrailingZeros().toPlainString();
                     double max = resultSet.getDouble(5);
-                    // todo
+                    String maxStr = new BigDecimal(max).stripTrailingZeros().toPlainString();
                     Value value = Value.builder()
-                            .origin(String.valueOf(origin)).mean(String.valueOf(avg))
-                            .min(String.valueOf(min)).max(String.valueOf(max))
+                            .origin(originStr).mean(avgStr)
+                            .min(minStr).max(maxStr)
                             .time(ts.getTime())
                             .build();
                     values.add(value);
