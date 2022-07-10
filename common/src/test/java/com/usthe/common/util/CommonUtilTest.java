@@ -14,8 +14,8 @@ class CommonUtilTest {
     void testParseDoubleStr() {
         assertEquals("9.3454",CommonUtil.parseDoubleStr("9.345435345", null));
         assertEquals("9.3454",CommonUtil.parseDoubleStr("9.345435345%", "%"));
-        assertEquals("10.0",CommonUtil.parseDoubleStr("10%", "%"));
-        assertEquals("588.0",CommonUtil.parseDoubleStr("588Mb", "Mb"));
+        assertEquals("10",CommonUtil.parseDoubleStr("10%", "%"));
+        assertEquals("588",CommonUtil.parseDoubleStr("588Mb", "Mb"));
     }
 
     @Test

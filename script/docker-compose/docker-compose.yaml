@@ -43,6 +43,7 @@ services:
     restart: always
     environment:
       TZ: Asia/Shanghai
+      LANG: zh_CN.UTF-8
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
