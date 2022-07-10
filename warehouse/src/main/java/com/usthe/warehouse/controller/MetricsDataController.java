@@ -30,6 +30,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * 指标数据查询接口
+ *
  * @author tom
  * @date 2021/12/5 15:52
  */
@@ -68,30 +69,30 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @ApiOperation(value = "查询监控指标组的指标数据", notes = "查询监控指标组的指标数据")
+    @ApiOperation(value = "Query Real Time Metrics Data", notes = "查询监控指标组的指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
-            @ApiParam(value = "监控ID", example = "343254354")
+            @ApiParam(value = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,
-            @ApiParam(value = "监控指标组", example = "cpu")
+            @ApiParam(value = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        CollectRep.MetricsData redisData = memoryDataStorage.getCurrentMetricsData(monitorId, metrics);
-        if (redisData == null) {
+        CollectRep.MetricsData storageData = memoryDataStorage.getCurrentMetricsData(monitorId, metrics);
+        if (storageData == null) {
             return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
         }
         {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
-            dataBuilder.id(redisData.getId()).app(redisData.getApp()).metric(redisData.getMetrics())
-                    .time(redisData.getTime());
-            List<Field> fields = redisData.getFieldsList().stream().map(redisField ->
+            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metric(storageData.getMetrics())
+                    .time(storageData.getTime());
+            List<Field> fields = storageData.getFieldsList().stream().map(redisField ->
                             Field.builder().name(redisField.getName())
                                     .type(Integer.valueOf(redisField.getType()).byteValue())
                                     .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);
-            List<ValueRow> valueRows = redisData.getValuesList().stream().map(redisValueRow ->
+            List<ValueRow> valueRows = storageData.getValuesList().stream().map(redisValueRow ->
                     ValueRow.builder().instance(redisValueRow.getInstance())
                             .values(redisValueRow.getColumnsList().stream().map(Value::new).collect(Collectors.toList()))
-                    .build()).collect(Collectors.toList());
+                            .build()).collect(Collectors.toList());
             dataBuilder.valueRows(valueRows);
             return ResponseEntity.ok().body(new Message<>(dataBuilder.build()));
         }
@@ -110,7 +111,7 @@ public class MetricsDataController {
             @RequestParam(required = false) String history,
             @ApiParam(value = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
-            ) {
+    ) {
         String[] names = metricFull.split("\\.");
         if (names.length != METRIC_FULL_LENGTH) {
             throw new IllegalArgumentException("metrics full name: " + metricFull + " is illegal.");
