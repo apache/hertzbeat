@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * 报警持久化 - 落地到数据库
- *
+ * Alarm data persistence - landing in the database
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
  * @since 2022/4/24
  */
@@ -27,7 +27,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
 
     @Override
     public void store(Alert alert) {
-        // todo Using the cache does not directly manipulate the library    使用缓存不直接操作库
+        // todo Using the cache does not directly manipulate the library
         Map<String, String> tags = alert.getTags();
         String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
         if (monitorIdStr == null) {

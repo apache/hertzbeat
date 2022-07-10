@@ -86,20 +86,4 @@ public class CommonUtil {
         Matcher m = PHONE_PATTERN.matcher(phoneNum);
         return m.find();
     }
-
-    /**
-     * 告警级别文字转换
-     * @param priority 告警级别
-     * @return 告警级别文字
-     */
-    public static String transferAlertPriority(byte priority) {
-        String priorityMsg = "警告告警";
-        switch (priority) {
-            case 0: priorityMsg = "紧急告警"; break;
-            case 1: priorityMsg = "严重告警"; break;
-            case 2: priorityMsg = "警告告警"; break;
-            default: break;
-        }
-        return priorityMsg;
-    }
 }
