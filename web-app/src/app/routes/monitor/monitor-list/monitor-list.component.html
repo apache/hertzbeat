@@ -128,6 +128,7 @@
           <i nz-icon nzType="edit" nzTheme="outline"></i>
         </button>
         <button
+          *ngIf="data.status == 0"
           nz-button
           nzType="primary"
           (click)="onEnableManageOneMonitor(data.id)"
@@ -137,6 +138,7 @@
           <i nz-icon nzType="up-circle" nzTheme="outline"></i>
         </button>
         <button
+          *ngIf="data.status != 0"
           nz-button
           nzDanger
           nzType="primary"
