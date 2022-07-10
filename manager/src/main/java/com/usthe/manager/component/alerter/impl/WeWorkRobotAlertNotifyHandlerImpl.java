@@ -4,7 +4,7 @@ import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.CommonUtil;
+import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.WeWorkWebHookDto;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ResourceBundle;
 
 /**
  * Send alarm information through enterprise WeChat
@@ -34,6 +35,8 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final AlerterProperties alerterProperties;
 
+    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
         String monitorId = null;
@@ -45,25 +48,29 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
         WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
         StringBuilder content = new StringBuilder();
-        content.append("<font color=\"info\">[HertzBeat告警通知]</font>\n告警目标对象 : <font color=\"info\">")
-                .append(alert.getTarget()).append("</font>\n");
+        content.append("<font color=\"info\">[").append(bundle.getString("alerter.notify.title"))
+                .append("]</font>\n").append(bundle.getString("alerter.notify.target"))
+                .append(" : <font color=\"info\">").append(alert.getTarget()).append("</font>\n");
         if (monitorId != null) {
-            content.append("所属监控ID : ").append(monitorId).append("\n");
+            content.append(bundle.getString("alerter.notify.monitorId")).append(" : ")
+                    .append(monitorId).append("\n");
         }
         if (monitorName != null) {
-            content.append("所属监控名称 : ").append(monitorName).append("\n");
+            content.append(bundle.getString("alerter.notify.monitorName")).append(" : ")
+                    .append(monitorName).append("\n");
         }
         if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
-            content.append("告警级别 : <font color=\"warning\">")
-                    .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
+            content.append(bundle.getString("alerter.notify.priority")).append(" : <font color=\"warning\">")
+                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("</font>\n");
         } else {
-            content.append("告警级别 : <font color=\"comment\">")
-                    .append(CommonUtil.transferAlertPriority(alert.getPriority())).append("</font>\n");
+            content.append(bundle.getString("alerter.notify.priority")).append(" : <font color=\"comment\">")
+                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("</font>\n");
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        content.append("告警触发时间 : ").append(triggerTime).append("\n");
-        content.append("内容详情 : ").append(alert.getContent());
+        content.append(bundle.getString("alerter.notify.triggerTime")).append(" : ")
+                .append(triggerTime).append("\n");
+        content.append(bundle.getString("alerter.notify.content")).append(" : ").append(alert.getContent());
         markdownDTO.setContent(content.toString());
         weWorkWebHookDTO.setMarkdown(markdownDTO);
         String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
