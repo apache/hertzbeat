@@ -1,37 +1,37 @@
 ---
 id: alert_wework  
-title: 告警企业微信通知      
-sidebar_label: 告警企业微信通知     
+title: Alert enterprise Wechat notification      
+sidebar_label: Alert enterprise Wechat notification     
 ---
 
-> 阈值触发后发送告警信息，通过企业微信机器人通知到接收人。         
+> After the threshold is triggered send alarm information and notify the recipient by enterprise Wechat robot.         
 
-### 操作步骤   
+### Operation steps   
 
-1. **【企业微信端】-> 【群设置】-> 【群机器人】-> 【添加新建机器人】-> 【设置机器人名称头像】-> 【添加成功后复制其WebHook地址】**  
+1. **【Enterprise Wechat】-> 【Group settings】-> 【Group robot】-> 【Add new robot】-> 【Set robot name and avatar】-> 【Copy its webhook address after adding successfully】**  
 
 ![email](/img/docs/help/alert-notice-6.jpg)  
 
-2. **【保存机器人的WebHook地址的KEY值】**     
+2. **【Save the key value of the WebHook address of the robot】**     
 
-> 例如： webHook地址：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`     
-> 其机器人KEY值为 `3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`      
+> eg： webHook address：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`     
+> Its robot KEY value is `3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`      
 
-3. **【告警通知】->【新增接收人】 ->【选择企业微信机器人通知方式】->【设置企业微信机器人KEY】-> 【确定】**    
+3. **【Alarm notification】->【Add new recipient】 ->【Select enterprise Wechat robot notification method】->【Set enterprise Wechat robot KEY】-> 【Confirm】**    
 
 ![email](/img/docs/help/alert-notice-7.png)
 
-4. ** 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】**  
+4. **Configure the associated alarm notification strategy⚠️ 【Add new notification strategy】-> 【Associate the recipient just set】-> 【Confirm】**  
 
-> ** 注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人 **。   
+> **Note⚠️ Adding a new recipient does not mean that it is effective to receive alarm information. It is also necessary to configure the associated alarm notification strategy, that is, to specify which messages are sent to which recipients.**   
 
 ![email](/img/docs/help/alert-notice-4.png)    
 
 
-### 企业微信机器人通知常见问题   
+### Enterprise Wechat robot common issues
 
-1. 企业微信群未收到机器人告警通知       
-> 请排查在告警中心是否已有触发的告警信息   
-> 请排查是否配置正确机器人KEY，是否已配置告警策略关联   
+1. The enterprise wechat group did not receive the robot alarm notification.        
+> Please check whether there is any triggered alarm information in the alarm center.   
+> Please check whether the robot key is configured correctly and whether the alarm strategy association is configured.   
 
-其它问题可以通过交流群ISSUE反馈哦！  
+Other issues can be fed back through the communication group ISSUE!

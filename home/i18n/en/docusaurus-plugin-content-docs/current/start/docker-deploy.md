@@ -78,7 +78,7 @@ resourceRole:
    - /api/summary/**===put===[admin,user]
    - /api/summary/**===delete===[admin]
 
-# 需要被过滤保护的资源,不认证鉴权直接访问
+# Resources that need to be filtered and protected can be accessed directly without authentication
 # /api/v1/source3===get means /api/v1/source3===get it can be accessed by anyone. Don't need to login and authentication
 excludedResource:
    - /api/account/auth/**===*
@@ -171,7 +171,7 @@ $ docker run -d -p 1157:1157 \
 
 **HAVE FUN**   
 
-### Docker Deployment Common Issues   
+### Docker Deployment common issues   
 
 1. **MYSQL, TDENGINE and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
 The problems lies in Docker container failed to visit and connect localhost port. Beacuse the docker default network mode is Bridge mode which can't access loacl machine through localhost.
@@ -181,7 +181,7 @@ The problems lies in Docker container failed to visit and connect localhost port
 2. **According to the process deploy，visit http://ip:1157/ no interface**   
 Please refer to the following points to troubleshoot issuess：  
 > one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> two：Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+> two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 > three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
 3. **Log an error TDengine connection or insert SQL failed**  

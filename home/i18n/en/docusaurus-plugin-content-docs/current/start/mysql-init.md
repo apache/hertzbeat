@@ -30,7 +30,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 3. Check if hertzbeat database has been successfully created
    `show databases;`
 
-### 修改hertzbeat的配置文件application.yml切换数据源   
+### Modify hertzbeat's configuration file application.yml and switch data source  
 
 1. Configure HertzBeat's configuration file
    Modify `hertzbeat/config/application.yml` configuration file

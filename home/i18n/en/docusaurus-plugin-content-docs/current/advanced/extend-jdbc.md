@@ -25,7 +25,7 @@ Here the indicator field and the response data can be mapped into a row of colle
 #### **multiRow**
 > Query multiple rows of data, return the column names of the result set and map them to the queried fields.  
 
-例如：   
+eg：   
 queried indicator fields：one tow three four
 query SQL：select one, tow, three, four from book;
 Here the indicator field and the response data can be mapped into multiple rows of collected data one by one. 

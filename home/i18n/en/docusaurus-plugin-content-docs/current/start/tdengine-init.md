@@ -69,7 +69,7 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
 
 ```
 
-### Common Issues   
+###   Common issues  
 
 1. If the history chart on the monitoring page is not displayed，popup [unable to provide historical chart data, please configure dependency service on TDengine time series database]
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.

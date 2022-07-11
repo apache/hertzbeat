@@ -1,29 +1,28 @@
 ---
 id: website  
-title: 监控：网站监测      
-sidebar_label: 网站监测    
+title: Monitoring：website monitoring       
+sidebar_label: Website monitoring   
 ---
 
-> 对网站是否可用，响应时间等指标进行监测       
+> Monitor whether the website is available, response time and other indicators.       
 
-### 配置参数   
+### Configuration parameter   
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 网站对外提供的端口，http一般默认为80，https一般默认为443。  |
-| 相对路径     | 网站地址除IP端口外的后缀路径，例如 `www.tancloud.cn/console` 网站的相对路径为 `/console`。  |
-| 启用HTTPS   | 是否通过HTTPS访问网站，注意⚠️开启HTTPS一般默认对应端口需要改为443  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Ports provided by website, http generally defaults to 80 and https generally defaults to 443 |
+| Relative path     | Suffix path of website address except IP port. For example, the relative path of `www.tancloud.cn/console` website is `/console` |
+| Enable HTTPS   | Whether to access the website through HTTPS. Note⚠️When HTTPS is enabled, the default corresponding port needs to be changed to 443 |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标   
+### Collection indicator   
 
-#### 指标集合：summary  
+#### Indicator set：summary  
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Indicator name      | Indicator unit | Indicator help description |
 | ----------- | ----------- | ----------- |
-| responseTime   | ms毫秒 | 网站响应时间 |
-
+| responseTime   | ms | Website response time |

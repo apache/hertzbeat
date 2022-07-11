@@ -77,12 +77,12 @@ account:
 
 **HAVE FUN**
 
-### Package Deployment Common Issues
+### Package Deployment common issues
 
 1. **According to the process deploy，visit http://ip:1157/ no interface**   
    Please refer to the following points to troubleshoot issuess:
 > one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> two：Check whether IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
+> two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
 > three： Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
 
 2. **Log an error TDengine connection or insert SQL failed**
