@@ -1,17 +1,24 @@
 ---
 id: private  
-title: 私有化部署    
-sidebar_label: 私有化部署     
+title: Privatization deployment    
+sidebar_label: Privatization deployment     
 ---
-如果您的团队想私有化部署此监控系统，目前我们提供两种方案。   
+If your team wants to privatize and deploy this monitoring system, we currently provide two solutions.   
 
-#### 社区版监控产品HertzBeat(完全免费)   
+#### Community monitoring product HertzBeat (Free, copyright reserved)   
 
-我们提供社区版监控产品 HertzBeat, 可以直接参考[HertzBeat部署文档](/docs)下载部署, 对个人或企业完全免费。  
-安装部署过程中遇到的问题可以通过[社区，微信群，QQ群等](/docs/others/contact)反馈交流学习。  
-我们也提供有偿远程安装部署服务。
+We provide community version monitoring product hertzbeat, which can be downloaded and deployed directly by referring to [HertzBeat deployment document](/docs). It is free for individuals or enterprises.  
+All copyrights, patents, trademarks and ownership statements in this work and the source code must be retained.
+You can feed back or learn problems encountered during installation and deployment through [communities, wechat groups, QQ groups, etc.](/docs/others/contact).  
+We also provide paid remote installation and deployment services.
 
-#### HertzBeat的集群SAAS版本-TanCloud(付费)      
+#### Cluster SAAS version of HertzBeat-TanCloud (paid)      
 
-此版本即[TanCloud官网](https://console.tancloud.cn)环境对应版本，对比HertzBeat拥有集群，用户，租户等功能，适合中大型团队企业。  
-此版本为付费版本，关于TanCloud私有化部署方案及价格，请加我们微信 tomsun28 咨询，加微信请备注：私有化+团队名   
+This version is the corresponding version of [TanCloud Official website](https://console.tancloud.cn) environment. Compared with hertzbeat, it has functions of clustering, users, tenants and so on, which is suitable for medium and large-scale team enterprises. 
+This version is a paid version. For tancloud privatization deployment plan and price, please consult us on WeChat tomsun28, and add WeChat please note: privatization + team name.  
+
+#### Privatized custom function development (paid) 
+
+Support the development of custom functions and features. Please contact us on WeChat tomsun28, and please note: privatization + team name.   
+
+**Welcome to introduce business and become a recommender. We will give the recommender 20% - 30% commission reward for orders**      

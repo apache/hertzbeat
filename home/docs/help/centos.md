@@ -49,7 +49,7 @@ sidebar_label: CentOS操作系统
 | used          | Mb | 用户程序内存量 |
 | free          | Mb | 空闲内存容量 |
 | buff_cache    | Mb | 缓存占用内存 |  
-| available     | Mb | 剩余可用内存容 |   
+| available     | Mb | 剩余可用内存容量 |   
 | usage          | %  | 内存使用率 |  
 
 #### 指标集合：disk

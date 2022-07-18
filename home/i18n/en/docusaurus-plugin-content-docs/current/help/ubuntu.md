@@ -1,10 +1,10 @@
 ---
-id: linux  
-title: Monitoring：Linux operating system monitoring       
-sidebar_label: Linux operating system       
+id: ubuntu  
+title: Monitoring：Ubuntu operating system monitoring   
+sidebar_label: Ubuntu operating system       
 ---
 
-> Collect and monitor the general performance indicators of Linux operating system.
+> Collect and monitor the general performance indicators of Ubuntu operating system.
 
 ### Configuration parameter
 
@@ -38,7 +38,7 @@ sidebar_label: Linux operating system
 | interrupt      | number | Number of CPU interrupts |
 | load           | none | Average load of CPU in the last 1/5/15 minutes |
 | context_switch | number | Number of current context switches |
-| usage          | %  | CPU usage |  
+| usage          | %  | CPU usage |   
 
 
 #### Indicator set：memory
@@ -78,4 +78,4 @@ sidebar_label: Linux operating system
 | used           | Mb  | Used disk size |
 | available      | Mb  | Available disk size |
 | usage          | %   | usage |  
-| mounted        | none  | Mount point directory |   
+| mounted        | none  | Mount point directory |    
