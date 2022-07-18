@@ -1,34 +1,33 @@
 ---
 id: fullsite  
-title: 监控：全站监控      
-sidebar_label: 全站监控   
+title: Monitoring：Full site monitoring      
+sidebar_label: Full site monitoring   
 ---
 
-> 对网站的全部页面监测是否可用    
-> 往往一个网站有多个不同服务提供的页面，我们通过采集网站暴露出来的网站地图SiteMap来监控全站。   
-> 注意⚠️，此监控需您网站支持SiteMap。我们支持XML和TXT格式的SiteMap。     
+> Available or not to monitor all pages of the website.    
+> A website often has multiple pages provided by different services. We monitor the full site by collecting the SiteMap exposed by the website.   
+> Note⚠️ This monitoring requires your website to support SiteMap. We support SiteMap in XML and TXT formats.    
 
-### 配置参数
+### Configuration parameter   
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 网站对外提供的端口，http一般默认为80，https一般默认为443。  |
-| 网站地图     | 网站SiteMap地图地址的相对路径，例如：/sitemap.xml。  |
-| 启用HTTPS   | 是否通过HTTPS访问网站，注意⚠️开启HTTPS一般默认对应端口需要改为443  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Ports provided by website, http generally defaults to 80 and https generally defaults to 443 |
+| SiteMap     | Relative path of website SiteMap address, eg：/sitemap.xml |
+| Enable HTTPS   | Whether to access the website through HTTPS. Note⚠️When HTTPS is enabled, the default corresponding port needs to be changed to 443 |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection indicator   
 
-#### 指标集合：summary
+#### Indicator set：summary  
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Indicator name      | Indicator unit | Indicator help description |
 | ----------- | ----------- | ----------- |
-| url         | 无 | 网页的URL路径 |
-| statusCode  | 无 | 请求此网页的响应HTTP状态码 |
-| responseTime   | ms毫秒 | 网站响应时间 |
-| errorMsg     | 无 | 请求此网站反馈的错误信息 |
-
+| url         | none | URL path of web page |
+| statusCode  | none | Response HTTP status code for requesting the website |
+| responseTime   | ms | Website response time |
+| errorMsg     | none | Error message feedback after requesting the website |

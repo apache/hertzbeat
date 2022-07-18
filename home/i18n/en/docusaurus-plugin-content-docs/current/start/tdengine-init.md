@@ -1,55 +1,75 @@
 ---
 id: tdengine-init  
-title: 依赖服务TDengine安装初始化        
-sidebar_label: TDengine安装初始化    
+title: Dependency Service TDengine Installation and Initialization        
+sidebar_label: TDengine Installation and Initialization(optional)    
 ---
-TDengine是一款国产的开源物联网时序型数据库，我们使用其替换了InfluxDb，来存储采集到的监控指标数据。
+TDengine is a Chinese time series database for Open Source the Internet of Things.We use TDengine to replace the InfluxDb, to store the history data collected monitoring indicators.
+Note⚠️ TDengine is optional.And no configuration means no historical chart data.
 
-> 如果您已有TDengine环境，可直接跳到创建数据库实例那一步。
+> If you have TDengine environment, can directly skip to create a database instance.
 
-### 通过Docker方式安装TDengine 
-> 可参考官方网站[安装教程](https://www.taosdata.com/docs/cn/v2.0/getting-started/docker)  
-1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。
+
+### Install TDengine via Docker 
+> Refer to the official website [installation tutorial](https://www.taosdata.com/docs/cn/v2.0/getting-started/docker)  
+1. Download and install Docker environment   
+   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
+   After the installation you can check if the Docker version normally output at the terminal.
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
-2. Docker安装TDengine
+2. Install TDengine with Docker
    ```
    $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp -v /opt/taosdata:/var/lib/taos --name tdengine -e TZ=Asia/Shanghai tdengine/tdengine:2.4.0.12
-   526aa188da767ae94b244226a2b2eec2b5f17dd8eff594533d9ec0cd0f3a1ccd
    ```
-   `-v /opt/taosdata:/var/lib/taos` 为tdengine数据目录本地持久化挂载，需将`/opt/taosdata`替换为实际本地存在的目录  
-   `-e TZ="Asia/Shanghai"` 为tdengine设置时区，这里可选设置对应的时区   
-   使用```$ docker ps```查看数据库是否启动成功
+   `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory.`/opt/taosdata` should be replaced with the actual local directory.
+   `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.
+   use```$ docker ps``` to check if the database started successfully
 
-### 创建数据库实例    
-1. 进入数据库Docker容器  
+### Create database instance    
+1. Enter database Docker container  
    ```
    $ docker exec -it tdengine /bin/bash
-   root@tdengine-server:~/TDengine-server-2.4.0.4#
    ```
-2. 创建名称为hertzbeat的数据库
-   进入容器后，执行 taos shell 客户端程序。
+2. Create database named hertzbeat
+   After entering the container，execute `taos` command as follows: 
    ```
    root@tdengine-server:~/TDengine-server-2.4.0.4# taos
    Welcome to the TDengine shell from Linux, Client Version:2.4.0.4
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
    taos>
    ```
-   执行创建数据库命令
+   execute commands to create database
    ```
    taos> show databases;
    taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;
    ```
-   上述语句将创建一个名为 hertzbeat 的库，这个库的数据将保留90天（超过90天将被自动删除），每 10 天一个数据文件，内存块数为 6，允许更新数据
-3. 查看hertzbeat数据库是否成功创建
+   The above statements will create a database named hertzbeat. The data will be saved for 90 days (more than 90 days data will be automatically deleted).
+   A data file every 10 days, memory blocks is 6, allow you to update the data.
+3. Check if hertzbeat database has been successfully created
    ```
    taos> show databases;
    taos> use hertzbeat;
    ```
 
-**注意⚠️若是安装包安装的TDengine2.3+版本**       
-> 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter
+**Note⚠️If you install TDengine2.3+ version**       
+> In addition to start the server，you must execute `systemctl start taosadapter` to start adapter
+
+### Configure the database connection in hertzbeat `application.yml`configuration file  
+
+1. Configure HertzBeat's configuration file
+   Modify `hertzbeat/config/application.yml` configuration file   
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+   Replace `warehouse.store.td-engine` data source parameters, URL account and password.     
+
+```
+   warehouse.store.td-engine.url
+   warehouse.store.td-engine.username
+   warehouse.store.td-engine.password
+
+```
+
+###   Common issues  
+
+1. If the history chart on the monitoring page is not displayed，popup [unable to provide historical chart data, please configure dependency service on TDengine time series database]
+> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.

@@ -1,10 +1,10 @@
 ---
-id: linux  
-title: Monitoring：Linux operating system monitoring       
-sidebar_label: Linux operating system       
+id: centos  
+title: Monitoring：CentOS operating system monitoring      
+sidebar_label: CentOS operating system       
 ---
 
-> Collect and monitor the general performance indicators of Linux operating system.
+> Collect and monitor the general performance indicators of CentOS operating system.
 
 ### Configuration parameter
 
@@ -38,7 +38,7 @@ sidebar_label: Linux operating system
 | interrupt      | number | Number of CPU interrupts |
 | load           | none | Average load of CPU in the last 1/5/15 minutes |
 | context_switch | number | Number of current context switches |
-| usage          | %  | CPU usage |  
+| usage          | %  | CPU usage |   
 
 
 #### Indicator set：memory
@@ -50,7 +50,7 @@ sidebar_label: Linux operating system
 | free          | Mb | Free memory capacity |
 | buff_cache    | Mb | Memory occupied by cache |  
 | available     | Mb | Remaining available memory capacity |   
-| usage          | %  | Memory usage |  
+| usage          | %  | Memory usage | 
 
 #### Indicator set：disk
 
@@ -60,7 +60,7 @@ sidebar_label: Linux operating system
 | partition_num  | partitions | Total number of partitions |
 | block_write    | blocks | Total number of blocks written to disk |
 | block_read     | blocks | Number of blocks read from disk |  
-| write_rate     | iops | Rate of writing disk blocks per second |   
+| write_rate     | iops | Rate of writing disk blocks per second |  
 
 #### Indicator set：interface
 
@@ -78,4 +78,4 @@ sidebar_label: Linux operating system
 | used           | Mb  | Used disk size |
 | available      | Mb  | Available disk size |
 | usage          | %   | usage |  
-| mounted        | none  | Mount point directory |   
+| mounted        | none  | Mount point directory |  

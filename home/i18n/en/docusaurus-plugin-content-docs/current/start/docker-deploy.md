@@ -1,32 +1,32 @@
 ---
 id: docker-deploy  
-title: 通过Docker方式安装HertzBeat    
-sidebar_label: Docker方式部署    
+title: Install HertzBeat via Docker   
+sidebar_label: Docker Way Deployment    
 ---
 
-> 推荐使用docker部署HertzBeat  
+> Recommend to use docker deploy HertzBeat
 
-1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。
+video tutorial of installation and deployment: [HertzBeat installation and deployment-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)  
+
+1. Download and install the Docker environment   
+   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
+   After the installation you can check if the Docker version normally output at the terminal.
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
-2. 拉取HertzBeat Docker镜像   
-   镜像版本TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
+2. pull HertzBeat Docker mirror  
+   you can look up the mirror version TAG in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
    ``` 
-   $ docker pull tancloud/hertzbeat:[版本tag]   
+   $ docker pull tancloud/hertzbeat   
    ```
-3. 配置HertzBeat的配置文件  
-   在主机目录下创建application.yml，eg:/opt/application.yml   
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，需要替换里面的MYSQL服务和TDengine服务参数，IP端口账户密码（若使用邮件告警，需替换里面的邮件服务器参数）
-   具体替换参数如下:
-   ``` 
-   spring.datasource.url
-   spring.datasource.username
-   spring.datasource.password
+3. Configure HertzBeat's configuration file(optional)      
+   Create application.yml in the host directory，eg:/opt/application.yml        
+   The configuration file content refer to project repository[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，modify service parameters, IP port account password in `td-engine`   
+   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-init)）       
+   Specific replacement parameters is as follows:     
+```
    
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
@@ -36,26 +36,62 @@ sidebar_label: Docker方式部署
    spring.mail.port
    spring.mail.username
    spring.mail.password
-   
-   ```
+```
 
-4. 配置用户配置文件(非必须,配置账户需要)     
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat     
-   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
-   在主机目录下创建sureness.yml，eg:/opt/sureness.yml  
-   配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)
+4. Configure the user configuration file(optional, user-defined user password)         
+   HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat      
+   If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.    
+   Create sureness.yml in the host directory，eg:/opt/sureness.yml    
+   The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
    
-   ```yaml
-   
-   resourceRole:
-   - /account/auth/refresh===post===[role1,role2,role3,role4]
-   
-   excludedResource:
-   - /account/auth/**===*
+```yaml
+
+resourceRole:
+   - /api/account/auth/refresh===post===[admin,user,guest]
+   - /api/apps/**===get===[admin,user,guest]
+   - /api/monitor/**===get===[admin,user,guest]
+   - /api/monitor/**===post===[admin,user]
+   - /api/monitor/**===put===[admin,user]
+   - /api/monitor/**===delete==[admin]
+   - /api/monitors/**===get===[admin,user,guest]
+   - /api/monitors/**===post===[admin,user]
+   - /api/monitors/**===put===[admin,user]
+   - /api/monitors/**===delete===[admin]
+   - /api/alert/**===get===[admin,user,guest]
+   - /api/alert/**===post===[admin,user]
+   - /api/alert/**===put===[admin,user]
+   - /api/alert/**===delete===[admin]
+   - /api/alerts/**===get===[admin,user,guest]
+   - /api/alerts/**===post===[admin,user]
+   - /api/alerts/**===put===[admin,user]
+   - /api/alerts/**===delete===[admin]
+   - /api/notice/**===get===[admin,user,guest]
+   - /api/notice/**===post===[admin,user]
+   - /api/notice/**===put===[admin,user]
+   - /api/notice/**===delete===[admin]
+   - /api/tag/**===get===[admin,user,guest]
+   - /api/tag/**===post===[admin,user]
+   - /api/tag/**===put===[admin,user]
+   - /api/tag/**===delete===[admin]
+   - /api/summary/**===get===[admin,user,guest]
+   - /api/summary/**===post===[admin,user]
+   - /api/summary/**===put===[admin,user]
+   - /api/summary/**===delete===[admin]
+
+# Resources that need to be filtered and protected can be accessed directly without authentication
+# /api/v1/source3===get means /api/v1/source3===get it can be accessed by anyone. Don't need to login and authentication
+excludedResource:
+   - /api/account/auth/**===*
+   - /api/i18n/**===get
+   - /api/apps/hierarchy===get
+   # web ui  the front-end static resource
    - /===get
-   - /i18n/**===get
-   - /apps/hierarchy===get
-   - /console/**===get
+   - /dashboard/**===get
+   - /monitors/**===get
+   - /alert/**===get
+   - /account/**===get
+   - /setting/**===get
+   - /passport/**===get
    - /**/*.html===get
    - /**/*.js===get
    - /**/*.css===get
@@ -63,88 +99,100 @@ sidebar_label: Docker方式部署
    - /**/*.ttf===get
    - /**/*.png===get
    - /**/*.gif===get
-   - /**/*.png===*
+   - /**/*.jpg===get
+   - /**/*.svg===get
+   - /**/*.json===get
+   # swagger ui resource
    - /swagger-resources/**===get
    - /v2/api-docs===get
    - /v3/api-docs===get
-   
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为hertzbeat
-   # eg: tom 拥有[role1,role2,role3],密码为hertzbeat
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
-   account:
-   - appId: admin
-     credential: admin
-     role: [role1,role2]
-   - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
-   ```
-   
-   修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
-   
-   ```yaml
-   
-   # 用户账户信息
-   # 下面有 admin tom lili 三个账户
-   # eg: admin 拥有[role1,role2]角色,密码为admin
-   # eg: tom 拥有[role1,role2,role3],密码为tom@123
-   # eg: lili 拥有[role1,role2],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289  
-   account:
-   - appId: admin
-     credential: admin
-     role: [role1,role2]
-   - appId: tom
-     credential: tom@123
-     role: [role1,role2,role3]
-   - appId: lili
-     # 注意 Digest认证不支持加盐加密的密码账户
-     # 加盐加密的密码，通过 MD5(password+salt)计算
-     # 此账户的原始密码为 lili
-     credential: 1A676730B0C7F54654B0E09184448289
-     salt: 123
-     role: [role1,role2]
-   ```
 
-6. 启动HertzBeat Docker容器  
-   ``` 
-   $ docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml --name hertzbeat tancloud/hertzbeat:[版本tag]
-   526aa188da767ae94b244226a2b2eec2b5f17dd8eff592893d9ec0cd0f3a1ccd
-   ```
-   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
-   - docker run -d : 通过Docker运行一个容器,使其在后台运行
-   - -p 1157:1157  : 映射容器端口到主机端口
-   - -v /opt/application.yml:/opt/hertzbeat/config/application.yml  : 挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
-   - -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml  : (非必须)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
-   - --name hertzbeat : 命名容器名称 hertzbeat 
-   - tancloud/hertzbeat:[版本tag] : 使用拉取的HertzBeat官方发布的应用镜像来启动容器,TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+# user account information
+# Here is admin tom lili three accounts
+# eg: admin includes[admin,user]roles, password is hertzbeat 
+# eg: tom includes[user], password is hertzbeat
+# eg: lili includes[guest],text password is lili, salt password is 1A676730B0C7F54654B0E09184448289
+account:
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
+```
+   
+   Modify the following **part parameters** in sureness.yml**[Note⚠️Other default sureness configuration parameters should be retained]**：  
 
-7. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/console 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
+```yaml
+
+# user account information
+# Here is admin tom lili three accounts
+# eg: admin includes[admin,user]roles, password is hertzbeat 
+# eg: tom includes[user], password is hertzbeat
+# eg: lili includes[guest], text password is lili, salt password is 1A676730B0C7F54654B0E09184448289
+account:
+   - appId: admin
+     credential: hertzbeat
+     role: [admin,user]
+   - appId: tom
+     credential: hertzbeat
+     role: [user]
+   - appId: guest
+     credential: hertzbeat
+     role: [guest]
+```
+
+6. Start the HertzBeat Docker container    
+
+```shell 
+$ docker run -d -p 1157:1157 \
+    -v /opt/data:/opt/hertzbeat/data \
+    -v /opt/logs:/opt/hertzbeat/logs \
+    -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
+    -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
+    --name hertzbeat tancloud/hertzbeat
+```
+
+   This command starts a running HertzBeat Docker container, and the container port 1157 is mapped to the host machine 1157. If existing processes on the host use the port, please modify host mapped port.  
+   - `docker run -d` : Run a container in the background via Docker
+   - `-p 1157:1157`  : Mapping container ports to the host
+   - `-v /opt/data:/opt/hertzbeat/data` : (optional，data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost because of creating or deleting container.  
+   - `-v /opt/logs:/opt/hertzbeat/logs` : (optional，if you don't have a need,just delete it) Mount the log file to the local host, to guarantee the log will not be lost because of creating or deleting container.
+   - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (optional，if you don't have a need,just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file. We need to modify MYSQL, TDengine configuration information in the configuration file to connect to an external service.
+   - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional，if you don't have a need,just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if have no modify account needs.
+   - `--name hertzbeat` : Naming container name hertzbeat 
+   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. version can be looked up in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+
+7. Begin to explore HertzBeat  
+   visit http://ip:1157/ on the browser. You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat.  
 
 **HAVE FUN**   
 
-### Docker部署常见问题   
+### Docker Deployment common issues   
 
-1. **MYSQL,TDENGINE和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**     
-此问题本质为Docker容器访问宿主机端口连接失败，由于docker默认网络模式为Bridge模式，其通过localhost访问不到宿主机。
-> 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
-> 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
+1. **MYSQL, TDENGINE and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
+The problems lies in Docker container failed to visit and connect localhost port. Beacuse the docker default network mode is Bridge mode which can't access loacl machine through localhost.
+> Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
+> Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
-2. **按照流程部署，访问 http://ip:1157/console 无界面**   
-请参考下面几点排查问题：  
-> 一：依赖服务MYSQL数据库，TDENGINE数据库是否已按照启动成功，对应hertzbeat数据库是否已创建，SQL脚本是否执行    
-> 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
-> 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
+2. **According to the process deploy，visit http://ip:1157/ no interface**   
+Please refer to the following points to troubleshoot issuess：  
+> one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+> two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+> three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
-3. **日志报错TDengine连接或插入SQL失败**  
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+3. **Log an error TDengine connection or insert SQL failed**  
+> one：Check whether database account and password configured is correct, the database is created.   
+> two：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.  
+
+4. **Historical monitoring charts have been missing data for a long time**  
+> one：Check whether you configure Tdengine. No configuration means no historical chart data.  
+> two：Check whether Tdengine database `hertzbeat` is created. 
+> three: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+
+5. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
+> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
+> Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init).  
