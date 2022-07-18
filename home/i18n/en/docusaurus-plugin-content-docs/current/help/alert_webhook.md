@@ -1,26 +1,26 @@
 ---
 id: alert_webhook
-title: 告警WebHook回调通知      
-sidebar_label: 告警WebHook通知   
+title: Alert WebHook callback notification     
+sidebar_label: Alert webHook notification   
 ---
 
-> 阈值触发后发送告警信息，通过post请求方式调用WebHook接口通知到接收人。          
+> After the threshold is triggered send alarm information and call the Webhook interface through post request to notify the recipient.          
 
-### 操作步骤   
+### Operation steps   
 
-1. **【告警通知】->【新增接收人】 ->【选择WebHook通知方式】-> 【设置WebHook回调地址】 -> 【确定】** 
+1. **【Alarm notification】->【Add new recipient】 ->【Select WebHook notification method】-> 【Set WebHook callback address】 -> 【Confirm】** 
 
 ![email](/img/docs/help/alert-notice-5.png)
 
-2. ** 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】**  
+2. **Configure the associated alarm notification strategy⚠️ 【Add new notification strategy】-> 【Associate the recipient just set】-> 【Confirm】**  
 
-> ** 注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人 **。   
+> **Note⚠️ Adding a new recipient does not mean that it is effective to receive alarm information. It is also necessary to configure the associated alarm notification strategy, that is, to specify which messages are sent to which recipients.**   
 
 ![email](/img/docs/help/alert-notice-4.png)    
 
-### WebHook回调POST请求体BODY内容   
+### WebHook callback POST body BODY content   
 
-内容格式：JSON   
+Content format：JSON   
 ```json
 {
     "id":76456,
@@ -28,7 +28,7 @@ sidebar_label: 告警WebHook通知
     "monitorId":5739609486000128,
     "monitorName":"API_poetry.apiopen.top",
     "priority":0,
-    "content":"监控紧急可用性告警: UN_CONNECTABLE",
+    "content":"Monitor emergency availability alarm: UN_CONNECTABLE",
     "status":0,
     "times":1,
     "tenantId":10000,
@@ -38,10 +38,10 @@ sidebar_label: 告警WebHook通知
 ```
 
 
-### webhook通知常见问题   
+### Webhook notification common issues   
 
-1. WebHook回调未生效   
-> 请查看告警中心是否已经产生此条告警信息   
-> 请排查配置的WebHook回调地址是否正确
+1. WebHook callback did not take effect  
+> Please check whether there is any triggered alarm information in the alarm center.  
+> Please check whether the configured webhook callback address is correct.
 
-其它问题可以通过交流群ISSUE反馈哦！  
+Other issues can be fed back through the communication group ISSUE!  

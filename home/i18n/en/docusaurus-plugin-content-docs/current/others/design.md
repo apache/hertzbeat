@@ -1,7 +1,7 @@
 ---
 id: design  
-title: 设计文档     
-sidebar_label: 设计文档     
+title: Design Document     
+sidebar_label: Design Document     
 ---
 
 ### HertzBeat Architecture     
