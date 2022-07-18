@@ -1,6 +1,6 @@
 ---
 id: service
-title: TanCloud 通用服务条款 / TanCloud Subscription Agreement     
+title: TanCloud 通用服务条款    
 sidebar_label: 通用服务条款
 ---
 
@@ -22,7 +22,7 @@ sidebar_label: 通用服务条款
    本条款中“服务”指：TanCloud 服务 tancloud.cn  网站和客户端（以下单独或统称“TanCloud”）所展示的、您申请订购且 TanCloud 同意向您提供的服务
 
 3. 服务费用
-   3.1. 服务费用将在您订购页面予以列明公示，您可自行选择具体服务类型并按列明的价格予以支付。TanCloud 仅供选择先付费的服务。
+3.1. 服务费用将在您订购页面予以列明公示，您可自行选择具体服务类型并按列明的价格予以支付。TanCloud 仅供选择先付费的服务。
 
 3.2. 先付费：
 
@@ -35,7 +35,7 @@ sidebar_label: 通用服务条款
 3.4. 您完全理解 TanCloud 价格体系中所有的赠送服务项目或优惠活动均为 TanCloud 在正常服务价格之外的一次性特别优惠，赠送的服务项目或优惠活动不可折价、冲抵服务价格。
 
 4. 您的权利和义务
-   4.1. 成功订购服务后，您有权要求 TanCloud 按照本服务协议以及 TanCloud 网站相关页面所展示的服务说明、技术规范等内容向您提供服务。
+4.1. 成功订购服务后，您有权要求 TanCloud 按照本服务协议以及 TanCloud 网站相关页面所展示的服务说明、技术规范等内容向您提供服务。
 
 4.2. 您订购 TanCloud 的服务后，您可享受免费的售后服务。除此之外 TanCloud 并提供其他付费的技术服务。
 
@@ -56,7 +56,7 @@ sidebar_label: 通用服务条款
 4.10. 您还应仔细阅读并遵守 TanCloud 在网站页面上展示的相应服务说明、技术规范、使用流程、操作文档等内容（以上简称“操作指引”），依照相关操作指引进行操作。您将承担违反相关操作指引所引起的后果；同时，TanCloud 郑重提示您，请把握风险谨慎操作。
 
 5. TanCloud 的权利、义务
-   5.1. TanCloud 应按照约定提供服务。
+5.1. TanCloud 应按照约定提供服务。
 
 5.2. 服务期限内，TanCloud 将为您提供如下售后服务：
 
@@ -77,7 +77,7 @@ sidebar_label: 通用服务条款
 5.8. 您应理解并同意，TanCloud 在对服务进行公测、邀测等您免费试（使）用服务期间或免费服务额度内，虽然 TanCloud 会对服务可用性和可靠性提供支撑，但将不对任何服务可用性、可靠性做出承诺，TanCloud 亦不对您使用或不能使用 TanCloud 服务的工作或结果承担任何责任。 TanCloud 保留日后对该等免费服务收取费用的可能性，收取服务费用之前，TanCloud 将另行通知您。
 
 6. 用户业务数据
-   6.1. TanCloud 理解并认可，您通过 TanCloud 提供的服务，加工、存储、上传、下载、分发以及通过其他方式处理的数据，均为您的用户业务数据，您完全拥有您的用户业务数据。
+6.1. TanCloud 理解并认可，您通过 TanCloud 提供的服务，加工、存储、上传、下载、分发以及通过其他方式处理的数据，均为您的用户业务数据，您完全拥有您的用户业务数据。
 
 6.2. 就用户业务数据，TanCloud 除执行您的服务要求外，不进行任何未获授权的使用及披露；但以下情形除外：
 
@@ -94,14 +94,14 @@ sidebar_label: 通用服务条款
 6.6. TanCloud 恪守对用户的安全承诺，根据适用的法律保护用户存储在 TanCloud 数据中心的数据。
 
 7. 知识产权
-   7.1. 在本协议项下一方向对方提供的任何资料、技术或技术支持、软件、服务等的知识产权均属于提供一方或其合法权利人所有； 除提供方或合法权利人明示同意外，另一方无权复制、传播、转让、许可或提供他人使用上述知识成果，否则应承担相应的责任。
+7.1. 在本协议项下一方向对方提供的任何资料、技术或技术支持、软件、服务等的知识产权均属于提供一方或其合法权利人所有； 除提供方或合法权利人明示同意外，另一方无权复制、传播、转让、许可或提供他人使用上述知识成果，否则应承担相应的责任。
 
 7.2. 您应保证提交 TanCloud 的素材、对 TanCloud 服务的使用及使用 TanCloud 服务所产生的成果未侵犯任何第三方的合法权益。 TanCloud 应保证向您提供的服务未侵犯任何第三方的合法权益。
 
 7.3. 如果第三方机构或个人对您使用 TanCloud 服务所涉及的相关素材的知识产权归属提出质疑或投诉，或对您使用的 TanCloud 服务的知识产权的归属提出质疑或投诉，您和 TanCloud 均有责任出具相关知识产权证明材料，并配合对方的相关投诉处理工作。对于因此引起的索赔、诉讼或可能向其提起诉讼,违约方应负责解决，承担费用和损失，以及使另一方免责。
 
 8. 保密条款
-   8.1. 本服务条款所称保密信息，是指一方（以下简称“接受方”）从对方（以下简称“披露方”）取得的、获知的、或因双方履行本协议而产生的商业秘密（包括财务秘密）、技术秘密、经营诀窍和（或）其他应予保密的信息和资料（包括产品资料，产品计划，价格，财务及营销规划，业务战略，客户信息，客户数据，研发，软件，硬件，API应用数据接口，技术说明，设计，特殊公式，特殊算法等），无论上述信息和资料以何种形式或载于何种载体，无论披露方在披露时是否以口头、图像或书面等方式表明其具有保密性。
+8.1. 本服务条款所称保密信息，是指一方（以下简称“接受方”）从对方（以下简称“披露方”）取得的、获知的、或因双方履行本协议而产生的商业秘密（包括财务秘密）、技术秘密、经营诀窍和（或）其他应予保密的信息和资料（包括产品资料，产品计划，价格，财务及营销规划，业务战略，客户信息，客户数据，研发，软件，硬件，API应用数据接口，技术说明，设计，特殊公式，特殊算法等），无论上述信息和资料以何种形式或载于何种载体，无论披露方在披露时是否以口头、图像或书面等方式表明其具有保密性。
 
 8.2. 双方应采取适当措施妥善保存对方提供的保密信息，措施的审慎程度不少于其保护自身的保密信息时的审慎程度。双方仅能将保密信息用于与本协议项下的有关用途或目的。
 
@@ -126,7 +126,7 @@ sidebar_label: 通用服务条款
 8.5. 您和 TanCloud 都应尽最大的努力保护上述保密信息不被泄露。一旦发现有上述保密信息泄露事件，双方应合作采取一切合理措施避免或者减轻损害后果的产生。如因此给对方造成损失的，应赔偿因此给对方造成的直接经济损失。
 
 9. 服务的开通、终止与变更
-   9.1. 先付费的服务：
+9.1. 先付费的服务：
 
 9.1.1. 您付费后服务即开通，开通后您获得 TanCloud 向您发送的登录、使用服务的密钥、口令即可使用服务，服务期限自开通之时起算（而非自您获得登录、使用服务的密钥、口令时起算）；
 
@@ -149,7 +149,7 @@ sidebar_label: 通用服务条款
 9.3. 您理解并认可，为技术升级、服务体系升级、或因经营策略调整或配合国家重大技术、法规政策等变化，TanCloud 不保证永久的提供某种服务，并有权变更所提供服务的形式、规格或其他方面（如服务的价格和计费模式），在终止该种服务或进行此种变更前，TanCloud 将尽最大努力且提前以网站公告、站内信、邮件或短信等一种或多种方式进行事先通知。
 
 10. 违约责任
-    10.1. 您违反本协议中的承诺、保证条款、服务使用规则或义务的任一内容，或 TanCloud 根据其判断认为您的使用行为存在异常的，TanCloud 均有权就其情节，根据独立判断并单方采取以下措施中的一种或多种：（1）限制、中止使用服务；（2）终止提供服务，终止本协议；（3）追究您的法律责任；（4）其他 TanCloud 认为适合的处理措施。 TanCloud 依据前述约定采取中止服务、终止服务等措施而造成的用户损失将由您承担。
+10.1. 您违反本协议中的承诺、保证条款、服务使用规则或义务的任一内容，或 TanCloud 根据其判断认为您的使用行为存在异常的，TanCloud 均有权就其情节，根据独立判断并单方采取以下措施中的一种或多种：（1）限制、中止使用服务；（2）终止提供服务，终止本协议；（3）追究您的法律责任；（4）其他 TanCloud 认为适合的处理措施。 TanCloud 依据前述约定采取中止服务、终止服务等措施而造成的用户损失将由您承担。
 
 10.2. 如因您违反有关法律法规或者本协议、相关规则之规定，使 TanCloud 遭受任何损失、受到其他用户、任何第三方的索赔或任何行政管理部门的处罚，您应对 TanCloud、其他用户或相关第三方的实际损失进行全额赔偿，包括合理的律师费用。
 
@@ -166,17 +166,17 @@ sidebar_label: 通用服务条款
 10.6. 在法律允许的情况下，TanCloud 在本协议项下所承担的损失赔偿责任不超过就该服务过往 12 个月所缴纳的服务费用的总和。
 
 11. 不可抗力
-    11.1. 因不可抗力或者其他意外事件，使得本服务条款的履行不可能、不必要或者无意义的，遭受不可抗力、意外事件的一方不承担责任。
+11.1. 因不可抗力或者其他意外事件，使得本服务条款的履行不可能、不必要或者无意义的，遭受不可抗力、意外事件的一方不承担责任。
 
 11.2. 不可抗力、意外事件是指不能预见、不能克服并不能避免且对一方或双方当事人造成重大影响的客观事件，包括自然灾害如洪水、地震、瘟疫流行等以及社会事件如战争、动乱、政府行为、电信主干线路中断、黑客、网路堵塞、电信部门技术调整和政府管制等。
 
 12. 法律适用及争议解决
-    12.1. 本协议之订立、生效、解释、修订、补充、终止、执行与争议解决均适用中华人民共和国大陆法律。
+12.1. 本协议之订立、生效、解释、修订、补充、终止、执行与争议解决均适用中华人民共和国大陆法律。
 
 12.2. 您因使用 TanCloud 服务所产生及与 TanCloud 服务有关的争议，由 TanCloud 与您协商解决。协商不成时，任何一方均可向北京市海淀区人民法院提起诉讼。
 
 13. 附则
-    13.1. 本协议的附件，以及 TanCloud 在 TanCloud 网站相关页面上的服务说明、价格说明和您确认同意的订购页面（包括产品的专用条款、服务说明、操作文档等）均为本协议不可分割的一部分。如遇不一致之处，以（1）服务说明、价格说明、其他订购页面，（2）专用条款和附件，（3）本协议通用条款的顺序予以适用。
+13.1. 本协议的附件，以及 TanCloud 在 TanCloud 网站相关页面上的服务说明、价格说明和您确认同意的订购页面（包括产品的专用条款、服务说明、操作文档等）均为本协议不可分割的一部分。如遇不一致之处，以（1）服务说明、价格说明、其他订购页面，（2）专用条款和附件，（3）本协议通用条款的顺序予以适用。
 
 13.2. 如本协议内容发生变动，TanCloud 应通过提前30天在 TanCloud 网站的适当版面公告向您提示修改内容；如您继续使用 TanCloud 服务，则视为您接受 TanCloud 所做的相关修改。
 
@@ -187,49 +187,3 @@ sidebar_label: 通用服务条款
 13.5. 本协议任一条款被视为废止、无效或不可执行，该条应视为可分的且并不影响本协议其余条款的有效性及可执行性。
 
 13.6. 本协议项下之保证条款、保密条款、知识产权条款、法律适用及争议解决条款等内容，不因本协议的终止而失效。
-
-TanCloud Subscription Agreement
-1. Service and Professional Services.
-   1.1. TanCloud’s Obligations.
-   TanCloud shall make the Service available to Customer pursuant to this Agreement and the applicable Order Form during the Term, and grants to Customer a limited, non-sublicensable, non-exclusive, non-transferable (except as expressly permitted in Section 12.1) right during the Term to allow its Users to access and use the Service in accordance with the Documentation, solely for Customer’s business purposes. Customer agrees that its purchase of the Service or the Professional Services is neither contingent upon the delivery of any future functionality or features nor dependent upon any oral or written public comments made by TanCloud with respect to future functionality or features. TanCloud will comply with all applicable Laws in its provision of the Service. TanCloud shall use commercially reasonable efforts to make the Service available to Customer 24 hours a day, 7 days a week, every day of each year (except for any unavailability caused by a Force Majeure event).
-
-1.2. Customer’s Obligations.
-a) Customer is responsible for all activities conducted under its and its Users’ logins to the Service. Customer shall use the Service in compliance with this Agreement, the applicable Order Forms, Documentation, and all applicable Laws and shall not: (i) copy, rent, sell, lease, distribute, pledge, assign, or otherwise transfer, or encumber rights to the Service, or any part thereof, or make it available to anyone other than its Users; (ii) send or store in the Service any personal health data, credit card data, personal financial data or other such sensitive data; (iii) send or store infringing or unlawful material in connection with the Service; (iv) send or store Malicious Code to the Service; (v) attempt to gain unauthorized access to, or disrupt the integrity or performance of, the Service or the data contained therein; (vi) modify, copy or create derivative works based on the Service, or any portion thereof; (vii) access the Service for the purpose of building a competitive product or service or copying its features or user interface; or (viii) delete, alter, add to or fail to reproduce in and on the Service the name of TanCloud and any copyright or other notices appearing in or on the Service or which may be required by TanCloud at any time.
-
-b) Any use of the Service in breach of this Agreement, Documentation or Order Forms by Customer or Users that in TanCloud’s judgment threatens the security, integrity or availability of the Service may result in TanCloud’s immediate suspension of Customer’s access to the Service; however, TanCloud will use commercially reasonable efforts under the circumstances to provide Customer with notice and an opportunity to remedy such violation or threat prior to such suspension.
-
-1.3. Professional Service (Custom Development Engineer).
-Customer and TanCloud may enter into Statements of Work that describe the specific Professional Services to be performed by TanCloud. If applicable, while on Customer premises for Professional Services, TanCloud personnel shall comply with reasonable Customer rules and regulations regarding safety, and conduct made known to TanCloud, and will, at Customer’s reasonable request, promptly remove from the project any TanCloud personnel not following such rules and regulations.
-
-2. Security and Support.
-   2.1. Security.
-   TanCloud shall maintain appropriate administrative, physical, and technical safeguards to protect the security and integrity of the Service and the Customer Data.
-
-2.2. Support Services.
-During the Term, TanCloud shall provide Support Services to Customer in accordance with TanCloud’s then-current support policy, and as identified in an Order Form. In the event that the level of support is not identified in the Order Form, Customer shall receive a “Developer” level of support that is included in the Service at no additional cost. Any updates or modifications to the Support Services will not materially diminish TanCloud’s responsibilities under the support policy during the Term.
-
-2.3. Confidentiality.
-Each party agrees to protect the Confidential Information (as defined below) of the other party in the same manner that it protects the confidentiality of its own proprietary and confidential information of like kind, but in no event using less than a reasonable standard of care. A party shall not: (i) disclose or use any Confidential Information of the other party for any purpose outside the scope of this Agreement, except with the disclosing party’s prior written permission and (ii) disclose or make the other party’s Confidential Information available to any party, except those of its employees, contractors, and agents that have signed an agreement containing disclosure and use provisions substantially similar to those set forth herein and have a “need to know” in order to carry out the purpose of this Agreement. Confidential Information shall not include any information that (a) is or becomes generally known to the public, other than as a result of the act or omission of the receiving party; (b) were rightfully known to a party prior to its disclosure by the other party without breach of any obligation owed to the other party; (c) is lawfully received from a third party without breach of any obligation owed to the other party; or (d) was independently developed by a party without breach of any obligation owed to the other party. If a party is compelled by law to disclose Confidential Information of the other party, it shall provide prior notice of such compelled disclosure (to the extent legally permitted) and reasonable assistance, at the other party's cost, if the other party wishes to contest the disclosure. Due to the unique nature of the parties’ Confidential Information disclosed hereunder, there can be no adequate remedy at law for a party’s breach of its obligations hereunder, and any such breach may result in irreparable harm to the non-breaching party. Therefore, upon any such breach or threat thereof, the party alleging breach shall be entitled to seek injunctive and other appropriate equitable relief in addition to any other remedies available to it.
-
-4. Ownership, Feedback, and Statistical Usage Data.
-   4.1. Customer Data.
-   As between TanCloud and Customer, Customer owns its Customer Data. Customer grants to TanCloud, its Affiliates and applicable contractors a worldwide, limited-term license to host, copy, transmit and display Customer Data, as reasonably necessary for TanCloud to provide the Service in accordance with this Agreement. Subject to the limited licenses granted herein, TanCloud acquires no right, title or interest in any Customer Data. Customer shall be responsible for the accuracy, quality and legality of Customer Data and the means by which Customer acquired Customer Data.
-
-4.2. TanCloud Ownership of the Service.
-Except for the rights expressly granted under this Agreement, TanCloud and its licensors retain all right, title, and interest in and to the Service, Documentation and Professional Services, including all related intellectual property rights inherent therein. If Customer purchases Professional Services, TanCloud grants to Customer a worldwide, non-exclusive, non-transferable (except as expressly permitted in Section 12.1), non-sublicensable right to use the Professional Services solely for Customer’s use with the Service. No rights are granted to Customer hereunder other than as expressly set forth in this Agreement.
-
-4.3. Feedback.
-TanCloud shall have a royalty-free, worldwide, transferable, sublicenseable, irrevocable, perpetual license to use or incorporate into its products and services any suggestions, ideas, enhancement requests, feedback, recommendations or other information provided by Customer or its Users relating to the features, functionality or operation of the Service, or the Professional Services (“Feedback”). TanCloud shall have no obligation to use Feedback, and Customer shall have no obligation to provide Feedback.
-
-4.4. Statistical Usage Data.
-TanCloud owns the statistical usage data derived from the operation of the Service, including data regarding web applications utilized in connection with the Service, configurations, log data, and the performance results for the Service (“Usage Data”). Nothing herein shall be construed as prohibiting TanCloud from utilizing the Usage Data for purposes of operating TanCloud’s business; provided that the Usage Data shall be de-identified and presented in the aggregate so that it will not disclose the identity of Customer or any User(s) to any third party.
-
-5. Fees, Expenses, and Taxes.
-   5.1. Fees.
-   Customer agrees to pay TanCloud all fees set forth in the oder form in accordance with this Agreement and the Order Form. If not otherwise specified on an Order Form, all such Fees (except Fees subject to a good faith dispute) will be due within thirty (30) days of date of invoice. Except as otherwise specifically provided in this Agreement, all Fees paid and payable to TanCloud hereunder are non- cancelable and non-refundable. All Fees are based on access rights acquired and not actual usage. If Customer fails to pay any amounts due under this Agreement by the due date, in addition to any other rights or remedies it may have under this Agreement or by matter of law, (i) TanCloud reserves the right to suspend the Service upon thirty (30) days written notice, until such amounts are paid in full, and (ii) TanCloud will have the right to charge interest at a rate equal to the lesser of one and one-half percent (1.5%) per month or the maximum rate permitted by applicable Law until Customer pays all amounts due; provided that TanCloud will not exercise its right to charge interest if the applicable charges are under reasonable and good faith dispute and Customer is cooperating diligently to resolve the issue.
-
-5.2. Expenses.
-Unless otherwise specified in the applicable Statement of Work, upon invoice from TanCloud, Customer will reimburse TanCloud for all pre-approved, reasonable expenses incurred by TanCloud while performing the Professional Services, including without limitation, transportation services, lodging, and meal and out-of-pocket expenses related to the provision of the Professional Services. TanCloud will include reasonably detailed documentation of all such expenses with each related invoice.
-
-5.3. Taxes.
-Fees do not include and may not be reduced to account for any taxes including any local, state, federal or foreign taxes, levies, duties or similar governmental assessments of any nature, including value-added, use or withholding taxes (collectively, “Taxes”). Customer is responsible for paying all Taxes associated with its purchases hereunder (excluding taxes based on TanCloud’s net income or property) unless Customer provides TanCloud with a valid tax exemption certificate authorized by the appropriate taxing authority.

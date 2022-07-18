@@ -1,18 +1,18 @@
 ---
 id: alert_console
-title: 告警模板中自定义的控制台地址     
-sidebar_label: 告警模板登录台地址
+title: Custom console address in alarm template     
+sidebar_label: Console address in alarm template
 ---
 
-> 阈值触发后发送告警信息，通过钉钉/企业微信/飞书机器人通知或者使用邮箱通知的时候，告警内容中有登录控制台的详情链接
+> After the threshold is triggered, send the alarm information. When you notify through DingDing / enterprise Wechat / FeiShu robot or email, the alarm content has a detailed link to log in to the console.
 
 
-### 自定义设置
+### Custom settings
 
-在我们的启动配置文件application.yml中，找到下面的配置
+In our startup configuration file application.yml, find the following configuration
 ```yml
 alerter:
-  console-url: #这里就是我们的自定义控制台地址
+  console-url: #Here is our custom console address
 ```
 
-默认值是赫兹跳动的官方控制台地址
+The default value is the official console address of HertzBeat.
