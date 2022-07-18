@@ -124,6 +124,7 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/DevilX5"><img src="https://avatars.githubusercontent.com/u/13269921?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DevilX5</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DevilX5" title="Documentation">📖</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DevilX5" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/djzeng"><img src="https://avatars.githubusercontent.com/u/14074864?v=4?s=100" width="100px;" alt=""/><br /><sub><b>tea</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=djzeng" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/yangshihui"><img src="https://avatars.githubusercontent.com/u/28550208?v=4?s=100" width="100px;" alt=""/><br /><sub><b>yangshihui</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=yangshihui" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Ayangshihui" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/DreamGirl524"><img src="https://avatars.githubusercontent.com/u/81132838?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DreamGirl524</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Documentation">📖</a></td>
   </tr>
 </table>
 
