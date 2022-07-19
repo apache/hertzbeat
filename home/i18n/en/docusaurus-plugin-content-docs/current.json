@@ -48,7 +48,7 @@
     "description": "The label for category 告警通知配置 in sidebar docs"
   },
   "sidebar.docs.category.中间件": {
-    "message": "中间件",
+    "message": "Middleware",
     "description": "The label for category 中间件 in sidebar docs"
   },
   "sidebar.docs.category.Others": {

@@ -8,9 +8,9 @@ sidebar_label: Alert DingDing robot notification
 
 ### Operation steps   
 
-1. **【DingDing desktop client】-> 【Group settings】-> 【Intelligent group assistant】-> 【Add new robot-select custom】-> 【Set robot name and avatar】-> 【Note⚠️Set custom keywords: TanCloud】 ->【Copy its webhook address after adding successfully】**
+1. **【DingDing desktop client】-> 【Group settings】-> 【Intelligent group assistant】-> 【Add new robot-select custom】-> 【Set robot name and avatar】-> 【Note⚠️Set custom keywords: HertzBeat】 ->【Copy its webhook address after adding successfully】**
 
-> Note⚠️ When adding a robot, its custom keywords need to be set in the security setting block: TanCloud. Other security settings or the IP segment don't need to be filled in.    
+> Note⚠️ When adding a robot, its custom keywords need to be set in the security setting block: HertzBeat. Other security settings or the IP segment don't need to be filled in.    
 
 ![email](/img/docs/help/alert-notice-8.png)     
 
@@ -34,7 +34,7 @@ sidebar_label: Alert DingDing robot notification
 
 1. DingDing group did not receive the robot alarm notification.  
 > Please check whether there is any triggered alarm information in the alarm center.  
-> Please check whether DingDing robot is configured with security custom keywords ：TanCloud.  
+> Please check whether DingDing robot is configured with security custom keywords ：HertzBeat.  
 > Please check whether the robot ACCESS_TOKEN is configured correctly and whether the alarm strategy association is configured.
 
 Other issues can be fed back through the communication group ISSUE!  
