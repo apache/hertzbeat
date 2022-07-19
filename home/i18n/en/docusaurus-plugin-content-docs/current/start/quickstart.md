@@ -38,12 +38,12 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `localhost:4200` to start, default account: `admin/hertzbeat`
 
-Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)
+Detailed steps refer to [CONTRIBUTING](../others/contributing)   
 
 ##### 4：Install All(mysql+tdengine+hertzbeat) via Docker-compose
 
-Install and deploy the mysql database, tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install and deploy the mysql database, tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
 
-Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)
+Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
 
 **HAVE FUN**  
