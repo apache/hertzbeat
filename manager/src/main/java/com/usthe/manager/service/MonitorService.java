@@ -149,4 +149,20 @@ public interface MonitorService {
      * @return Monitor Entity List  监控列表
      */
     List<Monitor> getAppMonitors(String app);
+
+    /**
+     * 新增一个可选指标的监控
+     * @param metrics   用户指标
+     * @param monitor   监控提示
+     * @param params    配置参数
+     */
+    void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params);
+
+    /**
+     * 根据App名称获取可监控指标，不传为获取全部指标
+     * @param app
+     * @return
+     */
+    List<String> getMonitorMetrics(String app);
+
 }
