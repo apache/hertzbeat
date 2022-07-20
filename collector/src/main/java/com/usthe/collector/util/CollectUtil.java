@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import com.usthe.common.entity.job.Configmap;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.GsonUtil;
 
 import java.lang.reflect.Type;
@@ -75,6 +76,20 @@ public class CollectUtil {
             return defaultTimeout;
         }
     }
+
+    /**
+     *
+     *
+     *
+     *
+     */
+    public static Boolean assertPromRequireField(String aliasField){
+        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)){
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * json parameter replacement

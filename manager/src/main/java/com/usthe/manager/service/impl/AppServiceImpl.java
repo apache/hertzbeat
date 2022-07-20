@@ -16,19 +16,16 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Monitoring Type Management Implementation
@@ -67,6 +64,24 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
         return appDefine.clone();
     }
+
+    @Override
+    public List<String> getAppDefineMetricNames(String app) {
+        List<String> metricNames = new ArrayList<>(16);
+        if (StringUtils.hasLength(app)) {
+            Job appDefine = appDefines.get(app);
+            if (appDefine == null) {
+                throw new IllegalArgumentException("The app " + app + " not support.");
+            }
+            metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
+        } else {
+            appDefines.forEach((k,v)->{
+                metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
+            });
+        }
+        return metricNames;
+    }
+
 
     @Override
     public Map<String, String> getI18nResources(String lang) {

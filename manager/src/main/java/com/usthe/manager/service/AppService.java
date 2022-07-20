@@ -37,6 +37,14 @@ public interface AppService {
     Job getAppDefine(String app) throws IllegalArgumentException;
 
     /**
+     * 获取app定义的指标
+     * @param app
+     * @return
+     */
+    List<String> getAppDefineMetricNames(String app);
+
+
+    /**
      * Get defined monitoring I 18 N resources
      * 获取定义的监控I18N资源
      *

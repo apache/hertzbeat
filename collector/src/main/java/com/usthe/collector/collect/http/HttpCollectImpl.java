@@ -41,6 +41,11 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
+import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
+import com.usthe.collector.collect.http.promethus.PrometheusParseCreater;
+import com.usthe.collector.collect.http.promethus.PrometheusVectorParser;
+
 
 import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
@@ -309,7 +314,8 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPrometheus(String resp, List<String> aliasFields, HttpProtocol http,
                                            CollectRep.MetricsData.Builder builder) {
-
+        AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
+        prometheusParser.handle(resp,aliasFields,http,builder);
     }
 
     private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,
