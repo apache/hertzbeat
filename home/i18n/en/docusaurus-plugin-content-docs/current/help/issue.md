@@ -19,7 +19,7 @@ The hertzbeat installed and deployed by the installation package is not availabl
 
 4. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
-> Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init).   
+> Installation and initialization this database refers to [TDengine Installation and Initialization](../start/tdengine-init).   
 
 ### Docker Deployment common issues   
 

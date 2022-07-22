@@ -1,7 +1,7 @@
 ---
 id: package-deploy  
 title: Install HertzBeat via Package 
-sidebar_label: Package Way Deployment    
+sidebar_label: Install via Package
 ---
 > You can install and run HertzBeat on Linux Windows Mac system, and CPU supports X86/ARM64. Due to the installation package itself does not include the JAVA runtime environment, you need to prepare JAVA runtime environment in advance.
 

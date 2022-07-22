@@ -61,16 +61,22 @@ export const features = [{
         ),
     }]
 
-export const friendLinks = [
+export const dromaraFriends = [
     {
-        img: 'ShenYu_logo.png',
-        alt: 'ShenYu',
-        url: 'https://dromara.org/projects/soul/overview/'
-    }, {
         img: 'maxkey_logo.png',
         alt: 'MaxKey',
         url: 'https://maxkey.top/'
     }, {
+        img: 'jpom_logo.png',
+        alt: 'jpom',
+        url: 'https://jpom.io/'
+    },
+    {
+        img: 'fast_request_logo.svg',
+        alt: 'fast-request',
+        url: 'https://plugins.sheng90.wang/fast-request/'
+    },
+    {
         img: 'tlog_logo.png',
         alt: 'TLog',
         url: 'https://yomahub.com/tlog/'
@@ -83,31 +89,66 @@ export const friendLinks = [
         alt: 'Sa-Token',
         url: 'http://sa-token.dev33.cn/'
     }, {
-        img: 'justauth_logo.png',
-        alt: 'Justauth',
-        url: 'https://justauth.wiki/'
-    }, {
-        img: 'pha_logo.jfif',
-        alt: 'pha_api',
-        url: 'https://www.phalapi.net/'
+        img: 'koalas_rpc_logo.png',
+        alt: 'koalas_rpc',
+        url: 'https://gitee.com/dromara/koalas-rpc'
     }, {
         img: 'liteflow_logo.png',
         alt: 'LiteFlow',
         url: 'https://yomahub.com/liteflow/'
-    }
+    }, {
+        img: 'hmily_logo.png',
+        alt: 'hmily',
+        url: 'https://dromara.org/'
+    }, {
+        img: 'forest_logo.png',
+        alt: 'Forest',
+        url: 'https://forest.dtflyx.com/'
+    }, {
+        img: 'cubic_logo.png',
+        alt: 'cubic',
+        url: 'https://cubic.jiagoujishu.com/'
+    }, {
+        img: 'raincat_logo.png',
+        alt: 'Raincat',
+        url: 'https://dromara.org/'
+    }, {
+        img: 'sureness_logo.png',
+        alt: 'Sureness',
+        url: 'https://su.usthe.com/'
+    }, {
+        img: 'easy_es_logo.png',
+        alt: 'easy-es',
+        url: 'https://www.easy-es.cn/'
+    }, {
+        img: 'dynamic_tp_logo.png',
+        alt: 'dynamic-tp',
+        url: 'https://dynamictp.cn/'
+    }, {
+        img: 'northstar_logo.png',
+        alt: 'northstar',
+        url: 'https://gitee.com/dromara/northstar'
+    }, {
+        img: 'mendmix_logo.png',
+        alt: 'mendmix',
+        url: 'https://www.jeesuite.com/'
+    }, {
+        img: 'gobrs_logo.png',
+        alt: 'Gobrs-Async',
+        url: 'https://async.sizegang.cn/'
+    }, {
+        img: 'easypdf_logo.png',
+        alt: 'easypdf',
+        url: 'https://dromara.gitee.io/x-easypdf/'
+    },
 ]
 
-export const mediaPartners = [
+export const friendsLink = [
     {
-        img: 'dromara_qr.png',
-        alt: 'Dromara',
-        url: 'https://mp.weixin.qq.com/s/Q3b7ZE802IMF6MwIPJIGQA'
+        img: 'hippo4j_logo.png',
+        alt: 'hippo4j',
+        url: 'https://hippo4j.cn/'
     },
-    {
-        img: 'JavaHouDuan_logo.png',
-        alt: 'JavaHouDuan',
-        url: 'https://mp.weixin.qq.com/s/Ylq51a7Av8ZRuH811xZnDA'
-    }
 ]
 
 

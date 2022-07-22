@@ -1,7 +1,7 @@
 ---
 id: docker-deploy  
 title: Install HertzBeat via Docker   
-sidebar_label: Docker Way Deployment    
+sidebar_label: Install via Docker      
 ---
 
 > Recommend to use docker deploy HertzBeat
