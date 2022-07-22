@@ -33,19 +33,7 @@ module.exports = {
         colorMode: {
             defaultMode: 'light',
             disableSwitch: false,
-            respectPrefersColorScheme: false,
-            switchConfig: {
-                darkIcon: '🌜',
-                lightIcon: '☀️',
-                // React inline style object
-                // see https://reactjs.org/docs/dom-elements.html#style
-                darkIconStyle: {
-                    marginLeft: '2px',
-                },
-                lightIconStyle: {
-                    marginLeft: '1px',
-                },
-            },
+            respectPrefersColorScheme: true
         },
         prism: {
             theme: require('prism-react-renderer/themes/github'),
@@ -55,7 +43,7 @@ module.exports = {
         algolia: {
             apiKey: 'c7c84bfcc1495156f5730309d821ba8c',
             indexName: 'sureness',
-            // appId: 'GNVT7Z0UI2',
+            appId: 'GNVT7Z0UI2',
             contextualSearch: true,
         },
         announcementBar: {

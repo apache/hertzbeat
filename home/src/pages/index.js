@@ -14,7 +14,7 @@ import LogoCarousel from './components/LogoCarousel'
 import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
-import { features, SetupExample, SurenessIntegration, friendLinks, mediaPartners } from '../constants'
+import { features, SetupExample, SurenessIntegration, dromaraFriends, friendsLink } from '../constants'
 
 function Home() {
     const context = useDocusaurusContext()
@@ -66,13 +66,13 @@ function Home() {
                 {/*</Section>*/}
 
                 {/*Friend Links*/}
-                {/*<Section>*/}
-                {/*    <LogoCarousel logos={friendLinks} headerTitle={translate({message: 'Friend Links'})}></LogoCarousel>*/}
-                {/*</Section>*/}
-                {/*/!*Media Partners*!/*/}
-                {/*<Section>*/}
-                {/*    <LogoCarousel logos={mediaPartners} headerTitle={translate({message: 'Media Partners'})}></LogoCarousel>*/}
-                {/*</Section>*/}
+                <Section>
+                    <LogoCarousel logos={dromaraFriends} headerTitle={translate({message: 'Dromara Friends'})}/>
+                </Section>
+                {/*/!*Friend Links*!/*/}
+                <Section>
+                    <LogoCarousel logos={friendsLink} headerTitle={translate({message: 'Friends Link'})}/>
+                </Section>
             </main>
         </Layout>
     )
