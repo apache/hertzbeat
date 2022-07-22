@@ -124,6 +124,8 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/DevilX5"><img src="https://avatars.githubusercontent.com/u/13269921?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DevilX5</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DevilX5" title="Documentation">📖</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DevilX5" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/djzeng"><img src="https://avatars.githubusercontent.com/u/14074864?v=4?s=100" width="100px;" alt=""/><br /><sub><b>tea</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=djzeng" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/yangshihui"><img src="https://avatars.githubusercontent.com/u/28550208?v=4?s=100" width="100px;" alt=""/><br /><sub><b>yangshihui</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=yangshihui" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Ayangshihui" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/DreamGirl524"><img src="https://avatars.githubusercontent.com/u/81132838?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DreamGirl524</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/gzwlly"><img src="https://avatars.githubusercontent.com/u/83171907?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gzwlly</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=gzwlly" title="Documentation">📖</a></td>
   </tr>
 </table>
 
@@ -159,10 +161,14 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>
 
+##### 友情链接   
+
+- [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
+
 ##### 赞助     
 
-感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
-感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点,CDN        
+- 感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
+- 感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点,CDN        
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
