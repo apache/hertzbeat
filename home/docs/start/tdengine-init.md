@@ -18,10 +18,15 @@ TDengine是一款国产的开源物联网时序型数据库，我们使用其替
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
-2. Docker安装TDengine
-   ```
-   $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp -v /opt/taosdata:/var/lib/taos --name tdengine -e TZ=Asia/Shanghai tdengine/tdengine:2.4.0.12
-   ```
+2. Docker安装TDengine  
+
+```shell
+$ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
+    -v /opt/taosdata:/var/lib/taos \ 
+    --name tdengine -e TZ=Asia/Shanghai \
+    tdengine/tdengine:2.4.0.12
+```
+
    `-v /opt/taosdata:/var/lib/taos` 为tdengine数据目录本地持久化挂载，需将`/opt/taosdata`替换为实际本地存在的目录  
    `-e TZ="Asia/Shanghai"` 为tdengine设置时区，这里可选设置对应的时区   
    使用```$ docker ps```查看数据库是否启动成功

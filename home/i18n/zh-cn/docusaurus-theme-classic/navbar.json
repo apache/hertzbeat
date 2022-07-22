@@ -1,0 +1,54 @@
+{
+  "title": {
+    "message": "HertzBeat",
+    "description": "The title in the navbar"
+  },
+  "item.label.首页": {
+    "message": "首页",
+    "description": "Navbar item with label 首页"
+  },
+  "item.label.文档": {
+    "message": "文档",
+    "description": "Navbar item with label 文档"
+  },
+  "item.label.博客": {
+    "message": "博客",
+    "description": "Navbar item with label 博客"
+  },
+  "item.label.讨论交流": {
+    "message": "讨论交流",
+    "description": "Navbar item with label 讨论交流"
+  },
+  "item.label.私有化部署": {
+    "message": "私有化部署",
+    "description": "Navbar item with label 私有化部署"
+  },
+  "item.label.贡献者指南": {
+    "message": "贡献者指南",
+    "description": "Navbar item with label 贡献者指南"
+  },
+  "item.label.项目看板": {
+    "message": "项目看板",
+    "description": "Navbar item with label 项目看板"
+  },
+  "item.label.其它": {
+    "message": "其它",
+    "description": "Navbar item with label 其它"
+  },
+  "item.label.登录/注册": {
+    "message": "登录/注册",
+    "description": "Navbar item with label 登录/注册"
+  },
+  "item.label.设计文档": {
+    "message": "设计文档",
+    "description": "Navbar item with label 设计文档"
+  },
+  "item.label.赞助我们": {
+    "message": "赞助我们",
+    "description": "Navbar item with label 赞助我们"
+  },
+  "item.label.相关资源": {
+    "message": "相关资源",
+    "description": "Navbar item with label 相关资源"
+  }
+}
