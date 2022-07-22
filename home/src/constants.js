@@ -148,7 +148,7 @@ export const friendsLink = [
         img: 'hippo4j_logo.png',
         alt: 'hippo4j',
         url: 'https://hippo4j.cn/'
-    }
+    },
 ]
 
 

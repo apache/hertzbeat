@@ -15,6 +15,7 @@ import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
 import { features, SetupExample, SurenessIntegration, dromaraFriends, friendsLink } from '../constants'
+import LogoCarouselStatic from "./components/LogoCarouselStatic";
 
 function Home() {
     const context = useDocusaurusContext()
@@ -71,7 +72,7 @@ function Home() {
                 </Section>
                 {/*/!*Friend Links*!/*/}
                 <Section>
-                    <LogoCarousel logos={friendsLink} headerTitle={translate({message: 'Friends Link'})}/>
+                    <LogoCarouselStatic logos={friendsLink} headerTitle={translate({message: 'Friends Link'})}/>
                 </Section>
             </main>
         </Layout>
