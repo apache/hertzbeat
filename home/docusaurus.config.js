@@ -29,22 +29,11 @@ module.exports = {
         liveCodeBlock: {
             playgroundPosition: 'bottom',
         },
+        metadata: [{name: 'keywords', content: 'monitor, apm, 监控, 开源, uptime, opensource'}],
         colorMode: {
             defaultMode: 'light',
             disableSwitch: false,
-            respectPrefersColorScheme: false,
-            switchConfig: {
-                darkIcon: '🌜',
-                lightIcon: '☀️',
-                // React inline style object
-                // see https://reactjs.org/docs/dom-elements.html#style
-                darkIconStyle: {
-                    marginLeft: '2px',
-                },
-                lightIconStyle: {
-                    marginLeft: '1px',
-                },
-            },
+            respectPrefersColorScheme: true
         },
         prism: {
             theme: require('prism-react-renderer/themes/github'),
@@ -54,7 +43,7 @@ module.exports = {
         algolia: {
             apiKey: 'c7c84bfcc1495156f5730309d821ba8c',
             indexName: 'sureness',
-            // appId: 'GNVT7Z0UI2',
+            appId: 'GNVT7Z0UI2',
             contextualSearch: true,
         },
         announcementBar: {
@@ -216,38 +205,43 @@ module.exports = {
     },
     presets: [
         [
-            '@docusaurus/preset-classic', {
-            docs: {
-                sidebarPath: require.resolve('./sidebars.json'),
-                // Please change this to your repo.
-                editUrl: `${repoUrl}/edit/${branch}/home/`,
-                editLocalizedFiles: true,
-                remarkPlugins: [
-                    [require('@docusaurus/remark-plugin-npm2yarn'), {sync: true}],
-                ],
-                lastVersion: 'current',
-                versions: {
-                    current: {
-                        label: 'v1.1.x',
-                        path: '',
+            '@docusaurus/preset-classic',
+            {
+                docs: {
+                    sidebarPath: require.resolve('./sidebars.json'),
+                    // Please change this to your repo.
+                    editUrl: `${repoUrl}/edit/${branch}/home/`,
+                    editLocalizedFiles: true,
+                    remarkPlugins: [
+                        [require('@docusaurus/remark-plugin-npm2yarn'), {sync: true}],
+                    ],
+                    lastVersion: 'current',
+                    versions: {
+                        current: {
+                            label: 'v1.1.x',
+                            path: '',
+                        }
                     }
+                },
+                blog: {
+                    showReadingTime: true,
+                    postsPerPage: 3,
+                    feedOptions: {
+                        type: 'all',
+                        copyright: `Copyright © ${new Date().getFullYear()} TANCLOUD, Inc.`,
+                    },
+                    // Please change this to your repo.
+                    editUrl: `${repoUrl}/edit/${branch}/home/`,
+                    editLocalizedFiles: true,
+                },
+                theme: {
+                    customCss: require.resolve('./src/css/custom.css'),
+                },
+                sitemap: {
+                    changefreq: 'weekly',
+                    priority: 0.5,
                 }
             },
-            blog: {
-                showReadingTime: true,
-                postsPerPage: 3,
-                feedOptions: {
-                    type: 'all',
-                    copyright: `Copyright © ${new Date().getFullYear()} TANCLOUD, Inc.`,
-                },
-                // Please change this to your repo.
-                editUrl: `${repoUrl}/edit/${branch}/home/`,
-                editLocalizedFiles: true,
-            },
-            theme: {
-                customCss: require.resolve('./src/css/custom.css'),
-            },
-        },
         ],
     ],
     plugins: [
@@ -320,6 +314,10 @@ module.exports = {
     scripts: [
         {
             src: 'https://cdn.jsdelivr.net/gh/buttons/buttons.github.io/buttons.js',
+            async: true
+        },
+        {
+            src: 'https://hm.baidu.com/hm.js?77fb03ed1c6c1267119fec6d84dd88f3',
             async: true
         }
     ]
