@@ -7,6 +7,8 @@ import Slider from "react-slick";
 
 const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/icons/'
 
+// const cdnUrl = '/img/icons/'
+
 var settings = {
     dots: false,
     infinite: true,

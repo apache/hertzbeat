@@ -72,7 +72,7 @@ export const dromaraFriends = [
         url: 'https://jpom.io/'
     },
     {
-        img: 'fast_request_logo.svg',
+        img: 'fast_request_logo.png',
         alt: 'fast-request',
         url: 'https://plugins.sheng90.wang/fast-request/'
     },
