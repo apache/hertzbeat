@@ -1,6 +1,6 @@
 {
-  "name": "tancloud",
-  "version": "0.0.0",
+  "name": "hertzbeat",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
