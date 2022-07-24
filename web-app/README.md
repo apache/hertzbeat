@@ -1,32 +1,28 @@
-> 前端工程    
+## Hertzbeat Web-App        
 
-**面向开发者，易用友好的监控告警系统**
+### Quickly Start   
 
-## 前端本地启动
+1. Need `Node Yarn` Environment.  
+2. Execute `yarn install` in `web-app`   
+3. Install angular-cli : `yarn global add @angular/cli@12`    
+4. Start After Backend Server Available : `ng serve --open`
 
-### npm 方式
-1. 需要nodejs npm环境   
-   下载地址：https://nodejs.org/en/download
-2. 在前端工程目录web-app下执行 `npm install --registry=https://registry.npm.taobao.org`
-3. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
-4. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
+---
 
-### yarn 方式
-1. 需要nodejs npm环境   
-   下载地址：https://nodejs.org/en/download
+1. 需要nodejs npm环境，下载地址：https://nodejs.org/en/download
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
 4. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 
-## hertzbeat 编译打包  
+### Build HertzBeat Install Package    
 
-1. web-app目录下执行
+1. Execute command in web-app  
 
 ```ng build --prod```
 
-2. manager目录下执行
+2. Execute command in manager  
 
 ```mvn package```
 
-生成的安装包在 manager/target/hertz-beta.tar.gz 
+The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
