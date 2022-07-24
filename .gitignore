@@ -40,7 +40,6 @@ nbdist/
 # dependencies
 node_modules
 .docusaurus
-yarn.lock
 
 # h2 data
 *.mv.db
