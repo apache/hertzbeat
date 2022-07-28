@@ -210,6 +210,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "cuipiheqiuqiu",
+      "name": "cuipiheqiuqiu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76642201?v=4",
+      "profile": "https://github.com/cuipiheqiuqiu",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7
