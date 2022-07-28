@@ -1,4 +1,4 @@
-app: influxdb
+app: influxdb-prometheus
 param:
   - field: host
     name:

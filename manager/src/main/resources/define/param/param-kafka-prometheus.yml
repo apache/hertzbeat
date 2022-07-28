@@ -1,4 +1,4 @@
-app: kafka
+app: kafka-prometheus
 param:
   - field: host
     name:

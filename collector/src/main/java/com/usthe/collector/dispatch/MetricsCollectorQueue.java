@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class MetricsCollectorQueue {
 
-    public  final PriorityBlockingQueue<MetricsCollect> jobQueue;
+    private final PriorityBlockingQueue<MetricsCollect> jobQueue;
 
     public MetricsCollectorQueue() {
         jobQueue = new PriorityBlockingQueue<>(2000);

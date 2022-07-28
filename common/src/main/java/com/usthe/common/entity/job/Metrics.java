@@ -106,12 +106,6 @@ public class Metrics {
      * 使用公共的snmp协议的监控配置信息
      */
     private SnmpProtocol snmp;
-    /**
-     *  Variable mapping alias (alias contains operator, which Aviator cannot recognize)
-     *  变量映射别名（别名中包含运算符，Aviator无法识别）
-     */
-    private List<String> varMappings;
-
 
     @Override
     public boolean equals(Object o) {
