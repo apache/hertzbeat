@@ -1,10 +1,10 @@
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
 category: custom
 # 监控应用类型名称(与文件名保持一致)
-app: kafka
+app: kafka-prometheus
 name:
-  zh-CN: HTTP API
-  en-US: HTTP API
+  zh-CN: Kafka-Prometheus
+  en-US: Kafka-Prometheus
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -86,7 +86,6 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: prometheus
-      keyword: ^_^keyword^_^
 
   - name: kafka_topic_partitions
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
@@ -187,4 +186,3 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: prometheus
-      keyword: ^_^keyword^_^

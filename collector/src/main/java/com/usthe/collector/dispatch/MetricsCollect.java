@@ -19,7 +19,6 @@ import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -181,7 +180,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     /**
      * Calculate the real indicator (fields) value according to the calculates and aliasFields configuration
-     * Calculate instance instance value
+     * Calculate instance value
      * <p>
      * 根据 calculates 和 aliasFields 配置计算出真正的指标(fields)值
      * 计算instance实例值
@@ -191,11 +190,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
-        Map<String,String> varMap = null;
-        if (!CollectionUtils.isEmpty(metrics.getVarMappings())){
-            //变量映射
-            varMap = metrics.getVarMappings().stream().collect(Collectors.toMap(v->(v.split("-->"))[1],v->(v.split("-->"))[0]));
-        }
         List<CollectRep.Field> fieldList = new LinkedList<>();
         for (Metrics.Field field : metrics.getFields()) {
             fieldList.add(CollectRep.Field.newBuilder().setName(field.getField()).setType(field.getType()).build());
@@ -240,12 +234,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
-                    if(!CollectionUtils.isEmpty(varMap)){
-                        //变量映射
-                        aliasFieldValueMap.put(varMap.get(aliasFields.get(aliasIndex)),aliasFieldValue);
-                    }else {
-                        aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
-                    }
                 }
             }
             StringBuilder instanceBuilder = new StringBuilder();

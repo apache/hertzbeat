@@ -155,11 +155,7 @@ public class MonitorServiceImpl implements MonitorService {
         if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)){
             throw new MonitorMetricsException("no select metrics or select illegal metrics");
         }
-        List<Metrics> realMetrics = metricsDefine.stream().filter(m -> {
-            if (metrics.contains(m.getName()))
-                return true;
-            return false;
-        }).collect(Collectors.toList());
+        List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
         appDefine.setMetrics(realMetrics);
         appDefine.setMonitorId(monitorId);
         appDefine.setInterval(monitor.getIntervals());
