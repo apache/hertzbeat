@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 /**
  * jmx 协议采集实现 - jmx
+ * jmx protocol acquisition implementation
  *
  * @author huacheng
  * @date 2022/6/21 15:09
