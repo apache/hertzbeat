@@ -34,6 +34,14 @@ interface LangConfigData {
 
 const DEFAULT = 'zh-CN';
 const LANGS: { [key: string]: LangConfigData } = {
+  'en-US': {
+    text: 'English',
+    ng: ngEn,
+    zorro: zorroEnUS,
+    date: dfEn,
+    delon: delonEnUS,
+    abbr: '🇬🇧'
+  },
   'zh-CN': {
     text: '简体中文',
     ng: ngZh,
@@ -49,14 +57,6 @@ const LANGS: { [key: string]: LangConfigData } = {
     date: dfZhTw,
     delon: delonZhTw,
     abbr: '🇭🇰'
-  },
-  'en-US': {
-    text: 'English',
-    ng: ngEn,
-    zorro: zorroEnUS,
-    date: dfEn,
-    delon: delonEnUS,
-    abbr: '🇬🇧'
   }
 };
 
