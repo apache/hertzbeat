@@ -1,36 +1,36 @@
-### TanCloud Collector 采集器  
+### Collector     
 
-使用通用协议远程采集获取对端指标数据  
+Collect Metrics Data from peer-to-peer machine by common protocols.  
+使用通用协议远程采集获取对端指标数据。  
 
-准备支持协议：http/https, jdbc, ssh, telnet, jmx, ping
+support protocols：http/https, jdbc, ssh, telnet, jmx, ping, prometheus...
 
-#### 监控项   
+#### Monitor Type   
 
-* 操作系统
+* OS
   * Linux
   * Windows
   * Ubuntu
   * CentOs
-* 数据库
+* Database
   * Mysql
   * Oracle
   * PostgreSQL
-* 中间件   
+* Middleware   
   * Kafka
   * Zookeeper
   * RocketMq
   * Etcd  
-* 云原生  
+* CloudNative  
   * Docker  
   * Kubernetes  
   * Istio  
-* 应用服务  
+* Service  
   * Tomcat
   * Jetty
   * Http
   * Ping
-  * 服务端口
+  * Port
 
-#### HELP
-
+....
 
