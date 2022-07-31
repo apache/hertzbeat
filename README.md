@@ -23,7 +23,7 @@
 
 **Home: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
-Running HertzBeat in [OSCR.COM](https://osrc.com) Open Source Runtime Community - [Doc](https://osrc.com/user/articles/wiki_776513931985080320)   
+Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734937636864) Open Source Runtime Community      
 
 ## 🎡 <font color="green">Introduction</font>
 

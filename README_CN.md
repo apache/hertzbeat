@@ -22,7 +22,7 @@
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
-在开源运行时社区[OSCR.COM](https://osrc.com)快速运行HertzBeat - [部署流程](https://osrc.com/user/articles/wiki_776513931985080320)   
+在开源运行时社区 [osrc.com](https://osrc.com/osrc/projects/project_805480734937636864) 运行 HertzBeat   
 
 ## 🎡 <font color="green">介绍</font>
 
