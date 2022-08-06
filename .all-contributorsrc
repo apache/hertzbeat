@@ -219,6 +219,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "mroldx",
+      "name": "mroldx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34847828?v=4",
+      "profile": "http://mroldx.xyz/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7

@@ -128,6 +128,9 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/gzwlly"><img src="https://avatars.githubusercontent.com/u/83171907?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gzwlly</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=gzwlly" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
   </tr>
+  <tr>
+    <td align="center"><a href="http://mroldx.xyz/"><img src="https://avatars.githubusercontent.com/u/34847828?v=4?s=100" width="100px;" alt=""/><br /><sub><b>mroldx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=mroldx" title="Documentation">📖</a></td>
+  </tr>
 </table>
 
 <!-- markdownlint-restore -->
