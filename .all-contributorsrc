@@ -210,6 +210,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "oyiyou",
+      "name": "lambert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39228891?v=4",
+      "profile": "https://github.com/oyiyou",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
