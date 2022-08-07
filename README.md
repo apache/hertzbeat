@@ -11,15 +11,14 @@
 > Friendly Cloud Monitoring System. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
 
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
-![tan-cloud](https://img.shields.io/badge/api-monitor-lightgrey)
-![tan-cloud](https://img.shields.io/badge/ping-connect-brightgreen)
-![tan-cloud](https://img.shields.io/badge/port-available-green)
-![tan-cloud](https://img.shields.io/badge/database-monitor-yellowgreen)
-![tan-cloud](https://img.shields.io/badge/os-monitor-yellow)
-![tan-cloud](https://img.shields.io/badge/custom-monitor-orange)
-![tan-cloud](https://img.shields.io/badge/threshold-red)
-![tan-cloud](https://img.shields.io/badge/alert-bule)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
 **Home: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
