@@ -56,9 +56,8 @@ public class JmxCollectImpl extends AbstractCollect {
 
             //Whether there is a second level of nesting
             //是否存在二级嵌套
-            String attributeName;
             if (jmxProtocol.getAttributeName() != null) {
-                attributeName = jmxProtocol.getAttributeName();
+                String attributeName = jmxProtocol.getAttributeName();
                 Object attribute = jmxBean.getAttribute(objectName, attributeName);
                 CompositeDataSupport support = null;
                 if (attribute instanceof CompositeDataSupport) {

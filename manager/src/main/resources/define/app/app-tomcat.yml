@@ -21,9 +21,9 @@ metrics:
   - name: server
     priority: 0
     fields:
-      - field: serverNumber
-        type: 1
       - field: serverInfo
+        type: 1
+      - field: serverNumber
         type: 1
       - field: serverBuilt
         type: 1
@@ -46,7 +46,7 @@ metrics:
   - name: eden_space
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
-    priority: 0
+    priority: 1
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -72,7 +72,7 @@ metrics:
       url: ^_^url^_^
 
   - name: meta_space
-    priority: 0
+    priority: 2
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -98,7 +98,7 @@ metrics:
       url: ^_^url^_^
 
   - name: survivor_space
-    priority: 0
+    priority: 3
     # 指标组中的具体监控指标
     fields:
     # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -124,7 +124,7 @@ metrics:
       url: ^_^url^_^
 
   - name: tenured_gen
-    priority: 0
+    priority: 4
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -150,7 +150,7 @@ metrics:
       url: ^_^url^_^
 
   - name: code_cache
-    priority: 0
+    priority: 5
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -176,7 +176,7 @@ metrics:
       url: ^_^url^_^
 
   - name: class_loading
-    priority: 0
+    priority: 6
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -199,28 +199,24 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 0
+    priority: 7
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: TotalStartedThreadCount
         type: 0
-        unit: 个
       - field: ThreadCount
         type: 0
-        unit: 个
       - field: PeakThreadCount
         type: 0
-        unit: 个
       - field: DaemonThreadCount
         type: 0
-        unit: 个
       - field: CurrentThreadUserTime
         type: 0
-        unit: 秒
+        unit: s
       - field: CurrentThreadCpuTime
         type: 0
-        unit: 秒
+        unit: s
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -234,53 +230,41 @@ metrics:
       url: ^_^url^_^
 
   - name: application
-    priority: 0
+    priority: 8
     fields:
       - field: acceptCount
         type: 0
-        unit: 个
       - field: acceptorThreadCount
         type: 0
-        unit: 个
       - field: acceptorThreadPriority
         type : 0
-        unit: 个
       - field: connectionTimeout
         type: 1
-        unit: 毫秒
+        unit: ms
       - field: currentThreadCount
         type: 0
-        unit: 个
       - field: currentThreadsBusy
         type: 0
-        unit: 个
       - field: keepAliveCount
         type: 0
-        unit: 个
       - field: keepAliveTimeout
         type: 0
-        unit: 毫秒
+        unit: ms
       - field: maxConnections
         type: 0
-        unit: 个
       - field: maxKeepAliveRequests
         type: 0
-        unit: 个
       - field: maxThreads
         type: 0
-        unit: 个
       - field: minSpareThreads
         type: 0
-        unit: 个
       - field: name
         type: 1
       - field: pollerThreadCount
         type: 0
-        unit: 个
       - field: pollerThreadPriority
         type: 0
-        unit: 个
-      - field: runnin
+      - field: running
         type: 1
     protocol: jmx
     jmx:
