@@ -1,3 +1,22 @@
+-- Licensed to the Apache Software Foundation (ASF) under one
+-- or more contributor license agreements.  See the NOTICE file
+-- distributed with this work for additional information
+-- regarding copyright ownership.  The ASF licenses this file
+-- to you under the Apache License, Version 2.0 (the
+-- "License"); you may not use this file except in compliance
+-- with the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+-- this file works for MySQL.
+
+
 set names utf8mb4;
 drop database if exists hertzbeat;
 create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;
@@ -6,8 +25,8 @@ use hertzbeat;
 -- ----------------------------
 -- Table structure for monitor
 -- ----------------------------
-DROP TABLE IF EXISTS  monitor ;
-CREATE TABLE  monitor
+DROP TABLE IF EXISTS  hzb_monitor ;
+CREATE TABLE  hzb_monitor
 (
      id           bigint       not null auto_increment comment '监控ID',
      job_id       bigint       not null comment '监控对应下发的任务ID',
@@ -28,13 +47,13 @@ CREATE TABLE  monitor
 -- ----------------------------
 -- Table structure for param
 -- ----------------------------
-DROP TABLE IF EXISTS  param ;
-CREATE TABLE  param
+DROP TABLE IF EXISTS  hzb_param ;
+CREATE TABLE  hzb_param
 (
     id           bigint       not null auto_increment comment '参数ID',
     monitor_id   bigint       not null comment '监控ID',
     field        varchar(100) not null comment '参数标识符',
-    value        varchar(8126) comment '参数值,最大字符长度8126',
+    `value`      varchar(8126) comment '参数值,最大字符长度8126',
     type         tinyint      not null default 0 comment '参数类型 0:数字 1:字符串 2:加密串',
     gmt_create   timestamp    default current_timestamp comment 'create time',
     gmt_update   datetime     default current_timestamp on update current_timestamp comment 'update time',
@@ -46,8 +65,8 @@ CREATE TABLE  param
 -- ----------------------------
 -- Table structure for param
 -- ----------------------------
-DROP TABLE IF EXISTS  param_define ;
-CREATE TABLE  param_define
+DROP TABLE IF EXISTS  hzb_param_define ;
+CREATE TABLE  hzb_param_define
 (
     id           bigint           not null auto_increment comment '参数ID',
     app          varchar(100)     not null comment '监控的类型:linux,mysql,jvm...',
@@ -69,12 +88,12 @@ CREATE TABLE  param_define
 -- ----------------------------
 -- Table structure for tag
 -- ----------------------------
-DROP TABLE IF EXISTS  tag ;
-CREATE TABLE  tag
+DROP TABLE IF EXISTS  hzb_tag ;
+CREATE TABLE  hzb_tag
 (
     id           bigint           not null auto_increment comment 'TAG ID',
     name         varchar(100)     not null comment 'TAG标签名称',
-    value        varchar(100)     comment 'TAG标签值(可为空)',
+    `value`      varchar(100)     comment 'TAG标签值(可为空)',
     type         tinyint          not null default 0 comment '标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预制',
     color        varchar(100)     default '#ffffff' comment '标签颜色' ,
     creator      varchar(100)     comment '创建者',
@@ -82,14 +101,14 @@ CREATE TABLE  tag
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
-    unique key unique_tag (name, value)
+    unique key unique_tag (name, `value`)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
 -- Table structure for tag_monitor_bind
 -- ----------------------------
-DROP TABLE IF EXISTS  tag_monitor_bind ;
-CREATE TABLE  tag_monitor_bind
+DROP TABLE IF EXISTS  hzb_tag_monitor_bind ;
+CREATE TABLE  hzb_tag_monitor_bind
 (
     id           bigint           not null auto_increment comment '主键ID',
     tag_id       bigint           not null comment 'TAG ID',
@@ -103,8 +122,8 @@ CREATE TABLE  tag_monitor_bind
 -- ----------------------------
 -- Table structure for alert_define
 -- ----------------------------
-DROP TABLE IF EXISTS  alert_define ;
-CREATE TABLE  alert_define
+DROP TABLE IF EXISTS  hzb_alert_define ;
+CREATE TABLE  hzb_alert_define
 (
     id           bigint           not null auto_increment comment '告警定义ID',
     app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
@@ -126,8 +145,8 @@ CREATE TABLE  alert_define
 -- ----------------------------
 -- Table structure for alert_define_monitor_bind
 -- ----------------------------
-DROP TABLE IF EXISTS  alert_define_monitor_bind ;
-CREATE TABLE  alert_define_monitor_bind
+DROP TABLE IF EXISTS  hzb_alert_define_monitor_bind ;
+CREATE TABLE  hzb_alert_define_monitor_bind
 (
     id               bigint           not null auto_increment comment '告警定义与监控关联ID',
     alert_define_id  bigint           not null comment '告警定义ID',
@@ -141,8 +160,8 @@ CREATE TABLE  alert_define_monitor_bind
 -- ----------------------------
 -- Table structure for alert
 -- ----------------------------
-DROP TABLE IF EXISTS  alert ;
-CREATE TABLE  alert
+DROP TABLE IF EXISTS  hzb_alert ;
+CREATE TABLE  hzb_alert
 (
     id                   bigint           not null auto_increment comment '告警ID',
     target               varchar(255)     not null comment '告警目标对象: 监控可用性-available 指标-app.metrics.field',
@@ -165,8 +184,8 @@ CREATE TABLE  alert
 -- ----------------------------
 -- Table structure for notice_rule
 -- ----------------------------
-DROP TABLE IF EXISTS  notice_rule ;
-CREATE TABLE  notice_rule
+DROP TABLE IF EXISTS  hzb_notice_rule ;
+CREATE TABLE  hzb_notice_rule
 (
     id             bigint           not null auto_increment comment '通知策略主键索引ID',
     name           varchar(100)     not null comment '策略名称',
@@ -186,8 +205,8 @@ CREATE TABLE  notice_rule
 -- ----------------------------
 -- Table structure for notice_receiver
 -- ----------------------------
-DROP TABLE IF EXISTS  notice_receiver ;
-CREATE TABLE  notice_receiver
+DROP TABLE IF EXISTS  hzb_notice_receiver ;
+CREATE TABLE  hzb_notice_receiver
 (
     id           bigint           not null auto_increment comment '消息接收人ID',
     name         varchar(100)     not null comment '消息接收人姓名',

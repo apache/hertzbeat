@@ -220,6 +220,24 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "oyiyou",
+      "name": "lambert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39228891?v=4",
+      "profile": "https://github.com/oyiyou",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "mroldx",
+      "name": "mroldx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34847828?v=4",
+      "profile": "http://mroldx.xyz/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7

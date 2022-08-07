@@ -22,7 +22,7 @@
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
-在开源运行时社区[OSCR.COM](https://osrc.com)快速运行HertzBeat - [部署流程](https://osrc.com/user/articles/wiki_776513931985080320)   
+在开源运行时社区 [osrc.com](https://osrc.com/osrc/projects/project_805480734937636864) 运行 HertzBeat   
 
 ## 🎡 <font color="green">介绍</font>
 
@@ -127,6 +127,10 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/DreamGirl524"><img src="https://avatars.githubusercontent.com/u/81132838?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DreamGirl524</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/gzwlly"><img src="https://avatars.githubusercontent.com/u/83171907?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gzwlly</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=gzwlly" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/cuipiheqiuqiu"><img src="https://avatars.githubusercontent.com/u/76642201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>cuipiheqiuqiu</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=cuipiheqiuqiu" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=cuipiheqiuqiu" title="Tests">⚠️</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
+    <td align="center"><a href="http://mroldx.xyz/"><img src="https://avatars.githubusercontent.com/u/34847828?v=4?s=100" width="100px;" alt=""/><br /><sub><b>mroldx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=mroldx" title="Documentation">📖</a></td>
   </tr>
 </table>
 
