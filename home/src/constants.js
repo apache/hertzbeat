@@ -140,7 +140,19 @@ export const dromaraFriends = [
         img: 'easypdf_logo.png',
         alt: 'easypdf',
         url: 'https://dromara.gitee.io/x-easypdf/'
-    },
+    }, {
+        img: 'dante-cloud_logo.png',
+        alt: 'dante-cloud',
+        url: 'https://www.herodotus.cn/'
+    }, {
+        img: 'image-combiner_logo.png',
+        alt: 'image-combiner',
+        url: 'https://gitee.com/dromara/image-combiner'
+    }, {
+        img: 'dromara.png',
+        alt: 'dromara',
+        url: 'https://dromara.org/'
+    }
 ]
 
 export const friendsLink = [
