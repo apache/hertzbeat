@@ -48,7 +48,7 @@ Even small corrections to typos are very welcome :)
 3. Execute under the front-end project directory web-app: `yarn install`
 5. Install angular-cli globally: `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
 6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-7. Browser access to localhost:4200 to start
+7. Browser access to localhost:4200 to start, default account/passwd admin/hertzbeat
 
 ### Find tasks
 
