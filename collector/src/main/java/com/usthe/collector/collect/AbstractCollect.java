@@ -21,6 +21,8 @@ package com.usthe.collector.collect;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
 
+import java.io.IOException;
+
 /**
  * Specific indicator group collection implementation abstract class
  * 具体的指标组采集实现抽象类
@@ -40,5 +42,5 @@ public abstract class AbstractCollect {
      * @param metrics Metric group configuration    指标组配置
      *                return response builder
      */
-    public abstract void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics);
+    public abstract void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) throws IOException;
 }

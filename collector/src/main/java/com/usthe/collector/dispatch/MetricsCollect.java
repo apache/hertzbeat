@@ -23,6 +23,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.database.JdbcCommonCollect;
 import com.usthe.collector.collect.http.HttpCollectImpl;
 import com.usthe.collector.collect.icmp.IcmpCollectImpl;
+import com.usthe.collector.collect.jmx.JmxCollectImpl;
 import com.usthe.collector.collect.redis.RedisSingleCollectImpl;
 import com.usthe.collector.collect.snmp.SnmpCollectImpl;
 import com.usthe.collector.collect.ssh.SshCollectImpl;
@@ -158,6 +159,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 break;
             case DispatchConstants.PROTOCOL_SNMP:
                 abstractCollect = SnmpCollectImpl.getInstance();
+                break;
+            case DispatchConstants.PROTOCOL_JMX:
+                abstractCollect = JmxCollectImpl.getInstance();
                 break;
             default:
                 break;
