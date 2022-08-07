@@ -51,6 +51,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_REDIS = "redis";
     /**
+     * protocol jmx
+     */
+    String PROTOCOL_JMX = "jmx";
+    /**
      * protocol snmp
      */
     String PROTOCOL_SNMP = "snmp";
