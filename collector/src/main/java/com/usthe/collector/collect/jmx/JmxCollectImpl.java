@@ -9,10 +9,15 @@ import com.usthe.common.entity.job.protocol.JmxProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 import javax.management.*;
-import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
 import javax.management.remote.*;
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.naming.Context;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +36,8 @@ public class JmxCollectImpl extends AbstractCollect {
 
     private static final String JMX_URL_SUFFIX = "/jmxrmi";
 
+    private static final String SUB_ATTRIBUTE = "->";
+
     private JmxCollectImpl() {
     }
 
@@ -40,50 +47,39 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) throws IOException {
-        //Get the address and port from the jmx carried by Metrics
-        //从Metrics携带的jmx中拿到地址  端口
 
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
+            validateParams(metrics);
 
-            //Create a jndi remote connection
-            //创建一个jndi远程连接
-            JMXConnector conn = getConnectSession(jmxProtocol);
+            // Create a jndi remote connection
+            JMXConnector jmxConnector = getConnectSession(jmxProtocol);
 
-            MBeanServerConnection jmxBean = conn.getMBeanServerConnection();
+            MBeanServerConnection serverConnection = jmxConnector.getMBeanServerConnection();
             ObjectName objectName = new ObjectName(jmxProtocol.getObjectName());
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
 
-            //Whether there is a second level of nesting
-            //是否存在二级嵌套
-            if (jmxProtocol.getAttributeName() != null) {
-                String attributeName = jmxProtocol.getAttributeName();
-                Object attribute = jmxBean.getAttribute(objectName, attributeName);
-                CompositeDataSupport support = null;
-                if (attribute instanceof CompositeDataSupport) {
-                    support = (CompositeDataSupport) attribute;
+            Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
+            Set<String> attributeNameSet = metrics.getAliasFields().stream()
+                    .map(field -> field.split(SUB_ATTRIBUTE)[0]).collect(Collectors.toSet());
+            for (ObjectInstance objectInstance : objectInstanceSet) {
+                ObjectName currentObjectName = objectInstance.getObjectName();
+                MBeanInfo beanInfo = serverConnection.getMBeanInfo(currentObjectName);
+                MBeanAttributeInfo[] attrInfos = beanInfo.getAttributes();
+                String[] attributes = new String[attributeNameSet.size()];
+                attributes = Arrays.stream(attrInfos)
+                        .filter(item -> item.isReadable() && attributeNameSet.contains(item.getName()))
+                        .map(MBeanFeatureInfo::getName)
+                        .collect(Collectors.toList()).toArray(attributes);
+                AttributeList attributeList = serverConnection.getAttributes(currentObjectName, attributes);
+
+                Map<String, String> attributeValueMap = extractAttributeValue(attributeList);
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String aliasField : metrics.getAliasFields()) {
+                    String fieldValue = attributeValueMap.get(aliasField);
+                    valueRowBuilder.addColumns(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
-                CompositeDataSupport finalSupport = support;
-                metrics.getFields().forEach(field -> {
-                    assert finalSupport != null;
-                    Object fieldValue = finalSupport.get(field.getField());
-                    if (fieldValue != null) {
-                        valueRowBuilder.addColumns(fieldValue.toString());
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
-                });
-            } else {
-                String[] attributes = new String[metrics.getAliasFields().size()];
-                attributes = metrics.getAliasFields().toArray(attributes);
-                AttributeList attributeList = jmxBean.getAttributes(objectName, attributes);
-                Map<String, Object> map = attributeList.asList().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
-                for (String attribute : attributes) {
-                    Object attributeValue = map.get(attribute);
-                    valueRowBuilder.addColumns(attributeValue != null ? attributeValue.toString() : CommonConstants.NULL_VALUE);
-                }
+                builder.addValues(valueRowBuilder.build());
             }
-            builder.addValues(valueRowBuilder.build());
         } catch (IOException exception) {
             log.error("JMX IOException :{}", exception.getMessage());
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
@@ -92,6 +88,50 @@ public class JmxCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
             log.error("JMX Error :{}", e.getMessage());
+        }
+    }
+
+    private Map<String, String> extractAttributeValue(AttributeList attributeList) {
+        if (attributeList == null || attributeList.size() == 0) {
+            throw new RuntimeException("attributeList is empty");
+        }
+        Map<String, String> attributeValueMap = new HashMap<>(attributeList.size());
+        for (Attribute attribute : attributeList.asList()) {
+            Object value = attribute.getValue();
+            if (value == null) {
+                log.info("attribute {} value is null.", attribute.getName());
+                continue;
+            }
+            if (value instanceof Number || value instanceof  String || value instanceof ObjectName
+                    || value instanceof Boolean || value instanceof Date) {
+                attributeValueMap.put(attribute.getName(), value.toString());
+            } else if (value instanceof CompositeData) {
+                CompositeData compositeData = (CompositeData) value;
+                CompositeType compositeType = compositeData.getCompositeType();
+                for (String typeKey : compositeType.keySet()) {
+                    Object fieldValue = compositeData.get(typeKey);
+                    attributeValueMap.put(attribute.getName() + SUB_ATTRIBUTE + typeKey, fieldValue.toString());
+                }
+            } else if (value instanceof String[]) {
+                String[] values = (String[]) value;
+                StringBuilder builder = new StringBuilder();
+                for (int index = 0; index < values.length; index ++) {
+                    builder.append(values[index]);
+                    if (index < values.length - 1) {
+                        builder.append(",");
+                    }
+                }
+                attributeValueMap.put(attribute.getName(), builder.toString());
+            } else {
+                log.warn("attribute value type {} not support.", value.getClass().getName());
+            }
+        }
+        return attributeValueMap;
+    }
+
+    private void validateParams(Metrics metrics) throws Exception {
+        if (metrics == null || metrics.getJmx() == null) {
+            throw new Exception("JMX collect must has jmx params");
         }
     }
 
@@ -120,8 +160,19 @@ public class JmxCollectImpl extends AbstractCollect {
         } else {
             url = JMX_URL_PREFIX + jmxProtocol.getHost() + ":" + jmxProtocol.getPort() + JMX_URL_SUFFIX;
         }
+        Map<String, Object> environment = new HashMap<>(4);
+        if (StringUtils.hasText(jmxProtocol.getUsername()) && StringUtils.hasText(jmxProtocol.getPassword())) {
+            String[] credential = new String[] {jmxProtocol.getUsername(), jmxProtocol.getPassword()};
+            environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credential);
+        }
+        if (Boolean.TRUE.toString().equals(jmxProtocol.getSsl())) {
+            environment.put(Context.SECURITY_PROTOCOL, "ssl");
+            SslRMIClientSocketFactory clientSocketFactory = new SslRMIClientSocketFactory();
+            environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
+            environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
+        }
         JMXServiceURL jmxServiceUrl = new JMXServiceURL(url);
-        conn = JMXConnectorFactory.connect(jmxServiceUrl);
+        conn = JMXConnectorFactory.connect(jmxServiceUrl, environment);
         CommonCache.getInstance().addCache(identifier, new JmxConnect(conn));
         return conn;
     }

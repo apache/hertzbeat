@@ -102,10 +102,3 @@ param:
     type: password
     required: false
     hide: true
-  - field: keyword
-    name:
-      zh-CN: 关键字
-      en-US: Keyword
-    type: text
-    required: false
-    hide: true
