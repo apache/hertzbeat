@@ -31,8 +31,8 @@ param:
     defaultValue: 22
   - field: timeout
     name:
-      zh-CN: 超时时间
-      en-US: Timeout
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
     type: number
     required: false
     defaultValue: 6000
