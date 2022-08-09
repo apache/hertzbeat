@@ -59,9 +59,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
-import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
 import com.usthe.collector.collect.http.promethus.PrometheusParseCreater;
-import com.usthe.collector.collect.http.promethus.PrometheusVectorParser;
 
 
 import javax.net.ssl.SSLException;

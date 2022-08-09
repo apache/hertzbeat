@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @author myth
- * @create 2022-07-06-18:04
+ * @date  2022-07-06-18:04
  * todo: string类型 和 scalar类型 响应格式解析
  */
 public abstract class AbstractPrometheusParse {

@@ -46,7 +46,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) throws IOException {
+    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
 
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
