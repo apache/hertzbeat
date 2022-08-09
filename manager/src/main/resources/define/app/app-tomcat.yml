@@ -280,7 +280,7 @@ metrics:
       - field: acceptorThreadPriority
         type : 0
       - field: connectionTimeout
-        type: 1
+        type: 0
         unit: ms
       - field: currentThreadCount
         type: 0
@@ -313,6 +313,5 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: Catalina:type=ThreadPool,name=*
       url: ^_^url^_^
