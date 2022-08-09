@@ -23,8 +23,8 @@ param:
     required: true
   - field: timeout
     name:
-      zh-CN: Ping超时时间
-      en-US: Ping Timeout
+      zh-CN: Ping超时时间(ms)
+      en-US: Ping Timeout(ms)
     type: number
     range: '[0,100000]'
     required: true

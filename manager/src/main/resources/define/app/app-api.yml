@@ -34,6 +34,8 @@ configmap:
     type: 1
   - key: ssl
     type: 1
+  - key: timeout
+    type: 0
   - key: username
     type: 1
   - key: password
@@ -66,7 +68,6 @@ metrics:
         unit: ms
       - field: keyword
         type: 0
-        unit: 次数
 # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
 # 当protocol为http协议时具体的采集配置
@@ -77,6 +78,7 @@ metrics:
       port: ^_^port^_^
       # url请求接口路径
       url: ^_^uri^_^
+      timeout: ^_^timeout^_^
       # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -98,6 +100,5 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
       parseType: website
       keyword: ^_^keyword^_^

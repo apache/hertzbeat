@@ -42,6 +42,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -494,6 +495,17 @@ public class HttpCollectImpl extends AbstractCollect {
             } else {
                 requestBuilder.setUri("http://" + httpProtocol.getHost() + ":" + httpProtocol.getPort() + httpProtocol.getUrl());
             }
+        }
+
+        // custom timeout
+        int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
+        if (timeout > 0) {
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout)
+                    .setRedirectsEnabled(true)
+                    .build();
+            requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
     }
