@@ -43,6 +43,13 @@ param:
       en-US: HTTPS
     type: boolean
     required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
   - field: authType
     name:
       zh-CN: 认证方式

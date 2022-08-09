@@ -50,8 +50,8 @@ param:
     placeholder: 'Snmp community for v1 v2c'
   - field: timeout
     name:
-      zh-CN: 超时时间
-      en-US: Timeout
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
     type: number
     range: '[0,100000]'
     required: false

@@ -31,8 +31,8 @@ param:
     defaultValue: 2181
   - field: timeout
     name:
-      zh-CN: 查询超时时间
-      en-US: Query Timeout
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
     type: number
     required: false
     hide: true
