@@ -21,6 +21,7 @@ import com.usthe.common.entity.dto.Message;
 import com.usthe.manager.support.exception.AlertNoticeException;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
+import com.usthe.manager.support.exception.MonitorMetricsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -210,5 +211,18 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.<Void>builder().msg(errorMessage).code(MONITOR_CONFLICT_CODE).build();
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
+
+    /**
+     * 处理监控指标传参异常
+     * @param exception 指标参数异常
+     * @return
+     */
+    @ExceptionHandler(MonitorMetricsException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleMonitorMetricsException(MonitorMetricsException exception) {
+        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
+        return ResponseEntity.ok(message);
+    }
+
 
 }

@@ -40,6 +40,7 @@ import com.usthe.manager.service.AppService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
+import com.usthe.manager.support.exception.MonitorMetricsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,6 +48,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -152,6 +154,60 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
+
+    @Override
+    public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
+        long monitorId = SnowFlakeIdGenerator.generateId();
+        List<Tag> tags = monitor.getTags();
+        if (tags == null) {
+            tags = new LinkedList<>();
+            monitor.setTags(tags);
+        }
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        Job appDefine = appService.getAppDefine(monitor.getApp());
+        //设置用户可选指标
+        List<Metrics> metricsDefine = appDefine.getMetrics();
+        List<String> metricsDefineNames = metricsDefine.stream().map(Metrics::getName).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)){
+            throw new MonitorMetricsException("no select metrics or select illegal metrics");
+        }
+        List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
+        appDefine.setMetrics(realMetrics);
+        appDefine.setMonitorId(monitorId);
+        appDefine.setInterval(monitor.getIntervals());
+        appDefine.setCyclic(true);
+        appDefine.setTimestamp(System.currentTimeMillis());
+        List<Configmap> configmaps = params.stream().map(param -> {
+            param.setMonitorId(monitorId);
+            return new Configmap(param.getField(), param.getValue(), param.getType());
+        }).collect(Collectors.toList());
+        appDefine.setConfigmap(configmaps);
+        // Send the collection task to get the job ID
+        // 下发采集任务得到jobId
+        long jobId = collectJobService.addAsyncCollectJob(appDefine);
+        // Brush the library after the download is successful
+        // 下发成功后刷库
+        try {
+            monitor.setId(monitorId);
+            monitor.setJobId(jobId);
+            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
+            monitorDao.save(monitor);
+            paramDao.saveAll(params);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            // Repository brushing abnormally cancels the previously delivered task
+            // 刷库异常取消之前的下发任务
+            collectJobService.cancelAsyncCollectJob(jobId);
+            throw new MonitorDatabaseException(e.getMessage());
+        }
+    }
+
+    @Override
+    public List<String> getMonitorMetrics(String app) {
+        return appService.getAppDefineMetricNames(app);
+    }
+
 
     @Override
     @Transactional(readOnly = true)
