@@ -172,6 +172,19 @@ public interface CommonConstants {
     String NULL_VALUE = "&nbsp;";
 
     /**
+     *
+     *
+     */
+    String PROM_TIME = "timestamp";
+
+    /**
+     *
+     *
+     */
+    String PROM_VALUE = "value";
+
+
+    /**
      * Availability Object
      * 可用性对象
      */

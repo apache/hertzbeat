@@ -6,13 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Jmx协议      Jmx protocol
+ * Jmx protocol
  *
- * @ClassName JmxProtocol
- * @Description
- * @Author huacheng
- * @Date 2022/6/21 15:45
- * @Version 1.0
+ * @author huacheng
+ * @date 2022/6/21 15:45
  **/
 @Data
 @Builder
@@ -30,6 +27,12 @@ public class JmxProtocol {
      * 端口号
      */
     private String port;
+
+    /**
+     * 是否使用链路加密ssl/tls
+     * enable ssl?
+     */
+    private String ssl = "false";
 
     /**
      * Jmx username (optional)
@@ -54,11 +57,5 @@ public class JmxProtocol {
      * jmx指标外层所在类型名称
      */
     private String objectName;
-
-    /**
-     * Jmx indicator name
-     * jmx指标名称
-     */
-    private String attributeName;
 
 }
