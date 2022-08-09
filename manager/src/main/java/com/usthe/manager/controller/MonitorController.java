@@ -37,6 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+import java.util.List;
+
 import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -117,5 +119,25 @@ public class MonitorController {
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(new Message<>("Detect success."));
     }
+
+    @PostMapping("/OptionalMetrics")
+    @ApiOperation(value = "Add a monitor that can select metrics",notes = "新增一个可选指标的监控器")
+    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto){
+        monitorService.validate(monitorDto, false);
+        if (monitorDto.isDetected()) {
+            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+        }
+        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(),monitorDto.getMonitor(),monitorDto.getParams());
+        return ResponseEntity.ok(new Message<>("Add success"));
+    }
+
+    @GetMapping(value = {"/metric/{app}","/metric"})
+    @ApiOperation(value = "get app metric", notes = "根据app名称获取该app可监控指标，不传为获取全部指标")
+    public ResponseEntity<Message<List>> getMonitorMetrics(@PathVariable(value = "app",required = false) String app) {
+        List<String> metricNames = monitorService.getMonitorMetrics(app);
+        return ResponseEntity.ok(new Message<>(metricNames));
+    }
+
+
 
 }

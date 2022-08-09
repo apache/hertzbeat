@@ -1,8 +1,8 @@
 category: mid
 app: tomcat
 name:
-  zh-CN: Tomcat应用服务器
-  en-US: Tomcat Server
+  zh-CN: Tomcat
+  en-US: Tomcat
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -39,7 +39,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
+      # jmx mbean object name
       objectName: Catalina:type=Server
       url: ^_^url^_^
 
@@ -58,6 +58,16 @@ metrics:
         type: 0
       - field: used
         type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -66,9 +76,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=MemoryPool,name=Eden Space
-      attributeName: Usage
       url: ^_^url^_^
 
   - name: meta_space
@@ -84,6 +92,16 @@ metrics:
         type: 0
       - field: used
         type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -92,9 +110,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=MemoryPool,name=Metaspace
-      attributeName: Usage
       url: ^_^url^_^
 
   - name: survivor_space
@@ -110,6 +126,16 @@ metrics:
         type: 0
       - field: used
         type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -118,9 +144,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=MemoryPool,name=Survivor Space
-      attributeName: Usage
       url: ^_^url^_^
 
   - name: tenured_gen
@@ -136,6 +160,16 @@ metrics:
         type: 0
       - field: used
         type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -144,9 +178,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=MemoryPool,name=Tenured Gen
-      attributeName: Usage
       url: ^_^url^_^
 
   - name: code_cache
@@ -162,6 +194,16 @@ metrics:
         type: 0
       - field: used
         type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
     protocol: jmx
     jmx:
       # 主机host: ipv4 ipv6 域名
@@ -170,9 +212,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=MemoryPool,name=Code Cache
-      attributeName: Usage
       url: ^_^url^_^
 
   - name: class_loading
@@ -194,7 +234,6 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=ClassLoading
       url: ^_^url^_^
 
@@ -225,13 +264,15 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
       objectName: java.lang:type=Threading
       url: ^_^url^_^
 
   - name: application
     priority: 8
     fields:
+      - field: name
+        type: 1
+        instance: true
       - field: acceptCount
         type: 0
       - field: acceptorThreadCount
@@ -239,7 +280,7 @@ metrics:
       - field: acceptorThreadPriority
         type : 0
       - field: connectionTimeout
-        type: 1
+        type: 0
         unit: ms
       - field: currentThreadCount
         type: 0
@@ -258,8 +299,6 @@ metrics:
         type: 0
       - field: minSpareThreads
         type: 0
-      - field: name
-        type: 1
       - field: pollerThreadCount
         type: 0
       - field: pollerThreadPriority
@@ -274,6 +313,5 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      #外层类型
-      objectName: Catalina:type=ThreadPool,name="http-nio-8080"
+      objectName: Catalina:type=ThreadPool,name=*
       url: ^_^url^_^

@@ -185,6 +185,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // If it is an asynchronous periodic cyclic task, directly send the collected data of the indicator group to the message middleware
             // 若是异步的周期性循环任务,直接发送指标组的采集数据到消息中间件
             kafkaDataExporter.send(metricsData);
+            if (log.isDebugEnabled()) {
+                log.debug("Cyclic Job: {}",metricsData.getMetrics());
+                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                    for (CollectRep.Field field : metricsData.getFieldsList()) {
+                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
+                    }
+                }
+            }
             //If metricsSet is null, it means that the execution is completed or whether the priority of the collection indicator group is 0, that is, the availability collection indicator group.
             // If the availability collection fails, the next indicator group scheduling will be cancelled and the next round of scheduling will be entered directly.
             // 若metricsSet为null表示执行完成
@@ -234,6 +242,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // 若是临时性一次任务,需等待所有指标组的采集数据统一包装返回
             // 将当前指标组数据插入job里统一组装
             job.addCollectMetricsData(metricsData);
+            if (log.isDebugEnabled()) {
+                log.debug("One-time Job: {}", metricsData.getMetrics());
+                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                    for (CollectRep.Field field : metricsData.getFieldsList()) {
+                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
+                    }
+                }
+            }
             if (metricsSet == null) {
                 // The collection and execution of all indicator groups of this job are completed
                 // and the result listener is notified of the combination of all indicator group data

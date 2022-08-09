@@ -201,7 +201,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     /**
      * Calculate the real indicator (fields) value according to the calculates and aliasFields configuration
-     * Calculate instance instance value
+     * Calculate instance value
      * <p>
      * 根据 calculates 和 aliasFields 配置计算出真正的指标(fields)值
      * 计算instance实例值

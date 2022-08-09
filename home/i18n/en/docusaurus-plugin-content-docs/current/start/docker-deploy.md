@@ -79,7 +79,7 @@ resourceRole:
    - /api/summary/**===delete===[admin]
 
 # Resources that need to be filtered and protected can be accessed directly without authentication
-# /api/v1/source3===get means /api/v1/source3===get it can be accessed by anyone. Don't need to login and authentication
+# /api/v1/source3===get means /api/v1/source3===get it can be accessed by anyone. Don't need to authentication
 excludedResource:
    - /api/account/auth/**===*
    - /api/i18n/**===get
@@ -124,7 +124,7 @@ account:
      role: [guest]
 ```
    
-   Modify the following **part parameters** in sureness.yml**[Note⚠️Other default sureness configuration parameters should be retained]**：  
+   Modify the following **part parameters** in sureness.yml **[Note⚠️Other default sureness configuration parameters should be retained]**：  
 
 ```yaml
 
@@ -149,6 +149,8 @@ account:
 
 ```shell 
 $ docker run -d -p 1157:1157 \
+    -e LANG=zh_CN.UTF-8 \
+    -e TZ=Asia/Shanghai \
     -v /opt/data:/opt/hertzbeat/data \
     -v /opt/logs:/opt/hertzbeat/logs \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
@@ -159,6 +161,8 @@ $ docker run -d -p 1157:1157 \
    This command starts a running HertzBeat Docker container, and the container port 1157 is mapped to the host machine 1157. If existing processes on the host use the port, please modify host mapped port.  
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157`  : Mapping container ports to the host
+   - `-e LANG=zh_CN.UTF-8`  : (optional) set the LANG  
+   - `-e TZ=Asia/Shanghai` : (optional) set the TimeZone  
    - `-v /opt/data:/opt/hertzbeat/data` : (optional，data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost because of creating or deleting container.  
    - `-v /opt/logs:/opt/hertzbeat/logs` : (optional，if you don't have a need,just delete it) Mount the log file to the local host, to guarantee the log will not be lost because of creating or deleting container.
    - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (optional，if you don't have a need,just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file. We need to modify MYSQL, TDengine configuration information in the configuration file to connect to an external service.
@@ -179,7 +183,7 @@ The problems lies in Docker container failed to visit and connect localhost port
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
 2. **According to the process deploy，visit http://ip:1157/ no interface**   
-Please refer to the following points to troubleshoot issuess：  
+Please refer to the following points to troubleshoot issues：  
 > one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
 > two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 > three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.

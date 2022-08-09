@@ -149,6 +149,8 @@ account:
 
 ```shell 
 $ docker run -d -p 1157:1157 \
+    -e LANG=zh_CN.UTF-8 \
+    -e TZ=Asia/Shanghai \
     -v /opt/data:/opt/hertzbeat/data \
     -v /opt/logs:/opt/hertzbeat/logs \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
@@ -159,6 +161,8 @@ $ docker run -d -p 1157:1157 \
    这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
    - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
    - `-p 1157:1157`  : 映射容器端口到主机端口
+   - `-e LANG=zh_CN.UTF-8`  : (可选) 设置语言
+   - `-e TZ=Asia/Shanghai` : (可选) 设置时区
    - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
    - `-v /opt/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
    - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。

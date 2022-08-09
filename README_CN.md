@@ -11,14 +11,14 @@
 > 易用友好的云监控系统，无需Agent，强大自定义监控能力。
 
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
-![tan-cloud](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
@@ -126,9 +126,10 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/yangshihui"><img src="https://avatars.githubusercontent.com/u/28550208?v=4?s=100" width="100px;" alt=""/><br /><sub><b>yangshihui</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=yangshihui" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/issues?q=author%3Ayangshihui" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/DreamGirl524"><img src="https://avatars.githubusercontent.com/u/81132838?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DreamGirl524</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=DreamGirl524" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/gzwlly"><img src="https://avatars.githubusercontent.com/u/83171907?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gzwlly</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=gzwlly" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/cuipiheqiuqiu"><img src="https://avatars.githubusercontent.com/u/76642201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>cuipiheqiuqiu</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=cuipiheqiuqiu" title="Code">💻</a> <a href="https://github.com/tomsun28/hertzbeat/commits?author=cuipiheqiuqiu" title="Tests">⚠️</a></td>
   </tr>
   <tr>
+    <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
     <td align="center"><a href="http://mroldx.xyz/"><img src="https://avatars.githubusercontent.com/u/34847828?v=4?s=100" width="100px;" alt=""/><br /><sub><b>mroldx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=mroldx" title="Documentation">📖</a></td>
   </tr>
 </table>
