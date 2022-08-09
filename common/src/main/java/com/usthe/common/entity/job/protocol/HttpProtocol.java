@@ -47,6 +47,10 @@ public class HttpProtocol {
      */
     private String url;
     /**
+     * 超时时间
+     */
+    private String timeout;
+    /**
      * http是否使用链路加密ssl/tls,即是http还是https
      */
     private String ssl = "false";

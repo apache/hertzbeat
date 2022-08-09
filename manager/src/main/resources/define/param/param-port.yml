@@ -31,8 +31,8 @@ param:
     defaultValue: 80
   - field: timeout
     name:
-      zh-CN: 连接超时时间
-      en-US: Connect Timeout
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
     type: number
     range: '[0,100000]'
     required: true
