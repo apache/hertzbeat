@@ -61,7 +61,7 @@ public class TimerDispatcher implements TimerDispatch {
             Thread ret = new Thread(r, "wheelTimer");
             ret.setDaemon(true);
             return ret;
-        }, 10, TimeUnit.SECONDS, 512);
+        }, 1, TimeUnit.SECONDS, 512);
         this.currentCyclicTaskMap = new ConcurrentHashMap<>(1024);
         this.currentTempTaskMap = new ConcurrentHashMap<>(64);
         eventListeners = new ConcurrentHashMap<>(64);
