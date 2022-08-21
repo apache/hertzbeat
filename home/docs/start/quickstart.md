@@ -40,7 +40,7 @@ sidebar_label: 快速开始
 #### 方式二：通过安装包安装    
 
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. 需要已安装java环境, `jdk8 -- jdk11`
+2. 需要已安装java环境, `jdk11`
 3. [可选]配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`
 4. 部署启动 `$ ./startup.sh `
 5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
@@ -49,7 +49,7 @@ sidebar_label: 快速开始
 
 #### 方式三：本地代码启动   
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
-2. 后端：需要`maven3+`, `java8+`和`lombok`环境，修改YML配置信息并启动manager服务
+2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改YML配置信息并启动manager服务
 3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在web-app目录下启动 `ng serve --open`
 4. 浏览器访问 `localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
