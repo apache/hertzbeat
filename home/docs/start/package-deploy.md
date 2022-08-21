@@ -8,7 +8,7 @@ sidebar_label: 安装包方式部署
 安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)   
 
 1. 安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   要求：JDK8+(已验证JDK8)   
+   要求：JDK11环境   
    下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)   
    安装后命令行检查是否成功安装   
    ```
