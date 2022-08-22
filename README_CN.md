@@ -162,9 +162,11 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 [User Club](https://support.qq.com/products/379369)    
 
-##### 微信公众号   
+##### 公众号与星球     
 
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>
+<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>  
+
+<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/planet.jpg" width="400"/>    
 
 ##### 友情链接   
 
