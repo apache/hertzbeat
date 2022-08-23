@@ -197,7 +197,7 @@ module.exports = {
             ],
             logo: {
                 alt: 'TANCLOUD探云-易用友好的高性能监控云',
-                src: 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/planet.jpg',
+                src: 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg',
                 href: 'https://github.com/dromara/hertzbeat',
             },
             copyright: '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' + ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,

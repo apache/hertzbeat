@@ -166,7 +166,9 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>  
 
-<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/planet.jpg" width="400"/>    
+<br/>
+
+<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg" width="400"/>    
 
 ##### 友情链接   
 
