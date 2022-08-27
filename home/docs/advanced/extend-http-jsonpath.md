@@ -145,5 +145,6 @@ metrics:
       ssl: false
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       # 这里使用jsonPath解析
-      parseType: $.number[*] 
+      parseType: jsonPath
+      parseScript: '$.number[*]' 
 ```
