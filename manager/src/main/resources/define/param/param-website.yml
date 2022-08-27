@@ -79,8 +79,9 @@ param:
     hide: true
   - field: keyword
     name:
-      zh-CN: 关键字
-      en-US: Keyword
+      zh-CN: 关键字计数
+      en-US: Keyword Num
     type: text
+    placeholder: 'Input monitored Keyword'
     required: false
     hide: true
