@@ -1,3 +1,4 @@
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
@@ -39,7 +40,8 @@ const COMPONENTS: Array<Type<void>> = [
     NgxEchartsModule,
     NzLayoutModule,
     NzSpaceModule,
-    NzCollapseModule
+    NzCollapseModule,
+    ClipboardModule
   ],
   declarations: COMPONENTS
 })

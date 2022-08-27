@@ -247,6 +247,7 @@
   "common.no": "No",
   "common.enable": "Enable",
   "common.disable": "Disable",
+  "common.copy": "Copy To Clipboard",
   "common.notify.no-select-edit": "No items selected for editing!",
   "common.notify.one-select-edit": "Only one selection can be edited!",
   "common.confirm.delete": "Please confirm whether to delete!",
