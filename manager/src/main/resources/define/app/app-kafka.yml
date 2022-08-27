@@ -18,8 +18,29 @@ configmap:
     type: 1
 # 指标组列表
 metrics:
-  - name: broker_activecontroller_count
+  - name: server_info
     priority: 0
+    fields:
+      - field: Version
+        type: 1
+      - field: StartTimeMs
+        type: 1
+      - field: CommitId
+        type: 1
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=app-info,id=0
+      url: ^_^url^_^
+
+  - name: broker_activecontroller_count
+    priority: 1
     fields:
       - field: Value
         type: 0
@@ -36,7 +57,7 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_partition_count
-    priority: 0
+    priority: 1
     fields:
       - field: Value
         type: 0
@@ -53,7 +74,7 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_leader_count
-    priority: 0
+    priority: 1
     fields:
       - field: Value
         type: 0
@@ -70,7 +91,7 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_handler_avg_percent
-    priority: 0
+    priority: 2
     fields:
       - field: EventType
         type: 1
@@ -99,7 +120,7 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_topic_metrics
-    priority: 0
+    priority: 2
     fields:
       - field: EventType
         type: 1
@@ -128,7 +149,7 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_bytes_out_persec
-    priority: 0
+    priority: 2
     fields:
       - field: EventType
         type: 1
@@ -161,7 +182,7 @@ metrics:
 
 
   - name: produce_message_conversions_persec
-    priority: 0
+    priority: 2
     fields:
       - field: EventType
         type: 1
@@ -190,7 +211,7 @@ metrics:
       url: ^_^url^_^
 
   - name: produce_total_requests_persec
-    priority: 0
+    priority: 2
     fields:
       - field: EventType
         type: 1
