@@ -1,0 +1,219 @@
+category: mid
+app: kafka
+name:
+  zh-CN: kafka
+  en-US: kafka
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: username
+    type: 1
+  - key: password
+    type: 2
+  - key: url
+    type: 1
+# 指标组列表
+metrics:
+  - name: broker_activecontroller_count
+    priority: 0
+    fields:
+      - field: Value
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.controller:type=KafkaController,name=ActiveControllerCount
+      url: ^_^url^_^
+
+  - name: broker_partition_count
+    priority: 0
+    fields:
+      - field: Value
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=ReplicaManager,name=PartitionCount
+      url: ^_^url^_^
+
+  - name: broker_leader_count
+    priority: 0
+    fields:
+      - field: Value
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=ReplicaManager,name=LeaderCount
+      url: ^_^url^_^
+
+  - name: broker_handler_avg_percent
+    priority: 0
+    fields:
+      - field: EventType
+        type: 1
+      - field: RateUnit
+        type: 1
+      - field: Count
+        type: 0
+      - field: OneMinuteRate
+        type: 0
+      - field: FiveMinuteRate
+        type: 0
+      - field: MeanRate
+        type: 0
+      - field: FifteenMinuteRate
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
+      url: ^_^url^_^
+
+  - name: broker_topic_metrics
+    priority: 0
+    fields:
+      - field: EventType
+        type: 1
+      - field: RateUnit
+        type: 1
+      - field: MeanRate
+        type: 0
+      - field: FifteenMinuteRate
+        type: 0
+      - field: OneMinuteRate
+        type: 0
+      - field: FiveMinuteRate
+        type: 0
+      - field: Count
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec
+      url: ^_^url^_^
+
+  - name: broker_bytes_out_persec
+    priority: 0
+    fields:
+      - field: EventType
+        type: 1
+      - field: RateUnit
+        type: 1
+      - field: MeanRate
+        type: 0
+      - field: FifteenMinuteRate
+        type: 0
+      - field: OneMinuteRate
+        type: 0
+      - field: FiveMinuteRate
+        type: 0
+      - field: Count
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec
+      url: ^_^url^_^
+
+
+
+
+
+  - name: produce_message_conversions_persec
+    priority: 0
+    fields:
+      - field: EventType
+        type: 1
+      - field: RateUnit
+        type: 1
+      - field: MeanRate
+        type: 0
+      - field: FifteenMinuteRate
+        type: 0
+      - field: OneMinuteRate
+        type: 0
+      - field: FiveMinuteRate
+        type: 0
+      - field: Count
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=ProduceMessageConversionsPerSec
+      url: ^_^url^_^
+
+  - name: produce_total_requests_persec
+    priority: 0
+    fields:
+      - field: EventType
+        type: 1
+      - field: RateUnit
+        type: 1
+      - field: MeanRate
+        type: 0
+      - field: FifteenMinuteRate
+        type: 0
+      - field: OneMinuteRate
+        type: 0
+      - field: FiveMinuteRate
+        type: 0
+      - field: Count
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=TotalProduceRequestsPerSec
+      url: ^_^url^_^
