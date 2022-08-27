@@ -100,9 +100,10 @@
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center" nzLeft>{{ data.target }}</td>
       <td nzAlign="center">
-        <a [routerLink]="['/monitors/' + data.tags?.monitorId]">
-          <span>{{ data.tags?.monitorName }}</span>
-        </a>
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags?.monitorId]">
+          {{ data.tags?.monitorName }}
+          <span nz-icon nzType="area-chart"></span>
+        </button>
       </td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
