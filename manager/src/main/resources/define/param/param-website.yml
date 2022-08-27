@@ -82,6 +82,6 @@ param:
       zh-CN: 关键字计数
       en-US: Keyword Num
     type: text
-    placeholder: 'Input Keyword'
+    placeholder: 'Input monitored Keyword'
     required: false
     hide: true
