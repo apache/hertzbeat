@@ -79,7 +79,7 @@ import java.util.Map;
 
 
 /**
- * http https 采集实现类
+ * http https collect
  *
  *
  */

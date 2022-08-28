@@ -58,6 +58,10 @@ public interface DispatchConstants {
      * protocol snmp
      */
     String PROTOCOL_SNMP = "snmp";
+    /**
+     * protocol ssl Certificate - custom
+     */
+    String PROTOCOL_SSL_CERT = "ssl_cert";
     // Protocol type related - end
     // 协议类型相关 - end //
 
