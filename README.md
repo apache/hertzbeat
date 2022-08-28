@@ -129,6 +129,7 @@ Thanks these wonderful people, welcome to join us:
   <tr>
     <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
     <td align="center"><a href="http://mroldx.xyz/"><img src="https://avatars.githubusercontent.com/u/34847828?v=4?s=100" width="100px;" alt=""/><br /><sub><b>mroldx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=mroldx" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/woshiniusange"><img src="https://avatars.githubusercontent.com/u/91513022?v=4?s=100" width="100px;" alt=""/><br /><sub><b>woshiniusange</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=woshiniusange" title="Documentation">📖</a></td>
   </tr>
 </table>
 
