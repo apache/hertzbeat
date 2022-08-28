@@ -233,6 +233,7 @@
   "monitors.detail.chart.query-1d": "Query 1 Day",
   "monitors.detail.chart.query-1w": "Query 1 Week",
   "monitors.detail.chart.query-1m": "Query 1 Month",
+  "monitors.detail.chart.query-3m": "Query 3 Month",
   "monitors.detail.chart.no-data": "No Metrics Data",
   "monitors.detail.chart.unit": "Unit",
   "common.name": "Name",
