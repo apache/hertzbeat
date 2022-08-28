@@ -3,16 +3,16 @@ id: extend-http
 title: HTTP Protocol Custom Monitoring  
 sidebar_label: HTTP Protocol Custom Monitoring    
 ---
-> From [Custom Monitoring](extend-point), you are familiar with how to customize types, indicators, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize indicator monitoring   
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring   
 
 ### HTTP protocol collection process     
-【**call HTTP interface**】->【**response verification **】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing(todo)**】->【**indicator data extraction**】
+【**call HTTP interface**】->【**response verification **】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing(todo)**】->【**Metric data extraction**】
 
-It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which indicators to obtain, and configure the parsing method and parsing script for response data.
+It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
 HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.   
 
-**System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding indicator data. For details, refer to [**System Default Parsing**](extend-http-default)    
-**JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding indicator data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)    
+**System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding Metric data. For details, refer to [**System Default Parsing**](extend-http-default)    
+**JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding Metric data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)    
   
 
 ### Custom Steps  
@@ -52,17 +52,17 @@ configmap:
     type: 1
   - key: password
     type: 2
-# indicator group list
+# Metric group list
 metrics:
-# The first monitoring indicator group cpu
-# Note：the built-in monitoring indicators have (responseTime - response time)
+# The first monitoring Metric group cpu
+# Note：the built-in monitoring Metrics have (responseTime - response time)
   - name: cpu
-    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
-    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # Specific monitoring indicators in the indicator group
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # indicator information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: indicator unit
+      # Metric information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
         instance: true
@@ -74,7 +74,7 @@ metrics:
       - field: waitTime
         type: 0
         unit: s
-# (optional)Monitoring indicator alias mapping to the indicator name above. The field used to collect interface data is not the final indicator name directly. This alias is required for mapping conversion.
+# (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
     aliasFields:
       - hostname
       - core1
@@ -82,7 +82,7 @@ metrics:
       - usage
       - allTime
       - runningTime
-# (optional)The indicator calculation expression works with the above alias to calculate the final required indicator value.
+# (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
 # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - hostname=hostname
@@ -116,7 +116,7 @@ metrics:
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability indicator monitoring
+      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability Metric monitoring
       # todo xmlPath-xmlPath script, prometheus-Prometheus data rules
       parseType: jsonPath
       parseScript: '$'

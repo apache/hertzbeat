@@ -4,7 +4,7 @@ title: Monitoring：ORACLE database monitoring
 sidebar_label: ORACLE database   
 ---
 
-> Collect and monitor the general performance indicators of ORACLE database.
+> Collect and monitor the general performance Metrics of ORACLE database.
 
 ### Configuration parameter
 
@@ -22,11 +22,11 @@ sidebar_label: ORACLE database
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：basic
+#### Metric set：basic
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | database_version     | none | Database version |
 | database_type        | none | Database type |
@@ -35,9 +35,9 @@ sidebar_label: ORACLE database
 | startup_time         | none | Database start time |
 | status               | none | Database status |
 
-#### Indicator set：tablespace
+#### Metric set：tablespace
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | file_id           | none | File ID |
 | file_name         | none | File name |
@@ -46,16 +46,16 @@ sidebar_label: ORACLE database
 | bytes             | MB | Size |
 | blocks            | none | Number of blocks |
 
-#### Indicator set：user_connect
+#### Metric set：user_connect
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | username         | none   | Username |
 | counts           | number | Current connection counts | 
 
-#### Indicator set：performance
+#### Metric set：performance
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | qps         | QPS | I/O Requests per second |
 | tps         | TPS | User transaction per second | 

@@ -55,7 +55,8 @@
             "help/api",
             "help/ping",
             "help/port",
-            "help/fullsite"
+            "help/fullsite",
+            "help/jvm"
           ]
         },
         {
@@ -83,7 +84,9 @@
           "type": "category",
           "label": "中间件",
           "items": [
-            "help/zookeeper"
+            "help/zookeeper",
+            "help/kafka",
+            "help/tomcat"
           ]
         },
         {
