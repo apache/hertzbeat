@@ -1,10 +1,10 @@
 ---
-id: tomcat  
-title: 监控：Tomcat监控      
-sidebar_label: Tomcat监控
+id: jvm  
+title: 监控：JVM虚拟机监控      
+sidebar_label: JVM虚拟机
 ---
 
-> 对Tomcat的通用性能指标进行采集监控
+> 对JVM虚拟机的通用性能指标进行采集监控
 
 **使用协议：JMX**
 
@@ -14,7 +14,7 @@ sidebar_label: Tomcat监控
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 查询超时时间 | 设置Tomcat连接的超时时间，单位ms毫秒，默认3000毫秒。  |
+| 查询超时时间 | 设置JVM连接的超时时间，单位ms毫秒，默认3000毫秒。  |
 | 用户名      | JMX连接用户名 |
 | 密码        | JMX连接密码 |
 | 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒  |
@@ -63,14 +63,13 @@ sidebar_label: Tomcat监控
 | CurrentThreadUserTime | ms | 使用时间 |
 | CurrentThreadCpuTime | ms | 使用CPU时间 |
 
-### Tomcat开启JMX协议步骤
+### JVM应用开启JMX协议步骤
 
-1. 搭建好tomcat后，进入tomcat下的bin目录，修改catalina.sh文件  
+1. 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口
 
-2. vim catalina.sh  
-
-```aidl
-CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=10.1.1.52 -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+```shell
+-Dcom.sun.management.jmxremote.port=9999
+-Dcom.sun.management.jmxremote.ssl=false
+-Dcom.sun.management.jmxremote.authenticate=false 
 ```
 
-参考: https://blog.csdn.net/weixin_41924764/article/details/108694239  

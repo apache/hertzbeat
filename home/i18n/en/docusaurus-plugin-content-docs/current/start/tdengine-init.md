@@ -3,7 +3,7 @@ id: tdengine-init
 title: Dependency Service TDengine Installation and Initialization        
 sidebar_label: TDengine Init(optional)    
 ---
-TDengine is a time series database for Open Source the Internet of Things.We use TDengine to replace the InfluxDb, to store the history data collected monitoring indicators.
+TDengine is a time series database for Open Source the Internet of Things.We use TDengine to replace the InfluxDb, to store the history data collected monitoring Metrics.
 Note⚠️ TDengine is optional.And no configuration means no historical chart data.
 
 > If you have TDengine environment, can directly skip to create a database instance.
