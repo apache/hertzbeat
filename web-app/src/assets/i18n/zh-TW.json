@@ -233,6 +233,7 @@
   "monitors.detail.chart.query-1d": "查詢近1天",
   "monitors.detail.chart.query-1w": "查詢近1周",
   "monitors.detail.chart.query-1m": "查詢近1月",
+  "monitors.detail.chart.query-3m": "查詢近3月",
   "monitors.detail.chart.no-data": "暫無數據",
   "monitors.detail.chart.unit": "單位",
   "common.name": "名稱",
