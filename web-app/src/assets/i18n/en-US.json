@@ -46,8 +46,8 @@
     "host.tip": "The monitored peer IP or domain name",
     "description": "Description",
     "description.tip": "Description and remarks",
-    "intervals": "Intervals",
-    "intervals.tip": "Monitor the interval time of periodic collection of data, second",
+    "intervals": "Intervals(s)",
+    "intervals.tip": "Monitor the interval time of periodic collection of data, unit second",
     "category": {
       "": "Category",
       "service": "Service",
