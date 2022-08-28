@@ -46,7 +46,7 @@
     "host.tip": "被監控的對端IP或域名",
     "description": "描述備注",
     "description.tip": "更多標識和描述此監控的備注信息",
-    "intervals": "采集間隔",
+    "intervals": "采集間隔(秒)",
     "intervals.tip": "監控周期性采集數據間隔時間,單位秒",
     "category": {
       "": "監控類別",
