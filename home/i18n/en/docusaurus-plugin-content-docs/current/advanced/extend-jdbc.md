@@ -3,35 +3,35 @@ id: extend-jdbc
 title: JDBC Protocol Custom Monitoring  
 sidebar_label: JDBC Protocol Custom Monitoring    
 ---
-> From [Custom Monitoring](extend-point), you are familiar with how to customize types, indicators, protocols, etc. Here we will introduce in detail how to use JDBC(support mysql,mariadb,postgresql,sqlserver at present) to customize indicator monitoring. 
-> JDBC protocol custom monitoring allows us to easily monitor indicators we want by writing SQL query statement.   
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JDBC(support mysql,mariadb,postgresql,sqlserver at present) to customize Metric monitoring. 
+> JDBC protocol custom monitoring allows us to easily monitor Metrics we want by writing SQL query statement.   
 
 ### JDBC protocol collection process    
-【**System directly connected to MYSQL**】->【**Run SQL query statement**】->【**parse reponse data: oneRow, multiRow, columns**】->【**indicator data extraction**】   
+【**System directly connected to MYSQL**】->【**Run SQL query statement**】->【**parse reponse data: oneRow, multiRow, columns**】->【**Metric data extraction**】   
 
-It can be seen from the process that we define a monitoring type of JDBC protocol. We need to configure SSH request parameters, configure which indicators to obtain, and configure query SQL statements.
+It can be seen from the process that we define a monitoring type of JDBC protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query SQL statements.
 
 ### Data parsing method   
-We can obtain the corresponding indicator data through the data fields queried by SQL and the indicator mapping we need. At present, there are three mapping parsing methods：oneRow, multiRow, columns.
+We can obtain the corresponding Metric data through the data fields queried by SQL and the Metric mapping we need. At present, there are three mapping parsing methods：oneRow, multiRow, columns.
 
 #### **oneRow**  
 > Query a row of data, return the column name of the result set through query and map them to the queried field.  
 
 eg：   
-queried indicator fields：one tow three four
+queried Metric fields：one tow three four
 query SQL：select one, tow, three, four from book limit 1;
-Here the indicator field and the response data can be mapped into a row of collected data one by one.     
+Here the Metric field and the response data can be mapped into a row of collected data one by one.     
 
 #### **multiRow**
 > Query multiple rows of data, return the column names of the result set and map them to the queried fields.  
 
 eg：   
-queried indicator fields：one tow three four
+queried Metric fields：one tow three four
 query SQL：select one, tow, three, four from book;
-Here the indicator field and the response data can be mapped into multiple rows of collected data one by one. 
+Here the Metric field and the response data can be mapped into multiple rows of collected data one by one. 
 
 #### **columns**
-> Collect a row of indicator data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field. 
+> Collect a row of Metric data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field. 
 
 eg：   
 queried fields：one tow three four   
@@ -45,7 +45,7 @@ SQL response data：
 | three  | 332 |
 | four   | 643 |
 
-Here by mapping the indicator field with the key of the response data, we can  obtain the corresponding value as collection and monitoring data.
+Here by mapping the Metric field with the key of the response data, we can  obtain the corresponding value as collection and monitoring data.
 
 ### Custom Steps  
 
@@ -88,15 +88,15 @@ configmap:
     type: 1
   - key: url
     type: 1
-# indicator group list
+# Metric group list
 metrics:
   - name: basic
-    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
-    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # Specific monitoring indicators in the indicator group
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: version
         type: 1
         instance: true
@@ -106,7 +106,7 @@ metrics:
         type: 1
       - field: max_connections
         type: 0
-    # (optional)Monitoring indicator alias mapping to the indicator name above. The field used to collect interface data is not the final indicator name directly. This alias is required for mapping conversion.
+    # (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
     aliasFields:
       - version
       - version_compile_os
@@ -114,7 +114,7 @@ metrics:
       - port
       - datadir
       - max_connections
-    # (optional)The indicator calculation expression works with the above alias to calculate the final required indicator value.
+    # (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - port=port
@@ -140,7 +140,7 @@ metrics:
   - name: status
     priority: 1
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: threads_created
         type: 0
       - field: threads_connected
@@ -149,13 +149,13 @@ metrics:
         type: 0
       - field: threads_running
         type: 0
-    # (optional)Monitoring indicator alias mapping to the indicator name above. The field used to collect interface data is not the final indicator name directly. This alias is required for mapping conversion.
+    # (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
     aliasFields:
       - threads_created
       - threads_connected
       - threads_cached
       - threads_running
-    # (optional)The indicator calculation expression works with the above alias to calculate the final required indicator value.
+    # (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - threads_created=threads_created
@@ -181,7 +181,7 @@ metrics:
   - name: innodb
     priority: 2
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: innodb_data_reads
         type: 0
         unit: times

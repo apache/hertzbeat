@@ -4,7 +4,7 @@ title: Monitoring：HTTP API
 sidebar_label: HTTP API   
 ---
 
-> Call HTTP API interface, check whether the interface is available, and monitor its response time and other indicators.   
+> Call HTTP API interface, check whether the interface is available, and monitor its response time and other Metrics.   
 
 ### Configuration parameter
 
@@ -24,11 +24,11 @@ sidebar_label: HTTP API
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator   
+### Collection Metric   
 
-#### Indicator set：summary  
+#### Metric set：summary  
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | responseTime   | ms | Website response time |
 

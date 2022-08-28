@@ -3,8 +3,8 @@ category: mid
 # 监控应用类型名称(与文件名保持一致)
 app: flink
 name:
-  zh-CN: Apache Flink
-  en-US: Apache Flink
+  zh-CN: Flink
+  en-US: Flink
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:

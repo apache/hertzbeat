@@ -4,12 +4,12 @@ title: Help center
 sidebar_label: Help center
 ---
 
-> TanCloud - Friendly cloud monitoring system    
+> Hertzbeat - An open-source, real-time monitoring system with custom-monitor and agentLess.  
 > Help documents and auxiliary information during use 
 
 ## 🔬 Monitoring services
 
-> Regularly collect and monitor the performance indicators exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
+> Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
 > Planned monitoring type：application service, database, operating system, cloud native, open source middleware.
 
 ### Application service monitoring 
@@ -35,7 +35,7 @@ sidebar_label: Help center
 
 ### Alarm configuration 
 
-> The indicator threshold configuration provides the indicator threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
+> The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
 More details see [threshold alarm](alert_threshold) &emsp;&emsp;&emsp;&emsp; [Threshold expression](alert_threshold_expr)   
 
