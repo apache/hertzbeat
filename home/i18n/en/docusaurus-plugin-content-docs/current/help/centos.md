@@ -4,7 +4,7 @@ title: Monitoring：CentOS operating system monitoring
 sidebar_label: CentOS operating system       
 ---
 
-> Collect and monitor the general performance indicators of CentOS operating system.
+> Collect and monitor the general performance Metrics of CentOS operating system.
 
 ### Configuration parameter
 
@@ -19,19 +19,19 @@ sidebar_label: CentOS operating system
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：basic
+#### Metric set：basic
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | hostname        | none | Host name |
 | version         | none | Operating system version |
 | uptime          | none | System running time |
 
-#### Indicator set：cpu
+#### Metric set：cpu
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | info           | none | CPU model |
 | cores          | cores | Number of CPU cores |
@@ -41,9 +41,9 @@ sidebar_label: CentOS operating system
 | usage          | %  | CPU usage |   
 
 
-#### Indicator set：memory
+#### Metric set：memory
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | total         | Mb | Total memory capacity |
 | used          | Mb | User program memory |
@@ -52,9 +52,9 @@ sidebar_label: CentOS operating system
 | available     | Mb | Remaining available memory capacity |   
 | usage          | %  | Memory usage | 
 
-#### Indicator set：disk
+#### Metric set：disk
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | disk_num       | blocks | Total number of disks |
 | partition_num  | partitions | Total number of partitions |
@@ -62,17 +62,17 @@ sidebar_label: CentOS operating system
 | block_read     | blocks | Number of blocks read from disk |  
 | write_rate     | iops | Rate of writing disk blocks per second |  
 
-#### Indicator set：interface
+#### Metric set：interface
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | interface_name         | none | Network card name |
 | receive_bytes          | byte | Inbound data traffic(bytes)  |
 | transmit_bytes         | byte | Outbound data traffic(bytes)  |
 
-#### Indicator set：disk_free
+#### Metric set：disk_free
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | filesystem     | none  | File system name |
 | used           | Mb  | Used disk size |

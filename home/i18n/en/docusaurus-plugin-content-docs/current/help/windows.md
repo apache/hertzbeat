@@ -4,7 +4,7 @@ title: Monitoring：Windows operating system monitoring
 sidebar_label: Windows operating system       
 ---
 
-> Collect and monitor the general performance indicators of Windows operating system through SNMP protocol.
+> Collect and monitor the general performance Metrics of Windows operating system through SNMP protocol.
 > Note⚠️ You need to start SNMP service for Windows server.  
 
 References:      
@@ -27,11 +27,11 @@ References:
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：system
+#### Metric set：system
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | name          | none | Host name |
 | descr         | none | Operating system description |
