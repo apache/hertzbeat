@@ -233,6 +233,7 @@
   "monitors.detail.chart.query-1d": "查询近1天",
   "monitors.detail.chart.query-1w": "查询近1周",
   "monitors.detail.chart.query-1m": "查询近1月",
+  "monitors.detail.chart.query-3m": "查询近3月",
   "monitors.detail.chart.no-data": "暂无数据",
   "monitors.detail.chart.unit": "单位",
   "common.name": "名称",
