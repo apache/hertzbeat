@@ -34,7 +34,8 @@
     "slick-carousel": "^1.8.1",
     "url-loader": "^4.1.1",
     "workbox-routing": "^6.1.0",
-    "workbox-strategies": "^6.1.0"
+    "workbox-strategies": "^6.1.0",
+    "swiper": "^7.0.1"
   },
   "browserslist": {
     "production": [
