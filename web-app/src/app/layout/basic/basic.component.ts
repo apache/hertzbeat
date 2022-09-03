@@ -7,7 +7,7 @@ import { CONSTS } from 'src/app/shared/consts';
 @Component({
   selector: 'layout-basic',
   template: `
-    <layout-default [options]="options" [asideUser]="asideUserTpl" [content]="contentTpl" [customError]="null">
+    <layout-default [options]="options" [asideUser]="asideUserTpl" [nav]="navTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
         <a layout-default-header-item-trigger href="//github.com/dromara/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
@@ -68,6 +68,9 @@ import { CONSTS } from 'src/app/shared/consts';
             <p class="mb0">{{ user.email }}</p>
           </div>
         </div>
+      </ng-template>
+      <ng-template #navTpl>
+        <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
       </ng-template>
       <ng-template #contentTpl>
         <router-outlet></router-outlet>

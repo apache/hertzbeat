@@ -8,7 +8,16 @@
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="reconciliation"></i>
-    <span>{{ 'monitor.app.' + app | i18n }} {{ 'monitors.list' | i18n }}</span>
+    <span>{{ 'monitors.list' | i18n }}</span>
+    <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5">
+      <span>{{ 'monitor.app.' + app | i18n }}</span>
+    </nz-tag>
+    <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%">
+      <button nz-button nzType="primary">
+        <span>{{ 'common.button.help' | i18n }} </span>
+        <span nz-icon nzType="question-circle"></span>
+      </button>
+    </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
