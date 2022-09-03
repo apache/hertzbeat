@@ -23,6 +23,7 @@ export class MonitorListComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private msg: NzMessageService,
     private monitorSvc: MonitorService,
+    private messageSvc: NzMessageService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -296,6 +297,10 @@ export class MonitorListComponent implements OnInit {
     }
   }
   // end: 列表多选逻辑
+
+  notifyCopySuccess() {
+    this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
+  }
 
   /**
    * 分页回调

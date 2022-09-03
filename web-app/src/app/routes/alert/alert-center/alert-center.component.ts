@@ -141,27 +141,13 @@ export class AlertCenterComponent implements OnInit {
   onMarkReadOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.mark-done'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzOnOk: () => this.updateAlertsStatus(alerts, 3)
-    });
+    this.updateAlertsStatus(alerts, 3);
   }
 
   onMarkUnReadOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.mark-no'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzOnOk: () => this.updateAlertsStatus(alerts, 0)
-    });
+    this.updateAlertsStatus(alerts, 0);
   }
 
   deleteAlerts(alertIds: Set<number>) {

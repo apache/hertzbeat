@@ -78,7 +78,7 @@ import { CONSTS } from 'src/app/shared/consts';
         HertzBeat {{ version }}<br />
         Copyright
         <i nz-icon nzType="copyright"></i> 2022
-        <a href="https://hertzbeat.com" target="_blank">https://www.hertzbeat.com</a>
+        <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>
