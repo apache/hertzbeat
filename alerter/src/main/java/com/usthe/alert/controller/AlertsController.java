@@ -107,11 +107,19 @@ public class AlertsController {
 
     @DeleteMapping
     @ApiOperation(value = "Delete alarms in batches", notes = "根据告警ID列表批量删除告警")
-    public ResponseEntity<Message<Void>> deleteAlertDefines(
+    public ResponseEntity<Message<Void>> deleteAlerts(
             @ApiParam(value = "Alarm List ID | 告警IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
             alertService.deleteAlerts(new HashSet<>(ids));
         }
+        Message<Void> message = new Message<>();
+        return ResponseEntity.ok(message);
+    }
+
+    @DeleteMapping("/clear")
+    @ApiOperation(value = "Delete alarms in batches", notes = "清空所有告警信息")
+    public ResponseEntity<Message<Void>> clearAllAlerts() {
+        alertService.clearAlerts();
         Message<Void> message = new Message<>();
         return ResponseEntity.ok(message);
     }

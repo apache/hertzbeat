@@ -75,6 +75,11 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    public void clearAlerts() {
+        alertDao.deleteAll();
+    }
+
+    @Override
     public void editAlertStatus(Byte status, List<Long> ids) {
         alertDao.updateAlertsStatus(status, ids);
     }

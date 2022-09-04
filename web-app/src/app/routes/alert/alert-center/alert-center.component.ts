@@ -96,6 +96,17 @@ export class AlertCenterComponent implements OnInit {
     });
   }
 
+  onClearAllAlerts() {
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.clear-all'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzOnOk: () => this.clearAllAlerts()
+    });
+  }
+
   onMarkReadAlerts() {
     if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('alert.center.notify.no-mark'), '');
@@ -167,6 +178,27 @@ export class AlertCenterComponent implements OnInit {
         this.tableLoading = false;
         deleteAlerts$.unsubscribe();
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
+      }
+    );
+  }
+
+  clearAllAlerts() {
+    this.tableLoading = true;
+    const deleteAlerts$ = this.alertSvc.clearAlerts().subscribe(
+      message => {
+        deleteAlerts$.unsubscribe();
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.clear-success'), '');
+          this.loadAlertsTable();
+        } else {
+          this.tableLoading = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), message.msg);
+        }
+      },
+      error => {
+        this.tableLoading = false;
+        deleteAlerts$.unsubscribe();
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), error.msg);
       }
     );
   }
