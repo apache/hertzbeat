@@ -101,8 +101,10 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics) {
-        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, metrics);
-        if (defines == null || defines.isEmpty()) {
+        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, app, metrics);
+        List<AlertDefine> defaultDefines = alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(app, metrics);
+        defines.addAll(defaultDefines);
+        if (defines.isEmpty()) {
             return null;
         }
         // 将告警阈值定义从告警级别0-3数字升序排序，数字越小告警基本越高，即从最高的告警阈值开始匹配计算
