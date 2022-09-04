@@ -31,6 +31,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appCountService: AppCount = new AppCount();
   appCountOs: AppCount = new AppCount();
   appCountDb: AppCount = new AppCount();
+  appCountMid: AppCount = new AppCount();
   appCountCustom: AppCount = new AppCount();
 
   // start 数量全局概览
@@ -228,6 +229,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.appCountService = new AppCount();
     this.appCountOs = new AppCount();
     this.appCountDb = new AppCount();
+    this.appCountMid = new AppCount();
     this.appCountCustom = new AppCount();
     let dashboard$ = this.monitorSvc.getAppsMonitorSummary().subscribe(
       message => {
@@ -268,6 +270,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 this.appCountOs.unAvailableSize += app.unAvailableSize;
                 this.appCountOs.unManageSize += app.unManageSize;
                 this.appCountOs.unReachableSize += app.unReachableSize;
+                break;
+              case 'mid':
+                this.appCountMid.size += app.size;
+                this.appCountMid.availableSize += app.availableSize;
+                this.appCountMid.unAvailableSize += app.unAvailableSize;
+                this.appCountMid.unManageSize += app.unManageSize;
+                this.appCountMid.unReachableSize += app.unReachableSize;
                 break;
               case 'custom':
                 this.appCountCustom.size += app.size;
