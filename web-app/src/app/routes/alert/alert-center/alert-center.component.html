@@ -13,7 +13,7 @@
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<div>
+<div style="margin-bottom: 20px">
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
@@ -29,6 +29,10 @@
   <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.center.delete' | i18n }}
+  </button>
+  <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
+    <i nz-icon nzType="clear" nzTheme="outline"></i>
+    {{ 'alert.center.clear' | i18n }}
   </button>
 
   <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()">
@@ -100,9 +104,10 @@
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center" nzLeft>{{ data.target }}</td>
       <td nzAlign="center">
-        <a [routerLink]="['/monitors/' + data.tags?.monitorId]">
-          <span>{{ data.tags?.monitorName }}</span>
-        </a>
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags?.monitorId]">
+          {{ data.tags?.monitorName }}
+          <span nz-icon nzType="area-chart"></span>
+        </button>
       </td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">

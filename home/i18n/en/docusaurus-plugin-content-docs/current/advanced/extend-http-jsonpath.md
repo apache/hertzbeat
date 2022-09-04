@@ -55,7 +55,7 @@ Multilayer format：Set key value in the array
 
 #### Example
 
-Query the value information of the custom system, and its exposed interface is  `/metrics/person`. We need `type,num` indicator.      
+Query the value information of the custom system, and its exposed interface is  `/metrics/person`. We need `type,num` Metric.      
 The raw data returned by the interface is as follows：  
 ```json
 {
@@ -93,7 +93,7 @@ We use the jsonpath script to parse, and the corresponding script is: `$.number[
   }
 ]
 ```
-This data structure conforms to the data format specification of HertzBeat, and the indicator `type,num` is successfully extracted.
+This data structure conforms to the data format specification of HertzBeat, and the Metric `type,num` is successfully extracted.
 
 **The corresponding monitoring configuration definition file YML can be configured as follows**   
 
@@ -113,17 +113,17 @@ configmap:
     type: 1
   - key: port
     type: 0
-# indicator group list
+# Metric group list
 metrics:
-# The first monitoring indicator group person
-# Note：the built-in monitoring indicators have (responseTime - response time)
+# The first monitoring Metric group person
+# Note：the built-in monitoring Metrics have (responseTime - response time)
   - name: cpu
-    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
-    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # Specific monitoring indicators in the indicator group
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # indicator information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: indicator unit
+      # Metric information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: Metric unit
       - field: type
         type: 1
         instance: true
@@ -143,7 +143,8 @@ metrics:
       method: GET
       # enable ssl/tls or not, that is to say, HTTP or HTTPS. The default is false
       ssl: false
-      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability indicator monitoring
+      # parsing method for response data: default-system rules, jsonPath-jsonPath script, website-website availability Metric monitoring
       # jsonPath parsing is used here
-      parseType: $.number[*] 
+      parseType: jsonPath
+      parseScript: '$.number[*]' 
 ```

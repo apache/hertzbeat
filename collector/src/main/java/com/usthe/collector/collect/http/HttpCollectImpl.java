@@ -79,7 +79,7 @@ import java.util.Map;
 
 
 /**
- * http https 采集实现类
+ * http https collect
  * @author tomsun28
  * @date 2021/11/4 15:37
  */
