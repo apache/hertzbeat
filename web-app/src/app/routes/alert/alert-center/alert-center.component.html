@@ -30,6 +30,10 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.center.delete' | i18n }}
   </button>
+  <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
+    <i nz-icon nzType="clear" nzTheme="outline"></i>
+    {{ 'alert.center.clear' | i18n }}
+  </button>
 
   <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()">
     {{ 'common.search' | i18n }}
