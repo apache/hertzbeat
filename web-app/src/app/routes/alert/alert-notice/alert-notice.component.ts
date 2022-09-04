@@ -387,6 +387,33 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageRuleModalVisible = false;
   }
 
+  updateNoticeRule(noticeRule: NoticeRule) {
+    this.ruleTableLoading = true;
+    const updateNoticeRule$ = this.noticeRuleSvc
+      .editNoticeRule(noticeRule)
+      .pipe(
+        finalize(() => {
+          updateNoticeRule$.unsubscribe();
+          this.ruleTableLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+          }
+          this.loadRulesTable();
+          this.ruleTableLoading = false;
+        },
+        error => {
+          this.ruleTableLoading = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+        }
+      );
+  }
+
   onManageRuleModalOk() {
     this.receiversOption.forEach(option => {
       if (option.value == this.rule.receiverId) {
