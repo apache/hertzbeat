@@ -123,6 +123,33 @@ export class AlertSettingComponent implements OnInit {
     this.editAlertDefine(alertDefineId);
   }
 
+  updateAlertDefine(alertDefine: AlertDefine) {
+    this.tableLoading = true;
+    const updateDefine$ = this.alertDefineSvc
+      .editAlertDefine(alertDefine)
+      .pipe(
+        finalize(() => {
+          updateDefine$.unsubscribe();
+          this.tableLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+          }
+          this.loadAlertDefineTable();
+          this.tableLoading = false;
+        },
+        error => {
+          this.tableLoading = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+        }
+      );
+  }
+
   editAlertDefine(alertDefineId: number) {
     this.isManageModalAdd = false;
     this.isManageModalVisible = true;
