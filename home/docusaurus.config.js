@@ -8,7 +8,7 @@ const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/'
 
 module.exports = {
   title: 'HertzBeat',
-  tagline: '易用友好的云监控系统',
+  tagline: '易用友好的实时监控系统',
   url: 'https://hertzbeat.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',

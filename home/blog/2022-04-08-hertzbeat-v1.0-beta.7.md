@@ -1,5 +1,5 @@
 ---
-title: HertzBeat入GVP啦，并 v1.0.beta.7 发布，易用友好的云监控系统     
+title: HertzBeat入GVP啦，并 v1.0.beta.7 发布，易用友好的实时监控系统     
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
