@@ -277,6 +277,7 @@
   "common.notify.enable-fail": "Enable Failed!",
   "common.confirm.clear-cache": "Please confirm whether to clear cache!",
   "common.notify.clear-success": "Clear Success!",
+  "common.notify.copy-success": "Copy Success!",
   "common.button.ok": "OK",
   "common.button.cancel": "Cancel",
   "common.button.help": "Help",

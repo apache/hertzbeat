@@ -277,6 +277,7 @@
   "common.notify.enable-fail": "啓用監控失敗!",
   "common.confirm.clear-cache": "請確認是否清理緩存!",
   "common.notify.clear-success": "清理成功!",
+  "common.notify.copy-success": "複製成功!",
   "common.button.ok": "確定",
   "common.button.detect": "測試",
   "common.button.cancel": "取消",
