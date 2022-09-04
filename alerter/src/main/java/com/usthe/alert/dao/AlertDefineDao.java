@@ -40,13 +40,23 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
     void deleteAlertDefinesByIdIn(Set<Long> alertDefineIds);
 
     /**
+     * 根据监控指标类型查询对应默认告警定义阈值
+     * @param app 监控类型
+     * @param metric 指标集合类型
+     * @return 告警定义
+     */
+    List<AlertDefine> queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(String app, String metric);
+
+    /**
      * 根据监控ID查询与之关联的告警定义列表
      * @param monitorId 监控ID
+     * @param app 监控类型
      * @param metrics 指标组
      * @return 告警定义列表
      */
     @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id " +
-            "where bind.monitorId = :monitorId and define.metric = :metrics and define.enable = true")
+            "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
     List<AlertDefine> queryAlertDefinesByMonitor(@Param(value = "monitorId") Long monitorId,
+                                                 @Param(value = "app") String app,
                                                  @Param(value = "metrics") String metrics);
 }
