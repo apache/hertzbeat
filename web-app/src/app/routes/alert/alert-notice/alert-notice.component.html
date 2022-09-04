@@ -157,20 +157,10 @@
             <span>{{ data.receiverName }}</span>
           </td>
           <td nzAlign="center">
-            <nz-tag *ngIf="data.filterAll" nzColor="green">
-              <span>{{ 'common.yes' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="!data.filterAll" nzColor="orange">
-              <span>{{ 'common.no' | i18n }}</span>
-            </nz-tag>
+            <nz-switch [(ngModel)]="data.filterAll" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
           </td>
           <td nzAlign="center">
-            <nz-tag *ngIf="data.enable" nzColor="green">
-              <span>{{ 'common.enable' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="!data.enable" nzColor="orange">
-              <span>{{ 'common.disable' | i18n }}</span>
-            </nz-tag>
+            <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
