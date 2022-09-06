@@ -7,13 +7,22 @@
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
-    <i nz-icon nzType="monitor"></i>
-    <span>{{ 'monitor.app.' + app | i18n }} {{ 'monitors.list' | i18n }}</span>
+    <i nz-icon nzType="reconciliation"></i>
+    <span>{{ 'monitors.list' | i18n }}</span>
+    <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5">
+      <span>{{ 'monitor.app.' + app | i18n }}</span>
+    </nz-tag>
+    <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%">
+      <button nz-button nzType="primary">
+        <span>{{ 'common.button.help' | i18n }} </span>
+        <span nz-icon nzType="question-circle"></span>
+      </button>
+    </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<div>
+<div style="margin-bottom: 20px">
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
@@ -93,9 +102,10 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center" nzLeft>
-        <a [routerLink]="['/monitors/' + data.id]">
-          <span>{{ data.name }}</span>
-        </a>
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.id]">
+          {{ data.name }}
+          <span nz-icon nzType="area-chart"></span>
+        </button>
       </td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.status == 0" nzColor="default">
@@ -115,7 +125,20 @@
           <span>{{ 'monitor.status.unreachable' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.host }}</td>
+      <td nzAlign="center">
+        <button
+          nz-button
+          nzSize="default"
+          nzType="text"
+          [cdkCopyToClipboard]="data.host"
+          nz-tooltip
+          [nzTooltipTitle]="'common.copy' | i18n"
+          (click)="notifyCopySuccess()"
+        >
+          {{ data.host }}
+          <span nz-icon nzType="copy"></span>
+        </button>
+      </td>
       <td nzAlign="center">
         <nz-tag nzColor="processing">
           <i nz-icon nzType="cloud"></i>
@@ -124,6 +147,16 @@
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
+        <button
+          nz-button
+          nzType="primary"
+          [routerLink]="['/monitors/' + data.id]"
+          nzDanger
+          nz-tooltip
+          [nzTooltipTitle]="'monitors.detail' | i18n"
+        >
+          <span nz-icon nzType="area-chart" nzTheme="outline"></span>
+        </button>
         <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitors.edit-monitor' | i18n">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
         </button>

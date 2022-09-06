@@ -43,13 +43,16 @@ metrics:
       objectName: Catalina:type=Server
       url: ^_^url^_^
 
-  - name: eden_space
+  - name: memory_pool
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: name
+        type: 1
+        instance: true
       - field: committed
         type: 0
       - field: init
@@ -59,11 +62,13 @@ metrics:
       - field: used
         type: 0
     aliasFields:
+      - Name
       - Usage->committed
       - Usage->init
       - Usage->max
       - Usage->used
     calculates:
+      - name=Name
       - committed=Usage->committed
       - init=Usage->init
       - max=Usage->max
@@ -76,109 +81,7 @@ metrics:
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      objectName: java.lang:type=MemoryPool,name=Eden Space
-      url: ^_^url^_^
-
-  - name: meta_space
-    priority: 2
-    # 指标组中的具体监控指标
-    fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: committed
-        type: 0
-      - field: init
-        type: 0
-      - field: max
-        type: 0
-      - field: used
-        type: 0
-    aliasFields:
-      - Usage->committed
-      - Usage->init
-      - Usage->max
-      - Usage->used
-    calculates:
-      - committed=Usage->committed
-      - init=Usage->init
-      - max=Usage->max
-      - used=Usage->used
-    protocol: jmx
-    jmx:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      objectName: java.lang:type=MemoryPool,name=Metaspace
-      url: ^_^url^_^
-
-  - name: survivor_space
-    priority: 3
-    # 指标组中的具体监控指标
-    fields:
-    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: committed
-        type: 0
-      - field: init
-        type: 0
-      - field: max
-        type: 0
-      - field: used
-        type: 0
-    aliasFields:
-      - Usage->committed
-      - Usage->init
-      - Usage->max
-      - Usage->used
-    calculates:
-      - committed=Usage->committed
-      - init=Usage->init
-      - max=Usage->max
-      - used=Usage->used
-    protocol: jmx
-    jmx:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      objectName: java.lang:type=MemoryPool,name=Survivor Space
-      url: ^_^url^_^
-
-  - name: tenured_gen
-    priority: 4
-    # 指标组中的具体监控指标
-    fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: committed
-        type: 0
-      - field: init
-        type: 0
-      - field: max
-        type: 0
-      - field: used
-        type: 0
-    aliasFields:
-      - Usage->committed
-      - Usage->init
-      - Usage->max
-      - Usage->used
-    calculates:
-      - committed=Usage->committed
-      - init=Usage->init
-      - max=Usage->max
-      - used=Usage->used
-    protocol: jmx
-    jmx:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      objectName: java.lang:type=MemoryPool,name=Tenured Gen
+      objectName: java.lang:type=MemoryPool,name=*
       url: ^_^url^_^
 
   - name: code_cache

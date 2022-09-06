@@ -4,7 +4,7 @@ title: Monitoring：website monitoring
 sidebar_label: Website monitoring   
 ---
 
-> Monitor whether the website is available, response time and other indicators.       
+> Monitor whether the website is available, response time and other Metrics.       
 
 ### Configuration parameter   
 
@@ -19,10 +19,10 @@ sidebar_label: Website monitoring
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator   
+### Collection Metric   
 
-#### Indicator set：summary  
+#### Metric set：summary  
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | responseTime   | ms | Website response time |

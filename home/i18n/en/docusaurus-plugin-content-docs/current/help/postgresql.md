@@ -4,7 +4,7 @@ title: Monitoring：PostgreSQL database monitoring
 sidebar_label: PostgreSQL database   
 ---
 
-> Collect and monitor the general performance indicators of PostgreSQL database. Support PostgreSQL 10+.
+> Collect and monitor the general performance Metrics of PostgreSQL database. Support PostgreSQL 10+.
 
 ### Configuration parameter
 
@@ -22,11 +22,11 @@ sidebar_label: PostgreSQL database
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：basic
+#### Metric set：basic
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | server_version  | none | Version number of the database server |
 | port            | none | Database server exposure service port |
@@ -34,9 +34,9 @@ sidebar_label: PostgreSQL database
 | data_directory  | none | Database storage data disk address |
 | max_connections | connections | Database maximum connections |
 
-#### Indicator set：state
+#### Metric set：state
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | name            | none     | Database name, or share-object is a shared object |
 | conflicts       | times   | The number of queries canceled in the database due to a conflict with recovery |
@@ -48,9 +48,9 @@ sidebar_label: PostgreSQL database
 | stats_reset     | none    | The last time these statistics were reset |
 
 
-#### Indicator set：activity
+#### Metric set：activity
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | running         | connections |  Number of current client connections |
 

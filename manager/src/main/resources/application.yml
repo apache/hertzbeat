@@ -26,7 +26,7 @@ spring:
       - classpath:/dist/
       - classpath:../dist/
   jackson:
-    default-property-inclusion: NON_EMPTY
+    default-property-inclusion: ALWAYS
 
 sureness:
   auths:

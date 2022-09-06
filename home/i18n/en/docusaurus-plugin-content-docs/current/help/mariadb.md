@@ -4,7 +4,7 @@ title: Monitoring：MariaDB database monitoring
 sidebar_label: MariaDB database   
 ---
 
-> Collect and monitor the general performance indicators of MariaDB database. Support MariaDB5+.
+> Collect and monitor the general performance Metrics of MariaDB database. Support MariaDB5+.
 
 ### Configuration parameter
 
@@ -22,20 +22,20 @@ sidebar_label: MariaDB database
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：basic
+#### Metric set：basic
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | version         | none | Database version |
 | port            | none | Database exposure service port |
 | datadir         | none |  Database storage data disk address |
 | max_connections | none | Database maximum connections |
 
-#### Indicator set：status
+#### Metric set：status
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | threads_created         | none | MariaDB created total connections |
 | threads_connected           | none | MariaDB connected connections |
@@ -43,9 +43,9 @@ sidebar_label: MariaDB database
 | threads_running | none | MariaDB current active connections |
 
 
-#### Indicator set：innodb
+#### Metric set：innodb
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | innodb_data_reads     | none | innodb average number of reads from files per second |
 | innodb_data_writes    | none | innodb average number of writes from file per second |

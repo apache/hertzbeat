@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> Friendly Cloud Monitoring System. | 易用友好的云监控系统, 无需Agent, 强大自定义监控能力.   
+> An open-source, real-time monitoring system with custom-monitor and agentless. | 易用友好的实时监控系统，无需Agent，强大自定义监控能力.   
 
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
@@ -26,12 +26,11 @@ Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.        
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless. Support web service, database, os, middleware and more.          
 > We also provide **[Monitoring Cloud For Saas](https://console.tancloud.cn)**, people no longer need to deploy a cumbersome monitoring system in order to monitor their website resources. **[Sign in to get started for free](https://console.tancloud.cn)**.   
-> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, DingDing, WeChat FeiShu and WebHook.    
+> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, dingDing, weChat, feiShu, webhook and more.    
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.      
-> HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.  
-> Welcome to HertzBeat's [Cloud Environment TanCloud](https://console.tancloud.cn) to try and discover more.    
+> HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.   
 > Welcome to join us to build hertzbeat together.    
 
 > `HertzBeat`'s multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.    
@@ -67,7 +66,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ##### 2：Install via package  
 
 1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. Need Jdk Environment, `jdk8 -- jdk11`
+2. Need Jdk Environment, `jdk11`
 3. [optional]Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`  
 4. Run shell `$ ./startup.sh `
 5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
@@ -77,7 +76,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 ##### 3：Start via source code        
 
 1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.  
-2. Backend：need `maven3+`, `java8+`, `lombok`, start the manager service.  
+2. Backend：need `maven3+`, `java11`, `lombok`, start the manager service.  
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
 4. Access `localhost:4200` to start, default account: `admin/hertzbeat`  
 
@@ -130,6 +129,7 @@ Thanks these wonderful people, welcome to join us:
   <tr>
     <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
     <td align="center"><a href="http://mroldx.xyz/"><img src="https://avatars.githubusercontent.com/u/34847828?v=4?s=100" width="100px;" alt=""/><br /><sub><b>mroldx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=mroldx" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/woshiniusange"><img src="https://avatars.githubusercontent.com/u/91513022?v=4?s=100" width="100px;" alt=""/><br /><sub><b>woshiniusange</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=woshiniusange" title="Documentation">📖</a></td>
   </tr>
 </table>
 
@@ -142,29 +142,21 @@ Thanks these wonderful people, welcome to join us:
 
 HertzBeat is an incubation project of [Dromara Open Source Community](https://dromara.org/).
 
-##### WeChat Group   
-
-Add WeChat account `tan-cloud` or scan the QR code below to pull you into the WeChat group.   
-
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
-
-##### QQ Group
-
-QQ group number `718618151` or scan the group QR code below, verify code: `tancloud`  
-
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
-
-##### Public WeChat      
-
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>
-
 ##### Channel
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
 [Github Discussion](https://github.com/usthe/hertzbeat/discussions)
 
-[User Club](https://support.qq.com/products/379369)
+[User Club](https://support.qq.com/products/379369)   
+
+##### Public        
+
+<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>       
+
+<br/>
+
+<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg" width="400"/>    
 
 ##### Friends   
 

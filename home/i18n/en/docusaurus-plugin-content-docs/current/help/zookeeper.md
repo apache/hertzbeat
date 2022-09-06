@@ -4,7 +4,7 @@ title: Monitoring：Zookeeper monitoring
 sidebar_label: Zookeeper monitoring   
 ---
 
-> Collect and monitor the general performance indicators of Zookeeper.
+> Collect and monitor the general performance Metrics of Zookeeper.
 
 ### Configuration parameter
 
@@ -20,11 +20,11 @@ sidebar_label: Zookeeper monitoring
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：conf
+#### Metric set：conf
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | clientPort         | none | Port |
 | dataDir            | none | Data snapshot file directory. By default, 100000 operations generate a snapshot |
@@ -37,9 +37,9 @@ sidebar_label: Zookeeper monitoring
 | serverId | none | Server id |
 
 
-#### Indicator set：stats
+#### Metric set：stats
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | zk_version         | none | Server version |
 | zk_server_state            | none | Server role |
@@ -60,7 +60,7 @@ sidebar_label: Zookeeper monitoring
 
 # Note
 ## Zookeeper four word command
->The current implementation scheme uses the four word command provided by zookeeper to collect indicators.
+>The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
 Users need to add the four word command of zookeeper to the white list by themselves.
 
 Steps
