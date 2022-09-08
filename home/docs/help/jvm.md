@@ -65,9 +65,12 @@ sidebar_label: JVM虚拟机
 
 ### JVM应用开启JMX协议步骤
 
-1. 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口
+1. 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
+
+参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote 
 
 ```shell
+-Djava.rmi.server.hostname=对外ip地址 
 -Dcom.sun.management.jmxremote.port=9999
 -Dcom.sun.management.jmxremote.ssl=false
 -Dcom.sun.management.jmxremote.authenticate=false 
