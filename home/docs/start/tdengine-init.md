@@ -1,9 +1,9 @@
 ---
 id: tdengine-init  
 title: 依赖服务TDengine安装初始化        
-sidebar_label: TDengine安装初始化(可选)    
+sidebar_label: TDengine初始化(可选)    
 ---
-TDengine是一款国产的开源物联网时序型数据库，我们使用其替换了InfluxDb，来存储采集到的监控指标历史数据。  
+TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意⚠️ 2.4.x版本。   
 注意⚠️ TDengine为可选项，未配置则无历史图表数据。
 
 > 如果您已有TDengine环境，可直接跳到创建数据库实例那一步。
@@ -67,6 +67,7 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
    替换里面的`warehouse.store.td-engine`数据源参数，URL账户密码    
 
 ```
+   warehouse.store.td-engine.enable
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
    warehouse.store.td-engine.password
