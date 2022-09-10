@@ -1,9 +1,9 @@
 ---
 id: mysql-init  
 title: 依赖的关系型数据库H2切换为MYSQL           
-sidebar_label: H2数据库切换为MYSQL    
+sidebar_label: H2切换为MYSQL    
 ---
-MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
+MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
 > 如果您已有MYSQL环境，可直接跳到数据库创建那一步。  
 
