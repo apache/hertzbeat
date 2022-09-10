@@ -27,7 +27,7 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
    Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-init)）       
    Specific replacement parameters is as follows:     
 ```
-   
+   warehouse.store.td-engine.enable
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
    warehouse.store.td-engine.password

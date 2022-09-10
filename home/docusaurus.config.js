@@ -4,7 +4,7 @@ const organizationName = 'dromara' // Usually your GitHub org/user name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/'
+const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages'
 
 module.exports = {
   title: 'HertzBeat',
@@ -13,7 +13,7 @@ module.exports = {
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
-  favicon: cdnUrl + 'img/tancloud-logo.svg',
+  favicon: '/img/tancloud-logo.svg',
   organizationName,
   projectName,
   customFields: {
@@ -25,7 +25,7 @@ module.exports = {
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
-    image: cdnUrl + 'img/tancloud-logo.svg',
+    image: '/img/tancloud-logo.svg',
     liveCodeBlock: {
       playgroundPosition: 'bottom',
     },
@@ -63,7 +63,7 @@ module.exports = {
       title: 'HertzBeat',
       logo: {
         alt: '易用友好的高性能监控云',
-        src: cdnUrl + 'img/tancloud-logo.svg',
+        src: '/img/tancloud-logo.svg',
       },
       items: [
         {
@@ -200,7 +200,7 @@ module.exports = {
       ],
       logo: {
         alt: 'TANCLOUD探云-易用友好的高性能监控云',
-        src: 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg',
+        src: '/img/planet.jpg',
         href: 'https://github.com/dromara/hertzbeat',
       },
       copyright:

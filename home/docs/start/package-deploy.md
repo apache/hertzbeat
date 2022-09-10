@@ -32,6 +32,7 @@ sidebar_label: 安装包方式部署
    注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）
    具体替换参数如下:   
 ```
+   warehouse.store.td-engine.enable
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
    warehouse.store.td-engine.password
