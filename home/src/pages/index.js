@@ -1,29 +1,25 @@
 import React from 'react'
 import clsx from 'clsx'
 import Layout from '@theme/Layout'
-import CodeBlock from '@theme/CodeBlock'
 import Link from '@docusaurus/Link'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import useBaseUrl from '@docusaurus/useBaseUrl'
 import Translate, { translate } from '@docusaurus/Translate'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
-import SwiperCore, { EffectFade, Navigation, Autoplay } from 'swiper'
+import { EffectFade, Navigation, Autoplay } from 'swiper'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 import Feature from './components/Feature'
 import Section from './components/Section'
-import Highlight from './components/Highlight'
 import LogoCarousel from './components/LogoCarousel'
 import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
 import {
   features,
-  SetupExample,
-  SurenessIntegration,
   dromaraFriends,
   friendsLink,
 } from '../constants'
@@ -42,7 +38,7 @@ function Home() {
           <h1 className="hero__title">
             <img
               style={{ width: '500px', marginTop: '100px' }}
-              src={cdnTransfer('img/hertzbeat-brand.svg')}
+              src={cdnTransfer('/img/hertzbeat-brand.svg')}
               alt={'#'}
             />
           </h1>
@@ -57,31 +53,31 @@ function Home() {
               />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/web-monitor.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/web-monitor.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/ping-connect.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/ping-connect.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/port-available.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/port-available.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
               <img
-                src={cdnTransfer('img/badge/database-monitor.svg')}
+                src={cdnTransfer('/img/badge/database-monitor.svg')}
                 alt={''}
               />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/os-monitor.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/os-monitor.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/custom-monitor.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/custom-monitor.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/threshold.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/threshold.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('img/badge/alert.svg')} alt={''} />
+              <img src={cdnTransfer('/img/badge/alert.svg')} alt={''} />
             </a>
           </div>
           <div className={styles.buttons}>
@@ -173,13 +169,13 @@ function Home() {
           </Swiper>
         </div>
         <div
-          className="swiper-button-prev user-swiper-button-prev"
-          style={{ top: '880px', left: '50px', color: '#000033' }}
-        ></div>
+    className="swiper-button-prev user-swiper-button-prev"
+    style={{top: '880px', left: '50px', color: '#000033'}}
+    />
         <div
-          className="swiper-button-next user-swiper-button-next"
-          style={{ top: '880px', right: '50px', color: '#000033' }}
-        ></div>
+    className="swiper-button-next user-swiper-button-next"
+    style={{top: '880px', right: '50px', color: '#000033'}}
+    />
         {features && features.length > 0 && (
           <Section isDark>
             {features.map((props, idx) => (

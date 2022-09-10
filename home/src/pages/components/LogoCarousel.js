@@ -5,9 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/icons/'
-
-// const cdnUrl = '/img/icons/'
+const iconCommonUrl = '/img/icons/'
 
 var settings = {
     dots: false,
@@ -36,7 +34,7 @@ export default class LogoCarousel extends React.Component {
             <Slider {...settings}>
                 {this.props.logos.map((value, index) => (
                     <a key={index} href={value.url} target="_blank" rel="noopener noreferrer">
-                        <img style={{ maxHeight: '80px', maxWidth: '100px' }} src={cdnUrl + value.img} alt={value.alt} />
+                        <img style={{ maxHeight: '80px', maxWidth: '100px' }} src={iconCommonUrl + value.img} alt={value.alt} />
                     </a>
                 ))}
             </Slider>

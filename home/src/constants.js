@@ -187,12 +187,7 @@ export const dromaraFriends = [
     img: 'image-combiner_logo.png',
     alt: 'image-combiner',
     url: 'https://gitee.com/dromara/image-combiner',
-  },
-  {
-    img: 'dromara.png',
-    alt: 'dromara',
-    url: 'https://dromara.org/',
-  },
+  }
 ]
 
 export const friendsLink = [
