@@ -13,60 +13,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: example2
-# 强制固定必须参数 - host(ipv4,ipv6,域名)
+app: hertzbeat
 param:
-    # field-字段名称标识符
   - field: host
-    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
-    # 是否是必输项 true-必填 false-可选
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
     type: number
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
-    # 端口默认值
-    defaultValue: 80
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    defaultValue: 1157
   - field: ssl
     name:
-      zh-CN: 启动SSL
-      en-US: SSL
-    # 当type为boolean时,前端用switch展示开关
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
     type: boolean
-    required: false
-  - field: contentType
+    required: true
+  - field: timeout
     name:
-      zh-CN: Content-Type
-      en-US: Content-Type
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
     type: text
-    placeholder: 'Request Body Type'
+    limit: 20
     required: false
     hide: true
-  - field: payload
+  - field: password
     name:
-      zh-CN: 请求BODY
-      en-US: BODY
-    type: textarea
-    placeholder: 'Available When POST PUT'
+      zh-CN: 密码
+      en-US: Password
+    type: password
     required: false
     hide: true
-  - field: headers
-    name:
-      zh-CN: 请求Headers
-      en-US: Headers
-    type: key-value
-    required: false
-    keyAlias: Header Name
-    valueAlias: Header Value

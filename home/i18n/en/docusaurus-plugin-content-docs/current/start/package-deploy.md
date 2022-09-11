@@ -29,7 +29,7 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
    ```
    Modify the configuration file `hertzbeat/config/application.yml`
    Replace `td-engine` service parameter, IP port account and password
-   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-init)）
+   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-change)）
    Specific replacement parameters is as follows:   
 ```
    warehouse.store.td-engine.enabled
