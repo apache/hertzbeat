@@ -9,7 +9,7 @@ sidebar_label: Sponsor
 
 ### WeChat Alipay  
 
-![wechat-alipay](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/pay.png)          
+![wechat-alipay](/img/docs/pay.png)          
 
 
 Thanks [JiShi Information(build a new microwave + optical transaction network)](https://www.flarespeed.com) sponsored server node.        

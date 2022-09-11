@@ -24,7 +24,7 @@ sidebar_label: Docker方式部署
 3. 配置HertzBeat的配置文件(可选)      
    在主机目录下创建application.yml，eg:/opt/application.yml        
    配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码   
-   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）       
+   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-change)）       
    具体替换参数如下:     
 ```
    warehouse.store.td-engine.enable

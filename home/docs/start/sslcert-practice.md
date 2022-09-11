@@ -1,17 +1,13 @@
 ---
-title: SSL证书过期监控最佳实践
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
-tags: [opensource, practice]  
+id: ssl-cert-practice  
+title: SSL证书过期监控使用案例    
+sidebar_label: 使用案例
 ---
 
-先祝看到的同学中秋快乐，身体健康，在身体健康的基础上尽量暴富。
 
-进入正题，现在大部分网站都默认支持 HTTPS，我们申请的证书一般是3个月或者1年，很容易随着时间的流逝SSL证书过期了我们却没有第一时间发现，或者在过期之前没有及时更新证书。
+现在大部分网站都默认支持 HTTPS，我们申请的证书一般是3个月或者1年，很容易随着时间的流逝SSL证书过期了我们却没有第一时间发现，或者在过期之前没有及时更新证书。
 
-今天这篇文章介绍如果使用 hertzbeat 监控系统来检测我们网站的SSL证书有效期，当证书过期时或证书快过期前几天，给我们发告警消息。
+这篇文章介绍如果使用 hertzbeat 监控系统来检测我们网站的SSL证书有效期，当证书过期时或证书快过期前几天，给我们发告警消息。
 
 #### HertzBeat是什么
 

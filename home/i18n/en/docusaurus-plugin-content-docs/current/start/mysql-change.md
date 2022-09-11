@@ -1,5 +1,5 @@
 ---
-id: mysql-init  
+id: mysql-change  
 title: Dependent Relational Database H2 Switch to MYSQL            
 sidebar_label: H2 Database Switch to MYSQL    
 ---
