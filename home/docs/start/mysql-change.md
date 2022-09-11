@@ -1,5 +1,5 @@
 ---
-id: mysql-init  
+id: mysql-change  
 title: 依赖的关系型数据库H2切换为MYSQL           
 sidebar_label: H2切换为MYSQL    
 ---

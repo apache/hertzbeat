@@ -24,7 +24,7 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
 3. Configure HertzBeat's configuration file(optional)      
    Create application.yml in the host directory，eg:/opt/application.yml        
    The configuration file content refer to project repository[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，modify service parameters, IP port account password in `td-engine`   
-   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-init)）       
+   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-change)）       
    Specific replacement parameters is as follows:     
 ```
    warehouse.store.td-engine.enable

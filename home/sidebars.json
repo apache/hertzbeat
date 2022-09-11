@@ -9,7 +9,8 @@
         "start/tdengine-init",
         "start/docker-deploy",
         "start/package-deploy",
-        "start/mysql-init"
+        "start/ssl-cert-practice",
+        "start/mysql-change"
       ]
     },
     {
@@ -17,13 +18,16 @@
       "label": "自定义监控",
       "items": [
         "advanced/extend-point",
+        "advanced/extend-tutorial",
         {
           "type": "category",
           "label": "HTTP协议",
           "items": [
             "advanced/extend-http",
             "advanced/extend-http-default",
-            "advanced/extend-http-jsonpath"
+            "advanced/extend-http-jsonpath",
+            "advanced/extend-http-example-hertzbeat",
+            "advanced/extend-http-example-token"
           ]
         },
         {
