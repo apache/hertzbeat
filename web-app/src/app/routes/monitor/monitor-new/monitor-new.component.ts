@@ -50,6 +50,9 @@ export class MonitorNewComponent implements OnInit {
       .pipe(
         switchMap((paramMap: ParamMap) => {
           this.monitor.app = paramMap.get('app') || '';
+          if (this.monitor.app == '') {
+            this.router.navigateByUrl('/monitors/new?app=website');
+          }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
           this.detected = true;
           this.passwordVisible = false;
