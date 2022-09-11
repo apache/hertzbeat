@@ -41,6 +41,9 @@ export class MonitorListComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(paramMap => {
       this.app = paramMap.get('app') || '';
+      if (this.app == '') {
+        this.router.navigateByUrl('/monitors?app=website');
+      }
       this.pageIndex = 1;
       this.pageSize = 8;
       this.checkedMonitorIds = new Set<number>();
