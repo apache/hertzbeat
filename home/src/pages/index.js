@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import clsx from 'clsx'
 import Layout from '@theme/Layout'
 import Link from '@docusaurus/Link'
@@ -18,15 +18,12 @@ import LogoCarousel from './components/LogoCarousel'
 import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
-import {
-  features,
-  dromaraFriends,
-  friendsLink,
-} from '../constants'
+import { features, dromaraFriends, friendsLink } from '../constants'
 import LogoCarouselStatic from './components/LogoCarouselStatic'
 
 function Home() {
   const context = useDocusaurusContext()
+  useEffect(() => autoRedirect(), [])
   const { siteConfig = {} } = context
   return (
     <Layout
@@ -59,7 +56,10 @@ function Home() {
               <img src={cdnTransfer('/img/badge/ping-connect.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('/img/badge/port-available.svg')} alt={''} />
+              <img
+                src={cdnTransfer('/img/badge/port-available.svg')}
+                alt={''}
+              />
             </a>
             <a href="https://console.tancloud.cn">
               <img
@@ -71,7 +71,10 @@ function Home() {
               <img src={cdnTransfer('/img/badge/os-monitor.svg')} alt={''} />
             </a>
             <a href="https://console.tancloud.cn">
-              <img src={cdnTransfer('/img/badge/custom-monitor.svg')} alt={''} />
+              <img
+                src={cdnTransfer('/img/badge/custom-monitor.svg')}
+                alt={''}
+              />
             </a>
             <a href="https://console.tancloud.cn">
               <img src={cdnTransfer('/img/badge/threshold.svg')} alt={''} />
@@ -169,13 +172,13 @@ function Home() {
           </Swiper>
         </div>
         <div
-    className="swiper-button-prev user-swiper-button-prev"
-    style={{top: '880px', left: '50px', color: '#000033'}}
-    />
+          className="swiper-button-prev user-swiper-button-prev"
+          style={{ top: '880px', left: '50px', color: '#000033' }}
+        />
         <div
-    className="swiper-button-next user-swiper-button-next"
-    style={{top: '880px', right: '50px', color: '#000033'}}
-    />
+          className="swiper-button-next user-swiper-button-next"
+          style={{ top: '880px', right: '50px', color: '#000033' }}
+        />
         {features && features.length > 0 && (
           <Section isDark>
             {features.map((props, idx) => (
@@ -225,4 +228,16 @@ function loadGitter() {
     }
     document.body.appendChild(script)
   })
+}
+
+function autoRedirect() {
+  let lang = global.navigator?.language || navigator?.userLanguage
+  console.log('Current lang is ' + lang)
+  if (lang != null && lang.toLowerCase() !== 'zh-cn') {
+    if (sessionStorage.getItem('auto_detect_redirect') !== 'true') {
+      console.log('Not zh-cn, redirect to en')
+      sessionStorage.setItem('auto_detect_redirect', 'true')
+      window.location.href = '/en'
+    }
+  }
 }
