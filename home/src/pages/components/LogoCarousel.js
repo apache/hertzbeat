@@ -34,7 +34,7 @@ export default class LogoCarousel extends React.Component {
             <Slider {...settings}>
                 {this.props.logos.map((value, index) => (
                     <a key={index} href={value.url} target="_blank" rel="noopener noreferrer">
-                        <img style={{ maxHeight: '80px', maxWidth: '100px' }} src={iconCommonUrl + value.img} alt={value.alt} />
+                        <img style={{ maxHeight: '80px', maxWidth: '100px' }} src={value.remoteImg} onError={(e) => e.target.src = iconCommonUrl + value.img} alt={value.alt} />
                     </a>
                 ))}
             </Slider>
