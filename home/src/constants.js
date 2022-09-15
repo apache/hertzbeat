@@ -85,108 +85,135 @@ export const features = [
 export const dromaraFriends = [
   {
     img: 'maxkey_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/maxkey.png',
     alt: 'MaxKey',
     url: 'https://maxkey.top/',
   },
   {
     img: 'jpom_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/jpom.png',
     alt: 'jpom',
     url: 'https://jpom.io/',
   },
   {
-    img: 'fast_request_logo.png',
+    img: 'fast_request_logo.gif',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/fastRequest.gif',
     alt: 'fast-request',
     url: 'https://plugins.sheng90.wang/fast-request/',
   },
   {
     img: 'tlog_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/tlog2.png',
     alt: 'TLog',
     url: 'https://yomahub.com/tlog/',
   },
   {
     img: 'hutool_logo.jpg',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/hutool.jpg',
     alt: 'Hutool',
     url: 'https://hutool.cn/',
   },
   {
     img: 'satoken_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/sa-token.png',
     alt: 'Sa-Token',
     url: 'http://sa-token.dev33.cn/',
   },
   {
     img: 'koalas_rpc_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/koalas-rpc2.png',
     alt: 'koalas_rpc',
     url: 'https://gitee.com/dromara/koalas-rpc',
   },
   {
     img: 'liteflow_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/liteflow.png',
     alt: 'LiteFlow',
     url: 'https://yomahub.com/liteflow/',
   },
   {
     img: 'hmily_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/hmily.png',
     alt: 'hmily',
     url: 'https://dromara.org/',
   },
   {
     img: 'forest_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/forest-logo.png',
     alt: 'Forest',
     url: 'https://forest.dtflyx.com/',
   },
   {
     img: 'cubic_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/cubic.png',
     alt: 'cubic',
     url: 'https://cubic.jiagoujishu.com/',
   },
   {
     img: 'raincat_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/raincat.png',
     alt: 'Raincat',
     url: 'https://dromara.org/',
   },
   {
     img: 'sureness_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/sureness.png',
     alt: 'Sureness',
     url: 'https://su.usthe.com/',
   },
   {
     img: 'easy_es_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/easy-es2.png',
     alt: 'easy-es',
     url: 'https://www.easy-es.cn/',
   },
   {
     img: 'dynamic_tp_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/dynamic-tp.png',
     alt: 'dynamic-tp',
     url: 'https://dynamictp.cn/',
   },
   {
     img: 'northstar_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/northstar_logo.png',
     alt: 'northstar',
     url: 'https://gitee.com/dromara/northstar',
   },
   {
     img: 'mendmix_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/mendmix.png',
     alt: 'mendmix',
     url: 'https://www.jeesuite.com/',
   },
   {
     img: 'gobrs_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/gobrs-async.png',
     alt: 'Gobrs-Async',
     url: 'https://async.sizegang.cn/',
   },
   {
     img: 'easypdf_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/x-easypdf.png',
     alt: 'easypdf',
     url: 'https://dromara.gitee.io/x-easypdf/',
   },
   {
     img: 'dante-cloud_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/dante-cloud2.png',
     alt: 'dante-cloud',
     url: 'https://www.herodotus.cn/',
   },
   {
     img: 'image-combiner_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/image-combiner.png',
     alt: 'image-combiner',
     url: 'https://gitee.com/dromara/image-combiner',
+  },
+  {
+    img: 'go-view_logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/go-view.png',
+    alt: 'go-view',
+    url: 'https://gitee.com/dromara/go-view',
   }
 ]
 
