@@ -6,8 +6,6 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
-import { AlertDefine } from '../../../pojo/AlertDefine';
-import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
 
@@ -76,6 +74,7 @@ export class SettingTagsComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteTags(this.checkedTagIds)
     });
   }
@@ -89,6 +88,7 @@ export class SettingTagsComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteTags(alerts)
     });
   }
