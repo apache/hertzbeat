@@ -189,6 +189,7 @@ export class AlertSettingComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteAlertDefines(this.checkedDefineIds)
     });
   }
@@ -202,6 +203,7 @@ export class AlertSettingComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteAlertDefines(defineIds)
     });
   }
