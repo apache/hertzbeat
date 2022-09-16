@@ -308,14 +308,27 @@ public class HttpCollectImpl extends AbstractCollect {
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
-        for (Map<String, Object> stringMap : results) {
+        for (int i = 0; i < results.size(); i++) {
+            Map<String, Object> stringMap = results.get(i);
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            // 监控目标版本问题可能出现属性不存在，stringMap为空时过滤。参考app-elasticsearch.yml的name: nodes
+            if (stringMap == null) {
+                continue;
+            }
             for (String alias : aliasFields) {
                 Object value = stringMap.get(alias);
                 if (value != null) {
                     valueRowBuilder.addColumns(String.valueOf(value));
                 } else {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    if (alias.startsWith("$.")) {
+                        List<Map<String, Object>> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
+                        if (subResults != null && subResults.size() > i) {
+                            Object resultValue = subResults.get(i);
+                            valueRowBuilder.addColumns(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
+                        } else {
+                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        }
+                    } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Integer.toString(keywordNum));
