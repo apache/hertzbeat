@@ -18,9 +18,10 @@
 package com.usthe.alert;
 
 import com.googlecode.aviator.AviatorEvaluator;
+import com.googlecode.aviator.lexer.token.OperatorType;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
-import com.googlecode.aviator.runtime.type.AviatorBoolean;
-import com.googlecode.aviator.runtime.type.AviatorObject;
+import com.googlecode.aviator.runtime.type.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,6 +32,7 @@ import java.util.Map;
  * @date 2021/11/3 12:55
  */
 @Configuration
+@Slf4j
 public class AlerterConfiguration {
 
     private static final int AVIATOR_LRU_CACHE_SIZE = 1024;
@@ -41,6 +43,29 @@ public class AlerterConfiguration {
         AviatorEvaluator.getInstance()
                 .useLRUExpressionCache(AVIATOR_LRU_CACHE_SIZE)
                 .addFunction(new StrEqualFunction());
+        AviatorEvaluator.getInstance().addOpFunction(OperatorType.BIT_OR, new AbstractFunction() {
+            @Override
+            public AviatorObject call(final Map<String, Object> env, final AviatorObject arg1,
+                                      final AviatorObject arg2) {
+                try {
+                    Object value1 = arg1.getValue(env);
+                    Object value2 = arg2.getValue(env);
+                    Object currentValue = value1 == null ? value2 : value1;
+                    if (arg1.getAviatorType() == AviatorType.String) {
+                        return new AviatorString(String.valueOf(currentValue));
+                    } else {
+                        return AviatorDouble.valueOf(currentValue);
+                    }
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+                return arg1.bitOr(arg2, env);
+            }
+            @Override
+            public String getName() {
+                return OperatorType.BIT_OR.getToken();
+            }
+        });
     }
 
     /**
