@@ -259,6 +259,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
+                } else {
+                    aliasFieldValueMap.put(aliasFields.get(aliasIndex), null);
                 }
             }
             StringBuilder instanceBuilder = new StringBuilder();
@@ -270,18 +272,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     // If there is a calculation expression, calculate the value
                     // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                        for (String variable : expression.getVariableNames()) {
+                        for (String variable : expression.getVariableFullNames()) {
                             Double doubleValue = CommonUtil.parseStrDouble(aliasFieldValueMap.get(variable));
-                            if (doubleValue != null) {
-                                fieldValueMap.put(variable, doubleValue);
-                            }
+                            fieldValueMap.put(variable, doubleValue);
                         }
                     } else {
-                        for (String variable : expression.getVariableNames()) {
+                        for (String variable : expression.getVariableFullNames()) {
                             String strValue = aliasFieldValueMap.get(variable);
-                            if (strValue != null && !"".equals(strValue)) {
-                                fieldValueMap.put(variable, strValue);
-                            }
+                            fieldValueMap.put(variable, strValue);
                         }
                     }
                     try {
