@@ -132,6 +132,7 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/woshiniusange"><img src="https://avatars.githubusercontent.com/u/91513022?v=4?s=100" width="100px;" alt=""/><br /><sub><b>woshiniusange</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=woshiniusange" title="Documentation">📖</a></td>
     <td align="center"><a href="https://vampireachao.github.io/"><img src="https://avatars.githubusercontent.com/u/52746628?v=4?s=100" width="100px;" alt=""/><br /><sub><b>VampireAchao</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=VampireAchao" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/Ceilzcx"><img src="https://avatars.githubusercontent.com/u/48920254?v=4?s=100" width="100px;" alt=""/><br /><sub><b>zcx</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=Ceilzcx" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/CharlieXCL"><img src="https://avatars.githubusercontent.com/u/91540487?v=4?s=100" width="100px;" alt=""/><br /><sub><b>CharlieXCL</b></sub></a><br /><a href="https://github.com/tomsun28/hertzbeat/commits?author=CharlieXCL" title="Documentation">📖</a></td>
   </tr>
 </table>
 
