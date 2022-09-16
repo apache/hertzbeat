@@ -116,7 +116,7 @@ https://tancloud.cn/docs/help/alert_dingtalk
 
 #### 完！
 
-监控SSL证书的实践就到这里，当然对heartbeat来说这个功能只是冰山一角，如果您觉得heartbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
+监控SSL证书的实践就到这里，当然对hertzbeat来说这个功能只是冰山一角，如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
 **github: https://github.com/dromara/hertzbeat**
 
