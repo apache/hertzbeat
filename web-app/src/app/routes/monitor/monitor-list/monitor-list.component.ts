@@ -141,6 +141,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteMonitors(monitors)
     });
   }
@@ -156,6 +157,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteMonitors(this.checkedMonitorIds)
     });
   }
@@ -196,6 +198,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.cancelManageMonitors(this.checkedMonitorIds)
     });
   }
@@ -209,6 +212,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.cancelManageMonitors(monitors)
     });
   }
@@ -245,6 +249,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.enableManageMonitors(this.checkedMonitorIds)
     });
   }
@@ -258,6 +263,7 @@ export class MonitorListComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.enableManageMonitors(monitors)
     });
   }

@@ -92,6 +92,7 @@ export class AlertCenterComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteAlerts(this.checkedAlertIds)
     });
   }
@@ -103,6 +104,7 @@ export class AlertCenterComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.clearAllAlerts()
     });
   }
@@ -118,6 +120,7 @@ export class AlertCenterComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 3)
     });
   }
@@ -132,6 +135,7 @@ export class AlertCenterComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 0)
     });
   }
@@ -145,6 +149,7 @@ export class AlertCenterComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteAlerts(alerts)
     });
   }
