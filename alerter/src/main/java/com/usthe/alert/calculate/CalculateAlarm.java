@@ -205,7 +205,7 @@ public class CalculateAlarm {
                         try {
                             Expression expression = AviatorEvaluator.compile(expr, true);
                             Boolean match = (Boolean) expression.execute(fieldValueMap);
-                            if (match) {
+                            if (match != null && match) {
                                 // 阈值规则匹配，判断已触发阈值次数，触发告警
                                 String monitorAlertKey = String.valueOf(monitorId) + define.getId();
                                 Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
