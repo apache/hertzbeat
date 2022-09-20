@@ -18,8 +18,7 @@
 package com.usthe.common.util;
 
 import lombok.extern.slf4j.Slf4j;
-import sun.net.util.IPAddressUtil;
-
+import org.apache.http.conn.util.InetAddressUtils;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -60,10 +59,10 @@ public class IpDomainUtil {
         if (LOCALHOST.equalsIgnoreCase(ipDomain)) {
             return true;
         }
-        if (IPAddressUtil.isIPv4LiteralAddress(ipDomain)) {
+        if (InetAddressUtils.isIPv4Address(ipDomain)) {
             return true;
         }
-        if (IPAddressUtil.isIPv6LiteralAddress(ipDomain)) {
+        if (InetAddressUtils.isIPv6Address(ipDomain)) {
             return true;
         }
         return DOMAIN_PATTERN.matcher(ipDomain).matches();

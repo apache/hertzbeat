@@ -97,5 +97,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- 使用apache.http.conn.util代替sun.net.util -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
     </dependencies>
 </project>
