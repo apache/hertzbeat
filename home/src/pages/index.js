@@ -18,7 +18,7 @@ import LogoCarousel from './components/LogoCarousel'
 import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
-import { features, dromaraFriends, friendsLink } from '../constants'
+import {features, dromaraFriends, friendsLink, usersLink} from '../constants'
 import LogoCarouselStatic from './components/LogoCarouselStatic'
 
 function Home() {
@@ -171,6 +171,7 @@ function Home() {
             </SwiperSlide>
           </Swiper>
         </div>
+
         <div
           className="swiper-button-prev user-swiper-button-prev"
           style={{ top: '880px', left: '50px', color: '#000033' }}
@@ -179,6 +180,12 @@ function Home() {
           className="swiper-button-next user-swiper-button-next"
           style={{ top: '880px', right: '50px', color: '#000033' }}
         />
+        {/*who is using*/}
+        <Section>
+            <LogoCarousel logos={usersLink}
+                          headerTitle={translate({ message: 'Who Use HertzBeat?' })}>
+            </LogoCarousel>
+        </Section>
         {features && features.length > 0 && (
           <Section isDark>
             {features.map((props, idx) => (
@@ -186,10 +193,6 @@ function Home() {
             ))}
           </Section>
         )}
-        {/*who is using*/}
-        {/*<Section>*/}
-        {/*    <LogoCarousel logos={logos}></LogoCarousel>*/}
-        {/*</Section>*/}
 
         {/*Friend Links*/}
         <Section>
