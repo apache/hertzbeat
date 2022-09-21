@@ -227,40 +227,28 @@ export const friendsLink = [
 
 export const usersLink = [
   {
+    img: 'skyworth_logo.png',
+    alt: 'skyworth',
+  },
+  {
+    img: 'sc_edu_logo.png',
+    alt: 'sc_edu_logo',
+  },
+  {
+    img: 'cmge_logo.png',
+    alt: 'cmge',
+  },
+  {
+    img: 'cnsodata_logo.svg',
+    alt: 'cnsodata',
+  },
+  {
+    img: 'tancloud_logo.svg',
+    alt: 'tancloud',
+  },
+  {
     img: 'hibobi_logo.svg',
     alt: 'hibobi',
-    url: 'https://www.babiego.com/',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-    url: 'https://gitee.com/dromara/go-view',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-    url: 'https://gitee.com/dromara/go-view',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-    url: 'https://gitee.com/dromara/go-view',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-    url: 'https://gitee.com/dromara/go-view',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-    url: 'https://gitee.com/dromara/go-view',
-  },
-  {
-    img: 'skyworth_logo.png',
-    remoteImg: 'http://investor.skyworth.com/images/logo.png',
-    alt: 'skyworth',
-    url: 'http://www.skyworth.com/',
   }
 ]
 
