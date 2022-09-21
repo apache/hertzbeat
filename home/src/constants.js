@@ -225,6 +225,33 @@ export const friendsLink = [
   },
 ]
 
+export const usersLink = [
+  {
+    img: 'skyworth_logo.png',
+    alt: 'skyworth',
+  },
+  {
+    img: 'sc_edu_logo.png',
+    alt: 'sc_edu_logo',
+  },
+  {
+    img: 'cmge_logo.png',
+    alt: 'cmge',
+  },
+  {
+    img: 'cnsodata_logo.svg',
+    alt: 'cnsodata',
+  },
+  {
+    img: 'tancloud_logo.svg',
+    alt: 'tancloud',
+  },
+  {
+    img: 'hibobi_logo.svg',
+    alt: 'hibobi',
+  }
+]
+
 export const SetupExample = `
 <dependency>
     <groupId>com.usthe.sureness</groupId>
@@ -233,30 +260,4 @@ export const SetupExample = `
 </dependency>
 
 compile group: 'com.usthe.sureness', name: 'sureness-core', version: '1.0.6'
-`
-
-export const SurenessIntegration = `
-    @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-        try {
-            SubjectSum subject = SurenessSecurityManager.getInstance().checkIn(servletRequest);
-        } catch (IncorrectCredentialsException | UnknownAccountException | ExpiredCredentialsException e1) {
-            logger.debug("this request account info is illegal");
-            responseWrite(ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED).body(e1.getMessage()), servletResponse);
-            return;
-        } catch (UnauthorizedException e4) {
-            logger.debug("this account can not access this resource");
-            responseWrite(ResponseEntity
-                    .status(HttpStatus.FORBIDDEN).body(e4.getMessage()), servletResponse);
-            return;
-        } catch (RuntimeException e) {
-            logger.error("other exception happen: ", e);
-            responseWrite(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(),
-                    servletResponse);
-            return;
-        }
-        filterChain.doFilter(servletRequest, servletResponse);
-    }
 `

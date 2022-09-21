@@ -318,10 +318,6 @@ module.exports = {
   themes: ['@docusaurus/theme-live-codeblock'],
   scripts: [
     {
-      src: 'https://cdn.jsdelivr.net/gh/buttons/buttons.github.io/buttons.js',
-      async: true,
-    },
-    {
       src: 'https://hm.baidu.com/hm.js?77fb03ed1c6c1267119fec6d84dd88f3',
       async: true,
     },
