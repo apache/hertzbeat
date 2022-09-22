@@ -25,6 +25,7 @@ import com.usthe.manager.service.MailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty("spring.mail.username")
 final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final JavaMailSender javaMailSender;
     private final MailService mailService;
