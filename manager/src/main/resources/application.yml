@@ -52,6 +52,7 @@ spring:
     hibernate:
       ddl-auto: update
 
+  # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
     # Attention: this is mail server address.
