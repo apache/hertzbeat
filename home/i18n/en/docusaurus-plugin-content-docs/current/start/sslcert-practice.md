@@ -1,7 +1,7 @@
 ---
 id: ssl-cert-practice  
 title: SSL证书过期监控使用案例    
-sidebar_label: 使用案例
+sidebar_label: Practice Example
 ---
 
 先祝看到的同学中秋快乐，身体健康，在身体健康的基础上尽量暴富。

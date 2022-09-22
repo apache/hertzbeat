@@ -1,7 +1,7 @@
 ---
 id: extend-tutorial
 title: 快速教程:自定义适配一款基于HTTP协议的监控   
-sidebar_label: 快速教程
+sidebar_label: Quickly Tutorial
 ---
 
 通过此教程我们一步一步描述如何在hertzbeat监控系统下自定义新增适配一款基于http协议的监控类型。  
