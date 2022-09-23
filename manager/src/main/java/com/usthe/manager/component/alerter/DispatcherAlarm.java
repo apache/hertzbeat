@@ -115,14 +115,14 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            // todo Forward configured email WeChat webhook              转发配置的邮件 微信 webhook
+            // Forward configured email WeChat webhook
             List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
                 try {
                     sendNoticeMsg(receiver, alert);
                 } catch (AlertNoticeException e) {
-                    log.error("dispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                 }
             }
         }
