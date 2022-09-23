@@ -201,3 +201,10 @@ $ docker run -d -p 1157:1157 \
 5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
 > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
 > 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init)  
+
+
+6.如果无法显示图表，则是TDengine版本不对
+![cd4402a1d6fd769a575869ec41b1c8f](https://user-images.githubusercontent.com/5848915/191882873-27ba5955-ca3c-4fa4-910a-e66c2e8a7173.png)
+2.2.0.5无法显示图表
+![91e30e27455ba38f9dfedc4c402208c](https://user-images.githubusercontent.com/5848915/191882978-c4a59180-d2cd-4e2b-ba48-ec33073c2015.png)
+安装2.4即可
