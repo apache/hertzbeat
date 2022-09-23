@@ -200,3 +200,6 @@ Please refer to the following points to troubleshoot issues：
 5. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
 > Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init).  
+
+6. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed  
+> Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  

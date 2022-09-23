@@ -23,6 +23,7 @@ import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.manager.service.NoticeConfigService;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
@@ -76,7 +77,7 @@ public class DispatcherAlarm implements InitializingBean {
      * @param alert alert msg
      * @return send success or failed
      */
-    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert){
+    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert) {
         if(receiver == null || receiver.getType() == null){
             log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
             return false;
@@ -114,11 +115,15 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            // todo Forward configured email WeChat webhook              转发配置的邮件 微信 webhook
+            // Forward configured email WeChat webhook
             List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
-                sendNoticeMsg(receiver, alert);
+                try {
+                    sendNoticeMsg(receiver, alert);
+                } catch (AlertNoticeException e) {
+                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                }
             }
         }
     }

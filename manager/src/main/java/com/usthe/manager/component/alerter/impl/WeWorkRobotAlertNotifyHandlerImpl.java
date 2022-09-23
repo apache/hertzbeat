@@ -24,12 +24,12 @@ import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.WeWorkWebHookDto;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
@@ -92,16 +92,21 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         weWorkWebHookDTO.setMarkdown(markdownDTO);
         String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
         try {
-            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, String.class);
+            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
-                log.debug("Send weWork webHook: {} Success", webHookUrl);
+                assert entity.getBody() != null;
+                if (entity.getBody().getErrCode() == 0) {
+                    log.debug("Send WeWork webHook: {} Success", webHookUrl);
+                } else {
+                    log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
+                    throw new AlertNoticeException(entity.getBody().getErrMsg());
+                }
             } else {
-                log.warn("Send weWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
-        } catch (ResourceAccessException e) {
-            log.warn("Send WebHook: {} Failed: {}.", webHookUrl, e.getMessage());
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            throw new AlertNoticeException("[WeWork Notify Error] " + e.getMessage());
         }
     }
 
