@@ -24,6 +24,7 @@ import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -106,16 +107,22 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
         flyBookWebHookDto.setContent(content);
         String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
         try {
-            ResponseEntity<String> entity = restTemplate.postForEntity(webHookUrl, flyBookWebHookDto, String.class);
+            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
+                    flyBookWebHookDto, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
-                log.debug("Send feiShu webHook: {} Success", webHookUrl);
+                assert entity.getBody() != null;
+                if (entity.getBody().getCode() == null || entity.getBody().getCode() == 0) {
+                    log.debug("Send feiShu webHook: {} Success", webHookUrl);
+                } else {
+                    log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody().getMsg());
+                    throw new AlertNoticeException(entity.getBody().getMsg());
+                }
             } else {
                 log.warn("Send feiShu webHook: {} Failed: {}", webHookUrl, entity.getBody());
+                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
-        } catch (ResourceAccessException e) {
-            log.warn("Send WebHook: {} Failed: {}.", webHookUrl, e.getMessage());
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            throw new AlertNoticeException("[FeiShu Notify Error] " + e.getMessage());
         }
     }
 

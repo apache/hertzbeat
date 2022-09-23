@@ -69,8 +69,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
-            log.error("[Email Alert] Exception，Exception information={}", e.getMessage());
-            throw new AlertNoticeException("email notice send message error, please check config!");
+            throw new AlertNoticeException("[Email Notify Error] " + e.getMessage());
         }
     }
 
