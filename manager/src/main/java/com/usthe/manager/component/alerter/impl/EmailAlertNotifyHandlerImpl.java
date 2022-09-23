@@ -22,6 +22,7 @@ import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.service.MailService;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +53,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -69,6 +70,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
             log.error("[Email Alert] Exception，Exception information={}", e.getMessage());
+            throw new AlertNoticeException("email notice send message error, please check config!");
         }
     }
 
