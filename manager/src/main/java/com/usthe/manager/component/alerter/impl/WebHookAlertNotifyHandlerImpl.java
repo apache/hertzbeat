@@ -20,6 +20,7 @@ package com.usthe.manager.component.alerter.impl;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,10 +45,11 @@ final class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
                 log.debug("Send WebHook: {} Success", receiver.getHookUrl());
             } else {
-                log.warn("Send WebHook: {} Failed", receiver.getHookUrl());
+                log.warn("Send WebHook: {} Failed: {}", receiver.getHookUrl(), entity.getBody());
+                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {
-            log.warn("Send WebHook: {} Failed: {}.", receiver.getHookUrl(), e.getMessage());
+            throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
         }
     }
 

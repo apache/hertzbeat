@@ -42,6 +42,7 @@ import javax.validation.Valid;
 
 import java.util.List;
 
+import static com.usthe.common.util.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -156,9 +157,16 @@ public class NoticeConfigController {
 
     @PostMapping(path = "/receiver/send-test-msg")
     @ApiOperation(value = "Send test msg to receiver", notes = "给指定接收人发送测试消息")
-    public ResponseEntity<Message<Boolean>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
+    public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
-        return ResponseEntity.ok(new Message<>(sendFlag));
+        if (sendFlag) {
+            return ResponseEntity.ok(new Message<>());
+        }
+        Message<Void> message = Message.<Void>builder()
+                .msg("Notify service not available, please check config!")
+                .code(FAIL_CODE)
+                .build();
+        return ResponseEntity.ok(message);
     }
 
 }

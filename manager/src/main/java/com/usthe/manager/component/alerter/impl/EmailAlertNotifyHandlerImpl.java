@@ -22,9 +22,11 @@ import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.service.MailService;
+import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,7 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty("spring.mail.username")
 final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final JavaMailSender javaMailSender;
     private final MailService mailService;
@@ -50,7 +53,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -66,7 +69,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {
-            log.error("[Email Alert] Exception，Exception information={}", e.getMessage());
+            throw new AlertNoticeException("[Email Notify Error] " + e.getMessage());
         }
     }
 
