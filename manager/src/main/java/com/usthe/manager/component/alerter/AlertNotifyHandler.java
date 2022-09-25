@@ -32,6 +32,7 @@ public interface AlertNotifyHandler {
      *
      * @param receiver Notification configuration information   通知配置信息
      * @param alert    Alarm information                        告警信息
+     * @throws AlertNoticeException when send receiver error
      */
     void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException;
 

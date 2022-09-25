@@ -4,7 +4,7 @@ title: Custom Monitoring
 sidebar_label: Custom Monitoring    
 ---
 > HertzBeat has custom monitoring ability. You only need to configure two YML file to fit a custom monitoring type.  
-> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH protocol](extend-ssh).And it will support more general protocols in the future(ssh telnet wmi snmp).。        
+> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc)(mysql,mariadb,postgresql...), [SSH protocol](extend-ssh), JMX protocol, SNMP protocol. And it will support more general protocols in the future.        
 
 ### Custom Steps  
 
