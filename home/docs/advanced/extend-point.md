@@ -4,7 +4,7 @@ title: 自定义监控
 sidebar_label: 自定义监控    
 ---
 > HertzBeat拥有自定义监控能力，您只需配置两个YML文件就能适配一款自定义的监控类型。  
-> 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH协议](extend-ssh)，后续会支持更多通用协议(ssh telnet wmi snmp)。        
+> 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH协议](extend-ssh)，JMX协议，SNMP协议，后续会支持更多通用协议。        
 
 ### 自定义步骤  
 
