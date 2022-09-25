@@ -8,9 +8,11 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open-source, real-time monitoring system with custom-monitor and agentless. | 易用友好的实时监控系统，无需Agent，强大自定义监控能力.   
+> An open-source, real-time monitoring system with custom-monitor and agentLess. | 易用友好的实时监控系统，无需Agent，强大自定义监控能力.   
 
+[![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![QQ](https://img.shields.io/badge/qq-718618151-orange)](https://jq.qq.com/?_wv=1027&k=Bud9OzdI)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
