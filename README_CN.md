@@ -138,6 +138,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center"><a href="https://github.com/CharlieXCL"><img src="https://avatars.githubusercontent.com/u/91540487?v=4?s=100" width="100px;" alt=""/><br /><sub><b>CharlieXCL</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=CharlieXCL" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/Privauto"><img src="https://avatars.githubusercontent.com/u/36581456?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Privauto</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Privauto" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Privauto" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/emrys-he"><img src="https://avatars.githubusercontent.com/u/5848915?v=4?s=100" width="100px;" alt=""/><br /><sub><b>emrys</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=emrys-he" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
