@@ -1,6 +1,6 @@
 {
   "projectName": "hertzbeat",
-  "projectOwner": "tomsun28",
+  "projectOwner": "dromara",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -272,6 +272,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/91540487?v=4",
       "profile": "https://github.com/CharlieXCL",
       "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Privauto",
+      "name": "Privauto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36581456?v=4",
+      "profile": "https://github.com/Privauto",
+      "contributions": [
+        "code",
         "doc"
       ]
     }
