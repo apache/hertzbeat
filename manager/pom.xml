@@ -28,9 +28,9 @@
     <packaging>jar</packaging>
 
     <properties>
-        <mysql.version>8.0.16</mysql.version>
+        <mysql.version>8.0.30</mysql.version>
         <h2.version>2.1.212</h2.version>
-        <snake.yaml.version>1.26</snake.yaml.version>
+        <snake.yaml.version>1.32</snake.yaml.version>
     </properties>
 
     <dependencies>
@@ -101,8 +101,9 @@
         </dependency>
         <!-- swagger -->
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.6.11</version>
         </dependency>
         <!-- yaml file load -->
         <dependency>

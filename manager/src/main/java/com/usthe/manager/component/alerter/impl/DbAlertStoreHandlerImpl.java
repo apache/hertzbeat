@@ -48,7 +48,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         Map<String, String> tags = alert.getTags();
         String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
         if (monitorIdStr == null) {
-            log.error("alert tags monitorId is null.");
+            log.error("alert monitorTags monitorId is null.");
             return;
         }
         long monitorId = Long.parseLong(monitorIdStr);
@@ -57,8 +57,8 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
             return;
         }
-        if (monitor.getTags() != null) {
-            monitor.getTags().forEach(item -> {
+        if (monitor.getMonitorTags() != null) {
+            monitor.getMonitorTags().forEach(item -> {
                 tags.put(item.getName(), item.getValue());
             });
         }

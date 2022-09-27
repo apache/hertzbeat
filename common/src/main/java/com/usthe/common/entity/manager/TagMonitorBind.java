@@ -26,15 +26,13 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.*;
 import java.time.LocalDateTime;
-
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
- * Tag Bind Monitor
+ * MonitorTag Bind Monitor
  * 标签与监控关联实体
  * @author tomsun28
  * @date 2021/11/13 22:19
@@ -45,7 +43,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "Tag Bind Monitor | 标签与监控关联实体")
+@ApiModel(description = "MonitorTag Bind Monitor | 标签与监控关联实体")
 @EntityListeners(AuditingEntityListener.class)
 public class TagMonitorBind {
 

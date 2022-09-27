@@ -21,12 +21,13 @@ spring:
     active: prod
   mvc:
     static-path-pattern: /**
-  resources:
-    static-locations:
-      - classpath:/dist/
-      - classpath:../dist/
   jackson:
     default-property-inclusion: ALWAYS
+  web:
+    resources:
+      static-locations:
+        - classpath:/dist/
+        - classpath:../dist/
 
 sureness:
   auths:
@@ -97,3 +98,10 @@ alerter:
   max-alert-eval-interval: 86400000
   # system alert(available alert, reachable alert...) trigger times
   system-alert-trigger-times: 1
+
+springdoc:
+  api-docs:
+    enabled: true
+  packagesToScan: com.usthe.manager.controller
+  pathsToMatch: /api/**
+
