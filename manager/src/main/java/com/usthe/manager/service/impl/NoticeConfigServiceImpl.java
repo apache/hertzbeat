@@ -121,7 +121,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
                             return false;
                         }
                     }
-                    // filter tags
+                    // filter monitorTags
                     if (rule.getTags() != null && !rule.getTags().isEmpty()) {
                         return rule.getTags().stream().anyMatch(tagItem -> {
                             if (!alert.getTags().containsKey(tagItem.getName())) {

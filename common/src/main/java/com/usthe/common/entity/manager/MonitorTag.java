@@ -28,19 +28,17 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Objects;
-
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
- * Tag
+ * MonitorTag
  * 标签
  * @author tomsun28
  * @date 2021/11/13 22:19
@@ -51,24 +49,24 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "Tag Entity | 标签实体")
+@ApiModel(description = "MonitorTag Entity | 标签实体")
 @EntityListeners(AuditingEntityListener.class)
-public class Tag {
+public class MonitorTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ApiModelProperty(value = "Tag主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
 
-    @ApiModelProperty(value = "Tag Field | 标签名称", example = "app", accessMode = READ_WRITE, position = 1)
+    @ApiModelProperty(value = "MonitorTag Field | 标签名称", example = "app", accessMode = READ_WRITE, position = 1)
     @NotNull
     private String name;
 
-    @ApiModelProperty(value = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "MonitorTag Value | 标签值", example = "23", accessMode = READ_WRITE, position = 2)
     @Column(name = "`value`")
     private String value;
 
-    @ApiModelProperty(value = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE, position = 3)
+    @ApiModelProperty(value = "MonitorTag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE, position = 3)
     private String color;
 
     @ApiModelProperty(value = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置", accessMode = READ_WRITE, position = 4)
@@ -100,8 +98,8 @@ public class Tag {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Tag tag = (Tag) o;
-        return Objects.equals(name, tag.name) && Objects.equals(value, tag.value);
+        MonitorTag monitorTag = (MonitorTag) o;
+        return Objects.equals(name, monitorTag.name) && Objects.equals(value, monitorTag.value);
     }
 
     @Override

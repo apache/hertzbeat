@@ -29,20 +29,17 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
  * Notification strategy entity
  * 通知策略
- *
  * @author tomsun28
  * @date 2021/11/13 22:19
  */
@@ -129,11 +126,11 @@ public class NoticeRule {
     @Data
     public static class TagItem {
 
-        @ApiModelProperty(value = "Tag Name")
+        @ApiModelProperty(value = "MonitorTag Name")
         @NotBlank
         private String name;
 
-        @ApiModelProperty(value = "Tag Value")
+        @ApiModelProperty(value = "MonitorTag Value")
         private String value;
     }
 }

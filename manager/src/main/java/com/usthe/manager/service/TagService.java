@@ -17,7 +17,7 @@
 
 package com.usthe.manager.service;
 
-import com.usthe.common.entity.manager.Tag;
+import com.usthe.common.entity.manager.MonitorTag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,27 +34,27 @@ import java.util.List;
 public interface TagService {
 
     /**
-     * new tags
-     * @param tags tag
+     * new monitorTags
+     * @param monitorTags tag
      */
-    void addTags(List<Tag> tags);
+    void addTags(List<MonitorTag> monitorTags);
 
     /**
-     * update tag
-     * @param tag tag
+     * update monitorTag
+     * @param monitorTag monitorTag
      */
-    void modifyTag(Tag tag);
+    void modifyTag(MonitorTag monitorTag);
 
     /**
      * get tag page list
      * @param specification 查询条件
      * @param pageRequest 分页条件
-     * @return tags
+     * @return monitorTags
      */
-    Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);
+    Page<MonitorTag> getTags(Specification<MonitorTag> specification, PageRequest pageRequest);
 
     /**
-     * delete tags
+     * delete monitorTags
      * @param ids tag id list
      */
     void deleteTags(HashSet<Long> ids);

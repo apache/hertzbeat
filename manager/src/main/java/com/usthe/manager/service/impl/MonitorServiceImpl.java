@@ -22,7 +22,7 @@ import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
-import com.usthe.common.entity.manager.Tag;
+import com.usthe.common.entity.manager.MonitorTag;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.AesUtil;
 import com.usthe.common.util.CommonConstants;
@@ -117,13 +117,13 @@ public class MonitorServiceImpl implements MonitorService {
         // Apply for monitor id         申请 monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
+        List<MonitorTag> monitorTags = monitor.getMonitorTags();
+        if (monitorTags == null) {
+            monitorTags = new LinkedList<>();
+            monitor.setMonitorTags(monitorTags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        monitorTags.add(MonitorTag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
+        monitorTags.add(MonitorTag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
         // Construct the collection task Job entity     构造采集任务Job实体
         Job appDefine = appService.getAppDefine(monitor.getApp());
         appDefine.setMonitorId(monitorId);
@@ -158,13 +158,13 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
         long monitorId = SnowFlakeIdGenerator.generateId();
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
+        List<MonitorTag> monitorTags = monitor.getMonitorTags();
+        if (monitorTags == null) {
+            monitorTags = new LinkedList<>();
+            monitor.setMonitorTags(monitorTags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        monitorTags.add(MonitorTag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
+        monitorTags.add(MonitorTag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
         Job appDefine = appService.getAppDefine(monitor.getApp());
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
@@ -240,8 +240,8 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
         // todo 校验标签
-        if (monitor.getTags() != null) {
-            monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
+        if (monitor.getMonitorTags() != null) {
+            monitor.setMonitorTags(monitor.getMonitorTags().stream().distinct().collect(Collectors.toList()));
         }
 
         // Parameter definition structure verification  参数定义结构校验
@@ -359,14 +359,14 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // Auto Update Default Tags: monitorName
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
+        List<MonitorTag> monitorTags = monitor.getMonitorTags();
+        if (monitorTags == null) {
+            monitorTags = new LinkedList<>();
+            monitor.setMonitorTags(monitorTags);
         }
-        for (Tag tag : tags) {
-            if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
-                tag.setValue(monitor.getName());
+        for (MonitorTag monitorTag : monitorTags) {
+            if (CommonConstants.TAG_MONITOR_NAME.equals(monitorTag.getName())) {
+                monitorTag.setValue(monitor.getName());
             }
         }
         // Construct the collection task Job entity

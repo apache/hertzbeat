@@ -30,20 +30,17 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
  * Monitor Entity
  * 监控实体
- *
  * @author tomsun28
  * @date 2021/11/14 9:53
  */
@@ -162,11 +159,11 @@ public class Monitor {
      *           JoinColumn  name 中间表的关联字段名称
      *                       referencedColumnName 关联表的映射字段名称
      */
-    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = MonitorTag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "hzb_tag_monitor_bind",
         foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
-    private List<Tag> tags;
+    private List<MonitorTag> monitorTags;
 }
