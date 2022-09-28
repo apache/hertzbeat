@@ -48,7 +48,7 @@ public class I18nController {
     @GetMapping("/{lang}")
     @Operation(summary = "Query total i 18 n internationalized text resources", description = "查询总的i18n国际化文本资源")
     public ResponseEntity<Message<Map<String, String>>> queryI18n(
-            @Parameter(name = "en: language type,zh: 语言类型", example = "zh-CN")
+            @Parameter(description = "en: language type,zh: 语言类型", example = "zh-CN")
             @PathVariable(name = "lang", required = false) String lang) {
         if (lang == null || "".equals(lang)) {
             lang = "zh-CN";

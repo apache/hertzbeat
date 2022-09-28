@@ -75,10 +75,10 @@ public class TagController {
     @GetMapping()
     @Operation(summary = "Get tags information", description = "根据条件获取标签信息")
     public ResponseEntity<Message<Page<Tag>>> getTags(
-            @Parameter(name = "Tag content search | 标签内容模糊查询", example = "status") @RequestParam(required = false) String search,
-            @Parameter(name = "Tag type | 标签类型", example = "0") @RequestParam(required = false) Byte type,
-            @Parameter(name = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(name = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+            @Parameter(description = "Tag content search | 标签内容模糊查询", example = "status") @RequestParam(required = false) String search,
+            @Parameter(description = "Tag type | 标签类型", example = "0") @RequestParam(required = false) Byte type,
+            @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         // Get tag information
         Specification<Tag> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
@@ -118,7 +118,7 @@ public class TagController {
     @DeleteMapping()
     @Operation(summary = "Delete tags based on ID", description = "根据TAG ID删除TAG")
     public ResponseEntity<Message<Void>> deleteTags(
-            @Parameter(name = "TAG IDs | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+            @Parameter(description = "TAG IDs | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
             tagService.deleteTags(new HashSet<>(ids));
         }

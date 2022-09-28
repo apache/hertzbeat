@@ -82,7 +82,7 @@ public class MonitorController {
     @GetMapping(path = "/{id}")
     @Operation(summary = "Obtain monitoring information based on monitoring ID", description = "根据监控ID获取监控信息")
     public ResponseEntity<Message<MonitorDto>> getMonitor(
-            @Parameter(name = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
+            @Parameter(description = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // Get monitoring information
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
@@ -98,7 +98,7 @@ public class MonitorController {
     @DeleteMapping(path = "/{id}")
     @Operation(summary = "Delete monitoring application based on monitoring ID", description = "根据监控ID删除监控应用")
     public ResponseEntity<Message<Void>> deleteMonitor(
-            @Parameter(name = "en: Monitor ID,zh: 监控ID", example = "6565463543") @PathVariable("id") final long id) {
+            @Parameter(description = "en: Monitor ID,zh: 监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // delete monitor 删除监控
         Monitor monitor = monitorService.getMonitor(id);
         if (monitor == null) {

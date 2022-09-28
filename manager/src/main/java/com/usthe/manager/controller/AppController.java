@@ -53,7 +53,7 @@ public class AppController {
     @GetMapping(path = "/{app}/params")
     @Operation(summary = "The structure of the input parameters required to specify the monitoring type according to the app query", description = "根据app查询指定监控类型的需要输入参数的结构")
     public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(
-            @Parameter(name = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase());
         return ResponseEntity.ok(new Message<>(paramDefines));
     }
@@ -61,7 +61,7 @@ public class AppController {
     @GetMapping(path = "/{app}/define")
     @Operation(summary = "The definition structure of the specified monitoring type according to the app query", description = "根据app查询指定监控类型的定义结构")
     public ResponseEntity<Message<Job>> queryAppDefine(
-            @Parameter(name = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         Job define = appService.getAppDefine(app.toLowerCase());
         return ResponseEntity.ok(new Message<>(define));
     }
@@ -69,7 +69,7 @@ public class AppController {
     @GetMapping(path = "/hierarchy")
     @Operation(summary = "Query all monitored types-indicator group-indicator level, output in a hierarchical structure", description = "查询所有监控的类型-指标组-指标层级,以层级结构输出")
     public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchy(
-            @Parameter(name = "en: language type,zh: 语言类型",
+            @Parameter(description = "en: language type,zh: 语言类型",
                     example = "zh-CN")
             @RequestParam(name = "lang", required = false) String lang) {
         if (lang == null || "".equals(lang)) {
