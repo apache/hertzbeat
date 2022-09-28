@@ -126,11 +126,11 @@ public class NoticeRule {
     @Data
     public static class TagItem {
 
-        @ApiModelProperty(value = "MonitorTag Name")
+        @ApiModelProperty(value = "Tag Name")
         @NotBlank
         private String name;
 
-        @ApiModelProperty(value = "MonitorTag Value")
+        @ApiModelProperty(value = "Tag Value")
         private String value;
     }
 }

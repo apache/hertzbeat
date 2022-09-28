@@ -38,7 +38,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
- * MonitorTag
+ * Tag
  * 标签
  * @author tomsun28
  * @date 2021/11/13 22:19
@@ -49,24 +49,24 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "MonitorTag Entity | 标签实体")
+@ApiModel(description = "Tag Entity | 标签实体")
 @EntityListeners(AuditingEntityListener.class)
-public class MonitorTag {
+public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ApiModelProperty(value = "Tag主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
     private Long id;
 
-    @ApiModelProperty(value = "MonitorTag Field | 标签名称", example = "app", accessMode = READ_WRITE, position = 1)
+    @ApiModelProperty(value = "Tag Field | 标签名称", example = "app", accessMode = READ_WRITE, position = 1)
     @NotNull
     private String name;
 
-    @ApiModelProperty(value = "MonitorTag Value | 标签值", example = "23", accessMode = READ_WRITE, position = 2)
+    @ApiModelProperty(value = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE, position = 2)
     @Column(name = "`value`")
     private String value;
 
-    @ApiModelProperty(value = "MonitorTag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE, position = 3)
+    @ApiModelProperty(value = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE, position = 3)
     private String color;
 
     @ApiModelProperty(value = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置", accessMode = READ_WRITE, position = 4)
@@ -98,8 +98,8 @@ public class MonitorTag {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        MonitorTag monitorTag = (MonitorTag) o;
-        return Objects.equals(name, monitorTag.name) && Objects.equals(value, monitorTag.value);
+        Tag tag = (Tag) o;
+        return Objects.equals(name, tag.name) && Objects.equals(value, tag.value);
     }
 
     @Override

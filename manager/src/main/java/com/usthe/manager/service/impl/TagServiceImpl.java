@@ -17,7 +17,7 @@
 
 package com.usthe.manager.service.impl;
 
-import com.usthe.common.entity.manager.MonitorTag;
+import com.usthe.common.entity.manager.Tag;
 import com.usthe.manager.dao.TagDao;
 import com.usthe.manager.service.TagService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,22 +45,22 @@ public class TagServiceImpl implements TagService {
     private TagDao tagDao;
 
     @Override
-    public void addTags(List<MonitorTag> monitorTags) {
-        tagDao.saveAll(monitorTags);
+    public void addTags(List<Tag> tags) {
+        tagDao.saveAll(tags);
     }
 
     @Override
-    public void modifyTag(MonitorTag monitorTag) {
-        Optional<MonitorTag> tagOptional = tagDao.findById(monitorTag.getId());
+    public void modifyTag(Tag tag) {
+        Optional<Tag> tagOptional = tagDao.findById(tag.getId());
         if (tagOptional.isPresent()) {
-            tagDao.save(monitorTag);
+            tagDao.save(tag);
         } else {
-            throw new IllegalArgumentException("The monitorTag is not existed");
+            throw new IllegalArgumentException("The tag is not existed");
         }
     }
 
     @Override
-    public Page<MonitorTag> getTags(Specification<MonitorTag> specification, PageRequest pageRequest) {
+    public Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest) {
         return tagDao.findAll(specification, pageRequest);
     }
 

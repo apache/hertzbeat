@@ -19,16 +19,15 @@ package com.usthe.manager.pojo.dto;
 
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.Param;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitoring Information External Interaction Entities
@@ -38,14 +37,14 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
  * @date 2021/11/14 10:13
  */
 @Data
-@ApiModel(description = "Monitoring information entities | 监控信息实体")
+@Schema(description = "Monitoring information entities | 监控信息实体")
 public class MonitorDto {
 
     /**
      * Monitoring entity
      * 监控实体
      */
-    @ApiModelProperty(value = "监控实体", accessMode = READ_WRITE, position = 0)
+    @Schema(description = "监控实体", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private Monitor monitor;
@@ -53,7 +52,7 @@ public class MonitorDto {
     /**
      * Params 参数
      */
-    @ApiModelProperty(value = "监控参数", accessMode = READ_WRITE, position = 1)
+    @Schema(description = "监控参数", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private List<Param> params;
@@ -62,13 +61,13 @@ public class MonitorDto {
      * List of indicator groups
      * 指标组列表
      */
-    @ApiModelProperty(value = "指标组列表", accessMode = READ_ONLY, position = 2)
+    @Schema(description = "指标组列表", accessMode = READ_ONLY)
     private List<String> metrics;
 
     /**
      * Whether to detect
      * 是否探测
      */
-    @ApiModelProperty(value = "是否进行探测", accessMode = READ_WRITE, position = 3)
+    @Schema(description = "是否进行探测", accessMode = READ_WRITE)
     private boolean detected;
 }
