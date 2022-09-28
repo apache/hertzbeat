@@ -32,7 +32,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 
 /**
- * MonitorTag Bind Monitor
+ * Tag Bind Monitor
  * 标签与监控关联实体
  * @author tomsun28
  * @date 2021/11/13 22:19
@@ -43,7 +43,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "MonitorTag Bind Monitor | 标签与监控关联实体")
+@ApiModel(description = "Tag Bind Monitor | 标签与监控关联实体")
 @EntityListeners(AuditingEntityListener.class)
 public class TagMonitorBind {
 

@@ -25,6 +25,7 @@ import com.usthe.common.entity.dto.Message;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,7 +49,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @author tom
  * @date 2021/12/9 10:32
  */
-@Api(tags = "Alarm Manage Batch API | 告警批量管理API")
+@Tag(name = "Alarm Manage Batch API | 告警批量管理API")
 @RestController
 @RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
