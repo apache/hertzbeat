@@ -21,8 +21,8 @@ import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.common.entity.alerter.AlertDefineMonitorBind;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.common.entity.dto.Message;
-import io.swagger.annotations.ApiParam;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -77,7 +77,7 @@ public class AlertDefineController {
     @GetMapping(path = "/{id}")
     @Operation(summary = "查询告警定义", description = "根据告警定义ID获取告警定义信息")
     public ResponseEntity<Message<AlertDefine>> getAlertDefine(
-            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("id") long id) {
+            @Parameter(description = "告警定义ID", example = "6565463543") @PathVariable("id") long id) {
         // 获取监控信息
         AlertDefine alertDefine = alertDefineService.getAlertDefine(id);
         Message.MessageBuilder<AlertDefine> messageBuilder = Message.builder();
@@ -92,7 +92,7 @@ public class AlertDefineController {
     @DeleteMapping(path = "/{id}")
     @Operation(summary = "删除告警定义", description = "根据告警定义ID删除告警定义,告警定义不存在也是删除成功")
     public ResponseEntity<Message<Void>> deleteAlertDefine(
-            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("id") long id) {
+            @Parameter(description = "告警定义ID", example = "6565463543") @PathVariable("id") long id) {
         // 删除告警定义不存在或删除成功都返回成功
         alertDefineService.deleteAlertDefine(id);
         return ResponseEntity.ok(new Message<>("Delete success"));
@@ -101,7 +101,7 @@ public class AlertDefineController {
     @PostMapping(path = "/{alertDefineId}/monitors")
     @Operation(summary = "应用告警定义与监控关联", description = "应用指定告警定义与监控关联关系")
     public ResponseEntity<Message<Void>> applyAlertDefineMonitorsBind(
-            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId,
+            @Parameter(description = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId,
             @RequestBody List<AlertDefineMonitorBind> alertDefineMonitorBinds) {
         alertDefineService.applyBindAlertDefineMonitors(alertDefineId, alertDefineMonitorBinds);
         return ResponseEntity.ok(new Message<>("Apply success"));
@@ -110,7 +110,7 @@ public class AlertDefineController {
     @GetMapping(path = "/{alertDefineId}/monitors")
     @Operation(summary = "应用告警定义与监控关联", description = "应用指定告警定义与监控关联关系")
     public ResponseEntity<Message<List<AlertDefineMonitorBind>>> getAlertDefineMonitorsBind(
-            @ApiParam(value = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
+            @Parameter(description = "告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
         List<AlertDefineMonitorBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
         defineBinds = defineBinds.stream().filter(item -> item.getMonitor() != null).collect(Collectors.toList());
         return ResponseEntity.ok(new Message<>(defineBinds));

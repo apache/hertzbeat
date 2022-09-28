@@ -73,7 +73,7 @@ public class NoticeConfigController {
     @DeleteMapping(path = "/receiver/{id}")
     @Operation(summary = "Delete existing recipient information", description = "删除已存在的接收人信息")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
-            @Parameter(name = "en: Recipient ID,zh: 接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
+            @Parameter(description = "en: Recipient ID,zh: 接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
         NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
         if (noticeReceiver == null) {
             return ResponseEntity.ok(new Message<>("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
@@ -86,7 +86,7 @@ public class NoticeConfigController {
     @Operation(summary = "Get a list of message notification recipients based on query filter items",
             description = "根据查询过滤项获取消息通知接收人列表")
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
-            @Parameter(name = "en: Recipient name,zh: 接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
+            @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (name != null && !"".equals(name)) {
@@ -117,7 +117,7 @@ public class NoticeConfigController {
     @DeleteMapping(path = "/rule/{id}")
     @Operation(summary = "Delete existing notification policy information", description = "删除已存在的通知策略信息")
     public ResponseEntity<Message<Void>> deleteNoticeRule(
-            @Parameter(name = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
+            @Parameter(description = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // Returns success if it does not exist or if the deletion is successful
         // todo 不存在或删除成功都返回成功
         NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
@@ -132,7 +132,7 @@ public class NoticeConfigController {
     @Operation(summary = "Get a list of message notification policies based on query filter items",
             description = "根据查询过滤项获取消息通知策略列表")
     public ResponseEntity<Message<List<NoticeRule>>> getRules(
-            @Parameter(name = "en: Recipient name,zh: 接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
+            @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (name != null && !"".equals(name)) {
