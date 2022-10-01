@@ -141,6 +141,7 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center"><a href="https://github.com/emrys-he"><img src="https://avatars.githubusercontent.com/u/5848915?v=4?s=100" width="100px;" alt="emrys"/><br /><sub><b>emrys</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=emrys-he" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/SxLiuYu"><img src="https://avatars.githubusercontent.com/u/95198625?v=4?s=100" width="100px;" alt="SxLiuYu"/><br /><sub><b>SxLiuYu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ASxLiuYu" title="Bug reports">🐛</a></td>
+      <td align="center"><a href="https://allcontributors.org"><img src="https://avatars.githubusercontent.com/u/46410174?v=4?s=100" width="100px;" alt="All Contributors"/><br /><sub><b>All Contributors</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=all-contributors" title="Documentation">📖</a></td>
     </tr>
   </tbody>
   <tfoot>
