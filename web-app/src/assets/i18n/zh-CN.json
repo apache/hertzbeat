@@ -195,6 +195,7 @@
   "dashboard.monitors.formatter": "个监控 占比",
   "dashboard.monitors.distribute": "纳管数量分布",
   "monitors.list": "监控列表",
+  "monitors.spinning-tip.detecting": "测试连接可用性",
   "monitors.new": "新增",
   "monitors.new.success": "新增监控成功",
   "monitors.new.failed": "新增监控失败",
