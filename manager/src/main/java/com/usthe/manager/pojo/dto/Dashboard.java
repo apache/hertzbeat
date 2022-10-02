@@ -17,7 +17,7 @@
 
 package com.usthe.manager.pojo.dto;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,7 +32,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "大屏仪表盘统计信息")
+@Schema(description = "大屏仪表盘统计信息")
 public class Dashboard {
 
     List<AppCount> apps;

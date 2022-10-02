@@ -17,15 +17,14 @@
 
 package com.usthe.manager.pojo.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Hierarchical structure
@@ -39,35 +38,36 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Schema(description = "Monitor Hierarchy | 监控类型指标组指标信息层级关系")
 public class Hierarchy {
 
     /**
      * Category value
      */
-    @ApiModelProperty(value = "类别值", example = "os", accessMode = READ_WRITE, position = 0)
+    @Schema(description = "类别值", example = "os", accessMode = READ_WRITE)
     String category;
 
     /**
      * Attribute value
      */
-    @ApiModelProperty(value = "属性值", example = "linux", accessMode = READ_WRITE, position = 1)
+    @Schema(description = "属性值", example = "linux", accessMode = READ_WRITE)
     String value;
 
     /**
      * Attribute internationalization tag
      */
-    @ApiModelProperty(value = "属性国际化标签", example = "Linux系统", accessMode = READ_WRITE, position = 2)
+    @Schema(description = "属性国际化标签", example = "Linux系统", accessMode = READ_WRITE)
     String label;
 
     /**
      * Is it a leaf node
      */
-    @ApiModelProperty(value = "是否是叶子节点", example = "true", accessMode = READ_WRITE, position = 3)
+    @Schema(description = "是否是叶子节点", example = "true", accessMode = READ_WRITE)
     Boolean isLeaf = false;
 
     /**
      * Next level of association
      */
-    @ApiModelProperty(value = "下一关联层级", accessMode = READ_WRITE, position = 4)
+    @Schema(description = "下一关联层级", accessMode = READ_WRITE)
     private List<Hierarchy> children;
 }

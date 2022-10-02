@@ -18,8 +18,7 @@
 package com.usthe.common.entity.alerter;
 
 import com.usthe.common.entity.manager.Monitor;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,8 +32,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+
 
 /**
  * 告警定义与监控关联实体
@@ -47,27 +47,27 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "告警定义与监控关联实体")
+@Schema(description = "告警定义与监控关联实体")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertDefineMonitorBind {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "告警定义与监控关联主键索引ID", example = "74384", accessMode = READ_ONLY, position = 0)
+    @Schema(title = "告警定义与监控关联主键索引ID", example = "74384", accessMode = READ_ONLY)
     private Long id;
 
-    @ApiModelProperty(value = "告警定义ID", example = "87432674384", accessMode = READ_WRITE, position = 1)
+    @Schema(title = "告警定义ID", example = "87432674384", accessMode = READ_WRITE)
     private Long alertDefineId;
 
-    @ApiModelProperty(value = "监控ID", example = "87432674336", accessMode = READ_WRITE, position = 2)
+    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 
-    @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 4)
+    @Schema(title = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 5)
+    @Schema(title = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

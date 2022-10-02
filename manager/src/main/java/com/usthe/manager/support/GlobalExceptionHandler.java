@@ -28,14 +28,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.lang.reflect.Field;
+import java.util.Objects;
 
 import static com.usthe.common.util.CommonConstants.*;
 
@@ -49,19 +48,6 @@ import static com.usthe.common.util.CommonConstants.*;
 public class GlobalExceptionHandler {
 
     private static final String CONNECT_STR = "||";
-
-    private static Field detailMessage;
-
-    private static Field fieldErrorField;
-
-    static {
-        try {
-            detailMessage = Throwable.class.getDeclaredField("detailMessage");
-            detailMessage.setAccessible(true);
-            fieldErrorField = FieldError.class.getDeclaredField("field");
-            fieldErrorField.setAccessible(true);
-        } catch (Exception e) {}
-    }
 
     /**
      * 处理探测失败
@@ -115,7 +101,11 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
         try {
-            Message<Void> message = Message.<Void>builder().msg((String) detailMessage.get(exception)).code(PARAM_INVALID_CODE).build();
+            String msg = exception.getCause().getMessage();
+            if (msg == null) {
+                msg = exception.getMessage();
+            }
+            Message<Void> message = Message.<Void>builder().msg(msg).code(PARAM_INVALID_CODE).build();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         } catch (Exception e) {
             Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(PARAM_INVALID_CODE).build();
@@ -138,7 +128,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException exception = (MethodArgumentNotValidException)e;
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
-                    String field = (String) fieldErrorField.get(error);
+                    String field = Objects.requireNonNull(error.getCodes())[0];
                     errorMessage.append(field).append(":").append(error.getDefaultMessage()).append(CONNECT_STR);
                 } catch (Exception e1) {
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR);

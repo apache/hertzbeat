@@ -17,8 +17,7 @@
 
 package com.usthe.common.entity.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,25 +40,25 @@ import static com.usthe.common.util.CommonConstants.SUCCESS_CODE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "公共消息包装")
+@Schema(description = "公共消息包装")
 public class Message<T> {
 
     /**
      * message body data
      */
-    @ApiModelProperty(value = "响应数据", position = 0)
+    @Schema(description = "响应数据")
     private T data;
 
     /**
      * exception message when error happen or success message
      */
-    @ApiModelProperty(value = "携带消息", position = 1)
+    @Schema(title = "携带消息")
     private String msg;
 
     /**
      * response code, not http code
      */
-    @ApiModelProperty(value = "携带编码", position = 2)
+    @Schema(title = "携带编码")
     private byte code = SUCCESS_CODE;
 
     public Message(String msg) {

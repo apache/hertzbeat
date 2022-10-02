@@ -17,8 +17,7 @@
 
 package com.usthe.common.entity.alerter;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,8 +36,9 @@ import javax.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+
 
 /**
  * 告警定义实体
@@ -51,69 +51,69 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "Alert Define | 告警定义实体")
+@Schema(description = "Alert Define | 告警定义实体")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertDefine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "告警定义实体主键索引ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
+    @Schema(title = "告警定义实体主键索引ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @ApiModelProperty(value = "配置告警的监控类型", example = "linux", accessMode = READ_WRITE, position = 1)
+    @Schema(title = "配置告警的监控类型", example = "linux", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String app;
 
-    @ApiModelProperty(value = "配置告警的指标集合", example = "cpu", accessMode = READ_WRITE, position = 2)
+    @Schema(title = "配置告警的指标集合", example = "cpu", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String metric;
 
-    @ApiModelProperty(value = "配置告警的指标", example = "usage", accessMode = READ_WRITE, position = 3)
+    @Schema(title = "配置告警的指标", example = "usage", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String field;
 
-    @ApiModelProperty(value = "是否是全局默认告警", example = "false", accessMode = READ_WRITE, position = 4)
+    @Schema(title = "是否是全局默认告警", example = "false", accessMode = READ_WRITE)
     private boolean preset;
 
-    @ApiModelProperty(value = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE, position = 5)
+    @Schema(title = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE)
     @Length(max = 1024)
     private String expr;
 
-    @ApiModelProperty(value = "告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
-            example = "1", accessMode = READ_WRITE, position = 6)
+    @Schema(title = "告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+            example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(2)
     private byte priority;
 
-    @ApiModelProperty(value = "阈值触发次数,即达到次数要求后才触发告警", example = "3", accessMode = READ_WRITE, position = 7)
+    @Schema(title = "阈值触发次数,即达到次数要求后才触发告警", example = "3", accessMode = READ_WRITE)
     @Min(0)
     @Max(10)
     private Integer times;
 
-    @ApiModelProperty(value = "告警阈值开关", example = "true", accessMode = READ_WRITE, position = 8)
+    @Schema(title = "告警阈值开关", example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
 
-    @ApiModelProperty(value = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
-            accessMode = READ_WRITE, position = 10)
+    @Schema(title = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
+            accessMode = READ_WRITE)
     @Length(max = 1024)
     private String template;
 
-    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 11)
+    @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 12)
+    @Schema(title = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 13)
+    @Schema(title = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 14)
+    @Schema(title = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
