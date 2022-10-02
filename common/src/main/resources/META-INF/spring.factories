@@ -17,4 +17,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.usthe.common.config.CommonProperties,\
 com.usthe.common.config.CommonConfig,\
+com.usthe.common.queue.impl.InMemoryCommonDataQueue,\
 com.usthe.common.support.SpringContextHolder

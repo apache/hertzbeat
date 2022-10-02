@@ -15,57 +15,79 @@
  * limitations under the License.
  */
 
-package com.usthe.collector.dispatch.export;
+package com.usthe.common.queue.impl;
 
+import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.queue.CommonDataQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 采集数据消息发送
- * @author tomsun28
- * @date 2021/11/3 15:22
+ * 内存采集数据队列实现
+ * @author tom
+ * @date 2021/11/24 17:58
  */
+@Configuration
+@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "Memory",
+        matchIfMissing = true)
 @Slf4j
-public class MetricsDataExporter implements DisposableBean {
+public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
 
+    private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToMemoryStorageQueue;
 
-    public MetricsDataExporter() {
+    public InMemoryCommonDataQueue() {
+        alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
         metricsDataToMemoryStorageQueue = new LinkedBlockingQueue<>();
     }
 
+    @Override
+    public void addAlertData(Alert alert) {
+        alertDataQueue.offer(alert);
+    }
+
+    @Override
+    public Alert pollAlertData() throws InterruptedException {
+        return alertDataQueue.poll(2, TimeUnit.SECONDS);
+    }
+
+    @Override
     public CollectRep.MetricsData pollAlertMetricsData() throws InterruptedException {
         return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
     }
 
+    @Override
     public CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException {
         return metricsDataToPersistentStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 
-    public CollectRep.MetricsData pollMemoryStorageMetricsData() throws InterruptedException {
+    @Override
+    public CollectRep.MetricsData pollRealTimeStorageMetricsData() throws InterruptedException {
         return metricsDataToMemoryStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 
-    /**
-     * 发送消息
-     * @param metricsData 指标组采集数据
-     */
-    public void send(CollectRep.MetricsData metricsData) {
+    @Override
+    public void sendMetricsData(CollectRep.MetricsData metricsData) {
         metricsDataToAlertQueue.offer(metricsData);
         metricsDataToPersistentStorageQueue.offer(metricsData);
         metricsDataToMemoryStorageQueue.offer(metricsData);
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
+        alertDataQueue.clear();
         metricsDataToAlertQueue.clear();
+        metricsDataToPersistentStorageQueue.clear();
+        metricsDataToMemoryStorageQueue.clear();
     }
 }

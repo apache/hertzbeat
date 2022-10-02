@@ -18,7 +18,7 @@
 package com.usthe.manager.component.alerter;
 
 import com.google.common.collect.Maps;
-import com.usthe.alert.AlerterDataQueue;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
@@ -44,13 +44,13 @@ public class DispatcherAlarm implements InitializingBean {
     private static final int DISPATCH_THREADS = 3;
 
     private final AlerterWorkerPool workerPool;
-    private final AlerterDataQueue dataQueue;
+    private final CommonDataQueue dataQueue;
     private final NoticeConfigService noticeConfigService;
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
 
     public DispatcherAlarm(AlerterWorkerPool workerPool,
-                           AlerterDataQueue dataQueue,
+                           CommonDataQueue dataQueue,
                            NoticeConfigService noticeConfigService,
                            AlertStoreHandler alertStoreHandler,
                            List<AlertNotifyHandler> alertNotifyHandlerList) {
