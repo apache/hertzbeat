@@ -15,7 +15,6 @@
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.usthe.warehouse.WarehouseProperties,\
-com.usthe.warehouse.MetricsDataQueue,\
 com.usthe.warehouse.WarehouseWorkerPool,\
 com.usthe.warehouse.store.MemoryDataStorage,\
 com.usthe.warehouse.store.TdEngineDataStorage,\

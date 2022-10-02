@@ -37,12 +37,6 @@
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
-        </dependency>
-        <!-- collector -->
-        <dependency>
-            <groupId>com.usthe.tancloud</groupId>
-            <artifactId>collector</artifactId>
-            <version>1.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- spring -->

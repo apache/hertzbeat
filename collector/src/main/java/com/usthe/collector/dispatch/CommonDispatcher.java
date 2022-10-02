@@ -19,7 +19,6 @@ package com.usthe.collector.dispatch;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.TimerDispatch;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
@@ -28,6 +27,7 @@ import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.queue.CommonDataQueue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -70,10 +70,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      */
     private TimerDispatch timerDispatch;
     /**
-     * kafka collection data exporter
-     * kafka采集数据导出器
+     * collection data exporter
+     * 采集数据导出器
      */
-    private MetricsDataExporter kafkaDataExporter;
+    private CommonDataQueue commonDataQueue;
     /**
      * Metric group task and start time mapping map
      * 指标组任务与开始时间映射map
@@ -81,8 +81,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private Map<String, MetricsTime> metricsTimeoutMonitorMap;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue, TimerDispatch timerDispatch,
-                            MetricsDataExporter kafkaDataExporter, WorkerPool workerPool) {
-        this.kafkaDataExporter = kafkaDataExporter;
+                            CommonDataQueue commonDataQueue, WorkerPool workerPool) {
+        this.commonDataQueue = commonDataQueue;
         this.jobRequestQueue = jobRequestQueue;
         this.timerDispatch = timerDispatch;
         ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(2, 2, 1,
@@ -184,7 +184,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         if (job.isCyclic()) {
             // If it is an asynchronous periodic cyclic task, directly send the collected data of the indicator group to the message middleware
             // 若是异步的周期性循环任务,直接发送指标组的采集数据到消息中间件
-            kafkaDataExporter.send(metricsData);
+            commonDataQueue.sendMetricsData(metricsData);
             if (log.isDebugEnabled()) {
                 log.debug("Cyclic Job: {}",metricsData.getMetrics());
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {

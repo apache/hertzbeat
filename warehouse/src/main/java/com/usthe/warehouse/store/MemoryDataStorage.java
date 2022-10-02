@@ -17,8 +17,8 @@
 
 package com.usthe.warehouse.store;
 
-import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
@@ -45,12 +45,12 @@ public class MemoryDataStorage implements DisposableBean {
 
     private Map<String, CollectRep.MetricsData> metricsDataMap;
     private WarehouseWorkerPool workerPool;
-    private MetricsDataExporter dataExporter;
+    private CommonDataQueue commonDataQueue;
 
-    public MemoryDataStorage(WarehouseWorkerPool workerPool, MetricsDataExporter dataExporter) {
+    public MemoryDataStorage(WarehouseWorkerPool workerPool, CommonDataQueue commonDataQueue) {
         metricsDataMap = new ConcurrentHashMap<>(1024);
         this.workerPool = workerPool;
-        this.dataExporter = dataExporter;
+        this.commonDataQueue = commonDataQueue;
         startStorageData();
     }
 
@@ -64,7 +64,7 @@ public class MemoryDataStorage implements DisposableBean {
             Thread.currentThread().setName("warehouse-memory-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataExporter.pollMemoryStorageMetricsData();
+                    CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
                     if (metricsData != null) {
                         saveData(metricsData);
                     }

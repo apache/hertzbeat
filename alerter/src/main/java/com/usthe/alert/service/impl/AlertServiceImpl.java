@@ -17,7 +17,7 @@
 
 package com.usthe.alert.service.impl;
 
-import com.usthe.alert.AlerterDataQueue;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.dao.AlertDao;
 import com.usthe.alert.dto.AlertPriorityNum;
 import com.usthe.alert.dto.AlertSummary;
@@ -57,7 +57,7 @@ public class AlertServiceImpl implements AlertService {
     private AlertDao alertDao;
 
     @Autowired
-    private AlerterDataQueue alerterDataQueue;
+    private CommonDataQueue commonDataQueue;
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
@@ -129,7 +129,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
-        alerterDataQueue.addAlertData(buildAlertData(alertReport));
+        commonDataQueue.addAlertData(buildAlertData(alertReport));
     }
 
     /**

@@ -35,11 +35,46 @@ public class CommonProperties {
      */
     private String secretKey;
 
+    /**
+     * data queue impl
+     */
+    private DataQueueProperties queue;
+
     public String getSecretKey() {
         return secretKey;
     }
 
     public void setSecretKey(String secretKey) {
         this.secretKey = secretKey;
+    }
+
+    public DataQueueProperties getQueue() {
+        return queue;
+    }
+
+    public void setQueue(DataQueueProperties queue) {
+        this.queue = queue;
+    }
+
+    public static class DataQueueProperties {
+
+        private QueueType type = QueueType.Memory;
+
+        public QueueType getType() {
+            return type;
+        }
+
+        public void setType(QueueType type) {
+            this.type = type;
+        }
+    }
+
+    public static enum QueueType {
+        /** in memory **/
+        Memory,
+        /** kafka **/
+        Kafka,
+        /** rabbit mq **/
+        Rabbit_Mq
     }
 }
