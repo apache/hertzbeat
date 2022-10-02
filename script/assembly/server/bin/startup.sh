@@ -66,7 +66,7 @@ if [ -n "$SERVER_PORT" ]; then
     # mac 下查询端口是否占用
     LSOF_AVA=`command -v lsof | wc -l`
     if [ $LSOF_AVA -gt 0 ]; then
-        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | wc -l`
+        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | grep java | wc -l`
         if [ $SERVER_PORT_COUNT -gt 0 ]; then
             echo "ERROR: lsof the $SERVER_NAME port $SERVER_PORT already used!"
             exit 1
@@ -95,7 +95,7 @@ then
 fi
 CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
 echo -e "Starting the $SERVER_NAME ..."
-nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >/dev/null 2>&1 &
+nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 &
 
 COUNT=0
 while [ $COUNT -lt 1 ]; do
