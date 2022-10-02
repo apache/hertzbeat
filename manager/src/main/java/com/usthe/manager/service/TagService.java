@@ -41,7 +41,7 @@ public interface TagService {
 
     /**
      * update tag
-     * @param tag tag
+     * @param tag Tag
      */
     void modifyTag(Tag tag);
 
@@ -49,7 +49,7 @@ public interface TagService {
      * get tag page list
      * @param specification 查询条件
      * @param pageRequest 分页条件
-     * @return tags
+     * @return Tags
      */
     Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);
 
