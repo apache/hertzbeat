@@ -5,7 +5,7 @@ name: Node CI with Yarn
 
 on:
   push:
-    branches: [ master, dev, eslint ]
+    branches: [ master, dev ]
   pull_request:
     branches: [ master, dev ]
 
