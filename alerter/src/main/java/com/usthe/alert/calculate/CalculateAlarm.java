@@ -21,7 +21,7 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.usthe.alert.AlerterProperties;
 import com.usthe.alert.AlerterWorkerPool;
-import com.usthe.alert.AlerterDataQueue;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.dao.AlertMonitorDao;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.alerter.AlertDefine;
@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CalculateAlarm {
 
     private AlerterWorkerPool workerPool;
-    private AlerterDataQueue dataQueue;
+    private CommonDataQueue dataQueue;
     private MetricsDataExporter dataExporter;
     private AlertDefineService alertDefineService;
     private AlerterProperties alerterProperties;
@@ -62,7 +62,7 @@ public class CalculateAlarm {
 
     private ResourceBundle bundle;
 
-    public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
+    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                            AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
                            AlertMonitorDao monitorDao, AlerterProperties alerterProperties) {
         this.workerPool = workerPool;
