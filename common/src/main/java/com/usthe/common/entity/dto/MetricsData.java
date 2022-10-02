@@ -17,8 +17,7 @@
 
 package com.usthe.common.entity.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,24 +34,24 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "指标组监控数据")
+@Schema(description = "指标组监控数据")
 public class MetricsData {
 
-    @ApiModelProperty(value = "监控ID", position = 0)
+    @Schema(title = "监控ID")
     private Long id;
 
-    @ApiModelProperty(value = "监控类型", position = 1)
+    @Schema(title = "监控类型")
     private String app;
 
-    @ApiModelProperty(value = "监控指标组", position = 2)
+    @Schema(title = "监控指标组")
     private String metric;
 
-    @ApiModelProperty(value = "最新采集时间", position = 3)
+    @Schema(title = "最新采集时间")
     private Long time;
 
-    @ApiModelProperty(value = "监控指标字段列表", position = 4)
+    @Schema(description = "监控指标字段列表")
     private List<Field> fields;
 
-    @ApiModelProperty(value = "监控指标列表值集合")
+    @Schema(description = "监控指标列表值集合")
     private List<ValueRow> valueRows;
 }

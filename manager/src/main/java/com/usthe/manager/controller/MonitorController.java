@@ -21,9 +21,9 @@ import com.usthe.common.entity.dto.Message;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.service.MonitorService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,22 +34,18 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.validation.Valid;
-
 import java.util.List;
-
 import static com.usthe.common.util.CommonConstants.MONITOR_NOT_EXIST_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitoring management API
  * 监控管理API
- *
  * @author tomsun28
  * @date 2021/11/14 10:57
  */
-@Api(tags = "Monitor Manage API | 监控管理API")
+@Tag(name = "Monitor Manage API | 监控管理API")
 @RestController
 @RequestMapping(path = "/api/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
@@ -58,7 +54,7 @@ public class MonitorController {
     private MonitorService monitorService;
 
     @PostMapping
-    @ApiOperation(value = "Add a monitoring application", notes = "新增一个监控应用")
+    @Operation(summary = "Add a monitoring application", description = "新增一个监控应用")
     public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data  校验请求数据
         monitorService.validate(monitorDto, false);
@@ -71,7 +67,7 @@ public class MonitorController {
     }
 
     @PutMapping
-    @ApiOperation(value = "Modify an existing monitoring application", notes = "修改一个已存在监控应用")
+    @Operation(summary = "Modify an existing monitoring application", description = "修改一个已存在监控应用")
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data  校验请求数据
         monitorService.validate(monitorDto, true);
@@ -84,9 +80,9 @@ public class MonitorController {
     }
 
     @GetMapping(path = "/{id}")
-    @ApiOperation(value = "Obtain monitoring information based on monitoring ID", notes = "根据监控ID获取监控信息")
+    @Operation(summary = "Obtain monitoring information based on monitoring ID", description = "根据监控ID获取监控信息")
     public ResponseEntity<Message<MonitorDto>> getMonitor(
-            @ApiParam(value = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
+            @Parameter(description = "监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // Get monitoring information
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
@@ -100,9 +96,9 @@ public class MonitorController {
     }
 
     @DeleteMapping(path = "/{id}")
-    @ApiOperation(value = "Delete monitoring application based on monitoring ID", notes = "根据监控ID删除监控应用")
+    @Operation(summary = "Delete monitoring application based on monitoring ID", description = "根据监控ID删除监控应用")
     public ResponseEntity<Message<Void>> deleteMonitor(
-            @ApiParam(value = "en: Monitor ID,zh: 监控ID", example = "6565463543") @PathVariable("id") final long id) {
+            @Parameter(description = "en: Monitor ID,zh: 监控ID", example = "6565463543") @PathVariable("id") final long id) {
         // delete monitor 删除监控
         Monitor monitor = monitorService.getMonitor(id);
         if (monitor == null) {
@@ -113,7 +109,7 @@ public class MonitorController {
     }
 
     @PostMapping(path = "/detect")
-    @ApiOperation(value = "Perform availability detection on this monitoring based on monitoring information", notes = "根据监控信息去对此监控进行可用性探测")
+    @Operation(summary = "Perform availability detection on this monitoring based on monitoring information", description = "根据监控信息去对此监控进行可用性探测")
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
@@ -121,7 +117,7 @@ public class MonitorController {
     }
 
     @PostMapping("/OptionalMetrics")
-    @ApiOperation(value = "Add a monitor that can select metrics",notes = "新增一个可选指标的监控器")
+    @Operation(summary = "Add a monitor that can select metrics",description = "新增一个可选指标的监控器")
     public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto){
         monitorService.validate(monitorDto, false);
         if (monitorDto.isDetected()) {
@@ -132,12 +128,9 @@ public class MonitorController {
     }
 
     @GetMapping(value = {"/metric/{app}","/metric"})
-    @ApiOperation(value = "get app metric", notes = "根据app名称获取该app可监控指标，不传为获取全部指标")
+    @Operation(summary = "get app metric", description = "根据app名称获取该app可监控指标，不传为获取全部指标")
     public ResponseEntity<Message<List>> getMonitorMetrics(@PathVariable(value = "app",required = false) String app) {
         List<String> metricNames = monitorService.getMonitorMetrics(app);
         return ResponseEntity.ok(new Message<>(metricNames));
     }
-
-
-
 }
