@@ -40,6 +40,6 @@ public class ValueRow {
     @Schema(title = "此行数据唯一实例")
     private String instance;
 
-    @Schema(title = "监控指标组指标值")
+    @Schema(description = "监控指标组指标值")
     private List<Value> values;
 }

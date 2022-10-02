@@ -50,6 +50,6 @@ public class MetricsHistoryData {
     @Schema(title = "监控指标")
     private Field field;
 
-    @Schema(title = "监控指标历史值 instance<==>values")
+    @Schema(description = "监控指标历史值 instance<==>values")
     private Map<String, List<Value>> values;
 }

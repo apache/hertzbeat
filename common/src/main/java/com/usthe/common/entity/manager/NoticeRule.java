@@ -95,7 +95,7 @@ public class NoticeRule {
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @Schema(title = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
+    @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
     private List<TagItem> tags;

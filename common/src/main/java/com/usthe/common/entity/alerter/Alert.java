@@ -116,7 +116,7 @@ public class Alert {
             example = "2000", accessMode = READ_ONLY)
     private Long nextEvalInterval;
 
-    @Schema(title = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
+    @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
     private Map<String, String> tags;

@@ -49,9 +49,9 @@ public class MetricsData {
     @Schema(title = "最新采集时间")
     private Long time;
 
-    @Schema(title = "监控指标字段列表")
+    @Schema(description = "监控指标字段列表")
     private List<Field> fields;
 
-    @Schema(title = "监控指标列表值集合")
+    @Schema(description = "监控指标列表值集合")
     private List<ValueRow> valueRows;
 }

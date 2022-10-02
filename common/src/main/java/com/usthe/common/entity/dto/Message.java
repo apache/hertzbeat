@@ -46,7 +46,7 @@ public class Message<T> {
     /**
      * message body data
      */
-    @Schema(title = "响应数据")
+    @Schema(description = "响应数据")
     private T data;
 
     /**
