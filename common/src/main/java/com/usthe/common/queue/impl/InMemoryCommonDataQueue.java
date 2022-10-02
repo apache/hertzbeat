@@ -84,7 +84,7 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         alertDataQueue.clear();
         metricsDataToAlertQueue.clear();
         metricsDataToPersistentStorageQueue.clear();

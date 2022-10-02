@@ -27,7 +27,6 @@ import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.alert.util.AlertTemplateUtil;
-import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
@@ -50,7 +49,6 @@ public class CalculateAlarm {
 
     private AlerterWorkerPool workerPool;
     private CommonDataQueue dataQueue;
-    private MetricsDataExporter dataExporter;
     private AlertDefineService alertDefineService;
     private AlerterProperties alerterProperties;
     /**
@@ -63,11 +61,10 @@ public class CalculateAlarm {
     private ResourceBundle bundle;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                           AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
-                           AlertMonitorDao monitorDao, AlerterProperties alerterProperties) {
+                           AlertDefineService alertDefineService, AlertMonitorDao monitorDao,
+                           AlerterProperties alerterProperties) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
-        this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.alerterProperties = alerterProperties;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
@@ -105,7 +102,7 @@ public class CalculateAlarm {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataExporter.pollAlertMetricsData();
+                    CollectRep.MetricsData metricsData = dataQueue.pollAlertMetricsData();
                     if (metricsData != null) {
                         calculate(metricsData);
                     }
