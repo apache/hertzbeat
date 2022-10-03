@@ -15,8 +15,9 @@
     "color-less": "ng-alain-plugin-theme -t=colorLess",
     "theme": "ng-alain-plugin-theme -t=themeCss",
     "icon": "ng g ng-alain:plugin icon",
-    "lint": "npm run lint:ts && npm run lint:style",
-    "lint:ts": "ng lint --fix",
+    "lint": "npm run lint:fix && npm run lint:style",
+    "lint:ts": "ng lint",
+    "lint:fix": "ng lint --fix",
     "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix"
   },
   "private": true,
