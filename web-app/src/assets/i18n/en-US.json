@@ -195,6 +195,7 @@
   "dashboard.monitors.formatter": " Monitors ",
   "dashboard.monitors.distribute": "Monitor Distribution",
   "monitors.list": "Monitor List",
+  "monitors.spinning-tip.detecting": "Available Detecting",
   "monitors.new": "New",
   "monitors.new.success": "New Monitor Success",
   "monitors.new.failed": "New Monitor Failed",
