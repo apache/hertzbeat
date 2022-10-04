@@ -22,12 +22,19 @@ spring:
     active: prod
   mvc:
     static-path-pattern: /**
-  resources:
-    static-locations:
-      - classpath:/dist/
-      - classpath:../dist/
   jackson:
-    default-property-inclusion: NON_EMPTY
+    default-property-inclusion: ALWAYS
+  web:
+    resources:
+      static-locations:
+        - classpath:/dist/
+        - classpath:../dist/
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    mode: HTML
 
 sureness:
   auths:
@@ -72,13 +79,6 @@ spring:
           ssl:
             enable: true
         debug: false
-
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
 
 warehouse:
   store:

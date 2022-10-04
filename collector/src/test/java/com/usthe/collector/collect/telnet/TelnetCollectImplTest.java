@@ -17,6 +17,7 @@
 
 package com.usthe.collector.collect.telnet;
 
+import com.usthe.collector.collect.common.cache.CommonCache;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +27,7 @@ import java.net.ConnectException;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author tom
- * @date 2021/12/4 19:39
+ * Test case for {@link TelnetCollectImpl}
  */
 class TelnetCollectImplTest {
 

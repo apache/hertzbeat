@@ -27,7 +27,6 @@
         <springdoc.version>1.6.11</springdoc.version>
         <!-- Test 3rd-party dependencies: -->
         <junit.version>5.7.0</junit.version>
-        <easymock.version>4.0.2</easymock.version>
     </properties>
 
     <dependencyManagement>
@@ -73,9 +72,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <version>${easymock.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

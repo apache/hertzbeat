@@ -17,14 +17,14 @@
 
 package com.usthe.common.util;
 
+import com.usthe.common.queue.CommonDataQueue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author tom
- * @date 2021/12/3 13:28
+ * Test case for {@link SnowFlakeIdGenerator}
  */
 class SnowFlakeIdGeneratorTest {
 
