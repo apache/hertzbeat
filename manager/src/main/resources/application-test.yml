@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 server:
-  port: 1157
+  port: ${random.int[10000,19999]}
 spring:
   datasource:
     driver-class-name: org.h2.Driver
