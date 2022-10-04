@@ -2,37 +2,34 @@ package com.usthe.manager.service;
 
 import com.usthe.common.entity.manager.Tag;
 import com.usthe.manager.dao.TagDao;
+import com.usthe.manager.service.impl.TagServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 /**
- * @author tom
- * @date 2022/9/12 15:50
+ * Test case for {@link TagService}
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class TagServiceTest {
 
-    @Autowired
-    private TagService tagService;
+    @InjectMocks
+    private TagServiceImpl tagService;
 
-    @MockBean
+    @Mock
     private TagDao tagDao;
 
     @Test

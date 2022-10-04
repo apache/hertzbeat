@@ -12,63 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 server:
   port: 1157
 spring:
-  application:
-    name: ${HOSTNAME:@hertzbeat@}${PID}
-  profiles:
-    active: prod
-  mvc:
-    static-path-pattern: /**
-  jackson:
-    default-property-inclusion: ALWAYS
-  web:
-    resources:
-      static-locations:
-        - classpath:/dist/
-        - classpath:../dist/
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
-
-sureness:
-  auths:
-    - digest
-    - basic
-    - jwt
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-
   datasource:
     driver-class-name: org.h2.Driver
     username: sa
     password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    url: jdbc:h2:./data/hertzbeat-test;MODE=MYSQL
     hikari:
       max-lifetime: 120000
-
   jpa:
     hibernate:
       ddl-auto: update
-
-  # Not Require, Please config if you need email notify
-  # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
-    # Attention: this is mail server address.
-    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.exmail.qq.com
     username: example@tancloud.cn
-    # Attention: this is not email account password, this requires an email authorization code
-    # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: example
     port: 465
     default-encoding: UTF-8
@@ -79,22 +38,17 @@ spring:
           ssl:
             enable: true
         debug: false
-
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    mode: HTML
 warehouse:
   store:
     td-engine:
-      enabled: true
+      enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
-
-alerter:
-  # custom console url
-  console-url: https://console.tancloud.cn
-  # base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
-  alert-eval-interval-base: 600000
-  # max of alert eval interval time, unit:ms
-  max-alert-eval-interval: 86400000
-  # system alert(available alert, reachable alert...) trigger times
-  system-alert-trigger-times: 1
