@@ -28,6 +28,12 @@ spring:
       static-locations:
         - classpath:/dist/
         - classpath:../dist/
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    mode: HTML
 
 sureness:
   auths:
@@ -73,13 +79,6 @@ spring:
             enable: true
         debug: false
 
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
-
 warehouse:
   store:
     td-engine:
@@ -98,10 +97,3 @@ alerter:
   max-alert-eval-interval: 86400000
   # system alert(available alert, reachable alert...) trigger times
   system-alert-trigger-times: 1
-
-springdoc:
-  api-docs:
-    enabled: true
-  packagesToScan: com.usthe.manager.controller
-  pathsToMatch: /api/**
-

@@ -17,14 +17,14 @@
 
 package com.usthe.common.util;
 
+import com.usthe.common.queue.CommonDataQueue;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- *
- *
+ * Test case for {@link IpDomainUtil}
  */
 class IpDomainUtilTest {
 
