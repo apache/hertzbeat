@@ -182,6 +182,10 @@ export class MonitorDataChartComponent implements OnInit {
           }
         }
       },
+      grid: {
+        left: '2',
+        containLabel: true
+      },
       xAxis: {
         type: 'time',
         splitLine: {
