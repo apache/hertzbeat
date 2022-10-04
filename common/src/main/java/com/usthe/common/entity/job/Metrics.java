@@ -76,6 +76,8 @@ public class Metrics {
      * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
      */
     private List<String> calculates;
+
+    private List<String> units;
     /**
      * Monitoring configuration information using the http protocol
      * 使用http协议的监控配置信息

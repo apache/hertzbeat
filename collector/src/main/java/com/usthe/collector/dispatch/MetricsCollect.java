@@ -31,11 +31,13 @@ import com.usthe.collector.collect.ssh.SshCollectImpl;
 import com.usthe.collector.collect.telnet.TelnetCollectImpl;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
+import com.usthe.collector.dispatch.unit.UnitConvert;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
+import com.usthe.common.util.Pair;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -108,7 +110,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     protected long startTime;
 
-    public MetricsCollect(Metrics metrics, Timeout timeout, CollectDataDispatch collectDataDispatch) {
+    protected List<UnitConvert> unitConvertList;
+
+    public MetricsCollect(Metrics metrics, Timeout timeout,
+                          CollectDataDispatch collectDataDispatch,
+                          List<UnitConvert> unitConvertList) {
         this.newTime = System.currentTimeMillis();
         this.timeout = timeout;
         this.metrics = metrics;
@@ -118,6 +124,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
+        this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         // 临时一次性任务执行优先级高
         if (isCyclic) {
@@ -249,6 +256,25 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1]));
 
+        if (metrics.getUnits() == null) {
+            metrics.setUnits(Collections.emptyList());
+        }
+        Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
+                .stream()
+                .map(unit -> {
+                    int equalIndex = unit.indexOf("=");
+                    int arrowIndex = unit.indexOf("->");
+                    if (equalIndex < 0 || arrowIndex < 0) {
+                        return null;
+                    }
+                    String field = unit.substring(0, equalIndex).trim();
+                    String originUnit = unit.substring(equalIndex + 1, arrowIndex).trim();
+                    String newUnit = unit.substring(arrowIndex + 2).trim();
+                    return new Object[]{field, Pair.of(originUnit, newUnit)};
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1]));
+
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, String> aliasFieldValueMap = new HashMap<>(16);
@@ -298,6 +324,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         value = aliasFieldValueMap.get(aliasField);
                     } else {
                         value = aliasFieldValueMap.get(realField);
+                    }
+                }
+                // 单位处理
+                Pair<String, String> unitPair = fieldUnitMap.get(realField);
+                if (value != null && unitPair != null) {
+                    for (UnitConvert unitConvert : unitConvertList) {
+                        if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {
+                            value = unitConvert.convert(value, unitPair.getLeft(), unitPair.getRight());
+                        }
                     }
                 }
                 // Handle indicator values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
