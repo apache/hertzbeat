@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -35,7 +36,7 @@ class TagServiceTest {
     @Test
     void addTags() {
         when(tagDao.saveAll(anyList())).thenReturn(anyList());
-        assertDoesNotThrow(() -> tagService.addTags(anyList()));
+        assertDoesNotThrow(() -> tagService.addTags(Collections.singletonList(new Tag())));
     }
 
     @Test
@@ -52,7 +53,7 @@ class TagServiceTest {
     @Test
     void getTags() {
         Specification<Tag> specification = mock(Specification.class);
-        when(tagDao.findAll(specification, Pageable.unpaged())).thenReturn(Page.empty());
+        when(tagDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
         assertNotNull(tagService.getTags(specification, PageRequest.of(1, 1)));
     }
 
