@@ -7,11 +7,23 @@ package com.usthe.collector.dispatch.unit;
  * @since 2022/10/03
  */
 public enum DataUnit {
+    /**
+     * byte
+     */
     B("B", 1),
+    /**
+     * kilobyte
+     */
     KB("KB", 1024),
-    // 1024 * 1024
+    /**
+     * megabyte
+     * 1024 * 1024
+     */
     MB("MB", 1_048_576),
-    // 1024 * 1024 * 1024
+    /**
+     * gigabyte
+     * 1024 * 1024 * 1024
+     */
     GB("GB", 1_073_741_824);
 
     private final String unit;
