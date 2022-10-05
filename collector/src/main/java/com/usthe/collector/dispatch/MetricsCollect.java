@@ -224,7 +224,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         collectData.setPriority(metrics.getPriority());
         List<CollectRep.Field> fieldList = new LinkedList<>();
         for (Metrics.Field field : metrics.getFields()) {
-            fieldList.add(CollectRep.Field.newBuilder().setName(field.getField()).setType(field.getType()).build());
+            CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
+            fieldBuilder.setName(field.getField()).setType(field.getType());
+            if (field.getUnit() != null) {
+                fieldBuilder.setUnit(field.getUnit());
+            }
+            fieldList.add(fieldBuilder.build());
         }
         collectData.addAllFields(fieldList);
         List<CollectRep.ValueRow> aliasRowList = collectData.getValuesList();

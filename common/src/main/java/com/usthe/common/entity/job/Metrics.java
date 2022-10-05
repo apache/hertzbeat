@@ -76,7 +76,14 @@ public class Metrics {
      * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
      */
     private List<String> calculates;
-
+    /**
+     * unit conversion expr
+     * eg:
+     * - heap_used=B->MB
+     * - heap_total=B->MB
+     * - disk_free=B->GB
+     * - disk_total=B->GB
+     */
     private List<String> units;
     /**
      * Monitoring configuration information using the http protocol
