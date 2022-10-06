@@ -46,6 +46,8 @@ message Field
     string name = 1;
     // 字段类型：0-number数字 1-string字符串
     uint32 type = 2;
+    // metric value unit
+    string unit = 3;
 }
 
 message ValueRow

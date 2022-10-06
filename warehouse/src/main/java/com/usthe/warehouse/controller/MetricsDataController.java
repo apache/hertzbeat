@@ -100,9 +100,10 @@ public class MetricsDataController {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
             dataBuilder.id(storageData.getId()).app(storageData.getApp()).metric(storageData.getMetrics())
                     .time(storageData.getTime());
-            List<Field> fields = storageData.getFieldsList().stream().map(redisField ->
-                            Field.builder().name(redisField.getName())
-                                    .type(Integer.valueOf(redisField.getType()).byteValue())
+            List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
+                            Field.builder().name(tmpField.getName())
+                                    .type(Integer.valueOf(tmpField.getType()).byteValue())
+                                    .unit(tmpField.getUnit())
                                     .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);

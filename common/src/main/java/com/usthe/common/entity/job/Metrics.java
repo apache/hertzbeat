@@ -77,6 +77,15 @@ public class Metrics {
      */
     private List<String> calculates;
     /**
+     * unit conversion expr
+     * eg:
+     * - heap_used=B->MB
+     * - heap_total=B->MB
+     * - disk_free=B->GB
+     * - disk_total=B->GB
+     */
+    private List<String> units;
+    /**
      * Monitoring configuration information using the http protocol
      * 使用http协议的监控配置信息
      */
