@@ -6,7 +6,7 @@ package com.usthe.common.util;
  * @since 2022/10/03
  */
 public class Pair<K, V> {
-    private final K left;
+    private K left;
     private final V right;
 
     private Pair(K left, V right) {
@@ -20,6 +20,10 @@ public class Pair<K, V> {
 
     public K getLeft() {
         return left;
+    }
+
+    public void setLeft(K left) {
+        this.left = left;
     }
 
     public V getRight() {

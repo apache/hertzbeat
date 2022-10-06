@@ -32,6 +32,7 @@ import com.usthe.collector.collect.telnet.TelnetCollectImpl;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
 import com.usthe.collector.dispatch.unit.UnitConvert;
+import com.usthe.collector.util.CollectUtil;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
@@ -299,12 +300,17 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String realField = field.getField();
                 Expression expression = fieldExpressionMap.get(realField);
                 String value = null;
+                String aliasFieldUnit = null;
                 if (expression != null) {
                     // If there is a calculation expression, calculate the value
                     // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
                         for (String variable : expression.getVariableFullNames()) {
-                            Double doubleValue = CommonUtil.parseStrDouble(aliasFieldValueMap.get(variable));
+                            // extract double value and unit from aliasField value
+                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                    .extractDoubleAndUnitFromStr(aliasFieldValueMap.get(variable));
+                            Double doubleValue = doubleAndUnit.getValue();
+                            aliasFieldUnit = doubleAndUnit.getUnit();
                             fieldValueMap.put(variable, doubleValue);
                         }
                     } else {
@@ -330,9 +336,22 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     } else {
                         value = aliasFieldValueMap.get(realField);
                     }
+                    if (CommonConstants.TYPE_NUMBER == field.getType() && value != null) {
+                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                .extractDoubleAndUnitFromStr(value);
+                        value = String.valueOf(doubleAndUnit.getValue());
+                        aliasFieldUnit = doubleAndUnit.getUnit();
+                    }
                 }
                 // 单位处理
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
+                if (aliasFieldUnit != null) {
+                    if (unitPair != null) {
+                        unitPair.setLeft(aliasFieldUnit);
+                    } else if (field.getUnit() != null && !aliasFieldUnit.equalsIgnoreCase(field.getUnit())) {
+                        unitPair = Pair.of(aliasFieldUnit, field.getUnit());
+                    }
+                }
                 if (value != null && unitPair != null) {
                     for (UnitConvert unitConvert : unitConvertList) {
                         if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {

@@ -16,15 +16,29 @@ public enum DataUnit {
      */
     KB("KB", 1024),
     /**
+     * kilobyte
+     */
+    K("K", 1024),
+    /**
      * megabyte
      * 1024 * 1024
      */
     MB("MB", 1_048_576),
     /**
+     * megabyte
+     * 1024 * 1024
+     */
+    M("M", 1_048_576),
+    /**
      * gigabyte
      * 1024 * 1024 * 1024
      */
-    GB("GB", 1_073_741_824);
+    GB("GB", 1_073_741_824),
+    /**
+     * gigabyte
+     * 1024 * 1024 * 1024
+     */
+    G("G", 1_073_741_824);
 
     private final String unit;
     private final long scale;
