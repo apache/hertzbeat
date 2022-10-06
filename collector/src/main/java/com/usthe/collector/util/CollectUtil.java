@@ -25,9 +25,13 @@ import com.google.gson.reflect.TypeToken;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.GsonUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +41,7 @@ import java.util.regex.Pattern;
  * @author tom
  * @date 2022/4/6 09:35
  */
+@Slf4j
 public class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
@@ -44,6 +49,7 @@ public class CollectUtil {
     private static final String SMILING_PLACEHOLDER_REGEX = "\\^_\\^";
     private static final String CRYING_PLACEHOLDER = "-_-";
     private static final String CRYING_PLACEHOLDER_REGEX = "-_-";
+    private static final List<String> UNIT_SYMBOLS = Arrays.asList("G", "g", "M", "m", "K", "k", "B", "b", "%");
 
     /**
      * 关键字匹配计数
@@ -65,6 +71,69 @@ public class CollectUtil {
             return count;
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    public static DoubleAndUnit extractDoubleAndUnitFromStr(String str) {
+        if (str == null || "".equals(str)) {
+            return null;
+        }
+        DoubleAndUnit doubleAndUnit = new DoubleAndUnit();
+        try {
+            Double doubleValue = Double.parseDouble(str);
+            doubleAndUnit.setValue(doubleValue);
+            return doubleAndUnit;
+        } catch (Exception e) {
+            log.debug(e.getMessage());
+        }
+        // extract unit from str value, eg: 23.43GB, 33KB, 44.22G
+        try {
+            // B KB MB GB % ....
+            for (String unitSymbol : UNIT_SYMBOLS) {
+                int index = str.indexOf(unitSymbol);
+                if (index > 0) {
+                    Double doubleValue = Double.parseDouble(str.substring(0, index));
+                    String unit = str.substring(index).trim();
+                    doubleAndUnit.setValue(doubleValue);
+                    doubleAndUnit.setUnit(unit);
+                    return doubleAndUnit;
+                }
+                if (index == 0) {
+                    Double doubleValue = 0d;
+                    String unit = str.trim();
+                    doubleAndUnit.setValue(doubleValue);
+                    doubleAndUnit.setUnit(unit);
+                    return doubleAndUnit;
+                }
+            }
+        } catch (Exception e) {
+            log.debug(e.getMessage());
+        }
+        return doubleAndUnit;
+    }
+
+    /**
+     * double and unit
+     */
+    public static final class DoubleAndUnit {
+
+        private Double value;
+        private String unit;
+
+        public Double getValue() {
+            return value;
+        }
+
+        public void setValue(Double value) {
+            this.value = value;
+        }
+
+        public String getUnit() {
+            return unit;
+        }
+
+        public void setUnit(String unit) {
+            this.unit = unit;
         }
     }
 

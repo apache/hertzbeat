@@ -124,17 +124,21 @@ metrics:
       - field: used_memory
         type: 0
       - field: used_memory_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_rss
         type: 0
       - field: used_memory_rss_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_peak
         type: 0
       - field: used_memory_peak_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_peak_perc
-        type: 1
+        type: 0
+        unit: '%'
       - field: used_memory_overhead
         type: 0
       - field: used_memory_startup
@@ -142,7 +146,8 @@ metrics:
       - field: used_memory_dataset
         type: 0
       - field: used_memory_dataset_perc
-        type: 1
+        type: 0
+        unit: '%'
       - field: allocator_allocated
         type: 0
       - field: allocator_active
@@ -152,21 +157,25 @@ metrics:
       - field: total_system_memory
         type: 0
       - field: total_system_memory_human
-        type: 1
+        type: 0
+        unit: GB
       - field: used_memory_lua
         type: 0
       - field: used_memory_lua_human
-        type: 1
+        type: 0
+        unit: KB
       - field: used_memory_scripts
         type: 0
       - field: used_memory_scripts_human
-        type: 1
+        type: 0
+        unit: KB
       - field: number_of_cached_scripts
         type: 0
       - field: maxmemory
         type: 0
       - field: maxmemory_human
-        type: 1
+        type: 0
+        unit: MB
       - field: maxmemory_policy
         type: 1
       - field: allocator_frag_ratio

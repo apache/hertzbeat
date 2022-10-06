@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -287,7 +288,7 @@ public class TdEngineDataStorage implements DisposableBean {
                     instanceValue = "NULL";
                 }
                 double value = resultSet.getDouble(3);
-                String strValue = new BigDecimal(value).stripTrailingZeros().toPlainString();
+                String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
                 valueList.add(new Value(strValue, ts.getTime()));
             }
