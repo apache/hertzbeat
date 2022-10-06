@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.usthe.alert;
+package com.usthe.common.config;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.lexer.token.OperatorType;
@@ -33,7 +33,7 @@ import java.util.Map;
  */
 @Configuration
 @Slf4j
-public class AlerterConfiguration {
+public class AviatorConfiguration {
 
     private static final int AVIATOR_LRU_CACHE_SIZE = 1024;
 

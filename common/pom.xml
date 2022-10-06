@@ -75,6 +75,12 @@
             <version>0.5.11</version>
             <scope>provided</scope>
         </dependency>
+        <!-- 表达式计算 -->
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
+            <version>5.2.7</version>
+        </dependency>
         <!-- 工具依赖  -->
         <dependency>
             <groupId>com.google.guava</groupId>
