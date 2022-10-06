@@ -95,12 +95,6 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- 表达式计算 -->
-        <dependency>
-            <groupId>com.googlecode.aviator</groupId>
-            <artifactId>aviator</artifactId>
-            <version>5.2.7</version>
-        </dependency>
         <!-- feign -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
