@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.TimerDispatch;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
+import com.usthe.collector.dispatch.unit.UnitConvert;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
@@ -33,9 +34,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
@@ -80,11 +79,17 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      */
     private Map<String, MetricsTime> metricsTimeoutMonitorMap;
 
-    public CommonDispatcher(MetricsCollectorQueue jobRequestQueue, TimerDispatch timerDispatch,
-                            CommonDataQueue commonDataQueue, WorkerPool workerPool) {
+    private final List<UnitConvert> unitConvertList;
+
+    public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
+                            TimerDispatch timerDispatch,
+                            CommonDataQueue commonDataQueue,
+                            WorkerPool workerPool,
+                            List<UnitConvert> unitConvertList) {
         this.commonDataQueue = commonDataQueue;
         this.jobRequestQueue = jobRequestQueue;
         this.timerDispatch = timerDispatch;
+        this.unitConvertList = unitConvertList;
         ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(2, 2, 1,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(), r -> {
@@ -168,7 +173,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
         metricsSet.forEach(metrics -> {
-            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this);
+            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this, unitConvertList);
             jobRequestQueue.addJob(metricsCollect);
             metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
                     new MetricsTime(System.currentTimeMillis(), metrics, timeout));
@@ -225,7 +230,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         CollectUtil.replaceCryPlaceholder(jsonElement, configmap);
                         metricItem = GSON.fromJson(jsonElement, Metrics.class);
                     }
-                    MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
+                    MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
                     jobRequestQueue.addJob(metricsCollect);
                     metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
                             new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
@@ -260,7 +265,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The execution of the current level indicator group is completed, and the execution of the next level indicator group starts
                 // 当前级别指标组执行完成，开始执行下一级别的指标组
                 metricsSet.forEach(metricItem -> {
-                    MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this);
+                    MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
                     jobRequestQueue.addJob(metricsCollect);
                     metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
                             new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
