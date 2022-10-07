@@ -191,7 +191,7 @@ export class MonitorEditComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.msg);
       }
     );
   }
@@ -240,7 +240,7 @@ export class MonitorEditComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.msg);
       }
     );
   }
