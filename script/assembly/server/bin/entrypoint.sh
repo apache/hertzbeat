@@ -54,5 +54,5 @@ then
     LOGGING_CONFIG="-Dlogging.config=$CONF_DIR/$LOG_IMPL_FILE"
 fi
 CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
-echo -e "Starting the $SERVER_NAME ..."
+echo -e "Starting the HertzBeat $SERVER_NAME ..."
 java $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME --spring.profiles.active=prod
