@@ -204,7 +204,7 @@ export class DefaultInterceptor implements HttpInterceptor {
             break;
         }
         this.checkStatus(err);
-        return throwError(err);
+        return throwError(err.error);
       })
     );
   }
