@@ -26,16 +26,24 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
    The configuration file content refer to project repository[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，modify service parameters, IP port account password in `td-engine`   
    Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-change)）       
    Specific replacement parameters is as follows:     
-```
-   warehouse.store.td-engine.enable
-   warehouse.store.td-engine.url
-   warehouse.store.td-engine.username
-   warehouse.store.td-engine.password
-   
-   spring.mail.host
-   spring.mail.port
-   spring.mail.username
-   spring.mail.password
+```yaml
+warehouse:
+   store:
+      td-engine:
+         enabled: true
+         driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+         url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+         username: root
+         password: taosdata
+         
+spring:
+   mail:
+      # Attention: this is mail server address.
+      host: smtp.exmail.qq.com
+      username: example@tancloud.cn
+      # Attention: this is not email account password, this requires an email authorization code
+      password: example
+      port: 465
 ```
 
 4. Configure the user configuration file(optional, user-defined user password)         

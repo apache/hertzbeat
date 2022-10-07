@@ -172,7 +172,7 @@ export class MonitorNewComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.msg);
       }
     );
   }
@@ -221,7 +221,7 @@ export class MonitorNewComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.msg);
       }
     );
   }
