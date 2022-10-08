@@ -309,9 +309,13 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                             // extract double value and unit from aliasField value
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
                                     .extractDoubleAndUnitFromStr(aliasFieldValueMap.get(variable));
-                            Double doubleValue = doubleAndUnit.getValue();
-                            aliasFieldUnit = doubleAndUnit.getUnit();
-                            fieldValueMap.put(variable, doubleValue);
+                            if (doubleAndUnit != null) {
+                                Double doubleValue = doubleAndUnit.getValue();
+                                aliasFieldUnit = doubleAndUnit.getUnit();
+                                fieldValueMap.put(variable, doubleValue);
+                            } else {
+                                fieldValueMap.put(variable, null);
+                            }
                         }
                     } else {
                         for (String variable : expression.getVariableFullNames()) {
