@@ -15,7 +15,7 @@ import { DELON_LOCALE, en_US as delonLang } from '@delon/theme';
 import { enUS as dateLang } from 'date-fns/locale';
 import { NZ_DATE_LOCALE, NZ_I18N, en_US as zorroLang } from 'ng-zorro-antd/i18n';
 const LANG = {
-  abbr: 'en',
+  abbr: 'en-US',
   ng: ngLang,
   zorro: zorroLang,
   date: dateLang,

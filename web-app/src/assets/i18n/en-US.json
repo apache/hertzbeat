@@ -243,6 +243,8 @@
   "common.value": "Value",
   "common.search": "Search",
   "common.refresh": "Refresh",
+  "common.notice": "Notice",
+  "common.ignore": "Ignore",
   "common.edit-time": "Last Update Time",
   "common.new-time": "Create Time",
   "common.edit": "Operate",
