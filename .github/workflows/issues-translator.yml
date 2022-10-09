@@ -10,3 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: tomsun28/issues-translate-action@v2.6
+        with:
+          IS_MODIFY_TITLE: true
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
