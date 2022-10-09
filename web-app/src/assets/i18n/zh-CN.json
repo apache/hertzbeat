@@ -243,6 +243,8 @@
   "common.value": "值",
   "common.search": "搜索",
   "common.refresh": "刷新",
+  "common.notice": "提醒",
+  "common.ignore": "忽略",
   "common.edit-time": "更新时间",
   "common.new-time": "创建时间",
   "common.edit": "操作",
