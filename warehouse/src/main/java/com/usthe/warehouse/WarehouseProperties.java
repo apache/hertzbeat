@@ -145,6 +145,10 @@ public class WarehouseProperties {
          * TdEngine配置信息
          */
         private TdEngineProperties tdEngine;
+        /**
+         * IoTDB配置信息
+         */
+        private IoTDBProperties iotdb;
 
         public InfluxdbProperties getInfluxdb() {
             return influxdb;
@@ -168,6 +172,14 @@ public class WarehouseProperties {
 
         public void setTdEngine(TdEngineProperties tdEngine) {
             this.tdEngine = tdEngine;
+        }
+
+        public IoTDBProperties getIotdb() {
+            return iotdb;
+        }
+
+        public void setIotdb(IoTDBProperties iotdb) {
+            this.iotdb = iotdb;
         }
 
         public static class InfluxdbProperties {
@@ -348,6 +360,41 @@ public class WarehouseProperties {
 
             public void setPort(Integer port) {
                 this.port = port;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
+            }
+        }
+
+        public static class IoTDBProperties {
+            /**
+             * Whether the iotDB data store is enabled
+             */
+            private boolean enabled = true;
+
+            private String username;
+
+            private String password;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
             }
 
             public String getPassword() {
