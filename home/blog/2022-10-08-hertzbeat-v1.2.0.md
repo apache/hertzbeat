@@ -1,5 +1,5 @@
 ---
-title: 云监控系统 HertzBeat v1.1.3 发布！   
+title: HertzBeat v1.2.0 发布！易用友好的开源实时监控系统   
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
