@@ -25,6 +25,7 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.dto.ValueRow;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.warehouse.store.IoTDBDataStorage;
 import com.usthe.warehouse.store.MemoryDataStorage;
 import com.usthe.warehouse.store.TdEngineDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +66,9 @@ public class MetricsDataController {
     @Autowired(required = false)
     private TdEngineDataStorage tdEngineDataStorage;
 
+    @Autowired(required = false)
+    private IoTDBDataStorage ioTDBDataStorage;
+
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus(
@@ -72,11 +76,8 @@ public class MetricsDataController {
             @RequestParam String storage) {
         boolean available = true;
         if (TDENGINE.equalsIgnoreCase(storage)) {
-            if (tdEngineDataStorage == null) {
-                available = false;
-            } else {
-                available = tdEngineDataStorage.isServerAvailable();
-            }
+            available = (tdEngineDataStorage == null || tdEngineDataStorage.isServerAvailable())
+                    ||  (ioTDBDataStorage == null || ioTDBDataStorage.isServerAvailable());
         }
         if (available) {
             return ResponseEntity.ok(Message.<Void>builder().build());
@@ -145,10 +146,16 @@ public class MetricsDataController {
             if (tdEngineDataStorage != null) {
                 instanceValuesMap = tdEngineDataStorage
                         .getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
+            } else if (ioTDBDataStorage != null) {
+                instanceValuesMap = ioTDBDataStorage
+                        .getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
             }
         } else {
             if (tdEngineDataStorage != null) {
                 instanceValuesMap = tdEngineDataStorage
+                        .getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
+            } else if (ioTDBDataStorage != null) {
+                instanceValuesMap = ioTDBDataStorage
                         .getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
             }
         }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * data storage abstract class
  * @author ceilzcx
  * @since 2022/10/12
  */
@@ -21,6 +22,8 @@ public abstract class AbstractDataStorage implements DisposableBean {
     protected final WarehouseProperties properties;
     protected final CommonDataQueue commonDataQueue;
 
+    protected boolean serverAvailable;
+
     protected AbstractDataStorage(WarehouseWorkerPool workerPool,
                                   WarehouseProperties properties,
                                   CommonDataQueue commonDataQueue) {
@@ -29,9 +32,9 @@ public abstract class AbstractDataStorage implements DisposableBean {
         this.commonDataQueue = commonDataQueue;
     }
 
-    protected void startStorageData(boolean consume) {
+    protected void startStorageData(String threadName, boolean consume) {
         Runnable runnable = () -> {
-            Thread.currentThread().setName("warehouse-tdEngine-data-storage");
+            Thread.currentThread().setName(threadName);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
@@ -45,6 +48,10 @@ public abstract class AbstractDataStorage implements DisposableBean {
         };
         workerPool.executeJob(runnable);
         workerPool.executeJob(runnable);
+    }
+
+    public boolean isServerAvailable() {
+        return serverAvailable;
     }
 
     abstract void saveData(CollectRep.MetricsData metricsData);
