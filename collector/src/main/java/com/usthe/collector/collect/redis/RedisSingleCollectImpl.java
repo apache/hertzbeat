@@ -30,6 +30,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -49,6 +51,12 @@ import java.util.Optional;
  */
 @Slf4j
 public class RedisSingleCollectImpl extends AbstractCollect {
+
+    private final ClientResources defaultClientResources;
+
+    public RedisSingleCollectImpl() {
+        defaultClientResources = DefaultClientResources.create();
+    }
 
     public static RedisSingleCollectImpl getInstance() {
         return RedisSingleCollectImpl.Singleton.INSTANCE;
@@ -155,7 +163,7 @@ public class RedisSingleCollectImpl extends AbstractCollect {
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
         redisUri.setTimeout(timeout);
-        return RedisClient.create(redisUri);
+        return RedisClient.create(defaultClientResources, redisUri);
     }
 
     /**
