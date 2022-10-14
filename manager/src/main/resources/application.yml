@@ -88,7 +88,7 @@ warehouse:
       username: root
       password: taosdata
     iotdb:
-      enabled: true
+      enabled: false
       username: root
       password: root
 

@@ -50,10 +50,17 @@ public abstract class AbstractDataStorage implements DisposableBean {
         workerPool.executeJob(runnable);
     }
 
+    /**
+     * @return data storage是否可用
+     */
     public boolean isServerAvailable() {
         return serverAvailable;
     }
 
+    /**
+     * 持久化数据
+     * @param metricsData 采集数据
+     */
     abstract void saveData(CollectRep.MetricsData metricsData);
 
     /**

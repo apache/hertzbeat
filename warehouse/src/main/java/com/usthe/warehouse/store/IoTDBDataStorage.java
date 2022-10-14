@@ -38,15 +38,13 @@ public class IoTDBDataStorage extends AbstractDataStorage {
     // storage group (存储组)
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
+    private static final String SHOW_DEVICES
+            = "SHOW DEVICES %s";
     // the second %s is alias
-    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT `instance` as `instance`, %s as %s FROM %s WHERE instance = %s AND Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_SQL
-            = "SELECT `instance` as `instance`, %s as %s FROM %s WHERE Time >= now() - %s order by Time desc";
+            = "SELECT %s as %s FROM %s WHERE Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(%s), avg(%s), min(%s), max(%s) FROM %s WHERE instance = %s AND Time >= now() - %s interval(4h)";
-    private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM %s WHERE ts >= now - 1w";
+            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h) WITHOUT NULL ANY";
 
     private Session session;
 
@@ -79,15 +77,10 @@ public class IoTDBDataStorage extends AbstractDataStorage {
     @Override
     void saveData(CollectRep.MetricsData metricsData) {
         // tablet的deviceId添加引号会导致数据插入失败
-        String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), false);
         List<MeasurementSchema> schemaList = new ArrayList<>();
 
-        // add instance
-        MeasurementSchema instanceSchema = new MeasurementSchema();
-        instanceSchema.setMeasurementId("instance");
-        instanceSchema.setType(TSDataType.TEXT);
-        schemaList.add(instanceSchema);
-
+        // todo MeasurementSchema是在客户端生成的数据结构，编码和压缩没有作用
+        // todo 需要使用指定的数据结构，还是需要手动创建timeseries或template
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
             MeasurementSchema schema = new MeasurementSchema();
@@ -100,14 +93,21 @@ public class IoTDBDataStorage extends AbstractDataStorage {
             }
             schemaList.add(schema);
         }
-        Tablet tablet = new Tablet(deviceId, schemaList);
+        Map<String, Tablet> tabletMap = new HashMap<>();
         try {
-            // 避免Time重复
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                String instance = valueRow.getInstance();
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, false);
+                if (tabletMap.containsKey(instance)) {
+                    // 避免Time重复
+                    now++;
+                } else {
+                    tabletMap.put(instance, new Tablet(deviceId, schemaList));
+                }
+                Tablet tablet = tabletMap.get(instance);
                 int rowIndex = tablet.rowSize++;
-                tablet.addTimestamp(rowIndex, now++);
-                tablet.addValue("instance", rowIndex, valueRow.getInstance());
+                tablet.addTimestamp(rowIndex, now);
                 for (int i = 0; i < fieldsList.size(); i++) {
                     if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
                         if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
@@ -118,35 +118,46 @@ public class IoTDBDataStorage extends AbstractDataStorage {
                     }
                 }
             }
-
-            session.insertTablet(tablet, true);
+            for (Tablet tablet : tabletMap.values()) {
+                session.insertTablet(tablet, true);
+            }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             e.printStackTrace();
         } finally {
-            tablet.reset();
+            for (Tablet tablet : tabletMap.values()) {
+                tablet.reset();
+            }
         }
     }
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
-        String deviceId = getDeviceId(app, metrics, monitorId, true);
-        String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId, history) :
-                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, addQuote(metric), addQuote(metric), deviceId, instance, history);
-        log.debug(selectSql);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
         }
+        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String selectSql;
         try {
-            SessionDataSet dataSet = this.session.executeQueryStatement(selectSql);
-            while (dataSet.hasNext()) {
-                RowRecord record = dataSet.next();
-                long timestamp = record.getTimestamp();
-                String instanceValue = record.getFields().get(0).getStringValue();
-                double value = record.getFields().get(1).getDoubleV();
-                String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                valueList.add(new Value(strValue, timestamp));
+            if (instance != null) {
+                selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId, history);
+                handleHistorySelect(selectSql, "", instanceValuesMap);
+            } else {
+                // 优先查询底下所有存在device, 如果存在底下所有device的数据, 否则查询deviceId的数据
+                List<String> devices = queryAllDevices(deviceId);
+                if (devices.isEmpty()) {
+                    selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId, history);
+                    handleHistorySelect(selectSql, "", instanceValuesMap);
+                } else {
+                    // todo 改造成一个select查询: select device1.metric, device2.metric from xxx
+                    for (String device : devices) {
+                        // 为什么不直接使用device？select有校验，device可能会报错(eg: xxx.xxx.xx-xx的形式)
+                        String[] node = device.split("\\.");
+                        String instanceId = node[node.length - 1];
+                        selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
+                        handleHistorySelect(selectSql, instanceId, instanceValuesMap);
+                    }
+                }
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             log.error(e.getMessage(), e);
@@ -154,16 +165,114 @@ public class IoTDBDataStorage extends AbstractDataStorage {
         return instanceValuesMap;
     }
 
+    private void handleHistorySelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
+            throws IoTDBConnectionException, StatementExecutionException {
+        SessionDataSet dataSet = this.session.executeQueryStatement(selectSql);
+        log.debug("iot select sql: {}", selectSql);
+        while (dataSet.hasNext()) {
+            RowRecord record = dataSet.next();
+            long timestamp = record.getTimestamp();
+            double value = record.getFields().get(0).getDoubleV();
+            String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+            valueList.add(new Value(strValue, timestamp));
+        }
+    }
+
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
-        return null;
+        Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
+        if (!isServerAvailable()) {
+            return instanceValuesMap;
+        }
+        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String selectSql;
+        try {
+            if (instance != null) {
+                selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
+                        addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
+                handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
+            } else {
+                List<String> devices = queryAllDevices(deviceId);
+                if (devices.isEmpty()) {
+                    selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
+                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
+                    handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
+                } else {
+                    for (String device : devices) {
+                        String[] node = device.split("\\.");
+                        String instanceId = node[node.length - 1];
+                        selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
+                                addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
+                        handleHistoryIntervalSelect(selectSql, instanceId, instanceValuesMap);
+                    }
+                }
+            }
+        } catch (StatementExecutionException | IoTDBConnectionException e) {
+            log.error(e.getMessage(), e);
+        }
+        return instanceValuesMap;
     }
 
-    private String getDeviceId(String app, String metrics, Long monitorId, boolean useQuote) {
-        return STORAGE_GROUP + "." + (useQuote ? addQuote(app) : app) + "." + (useQuote ? addQuote(metrics) : metrics) + "." + monitorId;
+    private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
+            throws IoTDBConnectionException, StatementExecutionException {
+        SessionDataSet dataSet = this.session.executeQueryStatement(selectSql);
+        log.debug("iot select sql: {}", selectSql);
+        while (dataSet.hasNext()) {
+            RowRecord record = dataSet.next();
+            long timestamp = record.getTimestamp();
+            double origin = record.getFields().get(0).getDoubleV();
+            String originStr = BigDecimal.valueOf(origin).stripTrailingZeros().toPlainString();
+            double avg = record.getFields().get(1).getDoubleV();
+            String avgStr = BigDecimal.valueOf(avg).stripTrailingZeros().toPlainString();
+            double min = record.getFields().get(2).getDoubleV();
+            String minStr = BigDecimal.valueOf(min).stripTrailingZeros().toPlainString();
+            double max = record.getFields().get(3).getDoubleV();
+            String maxStr = BigDecimal.valueOf(max).stripTrailingZeros().toPlainString();
+            Value value = Value.builder()
+                    .origin(originStr).mean(avgStr)
+                    .min(minStr).max(maxStr)
+                    .time(timestamp)
+                    .build();
+            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+            valueList.add(value);
+        }
     }
 
-    // add quote，否则关键字会报错(eg: nodes)
+    /**
+     * 获取deviceId下的所有设备
+     *
+     * @param deviceId 设备/实体
+     */
+    private List<String> queryAllDevices(String deviceId) throws IoTDBConnectionException, StatementExecutionException {
+        String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");
+        SessionDataSet dataSet = this.session.executeQueryStatement(showDevicesSql);
+        List<String> devices = new ArrayList<>();
+        while (dataSet.hasNext()) {
+            RowRecord record = dataSet.next();
+            devices.add(record.getFields().get(0).getStringValue());
+        }
+        return devices;
+    }
+
+    /**
+     * 获取设备id
+     * 有instanceId的使用 ${group}.${app}.${metrics}.${monitor}.${instanceId} 的方式
+     * 否则使用 ${group}.${app}.${metrics}.${monitor} 的方式
+     * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
+     */
+    private String getDeviceId(String app, String metrics, Long monitorId, String instanceId, boolean useQuote) {
+        String deviceId = STORAGE_GROUP + "." +
+                (useQuote ? addQuote(app) : app) + "." +
+                (useQuote ? addQuote(metrics) : metrics) + "." +
+                monitorId;
+        if (instanceId != null && !instanceId.isEmpty() && !instanceId.equals(CommonConstants.NULL_VALUE)) {
+            deviceId += "." + (useQuote ? addQuote(instanceId) : instanceId);
+        }
+        return deviceId;
+    }
+
+    // add quote，防止查询时关键字报错(eg: nodes)
     private String addQuote(String text) {
         return String.format("`%s`", text);
     }

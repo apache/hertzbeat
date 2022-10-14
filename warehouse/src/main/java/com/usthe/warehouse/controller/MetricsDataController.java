@@ -75,6 +75,7 @@ public class MetricsDataController {
             @Parameter(description = "Storage Type", example = "Tdengine")
             @RequestParam String storage) {
         boolean available = true;
+        // todo storage前端写死
         if (TDENGINE.equalsIgnoreCase(storage)) {
             available = (tdEngineDataStorage == null || tdEngineDataStorage.isServerAvailable())
                     ||  (ioTDBDataStorage == null || ioTDBDataStorage.isServerAvailable());
