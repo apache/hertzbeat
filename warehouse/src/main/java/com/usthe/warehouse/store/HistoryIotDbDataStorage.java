@@ -298,6 +298,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         text = String.format("`%s`", text);
         text = text.replace("'", "\\'");
         text = text.replace("\"","\\\"");
+        text = text.replace("*","-");
         return text;
     }
 
