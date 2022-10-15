@@ -90,6 +90,7 @@ warehouse:
     iotdb:
       enabled: false
       host: 127.0.0.1
+      rpc-port: 6667
       username: root
       password: root
     memory:
