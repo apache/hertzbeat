@@ -136,6 +136,11 @@ public class WarehouseProperties {
     public static class StoreProperties {
 
         /**
+         * 内存存储配置信息
+         */
+        private MemoryProperties memory;
+
+        /**
          * influxdb配置信息
          */
         private InfluxdbProperties influxdb;
@@ -151,6 +156,14 @@ public class WarehouseProperties {
          * IoTDB配置信息
          */
         private IotDbProperties iotDb;
+
+        public MemoryProperties getMemory() {
+            return memory;
+        }
+
+        public void setMemory(MemoryProperties memory) {
+            this.memory = memory;
+        }
 
         public InfluxdbProperties getInfluxdb() {
             return influxdb;
@@ -182,6 +195,33 @@ public class WarehouseProperties {
 
         public void setIotDb(IotDbProperties iotDb) {
             this.iotDb = iotDb;
+        }
+
+        public static class MemoryProperties {
+            /**
+             * 内存数据存储是否启动
+             */
+            private boolean enabled = false;
+            /**
+             * 内存存储map初始化大小
+             */
+            private Integer initSize = 1024;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public Integer getInitSize() {
+                return initSize;
+            }
+
+            public void setInitSize(Integer initSize) {
+                this.initSize = initSize;
+            }
         }
 
         public static class InfluxdbProperties {

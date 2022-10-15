@@ -23,7 +23,7 @@ import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
@@ -39,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Primary
 @Configuration
 @AutoConfigureAfter(value = {WarehouseProperties.class})
-@ConditionalOnMissingBean(value = AbstractRealTimeDataStorage.class)
+@ConditionalOnProperty(prefix = "warehouse.store.memory",
+        name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
 

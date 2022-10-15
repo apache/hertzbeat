@@ -92,6 +92,9 @@ warehouse:
       host: 127.0.0.1
       username: root
       password: root
+    memory:
+      enabled: true
+      init-size: 1024
     redis:
       enabled: false
       host: 127.0.0.1
