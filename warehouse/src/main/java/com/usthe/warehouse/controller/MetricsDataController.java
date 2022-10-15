@@ -58,7 +58,7 @@ public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
 
-    @Autowired
+    @Autowired(required = false)
     private AbstractRealTimeDataStorage realTimeDataStorage;
 
     @Autowired(required = false)
