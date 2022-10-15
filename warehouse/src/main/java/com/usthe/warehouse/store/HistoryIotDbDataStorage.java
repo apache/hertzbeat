@@ -40,8 +40,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
-    private static final String SHOW_DEVICES
-            = "SHOW DEVICES %s";
+    private static final String SHOW_DEVICES = "SHOW DEVICES %s";
+
     /**
      * the second %s is alias
      */
@@ -96,7 +96,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         List<MeasurementSchema> schemaList = new ArrayList<>();
 
         // todo MeasurementSchema是在客户端生成的数据结构，编码和压缩没有作用
-        // todo 需要使用指定的数据结构，还是需要手动创建timeseries或template
+        // todo 需要使用指定的数据结构，还是需要手动创建timeSeries或template
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
             MeasurementSchema schema = new MeasurementSchema();
@@ -114,7 +114,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                 String instance = valueRow.getInstance();
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, false);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, true);
                 if (tabletMap.containsKey(instance)) {
                     // 避免Time重复
                     now++;
@@ -131,6 +131,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                         } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
                             tablet.addValue(fieldsList.get(i).getName(), rowIndex, valueRow.getColumns(i));
                         }
+                    } else {
+                        tablet.addValue(fieldsList.get(i).getName(), rowIndex, null);
                     }
                 }
             }
@@ -138,11 +140,12 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 session.insertTablet(tablet, true);
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         } finally {
             for (Tablet tablet : tabletMap.values()) {
                 tablet.reset();
             }
+            tabletMap.clear();
         }
     }
 
@@ -292,7 +295,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * add quote，防止查询时关键字报错(eg: nodes)
      */
     private String addQuote(String text) {
-        return String.format("`%s`", text);
+        text = String.format("`%s`", text);
+        text = text.replace("'", "\\'");
+        text = text.replace("\"","\\\"");
+        return text;
     }
 
     @Override
