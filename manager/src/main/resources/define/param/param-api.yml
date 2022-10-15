@@ -58,6 +58,13 @@ param:
       en-US: HTTPS
     type: boolean
     required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
   - field: headers
     name:
       zh-CN: 请求Headers
@@ -119,8 +126,9 @@ param:
     hide: true
   - field: keyword
     name:
-      zh-CN: 关键字
-      en-US: Keyword
+      zh-CN: 关键字计数
+      en-US: Keyword Num
     type: text
+    placeholder: 'Input Keyword'
     required: false
     hide: true

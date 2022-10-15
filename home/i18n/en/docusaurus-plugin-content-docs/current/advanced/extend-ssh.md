@@ -3,49 +3,49 @@ id: extend-ssh
 title: SSH Protocol Custom Monitoring  
 sidebar_label: SSH Protocol Custom Monitoring     
 ---
->  From [Custom Monitoring](extend-point), you are familiar with how to customize types, indicators, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize indicator monitoring. 
-> SSH protocol custom monitoring allows us to easily monitor and collect the Linux indicators we want by writing sh command script.     
+>  From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring. 
+> SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.     
 
 ### SSH protocol collection process   
-【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse reponse data: oneRow, multiRow**】->【**indicator data extraction**】   
+【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse reponse data: oneRow, multiRow**】->【**Metric data extraction**】   
 
-It can be seen from the process that we define a monitoring type of SSH protocol. We need to configure SSH request parameters, configure which indicators to obtain, and configure query script statements.
+It can be seen from the process that we define a monitoring type of SSH protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query script statements.
 
 ### Data parsing method   
-We can obtain the corresponding indicator data through the data fields queried by the SHELL script and the indicator mapping we need. At present, there are two mapping parsing methods：oneRow and multiRow which can meet the needs of most indicators.
+We can obtain the corresponding Metric data through the data fields queried by the SHELL script and the Metric mapping we need. At present, there are two mapping parsing methods：oneRow and multiRow which can meet the needs of most Metrics.
 
 #### **oneRow**   
 > Query out a column of data, return the field value (one value per row) of the result set through query and map them to the field.     
 
 eg：     
-indicators of Linux to be queried hostname-host name，uptime-start time     
+Metrics of Linux to be queried hostname-host name，uptime-start time     
 Host name original query command：`hostname`     
 Start time original query command：`uptime | awk -F "," '{print $1}'`   
-Then the query script of the two indicators in hertzbeat is(Use `;` Connect them together)：       
+Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：       
 `hostname; uptime | awk -F "," '{print $1}'`     
 The data responded by the terminal is：    
 ```
 tombook
 14:00:15 up 72 days  
 ```  
-At last collected indicator data is mapped one by one as：   
+At last collected Metric data is mapped one by one as：   
 hostname is `tombook`   
 uptime is `14:00:15 up 72 days`      
 
-Here the indicator field and the response data can be mapped into a row of collected data one by one      
+Here the Metric field and the response data can be mapped into a row of collected data one by one      
 
 #### **multiRow**
-> Query multiple rows of data, return the column names of the result set through the query, and map them to the indicator field of the query.  
+> Query multiple rows of data, return the column names of the result set through the query, and map them to the Metric field of the query.  
 
 eg：   
-Linux memory related indicator fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
+Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
 Memory indicaotr original query command：`free -m`, Console response：  
 ```shell
               total        used        free      shared  buff/cache   available
 Mem:           7962        4065         333           1        3562        3593
 Swap:          8191          33        8158
 ```
-In heartbeat multiRow format parsing requires a one-to-one mapping between the column name of the response data  and the indicaotr value, so the corresponding query SHELL script is:
+In hertzbeat multiRow format parsing requires a one-to-one mapping between the column name of the response data  and the indicaotr value, so the corresponding query SHELL script is:
 `free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
 Console response is：  
 ```shell
@@ -53,7 +53,7 @@ total  used  free  buff_cache  available
 7962   4066  331   3564        3592
 ```
 
-Here the indicator field and the response data can be mapped into collected data one by one.
+Here the Metric field and the response data can be mapped into collected data one by one.
 
 ### Custom Steps  
 
@@ -92,17 +92,17 @@ configmap:
     type: 1
   - key: password
     type: 2
-# indicator group list
+# Metric group list
 metrics:
-  # The first monitoring indicator group basic
-  # Note：: the built-in monitoring indicators have (responseTime - response time)
+  # The first monitoring Metric group basic
+  # Note：: the built-in monitoring Metrics have (responseTime - response time)
   - name: basic
-    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
-    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # Specific monitoring indicators in the indicator group
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
         instance: true
@@ -127,7 +127,7 @@ metrics:
   - name: cpu
     priority: 1
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: info
         type: 1
       - field: cores
@@ -157,7 +157,7 @@ metrics:
   - name: memory
     priority: 2
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: total
         type: 0
         unit: Mb

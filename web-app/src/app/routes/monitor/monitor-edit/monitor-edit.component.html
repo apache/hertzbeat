@@ -8,22 +8,28 @@
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <a [routerLink]="['/monitors']" [queryParams]="{ app: monitor.app ? monitor.app : '' }">
-      <i nz-icon nzType="monitor"></i>
+      <i nz-icon nzType="reconciliation"></i>
       <span>{{ 'monitors.list' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <i nz-icon nzType="edit"></i>
-    <span>{{ 'monitors.edit' | i18n }} {{ 'monitor.app.' + monitor.app | i18n }} {{ 'monitor' | i18n }}</span>
+    <span>{{ 'monitors.edit' | i18n }} </span>
+    <nz-tag style="font-size: 14px; border-radius: 4px" nzColor="#3f51b5">
+      <span>{{ 'monitor.app.' + monitor.app | i18n }}</span>
+    </nz-tag>
+    <span>{{ 'monitor' | i18n }}</span>
     <a [href]="'https://hertzbeat.com/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%">
-      <span>{{ 'common.button.help' | i18n }} </span>
-      <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+      <button nz-button nzType="primary">
+        <span>{{ 'common.button.help' | i18n }} </span>
+        <span nz-icon nzType="question-circle"></span>
+      </button>
     </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<nz-spin [nzSpinning]="isSpinning">
+<nz-spin [nzSpinning]="isSpinning" [nzTip]="spinningTip" nzSize="large">
   <div class="-inner-content">
     <form nz-form #editForm="ngForm">
       <nz-form-item>

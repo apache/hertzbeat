@@ -10,24 +10,28 @@
     <i nz-icon nzType="alert"></i>
     <span>{{ 'menu.alert.setting' | i18n }}</span>
     <a href="https://hertzbeat.com/docs/help/alert_threshold" target="_blank" style="float: right; margin-right: 5%">
-      <span>{{ 'common.button.help' | i18n }}&nbsp;</span>
-      <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+      <button nz-button nzType="primary">
+        <span>{{ 'common.button.help' | i18n }} </span>
+        <span nz-icon nzType="question-circle"></span>
+      </button>
     </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-  <i nz-icon nzType="sync" nzTheme="outline"></i>
-</button>
-<button nz-button nzType="primary" (click)="onNewAlertDefine()">
-  <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-  {{ 'alert.setting.new' | i18n }}
-</button>
-<button nz-button nzType="primary" nzDanger (click)="onDeleteAlertDefines()">
-  <i nz-icon nzType="delete" nzTheme="outline"></i>
-  {{ 'common.button.delete' | i18n }}
-</button>
+<div style="margin-bottom: 20px">
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+  <button nz-button nzType="primary" (click)="onNewAlertDefine()">
+    <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+    {{ 'alert.setting.new' | i18n }}
+  </button>
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlertDefines()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    {{ 'common.button.delete' | i18n }}
+  </button>
+</div>
 
 <nz-table
   #fixedTable
@@ -53,7 +57,7 @@
       <th nzAlign="center">{{ 'alert.setting.times' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.setting.template' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.setting.default' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.setting.enable' | i18n }}</th>
       <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
@@ -83,20 +87,18 @@
       <td nzAlign="center">{{ data.times }}</td>
       <td nzAlign="center">{{ data.template }}</td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.preset" nzColor="green">
-          <span>{{ 'common.yes' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="!data.preset" nzColor="orange">
-          <span>{{ 'common.no' | i18n }}</span>
-        </nz-tag>
+        <nz-switch [(ngModel)]="data.preset" (ngModelChange)="updateAlertDefine(data)" name="preset"></nz-switch>
       </td>
-      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
+      </td>
       <td nzAlign="center">
         <button
           nz-button
           nzType="primary"
           (click)="onOpenConnectModal(data.id, data.app)"
           nz-tooltip
+          [disabled]="data.preset"
           [nzTooltipTitle]="'alert.setting.connect' | i18n"
         >
           <i nz-icon nzType="link" nzTheme="outline"></i>

@@ -8,7 +8,7 @@ sidebar_label: Install via Package
 video tutorial of installation and deployment: [HertzBeat installation and deployment-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)   
 
 1. Install JAVA runtime environment-refer to[official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   requirement：JDK8+ (verified JDK8)   
+   requirement：JDK11 ENV     
    download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)   
    After installation use command line to check whether you install it successfully.   
    ```
@@ -29,17 +29,26 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
    ```
    Modify the configuration file `hertzbeat/config/application.yml`
    Replace `td-engine` service parameter, IP port account and password
-   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-init)）
+   Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-change)）
    Specific replacement parameters is as follows:   
-```
-   warehouse.store.td-engine.url
-   warehouse.store.td-engine.username
-   warehouse.store.td-engine.password
-   
-   spring.mail.host
-   spring.mail.port
-   spring.mail.username
-   spring.mail.password
+```yaml
+warehouse:
+   store:
+      td-engine:
+         enabled: true
+         driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+         url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+         username: root
+         password: taosdata
+         
+spring:
+   mail:
+      # Attention: this is mail server address.
+      host: smtp.exmail.qq.com
+      username: example@tancloud.cn
+      # Attention: this is not email account password, this requires an email authorization code
+      password: example
+      port: 465
 ```
 
 4. Configure the user configuration file(optional, user-defined user password)     
@@ -80,7 +89,7 @@ account:
 ### Package Deployment common issues
 
 1. **According to the process deploy，visit http://ip:1157/ no interface**   
-   Please refer to the following points to troubleshoot issuess:
+   Please refer to the following points to troubleshoot issues:
 > one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
 > two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
 > three： Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.

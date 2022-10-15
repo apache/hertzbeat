@@ -8,7 +8,7 @@ sidebar_label: 安装包方式部署
 安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)   
 
 1. 安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   要求：JDK8+(已验证JDK8)   
+   要求：JDK11环境   
    下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)   
    安装后命令行检查是否成功安装   
    ```
@@ -29,17 +29,26 @@ sidebar_label: 安装包方式部署
    ```
    修改位于 `hertzbeat/config/application.yml` 的配置文件        
    替换里面的`td-engine`服务参数，IP端口账户密码   
-   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）
+   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-change)）
    具体替换参数如下:   
-```
-   warehouse.store.td-engine.url
-   warehouse.store.td-engine.username
-   warehouse.store.td-engine.password
-   
-   spring.mail.host
-   spring.mail.port
-   spring.mail.username
-   spring.mail.password
+```yaml
+warehouse:
+   store:
+      td-engine:
+         enabled: true
+         driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+         url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+         username: root
+         password: taosdata
+         
+spring:
+   mail:
+      # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
+      host: smtp.exmail.qq.com
+      username: example@tancloud.cn
+      # 请注意此非邮箱账户密码 此需填写邮箱授权码
+      password: example
+      port: 465
 ```
 
 4. 配置用户配置文件(可选,自定义配置用户密码)     

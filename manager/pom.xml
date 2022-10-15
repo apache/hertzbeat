@@ -15,11 +15,10 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>monitor</artifactId>
+        <artifactId>hertzbeat</artifactId>
         <groupId>com.usthe.tancloud</groupId>
         <version>1.0</version>
     </parent>
@@ -28,9 +27,9 @@
     <packaging>jar</packaging>
 
     <properties>
-        <mysql.version>8.0.16</mysql.version>
+        <mysql.version>8.0.28</mysql.version>
         <h2.version>2.1.212</h2.version>
-        <snake.yaml.version>1.26</snake.yaml.version>
+        <snake.yaml.version>1.32</snake.yaml.version>
     </properties>
 
     <dependencies>
@@ -101,8 +100,8 @@
         </dependency>
         <!-- swagger -->
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
         </dependency>
         <!-- yaml file load -->
         <dependency>
@@ -137,9 +136,8 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>application.yml</include>
+                    <include>*.yml</include>
                     <include>*.properties</include>
-                    <include>sureness.yml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
                     <include>**/*.html</include>

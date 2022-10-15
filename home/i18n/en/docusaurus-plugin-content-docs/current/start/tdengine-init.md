@@ -3,8 +3,9 @@ id: tdengine-init
 title: Dependency Service TDengine Installation and Initialization        
 sidebar_label: TDengine Init(optional)    
 ---
-TDengine is a time series database for Open Source the Internet of Things.We use TDengine to replace the InfluxDb, to store the history data collected monitoring indicators.
-Note⚠️ TDengine is optional.And no configuration means no historical chart data.
+TDengine is a time series database. We use TDengine to replace the InfluxDb, to store the history data collected monitoring Metrics.
+Note⚠️ TDengine is optional. And no configuration means no historical chart data. 
+Note⚠️ Need TDengine 2.4.x Version.   
 
 > If you have TDengine environment, can directly skip to create a database instance.
 
@@ -63,6 +64,7 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
    Replace `warehouse.store.td-engine` data source parameters, URL account and password.     
 
 ```
+   warehouse.store.td-engine.enable
    warehouse.store.td-engine.url
    warehouse.store.td-engine.username
    warehouse.store.td-engine.password
@@ -72,4 +74,7 @@ Note⚠️ TDengine is optional.And no configuration means no historical chart d
 ###   Common issues  
 
 1. If the history chart on the monitoring page is not displayed，popup [unable to provide historical chart data, please configure dependency service on TDengine time series database]
-> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
+> As shown in the popup window，the premise of history chart display is that you need install and configure HertzBeat's dependency service - TDengine database.
+
+2. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed     
+> Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  

@@ -43,6 +43,7 @@ export class MonitorEditComponent implements OnInit {
   detected: boolean = true;
   passwordVisible: boolean = false;
   isSpinning: boolean = false;
+  spinningTip: string = 'Loading...';
 
   ngOnInit(): void {
     this.route.paramMap
@@ -66,7 +67,7 @@ export class MonitorEditComponent implements OnInit {
                 this.paramValueMap.set(item.field, item);
               });
             }
-            this.detected = message.data.detected ? message.data.detected : true;
+            this.detected = true;
             if (this.monitor.tags == undefined) {
               this.monitor.tags = [];
             }
@@ -172,6 +173,11 @@ export class MonitorEditComponent implements OnInit {
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
+    if (this.detected) {
+      this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
+    } else {
+      this.spinningTip = 'Loading...';
+    }
     this.isSpinning = true;
     this.monitorSvc.editMonitor(addMonitor).subscribe(
       message => {
@@ -185,7 +191,7 @@ export class MonitorEditComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), error.msg);
       }
     );
   }
@@ -221,6 +227,7 @@ export class MonitorEditComponent implements OnInit {
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
+    this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
     this.isSpinning = true;
     this.monitorSvc.detectMonitor(detectMonitor).subscribe(
       message => {
@@ -233,7 +240,7 @@ export class MonitorEditComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.msg);
       }
     );
   }

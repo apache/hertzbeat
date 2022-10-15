@@ -4,8 +4,8 @@ title: 帮助中心
 sidebar_label: 帮助入门  
 ---
 
-> TanCloud - 易用友好的高性能监控云    
-> 使用过程中的帮助文档,辅助信息
+> 易用友好的实时监控系统，无需Agent，强大自定义监控能力。
+> 使用过程中的帮助文档,辅助信息。  
 
 ## 🔬 监控服务
 
@@ -14,19 +14,30 @@ sidebar_label: 帮助入门
 
 ### 应用服务监控  
 
-[网站监测](website)  &emsp;&emsp;&emsp;&emsp;  [HTTP API](api) &emsp;&emsp;&emsp;&emsp; [PING连通性](ping) &emsp;&emsp;&emsp;&emsp; [端口可用性](port) &emsp;&emsp;&emsp;&emsp; [全站监控](fullsite)
+  &emsp;&#x1F449;&emsp;[网站监测](website) <br />
+  &emsp;&#x1F449;&emsp;[HTTP API](api) <br /> 
+  &emsp;&#x1F449;&emsp;[PING连通性](ping) <br />
+  &emsp;&#x1F449;&emsp;[端口可用性](port) <br />
+  &emsp;&#x1F449;&emsp;[全站监控](fullsite) <br />
 
 ### 数据库监控  
 
-[MYSQL数据库监控](mysql) &emsp;&emsp;&emsp;&emsp; [MariaDB数据库监控](mariadb)  &emsp;&emsp;&emsp;&emsp; [PostgreSQL数据库监控](postgresql)  &emsp;&emsp;&emsp;&emsp; [SqlServer数据库监控](sqlserver) &emsp;&emsp;&emsp;&emsp; [Oracle数据库监控](oracle)         
+  &emsp;&#x1F449;&emsp;[MYSQL数据库监控](mysql) <br />
+  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br /> 
+  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br /> 
+  &emsp;&#x1F449;&emsp;[SqlServer数据库监控](sqlserver) <br />
+  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />        
 
 ### 操作系统监控     
 
-[Linux操作系统监控](linux) &emsp;&emsp;&emsp;&emsp; [Windows操作系统监控](windows) &emsp;&emsp;&emsp;&emsp; [Ubuntu操作系统监控](ubuntu) &emsp;&emsp;&emsp;&emsp; [Centos操作系统监控](centos) &emsp;&emsp;&emsp;&emsp;
+  &emsp;&#x1F449;&emsp;[Linux操作系统监控](linux) <br />
+  &emsp;&#x1F449;&emsp;[Windows操作系统监控](windows) <br />
+  &emsp;&#x1F449;&emsp;[Ubuntu操作系统监控](ubuntu) <br /> 
+  &emsp;&#x1F449;&emsp;[Centos操作系统监控](centos) <br />
 
 ### 中间件监控
 
-[Zookeeper](zookeeper) &emsp;&emsp;&emsp;&emsp;  
+  &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
 
 ## 💡 告警服务  
 
@@ -41,7 +52,8 @@ sidebar_label: 帮助入门
 
 > 指标阈值配置，提供表达式形式的指标阈值配置，可设置告警级别，触发次数，告警通知模版和是否启用，关联监控等功能。
 
-详见 [阈值告警](alert_threshold) &emsp;&emsp;&emsp;&emsp; [阈值表达式](alert_threshold_expr)   
+详见&emsp;&#x1F449;&emsp;[阈值告警](alert_threshold) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert_threshold_expr)   
 
 ### 告警通知  
 
@@ -50,5 +62,8 @@ sidebar_label: 帮助入门
 > 接收人设置后需要设置关联的告警通知策略，来配置哪些告警信息发给哪些接收人。   
 
 
-[配置邮箱通知](alert_email)  &emsp;&emsp;&emsp;&emsp;  [配置WebHook通知](alert_webhook) &emsp;&emsp;&emsp;&emsp; [配置企业微信机器人通知](alert_wework)    
-[配置钉钉机器人通知](alert_dingtalk) &emsp;&emsp;&emsp;&emsp; [配置飞书机器人通知](alert_feishu)   
+&emsp;&#x1F449;&emsp;[配置邮箱通知](alert_email) <br />
+&emsp;&#x1F449;&emsp;[配置WebHook通知](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
+&emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
+&emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />  

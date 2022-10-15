@@ -20,7 +20,6 @@ package com.usthe.collector.dispatch.export;
 import com.usthe.common.entity.message.CollectRep;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +29,6 @@ import java.util.concurrent.TimeUnit;
  * @author tomsun28
  * @date 2021/11/3 15:22
  */
-@Component
 @Slf4j
 public class MetricsDataExporter implements DisposableBean {
 

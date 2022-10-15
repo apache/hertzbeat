@@ -17,9 +17,9 @@
 
 package com.usthe.warehouse.store;
 
-import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -70,14 +71,14 @@ public class TdEngineDataStorage implements DisposableBean {
 
     private HikariDataSource hikariDataSource;
     private WarehouseWorkerPool workerPool;
-    private MetricsDataExporter dataExporter;
+    private CommonDataQueue commonDataQueue;
     private boolean serverAvailable;
     private int tableStrColumnDefineMaxLength;
 
     public TdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
-                               MetricsDataExporter dataExporter) {
+                               CommonDataQueue commonDataQueue) {
         this.workerPool = workerPool;
-        this.dataExporter = dataExporter;
+        this.commonDataQueue = commonDataQueue;
         if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
@@ -123,7 +124,7 @@ public class TdEngineDataStorage implements DisposableBean {
             Thread.currentThread().setName("warehouse-tdEngine-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataExporter.pollPersistentStorageMetricsData();
+                    CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
                     if (consume && metricsData != null) {
                         saveData(metricsData);
                     }
@@ -287,7 +288,7 @@ public class TdEngineDataStorage implements DisposableBean {
                     instanceValue = "NULL";
                 }
                 double value = resultSet.getDouble(3);
-                String strValue = new BigDecimal(value).stripTrailingZeros().toPlainString();
+                String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
                 valueList.add(new Value(strValue, ts.getTime()));
             }

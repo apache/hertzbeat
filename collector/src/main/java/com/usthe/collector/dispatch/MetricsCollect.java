@@ -22,6 +22,7 @@ import com.googlecode.aviator.Expression;
 import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.database.JdbcCommonCollect;
 import com.usthe.collector.collect.http.HttpCollectImpl;
+import com.usthe.collector.collect.http.SslCertificateCollectImpl;
 import com.usthe.collector.collect.icmp.IcmpCollectImpl;
 import com.usthe.collector.collect.jmx.JmxCollectImpl;
 import com.usthe.collector.collect.redis.RedisSingleCollectImpl;
@@ -30,11 +31,14 @@ import com.usthe.collector.collect.ssh.SshCollectImpl;
 import com.usthe.collector.collect.telnet.TelnetCollectImpl;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
+import com.usthe.collector.dispatch.unit.UnitConvert;
+import com.usthe.collector.util.CollectUtil;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.CommonUtil;
+import com.usthe.common.util.Pair;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -107,7 +111,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     protected long startTime;
 
-    public MetricsCollect(Metrics metrics, Timeout timeout, CollectDataDispatch collectDataDispatch) {
+    protected List<UnitConvert> unitConvertList;
+
+    public MetricsCollect(Metrics metrics, Timeout timeout,
+                          CollectDataDispatch collectDataDispatch,
+                          List<UnitConvert> unitConvertList) {
         this.newTime = System.currentTimeMillis();
         this.timeout = timeout;
         this.metrics = metrics;
@@ -117,6 +125,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
+        this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         // 临时一次性任务执行优先级高
         if (isCyclic) {
@@ -162,6 +171,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 break;
             case DispatchConstants.PROTOCOL_JMX:
                 abstractCollect = JmxCollectImpl.getInstance();
+                break;
+            case DispatchConstants.PROTOCOL_SSL_CERT:
+                abstractCollect = SslCertificateCollectImpl.getInstance();
                 break;
             default:
                 break;
@@ -213,7 +225,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         collectData.setPriority(metrics.getPriority());
         List<CollectRep.Field> fieldList = new LinkedList<>();
         for (Metrics.Field field : metrics.getFields()) {
-            fieldList.add(CollectRep.Field.newBuilder().setName(field.getField()).setType(field.getType()).build());
+            CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
+            fieldBuilder.setName(field.getField()).setType(field.getType());
+            if (field.getUnit() != null) {
+                fieldBuilder.setUnit(field.getUnit());
+            }
+            fieldList.add(fieldBuilder.build());
         }
         collectData.addAllFields(fieldList);
         List<CollectRep.ValueRow> aliasRowList = collectData.getValuesList();
@@ -245,6 +262,25 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1]));
 
+        if (metrics.getUnits() == null) {
+            metrics.setUnits(Collections.emptyList());
+        }
+        Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
+                .stream()
+                .map(unit -> {
+                    int equalIndex = unit.indexOf("=");
+                    int arrowIndex = unit.indexOf("->");
+                    if (equalIndex < 0 || arrowIndex < 0) {
+                        return null;
+                    }
+                    String field = unit.substring(0, equalIndex).trim();
+                    String originUnit = unit.substring(equalIndex + 1, arrowIndex).trim();
+                    String newUnit = unit.substring(arrowIndex + 2).trim();
+                    return new Object[]{field, Pair.of(originUnit, newUnit)};
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1]));
+
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, String> aliasFieldValueMap = new HashMap<>(16);
@@ -255,6 +291,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
+                } else {
+                    aliasFieldValueMap.put(aliasFields.get(aliasIndex), null);
                 }
             }
             StringBuilder instanceBuilder = new StringBuilder();
@@ -262,22 +300,27 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String realField = field.getField();
                 Expression expression = fieldExpressionMap.get(realField);
                 String value = null;
+                String aliasFieldUnit = null;
                 if (expression != null) {
                     // If there is a calculation expression, calculate the value
                     // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                        for (String variable : expression.getVariableNames()) {
-                            Double doubleValue = CommonUtil.parseStrDouble(aliasFieldValueMap.get(variable));
-                            if (doubleValue != null) {
+                        for (String variable : expression.getVariableFullNames()) {
+                            // extract double value and unit from aliasField value
+                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                    .extractDoubleAndUnitFromStr(aliasFieldValueMap.get(variable));
+                            if (doubleAndUnit != null) {
+                                Double doubleValue = doubleAndUnit.getValue();
+                                aliasFieldUnit = doubleAndUnit.getUnit();
                                 fieldValueMap.put(variable, doubleValue);
+                            } else {
+                                fieldValueMap.put(variable, null);
                             }
                         }
                     } else {
-                        for (String variable : expression.getVariableNames()) {
+                        for (String variable : expression.getVariableFullNames()) {
                             String strValue = aliasFieldValueMap.get(variable);
-                            if (strValue != null && !"".equals(strValue)) {
-                                fieldValueMap.put(variable, strValue);
-                            }
+                            fieldValueMap.put(variable, strValue);
                         }
                     }
                     try {
@@ -296,6 +339,28 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         value = aliasFieldValueMap.get(aliasField);
                     } else {
                         value = aliasFieldValueMap.get(realField);
+                    }
+                    if (CommonConstants.TYPE_NUMBER == field.getType() && value != null) {
+                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                .extractDoubleAndUnitFromStr(value);
+                        value = String.valueOf(doubleAndUnit.getValue());
+                        aliasFieldUnit = doubleAndUnit.getUnit();
+                    }
+                }
+                // 单位处理
+                Pair<String, String> unitPair = fieldUnitMap.get(realField);
+                if (aliasFieldUnit != null) {
+                    if (unitPair != null) {
+                        unitPair.setLeft(aliasFieldUnit);
+                    } else if (field.getUnit() != null && !aliasFieldUnit.equalsIgnoreCase(field.getUnit())) {
+                        unitPair = Pair.of(aliasFieldUnit, field.getUnit());
+                    }
+                }
+                if (value != null && unitPair != null) {
+                    for (UnitConvert unitConvert : unitConvertList) {
+                        if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {
+                            value = unitConvert.convert(value, unitPair.getLeft(), unitPair.getRight());
+                        }
                     }
                 }
                 // Handle indicator values that may have units such as 34%, 34Mb, and limit values to 4 decimal places

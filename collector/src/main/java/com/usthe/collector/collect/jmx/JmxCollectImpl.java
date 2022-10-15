@@ -20,6 +20,7 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +47,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) throws IOException {
+    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
 
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
@@ -103,7 +104,7 @@ public class JmxCollectImpl extends AbstractCollect {
                 continue;
             }
             if (value instanceof Number || value instanceof  String || value instanceof ObjectName
-                    || value instanceof Boolean || value instanceof Date) {
+                    || value instanceof Boolean || value instanceof Date || value instanceof TimeUnit) {
                 attributeValueMap.put(attribute.getName(), value.toString());
             } else if (value instanceof CompositeData) {
                 CompositeData compositeData = (CompositeData) value;

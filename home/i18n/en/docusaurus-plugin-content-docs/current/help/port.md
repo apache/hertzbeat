@@ -4,7 +4,7 @@ title: Monitoring：port availability
 sidebar_label: Port availability    
 ---
 
-> Judge whether the exposed port of the opposite end service is available, then judge whether the opposite end service is available, and collect indicators such as response time for monitoring.
+> Judge whether the exposed port of the opposite end service is available, then judge whether the opposite end service is available, and collect Metrics such as response time for monitoring.
 
 ### Configuration parameter   
 
@@ -18,11 +18,11 @@ sidebar_label: Port availability
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：summary
+#### Metric set：summary
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | responseTime   | ms | Website response time |
 

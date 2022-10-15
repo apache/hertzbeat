@@ -79,26 +79,24 @@
   <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
     <div nz-row nzAlign="middle" class="bg-magenta rounded-lg">
       <div nz-col nzSpan="10" class="p-md text-white">
-        <div class="h2 mt0 font-weight-bold">{{ appCountCustom.size }}</div>
+        <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
         <p class="h5 text-nowrap mb0">
-          <i nz-icon nzType="skin" nzTheme="outline"></i>
-          {{ 'monitor.category.custom' | i18n }}
+          <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
+          {{ 'monitor.category.mid' | i18n }}
         </p>
       </div>
       <div nz-col nzSpan="14">
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unreachable' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountCustom.unReachableSize }}</span>
+          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unReachableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>

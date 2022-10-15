@@ -16,7 +16,7 @@
 category: db
 app: redis
 name:
-  zh-CN: Redis
+  zh-CN: Redis数据库
   en-US: Redis
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
@@ -34,7 +34,7 @@ configmap:
   - key: timeout
     type: 0
 metrics:
-  - name: Server
+  - name: server
     priority: 0
     fields:
       - field: redis_version
@@ -84,14 +84,14 @@ metrics:
       - field: io_threads_active
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Clients
+
+  - name: clients
     priority: 1
     fields:
       - field: connected_clients
@@ -111,30 +111,34 @@ metrics:
       - field: clients_in_timeout_table
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Memory
+
+  - name: memory
     priority: 2
     fields:
       - field: used_memory
         type: 0
       - field: used_memory_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_rss
         type: 0
       - field: used_memory_rss_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_peak
         type: 0
       - field: used_memory_peak_human
-        type: 1
+        type: 0
+        unit: MB
       - field: used_memory_peak_perc
-        type: 1
+        type: 0
+        unit: '%'
       - field: used_memory_overhead
         type: 0
       - field: used_memory_startup
@@ -142,7 +146,8 @@ metrics:
       - field: used_memory_dataset
         type: 0
       - field: used_memory_dataset_perc
-        type: 1
+        type: 0
+        unit: '%'
       - field: allocator_allocated
         type: 0
       - field: allocator_active
@@ -152,21 +157,25 @@ metrics:
       - field: total_system_memory
         type: 0
       - field: total_system_memory_human
-        type: 1
+        type: 0
+        unit: GB
       - field: used_memory_lua
         type: 0
       - field: used_memory_lua_human
-        type: 1
+        type: 0
+        unit: KB
       - field: used_memory_scripts
         type: 0
       - field: used_memory_scripts_human
-        type: 1
+        type: 0
+        unit: KB
       - field: number_of_cached_scripts
         type: 0
       - field: maxmemory
         type: 0
       - field: maxmemory_human
-        type: 1
+        type: 0
+        unit: MB
       - field: maxmemory_policy
         type: 1
       - field: allocator_frag_ratio
@@ -204,14 +213,14 @@ metrics:
       - field: lazyfreed_objects
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Persistence
+
+  - name: persistence
     priority: 3
     fields:
       - field: loading
@@ -261,14 +270,14 @@ metrics:
       - field: module_fork_last_cow_size
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Stats
+
+  - name: stats
     priority: 4
     fields:
       - field: total_connections_received
@@ -348,14 +357,14 @@ metrics:
       - field: io_threaded_writes_processed
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Replication
+
+  - name: replication
     priority: 5
     fields:
       - field: role
@@ -381,14 +390,14 @@ metrics:
       - field: repl_backlog_histlen
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: CPU
+
+  - name: cpu
     priority: 6
     fields:
       - field: used_cpu_sys
@@ -404,14 +413,14 @@ metrics:
       - field: used_cpu_user_main_thread
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Errorstats
+
+  - name: errorstats
     priority: 8
     fields:
       - field: errorstat_ERR
@@ -419,28 +428,28 @@ metrics:
       - field: errorstat_MISCONF
         type: 1
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Cluster
+
+  - name: cluster
     priority: 9
     fields:
       - field: cluster_enabled
         type: 0
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-  - name: Keyspace
-    priority: 10
+
+  - name: keyspace
+    priority: 9
     fields:
       - field: db0
         type: 1
@@ -475,7 +484,6 @@ metrics:
       - field: db15
         type: 1
     protocol: redis
-    # 当protocol为telnet协议时具体的采集配置
     redis:
       host: ^_^host^_^
       port: ^_^port^_^

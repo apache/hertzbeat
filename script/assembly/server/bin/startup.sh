@@ -41,17 +41,17 @@ SERVER_PORT=1157
 PIDS=`ps -ef | grep java | grep "$CONF_DIR" | awk '{print $2}'`
 if [ "$1" = "status" ]; then
     if [ -n "$PIDS" ]; then
-        echo "The $SERVER_NAME is running...!"
+        echo "The HertzBeat $SERVER_NAME is running...!"
         echo "PID: $PIDS"
         exit 0
     else
-        echo "The $SERVER_NAME is stopped"
+        echo "The HertzBeat $SERVER_NAME is stopped"
         exit 0
     fi
 fi
 
 if [ -n "$PIDS" ]; then
-    echo "ERROR: The $SERVER_NAME already started!"
+    echo "ERROR: The HertzBeat $SERVER_NAME already started!"
     echo "PID: $PIDS"
     exit 1
 fi
@@ -60,15 +60,15 @@ if [ -n "$SERVER_PORT" ]; then
     # linux 下查询端口是否占用
     SERVER_PORT_COUNT=`netstat -tln | grep :$SERVER_PORT | wc -l`
     if [ $SERVER_PORT_COUNT -gt 0 ]; then
-        echo "ERROR: netstat the $SERVER_NAME port $SERVER_PORT already used!"
+        echo "ERROR: netstat the HertzBeat $SERVER_NAME port $SERVER_PORT already used!"
         exit 1
     fi
     # mac 下查询端口是否占用
     LSOF_AVA=`command -v lsof | wc -l`
     if [ $LSOF_AVA -gt 0 ]; then
-        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | wc -l`
+        SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | grep java | wc -l`
         if [ $SERVER_PORT_COUNT -gt 0 ]; then
-            echo "ERROR: lsof the $SERVER_NAME port $SERVER_PORT already used!"
+            echo "ERROR: lsof the HertzBeat $SERVER_NAME port $SERVER_PORT already used!"
             exit 1
         fi
     fi
@@ -94,8 +94,9 @@ then
     LOGGING_CONFIG="-Dlogging.config=$CONF_DIR/$LOG_IMPL_FILE"
 fi
 CONFIG_FILES=" -Dlogging.path=$LOGS_DIR $LOGGING_CONFIG -Dspring.config.location=$CONF_DIR/ "
-echo -e "Starting the $SERVER_NAME ..."
-nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >/dev/null 2>&1 &
+echo -e "You can review logs at hertzbeat/logs"
+echo -e "Starting the HertzBeat $SERVER_NAME ..."
+nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 &
 
 COUNT=0
 while [ $COUNT -lt 1 ]; do
@@ -111,6 +112,6 @@ while [ $COUNT -lt 1 ]; do
     fi
 done
 
-echo "Service starting OK!"
+echo "Service Start Success!"
 PIDS=`ps -f | grep java | grep "$DEPLOY_DIR" | awk '{print $2}'`
 echo "Service PID: $PIDS"

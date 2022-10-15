@@ -53,11 +53,11 @@ set JAVA_MEM_OPTS= -server -XX:SurvivorRatio=6 -XX:+UseParallelGC
 set LOGGING_CONFIG=-Dlogging.config=%CONF_DIR%\logback-spring.xml
 
 set CONFIG_FILES= -Dlogging.path=%LOGS_DIR% %LOGGING_CONFIG% -Dspring.config.location=%CONF_DIR%/
-echo Starting the %SERVER_NAME% ...
+echo Starting the HertzBeat %SERVER_NAME% ...
 
-start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME%
+start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME% >logs\startup.log 2>&1 &
 
-echo "Service starting OK!"
+echo "Service Start Success!"
 for /f "tokens=1-5" %%i in ('netstat -ano^|findstr ":%SERVER_PORT%"') do (
     echo Service PID: %%m , Port %SERVER_PORT%  
     goto q

@@ -1,0 +1,25 @@
+name: 🚀 Task
+description: Used to create tasks for the community.
+title: "[Task] <title>"
+labels: ["status: volunteer wanted"]
+body:
+- type: textarea
+  attributes:
+    label: Description
+    placeholder: A clear and concise description of Task
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Task List
+    placeholder: |
+      -[ ] Task1...
+      -[ ] Task2...
+      -[ ] Task3...
+      -[ ] Task4...
+  validations:
+    required: false
+- type: markdown
+  attributes:
+    value: |
+      Please read the [Contribution Guideline](https://hertzbeat.com/docs/others/contributing/) before submitting the PR

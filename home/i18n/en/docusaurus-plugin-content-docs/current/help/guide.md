@@ -4,25 +4,41 @@ title: Help center
 sidebar_label: Help center
 ---
 
-> TanCloud - Friendly cloud monitoring system    
+> Hertzbeat - An open-source, real-time monitoring system with custom-monitor and agentLess.  
 > Help documents and auxiliary information during use 
 
 ## 🔬 Monitoring services
 
-> Regularly collect and monitor the performance indicators exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
+> Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
 > Planned monitoring type：application service, database, operating system, cloud native, open source middleware.
 
 ### Application service monitoring 
 
-[Website monitoring](website)  &emsp;&emsp;&emsp;&emsp;  [HTTP API](api) &emsp;&emsp;&emsp;&emsp; [PING Connectivity](ping) &emsp;&emsp;&emsp;&emsp; [Port availability](port) &emsp;&emsp;&emsp;&emsp; [Full site monitoring](fullsite)
+&emsp;&#x1F449;&emsp;[Website monitoring](website) <br /> 
+&emsp;&#x1F449;&emsp;[HTTP API](api) <br /> 
+&emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br /> 
+&emsp;&#x1F449;&emsp;[Port availability](port) <br /> 
+&emsp;&#x1F449;&emsp;[Full site monitoring](fullsite) <br />
 
 ### Database monitoring  
 
-[MYSQL database monitoring](mysql) &emsp;&emsp;&emsp;&emsp; [MariaDB database monitoring](mariadb)  &emsp;&emsp;&emsp;&emsp; [PostgreSQL database monitoring](postgresql)  &emsp;&emsp;&emsp;&emsp; [SqlServer database monitoring](sqlserver) &emsp;&emsp;&emsp;&emsp; [Oracle database monitoring](oracle)         
+&emsp;&#x1F449;&emsp;[MYSQL database monitoring](mysql) <br />
+&emsp;&#x1F449;&emsp;[MariaDB database monitoring](mariadb) <br />
+&emsp;&#x1F449;&emsp;[PostgreSQL database monitoring](postgresql) <br />
+&emsp;&#x1F449;&emsp;[SqlServer database monitoring](sqlserver) <br />
+&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />        
 
 ### Operating system monitoring     
 
-[Linux operating system monitoring](linux) &emsp;&emsp;&emsp;&emsp; [Windows operating system monitoring](windows) &emsp;&emsp;&emsp;&emsp; [Ubuntu operating system monitoring](ubuntu) &emsp;&emsp;&emsp;&emsp; [Centos operating system monitoring](centos) &emsp;&emsp;&emsp;&emsp;
+&emsp;&#x1F449;&emsp;[Linux operating system monitoring](linux) <br />
+&emsp;&#x1F449;&emsp;[Windows operating system monitoring](windows) <br />
+&emsp;&#x1F449;&emsp;[Ubuntu operating system monitoring](ubuntu) <br />
+&emsp;&#x1F449;&emsp;[Centos operating system monitoring](centos) <br />
+
+### Middleware monitoring
+&emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
+
+***
 
 ## 💡 Alarm service  
 
@@ -35,9 +51,10 @@ sidebar_label: Help center
 
 ### Alarm configuration 
 
-> The indicator threshold configuration provides the indicator threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
+> The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
-More details see [threshold alarm](alert_threshold) &emsp;&emsp;&emsp;&emsp; [Threshold expression](alert_threshold_expr)   
+More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br /> 
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)   
 
 ### Alarm notification  
 
@@ -46,5 +63,8 @@ More details see [threshold alarm](alert_threshold) &emsp;&emsp;&emsp;&emsp; [Th
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
 
 
-[Configure email notification](alert_email)  &emsp;&emsp;&emsp;&emsp;  [Configure WebHook notification](alert_webhook) &emsp;&emsp;&emsp;&emsp; [Configure enterprise wechat robot notification](alert_wework)    
-[Configure DingDing robot notification](alert_dingtalk) &emsp;&emsp;&emsp;&emsp; [Configure FeiShu robot notification](alert_feishu)   
+&emsp;&#x1F449;&emsp;[Configure email notification](alert_email) <br /> 
+&emsp;&#x1F449;&emsp;[Configure WebHook notification](alert_webhook) <br /> 
+&emsp;&#x1F449;&emsp;[Configure enterprise wechat robot notification](alert_wework) <br />    
+&emsp;&#x1F449;&emsp;[Configure DingDing robot notification](alert_dingtalk) <br /> 
+&emsp;&#x1F449;&emsp;[Configure FeiShu robot notification](alert_feishu) <br />   

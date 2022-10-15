@@ -27,9 +27,9 @@
     "message": "Dashboard",
     "description": "Navbar item with label 项目看板"
   },
-  "item.label.其它": {
-    "message": "Others",
-    "description": "Navbar item with label 其它"
+  "item.label.关于": {
+    "message": "About",
+    "description": "Navbar item with label 关于"
   },
   "item.label.登录/注册": {
     "message": "Login Now",

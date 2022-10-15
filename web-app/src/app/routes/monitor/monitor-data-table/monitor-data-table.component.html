@@ -7,7 +7,10 @@
     </thead>
     <tbody>
       <tr *ngFor="let valueRow of smallTable.data">
-        <td *ngFor="let value of valueRow.values">{{ value.origin }}</td>
+        <td *ngFor="let value of valueRow.values; let i = index">
+          {{ value.origin }}
+          <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+        </td>
       </tr>
     </tbody>
   </nz-table>
@@ -24,7 +27,10 @@
     <tbody>
       <tr *ngFor="let field of fields; let i = index">
         <td>{{ field.name }}</td>
-        <td>{{ rowValues[i].origin + ' ' + (field.unit ? field.unit : '') }}</td>
+        <td
+          >{{ rowValues[i].origin }}
+          <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
+        </td>
       </tr>
     </tbody>
   </nz-table>

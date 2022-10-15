@@ -4,7 +4,7 @@ title: Monitoring：SqlServer database monitoring
 sidebar_label: SqlServer database   
 ---
 
-> Collect and monitor the general performance indicators of SqlServer database. Support SqlServer 2017+.
+> Collect and monitor the general performance Metrics of SqlServer database. Support SqlServer 2017+.
 
 ### Configuration parameter
 
@@ -22,11 +22,11 @@ sidebar_label: SqlServer database
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### Collection indicator
+### Collection Metric
 
-#### Indicator set：basic
+#### Metric set：basic
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | machine_name         | none | Windows computer name running the server instance |
 | server_name            | none | Server and instance information SQL Server associated with Windows instance |
@@ -34,9 +34,9 @@ sidebar_label: SqlServer database
 | edition | none | The product SQL server version of the installed instance |
 | start_time | none | Database start time | 
 
-#### Indicator set：performance_counters
+#### Metric set：performance_counters
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | database_pages         | none | Database pages, Number of pages obtained (buffer pool) |
 | target_pages            | none | Target pages, The desired number of pages that the buffer pool must have |
@@ -47,9 +47,9 @@ sidebar_label: SqlServer database
 | page_writes_sec | none | Page writes/sec, Number of pages written per second in the cache pool |
 
 
-#### Indicator set：connection
+#### Metric set：connection
 
-| Indicator name      | Indicator unit | Indicator help description |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
 | user_connection   | none | Number of connected sessions |
 

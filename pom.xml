@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.usthe.tancloud</groupId>
-    <artifactId>monitor</artifactId>
+    <artifactId>hertzbeat</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
     <modules>
@@ -24,10 +24,9 @@
         <slf4j.version>1.7.21</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <lombok.version>1.18.20</lombok.version>
-        <swagger.version>3.0.0</swagger.version>
+        <springdoc.version>1.6.11</springdoc.version>
         <!-- Test 3rd-party dependencies: -->
         <junit.version>5.7.0</junit.version>
-        <easymock.version>4.0.2</easymock.version>
     </properties>
 
     <dependencyManagement>
@@ -36,7 +35,7 @@
                 <!-- Import dependency management from Spring Boot -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.4.13</version>
+                <version>2.7.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -46,9 +45,9 @@
                 <version>${xml.bind.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-boot-starter</artifactId>
-                <version>${swagger.version}</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -73,9 +72,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <version>${easymock.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

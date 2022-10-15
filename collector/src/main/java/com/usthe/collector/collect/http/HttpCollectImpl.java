@@ -42,6 +42,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -59,9 +60,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
-import com.usthe.collector.collect.http.promethus.AbstractPrometheusParse;
 import com.usthe.collector.collect.http.promethus.PrometheusParseCreater;
-import com.usthe.collector.collect.http.promethus.PrometheusVectorParser;
 
 
 import javax.net.ssl.SSLException;
@@ -80,7 +79,7 @@ import java.util.Map;
 
 
 /**
- * http https 采集实现类
+ * http https collect
  * @author tomsun28
  * @date 2021/11/4 15:37
  */
@@ -309,14 +308,27 @@ public class HttpCollectImpl extends AbstractCollect {
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
-        for (Map<String, Object> stringMap : results) {
+        for (int i = 0; i < results.size(); i++) {
+            Map<String, Object> stringMap = results.get(i);
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            // 监控目标版本问题可能出现属性不存在，stringMap为空时过滤。参考app-elasticsearch.yml的name: nodes
+            if (stringMap == null) {
+                continue;
+            }
             for (String alias : aliasFields) {
                 Object value = stringMap.get(alias);
                 if (value != null) {
                     valueRowBuilder.addColumns(String.valueOf(value));
                 } else {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    if (alias.startsWith("$.")) {
+                        List<Map<String, Object>> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
+                        if (subResults != null && subResults.size() > i) {
+                            Object resultValue = subResults.get(i);
+                            valueRowBuilder.addColumns(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
+                        } else {
+                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        }
+                    } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Integer.toString(keywordNum));
@@ -496,6 +508,17 @@ public class HttpCollectImpl extends AbstractCollect {
             } else {
                 requestBuilder.setUri("http://" + httpProtocol.getHost() + ":" + httpProtocol.getPort() + httpProtocol.getUrl());
             }
+        }
+
+        // custom timeout
+        int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
+        if (timeout > 0) {
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout)
+                    .setRedirectsEnabled(true)
+                    .build();
+            requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
     }

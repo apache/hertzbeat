@@ -21,12 +21,19 @@ spring:
     active: prod
   mvc:
     static-path-pattern: /**
-  resources:
-    static-locations:
-      - classpath:/dist/
-      - classpath:../dist/
   jackson:
-    default-property-inclusion: NON_EMPTY
+    default-property-inclusion: ALWAYS
+  web:
+    resources:
+      static-locations:
+        - classpath:/dist/
+        - classpath:../dist/
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    mode: HTML
 
 sureness:
   auths:
@@ -52,6 +59,8 @@ spring:
     hibernate:
       ddl-auto: update
 
+  # Not Require, Please config if you need email notify
+  # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
     # Attention: this is mail server address.
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
@@ -69,13 +78,6 @@ spring:
           ssl:
             enable: true
         debug: false
-
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
 
 warehouse:
   store:

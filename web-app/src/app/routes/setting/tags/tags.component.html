@@ -10,14 +10,16 @@
     <i nz-icon nzType="tags"></i>
     <span>{{ 'menu.extras.tags' | i18n }}</span>
     <a href="https://hertzbeat.com/docs/help/alert_threshold" target="_blank" style="float: right; margin-right: 5%">
-      <span>{{ 'common.button.help' | i18n }}&nbsp;</span>
-      <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+      <button nz-button nzType="primary">
+        <span>{{ 'common.button.help' | i18n }} </span>
+        <span nz-icon nzType="question-circle"></span>
+      </button>
     </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
 <nz-divider></nz-divider>
 
-<div>
+<div style="margin-bottom: 20px">
   <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
@@ -31,7 +33,7 @@
     {{ 'tag.delete' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)='loadTagsTable()'>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()">
     {{ 'common.search' | i18n }}
   </button>
   <input

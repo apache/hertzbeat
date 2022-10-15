@@ -4,7 +4,7 @@ title: Custom Monitoring
 sidebar_label: Custom Monitoring    
 ---
 > HertzBeat has custom monitoring ability. You only need to configure two YML file to fit a custom monitoring type.  
-> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc)(mysql,mariadb,postgresql..)，[SSH protocol](extend-ssh).And it will support more general protocols in the future(ssh telnet wmi snmp).。        
+> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc)(mysql,mariadb,postgresql...), [SSH protocol](extend-ssh), JMX protocol, SNMP protocol. And it will support more general protocols in the future.        
 
 ### Custom Steps  
 
@@ -43,17 +43,17 @@ configmap:
     type: 1
   - key: password
     type: 2
-# indicator group list
+# Metric group list
 metrics:
-# The first monitoring indicator group cpu
-# Note：: the built-in monitoring indicators have (responseTime - response time)
+# The first monitoring Metric group cpu
+# Note：: the built-in monitoring Metrics have (responseTime - response time)
   - name: cpu
-    # The smaller indicator group scheduling priority(0-127), the higher the priority. After completion of the high priority indicator group collection,the low priority indicator group will then be scheduled. Indicator groups with the same priority  will be scheduled in parallel.
-    # Indicator group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # Specific monitoring indicators in the indicator group
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # indicator information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: indicator unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
         instance: true
@@ -65,7 +65,7 @@ metrics:
       - field: waitTime
         type: 0
         unit: s
-# (optional)Monitoring indicator alias mapping to the indicator name above. The field used to collect interface data is not the final indicator name directly. This alias is required for mapping conversion.
+# (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
     aliasFields:
       - hostname
       - core1
@@ -73,7 +73,7 @@ metrics:
       - usage
       - allTime
       - runningTime
-# (optional)The indicator calculation expression works with the above alias to calculate the final required indicator value.
+# (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
 # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - hostname=hostname
@@ -107,7 +107,7 @@ metrics:
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability indicator monitoring 
+      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability Metric monitoring 
       # todo xmlPath-xmlPath script,prometheus-Prometheus data rules
       parseType: jsonPath
       parseScript: '$'

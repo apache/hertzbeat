@@ -19,6 +19,7 @@ package com.usthe.manager.component.alerter;
 
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.manager.support.exception.AlertNoticeException;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
@@ -31,8 +32,9 @@ public interface AlertNotifyHandler {
      *
      * @param receiver Notification configuration information   通知配置信息
      * @param alert    Alarm information                        告警信息
+     * @throws AlertNoticeException when send receiver error
      */
-    void send(NoticeReceiver receiver, Alert alert);
+    void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException;
 
     /**
      * 通知类型

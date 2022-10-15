@@ -7,7 +7,7 @@ import { CONSTS } from 'src/app/shared/consts';
 @Component({
   selector: 'layout-basic',
   template: `
-    <layout-default [options]="options" [asideUser]="asideUserTpl" [content]="contentTpl" [customError]="null">
+    <layout-default [options]="options" [asideUser]="asideUserTpl" [nav]="navTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
         <a layout-default-header-item-trigger href="//github.com/dromara/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
@@ -69,6 +69,9 @@ import { CONSTS } from 'src/app/shared/consts';
           </div>
         </div>
       </ng-template>
+      <ng-template #navTpl>
+        <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
+      </ng-template>
       <ng-template #contentTpl>
         <router-outlet></router-outlet>
       </ng-template>
@@ -78,7 +81,7 @@ import { CONSTS } from 'src/app/shared/consts';
         HertzBeat {{ version }}<br />
         Copyright
         <i nz-icon nzType="copyright"></i> 2022
-        <a href="https://hertzbeat.com" target="_blank">https://www.hertzbeat.com</a>
+        <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>

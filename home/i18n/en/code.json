@@ -217,23 +217,11 @@
   "开箱即用": {
     "message": "Convenient"
   },
-  "中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统。往往有时候，那套监控系统比自身网站消耗的资源还大。{TANCLOUD} 提供{SAAS}云版本，{console}即可开始您的服务监控。{br}安全是最重要的，我们对账户密钥和监控密钥全链路加密。": {
-    "message": "Micro-teams no longer need to deploy a cumbersome monitoring system in order to monitor their own website resources. Often times, that monitoring system consumes more resources than its own website. {TANCLOUD} provides {SAAS} cloud, {console} can start your service monitoring. {br}Security is the most important, we encrypt the whole link of account key and monitoring key."
-  },
   "多支持与自定义": {
     "message": "Custom Monitor"
   },
-  "HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，数据库，操作系统等的监控，快速迭代提供更多的监控类型和性能指标。{br}我们提供了更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}不同团队的监控需求千变万化，我们提供{custom}，仅需配置YML就能快速接入监控系统。": {
-    "message": "HertzBeat supports monitoring of website, api, ping connectivity, port availability, sitemap, database, operating system, etc., and provides more monitoring types and metrics. {br}We provide a more liberalized threshold alarm configuration, support email, SMS, webhook, DingTalk, WeChat, Feishu robot and other alarm notifications. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, which can quickly access the monitoring system only by configuring YML."
-  },
   "拥抱开源": {
     "message": "Opensource Friendly"
-  },
-  "HertzBeat监控系统代码开源，非常欢迎任何对此有兴趣的同学参与中来，我们一起进步，丰富的资源文档正在完善中。{br}中二的我们相信开源改变世界！{br}{github} {br}{gitee}": {
-    "message": "The HertzBeat code is open source, and anyone who are interested in it are very welcome to participate. We will make progress together, and the rich resource documents are being improved. {br}We believe that open source can change the world! {br}{github} {br}{gitee}."
-  },
-  "易用友好的云监控系统": {
-    "message": "Friendly Cloud Monitor System"
   },
   "即刻登录免费使用": {
     "message": "Login Now"
@@ -285,5 +273,200 @@
   "theme.TOCCollapsible.toggleButtonLabel": {
     "message": "On this page",
     "description": "The label used by the button on the collapsible TOC component"
+  },
+  "{docker} {br} 一条命令即可开始监控之旅。监控系统集指标采集，指标数据可视化，告警转发一体化。一站式全功能，无需为了加一个监控或告警而去编写繁琐的配置文件。{br}我们也提供 {TANCLOUD} {SAAS}云版本，{console}即可开始您的服务监控。安全是最重要的，我们对账户密钥和监控密钥全链路加密。": {
+    "message": "{docker} {br} Just one command to get started. The system integrates metrics collection, metrics data visualization, alarming and forwarding.All in One, No need to write cumbersome configuration files in order to add a monitoring or alarm. {br}We also provider {TANCLOUD} {SAAS}, {console}. Security is the most important, we encrypt the whole link of account and monitoring."
+  },
+  "我们支持对网站，JVM，MYSQL，Linux等应用服务，数据库，操作系统，中间件的监控，更多监控类型正在快速迭代中。更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}不同团队的监控需求千变万化，我们提供{custom}，通过不同的协议SSH，JDBC，JMX，SNMP，HTTP等，仅需配置YML就能自定义监控指标并快速接入监控系统。": {
+    "message": "We support monitoring of WEB, JVM, MYSQL, Linux and other application, db, os, and middleware, and more monitoring types are under rapid iteration. We provide a more liberalized threshold alarm configuration, support email, SMS, webhook, DingTalk, WeChat, Feishu robot and other alarm notifications. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, through different protocols SSH, JDBC, JMX, SNMP, HTTP, etc. You only need to configure YML to customize monitoring and quickly access the monitoring system."
+  },
+  "HertzBeat监控系统代码全开源，无限制，非常欢迎任何对此有兴趣的同学参与中来，贡献不分大小，我们尊重每一位同学，不限于文档代码或者错别字的贡献，我们一起学习进步，构建属于贡献者们的开源事业。{br}中二的我们相信开源改变世界！{br}{github} {br}{gitee}": {
+    "message": "HertzBeat is fully open source, unlimited, and anyone who are interested in it are very welcome to contribute. We respect everyone, not limited to the contribution of the document code or typos, we will learn and progress together, build an open source business for contributors.{br}We believe that open source can change the world！{br}{github} {br}{gitee}"
+  },
+  "易用友好的开源实时监控系统": {
+    "message": "Real-time Monitoring System"
+  },
+  "Who Use HertzBeat?": {
+    "message": "Who Use HertzBeat?"
+  },
+  "Dromara Friends": {
+    "message": "Dromara Friends"
+  },
+  "Friends Link": {
+    "message": "Friends Link"
+  },
+  "theme.admonition.note": {
+    "message": "note",
+    "description": "The default label used for the Note admonition (:::note)"
+  },
+  "theme.admonition.tip": {
+    "message": "tip",
+    "description": "The default label used for the Tip admonition (:::tip)"
+  },
+  "theme.admonition.danger": {
+    "message": "danger",
+    "description": "The default label used for the Danger admonition (:::danger)"
+  },
+  "theme.admonition.info": {
+    "message": "info",
+    "description": "The default label used for the Info admonition (:::info)"
+  },
+  "theme.admonition.caution": {
+    "message": "caution",
+    "description": "The default label used for the Caution admonition (:::caution)"
+  },
+  "theme.colorToggle.ariaLabel": {
+    "message": "Switch between dark and light mode (currently {mode})",
+    "description": "The ARIA label for the navbar color mode toggle"
+  },
+  "theme.colorToggle.ariaLabel.mode.dark": {
+    "message": "dark mode",
+    "description": "The name for the dark color mode"
+  },
+  "theme.colorToggle.ariaLabel.mode.light": {
+    "message": "light mode",
+    "description": "The name for the light color mode"
+  },
+  "theme.docs.breadcrumbs.home": {
+    "message": "Home page",
+    "description": "The ARIA label for the home page in the breadcrumbs"
+  },
+  "theme.docs.breadcrumbs.navAriaLabel": {
+    "message": "Breadcrumbs",
+    "description": "The ARIA label for the breadcrumbs"
+  },
+  "theme.docs.DocCard.categoryDescription": {
+    "message": "{count} items",
+    "description": "The default description for a category card in the generated index about how many items this category includes"
+  },
+  "theme.docs.versionBadge.label": {
+    "message": "Version: {versionLabel}"
+  },
+  "theme.CodeBlock.wordWrapToggle": {
+    "message": "Toggle word wrap",
+    "description": "The title attribute for toggle word wrapping button of code block lines"
+  },
+  "theme.navbar.mobileLanguageDropdown.label": {
+    "message": "Languages",
+    "description": "The label for the mobile language switcher dropdown"
+  },
+  "theme.blog.post.readMoreLabel": {
+    "message": "Read more about {title}",
+    "description": "The ARIA label for the link to full blog posts from excerpts"
+  },
+  "theme.SearchBar.seeAll": {
+    "message": "See all {count} results"
+  },
+  "theme.SearchModal.searchBox.resetButtonTitle": {
+    "message": "Clear the query",
+    "description": "The label and ARIA label for search box reset button"
+  },
+  "theme.SearchModal.searchBox.cancelButtonText": {
+    "message": "Cancel",
+    "description": "The label and ARIA label for search box cancel button"
+  },
+  "theme.SearchModal.startScreen.recentSearchesTitle": {
+    "message": "Recent",
+    "description": "The title for recent searches"
+  },
+  "theme.SearchModal.startScreen.noRecentSearchesText": {
+    "message": "No recent searches",
+    "description": "The text when no recent searches"
+  },
+  "theme.SearchModal.startScreen.saveRecentSearchButtonTitle": {
+    "message": "Save this search",
+    "description": "The label for save recent search button"
+  },
+  "theme.SearchModal.startScreen.removeRecentSearchButtonTitle": {
+    "message": "Remove this search from history",
+    "description": "The label for remove recent search button"
+  },
+  "theme.SearchModal.startScreen.favoriteSearchesTitle": {
+    "message": "Favorite",
+    "description": "The title for favorite searches"
+  },
+  "theme.SearchModal.startScreen.removeFavoriteSearchButtonTitle": {
+    "message": "Remove this search from favorites",
+    "description": "The label for remove favorite search button"
+  },
+  "theme.SearchModal.errorScreen.titleText": {
+    "message": "Unable to fetch results",
+    "description": "The title for error screen of search modal"
+  },
+  "theme.SearchModal.errorScreen.helpText": {
+    "message": "You might want to check your network connection.",
+    "description": "The help text for error screen of search modal"
+  },
+  "theme.SearchModal.footer.selectText": {
+    "message": "to select",
+    "description": "The explanatory text of the action for the enter key"
+  },
+  "theme.SearchModal.footer.selectKeyAriaLabel": {
+    "message": "Enter key",
+    "description": "The ARIA label for the Enter key button that makes the selection"
+  },
+  "theme.SearchModal.footer.navigateText": {
+    "message": "to navigate",
+    "description": "The explanatory text of the action for the Arrow up and Arrow down key"
+  },
+  "theme.SearchModal.footer.navigateUpKeyAriaLabel": {
+    "message": "Arrow up",
+    "description": "The ARIA label for the Arrow up key button that makes the navigation"
+  },
+  "theme.SearchModal.footer.navigateDownKeyAriaLabel": {
+    "message": "Arrow down",
+    "description": "The ARIA label for the Arrow down key button that makes the navigation"
+  },
+  "theme.SearchModal.footer.closeText": {
+    "message": "to close",
+    "description": "The explanatory text of the action for Escape key"
+  },
+  "theme.SearchModal.footer.closeKeyAriaLabel": {
+    "message": "Escape key",
+    "description": "The ARIA label for the Escape key button that close the modal"
+  },
+  "theme.SearchModal.footer.searchByText": {
+    "message": "Search by",
+    "description": "The text explain that the search is making by Algolia"
+  },
+  "theme.SearchModal.noResultsScreen.noResultsText": {
+    "message": "No results for",
+    "description": "The text explains that there are no results for the following search"
+  },
+  "theme.SearchModal.noResultsScreen.suggestedQueryText": {
+    "message": "Try searching for",
+    "description": "The text for the suggested query when no results are found for the following search"
+  },
+  "theme.SearchModal.noResultsScreen.reportMissingResultsText": {
+    "message": "Believe this query should return results?",
+    "description": "The text for the question where the user thinks there are missing results"
+  },
+  "theme.SearchModal.noResultsScreen.reportMissingResultsLinkText": {
+    "message": "Let us know.",
+    "description": "The text for the link to report missing results"
+  },
+  "theme.SearchModal.placeholder": {
+    "message": "Search docs",
+    "description": "The placeholder of the input of the DocSearch pop-up modal"
+  },
+  "theme.IdealImageMessage.loading": {
+    "message": "Loading...",
+    "description": "When the full-scale image is loading"
+  },
+  "theme.IdealImageMessage.load": {
+    "message": "Click to load{sizeMessage}",
+    "description": "To prompt users to load the full image. sizeMessage is a parenthesized size figure."
+  },
+  "theme.IdealImageMessage.offline": {
+    "message": "Your browser is offline. Image not loaded",
+    "description": "When the user is viewing an offline document"
+  },
+  "theme.IdealImageMessage.404error": {
+    "message": "404. Image not found",
+    "description": "When the image is not found"
+  },
+  "theme.IdealImageMessage.error": {
+    "message": "Error. Click to reload",
+    "description": "When the image fails to load for unknown error"
   }
 }

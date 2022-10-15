@@ -27,9 +27,9 @@ import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.store.MemoryDataStorage;
 import com.usthe.warehouse.store.TdEngineDataStorage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +53,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @RestController
 @RequestMapping(produces = {APPLICATION_JSON_VALUE})
-@Api(tags = "Metrics Data API | 监控指标数据API")
+@Tag(name = "Metrics Data API | 监控指标数据API")
 public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
@@ -66,9 +66,9 @@ public class MetricsDataController {
     private TdEngineDataStorage tdEngineDataStorage;
 
     @GetMapping("/api/warehouse/storage/status")
-    @ApiOperation(value = "Query Warehouse Storage Server Status", notes = "查询仓储下存储服务的可用性状态")
+    @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus(
-            @ApiParam(value = "Storage Type", example = "Tdengine")
+            @Parameter(description = "Storage Type", example = "Tdengine")
             @RequestParam String storage) {
         boolean available = true;
         if (TDENGINE.equalsIgnoreCase(storage)) {
@@ -86,11 +86,11 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @ApiOperation(value = "Query Real Time Metrics Data", notes = "查询监控指标组的指标数据")
+    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标组的指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
-            @ApiParam(value = "Monitor Id", example = "343254354")
+            @Parameter(description = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,
-            @ApiParam(value = "Metrics Name", example = "cpu")
+            @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
         CollectRep.MetricsData storageData = memoryDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
@@ -100,9 +100,10 @@ public class MetricsDataController {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
             dataBuilder.id(storageData.getId()).app(storageData.getApp()).metric(storageData.getMetrics())
                     .time(storageData.getTime());
-            List<Field> fields = storageData.getFieldsList().stream().map(redisField ->
-                            Field.builder().name(redisField.getName())
-                                    .type(Integer.valueOf(redisField.getType()).byteValue())
+            List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
+                            Field.builder().name(tmpField.getName())
+                                    .type(Integer.valueOf(tmpField.getType()).byteValue())
+                                    .unit(tmpField.getUnit())
                                     .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);
@@ -116,17 +117,17 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
-    @ApiOperation(value = "查询监控指标组的指定指标的历史数据", notes = "查询监控指标组下的指定指标的历史数据")
+    @Operation(summary = "查询监控指标组的指定指标的历史数据", description = "查询监控指标组下的指定指标的历史数据")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @ApiParam(value = "监控ID", example = "343254354")
+            @Parameter(description = "监控ID", example = "343254354")
             @PathVariable Long monitorId,
-            @ApiParam(value = "监控指标全路径", example = "linux.cpu.usage")
+            @Parameter(description = "监控指标全路径", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
-            @ApiParam(value = "所属实例,默认空", example = "disk2")
+            @Parameter(description = "所属实例,默认空", example = "disk2")
             @RequestParam(required = false) String instance,
-            @ApiParam(value = "查询历史时间段,默认6h-6小时:s-秒、m-分, h-小时, d-天, w-周", example = "6h")
+            @Parameter(description = "查询历史时间段,默认6h-6小时:s-秒、m-分, h-小时, d-天, w-周", example = "6h")
             @RequestParam(required = false) String history,
-            @ApiParam(value = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
+            @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
         String[] names = metricFull.split("\\.");
