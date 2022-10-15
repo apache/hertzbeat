@@ -31,16 +31,20 @@ import java.util.*;
  */
 @Configuration
 @AutoConfigureAfter(value = {WarehouseProperties.class})
-@ConditionalOnProperty(prefix = "warehouse.store.iotdb",
-        name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "warehouse.store.iot-db",
+        name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class IoTDBDataStorage extends AbstractDataStorage {
-    // storage group (存储组)
+public class IotDbDataStorage extends AbstractDataStorage {
+    /**
+     *  storage group (存储组)
+     */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
     private static final String SHOW_DEVICES
             = "SHOW DEVICES %s";
-    // the second %s is alias
+    /**
+     * the second %s is alias
+     */
     private static final String QUERY_HISTORY_SQL
             = "SELECT %s as %s FROM %s WHERE Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
@@ -48,23 +52,35 @@ public class IoTDBDataStorage extends AbstractDataStorage {
 
     private Session session;
 
-    public IoTDBDataStorage(WarehouseWorkerPool workerPool,
+    public IotDbDataStorage(WarehouseWorkerPool workerPool,
                             WarehouseProperties properties,
                             CommonDataQueue commonDataQueue) {
         super(workerPool, properties, commonDataQueue);
 
-        this.serverAvailable = this.initIoTDBSession(properties.getStore().getIotdb());
+        this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
         this.startStorageData("warehouse-iotdb-data-storage", isServerAvailable());
     }
 
-    private boolean initIoTDBSession(WarehouseProperties.StoreProperties.IoTDBProperties properties) {
+    private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
         try {
-            this.session = new Session.Builder()
-                    .username(properties.getUsername())
-                    .password(properties.getPassword())
-                    .build();
+            Session.Builder builder = new Session.Builder();
+            builder.host(properties.getHost());
+            if (properties.getRpcPort() != null) {
+                builder.port(properties.getRpcPort());
+            }
+            if (properties.getUsername() != null) {
+                builder.username(properties.getUsername());
+            }
+            if (properties.getPassword() != null) {
+                builder.password(properties.getPassword());
+            }
+            if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
+                builder.nodeUrls(properties.getNodeUrls());
+            }
+            this.session = builder.build();
             this.session.open();
         } catch (IoTDBConnectionException e) {
+            log.error(e.getMessage(), e);
             log.warn("\n\t------------------WARN WARN WARN------------------\n" +
                     "\t-------------------Init IoTDB Failed-----------------\n" +
                     "\t------------------Please Config IoTDB----------------\n" +
@@ -93,7 +109,7 @@ public class IoTDBDataStorage extends AbstractDataStorage {
             }
             schemaList.add(schema);
         }
-        Map<String, Tablet> tabletMap = new HashMap<>();
+        Map<String, Tablet> tabletMap = new HashMap<>(8);
         try {
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
@@ -272,7 +288,9 @@ public class IoTDBDataStorage extends AbstractDataStorage {
         return deviceId;
     }
 
-    // add quote，防止查询时关键字报错(eg: nodes)
+    /**
+     * add quote，防止查询时关键字报错(eg: nodes)
+     */
     private String addQuote(String text) {
         return String.format("`%s`", text);
     }

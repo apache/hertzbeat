@@ -20,6 +20,8 @@ package com.usthe.warehouse;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * 数据仓储配置属性
  * @author tom
@@ -148,7 +150,7 @@ public class WarehouseProperties {
         /**
          * IoTDB配置信息
          */
-        private IoTDBProperties iotdb;
+        private IotDbProperties iotDb;
 
         public InfluxdbProperties getInfluxdb() {
             return influxdb;
@@ -174,12 +176,12 @@ public class WarehouseProperties {
             this.tdEngine = tdEngine;
         }
 
-        public IoTDBProperties getIotdb() {
-            return iotdb;
+        public IotDbProperties getIotDb() {
+            return iotDb;
         }
 
-        public void setIotdb(IoTDBProperties iotdb) {
-            this.iotdb = iotdb;
+        public void setIotDb(IotDbProperties iotDb) {
+            this.iotDb = iotDb;
         }
 
         public static class InfluxdbProperties {
@@ -371,15 +373,36 @@ public class WarehouseProperties {
             }
         }
 
-        public static class IoTDBProperties {
+        public static class IotDbProperties {
             /**
              * Whether the iotDB data store is enabled
              */
             private boolean enabled = true;
 
+            /**
+             * iotDB host
+             */
+            private String host = "127.0.0.1";
+
+            /**
+             * iotDB rpc port
+             */
+            private Integer rpcPort = 6667;
+
+            /**
+             * iotDB username
+             */
             private String username;
 
+            /**
+             * iotDB password
+             */
             private String password;
+
+            /**
+             * cluster node url list
+             */
+            private List<String> nodeUrls;
 
             public boolean isEnabled() {
                 return enabled;
@@ -403,6 +426,30 @@ public class WarehouseProperties {
 
             public void setPassword(String password) {
                 this.password = password;
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public void setHost(String host) {
+                this.host = host;
+            }
+
+            public Integer getRpcPort() {
+                return rpcPort;
+            }
+
+            public void setRpcPort(Integer rpcPort) {
+                this.rpcPort = rpcPort;
+            }
+
+            public List<String> getNodeUrls() {
+                return nodeUrls;
+            }
+
+            public void setNodeUrls(List<String> nodeUrls) {
+                this.nodeUrls = nodeUrls;
             }
         }
     }

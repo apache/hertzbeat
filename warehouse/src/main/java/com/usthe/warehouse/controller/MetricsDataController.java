@@ -25,7 +25,7 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.dto.ValueRow;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.store.IoTDBDataStorage;
+import com.usthe.warehouse.store.IotDbDataStorage;
 import com.usthe.warehouse.store.MemoryDataStorage;
 import com.usthe.warehouse.store.TdEngineDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -67,7 +67,7 @@ public class MetricsDataController {
     private TdEngineDataStorage tdEngineDataStorage;
 
     @Autowired(required = false)
-    private IoTDBDataStorage ioTDBDataStorage;
+    private IotDbDataStorage ioTDBDataStorage;
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
