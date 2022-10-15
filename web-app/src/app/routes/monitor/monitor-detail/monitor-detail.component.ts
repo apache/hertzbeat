@@ -73,7 +73,7 @@ export class MonitorDetailComponent implements OnInit {
   initMetricChart() {
     // 检测历史数据服务是否可用
     const detectStatus$ = this.monitorSvc
-      .getWarehouseStorageServerStatus('tdengine')
+      .getWarehouseStorageServerStatus()
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {

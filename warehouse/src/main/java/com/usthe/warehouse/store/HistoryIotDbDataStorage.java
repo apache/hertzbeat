@@ -34,7 +34,7 @@ import java.util.*;
 @ConditionalOnProperty(prefix = "warehouse.store.iot-db",
         name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class IotDbDataStorage extends AbstractDataStorage {
+public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     /**
      *  storage group (存储组)
      */
@@ -52,9 +52,9 @@ public class IotDbDataStorage extends AbstractDataStorage {
 
     private Session session;
 
-    public IotDbDataStorage(WarehouseWorkerPool workerPool,
-                            WarehouseProperties properties,
-                            CommonDataQueue commonDataQueue) {
+    public HistoryIotDbDataStorage(WarehouseWorkerPool workerPool,
+                                   WarehouseProperties properties,
+                                   CommonDataQueue commonDataQueue) {
         super(workerPool, properties, commonDataQueue);
 
         this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());

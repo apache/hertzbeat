@@ -92,6 +92,11 @@ warehouse:
       host: 127.0.0.1
       username: root
       password: root
+    redis:
+      enabled: false
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
 
 alerter:
   # custom console url

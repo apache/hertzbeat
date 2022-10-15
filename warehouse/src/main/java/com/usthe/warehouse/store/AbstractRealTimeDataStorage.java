@@ -19,49 +19,48 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * redis存储采集实时数据
+ * 实时数据存储抽象类
  * @author tom
  * @date 2021/11/25 10:26
  */
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
-@ConditionalOnProperty(prefix = "warehouse.store.memory",
-        name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
-public class MemoryDataStorage implements DisposableBean {
+public abstract class AbstractRealTimeDataStorage implements DisposableBean {
 
-    private Map<String, CollectRep.MetricsData> metricsDataMap;
-    private WarehouseWorkerPool workerPool;
-    private CommonDataQueue commonDataQueue;
+    private final WarehouseWorkerPool workerPool;
+    private final CommonDataQueue commonDataQueue;
 
-    public MemoryDataStorage(WarehouseWorkerPool workerPool, CommonDataQueue commonDataQueue) {
-        metricsDataMap = new ConcurrentHashMap<>(1024);
+    public AbstractRealTimeDataStorage(WarehouseWorkerPool workerPool, CommonDataQueue commonDataQueue) {
         this.workerPool = workerPool;
         this.commonDataQueue = commonDataQueue;
-        startStorageData();
     }
 
-    public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
-        String hashKey = monitorId + metric;
-        return metricsDataMap.get(hashKey);
-    }
+    /**
+     * save collect metrics data
+     * @param metricsData metrics data
+     */
+    abstract void saveData(CollectRep.MetricsData metricsData);
 
-    private void startStorageData() {
+    /**
+     * query real-time last metrics data
+     * @param monitorId monitorId
+     * @param metric metric name
+     * @return metrics data
+     */
+    public abstract CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
+
+    /**
+     * start worker thread
+     * @param threadName thread name
+     */
+    protected void startStorageData(String threadName) {
         Runnable runnable = () -> {
-            Thread.currentThread().setName("warehouse-memory-data-storage");
+            Thread.currentThread().setName(threadName);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
@@ -74,21 +73,5 @@ public class MemoryDataStorage implements DisposableBean {
             }
         };
         workerPool.executeJob(runnable);
-    }
-
-    private void saveData(CollectRep.MetricsData metricsData) {
-        String hashKey = metricsData.getId() + metricsData.getMetrics();
-        if (metricsData.getValuesList().isEmpty()) {
-            log.debug("[warehouse memory] redis flush metrics data {} is null, ignore.", hashKey);
-            return;
-        }
-        metricsDataMap.put(hashKey, metricsData);
-    }
-
-    @Override
-    public void destroy() throws Exception {
-        if (metricsDataMap != null) {
-            metricsDataMap.clear();
-        }
     }
 }

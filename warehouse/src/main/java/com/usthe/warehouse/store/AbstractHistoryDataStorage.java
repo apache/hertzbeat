@@ -17,16 +17,16 @@ import java.util.Map;
  * @since 2022/10/12
  */
 @Slf4j
-public abstract class AbstractDataStorage implements DisposableBean {
+public abstract class AbstractHistoryDataStorage implements DisposableBean {
     protected final WarehouseWorkerPool workerPool;
     protected final WarehouseProperties properties;
     protected final CommonDataQueue commonDataQueue;
 
     protected boolean serverAvailable;
 
-    protected AbstractDataStorage(WarehouseWorkerPool workerPool,
-                                  WarehouseProperties properties,
-                                  CommonDataQueue commonDataQueue) {
+    protected AbstractHistoryDataStorage(WarehouseWorkerPool workerPool,
+                                         WarehouseProperties properties,
+                                         CommonDataQueue commonDataQueue) {
         this.workerPool = workerPool;
         this.properties = properties;
         this.commonDataQueue = commonDataQueue;
