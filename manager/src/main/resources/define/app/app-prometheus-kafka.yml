@@ -1,10 +1,10 @@
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
 category: mid
 # 监控应用类型名称(与文件名保持一致)
-app: kafka-prometheus
+app: kafka-prom
 name:
-  zh-CN: Kafka-Prometheus
-  en-US: Kafka-Prometheus
+  zh-CN: Kafka-Prom
+  en-US: Kafka-Prom
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -82,8 +82,7 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
-      parseType: prometheus
+      parseType: PromQL
 
   - name: kafka_topic_partitions
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
@@ -131,9 +130,9 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
-      parseType: prometheus
-      keyword: ^_^keyword^_^
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
+
   - name: kafka_server_brokertopicmetrics_bytesinpersec    #每秒查询率
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
@@ -182,5 +181,5 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
-      parseType: prometheus
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL

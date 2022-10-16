@@ -116,8 +116,13 @@ public interface DispatchConstants {
      */
     String PARSE_PROMETHEUS = "prometheus";
     String PARSE_PROMETHEUS_ACCEPT = "application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1";
-    String PARSE_PROMETHEUS_VECTOR = "vector";
-    String PARSE_PROMETHEUS_MATRIX = "matrix";
+    /**
+     * PromQL Prometheus Query Language
+     * 解析方式 Prometheus Query Language
+     */
+    String PARSE_PromQL = "PromQL";
+    String PARSE_PromQL_VECTOR = "vector";
+    String PARSE_PromQL_MATRIX = "matrix";
 
     // http协议相关 - end //
 }
