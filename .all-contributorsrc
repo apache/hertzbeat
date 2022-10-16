@@ -313,6 +313,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "gxc-myh",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/gxc-myh",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
