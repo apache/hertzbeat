@@ -61,9 +61,9 @@ public class AlerterWorkerPool {
     }
 
     /**
-     * 运行alerter任务
-     * @param runnable 任务
-     * @throws RejectedExecutionException when 线程池满
+     * Run the alerter task 运行alerter任务
+     * @param runnable task 任务
+     * @throws RejectedExecutionException when The thread pool is full of 线程池满
      */
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);

@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * Alarm definition management interface implementation
  * 告警定义管理接口实现
  * @author tom
  * @date 2021/12/9 10:17
@@ -91,10 +92,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds) {
+        // todo checks whether the alarm definition and monitoring exist
         // todo 校验此告警定义和监控是否存在
 
+        // Delete all associations of this alarm
         // 先删除此告警的所有关联
         alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
+        // Save the associated
         // 保存关联
         alertDefineBindDao.saveAll(alertDefineBinds);
     }
@@ -107,6 +111,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (defines.isEmpty()) {
             return null;
         }
+        // The alarm thresholds are defined in ascending order of the alarm severity from 0 to 3. The lower the number, the higher the alarm is. That is, the alarm is calculated from the highest alarm threshold
         // 将告警阈值定义从告警级别0-3数字升序排序，数字越小告警基本越高，即从最高的告警阈值开始匹配计算
         return defines.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
                 .collect(Collectors.groupingBy(AlertDefine::getField));
