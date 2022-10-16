@@ -44,6 +44,7 @@ public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationEx
     void deleteAlertsByIdIn(Set<Long> alertIds);
 
     /**
+     * Updates the alarm status based on the alarm ID-status value
      * 根据告警ID-状态值 更新告警状态
      *
      * @param status 状态值

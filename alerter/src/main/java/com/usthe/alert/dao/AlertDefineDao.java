@@ -34,25 +34,28 @@ import java.util.Set;
 public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpecificationExecutor<AlertDefine> {
 
     /**
+     * Delete alarm definitions based on the ID list
      * 根据ID列表删除告警定义
      * @param alertDefineIds 告警定义ID列表
      */
     void deleteAlertDefinesByIdIn(Set<Long> alertDefineIds);
 
     /**
+     * Query the default alarm thresholds based on the monitoring indicator type
      * 根据监控指标类型查询对应默认告警定义阈值
      * @param app 监控类型
      * @param metric 指标集合类型
-     * @return 告警定义
+     * @return The alarm is defined ｜ 告警定义
      */
     List<AlertDefine> queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(String app, String metric);
 
     /**
+     * Query the alarm definition list associated with the monitoring ID
      * 根据监控ID查询与之关联的告警定义列表
      * @param monitorId 监控ID
      * @param app 监控类型
      * @param metrics 指标组
-     * @return 告警定义列表
+     * @return Alarm Definition List ｜ 告警定义列表
      */
     @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id " +
             "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
