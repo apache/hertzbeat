@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Alarm template keyword matching replacement engine tool
  * 告警模版关键字匹配替换引擎工具
  * @author tom
  * @date 2021/12/10 11:53
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
 public class AlertTemplateUtil {
 
     /**
+     * Match the variable ${key}
      * 匹配 ${key} 的变量
      * eg: Alert, the instance: ${instance} metrics: ${metrics} is over flow.
      */
