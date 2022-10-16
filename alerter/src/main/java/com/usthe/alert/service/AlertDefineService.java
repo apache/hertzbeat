@@ -35,86 +35,93 @@ import java.util.Set;
 public interface AlertDefineService {
 
     /**
+     * Verify the correctness of the request data parameters
      * 校验请求数据参数正确性
      * @param alertDefine alertDefine
      * @param isModify 是否是修改配置
-     * @throws IllegalArgumentException 校验参数错误抛出
+     * @throws IllegalArgumentException A checksum parameter error is thrown ｜ 校验参数错误抛出
      */
     void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException;
 
     /**
+     * New Alarm Definition
      * 新增告警定义
-     * @param alertDefine 告警定义实体
-     * @throws RuntimeException 新增过程异常抛出
+     * @param alertDefine Alarm definition Entity ｜ 告警定义实体
+     * @throws RuntimeException Added procedure exception throwing ｜ 新增过程异常抛出
      */
     void addAlertDefine(AlertDefine alertDefine) throws RuntimeException;
 
     /**
-     * 修改告警定义
-     * @param alertDefine 告警定义实体
-     * @throws RuntimeException 修改过程中异常抛出
+     * Modifying an Alarm Definition ｜ 修改告警定义
+     * @param alertDefine Alarm definition Entity ｜ 告警定义实体
+     * @throws RuntimeException Exception thrown during modification ｜ 修改过程中异常抛出
      */
     void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException;
 
     /**
+     * Deleting an Alarm Definition
      * 删除告警定义
-     * @param alertId 告警定义ID
-     * @throws RuntimeException 删除过程中异常抛出
+     * @param alertId Alarm Definition ID ｜ 告警定义ID
+     * @throws RuntimeException Exception thrown during deletion ｜ 删除过程中异常抛出
      */
     void deleteAlertDefine(long alertId) throws RuntimeException;
 
     /**
+     * Obtain alarm definition information
      * 获取告警定义信息
-     * @param alertId 监控ID
+     * @param alertId Monitor the ID ｜ 监控ID
      * @return AlertDefine
-     * @throws RuntimeException 查询过程中异常抛出
+     * @throws RuntimeException An exception was thrown during the query ｜ 查询过程中异常抛出
      */
     AlertDefine getAlertDefine(long alertId) throws RuntimeException;
 
 
     /**
-     * 批量删除告警定义
-     * @param alertIds 告警定义IDs
-     * @throws RuntimeException 删除过程中异常抛出
+     * Delete alarm definitions in batches ｜ 批量删除告警定义
+     * @param alertIds Alarm Definition IDs ｜ 告警定义IDs
+     * @throws RuntimeException Exception thrown during deletion ｜ 删除过程中异常抛出
      */
     void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException;
 
     /**
-     * 动态条件查询
-     * @param specification 查询条件
-     * @param pageRequest 分页参数
-     * @return 查询结果
+     * Dynamic conditional query ｜ 动态条件查询
+     * @param specification Query conditions ｜ 查询条件
+     * @param pageRequest Paging parameters ｜ 分页参数
+     * @return The query results ｜ 查询结果
      */
     Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 
     /**
-     * 应用告警定于与监控关联关系
-     * @param alertId 告警定义ID
-     * @param alertDefineBinds 关联关系
+     * Association between application alarm schedule and monitoring ｜应用告警定于与监控关联关系
+     * @param alertId Alarm Definition ID ｜ 告警定义ID
+     * @param alertDefineBinds correlation ｜ 关联关系
      */
     void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds);
 
     /**
+     * Query the alarm definitions that match the specified indicator group associated with the monitoring ID
      * 查询与此监控ID关联的指定指标组匹配的告警定义
-     * @param monitorId 监控ID
-     * @param app 监控类型
-     * @param metrics 指标组
+     * @param monitorId Monitor the ID ｜ 监控ID
+     * @param app Monitoring type ｜ 监控类型
+     * @param metrics Index group ｜ 指标组
      * @return field - define[]
      */
     Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics);
 
     /**
+     * Dynamic conditional query
      * 动态条件查询
-     * @param specification 查询条件
-     * @param pageRequest 分页参数
-     * @return 查询结果
+     * @param specification Query conditions ｜ 查询条件
+     * @param pageRequest Paging parameters ｜ 分页参数
+     * @return The query results ｜ 查询结果
      */
     Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 
     /**
+     * Query the associated monitoring list information based on the alarm definition ID
      * 根据告警定义ID查询其关联的监控列表关联信息
-     * @param alertDefineId 告警定义ID
-     * @return 监控列表关联信息
+     * @param alertDefineId Alarm Definition ID ｜ 告警定义ID
+     * @return Associated information about the monitoring list ｜ 监控列表关联信息
      */
     List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId);
 }

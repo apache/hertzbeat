@@ -70,7 +70,7 @@ public class AlerterProperties {
     private int systemAlertTriggerTimes = 1;
 
     /**
-     * 数据入口配置属性
+     * Data entry configuration properties 数据入口配置属性
      */
     private EntranceProperties entrance;
 
@@ -140,13 +140,13 @@ public class AlerterProperties {
 
 
     /**
-     * 数据入口配置属性
-     * 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
+     * Data entry configuration properties 数据入口配置属性
+     * The entry can obtain data from messaging middleware such as kafka rabbitmq rocketmq 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
      */
     public static class EntranceProperties {
 
         /**
-         * kafka配置信息
+         * kafka configuration information kafka配置信息
          */
         private KafkaProperties kafka;
 
@@ -160,20 +160,20 @@ public class AlerterProperties {
 
         public static class KafkaProperties {
             /**
-             * kafka数据入口是否启动
+             * Whether the kafka data entry is started kafka数据入口是否启动
              */
             private boolean enabled = true;
 
             /**
-             * kafka的连接服务器url
+             * kafka's connection server url kafka的连接服务器url
              */
             private String servers = "127.0.0.1:9092";
             /**
-             * 接收数据的topic名称
+             * The name of the topic that receives the data 接收数据的topic名称
              */
             private String topic;
             /**
-             * 消费者组ID
+             * Consumer Group ID 消费者组ID
              */
             private String groupId;
 

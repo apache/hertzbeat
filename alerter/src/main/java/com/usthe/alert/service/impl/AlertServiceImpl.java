@@ -133,9 +133,9 @@ public class AlertServiceImpl implements AlertService {
     }
 
     /**
-     * 对外告警信息 转换为Alert
+     * The external alarm information is converted to Alert  对外告警信息 转换为Alert
      * @param alertReport 对外告警信息
-     * @return Alert实体
+     * @return Alert entity ｜ Alert实体
      */
     private Alert buildAlertData(AlertReport alertReport){
         Map<String, String> annotations = alertReport.getAnnotations();

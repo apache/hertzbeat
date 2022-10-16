@@ -145,7 +145,8 @@ public class AlertsController {
     }
 
     @PostMapping("/report")
-    @Operation(summary = "对外上报告警信息 接口", description = "对外 新增一个告警")
+    @Operation(summary = "Interface for reporting external alarm information ｜ 对外上报告警信息 接口",
+            description = "对外 新增一个告警")
     public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
         // 校验请求数据 TODO
         alertService.addNewAlertReport(alertReport);

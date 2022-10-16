@@ -86,8 +86,8 @@ public interface AlertService {
     AlertSummary getAlertsSummary();
 
     /**
-     * 第三方 上报告警信息
-     * @param alertReport 告警信息
+     * A third party reports an alarm  第三方 上报告警信息
+     * @param alertReport The alarm information 告警信息
      */
     void addNewAlertReport(AlertReport alertReport);
 
