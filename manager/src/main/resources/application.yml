@@ -87,12 +87,16 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
-    iotdb:
+    iot-db:
       enabled: false
       host: 127.0.0.1
       rpc-port: 6667
       username: root
       password: root
+      # org.apache.iotdb.session.util.Version: V_O_12 || V_0_13
+      version: V_0_13
+      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
+      query-timeout-in-ms: -1
     memory:
       enabled: true
       init-size: 1024

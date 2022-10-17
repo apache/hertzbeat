@@ -17,9 +17,11 @@
 
 package com.usthe.warehouse;
 
+import org.apache.iotdb.session.util.Version;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -444,6 +446,18 @@ public class WarehouseProperties {
              */
             private List<String> nodeUrls;
 
+            private ZoneId zoneId;
+
+            /**
+             * the version of IotDb
+             */
+            private Version version;
+
+            /**
+             * query timeout(ms)
+             */
+            private long queryTimeoutInMs;
+
             public boolean isEnabled() {
                 return enabled;
             }
@@ -490,6 +504,30 @@ public class WarehouseProperties {
 
             public void setNodeUrls(List<String> nodeUrls) {
                 this.nodeUrls = nodeUrls;
+            }
+
+            public Version getVersion() {
+                return version;
+            }
+
+            public void setVersion(Version version) {
+                this.version = version;
+            }
+
+            public ZoneId getZoneId() {
+                return zoneId;
+            }
+
+            public void setZoneId(ZoneId zoneId) {
+                this.zoneId = zoneId;
+            }
+
+            public long getQueryTimeoutInMs() {
+                return queryTimeoutInMs;
+            }
+
+            public void setQueryTimeoutInMs(long queryTimeoutInMs) {
+                this.queryTimeoutInMs = queryTimeoutInMs;
             }
         }
     }

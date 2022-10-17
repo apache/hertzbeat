@@ -11,6 +11,7 @@ import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
+import org.apache.iotdb.session.util.Version;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.write.record.Tablet;
@@ -32,21 +33,18 @@ import java.util.*;
 @Configuration
 @AutoConfigureAfter(value = {WarehouseProperties.class})
 @ConditionalOnProperty(prefix = "warehouse.store.iot-db",
-        name = "enabled", havingValue = "true", matchIfMissing = false)
+        name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     /**
-     *  storage group (存储组)
+     * storage group (存储组)
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
     private static final String SHOW_DEVICES = "SHOW DEVICES %s";
 
-    /**
-     * the second %s is alias
-     */
     private static final String QUERY_HISTORY_SQL
-            = "SELECT %s as %s FROM %s WHERE Time >= now() - %s order by Time desc";
+            = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
             = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h) WITHOUT NULL ANY";
 
@@ -77,7 +75,14 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
                 builder.nodeUrls(properties.getNodeUrls());
             }
+            if (properties.getVersion() != null) {
+                builder.version(properties.getVersion());
+            }
+            if (properties.getZoneId() != null) {
+                builder.zoneId(properties.getZoneId());
+            }
             this.session = builder.build();
+            this.session.setQueryTimeout(properties.getQueryTimeoutInMs());
             this.session.open();
         } catch (IoTDBConnectionException e) {
             log.error(e.getMessage(), e);
@@ -114,7 +119,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                 String instance = valueRow.getInstance();
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, true);
+                if (!instance.isEmpty()) {
+                    instance = String.format("\"%s\"", instance);
+                }
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, false);
                 if (tabletMap.containsKey(instance)) {
                     // 避免Time重复
                     now++;
@@ -156,29 +164,29 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
-        String selectSql;
+        String selectSql = "";
         try {
             if (instance != null) {
-                selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId, history);
+                selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                 handleHistorySelect(selectSql, "", instanceValuesMap);
             } else {
                 // 优先查询底下所有存在device, 如果存在底下所有device的数据, 否则查询deviceId的数据
                 List<String> devices = queryAllDevices(deviceId);
                 if (devices.isEmpty()) {
-                    selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId, history);
+                    selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                     handleHistorySelect(selectSql, "", instanceValuesMap);
                 } else {
                     // todo 改造成一个select查询: select device1.metric, device2.metric from xxx
                     for (String device : devices) {
-                        // 为什么不直接使用device？select有校验，device可能会报错(eg: xxx.xxx.xx-xx的形式)
-                        String[] node = device.split("\\.");
-                        String instanceId = node[node.length - 1];
-                        selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
+                        String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
+                        String instanceId = device.substring(prefixDeviceId.length() + 1);
+                        selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId + "." + addQuote(instanceId), history);
                         handleHistorySelect(selectSql, instanceId, instanceValuesMap);
                     }
                 }
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
+            log.error("select error history sql: {}", selectSql);
             log.error(e.getMessage(), e);
         }
         return instanceValuesMap;
@@ -205,7 +213,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
-        String selectSql;
+        String selectSql = "";
         try {
             if (instance != null) {
                 selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
@@ -219,8 +227,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                     handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
                 } else {
                     for (String device : devices) {
-                        String[] node = device.split("\\.");
-                        String instanceId = node[node.length - 1];
+                        String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
+                        String instanceId = device.substring(prefixDeviceId.length() + 1);
                         selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                                 addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
                         handleHistoryIntervalSelect(selectSql, instanceId, instanceValuesMap);
@@ -228,6 +236,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
+            log.error("select error history interval sql: {}", selectSql);
             log.error(e.getMessage(), e);
         }
         return instanceValuesMap;
@@ -295,10 +304,20 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * add quote，防止查询时关键字报错(eg: nodes)
      */
     private String addQuote(String text) {
-        text = String.format("`%s`", text);
-        text = text.replace("'", "\\'");
-        text = text.replace("\"","\\\"");
-        text = text.replace("*","-");
+        if (text == null || text.isEmpty() || (text.startsWith("\"") && text.endsWith("\"")) || (text.startsWith("`") && text.endsWith("`"))) {
+            return text;
+        }
+        if (this.session.getVersion().equals(Version.V_0_13)) {
+            text = text.replace("'", "\\'");
+            text = text.replace("\"", "\\\"");
+            text = text.replace("*", "-");
+            text = String.format("`%s`", text);
+        } else {
+            if (text.contains(" ") || text.contains(".")) {
+                text = String.format("\"%s\"", text);
+                return text;
+            }
+        }
         return text;
     }
 
