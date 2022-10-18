@@ -164,23 +164,7 @@ export class MonitorDataChartComponent implements OnInit {
         }
       },
       tooltip: {
-        trigger: 'axis',
-        formatter: function (params: any) {
-          let time: number = params[0].value[0];
-          var date = new Date(time);
-          let seriesName = params[0].seriesName;
-          let month = (date.getMonth() + 1).toString().padStart(2, '0');
-          let day = date.getDate().toString().padStart(2, '0');
-          if (seriesName == null || seriesName == 'NULL') {
-            return `${date.getFullYear()}/${month}/${day} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} -- ${
-              params[0].value[1]
-            }`;
-          } else {
-            return `${seriesName} ${date.getFullYear()}/${month}/${day} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} -- ${
-              params[0].value[1]
-            }`;
-          }
-        }
+        trigger: 'axis'
       },
       grid: {
         left: '2',
@@ -190,6 +174,12 @@ export class MonitorDataChartComponent implements OnInit {
         type: 'time',
         splitLine: {
           show: false
+        },
+        axisTick: {
+          show: true
+        },
+        axisLine: {
+          onZero: false
         }
       },
       yAxis: {
