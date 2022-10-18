@@ -9,8 +9,8 @@ import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
-import org.apache.iotdb.session.Session;
-import org.apache.iotdb.session.SessionDataSet;
+import org.apache.iotdb.session.pool.SessionDataSetWrapper;
+import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.session.util.Version;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
@@ -48,7 +48,12 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
             = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h) WITHOUT NULL ANY";
 
-    private Session session;
+    private SessionPool sessionPool;
+
+    // Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
+    private Version version;
+
+    private long queryTimeoutInMs;
 
     public HistoryIotDbDataStorage(WarehouseWorkerPool workerPool,
                                    WarehouseProperties properties,
@@ -60,38 +65,29 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
-        try {
-            Session.Builder builder = new Session.Builder();
-            builder.host(properties.getHost());
-            if (properties.getRpcPort() != null) {
-                builder.port(properties.getRpcPort());
-            }
-            if (properties.getUsername() != null) {
-                builder.username(properties.getUsername());
-            }
-            if (properties.getPassword() != null) {
-                builder.password(properties.getPassword());
-            }
-            if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
-                builder.nodeUrls(properties.getNodeUrls());
-            }
-            if (properties.getVersion() != null) {
-                builder.version(properties.getVersion());
-            }
-            if (properties.getZoneId() != null) {
-                builder.zoneId(properties.getZoneId());
-            }
-            this.session = builder.build();
-            this.session.setQueryTimeout(properties.getQueryTimeoutInMs());
-            this.session.open();
-        } catch (IoTDBConnectionException e) {
-            log.error(e.getMessage(), e);
-            log.warn("\n\t------------------WARN WARN WARN------------------\n" +
-                    "\t-------------------Init IoTDB Failed-----------------\n" +
-                    "\t------------------Please Config IoTDB----------------\n" +
-                    "\t-----------Or Can Not Use Metric History Now---------\n");
-            return false;
+        SessionPool.Builder builder = new SessionPool.Builder();
+        builder.host(properties.getHost());
+        if (properties.getRpcPort() != null) {
+            builder.port(properties.getRpcPort());
         }
+        if (properties.getUsername() != null) {
+            builder.user(properties.getUsername());
+        }
+        if (properties.getPassword() != null) {
+            builder.password(properties.getPassword());
+        }
+        if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
+            builder.nodeUrls(properties.getNodeUrls());
+        }
+        if (properties.getZoneId() != null) {
+            builder.zoneId(properties.getZoneId());
+        }
+        if (properties.getVersion() != null) {
+            this.version = properties.getVersion();
+        }
+        this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
+        this.sessionPool = builder.build();
+        log.info("IotDB session pool init success");
         return true;
     }
 
@@ -145,7 +141,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             for (Tablet tablet : tabletMap.values()) {
-                session.insertTablet(tablet, true);
+                this.sessionPool.insertTablet(tablet, true);
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             log.error(e.getMessage(), e);
@@ -194,12 +190,12 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistorySelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSet dataSet = this.session.executeQueryStatement(selectSql);
+        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
         log.debug("iot select sql: {}", selectSql);
         while (dataSet.hasNext()) {
-            RowRecord record = dataSet.next();
-            long timestamp = record.getTimestamp();
-            double value = record.getFields().get(0).getDoubleV();
+            RowRecord rowRecord = dataSet.next();
+            long timestamp = rowRecord.getTimestamp();
+            double value = rowRecord.getFields().get(0).getDoubleV();
             String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
             List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
             valueList.add(new Value(strValue, timestamp));
@@ -244,18 +240,18 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSet dataSet = this.session.executeQueryStatement(selectSql);
+        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
         log.debug("iot select sql: {}", selectSql);
         while (dataSet.hasNext()) {
-            RowRecord record = dataSet.next();
-            long timestamp = record.getTimestamp();
-            double origin = record.getFields().get(0).getDoubleV();
+            RowRecord rowRecord = dataSet.next();
+            long timestamp = rowRecord.getTimestamp();
+            double origin = rowRecord.getFields().get(0).getDoubleV();
             String originStr = BigDecimal.valueOf(origin).stripTrailingZeros().toPlainString();
-            double avg = record.getFields().get(1).getDoubleV();
+            double avg = rowRecord.getFields().get(1).getDoubleV();
             String avgStr = BigDecimal.valueOf(avg).stripTrailingZeros().toPlainString();
-            double min = record.getFields().get(2).getDoubleV();
+            double min = rowRecord.getFields().get(2).getDoubleV();
             String minStr = BigDecimal.valueOf(min).stripTrailingZeros().toPlainString();
-            double max = record.getFields().get(3).getDoubleV();
+            double max = rowRecord.getFields().get(3).getDoubleV();
             String maxStr = BigDecimal.valueOf(max).stripTrailingZeros().toPlainString();
             Value value = Value.builder()
                     .origin(originStr).mean(avgStr)
@@ -274,11 +270,11 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      */
     private List<String> queryAllDevices(String deviceId) throws IoTDBConnectionException, StatementExecutionException {
         String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");
-        SessionDataSet dataSet = this.session.executeQueryStatement(showDevicesSql);
+        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(showDevicesSql, this.queryTimeoutInMs);
         List<String> devices = new ArrayList<>();
         while (dataSet.hasNext()) {
-            RowRecord record = dataSet.next();
-            devices.add(record.getFields().get(0).getStringValue());
+            RowRecord rowRecord = dataSet.next();
+            devices.add(rowRecord.getFields().get(0).getStringValue());
         }
         return devices;
     }
@@ -307,7 +303,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         if (text == null || text.isEmpty() || (text.startsWith("\"") && text.endsWith("\"")) || (text.startsWith("`") && text.endsWith("`"))) {
             return text;
         }
-        if (this.session.getVersion().equals(Version.V_0_13)) {
+        if (this.version != null && this.version.equals(Version.V_0_13)) {
             text = text.replace("'", "\\'");
             text = text.replace("\"", "\\\"");
             text = text.replace("*", "-");
@@ -322,9 +318,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public void destroy() throws Exception {
-        if (this.session != null) {
-            this.session.close();
+    public void destroy() {
+        if (this.sessionPool != null) {
+            this.sessionPool.close();
         }
     }
 }
