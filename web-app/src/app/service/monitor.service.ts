@@ -144,12 +144,7 @@ export class MonitorService {
     return this.http.get<Message<any>>(summary_uri);
   }
 
-  public getWarehouseStorageServerStatus(storage: string): Observable<Message<any>> {
-    let httpParams = new HttpParams();
-    httpParams = httpParams.appendAll({
-      storage: storage
-    });
-    const options = { params: httpParams };
-    return this.http.get<Message<any>>(warehouse_storage_status_uri, options);
+  public getWarehouseStorageServerStatus(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(warehouse_storage_status_uri);
   }
 }
