@@ -25,8 +25,8 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.dto.ValueRow;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.store.MemoryDataStorage;
-import com.usthe.warehouse.store.TdEngineDataStorage;
+import com.usthe.warehouse.store.AbstractHistoryDataStorage;
+import com.usthe.warehouse.store.AbstractRealTimeDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,26 +57,19 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
-    private static final String TDENGINE = "tdengine";
-
-    @Autowired
-    private MemoryDataStorage memoryDataStorage;
 
     @Autowired(required = false)
-    private TdEngineDataStorage tdEngineDataStorage;
+    private AbstractRealTimeDataStorage realTimeDataStorage;
+
+    @Autowired(required = false)
+    private AbstractHistoryDataStorage historyDataStorage;
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
-    public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus(
-            @Parameter(description = "Storage Type", example = "Tdengine")
-            @RequestParam String storage) {
-        boolean available = true;
-        if (TDENGINE.equalsIgnoreCase(storage)) {
-            if (tdEngineDataStorage == null) {
-                available = false;
-            } else {
-                available = tdEngineDataStorage.isServerAvailable();
-            }
+    public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
+        boolean available = false;
+        if (historyDataStorage != null) {
+            available = historyDataStorage.isServerAvailable();
         }
         if (available) {
             return ResponseEntity.ok(Message.<Void>builder().build());
@@ -92,7 +85,7 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        CollectRep.MetricsData storageData = memoryDataStorage.getCurrentMetricsData(monitorId, metrics);
+        CollectRep.MetricsData storageData = realTimeDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
             return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
         }
@@ -130,6 +123,9 @@ public class MetricsDataController {
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
+        if (historyDataStorage == null || !historyDataStorage.isServerAvailable()) {
+            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "Time series database not available"));
+        }
         String[] names = metricFull.split("\\.");
         if (names.length != METRIC_FULL_LENGTH) {
             throw new IllegalArgumentException("metrics full name: " + metricFull + " is illegal.");
@@ -142,15 +138,9 @@ public class MetricsDataController {
         }
         Map<String, List<Value>> instanceValuesMap = null;
         if (interval == null || !interval) {
-            if (tdEngineDataStorage != null) {
-                instanceValuesMap = tdEngineDataStorage
-                        .getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
-            }
+            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
         } else {
-            if (tdEngineDataStorage != null) {
-                instanceValuesMap = tdEngineDataStorage
-                        .getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
-            }
+            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
                 .id(monitorId).metric(metrics).values(instanceValuesMap)

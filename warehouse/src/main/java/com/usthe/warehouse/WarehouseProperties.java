@@ -17,8 +17,12 @@
 
 package com.usthe.warehouse;
 
+import org.apache.iotdb.session.util.Version;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import java.time.ZoneId;
+import java.util.List;
 
 /**
  * 数据仓储配置属性
@@ -134,6 +138,11 @@ public class WarehouseProperties {
     public static class StoreProperties {
 
         /**
+         * 内存存储配置信息
+         */
+        private MemoryProperties memory;
+
+        /**
          * influxdb配置信息
          */
         private InfluxdbProperties influxdb;
@@ -145,6 +154,18 @@ public class WarehouseProperties {
          * TdEngine配置信息
          */
         private TdEngineProperties tdEngine;
+        /**
+         * IoTDB配置信息
+         */
+        private IotDbProperties iotDb;
+
+        public MemoryProperties getMemory() {
+            return memory;
+        }
+
+        public void setMemory(MemoryProperties memory) {
+            this.memory = memory;
+        }
 
         public InfluxdbProperties getInfluxdb() {
             return influxdb;
@@ -168,6 +189,41 @@ public class WarehouseProperties {
 
         public void setTdEngine(TdEngineProperties tdEngine) {
             this.tdEngine = tdEngine;
+        }
+
+        public IotDbProperties getIotDb() {
+            return iotDb;
+        }
+
+        public void setIotDb(IotDbProperties iotDb) {
+            this.iotDb = iotDb;
+        }
+
+        public static class MemoryProperties {
+            /**
+             * 内存数据存储是否启动
+             */
+            private boolean enabled = false;
+            /**
+             * 内存存储map初始化大小
+             */
+            private Integer initSize = 1024;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public Integer getInitSize() {
+                return initSize;
+            }
+
+            public void setInitSize(Integer initSize) {
+                this.initSize = initSize;
+            }
         }
 
         public static class InfluxdbProperties {
@@ -356,6 +412,122 @@ public class WarehouseProperties {
 
             public void setPassword(String password) {
                 this.password = password;
+            }
+        }
+
+        public static class IotDbProperties {
+            /**
+             * Whether the iotDB data store is enabled
+             */
+            private boolean enabled = true;
+
+            /**
+             * iotDB host
+             */
+            private String host = "127.0.0.1";
+
+            /**
+             * iotDB rpc port
+             */
+            private Integer rpcPort = 6667;
+
+            /**
+             * iotDB username
+             */
+            private String username;
+
+            /**
+             * iotDB password
+             */
+            private String password;
+
+            /**
+             * cluster node url list
+             */
+            private List<String> nodeUrls;
+
+            private ZoneId zoneId;
+
+            /**
+             * the version of IotDb
+             */
+            private Version version;
+
+            /**
+             * query timeout(ms)
+             */
+            private long queryTimeoutInMs;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public void setHost(String host) {
+                this.host = host;
+            }
+
+            public Integer getRpcPort() {
+                return rpcPort;
+            }
+
+            public void setRpcPort(Integer rpcPort) {
+                this.rpcPort = rpcPort;
+            }
+
+            public List<String> getNodeUrls() {
+                return nodeUrls;
+            }
+
+            public void setNodeUrls(List<String> nodeUrls) {
+                this.nodeUrls = nodeUrls;
+            }
+
+            public Version getVersion() {
+                return version;
+            }
+
+            public void setVersion(Version version) {
+                this.version = version;
+            }
+
+            public ZoneId getZoneId() {
+                return zoneId;
+            }
+
+            public void setZoneId(ZoneId zoneId) {
+                this.zoneId = zoneId;
+            }
+
+            public long getQueryTimeoutInMs() {
+                return queryTimeoutInMs;
+            }
+
+            public void setQueryTimeoutInMs(long queryTimeoutInMs) {
+                this.queryTimeoutInMs = queryTimeoutInMs;
             }
         }
     }
