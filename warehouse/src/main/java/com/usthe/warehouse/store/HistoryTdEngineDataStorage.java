@@ -347,13 +347,13 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 while (resultSet.next()) {
                     Timestamp ts = resultSet.getTimestamp(1);
                     double origin = resultSet.getDouble(2);
-                    String originStr = new BigDecimal(origin).stripTrailingZeros().toPlainString();
+                    String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double avg = resultSet.getDouble(3);
-                    String avgStr = new BigDecimal(avg).stripTrailingZeros().toPlainString();
+                    String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double min = resultSet.getDouble(4);
-                    String minStr = new BigDecimal(min).stripTrailingZeros().toPlainString();
+                    String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double max = resultSet.getDouble(5);
-                    String maxStr = new BigDecimal(max).stripTrailingZeros().toPlainString();
+                    String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     Value value = Value.builder()
                             .origin(originStr).mean(avgStr)
                             .min(minStr).max(maxStr)
