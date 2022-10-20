@@ -36,6 +36,11 @@ import java.util.*;
         name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
+    private static final String BACK_QUOTE = "`";
+    private static final String DOUBLE_QUOTATION_MARKS = "\"";
+    private static final String SPACE = " ";
+    private static final String DOT = ".";
+
     /**
      * storage group (存储组)
      */
@@ -51,6 +56,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private SessionPool sessionPool;
 
     // Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
+    /**
+     * version: ioTDb version
+     * <p>用来区分不同版本的ioTDb</p>
+     */
     private Version version;
 
     private long queryTimeoutInMs;
@@ -300,7 +309,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * add quote，防止查询时关键字报错(eg: nodes)
      */
     private String addQuote(String text) {
-        if (text == null || text.isEmpty() || (text.startsWith("\"") && text.endsWith("\"")) || (text.startsWith("`") && text.endsWith("`"))) {
+        if (text == null || text.isEmpty()
+                || (text.startsWith(DOUBLE_QUOTATION_MARKS) && text.endsWith(DOUBLE_QUOTATION_MARKS))
+                || (text.startsWith(BACK_QUOTE) && text.endsWith(BACK_QUOTE))) {
             return text;
         }
         if (this.version != null && this.version.equals(Version.V_0_13)) {
@@ -309,7 +320,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             text = text.replace("*", "-");
             text = String.format("`%s`", text);
         } else {
-            if (text.contains(" ") || text.contains(".")) {
+            if (text.contains(SPACE) || text.contains(DOT)) {
                 text = String.format("\"%s\"", text);
                 return text;
             }
