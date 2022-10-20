@@ -28,7 +28,6 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
     void setUp() {
         // insert notice rule with enable = true
         NoticeRule enabled = NoticeRule.builder()
-                .id(1L)
                 .name("mock notice rule")
                 .enable(true)
                 .filterAll(true)
@@ -67,7 +66,6 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
     void tearDown() {
         noticeRuleDao.deleteAll();
     }
-
 
     @Test
     void findNoticeRulesByEnableTrue() {
