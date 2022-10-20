@@ -61,6 +61,12 @@
             <artifactId>taos-jdbcdriver</artifactId>
             <version>2.0.36</version>
         </dependency>
+        <!-- IoTDB -->
+        <dependency>
+            <groupId>org.apache.iotdb</groupId>
+            <artifactId>iotdb-session</artifactId>
+            <version>0.13.2</version>
+        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
