@@ -203,7 +203,7 @@ public class WarehouseProperties {
             /**
              * 内存数据存储是否启动
              */
-            private boolean enabled = false;
+            private boolean enabled = true;
             /**
              * 内存存储map初始化大小
              */
@@ -293,7 +293,7 @@ public class WarehouseProperties {
             /**
              * Whether the TdEngine data store is enabled
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
             /**
              * TdEngine connect url
              */
@@ -368,7 +368,7 @@ public class WarehouseProperties {
             /**
              * redis数据存储是否启动
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
             /**
              * redis 主机host
              */
@@ -419,7 +419,7 @@ public class WarehouseProperties {
             /**
              * Whether the iotDB data store is enabled
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
 
             /**
              * iotDB host
