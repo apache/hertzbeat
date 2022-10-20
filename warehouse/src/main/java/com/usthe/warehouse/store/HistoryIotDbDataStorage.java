@@ -255,13 +255,13 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             RowRecord rowRecord = dataSet.next();
             long timestamp = rowRecord.getTimestamp();
             double origin = rowRecord.getFields().get(0).getDoubleV();
-            String originStr = BigDecimal.valueOf(origin).stripTrailingZeros().toPlainString();
+            String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
             double avg = rowRecord.getFields().get(1).getDoubleV();
-            String avgStr = BigDecimal.valueOf(avg).stripTrailingZeros().toPlainString();
+            String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
             double min = rowRecord.getFields().get(2).getDoubleV();
-            String minStr = BigDecimal.valueOf(min).stripTrailingZeros().toPlainString();
+            String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
             double max = rowRecord.getFields().get(3).getDoubleV();
-            String maxStr = BigDecimal.valueOf(max).stripTrailingZeros().toPlainString();
+            String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
             Value value = Value.builder()
                     .origin(originStr).mean(avgStr)
                     .min(minStr).max(maxStr)
