@@ -458,6 +458,14 @@ public class WarehouseProperties {
              */
             private long queryTimeoutInMs;
 
+            /**
+             * save data expire time(ms)，-1 means it never expires
+             * 数据存储时间(单位：ms,-1代表永不过期)
+             * 注：这里为什么使用String而不是Long？
+             *    目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
+             */
+            private String expireTime;
+
             public boolean isEnabled() {
                 return enabled;
             }
@@ -528,6 +536,14 @@ public class WarehouseProperties {
 
             public void setQueryTimeoutInMs(long queryTimeoutInMs) {
                 this.queryTimeoutInMs = queryTimeoutInMs;
+            }
+
+            public String getExpireTime() {
+                return expireTime;
+            }
+
+            public void setExpireTime(String expireTime) {
+                this.expireTime = expireTime;
             }
         }
     }
