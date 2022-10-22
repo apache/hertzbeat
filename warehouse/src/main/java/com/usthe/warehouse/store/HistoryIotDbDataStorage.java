@@ -40,7 +40,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String DOUBLE_QUOTATION_MARKS = "\"";
     private static final String SPACE = " ";
     private static final String DOT = ".";
-    // set ttl never expire
+    /**
+     * set ttl never expire
+     */
     private static final String NEVER_EXPIRE = "-1";
 
     /**
