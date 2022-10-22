@@ -40,11 +40,17 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String DOUBLE_QUOTATION_MARKS = "\"";
     private static final String SPACE = " ";
     private static final String DOT = ".";
+    // set ttl never expire
+    private static final String NEVER_EXPIRE = "-1";
 
     /**
      * storage group (存储组)
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
+
+    private static final String SET_TTL = "set ttl to %s %s";
+
+    private static final String CANCEL_TTL = "unset ttl to %s";
 
     private static final String SHOW_DEVICES = "SHOW DEVICES %s";
 
@@ -96,8 +102,28 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
         this.sessionPool = builder.build();
+        this.initTtl(properties.getExpireTime());
         log.info("IotDB session pool init success");
         return true;
+    }
+
+    private void initTtl(String expireTime) {
+        if (expireTime == null || expireTime.isEmpty()) {
+            return;
+        }
+        try {
+            if (NEVER_EXPIRE.equals(expireTime)) {
+                // 删除原本可能已经存在的ttl
+                String cancelTtlSql = String.format(CANCEL_TTL, STORAGE_GROUP);
+                this.sessionPool.executeNonQueryStatement(cancelTtlSql);
+            } else {
+                String sstTtlSql = String.format(SET_TTL, STORAGE_GROUP, expireTime);
+                this.sessionPool.executeNonQueryStatement(sstTtlSql);
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            // 失败不影响主业务
+            log.error("IoTDB init ttl error, expireTime: {}", expireTime);
+        }
     }
 
     @Override
