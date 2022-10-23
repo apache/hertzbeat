@@ -118,7 +118,7 @@
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot-starter-sureness</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
         </dependency>
         <!-- h2 database-->
         <dependency>
