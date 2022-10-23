@@ -56,6 +56,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String SHOW_DEVICES = "SHOW DEVICES %s";
 
+    private static final String SHOW_STORAGE_GROUP = "show storage group";
+
     private static final String QUERY_HISTORY_SQL
             = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
@@ -63,8 +65,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private SessionPool sessionPool;
 
-    // Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
     /**
+     * Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
      * version: ioTDb version
      * <p>用来区分不同版本的ioTDb</p>
      */
@@ -104,9 +106,22 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
         this.sessionPool = builder.build();
-        this.initTtl(properties.getExpireTime());
-        log.info("IotDB session pool init success");
-        return true;
+        boolean available = checkConnection();
+        if (available) {
+            this.initTtl(properties.getExpireTime());
+            log.info("IotDB session pool init success");
+        }
+        return available;
+    }
+
+    private boolean checkConnection() {
+        try {
+            this.sessionPool.executeNonQueryStatement(SHOW_STORAGE_GROUP);
+            return true;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return false;
+        }
     }
 
     private void initTtl(String expireTime) {
@@ -124,7 +139,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             // 失败不影响主业务
-            log.error("IoTDB init ttl error, expireTime: {}", expireTime);
+            log.error("IoTDB init ttl error, expireTime: {}, error: {}", expireTime, e.getMessage());
         }
     }
 
@@ -194,6 +209,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
+            log.error("\n\t---------------IotDb Init Failed---------------\n" +
+                    "\t--------------Please Config IotDb--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
@@ -243,6 +261,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
+            log.error("\n\t---------------IotDb Init Failed---------------\n" +
+                    "\t--------------Please Config IotDb--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
