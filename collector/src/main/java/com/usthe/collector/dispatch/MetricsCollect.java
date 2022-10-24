@@ -324,7 +324,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                     try {
-                        Object objValue = expression.execute(fieldValueMap);
+                        // A | B的表达式, A和B都的value都为null, 防止打印异常
+                        List<Object> valueList = fieldValueMap.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
+                        Object objValue = null;
+                        if (!valueList.isEmpty()) {
+                            objValue = expression.execute(fieldValueMap);
+                        }
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
