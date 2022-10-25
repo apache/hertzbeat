@@ -102,8 +102,7 @@ warehouse:
       version: V_0_13
       # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
-      # 数据存储时间：默认'7776000000'（90天）
-      # 虽然expireTime目前是数字，但是请使用String类型，单位为毫秒，目前不支持其他单位，-1代表永不过期
+      # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       expire-time: '7776000000'
     memory:
       enabled: true
