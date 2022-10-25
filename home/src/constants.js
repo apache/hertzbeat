@@ -95,7 +95,7 @@ export const dromaraFriends = [
     img: 'jpom_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/jpom.png',
     alt: 'jpom',
-    url: 'https://jpom.io/',
+    url: 'https://jpom.top/',
   },
   {
     img: 'fast_request_logo.gif',
