@@ -114,7 +114,7 @@ export class MonitorDetailComponent implements OnInit {
           }
         },
         error => {
-          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.tdengine.unavailable'), error);
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.time-series.unavailable'), error);
         }
       );
   }
