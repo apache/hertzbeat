@@ -114,7 +114,7 @@ warehouse:
 > 请确认是否安装的TDengine版本为2.4.0.12附近，版本3.0和2.2不支持兼容
 
 4. 安装配置了TDengine数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
-> 请检查配置参数是否正确
-> td-engine enable是否设置为true
-> 注意⚠️若hertzbeat和TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
-> 可根据logs目录下启动日志排查
+> 请检查配置参数是否正确  
+> td-engine enable是否设置为true  
+> 注意⚠️若hertzbeat和TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP  
+> 可根据logs目录下启动日志排查  
