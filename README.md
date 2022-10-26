@@ -45,7 +45,7 @@ Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734
 
 ## 🥐 Architecture  
 
-![hertzBeat](home/static/img/docs/hertzbeat-stru-en.svg)     
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     
 
 
 ## 🐕 Quick Start   
