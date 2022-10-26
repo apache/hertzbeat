@@ -46,7 +46,7 @@
 
 ## 🥐 模块  
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
 
 
 ## 🐕 快速开始  
