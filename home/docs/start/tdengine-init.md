@@ -1,8 +1,11 @@
 ---
 id: tdengine-init  
-title: 依赖服务TDengine安装初始化        
-sidebar_label: TDengine初始化(可选)    
+title: 依赖时序数据库服务TDengine安装初始化        
+sidebar_label: 时序数据库TDengine安装(可选)    
 ---
+
+HertzBeat的历史数据存储依赖时序数据库 TDengine 或 IoTDB，任选其一安装初始化即可，也可不安装(注意⚠️不安装则无历史图表数据)
+
 TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意⚠️ 2.4.x版本。   
 注意⚠️ TDengine为可选项，未配置则无历史图表数据。
 
@@ -88,17 +91,30 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
    替换里面的`warehouse.store.td-engine`数据源参数，URL账户密码    
 
-```
-   warehouse.store.td-engine.enable
-   warehouse.store.td-engine.url
-   warehouse.store.td-engine.username
-   warehouse.store.td-engine.password
+```yaml
+warehouse:
+  store:
+    td-engine:
+      enabled: true
+      driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+      url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+      username: root
+      password: taosdata
 ```
 
 ### 常见问题   
 
-1. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
-> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - TDengine数据库
+1. 时序数据库IoTDB和TDengine是否都需要配置，能不能都用
+> 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
 
-2. 监控详情历史图片不展示或无数据，已经配置了TDengine   
+2. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库] 
+> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - IotDB数据库或TDengine数据库
+
+3. 监控详情历史图片不展示或无数据，已经配置了TDengine   
 > 请确认是否安装的TDengine版本为2.4.0.12附近，版本3.0和2.2不支持兼容
+
+4. 安装配置了TDengine数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+> 请检查配置参数是否正确  
+> td-engine enable是否设置为true  
+> 注意⚠️若hertzbeat和TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP  
+> 可根据logs目录下启动日志排查  

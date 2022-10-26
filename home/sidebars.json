@@ -6,6 +6,7 @@
       "items": [
         "introduce",
         "start/quickstart",
+        "start/iotdb-init",
         "start/tdengine-init",
         "start/docker-deploy",
         "start/package-deploy",
