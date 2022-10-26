@@ -44,18 +44,30 @@ sidebar_label: Docker方式部署
 
 4. 配置HertzBeat的配置文件(可选)      
    在主机目录下创建application.yml，eg:/opt/application.yml        
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码   
+   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`warehouse`依赖服务参数，IP端口账户密码   
    注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-change)）       
    具体替换参数如下:     
 ```yaml
 warehouse:
    store:
       td-engine:
-         enabled: true
+         enabled: false
          driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
          url: jdbc:TAOS-RS://localhost:6041/hertzbeat
          username: root
          password: taosdata
+      iot-db:
+         enabled: false
+         host: 127.0.0.1
+         rpc-port: 6667
+         username: root
+         password: root
+         # org.apache.iotdb.session.util.Version: V_O_12 || V_0_13
+         version: V_0_13
+         # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
+         query-timeout-in-ms: -1
+         # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
+         expire-time: '7776000000'
          
 spring:
    mail:
@@ -223,7 +235,9 @@ $ docker run -d -p 1157:1157 \
 
 ### Docker部署常见问题   
 
-1. **MYSQL,TDENGINE和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**     
+**最多的问题就是网络问题，请先提前排查**
+
+1. **MYSQL,TDENGINE或IotDB和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**     
 此问题本质为Docker容器访问宿主机端口连接失败，由于docker默认网络模式为Bridge模式，其通过localhost访问不到宿主机。
 > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
 > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
@@ -239,14 +253,18 @@ $ docker run -d -p 1157:1157 \
 > 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
 
 4. **监控历史图表长时间都一直无数据**  
-> 一：Tdengine是否配置，未配置则无历史图表数据  
+> 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
 > 二：Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 Tdengine IP账户密码等配置是否正确  
+> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB或Tdengine IP账户密码等配置是否正确  
 
-5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
+5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
-> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init)  
+> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init) 或 [IoTDB安装初始化](iotdb-init)  
+
+6. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+> 请检查配置参数是否正确
+> iot-db 或td-engine enable 是否设置为true
+> 注意⚠️若hertzbeat和IotDB，TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
+> 可根据logs目录下启动日志排查
 
 
-6. 监控详情历史图片不展示或无数据，已经配置了TDengine    
-> 请确认是否安装的TDengine版本为2.4.0.12附近，版本3.0和2.2不支持兼容
