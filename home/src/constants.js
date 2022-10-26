@@ -179,7 +179,7 @@ export const dromaraFriends = [
     img: 'northstar_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/northstar_logo.png',
     alt: 'northstar',
-    url: 'https://gitee.com/dromara/northstar',
+    url: 'https://www.quantit.tech',
   },
   {
     img: 'mendmix_logo.png',
