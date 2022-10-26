@@ -1,53 +1,51 @@
 ---
 id: ssl-cert-practice  
-title: SSL证书过期监控使用案例    
+title: SSL Certificate Monitor Practice      
 sidebar_label: Practice Example
 ---
 
-先祝看到的同学中秋快乐，身体健康，在身体健康的基础上尽量暴富。
+Most websites now support HTTPS by default. The certificate we apply for is usually 3 months or 1 year. It is easy to expire the SSL certificate over time, but we did not find it the first time, or did not update the certificate in time before it expired.
 
-进入正题，现在大部分网站都默认支持 HTTPS，我们申请的证书一般是3个月或者1年，很容易随着时间的流逝SSL证书过期了我们却没有第一时间发现，或者在过期之前没有及时更新证书。
+This article introduces how to use the hertzbeat monitoring system to detect the validity period of our website's SSL certificate, and send us a warning message when the certificate expires or a few days before the certificate expires.
 
-今天这篇文章介绍如果使用 hertzbeat 监控系统来检测我们网站的SSL证书有效期，当证书过期时或证书快过期前几天，给我们发告警消息。
+#### What is HertzBeat
 
-#### HertzBeat是什么
+HertzBeat is a real-time monitoring system with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
-HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时监控系统。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
+**Official website: https://hertzbeat.com | https://tancloud.cn**
 
-**官网: https://hertzbeat.com | https://tancloud.cn**
-
-github: https://github.com/dromara/hertzbeat    
+github: https://github.com/dromara/hertzbeat
 gitee: https://gitee.com/dromara/hertzbeat
 
-#### 安装 HertzBeat
+#### Install HertzBeat
 
-1.如果不想安装可以直接使用云服务 [TanCloud探云 console.tancloud.cn](https://console.tancloud.cn)
+1. If you don't want to install, you can use the cloud service directly [TanCloud exploration cloud console.tancloud.cn](https://console.tancloud.cn)
 
-2. `docker` 环境仅需一条命令即可安装
+2. The `docker` environment can be installed with just one command
 
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 
-3. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+3. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
 
-#### 监控SSL证书
+#### Monitoring SSL certificates
 
-1. 点击新增SSL证书监控
+1. Click Add SSL Certificate Monitor
 
-> 系统页面 -> 监控菜单 -> SSL证书 -> 新增SSL证书
+> System Page -> Monitor Menu -> SSL Certificate -> Add SSL Certificate
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd53f343a5b54feab62e71458d076441~tplv-k3u1fbpfcp-zoom-1.image)
 
-2. 配置监控网站
+2. Configure the monitoring website
 
-> 我们这里举例监控百度网站, 配置监控host域名，名称，采集间隔等。    
-> 点击确定 注意⚠️新增前默认会先去测试网站连接性，连接成功才会新增，当然也可以把**是否测试**按钮置灰。
+> Here we take the example of monitoring Baidu website, configure monitoring host domain name, name, collection interval, etc.
+> Click OK Note ⚠️Before adding, it will test the connectivity of the website by default, and the connection will be successful before adding. Of course, you can also gray out the **Test or not** button.
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad1154670648413bb82c8bdeb5b13609~tplv-k3u1fbpfcp-zoom-1.image)
 
-3. 查看检测指标数据
+3. View the detection index data
 
-> 在监控列表可以查看监控状态，进监控详情可以查看指标数据图表等。
+> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the indicator data chart, etc.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)
@@ -57,19 +55,19 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 
 
-4. 设置阈值(证书过期时触发)
+4. Set the threshold (triggered when the certificate expires)
 
-> 系统页面 -> 告警 -> 告警阈值 -> 新增阈值
+> System Page -> Alarms -> Alarm Thresholds -> New Thresholds
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
 
-> 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模版信息等。
+> Configure the threshold, select the SSL certificate indicator object, configure the alarm expression-triggered when the indicator `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
 
-> 关联阈值与监控, 在阈值列表设置此阈值应用于哪些监控。
+> Associating thresholds with monitoring, in the threshold list, set which monitoring this threshold applies to.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9b9063d7bcf9454387be0491fc382bd1~tplv-k3u1fbpfcp-zoom-1.image)
@@ -77,43 +75,43 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 
 
-5. 设置阈值(证书过期前一周触发)
+5. Set the threshold (triggered one week before the certificate expires)
 
-> 同理如上，新增配置阈值，配置告警表达式-当指标有效期时间戳 `end_timestamp`，`now()`函数为当前时间戳，若配置提前一周触发告警即：`end_timestamp <= (now()  + 604800000)` , 其中 `604800000` 为7天总时间差毫秒值。
+> In the same way, add a new configuration threshold and configure an alarm expression - when the indicator expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d6f837f57c247e09f668f60eff4a0ff~tplv-k3u1fbpfcp-zoom-1.image)
 
-> 最终可以在告警中心看到已触发的告警。
+> Finally, you can see the triggered alarm in the alarm center.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a61b23127524976b2c209ce0ca6a339~tplv-k3u1fbpfcp-zoom-1.image)
 
 
-6. 告警通知(通过钉钉微信飞书等及时通知)
+6. Alarm notification (in time notification via Dingding WeChat Feishu, etc.)
 
-> 监控系统 -> 告警通知 -> 新增接收人
+> Monitoring System -> Alarm Notification -> New Receiver
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f36956060ef410a82bbecafcbb2957f~tplv-k3u1fbpfcp-zoom-1.image)
 
-钉钉微信飞书等token配置可以参考帮助文档
+For token configuration such as Dingding WeChat Feishu, please refer to the help document
 
-https://hertzbeat.com/docs/help/alert_dingtalk   
+https://hertzbeat.com/docs/help/alert_dingtalk
 https://tancloud.cn/docs/help/alert_dingtalk
 
-> 告警通知 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知
+> Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d976343e81f843138344a039f3aff8a3~tplv-k3u1fbpfcp-zoom-1.image)
 
-7. OK 当阈值触发后我们就可以收到对应告警消息啦，如果没有配通知，也可以在告警中心查看告警信息。
+7. OK When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 
-----  
+----
 
-#### 完！
+#### Finish!
 
-监控SSL证书的实践就到这里，当然对hertzbeat来说这个功能只是冰山一角，如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
+The practice of monitoring SSL certificates is here. Of course, for hertzbeat, this function is just the tip of the iceberg. If you think hertzbeat is a good open source project, please give us a Gitee star on GitHub, thank you very much. Thank you for your support. Refill!
 
 **github: https://github.com/dromara/hertzbeat**
 
