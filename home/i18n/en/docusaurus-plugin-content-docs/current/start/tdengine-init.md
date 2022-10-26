@@ -74,7 +74,7 @@ Note⚠️ Need TDengine 2.4.x Version.
 
 ```
 
-###   Common issues  
+### FAQ
 
 1. Do both the time series databases IoTDB and TDengine need to be configured? Can they both be used?
 > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.

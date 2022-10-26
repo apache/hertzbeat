@@ -98,7 +98,7 @@ account:
 
 **HAVE FUN**
 
-### Package Deployment common issues
+### FAQ  
 
 1. **According to the process deploy，visit http://ip:1157/ no interface**   
    Please refer to the following points to troubleshoot issues:

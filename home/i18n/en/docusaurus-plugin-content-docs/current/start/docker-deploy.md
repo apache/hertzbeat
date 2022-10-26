@@ -195,7 +195,7 @@ $ docker run -d -p 1157:1157 \
 
 **HAVE FUN**   
 
-### Docker Deployment common issues   
+### FAQ  
 
 **The most common problem is network problems, please check in advance**
 
