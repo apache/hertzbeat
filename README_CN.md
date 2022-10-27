@@ -153,7 +153,7 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://www.zhihu.com/people/kevinbauer"><img src="https://avatars.githubusercontent.com/u/28581579?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Kevin Huang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=kevinhuangwl" title="Documentation">📖</a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://github.com/TJxiaobao"><img src="https://avatars.githubusercontent.com/u/85919258?v=4?s=100" width="100px;" alt=""/><br /><sub><b>铁甲小宝</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ATJxiaobao" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/TJxiaobao"><img src="https://avatars.githubusercontent.com/u/85919258?v=4?s=100" width="100px;" alt=""/><br /><sub><b>铁甲小宝</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ATJxiaobao" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Documentation">📖</a></td>
   </tr>
 </table>
 
