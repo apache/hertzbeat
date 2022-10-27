@@ -119,7 +119,7 @@ export const dromaraFriends = [
     img: 'satoken_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/sa-token.png',
     alt: 'Sa-Token',
-    url: 'http://sa-token.dev33.cn/',
+    url: 'https://sa-token.cc/',
   },
   {
     img: 'koalas_rpc_logo.png',
