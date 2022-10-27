@@ -350,6 +350,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "TJxiaobao",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/TJxiaobao",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7
