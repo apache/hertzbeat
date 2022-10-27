@@ -323,6 +323,44 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "click33",
+      "name": "click33",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36243476?v=4",
+      "profile": "https://github.com/click33",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bwcx-jzy",
+      "name": "蒋小小",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16408873?v=4",
+      "profile": "https://jpom.io/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "kevinhuangwl",
+      "name": "Kevin Huang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28581579?v=4",
+      "profile": "https://www.zhihu.com/people/kevinbauer",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "TJxiaobao",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/TJxiaobao",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
