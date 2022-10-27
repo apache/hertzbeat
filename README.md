@@ -45,7 +45,7 @@ Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734
 
 ## 🥐 Architecture  
 
-![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 
 ## 🐕 Quick Start   
@@ -91,6 +91,10 @@ Install and deploy the mysql database, tdengine database and hertzbeat at one ti
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
 **HAVE FUN**  
+
+## 🥐 Roadmap
+
+![hertzBeat](home/static/img/docs/hertzbeat-roadmap.png) 
 
 ## ✨ Contributors
 
