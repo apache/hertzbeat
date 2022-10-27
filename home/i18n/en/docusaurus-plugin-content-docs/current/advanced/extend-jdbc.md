@@ -18,23 +18,23 @@ We can obtain the corresponding Metric data through the data fields queried by S
 > Query a row of data, return the column name of the result set through query and map them to the queried field.  
 
 eg：   
-queried Metric fields：one tow three four
-query SQL：select one, tow, three, four from book limit 1;
+queried Metric fields：one two three four
+query SQL：select one, two, three, four from book limit 1;
 Here the Metric field and the response data can be mapped into a row of collected data one by one.     
 
 #### **multiRow**
 > Query multiple rows of data, return the column names of the result set and map them to the queried fields.  
 
 eg：   
-queried Metric fields：one tow three four
-query SQL：select one, tow, three, four from book;
+queried Metric fields：one two three four
+query SQL：select one, two, three, four from book;
 Here the Metric field and the response data can be mapped into multiple rows of collected data one by one. 
 
 #### **columns**
 > Collect a row of Metric data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field. 
 
 eg：   
-queried fields：one tow three four   
+queried fields：one two three four   
 query SQL：select key, value from book;   
 SQL response data：   
 
