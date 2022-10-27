@@ -323,6 +323,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "click33",
+      "name": "click33",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36243476?v=4",
+      "profile": "https://github.com/click33",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
