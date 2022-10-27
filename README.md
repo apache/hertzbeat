@@ -147,6 +147,7 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://allcontributors.org"><img src="https://avatars.githubusercontent.com/u/46410174?v=4?s=100" width="100px;" alt=""/><br /><sub><b>All Contributors</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=all-contributors" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/gxc-myh"><img src="https://avatars.githubusercontent.com/u/85919258?v=4?s=100" width="100px;" alt=""/><br /><sub><b>铁甲小宝</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=gxc-myh" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=gxc-myh" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/click33"><img src="https://avatars.githubusercontent.com/u/36243476?v=4?s=100" width="100px;" alt=""/><br /><sub><b>click33</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=click33" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://jpom.io/"><img src="https://avatars.githubusercontent.com/u/16408873?v=4?s=100" width="100px;" alt=""/><br /><sub><b>蒋小小</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=bwcx-jzy" title="Documentation">📖</a></td>
   </tr>
 </table>
 
