@@ -175,7 +175,7 @@ HertzBeat is an incubation project of [Dromara Open Source Community](https://dr
 ##### Friends   
 
 - [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能     
-
+- [Eoapi](https://www.eoapi.io/?utm_source=sponsor&utm_campaign=s-hertzbeatyl) :  Open source extensible API management tool    
 
 ##### Sponsor     
 
