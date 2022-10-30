@@ -20,22 +20,41 @@ sidebar_label: Alert webHook notification
 
 ### WebHook callback POST body BODY content   
 
-Content format：JSON   
+Content format：JSON  
 ```json
 {
     "id":76456,
     "target":"available",
-    "monitorId":5739609486000128,
-    "monitorName":"API_poetry.apiopen.top",
+    "alertDefineId":232,
     "priority":0,
-    "content":"Monitor emergency availability alarm: UN_CONNECTABLE",
+    "content":"监控紧急可用性告警: UN_CONNECTABLE",
+    "tag": {
+      "monitorId": 3543534545,
+      "monitorName":"API_poetry.didi.top"
+    },
     "status":0,
     "times":1,
-    "tenantId":10000,
     "gmtCreate":"2022-02-25T13:32:13",
     "gmtUpdate":"2022-02-25T13:32:13"
 }
 ```
+
+|     |     |
+|-----|-----|
+| id |	integer($int64) title: Alarm record entity primary key index ID  |
+| target |	string title: Alert target object: monitor availability-available metrics-app.metrics.field  |
+| alertDefineId	integer($int64) title: Alarm definition ID associated with the alarm  |
+| priority |	string($byte) title: Alarm level 0: high-emergency-critical alarm-red 1: medium-critical-critical alarm-orange 2: low-warning-warning alarm-yellow  |
+| content |	string title: The actual content of the alarm notification |
+| status |	string($byte) title: Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed |
+| times | integer($int32) title: Alarm threshold trigger times |
+| firstTriggerTime |	integer($int64) title: Alarm trigger time (timestamp in milliseconds) |
+| lastTriggerTime |	integer($int64) title: Alarm trigger time (timestamp in milliseconds) |
+| nextEvalInterval |	integer($int64) title: Alarm evaluation interval (milliseconds) |
+| tags	| example: {key1:value1} |
+| gmtCreate |	string($date-time) title: Record the latest creation time (timestamp in milliseconds) |
+| gmtUpdate	|   string($date-time) |
+
 
 
 ### Webhook notification common issues   
