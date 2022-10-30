@@ -65,7 +65,7 @@ import { CONSTS } from 'src/app/shared/consts';
           <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="avatar"></nz-avatar>
           <div class="alain-default__aside-user-info">
             <strong>{{ user.name }}</strong>
-            <p class="mb0">{{ user.email }}</p>
+            <p class="mb0">{{ 'app.role.admin' | i18n }}</p>
           </div>
         </div>
       </ng-template>
