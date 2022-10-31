@@ -158,6 +158,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 abstractCollect = TelnetCollectImpl.getInstance();
                 break;
             case DispatchConstants.PROTOCOL_JDBC:
+            case DispatchConstants.PROTOCOL_DM:
                 abstractCollect = JdbcCommonCollect.getInstance();
                 break;
             case DispatchConstants.PROTOCOL_SSH:
