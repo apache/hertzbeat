@@ -199,7 +199,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     /**
      * 查询一行数据, 通过查询的两列数据(key-value)，key和查询的字段匹配，value为查询字段的值
      * eg:
-     * 查询字段：one tow three four
+     * 查询字段：one two three four
      * 查询SQL：select key, value from book;
      * 返回的key映射查询字段
      * @param statement 执行器
@@ -298,6 +298,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "oracle":
                 url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                break;
+            case "dm":
+                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" +jdbcProtocol.getPort();
                 break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
