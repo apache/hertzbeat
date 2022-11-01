@@ -17,7 +17,7 @@ category: db
 app: dm
 name:
   zh-CN: 达梦数据库
-  en-US: dm DB
+  en-US: DM DB
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -81,10 +81,8 @@ metrics:
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: status$
+      - field: state
         type: 1
-    calculates:
-      - status$=status$
     protocol: jdbc
     jdbc:
       # 主机host: ipv4 ipv6 域名
@@ -99,7 +97,7 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
       # sql
-      sql: SELECT status$  FROM v$instance;
+      sql: SELECT status$ as state  FROM v$instance;
       url: ^_^url^_^
 
 
