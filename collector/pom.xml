@@ -102,13 +102,11 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.28</version>
         </dependency>
-        <!--  dm -->
+        <!-- dm -->
         <dependency>
             <groupId>com.dameng</groupId>
-            <artifactId>dm-jdbc</artifactId>
-            <version>1.8</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/DmJdbcDriver18.jar</systemPath>
+            <artifactId>DmJdbcDriver18</artifactId>
+            <version>8.1.2.141</version>
         </dependency>
         <!-- postgresql -->
         <dependency>
