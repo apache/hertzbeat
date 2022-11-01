@@ -297,7 +297,7 @@
   "app.theme.default": "Light Theme",
   "app.theme.dark": "Dark Theme",
   "app.theme.compact": "Compact Theme",
-  "app.role.admin": "Administrator",
+  "app.role.admin": "administrator",
   "app.lock": "Lock",
   "app.lock.placeholder": "Enter Any To Unlock",
   "app.passport.desc": "An open-source real-time monitoring system",
