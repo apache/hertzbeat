@@ -1,0 +1,51 @@
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: dm
+# 强制固定必须参数 - host(ipv4,ipv6,域名)
+param:
+    # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    # 端口默认值
+    defaultValue: 5236
+    # 参数输入框提示信息
+#    这个是什么参数？
+    placeholder: '请输入端口'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 用户密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
+    type: number
+    range: '[0, 100000]'
+    required: true
+    defaultValue: 3000
