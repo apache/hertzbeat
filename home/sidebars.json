@@ -72,7 +72,8 @@
             "help/mariadb",
             "help/postgresql",
             "help/sqlserver",
-            "help/oracle"
+            "help/oracle",
+            "help/dm"
           ]
         },
         {
