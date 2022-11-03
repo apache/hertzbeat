@@ -245,15 +245,23 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistorySelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
-        log.debug("iot select sql: {}", selectSql);
-        while (dataSet.hasNext()) {
-            RowRecord rowRecord = dataSet.next();
-            long timestamp = rowRecord.getTimestamp();
-            double value = rowRecord.getFields().get(0).getDoubleV();
-            String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
-            valueList.add(new Value(strValue, timestamp));
+        SessionDataSetWrapper dataSet = null;
+        try {
+            dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
+            log.debug("iot select sql: {}", selectSql);
+            while (dataSet.hasNext()) {
+                RowRecord rowRecord = dataSet.next();
+                long timestamp = rowRecord.getTimestamp();
+                double value = rowRecord.getFields().get(0).getDoubleV();
+                String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                valueList.add(new Value(strValue, timestamp));
+            }
+        } finally {
+            if (dataSet != null) {
+                // 需要关闭结果集！！！否则会造成服务端堆积
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
     }
 
@@ -298,26 +306,34 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
-        log.debug("iot select sql: {}", selectSql);
-        while (dataSet.hasNext()) {
-            RowRecord rowRecord = dataSet.next();
-            long timestamp = rowRecord.getTimestamp();
-            double origin = rowRecord.getFields().get(0).getDoubleV();
-            String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double avg = rowRecord.getFields().get(1).getDoubleV();
-            String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double min = rowRecord.getFields().get(2).getDoubleV();
-            String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double max = rowRecord.getFields().get(3).getDoubleV();
-            String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            Value value = Value.builder()
-                    .origin(originStr).mean(avgStr)
-                    .min(minStr).max(maxStr)
-                    .time(timestamp)
-                    .build();
-            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
-            valueList.add(value);
+        SessionDataSetWrapper dataSet = null;
+        try {
+            dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
+            log.debug("iot select sql: {}", selectSql);
+            while (dataSet.hasNext()) {
+                RowRecord rowRecord = dataSet.next();
+                long timestamp = rowRecord.getTimestamp();
+                double origin = rowRecord.getFields().get(0).getDoubleV();
+                String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double avg = rowRecord.getFields().get(1).getDoubleV();
+                String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double min = rowRecord.getFields().get(2).getDoubleV();
+                String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double max = rowRecord.getFields().get(3).getDoubleV();
+                String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                Value value = Value.builder()
+                        .origin(originStr).mean(avgStr)
+                        .min(minStr).max(maxStr)
+                        .time(timestamp)
+                        .build();
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                valueList.add(value);
+            }
+        } finally {
+            if (dataSet != null) {
+                // 需要关闭结果集！！！否则会造成服务端堆积
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
     }
 
