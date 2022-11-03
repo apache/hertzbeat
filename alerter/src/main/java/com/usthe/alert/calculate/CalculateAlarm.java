@@ -48,18 +48,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class CalculateAlarm {
 
-    private AlerterWorkerPool workerPool;
-    private CommonDataQueue dataQueue;
-    private AlertDefineService alertDefineService;
-    private AlerterProperties alerterProperties;
     /**
      * The alarm in the process is triggered
      * 触发中告警信息
      * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
      * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
-    private Map<String, Alert> triggeredAlertMap;
+    public Map<String, Alert> triggeredAlertMap;
 
+    private AlerterWorkerPool workerPool;
+    private CommonDataQueue dataQueue;
+    private AlertDefineService alertDefineService;
+    private AlerterProperties alerterProperties;
     private ResourceBundle bundle;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
