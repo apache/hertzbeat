@@ -46,9 +46,9 @@ module.exports = {
       additionalLanguages: ['java'],
     },
     algolia: {
-      apiKey: 'c7c84bfcc1495156f5730309d821ba8c',
-      indexName: 'sureness',
-      appId: 'GNVT7Z0UI2',
+      apiKey: '9298a61d23b2842ce077324283fb0abb',
+      indexName: 'hertzbeat',
+      appId: 'JMM99UL1H5',
       contextualSearch: true,
     },
     announcementBar: {
