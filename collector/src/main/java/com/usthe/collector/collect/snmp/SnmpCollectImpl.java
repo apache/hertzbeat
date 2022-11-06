@@ -150,7 +150,11 @@ public class SnmpCollectImpl extends AbstractCollect {
         } catch (Exception e) {
             log.warn("[snmp collect] error: {}", e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            if (e.getMessage() == null) {
+                builder.setMsg(e.toString());
+            } else {
+                builder.setMsg(e.getMessage());
+            }
         }
     }
 
