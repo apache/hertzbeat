@@ -65,7 +65,7 @@ sidebar_label: Tomcat监控
 
 ### Tomcat开启JMX协议步骤
 
-1. 搭建好tomcat后，进入tomcat下的bin目录，修改catalina.sh文件  
+1. 搭建好tomcat后，进入tomcat下的bin目录，修改catalina.sh文件  注意⚠️替换IP地址  
 
 2. vim catalina.sh  
 

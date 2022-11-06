@@ -119,7 +119,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('1w');
+              this.loadData('1w', true);
             }
           },
           myPeriod4w: {
@@ -132,7 +132,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('4w');
+              this.loadData('4w', true);
             }
           },
           myPeriod3m: {
@@ -145,7 +145,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('12w');
+              this.loadData('12w', true);
             }
           },
           myRefresh: {
@@ -164,28 +164,22 @@ export class MonitorDataChartComponent implements OnInit {
         }
       },
       tooltip: {
-        trigger: 'axis',
-        formatter: function (params: any) {
-          let time: number = params[0].value[0];
-          var date = new Date(time);
-          let seriesName = params[0].seriesName;
-          let month = (date.getMonth() + 1).toString().padStart(2, '0');
-          let day = date.getDate().toString().padStart(2, '0');
-          if (seriesName == null || seriesName == 'NULL') {
-            return `${date.getFullYear()}/${month}/${day} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} -- ${
-              params[0].value[1]
-            }`;
-          } else {
-            return `${seriesName} ${date.getFullYear()}/${month}/${day} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} -- ${
-              params[0].value[1]
-            }`;
-          }
-        }
+        trigger: 'axis'
+      },
+      grid: {
+        left: '2',
+        containLabel: true
       },
       xAxis: {
         type: 'time',
         splitLine: {
           show: false
+        },
+        axisTick: {
+          show: true
+        },
+        axisLine: {
+          onZero: false
         }
       },
       yAxis: {
@@ -203,14 +197,17 @@ export class MonitorDataChartComponent implements OnInit {
     this.loadData();
   }
 
-  loadData(timePeriod?: string) {
+  loadData(timePeriod?: string, isInterval?: boolean) {
     if (timePeriod != undefined) {
       this.timePeriod = timePeriod;
+    }
+    if (isInterval == undefined) {
+      isInterval = false;
     }
     // 读取指标历史数据
     this.loading = true;
     let metricData$ = this.monitorSvc
-      .getMonitorMetricHistoryData(this.monitorId, this.app, this.metrics, this.metric, this.timePeriod, false)
+      .getMonitorMetricHistoryData(this.monitorId, this.app, this.metrics, this.metric, this.timePeriod, isInterval)
       .pipe(
         finalize(() => {
           this.loading = false;
@@ -225,7 +222,41 @@ export class MonitorDataChartComponent implements OnInit {
             Object.keys(values).forEach(key => {
               legend.push(key);
             });
-            if (legend.length > 1) {
+            if (!isInterval || legend.length > 1) {
+              if (legend.length > 1) {
+                this.lineHistoryTheme.legend = {
+                  orient: 'vertical',
+                  align: 'auto',
+                  right: '10%',
+                  top: '10%',
+                  data: legend
+                };
+              }
+              this.lineHistoryTheme.series = [];
+              let maxLegend = 5;
+              let valueKeyArr = Object.keys(values);
+              for (let index = 0; index < valueKeyArr.length; index++) {
+                if (maxLegend-- <= 0) {
+                  break;
+                }
+                let key = valueKeyArr[index];
+                let seriesData: Array<{ value: any }> = [];
+                values[key].forEach((item: { time: number; origin: any }) => {
+                  seriesData.push({
+                    value: [item.time, item.origin]
+                  });
+                });
+                // @ts-ignore
+                this.lineHistoryTheme.series.push({
+                  name: key,
+                  type: 'line',
+                  smooth: true,
+                  showSymbol: false,
+                  data: seriesData
+                });
+              }
+            } else {
+              legend = ['Max', 'Min', 'Mean'];
               this.lineHistoryTheme.legend = {
                 orient: 'vertical',
                 align: 'auto',
@@ -233,28 +264,41 @@ export class MonitorDataChartComponent implements OnInit {
                 top: '10%',
                 data: legend
               };
-            }
-            this.lineHistoryTheme.series = [];
-            let maxLegend = 5;
-            let valueKeyArr = Object.keys(values);
-            for (let index = 0; index < valueKeyArr.length; index++) {
-              if (maxLegend-- <= 0) {
-                break;
-              }
-              let key = valueKeyArr[index];
-              let seriesData: Array<{ value: any }> = [];
-              values[key].forEach((item: { time: number; origin: any }) => {
-                seriesData.push({
-                  value: [item.time, item.origin]
+              let maxSeriesData: Array<{ value: any }> = [];
+              let minSeriesData: Array<{ value: any }> = [];
+              let meanSeriesData: Array<{ value: any }> = [];
+              this.lineHistoryTheme.series = [];
+              values[Object.keys(values)[0]].forEach((item: { time: number; mean: any; max: any; min: any }) => {
+                maxSeriesData.push({
+                  value: [item.time, item.max]
+                });
+                minSeriesData.push({
+                  value: [item.time, item.min]
+                });
+                meanSeriesData.push({
+                  value: [item.time, item.mean]
                 });
               });
-              // @ts-ignore
               this.lineHistoryTheme.series.push({
-                name: key,
+                name: 'Max',
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                data: seriesData
+                data: maxSeriesData
+              });
+              this.lineHistoryTheme.series.push({
+                name: 'Min',
+                type: 'line',
+                smooth: true,
+                showSymbol: false,
+                data: minSeriesData
+              });
+              this.lineHistoryTheme.series.push({
+                name: 'Mean',
+                type: 'line',
+                smooth: true,
+                showSymbol: false,
+                data: meanSeriesData
               });
             }
             this.eChartOption = this.lineHistoryTheme;

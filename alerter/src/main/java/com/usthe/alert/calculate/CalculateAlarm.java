@@ -21,13 +21,12 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.usthe.alert.AlerterProperties;
 import com.usthe.alert.AlerterWorkerPool;
-import com.usthe.alert.AlerterDataQueue;
+import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.dao.AlertMonitorDao;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.alerter.AlertDefine;
 import com.usthe.alert.service.AlertDefineService;
 import com.usthe.alert.util.AlertTemplateUtil;
-import com.usthe.collector.dispatch.export.MetricsDataExporter;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
@@ -40,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Calculate alarms based on the alarm definition rules and collected data
  * 根据告警定义规则和采集数据匹配计算告警
  * @author tom
  * @date 2021/12/9 14:19
@@ -49,29 +49,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CalculateAlarm {
 
     private AlerterWorkerPool workerPool;
-    private AlerterDataQueue dataQueue;
-    private MetricsDataExporter dataExporter;
+    private CommonDataQueue dataQueue;
     private AlertDefineService alertDefineService;
     private AlerterProperties alerterProperties;
     /**
+     * The alarm in the process is triggered
      * 触发中告警信息
-     * key - monitorId+alertDefineId 为普通阈值告警
-     * key - monitorId 为监控状态可用性可达性告警
+     * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
+     * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
     private Map<String, Alert> triggeredAlertMap;
 
     private ResourceBundle bundle;
 
-    public CalculateAlarm (AlerterWorkerPool workerPool, AlerterDataQueue dataQueue,
-                           AlertDefineService alertDefineService, MetricsDataExporter dataExporter,
-                           AlertMonitorDao monitorDao, AlerterProperties alerterProperties) {
+    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                           AlertDefineService alertDefineService, AlertMonitorDao monitorDao,
+                           AlerterProperties alerterProperties) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
-        this.dataExporter = dataExporter;
         this.alertDefineService = alertDefineService;
         this.alerterProperties = alerterProperties;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
+        // Initialize stateAlertMap
         // 初始化stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
                 CommonConstants.UN_REACHABLE_CODE));
@@ -105,7 +105,7 @@ public class CalculateAlarm {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataExporter.pollAlertMetricsData();
+                    CollectRep.MetricsData metricsData = dataQueue.pollAlertMetricsData();
                     if (metricsData != null) {
                         calculate(metricsData);
                     }
@@ -124,27 +124,35 @@ public class CalculateAlarm {
         long monitorId = metricsData.getId();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
+        // If the indicator group whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE, the highest severity alarm is generated to monitor the status change
         // 先判断调度优先级为0的指标组采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警进行监控状态变更
         if (metricsData.getPriority() == 0) {
             if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+                // Collection and abnormal
                 // 采集异常
                 if (metricsData.getCode() == CollectRep.Code.UN_AVAILABLE) {
+                    // The todo collector is unavailable
                     // todo 采集器不可用
                 } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
+                    // UN_REACHABLE Peer unreachable (Network layer icmp)
                     // UN_REACHABLE 对端不可达(网络层icmp)
                     handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
+                    // UN_CONNECTABLE Peer connection failure (transport layer tcp,udp)
                     // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
                     handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 } else {
+                    // Other exceptions
                     // 其他异常
                     handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
                 }
                 return;
             } else {
+                // Check whether an availability or unreachable alarm is generated before the association monitoring, and send a clear alarm to clear the monitoring status
                 // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
                 Alert preAlert = triggeredAlertMap.remove(String.valueOf(monitorId));
                 if (preAlert != null && preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
+                    // Sending an alarm cleared
                     // 发送告警恢复
                     Map<String, String> tags = new HashMap<>(6);
                     tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
@@ -169,6 +177,7 @@ public class CalculateAlarm {
                 }
             }
         }
+        // Query the alarm definitions associated with the indicator set of the monitoring type
         // 查出此监控类型下的此指标集合下关联配置的告警定义信息
         // field - define[]
         Map<String, List<AlertDefine>> defineMap = alertDefineService.getMonitorBindAlertDefines(monitorId, app, metrics);
@@ -205,7 +214,8 @@ public class CalculateAlarm {
                         try {
                             Expression expression = AviatorEvaluator.compile(expr, true);
                             Boolean match = (Boolean) expression.execute(fieldValueMap);
-                            if (match) {
+                            if (match != null && match) {
+                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                                 // 阈值规则匹配，判断已触发阈值次数，触发告警
                                 String monitorAlertKey = String.valueOf(monitorId) + define.getId();
                                 Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
@@ -235,6 +245,7 @@ public class CalculateAlarm {
                                             .times(times)
                                             .firstTriggerTime(currentTimeMilli)
                                             .lastTriggerTime(currentTimeMilli)
+                                            // Keyword matching and substitution in the template
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                             .build();
@@ -245,6 +256,7 @@ public class CalculateAlarm {
                                         triggeredAlertMap.put(monitorAlertKey, alert);
                                     }
                                 }
+                                // Threshold rules below this priority are ignored
                                 // 此优先级以下的阈值规则则忽略
                                 break;
                             }
@@ -293,6 +305,7 @@ public class CalculateAlarm {
             return;
         }
         if (preAlert.getLastTriggerTime() + preAlert.getNextEvalInterval() >= currentTimeMill) {
+            // Still in the silent period of the alarm evaluation interval
             // 还在告警评估时间间隔静默期
             preAlert.setTimes(preAlert.getTimes() + 1);
             triggeredAlertMap.put(monitorId, preAlert);

@@ -88,6 +88,7 @@ export class AlertNoticeComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteOneNoticeReceiver(receiveId)
     });
   }
@@ -122,6 +123,7 @@ export class AlertNoticeComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteOneNoticeRule(ruleId)
     });
   }

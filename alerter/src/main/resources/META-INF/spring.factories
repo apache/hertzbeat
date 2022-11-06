@@ -19,8 +19,6 @@ com.usthe.alert.service.impl.AlertServiceImpl,\
 com.usthe.alert.controller.AlertDefineController,\
 com.usthe.alert.AlerterWorkerPool,\
 com.usthe.alert.AlerterProperties,\
-com.usthe.alert.AlerterDataQueue,\
-com.usthe.alert.AlerterConfiguration,\
 com.usthe.alert.calculate.CalculateAlarm,\
 com.usthe.alert.controller.AlertsController,\
 com.usthe.alert.controller.AlertDefinesController

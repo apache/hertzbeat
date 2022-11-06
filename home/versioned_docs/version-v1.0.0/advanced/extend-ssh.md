@@ -45,7 +45,7 @@ uptime值为 `14:00:15 up 72 days`
 Mem:           7962        4065         333           1        3562        3593
 Swap:          8191          33        8158
 ```
-在heartbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：  
+在hertzbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：  
 `free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
 控制台响应为：  
 ```shell

@@ -1,4 +1,5 @@
 import { NgModule, Type } from '@angular/core';
+// eslint-disable-next-line import/order
 import { SharedModule } from '@shared';
 
 // dashboard pages

@@ -31,7 +31,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
@@ -41,7 +40,6 @@ import java.util.Map;
 /**
  * Solve the front-end routing problem of angular static website resources with DefaultErrorViewResolver and route the 404 website request to the angular front-end
  * 同DefaultErrorViewResolver 解决angular静态网站资源前端路由问题 把404的网站请求给angular前端进行路由
- *
  * @author tom
  * @date 2021/12/24 21:07
  */
@@ -66,11 +64,11 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
 
     private int order = Ordered.LOWEST_PRECEDENCE;
 
-    public AngularErrorViewResolver(ApplicationContext applicationContext, WebProperties.Resources resources) {
+    public AngularErrorViewResolver(ApplicationContext applicationContext, WebProperties webProperties) {
         Assert.notNull(applicationContext, "ApplicationContext must not be null");
-        Assert.notNull(resources, "Resources must not be null");
+        Assert.notNull(webProperties.getResources(), "Resources must not be null");
         this.applicationContext = applicationContext;
-        this.resources = resources;
+        this.resources = webProperties.getResources();
         this.templateAvailabilityProviders = new TemplateAvailabilityProviders(applicationContext);
     }
 

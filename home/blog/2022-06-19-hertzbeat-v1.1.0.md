@@ -12,7 +12,7 @@ tags: [opensource]
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**  
 
 大家好，HertzBeat v1.1.0 发布啦！这个版本我们支持了SNMP协议，并使用SNMP协议监控支持了windwos操作系统的应用监控。
-另一个重大变更是我们默认使用了H2数据库来替换MYSQL数据库作为存储，来方便使用者们的安装部署，现在只需要一条docker命令即可安装体验heartbeat ： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+另一个重大变更是我们默认使用了H2数据库来替换MYSQL数据库作为存储，来方便使用者们的安装部署，现在只需要一条docker命令即可安装体验hertzbeat ： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 Let's Try It!
 
 感谢hertzbeat贡献者们的贡献！👍👍
@@ -65,7 +65,7 @@ Have Fun!
 Home: hertzbeat.com | tancloud.cn
 
 Hi gays! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
-Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience heartbeat： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 Let's Try It!
 
 Thanks to the contributors! 👍👍

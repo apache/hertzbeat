@@ -19,7 +19,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>monitor</artifactId>
+        <artifactId>hertzbeat</artifactId>
         <groupId>com.usthe.tancloud</groupId>
         <version>1.0</version>
     </parent>
@@ -64,8 +64,8 @@
         </dependency>
         <!-- swagger -->
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
         <!-- etcd -->
@@ -74,6 +74,12 @@
             <artifactId>jetcd-core</artifactId>
             <version>0.5.11</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- 表达式计算 -->
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
+            <version>5.2.7</version>
         </dependency>
         <!-- 工具依赖  -->
         <dependency>
@@ -96,6 +102,11 @@
                     <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- 使用apache.http.conn.util代替sun.net.util -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
         </dependency>
     </dependencies>
 </project>

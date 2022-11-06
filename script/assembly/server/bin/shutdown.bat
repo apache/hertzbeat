@@ -32,7 +32,7 @@ for /f "tokens=1-5" %%i in ('netstat -ano^|findstr ":%SERVER_PORT%"') do (
     echo Shutdown HertzBeat %SERVER_NAME% Success!  
     goto q
 )
-echo Faild shutdown HertzBeat %SERVER_NAME%  
+echo Failed shutdown HertzBeat %SERVER_NAME%
 
 :q
 pause

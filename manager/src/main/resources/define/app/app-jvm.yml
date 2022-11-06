@@ -54,12 +54,21 @@ metrics:
         instance: true
       - field: committed
         type: 0
+        unit: MB
       - field: init
         type: 0
+        unit: MB
       - field: max
         type: 0
+        unit: MB
       - field: used
         type: 0
+        unit: MB
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
     aliasFields:
       - Name
       - Usage->committed

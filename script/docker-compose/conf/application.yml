@@ -22,18 +22,30 @@ spring:
     active: prod
   mvc:
     static-path-pattern: /**
-  resources:
-    static-locations:
-      - classpath:/dist/
-      - classpath:../dist/
   jackson:
-    default-property-inclusion: NON_EMPTY
+    default-property-inclusion: ALWAYS
+  web:
+    resources:
+      static-locations:
+        - classpath:/dist/
+        - classpath:../dist/
+  thymeleaf:
+    prefix: classpath:/templates/
+    check-template-location: true
+    cache: true
+    suffix: .html
+    mode: HTML
 
 sureness:
   auths:
     - digest
     - basic
     - jwt
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 
 ---
 spring:
@@ -52,6 +64,8 @@ spring:
     database: mysql
     hibernate:
       ddl-auto: update
+  # Not Require, Please config if you need email notify
+  # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
     # Attention: this is mail server address.
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
@@ -68,15 +82,6 @@ spring:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
-
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    #encoding: UTF-8
-    #content-type: text/html
-    mode: HTML
 
 warehouse:
   store:

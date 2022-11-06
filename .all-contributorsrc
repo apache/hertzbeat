@@ -1,6 +1,6 @@
 {
   "projectName": "hertzbeat",
-  "projectOwner": "tomsun28",
+  "projectOwner": "dromara",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -245,6 +245,120 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/91513022?v=4",
       "profile": "https://github.com/woshiniusange",
       "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "VampireAchao",
+      "name": "VampireAchao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52746628?v=4",
+      "profile": "https://vampireachao.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Ceilzcx",
+      "name": "zcx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48920254?v=4",
+      "profile": "https://github.com/Ceilzcx",
+      "contributions": [
+        "code",
+        "bug",
+        "design"
+      ]
+    },
+    {
+      "login": "CharlieXCL",
+      "name": "CharlieXCL",
+      "avatar_url": "https://avatars.githubusercontent.com/u/91540487?v=4",
+      "profile": "https://github.com/CharlieXCL",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Privauto",
+      "name": "Privauto",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36581456?v=4",
+      "profile": "https://github.com/Privauto",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "emrys-he",
+      "name": "emrys",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5848915?v=4",
+      "profile": "https://github.com/emrys-he",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "SxLiuYu",
+      "name": "SxLiuYu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95198625?v=4",
+      "profile": "https://github.com/SxLiuYu",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "all-contributors",
+      "name": "All Contributors",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46410174?v=4",
+      "profile": "https://allcontributors.org",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "gxc-myh",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/gxc-myh",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "click33",
+      "name": "click33",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36243476?v=4",
+      "profile": "https://github.com/click33",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bwcx-jzy",
+      "name": "蒋小小",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16408873?v=4",
+      "profile": "https://jpom.io/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "kevinhuangwl",
+      "name": "Kevin Huang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28581579?v=4",
+      "profile": "https://www.zhihu.com/people/kevinbauer",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "TJxiaobao",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/TJxiaobao",
+      "contributions": [
+        "bug",
+        "code",
         "doc"
       ]
     }

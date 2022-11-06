@@ -1,5 +1,8 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
@@ -8,9 +11,6 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
-import { I18NService } from '@core';
 
 @Component({
   selector: 'app-monitor-detail',
@@ -73,7 +73,7 @@ export class MonitorDetailComponent implements OnInit {
   initMetricChart() {
     // 检测历史数据服务是否可用
     const detectStatus$ = this.monitorSvc
-      .getWarehouseStorageServerStatus('tdengine')
+      .getWarehouseStorageServerStatus()
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
@@ -114,7 +114,7 @@ export class MonitorDetailComponent implements OnInit {
           }
         },
         error => {
-          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.tdengine.unavailable'), error);
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.time-series.unavailable'), error);
         }
       );
   }

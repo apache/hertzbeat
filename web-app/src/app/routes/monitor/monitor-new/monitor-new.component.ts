@@ -29,6 +29,7 @@ export class MonitorNewComponent implements OnInit {
   passwordVisible: boolean = false;
   // 是否显示加载中
   isSpinning: boolean = false;
+  spinningTip: string = 'Loading...';
   constructor(
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
@@ -50,6 +51,9 @@ export class MonitorNewComponent implements OnInit {
       .pipe(
         switchMap((paramMap: ParamMap) => {
           this.monitor.app = paramMap.get('app') || '';
+          if (this.monitor.app == '') {
+            this.router.navigateByUrl('/monitors/new?app=website');
+          }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
           this.detected = true;
           this.passwordVisible = false;
@@ -150,6 +154,11 @@ export class MonitorNewComponent implements OnInit {
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
+    if (this.detected) {
+      this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
+    } else {
+      this.spinningTip = 'Loading...';
+    }
     this.isSpinning = true;
     this.monitorSvc.newMonitor(addMonitor).subscribe(
       message => {
@@ -163,7 +172,7 @@ export class MonitorNewComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.msg);
       }
     );
   }
@@ -199,6 +208,7 @@ export class MonitorNewComponent implements OnInit {
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
+    this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
     this.isSpinning = true;
     this.monitorSvc.detectMonitor(detectMonitor).subscribe(
       message => {
@@ -211,7 +221,7 @@ export class MonitorNewComponent implements OnInit {
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.msg);
       }
     );
   }

@@ -18,8 +18,7 @@
 package com.usthe.common.entity.manager;
 
 import com.usthe.common.entity.alerter.JsonMapAttributeConverter;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,8 +34,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
-import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * todo 字段默认值
@@ -52,7 +51,7 @@ import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel(description = "Parameter structure definition entity | 参数结构定义实体")
+@Schema(description = "Parameter structure definition entity | 参数结构定义实体")
 @EntityListeners(AuditingEntityListener.class)
 public class ParamDefine {
 
@@ -61,14 +60,14 @@ public class ParamDefine {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ApiModelProperty(value = "参数结构ID", example = "87584674384", accessMode = READ_ONLY, position = 0)
+    @Schema(title = "参数结构ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     /**
      * Monitoring application type name
      * 监控应用类型名称
      */
-    @ApiModelProperty(value = "监控类型", example = "TanCloud", accessMode = READ_WRITE, position = 1)
+    @Schema(title = "监控类型", example = "TanCloud", accessMode = READ_WRITE)
     private String app;
 
     /**
@@ -77,7 +76,7 @@ public class ParamDefine {
      * en-US: Port
      * 参数字段对外显示名称
      */
-    @ApiModelProperty(value = "参数字段显示国际化名称", example = "{zh-CN: '端口'}", accessMode = READ_WRITE, position = 2)
+    @Schema(description = "参数字段显示国际化名称", example = "{zh-CN: '端口'}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
     private Map<String, String> name;
@@ -86,42 +85,42 @@ public class ParamDefine {
      * Parameter Field Identifier
      * 参数字段标识符
      */
-    @ApiModelProperty(value = "参数字段标识符", example = "port", accessMode = READ_WRITE, position = 3)
+    @Schema(title = "参数字段标识符", example = "port", accessMode = READ_WRITE)
     private String field;
 
     /**
      * Field type, style (mostly map the input tag type attribute)
      * 字段类型,样式(大部分映射input标签type属性)
      */
-    @ApiModelProperty(value = "字段类型,样式(大部分映射input标签type属性)", example = "number", accessMode = READ_WRITE, position = 4)
+    @Schema(title = "字段类型,样式(大部分映射input标签type属性)", example = "number", accessMode = READ_WRITE)
     private String type;
 
     /**
      * Is it mandatory true-required false-optional
      * 是否是必输项 true-必填 false-可选
      */
-    @ApiModelProperty(value = "是否是必输项 true-必填 false-可选", example = "true", accessMode = READ_WRITE, position = 5)
+    @Schema(title = "是否是必输项 true-必填 false-可选", example = "true", accessMode = READ_WRITE)
     private boolean required = false;
 
     /**
      * Parameter Default Value
      * 参数默认值
      */
-    @ApiModelProperty(value = "参数默认值", example = "12", accessMode = READ_WRITE, position = 6)
+    @Schema(title = "参数默认值", example = "12", accessMode = READ_WRITE)
     private String defaultValue;
 
     /**
      * Parameter input box prompt information
      * 参数输入框提示信息
      */
-    @ApiModelProperty(value = "参数输入框提示信息", example = "请输入密码", accessMode = READ_WRITE, position = 7)
+    @Schema(title = "参数输入框提示信息", example = "请输入密码", accessMode = READ_WRITE)
     private String placeholder;
 
     /**
      * When type is number, use range to represent the range eg: 0-233
      * 当type为number时,用range表示范围 eg: 0-233
      */
-    @ApiModelProperty(value = "当type为number时,用range区间表示范围", example = "[0,233]", accessMode = READ_WRITE, position = 6)
+    @Schema(title = "当type为number时,用range区间表示范围", example = "[0,233]", accessMode = READ_WRITE)
     @Column(name = "param_range")
     private String range;
 
@@ -129,7 +128,7 @@ public class ParamDefine {
      * When type is text, use limit to indicate the limit size of the string. The maximum is 255
      * 当type为text时,用limit表示字符串限制大小.最大255
      */
-    @ApiModelProperty(value = "当type为text时,用limit表示字符串限制大小.最大255", example = "30", accessMode = READ_WRITE, position = 7)
+    @Schema(title = "当type为text时,用limit表示字符串限制大小.最大255", example = "30", accessMode = READ_WRITE)
     @Column(name = "param_limit")
     private Short limit;
 
@@ -143,7 +142,7 @@ public class ParamDefine {
      * key-值显示标签
      * value-真正值
      */
-    @ApiModelProperty(value = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "{key1,value1}", accessMode = READ_WRITE, position = 8)
+    @Schema(description = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "{key1,value1}", accessMode = READ_WRITE)
     @Column(name = "param_options")
     @Convert(converter = JsonOptionListAttributeConverter.class)
     private List<Option> options;
@@ -152,28 +151,28 @@ public class ParamDefine {
      * Valid when type is key-value, indicating the alias description of the key
      * 当type为key-value时有效,表示key的别名描述
      */
-    @ApiModelProperty(value = "当type为key-value时有效,表示key的别名描述", example = "Name", accessMode = READ_WRITE, position = 9)
+    @Schema(title = "当type为key-value时有效,表示key的别名描述", example = "Name", accessMode = READ_WRITE)
     private String keyAlias;
 
     /**
      * Valid when type is key-value, indicating the alias description of value type
      * 当type为key-value时有效,表示value的别名描述
      */
-    @ApiModelProperty(value = "当type为key-value时有效,表示value的别名描述", example = "Value", accessMode = READ_WRITE, position = 10)
+    @Schema(title = "当type为key-value时有效,表示value的别名描述", example = "Value", accessMode = READ_WRITE)
     private String valueAlias;
 
     /**
      * Is it an advanced hidden parameter true-yes false-no
      * 是否是高级隐藏参数 true-是 false-否
      */
-    @ApiModelProperty(value = "是否是高级隐藏参数 true-是 false-否", example = "true", accessMode = READ_WRITE, position = 11)
+    @Schema(title = "是否是高级隐藏参数 true-是 false-否", example = "true", accessMode = READ_WRITE)
     private boolean hide = false;
 
     /**
      * The creator of this record
      * 此条记录创建者
      */
-    @ApiModelProperty(value = "此条记录创建者", example = "tom", accessMode = READ_ONLY, position = 11)
+    @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
@@ -181,7 +180,7 @@ public class ParamDefine {
      * This record was last modified by
      * 此条记录最新修改者
      */
-    @ApiModelProperty(value = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY, position = 12)
+    @Schema(title = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
@@ -189,7 +188,7 @@ public class ParamDefine {
      * record creation time
      * 记录创建时间
      */
-    @ApiModelProperty(value = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY, position = 13)
+    @Schema(title = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
@@ -197,7 +196,7 @@ public class ParamDefine {
      * Record the latest modification time
      * 记录最新修改时间
      */
-    @ApiModelProperty(value = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY, position = 14)
+    @Schema(title = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
