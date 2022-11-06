@@ -178,6 +178,16 @@ public class CollectUtil {
 
 
     /**
+     * is contains cryPlaceholder -_-
+     * @param jsonElement json element
+     * @return return true when contains
+     */
+    public static boolean containCryPlaceholder(JsonElement jsonElement) {
+        String jsonStr = jsonElement.toString();
+        return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).find();
+    }
+
+    /**
      * json parameter replacement
      * json 参数替换
      *
@@ -197,7 +207,7 @@ public class CollectUtil {
                     // Check if there are special characters Replace
                     String value = element.getAsString();
                     Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.matches()) {
+                    if (cryingMatcher.find()) {
                         cryingMatcher.reset();
                         while (cryingMatcher.find()) {
                             String group = cryingMatcher.group();
@@ -232,7 +242,7 @@ public class CollectUtil {
                     // Check if there are special characters Replace
                     String value = element.getAsString();
                     Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.matches()) {
+                    if (cryingMatcher.find()) {
                         cryingMatcher.reset();
                         while (cryingMatcher.find()) {
                             String group = cryingMatcher.group();
@@ -305,7 +315,7 @@ public class CollectUtil {
                     // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (smilingMatcher.matches()) {
+                    if (smilingMatcher.find()) {
                         smilingMatcher.reset();
                         while (smilingMatcher.find()) {
                             String group = smilingMatcher.group();
@@ -341,7 +351,7 @@ public class CollectUtil {
                     // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (smilingMatcher.matches()) {
+                    if (smilingMatcher.find()) {
                         smilingMatcher.reset();
                         while (smilingMatcher.find()) {
                             String group = smilingMatcher.group();
