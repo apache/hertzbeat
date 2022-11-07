@@ -62,8 +62,8 @@ public class K8sMetricsUtil {
      * 获取k8s节点指标列表，预置数据
      * @return List<String> 节点指标列表
      * */
-    //todo Arrays.asList() && 不应该写成方法
     public static List<String> retrieveNodeMetricsList() {
+        //todo Arrays.asList() && 不应该写成方法
         List<String> nodeMetricsList = new ArrayList<>(NODE_METRICS_COUNT);
         nodeMetricsList.add(NODE_METRICS_NODE_NAME);
         nodeMetricsList.add(NODE_METRICS_LABELS);
