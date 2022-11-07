@@ -37,6 +37,13 @@ param:
     required: false
     hide: true
     defaultValue: 6000
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: true
   - field: authType
     name:
       zh-CN: 认证方式
