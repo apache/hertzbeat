@@ -1,0 +1,448 @@
+category: service
+app: msa-app
+name:
+  zh-CN: 应用
+  en-US: app
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - k8sHost
+configmap:
+  - key: k8sHost
+    type: 1
+  - key: k8sAPIServPort
+    type: 1
+  - key: k8sAPIToken
+    type: 1
+  - key: prometheusHost
+    type: 1
+  - key: prometheusPort
+    type: 0
+  - key: prometheusUri
+    type: 1
+  - key: prometheusMethod
+    type: 1
+  - key: prometheusSsl
+    type: 1
+  - key: prometheusUsername
+    type: 1
+  - key: prometheusPassword
+    type: 2
+  - key: prometheusContentType
+    type: 1
+  - key: prometheusPayload
+    type: 1
+  - key: prometheusAuthType
+    type: 1
+  - key: prometheusHeaders
+    type: 3
+  - key: prometheusParams
+    type: 3
+  - key: prometheusKeyword
+    type: 1
+metrics:
+  - name: k8s
+    priority: 0
+    fields:
+      - field: podName
+        type: 1
+      - field: podHost
+        type: 1
+      - field: podPort
+        type: 0
+      - field: namespace
+        type: 1
+      - field: status
+        type: 1
+      - field: restarts
+        type: 0
+      - field: pods
+        type: 0
+      - field: running
+        type: 0
+    childParam:
+      - key: parseScript
+        value:
+          #single 获取具体值、group 获取数组的大小
+          podName: single-->$.metadata.name  # 获取实例名称
+          podHost: single-->$.status.podIP   # 获取实例IP
+          podPort: single-->$.spec.containers[?(@.name =~ /.*app.*/)].ports[0].containerPort  # 获取容器向外 暴露的端口 多个情况下就获取第一个
+          namespace: single-->$.metadata.namespace # 获取命名空间
+          status: single-->$.status.phase     # 获取运行状态
+          restarts: single-->$.status.containerStatuses[0].restartCount   # 获取pod重启次数
+          pods: group-->$[*]    # 获取pod总数
+          running: group-->$.[?(@.status.phase=="Running")].status.phase  # 获取运行pod总数
+        type: 3
+    protocol: service
+    # 当protocol为service协议时具体的采集配置
+    service:
+      k8sHost: ^_^k8sHost^_^
+      k8sAPIServPort: ^_^k8sAPIServPort^_^
+      k8sAPIToken: ^_^k8sAPIToken^_^
+      #初始筛选 避免每次筛选的数据量太大
+      metaData: $.items[?(@.metadata.name =~ /.*app.*/)]
+      #k8s的pods节点指标采集参数 变量替换符为^o^开头和结尾防止父类变量替换是将子类指标也替换 与childNode下的field下的childParam相对应
+      http:
+        # 主机host: ipv4 ipv6 域名
+        host: ^o^host^o^
+        # 端口
+        port: ^o^port^o^
+        # url请求接口路径
+        url: ^o^url^o^
+        # 请求方式 GET POST PUT DELETE PATCH
+        method: ^o^method^o^
+        # 是否启用ssl/tls,即是http还是https,默认false
+        ssl: ^o^ssl^o^
+        payload: ^o^payload^o^
+        # 请求头内容
+        headers:
+          content-type: ^o^contentType^o^
+          ^o^headers^o^: ^o^headers^o^
+        # 请求参数内容
+        params:
+          ^o^params^o^: ^o^params^o^
+        # 认证
+        authorization:
+          # 认证方式: Basic Auth, Digest Auth, Bearer Token
+          type: ^o^authType^o^
+          basicAuthUsername: ^o^username^o^
+          basicAuthPassword: ^o^password^o^
+          digestAuthUsername: ^o^username^o^
+          digestAuthPassword: ^o^password^o^
+        # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+        # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
+        parseType: micro
+        parseScript: ^o^parseScript^o^
+        keyword: ^o^keyword^o^
+    childNode:
+      #目前子指标仅支持http_micro的
+      - name: scheduledtasks
+        # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+        # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+        priority: 0
+        # 指标组中的具体监控指标
+        fields:
+          # 指标信息 包括 field名称 在一发多收的情况下 field 以 ’组-具体指标‘ 的形式命名,否则后台无法解析
+          # type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+          # childParam:子指标http接口请求参数 例如 url、method、parseScript
+          # childWay:采集指标方式 single:一发一结果、multiple:一发多结果、calculate:计算得出的值、parent:父节点指标
+          - field: target
+            type: 1
+          - field: expression
+            type: 1
+          - field: instanceId
+            type: 1
+          - field: podName
+            type: 1
+        childParam:
+          - key: requests
+            value:
+              - fields:
+                  - target
+                  - expression
+                url: /actuator/scheduledtasks
+                method: GET
+                metaData:
+                  - $.cron[*].runnable
+                  - $.cron[*]
+            type: 3
+        aliasFields:
+          - podPort
+          - podHost
+          - target
+          - expression
+          - instanceId
+          - podName
+        calculates:
+          - instanceId=#`podHost`+":"+#`podPort`
+        protocol: http_micro
+      - name: jvm-memory-max
+        priority: 0
+        fields:
+          - field: value
+            type: 0
+          - field: id
+            type: 1
+          - field: area
+            type: 1
+          - field: instanceId
+            type: 1
+          - field: podName
+            type: 1
+        childParam:
+          - key: requests
+            value:
+              - fields:
+                  - value
+                  - id
+                  - area
+                url: /actuator/metrics/jvm.memory.max
+                method: GET
+                params:
+                  field: tag
+                  value: id:%s
+                  script: $.availableTags[?(@.tag == "id")].values[*]
+                metaData:
+                  - $.measurements[*]
+                  - $.availableTags[*]
+                  - $.availableTags[*]
+                chain: common
+            type: 3
+        aliasFields:
+          - podPort
+          - podHost
+          - value
+          - id
+          - area
+          - instanceId
+          - podName
+        calculates:
+          - instanceId=#`podHost`+":"+#`podPort`
+        protocol: http_micro
+      - name: jvm-memory-used
+        priority: 0
+        fields:
+          - field: value
+            type: 0
+          - field: id
+            type: 1
+          - field: area
+            type: 1
+          - field: instanceId
+            type: 1
+          - field: podName
+            type: 1
+        childParam:
+          - key: requests
+            value:
+              - fields:
+                  - value
+                  - id
+                  - area
+                url: /actuator/metrics/jvm.memory.used
+                method: GET
+                params:
+                  field: tag
+                  value: id:%s
+                  script: $.availableTags[?(@.tag == "id")].values[*]
+                metaData:
+                  - $.measurements[*]
+                  - $.availableTags[*]
+                  - $.availableTags[*]
+                chain: common
+            type: 3
+        aliasFields:
+          - podPort
+          - podHost
+          - value
+          - id
+          - area
+          - instanceId
+          - podName
+        calculates:
+          - instanceId=#`podHost`+":"+#`podPort`
+        protocol: http_micro
+      - name: jvm-memory-used
+        priority: 0
+        fields:
+          - field: value
+            type: 0
+          - field: id
+            type: 1
+          - field: area
+            type: 1
+          - field: instanceId
+            type: 1
+          - field: podName
+            type: 1
+        childParam:
+          - key: requests
+            value:
+              - fields:
+                  - value
+                  - id
+                  - area
+                url: /actuator/metrics/jvm.memory.committed
+                method: GET
+                params:
+                  field: tag
+                  value: id:%s
+                  script: $.availableTags[?(@.tag == "id")].values[*]
+                metaData:
+                  - $.measurements[*]
+                  - $.availableTags[*]
+                  - $.availableTags[*]
+                chain: common
+            type: 3
+        aliasFields:
+          - podPort
+          - podHost
+          - value
+          - id
+          - area
+          - instanceId
+          - podName
+        calculates:
+          - instanceId=#`podHost`+":"+#`podPort`
+        protocol: http_micro
+      - name: jvm-threads-states
+        priority: 0
+        fields:
+          - field: value
+            type: 0
+          - field: state
+            type: 1
+          - field: instanceId
+            type: 1
+          - field: podName
+            type: 1
+        childParam:
+          - key: requests
+            value:
+              - fields:
+                  - value
+                  - state
+                url: /actuator/metrics/jvm.threads.states
+                method: GET
+                params:
+                  field: tag
+                  value: state:%s
+                  script: $.availableTags[?(@.tag == "state")].values[*]
+                metaData:
+                  - $.measurements[*]
+                  - $
+                chain: common
+            type: 3
+        aliasFields:
+          - podPort
+          - podHost
+          - value
+          - state
+          - instanceId
+          - podName
+        calculates:
+          - instanceId=#`podHost`+":"+#`podPort`
+        protocol: http_micro
+##gc、io 调研中、、、
+  - name: http_server_requests_seconds_sum
+    priority: 0
+    fields:
+      - field: instanceId
+        type: 1
+      - field: exception
+        type: 1
+      - field: method
+        type: 1
+      - field: outcome
+        type: 1
+      - field: status
+        type: 1
+      - field: uri
+        type: 1
+      - field: value
+        type: 0
+    aliasFields:
+      - instance
+      - instanceId
+      - exception
+      - method
+      - outcome
+      - status
+      - uri
+      - value
+    calculates:
+      - instanceId=#`instance`
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^prometheusHost^_^
+      # 端口
+      port: ^_^prometheusPort^_^
+      # url请求接口路径
+      url: ^_^prometheusUri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^prometheusMethod^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^prometheusSsl^_^
+      payload: ^_^prometheusPayload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^prometheusContentType^_^
+        ^_^headers^_^: ^_^prometheusHeaders^_^
+      # 请求参数内容
+      params:
+        query: topk(50,http_server_requests_seconds_sum)
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^prometheusAuthType^_^
+        basicAuthUsername: ^_^prometheusUsername^_^
+        basicAuthPassword: ^_^prometheusPassword^_^
+        digestAuthUsername: ^_^prometheusUsername^_^
+        digestAuthPassword: ^_^prometheusPassword^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
+      parseType: prometheus
+      keyword: ^_^prometheusKeyword^_^
+  - name: http_server_requests_seconds_max
+    priority: 0
+    fields:
+      - field: instanceId
+        type: 1
+      - field: exception
+        type: 1
+      - field: method
+        type: 1
+      - field: outcome
+        type: 1
+      - field: status
+        type: 1
+      - field: uri
+        type: 1
+      - field: value
+        type: 0
+    aliasFields:
+      - instance
+      - instanceId
+      - exception
+      - method
+      - outcome
+      - status
+      - uri
+      - value
+    calculates:
+      - instanceId=#`instance`
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^prometheusHost^_^
+      # 端口
+      port: ^_^prometheusPort^_^
+      # url请求接口路径
+      url: ^_^prometheusUri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^prometheusMethod^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^prometheusSsl^_^
+      payload: ^_^prometheusPayload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^prometheusContentType^_^
+        ^_^headers^_^: ^_^prometheusHeaders^_^
+      # 请求参数内容
+      params:
+        query: topk(50,http_server_requests_seconds_max)
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^prometheusAuthType^_^
+        basicAuthUsername: ^_^prometheusUsername^_^
+        basicAuthPassword: ^_^prometheusPassword^_^
+        digestAuthUsername: ^_^prometheusUsername^_^
+        digestAuthPassword: ^_^prometheusPassword^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
+      parseType: prometheus
+      keyword: ^_^prometheusKeyword^_^
