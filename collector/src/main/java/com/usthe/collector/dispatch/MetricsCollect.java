@@ -22,9 +22,12 @@ import com.googlecode.aviator.Expression;
 import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.database.JdbcCommonCollect;
 import com.usthe.collector.collect.http.HttpCollectImpl;
+import com.usthe.collector.collect.http.MicroServiceActuatorHttpCollectImpl;
 import com.usthe.collector.collect.http.SslCertificateCollectImpl;
 import com.usthe.collector.collect.icmp.IcmpCollectImpl;
 import com.usthe.collector.collect.jmx.JmxCollectImpl;
+import com.usthe.collector.collect.k8s.K8sCollectImpl;
+import com.usthe.collector.collect.microservice.MicroServiceParentCollectImpl;
 import com.usthe.collector.collect.redis.RedisSingleCollectImpl;
 import com.usthe.collector.collect.snmp.SnmpCollectImpl;
 import com.usthe.collector.collect.ssh.SshCollectImpl;
@@ -146,6 +149,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
+        //todo 是否需要用策略工厂
         AbstractCollect abstractCollect = null;
         switch (metrics.getProtocol()) {
             case DispatchConstants.PROTOCOL_HTTP:
@@ -174,6 +178,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 break;
             case DispatchConstants.PROTOCOL_SSL_CERT:
                 abstractCollect = SslCertificateCollectImpl.getInstance();
+                break;
+            case DispatchConstants.PROTOCOL_K8S:
+                abstractCollect = K8sCollectImpl.getInstance();
+                break;
+            case DispatchConstants.PROTOCOL_SERVICE:
+                abstractCollect = MicroServiceParentCollectImpl.getInstance();
+                break;
+            case DispatchConstants.PROTOCOL_HTTP_MICRO:
+                abstractCollect = MicroServiceActuatorHttpCollectImpl.getInstance();
                 break;
             default:
                 break;

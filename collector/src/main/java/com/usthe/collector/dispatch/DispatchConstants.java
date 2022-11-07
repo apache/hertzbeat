@@ -30,6 +30,12 @@ public interface DispatchConstants {
      * protocol http
      */
     String PROTOCOL_HTTP = "http";
+
+    /**
+     * protocol  微服务http
+     */
+    String PROTOCOL_HTTP_MICRO = "http_micro";
+
     /**
      * protocol icmp
      */
@@ -62,6 +68,15 @@ public interface DispatchConstants {
      * protocol ssl Certificate - custom
      */
     String PROTOCOL_SSL_CERT = "ssl_cert";
+    /**
+     * protocol 协议 k8s
+     */
+    String PROTOCOL_K8S = "k8s";
+
+    /**
+     * protocol  协议 microService
+     */
+    String PROTOCOL_SERVICE = "service";
     // Protocol type related - end
     // 协议类型相关 - end //
 
@@ -115,9 +130,31 @@ public interface DispatchConstants {
      * 解析方式 prometheus规则
      */
     String PARSE_PROMETHEUS = "prometheus";
+    String PARSE_MICRO = "micro";
+
+    String PARSE_CHAIN_REQUESTS = "requests";
     String PARSE_PROMETHEUS_ACCEPT = "application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1";
     String PARSE_PROMETHEUS_VECTOR = "vector";
     String PARSE_PROMETHEUS_MATRIX = "matrix";
 
     // http协议相关 - end //
+    // k8s相关 -- start//
+    /**
+     * k8s 解析数据按照获取值的方式
+     */
+    String PARSE_SINGLE = "single";
+    /**
+     * k8s 解析数据算数组的大小
+     */
+    String PARSE_GROUP = "group";
+    // k8s相关 -- end//
+    // 微服务相关 -- start//
+    /**
+     * 参数configParam的key
+     */
+    String CHILD_REQUESTS = "requests";
+    /**
+     * 通用解析链路
+     */
+    String PARSE_CHAIN_COMMON = "common";
 }

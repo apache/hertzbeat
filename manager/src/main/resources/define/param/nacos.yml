@@ -1,0 +1,14 @@
+app: nacos
+param:
+  - field: nacosHost
+    name:
+      zh-CN: nacos服务器host
+      en-US: nacosHost
+    type: host
+    required: true
+  - field: nacosPort
+    name:
+      zh-CN: nacos服务器端口
+      en-US: nacosPort
+    type: text
+    required: true
