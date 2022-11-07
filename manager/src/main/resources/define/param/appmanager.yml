@@ -1,0 +1,24 @@
+app: msa-appmanager
+param:
+  - field: k8sHost
+    name:
+      zh-CN: k8sAPI服务器host
+      en-US: Host
+    type: host
+    required: true
+  - field: k8sAPIServPort
+    name:
+      zh-CN: k8sAPI服务器端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 6443
+    placeholder: '请输入k8sAPI访问端口'
+  - field: k8sAPIToken
+    name:
+      zh-CN: 访问k8s接口Token
+      en-US: Token
+    type: text
+    required: true
+    placeholder: '访问k8s所需Token'

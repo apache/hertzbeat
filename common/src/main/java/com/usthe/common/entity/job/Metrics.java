@@ -26,6 +26,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -73,14 +75,34 @@ public class Metrics {
      * Public attribute - collection and monitoring pre-query attribute set eg: size1 | size2 | speedSize
      * 公共属性-采集监控的前置查询属性集合 eg: size1 | size2 | speedSize
      */
-    private List<String> aliasFields;
+    private List<String> aliasFields = new ArrayList<>();
+
+    /**
+     * Child Node Indicator group configuration eg: cpu memory
+     * 子节点的指标组配置 eg: cpu memory
+     */
+    private List<Metrics> childNode;
+    //不参与MetricsData
+    /**
+     * child node arg
+     * 子节点指标参数
+     */
+    private List<Configmap> childParam;
+
     /**
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields) with the final attribute (fields), and calculate the final attribute (fields) value
      * 公共属性-表达式计算，将前置查询属性(preFields)与最终属性(fields)映射,计算出最终属性(fields)值
      * eg: size = size1 + size2, speed = speedSize
      * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
      */
-    private List<String> calculates;
+    private List<String> calculates = new ArrayList<>();
+
+    /**
+     * parent Node Indicator group configuration value eg: cpu memory
+     * 父节点的指标组配置的值 eg: cpu memory
+     */
+    private Map<String, Object> parentMetrics;
+
     /**
      * unit conversion expr
      * eg:
@@ -197,6 +219,77 @@ public class Metrics {
         }
     }
 
+    /**
+     * Monitoring configuration information using the public k8s protocol
+     * 使用公共的 k8s 协议的监控配置信息
+     */
+    private K8sProtocol k8s;
+
+    /**
+     * Monitoring configuration information using the public service protocol
+     * 使用公共的 微服务 协议的监控配置信息
+     */
+    private ServiceProtocol service;
+
+    /**
+     * 确保获取到的field与后续的分组请求的顺序一致
+     *
+     * @return List<Field>
+     */
+    public List<Field> getFields() {
+        if (fields == null) {return fields;}
+        return fields.stream()
+                .sorted(Comparator.comparing(Metrics.Field::getChildWay, Comparator.nullsFirst((x, y) -> y.compareTo(x)))
+                        .thenComparing(Comparator.comparing(Metrics.Field::getField, Comparator.nullsFirst((x, y) -> y.compareTo(x))))).collect(Collectors.toList());
+    }
+
+    public List<String> getAliasFields() {
+        //原先有值防止顺序被打乱重新矫正下顺序
+        //未排序
+        List<Field> fields = this.fields;
+        List<String> temp = new ArrayList<>();
+        if (fields != null && this.aliasFields != null) {
+            HashMap<String, Field> hashMap = new HashMap<>(aliasFields.size());
+            for (int i = 0; i < this.aliasFields.size(); i++) {
+                if (fields.size() > i) {
+                    hashMap.put(aliasFields.get(i), fields.get(i));
+                } else {
+                    hashMap.put(aliasFields.get(i), new Field());
+                }
+            }
+            LinkedHashMap<String, Metrics.Field> collect = hashMap.entrySet().stream()
+                    .sorted((Map.Entry.<String, Metrics.Field>comparingByValue(Comparator.comparing(Metrics.Field::getChildWay, Comparator.nullsFirst((x, y) -> y.compareTo(x)))))
+                            .thenComparing(Map.Entry.<String, Metrics.Field>comparingByValue(Comparator.comparing(Metrics.Field::getField, Comparator.nullsFirst((x, y) -> y.compareTo(x))))))
+                    .collect(Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    Map.Entry::getValue,
+                                    (oldVal, newVal) -> oldVal,
+                                    LinkedHashMap::new
+                            )
+                    );
+            temp.addAll(collect.keySet());
+        }
+        if (!temp.isEmpty()) {
+            return temp;
+        } else {
+            return aliasFields;
+        }
+
+    }
+
+
+    public void setAliasFields(List<String> aliasFields) {
+        if (aliasFields != null) {
+            Set<String> collect = this.fields.stream().map(Metrics.Field::getField).collect(Collectors.toSet());
+            collect.addAll(aliasFields);
+            this.aliasFields = new ArrayList<>(collect);
+        }
+
+    }
+
+    public List<Field> getPrimitiveFields() {
+        return fields;
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -238,5 +331,16 @@ public class Metrics {
          * 指标单位
          */
         private String unit;
+        //不参与MetricsData
+        /**
+         * child node arg
+         * 子节点指标参数
+         */
+        private List<Configmap> childParam;
+        /**
+         * Indicator type single: single multiple: multiple
+         * 指标类型 single:一发一收 multiple:一发多收 calculate:需要计算的属性 parent:父节点指标数据
+         */
+        private String childWay = "multiple";
     }
 }
