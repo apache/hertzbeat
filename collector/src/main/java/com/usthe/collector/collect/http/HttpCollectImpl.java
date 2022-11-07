@@ -86,7 +86,7 @@ import java.util.Map;
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
 
-    private HttpCollectImpl() {}
+    public HttpCollectImpl() {}
 
     public static HttpCollectImpl getInstance() {
         return Singleton.INSTANCE;
@@ -397,7 +397,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http protocol
      * @return context
      */
-    private HttpContext createHttpContext(HttpProtocol httpProtocol) {
+    public HttpContext createHttpContext(HttpProtocol httpProtocol) {
         HttpProtocol.Authorization auth = httpProtocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
@@ -422,7 +422,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http参数配置
      * @return 请求体
      */
-    private HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
+    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
         RequestBuilder requestBuilder;
         // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();

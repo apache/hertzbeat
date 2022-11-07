@@ -91,6 +91,9 @@ public class HttpProtocol {
      */
     private String keyword;
 
+    /** 解析微服务使用链式判断 */
+    private String chain;
+
     /**
      * 认证信息
      */

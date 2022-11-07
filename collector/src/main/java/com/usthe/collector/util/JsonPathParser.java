@@ -17,16 +17,15 @@
 
 package com.usthe.collector.util;
 
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.ParseContext;
+import com.jayway.jsonpath.*;
 import com.jayway.jsonpath.spi.cache.CacheProvider;
 import com.jayway.jsonpath.spi.cache.LRUCache;
+import com.jayway.jsonpath.spi.json.GsonJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * json path parser
@@ -38,6 +37,26 @@ public class JsonPathParser {
     private static final ParseContext PARSER;
 
     static {
+        Configuration.setDefaults(new Configuration.Defaults() {
+
+            private final GsonJsonProvider jsonProvider = new GsonJsonProvider();
+            private final MappingProvider mappingProvider = new GsonMappingProvider();
+
+            @Override
+            public JsonProvider jsonProvider() {
+                return jsonProvider;
+            }
+
+            @Override
+            public MappingProvider mappingProvider() {
+                return mappingProvider;
+            }
+
+            @Override
+            public Set<Option> options() {
+                return EnumSet.noneOf(Option.class);
+            }
+        });
         Configuration conf = Configuration.defaultConfiguration()
                 .addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL)
                 .addOptions(Option.ALWAYS_RETURN_LIST);
@@ -56,6 +75,19 @@ public class JsonPathParser {
             return Collections.emptyList();
         }
         return PARSER.parse(content).read(jsonPath);
+    }
+
+    /**
+     * 使用jsonPath来解析json内容
+     * @param content json内容
+     * @param jsonPath jsonPath脚本
+     * @return 解析后的内容 [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
+     */
+    public static <T> T parseContentWithJsonPath(String content, String jsonPath, TypeRef<T> typeRef) {
+        if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
+            return null;
+        }
+        return PARSER.parse(content).read(jsonPath,typeRef);
     }
 
 }
