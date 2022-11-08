@@ -1,31 +1,30 @@
-category: component
+category: mid
 app: nacos
 name:
   zh-CN: Nacos
   en-US: Nacos
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
-# 强制固定必须参数 - k8sHost
 configmap:
-  - key: nacosHost
+  - key: host
     type: 1
-  - key: nacosPort
-    type: 1
+  - key: port
+    type: 0
 metrics:
   - name: cpu
     priority: 0
     fields:
-      - field: system-cpu-usage
+      - field: system_cpu_usage
         type: 0
+        unit: '%'
     aliasFields:
       - value
     calculates:
-      - system-cpu-usage=value
+      - system_cpu_usage=value * 100
     protocol: http
     http:
       # 主机host: ipv4 ipv6 域名
-      host: ^_^nacosHost^_^
+      host: ^_^host^_^
       # 端口
-      port: ^_^nacosPort^_^
+      port: ^_^port^_^
       # url请求接口路径
       url: /nacos/actuator/metrics/system.cpu.usage
       # 请求方式 GET POST PUT DELETE PATCH
@@ -36,18 +35,21 @@ metrics:
   - name: memory
     priority: 0
     fields:
-      - field: jvm-memory-used
-        type: 1
+      - field: jvm_memory_used
+        type: 0
+        unit: 'MB'
     aliasFields:
       - value
     calculates:
-      - jvm-memory-used=value
+      - jvm_memory_used=value
+    units:
+      - jvm_memory_used=B->MB
     protocol: http
     http:
       # 主机host: ipv4 ipv6 域名
-      host: ^_^nacosHost^_^
+      host: ^_^host^_^
       # 端口
-      port: ^_^nacosPort^_^
+      port: ^_^port^_^
       # url请求接口路径
       url: /nacos/actuator/metrics/jvm.memory.used
       # 请求方式 GET POST PUT DELETE PATCH
