@@ -26,15 +26,15 @@ public class MetricFamily {
 
         private List<Label> labelPair;
 
-        private Object gauge;
+        private Gauge gauge;
 
-        private Object counter;
+        private Counter counter;
 
-        private Object summary;
+        private Summary summary;
 
-        private Object untyped;
+        private Untyped untyped;
 
-        private Object histogram;
+        private Histogram histogram;
 
         private Long timestampMs;
     }
@@ -45,5 +45,61 @@ public class MetricFamily {
         private String name;
 
         private String value;
+    }
+
+    @Data
+    static class Counter {
+
+        private double value;
+
+        // Exemplar
+    }
+
+    @Data
+    static class Gauge {
+
+        private double value;
+    }
+
+    @Data
+    static class Untyped {
+
+        private double value;
+    }
+
+    @Data
+    static class Summary {
+
+        private long count;
+
+        private double sum;
+
+        private List<Quantile> quantileList;
+    }
+
+    @Data
+    static class Quantile {
+
+        private double xLabel;
+
+        private double value;
+    }
+
+    @Data
+    static class Histogram {
+
+        private long count;
+
+        private double sum;
+
+        private List<Bucket> bucketList;
+    }
+
+    @Data
+    static class Bucket {
+
+        private long cumulativeCount;
+
+        private double upperBound;
     }
 }

@@ -22,6 +22,9 @@ public class ExporterParser {
 
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
+    private static final String SUM_SUFFIX = "_sum";
+    private static final String COUNT_SUFFIX = "_count";
+    private static final String BUCKET_SUFFIX = "_bucket";
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
@@ -92,35 +95,51 @@ public class ExporterParser {
         String subLine = pair.getRight();
         MetricFamily metricFamily = metricMap.get(metricName);
         if (metricFamily == null) {
-            log.error("line {} parse error, no such HELP and TYPE", line);
-            return;
+            if (this.isCount(metricName)) {
+                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - COUNT_SUFFIX.length()));
+            } else if (this.isSum(metricName)) {
+                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - SUM_SUFFIX.length()));
+            } else if (this.isBucket(metricName)) {
+                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - BUCKET_SUFFIX.length()));
+            }
+            if (metricFamily == null) {
+                log.error("line {} parse error, no such HELP and TYPE", line);
+                return;
+            } else if (this.isCount(metricName) || this.isSum(metricName)) {
+                MetricFamily.Label label = new MetricFamily.Label();
+                label.setName(metricName);
+                this.readLabelValue(metricFamily, metricFamily.getMetricList().get(0), label, subLine);
+            }
         }
         List<MetricFamily.Metric> metricList = metricFamily.getMetricList();
-        MetricFamily.Metric metric = new MetricFamily.Metric();
-        this.readLabels(metricFamily, metric, subLine);
         if (metricList == null) {
             metricList = new ArrayList<>();
             metricFamily.setMetricList(metricList);
         }
-        metricList.add(metric);
+        // todo 写死只创建一个metric, 为什么prometheus需要使用List?
+        MetricFamily.Metric metric;
+        if (metricList.isEmpty()) {
+            metric = new MetricFamily.Metric();
+            metricList.add(metric);
+        } else {
+            metric = metricList.get(0);
+        }
+        this.readLabels(metricFamily, metric, subLine);
     }
 
     private void readLabels(MetricFamily metricFamily, MetricFamily.Metric metric, String line) {
-        if (metricFamily.getMetricType().equals(MetricType.SUMMARY) || metricFamily.getMetricType().equals(MetricType.HISTOGRAM)) {
-            // need handle
-        }
         metric.setLabelPair(new ArrayList<>());
         if (line.charAt(0) == '{') {
             this.startReadLabelName(metricFamily, metric, line.substring(1));
         } else {
-            this.readLabelValue(metricFamily, metric, new MetricFamily.Label(), line);
+            this.readLabelValue(metricFamily, metric, null, line);
         }
     }
 
     private void startReadLabelName(MetricFamily metricFamily, MetricFamily.Metric metric, String line) {
         String subLine = this.skipBlankTab(line);
-        if (line == null) return;
-        if (line.charAt(0) == '}') {
+        if (subLine == null) return;
+        if (subLine.charAt(0) == '}') {
             subLine = this.skipBlankTab(line.substring(1));
             if (subLine.isEmpty()) return;
             this.startReadLabelValue(metricFamily, metric, new MetricFamily.Label(), subLine);
@@ -133,10 +152,7 @@ public class ExporterParser {
             throw new ParseException("invalid label name, label name size = 0 or label name equals __name__");
         }
         MetricFamily.Label label = new MetricFamily.Label();
-        if (!(metricFamily.getMetricType().equals(MetricType.SUMMARY) && labelName.equals(QUANTILE_LABEL))
-                && !(metricFamily.getMetricType().equals(MetricType.HISTOGRAM) && labelName.equals(BUCKET_LABEL))) {
-            label.setName(labelName);
-        }
+        label.setName(labelName);
         if (subLine.charAt(0) != '=') {
             throw new ParseException("parse error, not match the format of labelName=labelValue");
         }
@@ -152,7 +168,10 @@ public class ExporterParser {
         Pair<String, String> pair = this.readTokenAsLabelValue(line.substring(1));
         subLine = this.skipBlankTab(pair.getRight());
         label.setValue(pair.getLeft());
-        metric.getLabelPair().add(label);
+        if (!(metricFamily.getMetricType().equals(MetricType.SUMMARY) && label.getName().equals(QUANTILE_LABEL))
+                && !(metricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL))) {
+            metric.getLabelPair().add(label);
+        }
         // todo add method: judge label value is valid
         if (!subLine.isEmpty()) {
             switch (subLine.charAt(0)) {
@@ -160,21 +179,97 @@ public class ExporterParser {
                     this.startReadLabelName(metricFamily, metric, subLine);
                     break;
                 case '}':
-                    return;
+                    subLine = this.skipBlankTab(subLine.substring(1));
+                    if (subLine.isEmpty()) {
+                        return;
+                    }
+                    this.readLabelValue(metricFamily, metric, label, subLine);
+                    break;
                 default:
                     throw new ParseException("expected '}' or ',' at end of label value");
             }
         }
     }
 
+    // todo golang对于无限大的字符为 +INF/-INF, 需要单独处理
     private void readLabelValue(MetricFamily metricFamily, MetricFamily.Metric metric, MetricFamily.Label label, String line) {
-        label.setValue(line);
-        metric.getLabelPair().add(label);
-        // todo handle by metric type
+        String subLine = this.skipBlankTab(line);
+        switch (metricFamily.getMetricType()) {
+            case COUNTER:
+                MetricFamily.Counter counter = new MetricFamily.Counter();
+                counter.setValue(Double.parseDouble(subLine));
+                metric.setCounter(counter);
+                break;
+            case GAUGE:
+                MetricFamily.Gauge gauge = new MetricFamily.Gauge();
+                gauge.setValue(Double.parseDouble(subLine));
+                metric.setGauge(gauge);
+                break;
+            case UNTYPED:
+                MetricFamily.Untyped untyped = new MetricFamily.Untyped();
+                untyped.setValue(Double.parseDouble(subLine));
+                metric.setUntyped(untyped);
+                break;
+            case SUMMARY:
+                MetricFamily.Summary summary = metric.getSummary();
+                if (summary == null) {
+                    summary = new MetricFamily.Summary();
+                    metric.setSummary(summary);
+                }
+                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                if (label != null && label.getName().equals(QUANTILE_LABEL)) {
+                    List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
+                    if (quantileList == null) {
+                        quantileList = new ArrayList<>();
+                        summary.setQuantileList(quantileList);
+                    }
+                    MetricFamily.Quantile quantile = new MetricFamily.Quantile();
+                    quantile.setXLabel(Double.parseDouble(label.getValue()));
+                    quantile.setValue(Double.parseDouble(subLine));
+                    quantileList.add(quantile);
+                }
+                // 处理 xxx_sum 的数据
+                if (label != null && this.isSum(label.getName())) {
+                    summary.setSum(Double.parseDouble(subLine));
+                }
+                // 处理 xxx_count 的数据
+                if (label != null && this.isCount(label.getName())) {
+                    summary.setCount(Long.parseLong(subLine));
+                }
+                break;
+            case HISTOGRAM:
+                MetricFamily.Histogram histogram = metric.getHistogram();
+                if (histogram == null) {
+                    histogram = new MetricFamily.Histogram();
+                    metric.setHistogram(histogram);
+                }
+                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                if (label != null && label.getName().equals(BUCKET_LABEL)) {
+                    List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
+                    if (bucketList == null) {
+                        bucketList = new ArrayList<>();
+                        histogram.setBucketList(bucketList);
+                    }
+                    MetricFamily.Bucket bucket = new MetricFamily.Bucket();
+                    bucket.setUpperBound(Double.parseDouble(label.getValue()));
+                    bucket.setCumulativeCount(Long.parseLong(subLine));
+                    bucketList.add(bucket);
+                }
+                if (label != null && this.isSum(label.getName())) {
+                    histogram.setSum(Double.parseDouble(subLine));
+                }
+                if (label != null && this.isCount(label.getName())) {
+                    histogram.setCount(Long.parseLong(subLine));
+                }
+                break;
+            default:
+                throw new ParseException("no such type in metricFamily");
+        }
     }
 
     /**
      * 读取第一个空格符前的token
+     *
      * @return Pair<Left: token, right: sub line>
      */
     private Pair<String, String> readTokenUnitWhitespace(String s) {
@@ -187,9 +282,10 @@ public class ExporterParser {
 
     /**
      * 获取指标的名称
+     *
      * @return Pair<left: metricName, right: sub line>
      */
-    private Pair<String,String> readTokenAsMetricName(String s) {
+    private Pair<String, String> readTokenAsMetricName(String s) {
         if (this.isValidMetricNameStart(s.charAt(0))) {
             int i;
             for (i = 1; i < s.length(); i++) {
@@ -204,12 +300,13 @@ public class ExporterParser {
 
     /**
      * 获取Label的名称
+     *
      * @return Pair<left: LabelName, right: sub line>
      */
     private Pair<String, String> readTokenAsLabelName(String s) {
         if (this.isValidLabelNameStart(s.charAt(0))) {
             int i;
-            for(i = 1; i < s.length(); i++) {
+            for (i = 1; i < s.length(); i++) {
                 if (!this.isValidLabelNameContinuation(s.charAt(i))) {
                     break;
                 }
@@ -221,6 +318,7 @@ public class ExporterParser {
 
     /**
      * 获取Label的值
+     *
      * @return Pair<left: LabelValue, right: sub line>
      */
     private Pair<String, String> readTokenAsLabelValue(String s) {
@@ -287,6 +385,18 @@ public class ExporterParser {
         return isValidLabelNameStart(c) || (c >= '0' && c <= '9');
     }
 
+    private boolean isSum(String s) {
+        return s != null && s.endsWith(SUM_SUFFIX);
+    }
+
+    private boolean isCount(String s) {
+        return s != null && s.endsWith(COUNT_SUFFIX);
+    }
+
+    private boolean isBucket(String s) {
+        return s != null && s.endsWith(BUCKET_SUFFIX);
+    }
+
     public static void main(String[] args) {
         String resp = "# HELP go_gc_cycles_automatic_gc_cycles_total Count of completed GC cycles generated by the Go runtime.\n" +
                 "# TYPE go_gc_cycles_automatic_gc_cycles_total counter\n" +
@@ -303,7 +413,31 @@ public class ExporterParser {
                 "go_gc_duration_seconds{quantile=\"0.25\"} 0\n" +
                 "go_gc_duration_seconds{quantile=\"0.5\"} 0\n" +
                 "go_gc_duration_seconds{quantile=\"0.75\"} 0\n" +
-                "go_gc_duration_seconds{quantile=\"1\"} 0\n";
+                "go_gc_duration_seconds{quantile=\"1\"} 0\n" +
+                "go_gc_duration_seconds_sum 0\n" +
+                "go_gc_duration_seconds_count 0\n" +
+                "# HELP go_gc_heap_allocs_by_size_bytes_total Distribution of heap allocations by approximate size. Note that this does not include tiny objects as defined by /gc/heap/tiny/allocs:objects, only tiny blocks.\n" +
+                "# TYPE go_gc_heap_allocs_by_size_bytes_total histogram\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"8.999999999999998\"} 4096\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"24.999999999999996\"} 12285\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"64.99999999999999\"} 17695\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"144.99999999999997\"} 20775\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"320.99999999999994\"} 22503\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"704.9999999999999\"} 23097\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"1536.9999999999998\"} 23285\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"3200.9999999999995\"} 23386\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"6528.999999999999\"} 23436\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"13568.999999999998\"} 23466\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"27264.999999999996\"} 23472\n" +
+//                "go_gc_heap_allocs_by_size_bytes_total_bucket{le=\"+Inf\"} 23474\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_sum 2.5694e+06\n" +
+                "go_gc_heap_allocs_by_size_bytes_total_count 23474\n" +
+                "# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures.\n" +
+                "# TYPE go_memstats_mspan_inuse_bytes gauge\n" +
+                "go_memstats_mspan_inuse_bytes 46512\n" +
+                "# HELP mysql_global_status_aborted_connects Generic metric from SHOW GLOBAL STATUS.\n" +
+                "# TYPE mysql_global_status_aborted_connects untyped\n" +
+                "mysql_global_status_aborted_connects 0";
         ExporterParser parser = new ExporterParser();
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         for (MetricFamily metricFamily : metricFamilyMap.values()) {
