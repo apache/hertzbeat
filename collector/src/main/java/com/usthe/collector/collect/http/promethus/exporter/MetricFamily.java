@@ -3,6 +3,7 @@ package com.usthe.collector.collect.http.promethus.exporter;
 import lombok.Data;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,7 +92,7 @@ public class MetricFamily {
 
         private double sum;
 
-        private List<Quantile> quantileList;
+        private List<Quantile> quantileList = new ArrayList<>();
     }
 
     @Data
@@ -109,7 +110,7 @@ public class MetricFamily {
 
         private double sum;
 
-        private List<Bucket> bucketList;
+        private List<Bucket> bucketList = new ArrayList<>();
     }
 
     @Data

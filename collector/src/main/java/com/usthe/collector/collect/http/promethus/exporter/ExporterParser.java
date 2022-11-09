@@ -5,6 +5,7 @@ import com.usthe.common.util.CommonUtil;
 import com.usthe.common.util.StrBuffer;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,17 +116,15 @@ public class ExporterParser {
         }
         // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric, 不知道是否合理, 还需要参照源码
         MetricFamily.Metric metric;
-        if (metricList.isEmpty()) {
+        if (!metricList.isEmpty() &&
+                (metricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
+                        metricFamily.getMetricType().equals(MetricType.SUMMARY))) {
+            metric = metricList.get(0);
+        } else {
             metric = new MetricFamily.Metric();
             metricList.add(metric);
-        } else {
-            if (metricFamily.getMetricType().equals(MetricType.HISTOGRAM) || metricFamily.getMetricType().equals(MetricType.SUMMARY)) {
-                metric = metricList.get(0);
-            } else {
-                metric = new MetricFamily.Metric();
-                metricList.add(metric);
-            }
         }
+
         this.readLabels(metricFamily, metric, buffer);
     }
 
@@ -170,11 +169,13 @@ public class ExporterParser {
         }
         String labelValue = this.readTokenAsLabelValue(buffer);
         label.setValue(labelValue);
+        if (!this.isValidLabelValue(labelValue)) {
+            throw new ParseException("no valid label value: " + labelValue);
+        }
         if (!(metricFamily.getMetricType().equals(MetricType.SUMMARY) && label.getName().equals(QUANTILE_LABEL))
                 && !(metricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL))) {
             metric.getLabelPair().add(label);
         }
-        // todo add method: judge label value is valid
         if (!buffer.isEmpty()) {
             switch (buffer.charAt(0)) {
                 case ',':
@@ -222,10 +223,6 @@ public class ExporterParser {
                 // 处理 "xxx{quantile=\"0\"} 0" 的格式
                 if (label != null && label.getName().equals(QUANTILE_LABEL)) {
                     List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
-                    if (quantileList == null) {
-                        quantileList = new ArrayList<>();
-                        summary.setQuantileList(quantileList);
-                    }
                     MetricFamily.Quantile quantile = new MetricFamily.Quantile();
                     if (!CommonUtil.isINF(label.getValue())) {
                         quantile.setXLabel(Double.parseDouble(label.getValue()));
@@ -234,11 +231,11 @@ public class ExporterParser {
                     quantileList.add(quantile);
                 }
                 // 处理 xxx_sum 的数据
-                if (label != null && this.isSum(label.getName())) {
+                else if (label != null && this.isSum(label.getName())) {
                     summary.setSum(buffer.toDouble());
                 }
                 // 处理 xxx_count 的数据
-                if (label != null && this.isCount(label.getName())) {
+                else if (label != null && this.isCount(label.getName())) {
                     summary.setCount(buffer.toLong());
                 }
                 break;
@@ -251,21 +248,15 @@ public class ExporterParser {
                 // 处理 "xxx{quantile=\"0\"} 0" 的格式
                 if (label != null && label.getName().equals(BUCKET_LABEL)) {
                     List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
-                    if (bucketList == null) {
-                        bucketList = new ArrayList<>();
-                        histogram.setBucketList(bucketList);
-                    }
                     MetricFamily.Bucket bucket = new MetricFamily.Bucket();
                     if (!CommonUtil.isINF(label.getValue())) {
                         bucket.setUpperBound(Double.parseDouble(label.getValue()));
                     }
                     bucket.setCumulativeCount(buffer.toLong());
                     bucketList.add(bucket);
-                }
-                if (label != null && this.isSum(label.getName())) {
+                } else if (label != null && this.isSum(label.getName())) {
                     histogram.setSum(buffer.toDouble());
-                }
-                if (label != null && this.isCount(label.getName())) {
+                } else if (label != null && this.isCount(label.getName())) {
                     histogram.setCount(buffer.toLong());
                 }
                 break;
@@ -377,6 +368,11 @@ public class ExporterParser {
     // 是否符合label name除首字符其他字符规则
     private boolean isValidLabelNameContinuation(char c) {
         return isValidLabelNameStart(c) || (c >= '0' && c <= '9');
+    }
+
+    // 检测是否是有效的utf8编码的字符串
+    private boolean isValidLabelValue(String s) {
+        return s != null && s.equals(new String(s.getBytes(StandardCharsets.UTF_8)));
     }
 
     private boolean isSum(String s) {
