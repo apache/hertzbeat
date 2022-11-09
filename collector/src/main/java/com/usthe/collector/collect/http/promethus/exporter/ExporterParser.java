@@ -1,6 +1,7 @@
 package com.usthe.collector.collect.http.promethus.exporter;
 
 import com.usthe.collector.collect.http.promethus.ParseException;
+import com.usthe.common.util.CommonUtil;
 import com.usthe.common.util.StrBuffer;
 import lombok.extern.slf4j.Slf4j;
 
@@ -226,7 +227,7 @@ public class ExporterParser {
                         summary.setQuantileList(quantileList);
                     }
                     MetricFamily.Quantile quantile = new MetricFamily.Quantile();
-                    if (!label.getValue().equals("+Inf")) {
+                    if (!CommonUtil.isINF(label.getValue())) {
                         quantile.setXLabel(Double.parseDouble(label.getValue()));
                     }
                     quantile.setValue(buffer.toDouble());
@@ -255,7 +256,7 @@ public class ExporterParser {
                         histogram.setBucketList(bucketList);
                     }
                     MetricFamily.Bucket bucket = new MetricFamily.Bucket();
-                    if (!label.getValue().equals("+Inf")) {
+                    if (!CommonUtil.isINF(label.getValue())) {
                         bucket.setUpperBound(Double.parseDouble(label.getValue()));
                     }
                     bucket.setCumulativeCount(buffer.toLong());

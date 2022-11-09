@@ -3,6 +3,7 @@ package com.usthe.common.util;
 /**
  * @author ceilzcx
  * @since 9/11/2022
+ * 为了避免ExporterParser解析过程中, 使用subString的方式生成过多的String对象, 使用该类控制
  */
 public class StrBuffer {
     private final char[] chars;
@@ -50,7 +51,7 @@ public class StrBuffer {
     // todo golang对于无限大的字符为 +INF, 需要单独处理
     public double toDouble() {
         String s = toStr();
-        if (this.isINF(s)) {
+        if (CommonUtil.isINF(s)) {
             return Double.MAX_VALUE;
         }
         return Double.parseDouble(s);
@@ -59,7 +60,7 @@ public class StrBuffer {
     // char[] -> long
     public long toLong() {
         String s = toStr();
-        if (this.isINF(s)) {
+        if (CommonUtil.isINF(s)) {
             return Long.MAX_VALUE;
         }
         return Long.parseLong(s);
@@ -84,10 +85,6 @@ public class StrBuffer {
 
     private boolean isBlankOrTab(char c) {
         return c == ' ' || c == '\t';
-    }
-
-    private boolean isINF(String s) {
-        return !s.isEmpty() && s.equals("+Inf");
     }
 
     public boolean isEmpty() {

@@ -12,18 +12,35 @@ import java.util.List;
 @Data
 @ToString
 public class MetricFamily {
-
+    /**
+     * 指标名称
+     * metric name
+     */
     private String name;
 
+    /**
+     * 指标描述
+     * metric help
+     */
     private String help;
 
+    /**
+     * 指标类型
+     * metric type
+     */
     private MetricType metricType;
 
+    /**
+     * 具体的指标
+     */
     private List<Metric> metricList;
 
     @Data
     static class Metric {
 
+        /**
+         * 标签数据, 主要对应{}内容
+         */
         private List<Label> labelPair;
 
         private Gauge gauge;
@@ -79,7 +96,7 @@ public class MetricFamily {
 
     @Data
     static class Quantile {
-
+        // 对应 prometheus 的 quantile 字段
         private double xLabel;
 
         private double value;
