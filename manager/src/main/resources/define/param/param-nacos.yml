@@ -1,0 +1,16 @@
+app: nacos
+param:
+  - field: host
+    name:
+      zh-CN: 服务器Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: Nacos服务端口
+      en-US: Nacos Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 8848

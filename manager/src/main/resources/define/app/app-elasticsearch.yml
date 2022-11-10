@@ -35,6 +35,8 @@ configmap:
     type: 0
   - key: method
     type: 1
+  - key: ssl
+    type: 1
   - key: url
     type: 1
 # 指标组列表
@@ -110,6 +112,8 @@ metrics:
       url: /_cluster/health?pretty
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
@@ -146,6 +150,8 @@ metrics:
       url: /_nodes/stats
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
@@ -228,6 +234,8 @@ metrics:
       url: /_nodes/stats
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
