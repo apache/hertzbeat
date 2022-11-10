@@ -23,6 +23,7 @@ public class ExporterParser {
 
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
+    private static final String NAME_LABEL = "__name__";
     private static final String SUM_SUFFIX = "_sum";
     private static final String COUNT_SUFFIX = "_count";
     private static final String BUCKET_SUFFIX = "_bucket";
@@ -57,7 +58,7 @@ public class ExporterParser {
         if (buffer.isEmpty()) return;
         String token = this.readTokenUnitWhitespace(buffer);
         if (!token.equals(HELP) && !token.equals(TYPE)) {
-            // handle
+            // todo need handle
             return;
         }
         String metricName = this.readTokenAsMetricName(buffer);
@@ -129,6 +130,8 @@ public class ExporterParser {
     }
 
     private void readLabels(MetricFamily metricFamily, MetricFamily.Metric metric, StrBuffer buffer) {
+        buffer.skipBlankTabs();
+        if (buffer.isEmpty()) return;
         metric.setLabelPair(new ArrayList<>());
         if (buffer.charAt(0) == '{') {
             buffer.read();
@@ -149,8 +152,8 @@ public class ExporterParser {
             return;
         }
         String labelName = this.readTokenAsLabelName(buffer);
-        if (labelName.isEmpty() || labelName.equals("__name__")) {
-            throw new ParseException("invalid label name, label name size = 0 or label name equals __name__");
+        if (labelName.isEmpty() || labelName.equals(NAME_LABEL)) {
+            throw new ParseException("invalid label name, label name size = 0 or label name equals " + NAME_LABEL);
         }
         MetricFamily.Label label = new MetricFamily.Label();
         label.setName(labelName);
@@ -176,28 +179,23 @@ public class ExporterParser {
                 && !(metricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL))) {
             metric.getLabelPair().add(label);
         }
-        if (!buffer.isEmpty()) {
-            switch (buffer.charAt(0)) {
-                case ',':
-                    buffer.read();
-                    this.startReadLabelName(metricFamily, metric, buffer);
-                    break;
-                case '}':
-                    buffer.read();
-                    buffer.skipBlankTabs();
-                    if (buffer.isEmpty()) {
-                        return;
-                    }
-                    this.readLabelValue(metricFamily, metric, label, buffer);
-                    break;
-                default:
-                    throw new ParseException("expected '}' or ',' at end of label value");
-            }
+        if (buffer.isEmpty()) return;
+        c = buffer.read();
+        switch (c) {
+            case ',':
+                this.startReadLabelName(metricFamily, metric, buffer);
+                break;
+            case '}':
+                this.readLabelValue(metricFamily, metric, label, buffer);
+                break;
+            default:
+                throw new ParseException("expected '}' or ',' at end of label value");
         }
     }
 
     private void readLabelValue(MetricFamily metricFamily, MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
+        if (buffer.isEmpty()) return;
         switch (metricFamily.getMetricType()) {
             case COUNTER:
                 MetricFamily.Counter counter = new MetricFamily.Counter();
