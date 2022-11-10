@@ -198,7 +198,7 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 - [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
 
 ##### 赞助     
-
+- Eoapi[开源 API 管理工具 ](https://github.com/eolinker/eoapi) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
 - 感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
 - 感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点,CDN        
 
