@@ -58,7 +58,7 @@ public class ExporterParser {
         if (buffer.isEmpty()) return;
         String token = this.readTokenUnitWhitespace(buffer);
         if (!token.equals(HELP) && !token.equals(TYPE)) {
-            // todo need handle
+            log.error("parse comment error {}, start without {} or {}", buffer.toStr(), HELP, TYPE);
             return;
         }
         String metricName = this.readTokenAsMetricName(buffer);
@@ -115,7 +115,8 @@ public class ExporterParser {
             metricList = new ArrayList<>();
             metricFamily.setMetricList(metricList);
         }
-        // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric, 不知道是否合理, 还需要参照源码
+        // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
+        //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
         MetricFamily.Metric metric;
         if (!metricList.isEmpty() &&
                 (metricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
