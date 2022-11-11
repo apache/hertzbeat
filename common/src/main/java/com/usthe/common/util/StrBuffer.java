@@ -6,6 +6,11 @@ package com.usthe.common.util;
  * 为了避免ExporterParser解析过程中, 使用subString的方式生成过多的String对象, 使用该类控制
  */
 public class StrBuffer {
+    private static final String POSITIVE_INF = "+inf";
+    private static final String NEGATIVE_INF = "-inf";
+    private static final long POSITIVE_INF_VALUE = 0x7FF0000000000000L;
+    private static final long NEGATIVE_INF_VALUE = 0xFFF0000000000000L;
+
     private final char[] chars;
     private int left;
     private int right;
@@ -48,22 +53,15 @@ public class StrBuffer {
     }
 
     // char[] -> double
-    // todo golang对于无限大的字符为 +INF, 需要单独处理
     public double toDouble() {
         String s = toStr();
-        if (CommonUtil.isINF(s)) {
-            return Double.MAX_VALUE;
-        }
-        return Double.parseDouble(s);
+        return parseDouble(s);
     }
 
     // char[] -> long
     public long toLong() {
         String s = toStr();
-        if (CommonUtil.isINF(s)) {
-            return Long.MAX_VALUE;
-        }
-        return Long.parseLong(s);
+        return parseLong(s);
     }
 
     public void skipBlankTabs() {
@@ -89,5 +87,26 @@ public class StrBuffer {
 
     public boolean isEmpty() {
         return left > right;
+    }
+
+    // string -> long, 需要判断是否为INF
+    public static long parseLong(String s) {
+        if (POSITIVE_INF.equalsIgnoreCase(s)) {
+            return POSITIVE_INF_VALUE;
+        }
+        if (NEGATIVE_INF.equalsIgnoreCase(s)) {
+            return NEGATIVE_INF_VALUE;
+        }
+        return Long.parseLong(s);
+    }
+
+    // string -> double, 需要判断是否为INF
+    public static double parseDouble(String s) {
+        if (POSITIVE_INF.equalsIgnoreCase(s)) {
+            return POSITIVE_INF_VALUE;
+        } else if (NEGATIVE_INF.equalsIgnoreCase(s)) {
+            return NEGATIVE_INF_VALUE;
+        }
+        return Double.parseDouble(s);
     }
 }

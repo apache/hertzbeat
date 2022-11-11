@@ -38,8 +38,6 @@ public class CommonUtil {
 
     private static final int PHONE_LENGTH = 11;
 
-    private static final String INF = "inf";
-
     /**
      * 将字符串str转换为double数字类型
      * @param str string
@@ -106,7 +104,4 @@ public class CommonUtil {
         return m.find();
     }
 
-    public static boolean isINF(String s) {
-        return !s.isEmpty() && s.toLowerCase().endsWith(INF);
-    }
 }
