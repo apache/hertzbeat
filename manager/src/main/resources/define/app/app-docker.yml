@@ -31,8 +31,32 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: Id
+      - field: id
         type: 1
+      - field: name
+        type: 1
+      - field: image
+        type: 1
+      - field: command
+        type: 1
+      - field: state
+        type: 1
+      - field: status
+        type: 1
+    aliasFields:
+      - Id
+      - $.Names[0]
+      - Image
+      - Command
+      - State
+      - Status
+    calculates:
+      - id = Id
+      - name = $.Names[0]
+      - image = Image
+      - command = Command
+      - state = State
+      - status = Status
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -62,32 +86,38 @@ metrics:
   - name: stats
     priority: 1
     fields:
-      - field: memory_stats        # memory_stats
-        type: 0
-      - field: used_memory       # memory_stats.stats
-        type: 0
-      - field: cache        # stats.cache
-        type: 0
-      - field: limit       # memory_stats.limit
-        type: 0
-      - field: jobs-failed        # 已经失败的任务数
-        type: 0
-      - field: cpu_use
+      - field: name
+        type: 1
+      - field: available_memory
         type: 0
       - field: used_memory
         type: 0
-      - field: usage
+      - field: memory_usage
         type: 0
+        unit: '%'
+      - field: cpu_delta
+        type: 0
+      - field: number_cpus
+        type: 0
+      - field: cpu_usage
+        type: 0
+        unit: '%'
     aliasFields:
-      - used_memory
-      - $.memory_stats
       - $.memory_stats.usage
       - $.memory_stats.stats.cache
       - $.memory_stats.limit
-      - cpu_use
+      - $.cpu_stats.cpu_usage.total_usage
+      - $.precpu_stats.cpu_usage.total_usage
+      - $.cpu_stats.online_cpus
+      - $.cpu_stats.system_cpu_usage
+      - $.precpu_stats.system_cpu_usage
     calculates:
-      - used_memory=#`$.memory_stats.usage`-#`$.memory_stats.stats.cache`
-      - cpu_use=#`used_memory`/#`$.memory_stats.limit`
+      - available_memory = $.memory_stats.limit
+      - used_memory=$.memory_stats.usage - $.memory_stats.stats.cache
+      - memory_usage=(($.memory_stats.usage - $.memory_stats.stats.cache)/$.memory_stats.limit) * 100
+      - cpu_delta=$.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage
+      - number_cpus=$.cpu_stats.online_cpus
+      - cpu_usage=(($.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage) / ($.cpu_stats.system_cpu_usage - $.precpu_stats.system_cpu_usage)) * online_cpus * 100
     protocol: http
     http:
       # 主机host: ipv4 ipv6 域名
@@ -95,11 +125,14 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: /containers/-_-Id-_-/stats
+      url: /containers/-_-id-_-/stats
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      params:
+        stream: false
+        one-shot: true
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
@@ -110,4 +143,4 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
-      parseScript: '$.*'
+      parseScript: '$'
