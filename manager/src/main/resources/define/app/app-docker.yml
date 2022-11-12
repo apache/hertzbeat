@@ -55,10 +55,9 @@ metrics:
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
-        bearerTokenToken: -_-Id-_-
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
-      parseScript: '$'
+      parseScript: '$.*'
 
   - name: stats
     priority: 1
@@ -111,4 +110,4 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
-#      parseScript: '$.'
+      parseScript: '$.*'
