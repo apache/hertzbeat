@@ -33,7 +33,7 @@
           "key": "service",
           "text": "应用服务",
           "i18n": "menu.monitor.service",
-          "icon": "anticon-cloud"
+          "icon": "anticon-appstore"
         },
         {
           "key": "db",
@@ -54,6 +54,13 @@
           "hide": false,
           "i18n": "menu.monitor.mid",
           "icon": "anticon-merge-cells"
+        },
+        {
+          "key": "cn",
+          "text": "云原生",
+          "hide": false,
+          "i18n": "menu.monitor.cn",
+          "icon": "anticon-cloud"
         },
         {
           "key": "custom",
