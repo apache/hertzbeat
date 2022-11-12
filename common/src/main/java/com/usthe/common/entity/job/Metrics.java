@@ -17,14 +17,18 @@
 
 package com.usthe.common.entity.job;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.usthe.common.entity.job.protocol.*;
+import com.usthe.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Details of the collection of indicators collected by monitoring
@@ -38,6 +42,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Slf4j
 public class Metrics {
 
     /**
@@ -132,6 +137,65 @@ public class Metrics {
      * 使用公共的snmp协议的监控配置信息
      */
     private SnmpProtocol snmp;
+
+    /**
+     * collector use - Temporarily store subTask indicator group response data
+     * collector使用 - 临时存储分级任务指标响应数据
+     */
+    @JsonIgnore
+    private transient CollectRep.MetricsData subTaskDataTmp;
+
+    /**
+     * collector use - Temporarily store subTask running num
+     * collector使用 - 分级任务正在运行中的数量
+     */
+    @JsonIgnore
+    private transient AtomicInteger subTaskNum;
+
+    /**
+     * collector use - Temporarily store subTask id
+     * collector使用 - 分级任务ID
+     */
+    @JsonIgnore
+    private transient Integer subTaskId;
+
+    /**
+     * is has subTask
+     * @return true - has
+     */
+    public boolean isHasSubTask() {
+        return subTaskNum != null;
+    }
+
+    /**
+     * consume subTask
+     * @param metricsData response data
+     * @return is last task?
+     */
+    public boolean consumeSubTaskResponse(CollectRep.MetricsData metricsData) {
+        if (subTaskNum == null) {
+            return true;
+        }
+        synchronized (subTaskNum) {
+            int index = subTaskNum.decrementAndGet();
+            if (subTaskDataTmp == null) {
+                subTaskDataTmp = metricsData;
+            } else {
+                if (metricsData.getValuesCount() > 1) {
+                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataTmp);
+                    for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                        if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
+                            dataBuilder.addValues(valueRow);
+                        } else {
+                            log.error("consume subTask data value not mapping filed");
+                        }
+                    }
+                    subTaskDataTmp = dataBuilder.build();
+                }
+            }
+            return index == 0;
+        }
+    }
 
     @Override
     public boolean equals(Object o) {
