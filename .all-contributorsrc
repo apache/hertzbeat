@@ -363,6 +363,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "Jack-123-power",
+      "name": "Captain Jack",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84333501?v=4",
+      "profile": "https://github.com/Jack-123-power",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
