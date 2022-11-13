@@ -132,7 +132,7 @@ Thanks these wonderful people, welcome to join us:
     <td align="center"><a href="https://github.com/yangshihui"><img src="https://avatars.githubusercontent.com/u/28550208?v=4?s=100" width="100px;" alt=""/><br /><sub><b>yangshihui</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=yangshihui" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/issues?q=author%3Ayangshihui" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/DreamGirl524"><img src="https://avatars.githubusercontent.com/u/81132838?v=4?s=100" width="100px;" alt=""/><br /><sub><b>DreamGirl524</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=DreamGirl524" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=DreamGirl524" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/gzwlly"><img src="https://avatars.githubusercontent.com/u/83171907?v=4?s=100" width="100px;" alt=""/><br /><sub><b>gzwlly</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=gzwlly" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/cuipiheqiuqiu"><img src="https://avatars.githubusercontent.com/u/76642201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>cuipiheqiuqiu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Tests">⚠️</a></td>
+    <td align="center"><a href="https://github.com/cuipiheqiuqiu"><img src="https://avatars.githubusercontent.com/u/76642201?v=4?s=100" width="100px;" alt=""/><br /><sub><b>cuipiheqiuqiu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Tests">⚠️</a> <a href="#design-cuipiheqiuqiu" title="Design">🎨</a></td>
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/oyiyou"><img src="https://avatars.githubusercontent.com/u/39228891?v=4?s=100" width="100px;" alt=""/><br /><sub><b>lambert</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=oyiyou" title="Code">💻</a></td>
@@ -154,6 +154,10 @@ Thanks these wonderful people, welcome to join us:
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/TJxiaobao"><img src="https://avatars.githubusercontent.com/u/85919258?v=4?s=100" width="100px;" alt=""/><br /><sub><b>铁甲小宝</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ATJxiaobao" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/Jack-123-power"><img src="https://avatars.githubusercontent.com/u/84333501?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Captain Jack</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Jack-123-power" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/haibo-duan"><img src="https://avatars.githubusercontent.com/u/7974845?v=4?s=100" width="100px;" alt=""/><br /><sub><b>haibo.duan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/assassinfym"><img src="https://avatars.githubusercontent.com/u/15188754?v=4?s=100" width="100px;" alt=""/><br /><sub><b>assassin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aassassinfym" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=assassinfym" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/csyshu"><img src="https://avatars.githubusercontent.com/u/46591658?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Reverse wind</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Code">💻</a></td>
   </tr>
 </table>
 
@@ -198,7 +202,7 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 - [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
 
 ##### 赞助     
-
+- Eoapi[开源 API 管理工具 ](https://github.com/eolinker/eoapi) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
 - 感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
 - 感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点,CDN        
 
