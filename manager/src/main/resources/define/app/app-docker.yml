@@ -52,7 +52,7 @@ metrics:
       - Status
     calculates:
       - id = Id
-      - name = $.Names[0]
+      - name=#`$.Names[0]`
       - image = Image
       - command = Command
       - state = State
@@ -90,8 +90,10 @@ metrics:
         type: 1
       - field: available_memory
         type: 0
+        unit: MB
       - field: used_memory
         type: 0
+        unit: MB
       - field: memory_usage
         type: 0
         unit: '%'
@@ -103,8 +105,8 @@ metrics:
         type: 0
         unit: '%'
     aliasFields:
+      - $.name
       - $.memory_stats.usage
-      - $.memory_stats.stats.cache
       - $.memory_stats.limit
       - $.cpu_stats.cpu_usage.total_usage
       - $.precpu_stats.cpu_usage.total_usage
@@ -112,12 +114,16 @@ metrics:
       - $.cpu_stats.system_cpu_usage
       - $.precpu_stats.system_cpu_usage
     calculates:
+      - name=$.name
       - available_memory = $.memory_stats.limit
-      - used_memory=$.memory_stats.usage - $.memory_stats.stats.cache
-      - memory_usage=(($.memory_stats.usage - $.memory_stats.stats.cache)/$.memory_stats.limit) * 100
+      - used_memory=$.memory_stats.usage
+      - memory_usage=($.memory_stats.usage / $.memory_stats.limit) * 100
       - cpu_delta=$.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage
       - number_cpus=$.cpu_stats.online_cpus
-      - cpu_usage=(($.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage) / ($.cpu_stats.system_cpu_usage - $.precpu_stats.system_cpu_usage)) * online_cpus * 100
+      - cpu_usage=(($.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage) / ($.cpu_stats.system_cpu_usage - $.precpu_stats.system_cpu_usage)) * $.cpu_stats.online_cpus * 100
+    units:
+      - available_memory=B->MB
+      - used_memory=B->MB
     protocol: http
     http:
       # 主机host: ipv4 ipv6 域名
@@ -132,7 +138,6 @@ metrics:
       ssl: ^_^ssl^_^
       params:
         stream: false
-        one-shot: true
       # 认证
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
