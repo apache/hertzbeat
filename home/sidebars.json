@@ -122,6 +122,7 @@
       "type": "category",
       "label": "Others",
       "items": [
+        "others/developer",
         "others/contact",
         "others/design",
         "others/sponsor",
