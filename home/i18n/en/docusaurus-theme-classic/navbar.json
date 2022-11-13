@@ -50,5 +50,9 @@
   "item.label.贡献者指南": {
     "message": "Contributor Guide",
     "description": "Navbar item with label 贡献者指南"
+  },
+  "item.label.开发者们": {
+    "message": "Contributors",
+    "description": "Navbar item with label 开发者们"
   }
 }

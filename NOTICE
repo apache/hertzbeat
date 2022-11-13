@@ -1,16 +1,12 @@
-HertzBeat-易用友好的云监控系统,
-无需Agent，强大自定义监控能力。网站监测，PING连通性，端口可用性，数据库，操作系统，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
+HertzBeat-An open-source, real-time monitoring system.
+HertzBeat-易用友好的实时监控系统。
 
-HertzBeat-Friendly cloud monitoring system,
-is an opensource monitoring and alarm project incubated by Dromara and open sourced by TanCloud, 
-which supports Website, API, PING, Port, Database, OS Monitor etc.
+HertzBeat Declaration / HertzBeat声明
 
-HertzBeat声明/HertzBeat Declaration
-
-可直接商用无需授权，必须保留本作品及源码中的所有版权、专利、商标和归属声明。
 It can be used directly without authorization. All copyrights, patents, trademarks and ownership statements in the product and source code must be retained.
+可直接免费商用，但必须保留本作品及源码中的所有版权、专利、商标和归属声明。
 
-页脚中归属声明及版权声明不可忽略，否则视为侵权
 The attribution statement and copyright notice in the footer cannot be ignored, otherwise it will be deemed as infringement.
+页面等页脚中归属声明及版权声明不可忽略，否则视为侵权。
 
-Copyright  https://www.hertzbeat.com  All Rights Reserved.
+Copyright https://www.hertzbeat.com https://www.tancloud.cn  All Rights Reserved.
