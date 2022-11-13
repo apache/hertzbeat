@@ -1,0 +1,22 @@
+app: kubernetes
+param:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: ApiServer端口
+      en-US: ApiServer Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 6443
+  - field: token
+    name:
+      zh-CN: 认证Token
+      en-US: Access Token
+    type: text
+    required: true

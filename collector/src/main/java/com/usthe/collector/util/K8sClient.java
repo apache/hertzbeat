@@ -33,7 +33,7 @@ public class K8sClient {
      */
     public K8sClient(String serverHost, String serverPort, String token) {
         try {
-            String serverIp = serverHost + ":" + serverPort;
+            String serverIp = "https://" + serverHost + ":" + serverPort;
             this.apiClient = new ClientBuilder()
                     .setBasePath(serverIp)
                     .setVerifyingSsl(false)

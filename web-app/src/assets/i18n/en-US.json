@@ -13,6 +13,7 @@
       "db": "DB Monitor",
       "os": "OS Monitor",
       "mid": "Mid Monitor",
+      "cn": "Cloud Native",
       "custom": "Custom Monitor"
     },
     "account": {
