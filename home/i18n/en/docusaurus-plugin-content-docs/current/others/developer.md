@@ -60,6 +60,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
   <tr>
     <td align="center"><a href="https://github.com/TJxiaobao"><img src="https://avatars.githubusercontent.com/u/85919258?v=4?s=100" width="100px;" alt=""/><br /><sub><b>铁甲小宝</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ATJxiaobao" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TJxiaobao" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/Jack-123-power"><img src="https://avatars.githubusercontent.com/u/84333501?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Captain Jack</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Jack-123-power" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/haibo-duan"><img src="https://avatars.githubusercontent.com/u/7974845?v=4?s=100" width="100px;" alt=""/><br /><sub><b>haibo.duan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Code">💻</a></td>
   </tr>
 </table>
 

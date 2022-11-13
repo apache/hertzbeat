@@ -372,6 +372,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "haibo-duan",
+      "name": "haibo.duan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7974845?v=4",
+      "profile": "https://github.com/haibo-duan",
+      "contributions": [
+        "test",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
