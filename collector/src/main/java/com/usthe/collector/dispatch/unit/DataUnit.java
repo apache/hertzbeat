@@ -20,10 +20,19 @@ public enum DataUnit {
      */
     K("K", 1024),
     /**
+     * kilobyte
+     */
+    KI("KI", 1024),
+    /**
      * megabyte
      * 1024 * 1024
      */
     MB("MB", 1_048_576),
+    /**
+     * megabyte
+     * 1024 * 1024
+     */
+    MI("MI", 1_048_576),
     /**
      * megabyte
      * 1024 * 1024
@@ -34,6 +43,11 @@ public enum DataUnit {
      * 1024 * 1024 * 1024
      */
     GB("GB", 1_073_741_824),
+    /**
+     * gigabyte
+     * 1024 * 1024 * 1024
+     */
+    GI("GI", 1_073_741_824),
     /**
      * gigabyte
      * 1024 * 1024 * 1024
