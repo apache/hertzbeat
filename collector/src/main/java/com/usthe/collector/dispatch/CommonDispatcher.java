@@ -237,22 +237,21 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // use pre collect metrics data to replace next metrics config params
                 List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
                 metricsSet.forEach(metricItem -> {
-                    JsonElement jsonElement = GSON.toJsonTree(metricItem);
-                    if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(jsonElement)) {
+                    if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(GSON.toJsonTree(metricItem))) {
                         AtomicInteger subTaskNum = new AtomicInteger(configmapList.size());
                         AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
                         for (int index = 0; index < configmapList.size(); index ++) {
                             Map<String, Configmap> configmap = configmapList.get(index);
-                            jsonElement = GSON.toJsonTree(metricItem);
-                            CollectUtil.replaceCryPlaceholder(jsonElement, configmap);
-                            metricItem = GSON.fromJson(jsonElement, Metrics.class);
-                            metricItem.setSubTaskNum(subTaskNum);
-                            metricItem.setSubTaskId(index);
-                            metricItem.setSubTaskDataRef(metricsDataReference);
-                            MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
+                            JsonElement metricJson = GSON.toJsonTree(metricItem);
+                            CollectUtil.replaceCryPlaceholder(metricJson, configmap);
+                            Metrics metric = GSON.fromJson(metricJson, Metrics.class);
+                            metric.setSubTaskNum(subTaskNum);
+                            metric.setSubTaskId(index);
+                            metric.setSubTaskDataRef(metricsDataReference);
+                            MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
                             jobRequestQueue.addJob(metricsCollect);
-                            metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName() + "-sub-" + index,
-                                    new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                            metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
+                                    new MetricsTime(System.currentTimeMillis(), metric, timeout));
                         }
                     } else {
                         MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
