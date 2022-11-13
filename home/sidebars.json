@@ -97,6 +97,13 @@
         },
         {
           "type": "category",
+          "label": "云原生",
+          "items": [
+            "help/docker"
+          ]
+        },
+        {
+          "type": "category",
           "label": "阈值告警配置",
           "items": [
             "help/alert_threshold",
