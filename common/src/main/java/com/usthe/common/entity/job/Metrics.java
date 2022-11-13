@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Details of the collection of indicators collected by monitoring
@@ -165,7 +166,7 @@ public class Metrics {
      * collector使用 - 临时存储分级任务指标响应数据
      */
     @JsonIgnore
-    private transient CollectRep.MetricsData subTaskDataTmp;
+    private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
@@ -200,11 +201,11 @@ public class Metrics {
         }
         synchronized (subTaskNum) {
             int index = subTaskNum.decrementAndGet();
-            if (subTaskDataTmp == null) {
-                subTaskDataTmp = metricsData;
+            if (subTaskDataRef.get() == null) {
+                subTaskDataRef.set(metricsData);
             } else {
-                if (metricsData.getValuesCount() > 1) {
-                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataTmp);
+                if (metricsData.getValuesCount() >= 1) {
+                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
                     for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                         if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
                             dataBuilder.addValues(valueRow);
@@ -212,7 +213,7 @@ public class Metrics {
                             log.error("consume subTask data value not mapping filed");
                         }
                     }
-                    subTaskDataTmp = dataBuilder.build();
+                    subTaskDataRef.set(dataBuilder.build());
                 }
             }
             return index == 0;
