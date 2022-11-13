@@ -5,7 +5,48 @@ sidebar_label: Docker 容器监控
 
 ---
 
-> 对Docker容器的通用性能指标进行采集监控。支持MYSQL5+。
+> 对Docker容器的通用性能指标进行采集监控。
+
+
+## 监控前操作
+
+如果想要监控 `Docker` 中的容器信息，则需要按照一下步骤打开端口，让采集请求获取到对应的信息。
+
+**1、编辑docker.server文件：**
+
+```css
+vi /usr/lib/systemd/system/docker.service
+```
+
+找到 **[Service]** 节点，修改 ExecStart 属性，增加 `-H tcp://0.0.0.0:2375`
+
+```css
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H tcp://0.0.0.0:2375
+```
+
+这样相当于对外开放的是 **2375** 端口，当然也可以根据自己情况修改成其他的。
+
+**2、重新加载Docker配置生效：**
+
+```shell
+systemctl daemon-reload 
+systemctl restart docker 
+```
+
+**注意：记得在服务器中台打开 `2375` 端口号。**
+
+**3、如果上述方法不行则：**
+
+在服务器内部打开 `2375` 端口号。
+
+```shell
+firewall-cmd --zone=public --add-port=2375/tcp --permanent
+firewall-cmd --reload
+```
+
+
+
+
 
 ### 配置参数
 
@@ -53,30 +94,6 @@ sidebar_label: Docker 容器监控
 | status   | 无       | Docker容器中的更新时间 |
 
 #### 指标集合：stats
-
-```yml
-      - field: name
-        type: 1
-      - field: available_memory
-        type: 0
-        unit: MB
-      - field: used_memory
-        type: 0
-        unit: MB
-      - field: memory_usage
-        type: 0
-        unit: '%'
-      - field: cpu_delta
-        type: 0
-      - field: number_cpus
-        type: 0
-      - field: cpu_usage
-        type: 0
-```
-
-
-
-
 
 | 指标名称         | 指标单位 | 指标帮助描述                 |
 | ---------------- | -------- | ---------------------------- |
