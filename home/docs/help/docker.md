@@ -14,13 +14,13 @@ sidebar_label: Docker 容器监控
 
 **1、编辑docker.server文件：**
 
-```css
+```shell
 vi /usr/lib/systemd/system/docker.service
 ```
 
 找到 **[Service]** 节点，修改 ExecStart 属性，增加 `-H tcp://0.0.0.0:2375`
 
-```css
+```shell
 ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H tcp://0.0.0.0:2375
 ```
 
