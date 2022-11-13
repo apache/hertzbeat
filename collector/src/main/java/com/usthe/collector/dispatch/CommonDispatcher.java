@@ -41,6 +41,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Indicator group collection task and response data scheduler
@@ -189,7 +190,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId());
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
             if (isLastTask) {
-                metricsData = metrics.getSubTaskDataTmp();
+                metricsData = metrics.getSubTaskDataRef().get();
             } else {
                 return;
             }
@@ -239,6 +240,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     JsonElement jsonElement = GSON.toJsonTree(metricItem);
                     if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(jsonElement)) {
                         AtomicInteger subTaskNum = new AtomicInteger(configmapList.size());
+                        AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
                         for (int index = 0; index < configmapList.size(); index ++) {
                             Map<String, Configmap> configmap = configmapList.get(index);
                             jsonElement = GSON.toJsonTree(metricItem);
@@ -246,6 +248,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             metricItem = GSON.fromJson(jsonElement, Metrics.class);
                             metricItem.setSubTaskNum(subTaskNum);
                             metricItem.setSubTaskId(index);
+                            metricItem.setSubTaskDataRef(metricsDataReference);
                             MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
                             jobRequestQueue.addJob(metricsCollect);
                             metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName() + "-sub-" + index,
