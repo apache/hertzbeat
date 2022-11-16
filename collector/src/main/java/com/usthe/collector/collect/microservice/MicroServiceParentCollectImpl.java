@@ -107,6 +107,11 @@ public class MicroServiceParentCollectImpl extends AbstractCollect {
     }
   }
 
+  @Override
+  public String supportProtocol() {
+    return null;
+  }
+
   private static class Singleton {
     private static final MicroServiceParentCollectImpl INSTANCE = new MicroServiceParentCollectImpl();
   }

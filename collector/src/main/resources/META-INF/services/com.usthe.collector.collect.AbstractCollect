@@ -1,0 +1,8 @@
+com.usthe.collector.collect.http.HttpCollectImpl
+com.usthe.collector.collect.database.JdbcCommonCollect
+com.usthe.collector.collect.icmp.IcmpCollectImpl
+com.usthe.collector.collect.jmx.JmxCollectImpl
+com.usthe.collector.collect.redis.RedisSingleCollectImpl
+com.usthe.collector.collect.snmp.SnmpCollectImpl
+com.usthe.collector.collect.ssh.SshCollectImpl
+com.usthe.collector.collect.telnet.TelnetCollectImpl
