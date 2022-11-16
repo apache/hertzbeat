@@ -22,5 +22,6 @@ com.usthe.collector.dispatch.WorkerPool,\
 com.usthe.collector.dispatch.entrance.internal.CollectJobService,\
 com.usthe.collector.collect.database.JdbcSpiLoader,\
 com.usthe.collector.collect.http.promethus.PrometheusParseCreater,\
-com.usthe.collector.dispatch.unit.impl.DataSizeConvert
+com.usthe.collector.dispatch.unit.impl.DataSizeConvert,\
+com.usthe.collector.collect.strategy.CollectStrategyFactory
 

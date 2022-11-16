@@ -22,6 +22,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.JdbcConnect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
@@ -53,11 +54,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
 
-    private JdbcCommonCollect(){}
-
-    public static JdbcCommonCollect getInstance() {
-        return Singleton.INSTANCE;
-    }
+    public JdbcCommonCollect(){}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -112,6 +109,11 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_JDBC;
     }
 
 
@@ -307,9 +309,5 @@ public class JdbcCommonCollect extends AbstractCollect {
 
         }
         return url;
-    }
-
-    private static class Singleton {
-        private static final JdbcCommonCollect INSTANCE = new JdbcCommonCollect();
     }
 }
