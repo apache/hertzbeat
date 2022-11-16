@@ -41,4 +41,10 @@ public abstract class AbstractCollect {
      *                return response builder
      */
     public abstract void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics);
+
+    /**
+     * the protocol this collect instance support
+     * @return protocol str
+     */
+    public abstract String supportProtocol();
 }

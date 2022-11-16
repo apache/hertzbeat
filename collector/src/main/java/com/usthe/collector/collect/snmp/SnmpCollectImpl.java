@@ -18,6 +18,7 @@
 package com.usthe.collector.collect.snmp;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
@@ -61,11 +62,7 @@ public class SnmpCollectImpl extends AbstractCollect {
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 
-    private SnmpCollectImpl() {
-    }
-
-    public static SnmpCollectImpl getInstance() {
-        return SnmpCollectImpl.Singleton.INSTANCE;
+    public SnmpCollectImpl() {
     }
 
     @Override
@@ -158,6 +155,11 @@ public class SnmpCollectImpl extends AbstractCollect {
         }
     }
 
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_SNMP;
+    }
+
     private void validateParams(Metrics metrics) throws Exception {
         if (metrics == null || metrics.getSnmp() == null) {
             throw new IllegalArgumentException("Snmp collect must has snmp params");
@@ -199,9 +201,5 @@ public class SnmpCollectImpl extends AbstractCollect {
             return SnmpConstants.version3;
         }
         return version;
-    }
-
-    private static class Singleton {
-        private static final SnmpCollectImpl INSTANCE = new SnmpCollectImpl();
     }
 }

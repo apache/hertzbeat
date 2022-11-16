@@ -21,6 +21,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.ssh.CommonSshClient;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.collector.util.KeyPairUtil;
 import com.usthe.common.entity.job.Metrics;
@@ -56,13 +57,8 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
 
-    private SshCollectImpl() {
+    public SshCollectImpl() {
     }
-
-    public static SshCollectImpl getInstance() {
-        return SshCollectImpl.Singleton.INSTANCE;
-    }
-
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -128,6 +124,11 @@ public class SshCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(exception.getMessage());
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_SSH;
     }
 
 
@@ -258,9 +259,5 @@ public class SshCollectImpl extends AbstractCollect {
         if (metrics == null || metrics.getSsh() == null) {
             throw new Exception("Ssh collect must has ssh params");
         }
-    }
-
-    private static class Singleton {
-        private static final SshCollectImpl INSTANCE = new SshCollectImpl();
     }
 }
