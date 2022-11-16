@@ -65,6 +65,11 @@ public class K8sCollectImpl extends AbstractCollect {
         log.info("kubernetes collect finish in {}ms.", System.currentTimeMillis() - startTime);
     }
 
+    @Override
+    public String supportProtocol() {
+        return null;
+    }
+
     /**
      * 填充获取到的k8s指标数据
      *

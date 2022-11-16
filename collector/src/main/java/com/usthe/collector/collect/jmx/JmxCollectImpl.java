@@ -4,6 +4,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.JmxConnect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JmxProtocol;
 import com.usthe.common.entity.message.CollectRep;
@@ -39,11 +40,7 @@ public class JmxCollectImpl extends AbstractCollect {
 
     private static final String SUB_ATTRIBUTE = "->";
 
-    private JmxCollectImpl() {
-    }
-
-    public static JmxCollectImpl getInstance() {
-        return Singleton.INSTANCE;
+    public JmxCollectImpl() {
     }
 
     @Override
@@ -90,6 +87,11 @@ public class JmxCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             log.error("JMX Error :{}", e.getMessage());
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_JMX;
     }
 
     private Map<String, String> extractAttributeValue(AttributeList attributeList) {
@@ -176,10 +178,6 @@ public class JmxCollectImpl extends AbstractCollect {
         conn = JMXConnectorFactory.connect(jmxServiceUrl, environment);
         CommonCache.getInstance().addCache(identifier, new JmxConnect(conn));
         return conn;
-    }
-
-    private static class Singleton {
-        private static final JmxCollectImpl INSTANCE = new JmxCollectImpl();
     }
 
 }
