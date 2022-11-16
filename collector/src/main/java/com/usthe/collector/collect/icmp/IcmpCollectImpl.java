@@ -18,6 +18,7 @@
 package com.usthe.collector.collect.icmp;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.IcmpProtocol;
@@ -37,12 +38,7 @@ import java.net.UnknownHostException;
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {
 
-    private IcmpCollectImpl(){}
-
-    public static IcmpCollectImpl getInstance() {
-        return IcmpCollectImpl.Singleton.INSTANCE;
-    }
-
+    public IcmpCollectImpl(){}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -97,7 +93,9 @@ public class IcmpCollectImpl extends AbstractCollect {
 
     }
 
-    private static class Singleton {
-        private static final IcmpCollectImpl INSTANCE = new IcmpCollectImpl();
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_ICMP;
     }
+
 }

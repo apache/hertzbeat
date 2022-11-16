@@ -88,10 +88,6 @@ public class HttpCollectImpl extends AbstractCollect {
 
     public HttpCollectImpl() {}
 
-    public static HttpCollectImpl getInstance() {
-        return Singleton.INSTANCE;
-    }
-
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
@@ -182,6 +178,11 @@ public class HttpCollectImpl extends AbstractCollect {
                 request.abort();
             }
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_HTTP;
     }
 
     private void validateParams(Metrics metrics) throws Exception {
@@ -521,9 +522,5 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
-    }
-
-    private static class Singleton {
-        private static final HttpCollectImpl INSTANCE = new HttpCollectImpl();
     }
 }
