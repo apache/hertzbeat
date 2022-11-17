@@ -260,3 +260,61 @@ metrics:
       timeout: ^_^timeout^_^
       script: df -m | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
       parseType: multiRow
+
+  - name: top_cpu_process
+    priority: 6
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: pid
+        type: 1
+        instance: true
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+      - field: mem_usage
+        type: 0
+        unit: '%'
+      - field: command
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: ps -aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow
+
+  - name: top_mem_process
+    priority: 7
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: pid
+        type: 1
+        instance: true
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+      - field: mem_usage
+        type: 0
+        unit: '%'
+      - field: command
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: ps -aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow
