@@ -226,12 +226,6 @@ public class Metrics {
     }
 
     /**
-     * Monitoring configuration information using the public k8s protocol
-     * 使用公共的 k8s 协议的监控配置信息
-     */
-    private K8sProtocol k8s;
-
-    /**
      * Monitoring configuration information using the public service protocol
      * 使用公共的 微服务 协议的监控配置信息
      */
