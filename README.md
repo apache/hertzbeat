@@ -186,7 +186,8 @@ HertzBeat is an incubation project of [Dromara Open Source Community](https://dr
 
 ##### Friends   
 
-- [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能     
+- [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
+- [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 
 
 ##### Sponsor     
