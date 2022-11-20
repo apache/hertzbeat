@@ -68,14 +68,14 @@ public class JsonPathParseResponse implements AbstractParseResponse {
             return "parseScript".equals(childParam.getKey());
         }).findFirst().get();
         List<String> parseScript = (List<String>)configmap.getValue();
-        List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(GsonUtil.toJson(resp), service.getMetaData());
+        List<Object> results = JsonPathParser.parseContentWithJsonPath(GsonUtil.toJson(resp), service.getMetaData());
         for (Object stringMap : results) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             ServicePodModel model = new ServicePodModel();
             for (int i = 0; i < aliasFields.size(); i++) {
                 String script = parseScript.get(i);
                 String field = aliasFields.get(i);
-                List<Map<String, Object>> list = null;
+                List<Object> list = null;
                 Object value = null;
                 String[] split = script.split("-->");
                 switch (split[0]) {
@@ -88,7 +88,7 @@ public class JsonPathParseResponse implements AbstractParseResponse {
                         break;
                     case DispatchConstants.PARSE_GROUP:
                         try {
-                            List<Map<String, Object>> maps = JsonPathParser.parseContentWithJsonPath(GsonUtil.toJson(results), split[1]);
+                            List<Object> maps = JsonPathParser.parseContentWithJsonPath(GsonUtil.toJson(results), split[1]);
                             value = maps.size();
                         } catch (Exception e) {
                             log.error("parse error！error detail:{}", e.getMessage());

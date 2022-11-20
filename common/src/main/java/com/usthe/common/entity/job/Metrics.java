@@ -68,6 +68,11 @@ public class Metrics {
      */
     private Byte priority;
     /**
+     * Is it visible true or false
+     * if false, web ui will not see this metrics.
+     */
+    private boolean visible = true;
+    /**
      * Public attribute - collection and monitoring final result attribute set eg: speed | times | size
      * 公共属性-采集监控的最终结果属性集合 eg: speed | times | size
      */
