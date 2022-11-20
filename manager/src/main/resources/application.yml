@@ -35,6 +35,13 @@ spring:
     suffix: .html
     mode: HTML
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+    enabled-by-default: on
+
 sureness:
   auths:
     - digest

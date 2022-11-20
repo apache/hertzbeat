@@ -442,7 +442,9 @@ public class MonitorServiceImpl implements MonitorService {
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
             Job job = appService.getAppDefine(monitor.getApp());
-            List<String> metrics = job.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList());
+            List<String> metrics = job.getMetrics().stream()
+                    .filter(Metrics::isVisible)
+                    .map(Metrics::getName).collect(Collectors.toList());
             monitorDto.setMetrics(metrics);
             return monitorDto;
         } else {

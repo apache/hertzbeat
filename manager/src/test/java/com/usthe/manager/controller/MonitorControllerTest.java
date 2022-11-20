@@ -169,7 +169,7 @@ class MonitorControllerTest {
     void addNewMonitorOptionalMetrics() throws Exception {
         MonitorDto monitorDto = DataTest();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/OptionalMetrics")
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/optional")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(GsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())

@@ -25,7 +25,6 @@ import com.usthe.common.util.GsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -379,5 +378,11 @@ public class CollectUtil {
             }
         }
         return jsonElement;
+    }
+
+    public static String replaceUriSpecialChar(String uri) {
+        uri = uri.replaceAll(" ", "%20");
+        // todo more special
+        return uri;
     }
 }

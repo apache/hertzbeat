@@ -200,7 +200,7 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 ##### 友情链接   
 
 - [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
-- [Jpom](https://gitee.com/dromara/Jpom)：简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件。 
+- [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件   
 
 ##### 赞助     
 - Eoapi[开源 API 管理工具 ](https://github.com/eolinker/eoapi) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
