@@ -34,6 +34,10 @@ public interface CollectorConstants {
 
     String URL = "url";
 
+    String HTTP_HEADER = "http://";
+
+    String HTTPS_HEADER = "https://";
+
     /**
      * POSTGRESQL状态码 不可达
      */

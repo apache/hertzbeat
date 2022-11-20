@@ -116,7 +116,7 @@ public class MonitorController {
         return ResponseEntity.ok(new Message<>("Detect success."));
     }
 
-    @PostMapping("/OptionalMetrics")
+    @PostMapping("/optional")
     @Operation(summary = "Add a monitor that can select metrics",description = "新增一个可选指标的监控器")
     public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto){
         monitorService.validate(monitorDto, false);
@@ -129,7 +129,8 @@ public class MonitorController {
 
     @GetMapping(value = {"/metric/{app}","/metric"})
     @Operation(summary = "get app metric", description = "根据app名称获取该app可监控指标，不传为获取全部指标")
-    public ResponseEntity<Message<List>> getMonitorMetrics(@PathVariable(value = "app",required = false) String app) {
+    public ResponseEntity<Message<List<String>>> getMonitorMetrics(
+            @PathVariable(value = "app",required = false) String app) {
         List<String> metricNames = monitorService.getMonitorMetrics(app);
         return ResponseEntity.ok(new Message<>(metricNames));
     }

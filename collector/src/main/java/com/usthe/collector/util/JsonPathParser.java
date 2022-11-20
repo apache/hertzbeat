@@ -46,7 +46,7 @@ public class JsonPathParser {
      * @param jsonPath jsonPath脚本
      * @return 解析后的内容 [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
-    public static List<Map<String, Object>> parseContentWithJsonPath(String content, String jsonPath) {
+    public static List<Object> parseContentWithJsonPath(String content, String jsonPath) {
         if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
             return Collections.emptyList();
         }

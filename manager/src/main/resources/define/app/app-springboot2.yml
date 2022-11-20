@@ -1,0 +1,208 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: service
+app: springboot2
+name:
+  zh-CN: SpringBoot2.0
+  en-US: SpringBoot2.0
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: ssl
+    type: 1
+metrics:
+  - name: health
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: status
+        type: 1
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/health
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+
+  - name: enviroment
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: profile
+        type: 1
+      - field: port
+        type: 0
+      - field: os
+        type: 1
+      - field: os_arch
+        type: 1
+      - field: jdk_vendor
+        type: 1
+      - field: jvm_version
+        type: 1
+    aliasFields:
+      - $.activeProfiles[0]
+      - $.propertySources[?(@.name=='server.ports')].properties.*.value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
+    calculates:
+      - profile=#`$.activeProfiles[0]`
+      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
+      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
+      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
+      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
+      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/env
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: thread_state
+    visible: false
+    priority: 2
+    fields:
+      - field: state
+        type: 1
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/metrics/jvm.threads.states
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
+
+  - name: threads
+    priority: 3
+    fields:
+      - field: state
+        type: 1
+      - field: number
+        type: 0
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - state='^o^state^o^'
+      - number=#`$.measurements[?(@.statistic == "VALUE")].value`
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: space_name
+    visible: true
+    priority: 4
+    fields:
+      - field: id
+        type: 1
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/metrics/jvm.memory.used
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
+
+  - name: memory_used
+    priority: 5
+    fields:
+      - field: space
+        type: 1
+      - field: mem_used
+        type: 0
+        unit: MB
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - space="^o^id^o^"
+      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+    units:
+      - mem_used=B->MB
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$'

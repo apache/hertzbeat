@@ -284,17 +284,13 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                     try {
-                        // A | B的表达式, A和B都的value都为null, 防止打印异常
-                        List<Object> valueList = fieldValueMap.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
-                        Object objValue = null;
-                        if (!valueList.isEmpty()) {
-                            objValue = expression.execute(fieldValueMap);
-                        }
+                        // valueList为空时也执行,涵盖纯字符串赋值表达式
+                        Object objValue = expression.execute(fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
                     } catch (Exception e) {
-                        log.warn(e.getMessage());
+                        log.info("[calculates execute warning] {}.",  e.getMessage());
                     }
                 } else {
                     // does not exist then map the alias value
