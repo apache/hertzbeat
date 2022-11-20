@@ -1,8 +1,25 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 category: cn
 app: kubernetes
 name:
   zh-CN: Kubernetes
   en-US: Kubernetes
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
 configmap:
   - key: host
     type: 1
@@ -11,80 +28,176 @@ configmap:
   - key: token
     type: 1
 # 指标组列表
-# metrics.name是枚举值，包括 node、namespace、pod 3种
-# metrics.name.fields中，field字段的指有约束，需要填写既定的指标值
 metrics:
-  - name: node
+  - name: nodes
     priority: 0
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: node_name
-        type: 1
-      - field: labels
         type: 1
       - field: is_ready
         type: 1
       - field: capacity_cpu
-        type: 1
+        type: 0
       - field: allocatable_cpu
-        type: 1
+        type: 0
       - field: capacity_memory
-        type: 1
+        type: 0
+        unit: Mi
       - field: allocatable_memory
+        type: 0
+        unit: Mi
+      - field: creation_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.status.conditions[?(@.type=='Ready')].status
+      - $.status.capacity.cpu
+      - $.status.capacity.memory
+      - $.status.allocatable.cpu
+      - $.status.allocatable.memory
+      - $.metadata.creationTimestamp
+    calculates:
+      - node_name=$.metadata.name
+      - is_ready=$.status.conditions[?(@.type=='Ready')].status
+      - capacity_cpu=$.status.capacity.cpu
+      - allocatable_cpu=$.status.allocatable.cpu
+      - capacity_memory=$.status.capacity.memory
+      - allocatable_memory=$.status.allocatable.memory
+      - creation_time=$.metadata.creationTimestamp
+    units:
+      - capacity_memory=Ki->Mi
+      - allocatable_memory=Ki->Mi
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/nodes
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
+
+  - name: namespaces
+    priority: 1
+    fields:
+      - field: namespace
+        type: 1
+      - field: status
         type: 1
       - field: creation_time
         type: 1
-    protocol: k8s
-    k8s:
+    aliasFields:
+      - $.metadata.name
+      - $.status.phase
+      - $.metadata.creationTimestamp
+    calculates:
+      - namespace=$.metadata.name
+      - status=$.status.phase
+      - creation_time=$.metadata.creationTimestamp
+    protocol: http
+    http:
       host: ^_^host^_^
       port: ^_^port^_^
-      token: ^_^token^_^
-      type: node
+      url: /api/v1/namespaces
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
 
-  - name: namespace
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+  - name: pods
     priority: 1
-    # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: namespace_name
+      - field: pod
         type: 1
-      - field: labels
+      - field: namespace
         type: 1
-      - field: creation_time
-        type: 1
-    protocol: k8s
-    k8s:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      token: ^_^token^_^
-      type: namespcace
-
-  - name: pod
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
-    priority: 1
-    # 指标组中的具体监控指标
-    fields:
-    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: pod_name
-        type: 1
-      - field: labels
-        type: 1
-      - field: namespace_name
-        type: 1
-      - field: pod_status
-        type: 1
-      - field: images
+      - field: status
         type: 1
       - field: restart
         type: 1
+      - field: host_ip
+        type: 1
+      - field: pod_ip
+        type: 1
       - field: creation_time
         type: 1
-    protocol: k8s
-    k8s:
+      - field: start_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.metadata.namespace
+      - $.status.phase
+      - $.spec.restartPolicy
+      - $.status.hostIP
+      - $.status.podIP
+      - $.metadata.creationTimestamp
+      - $.status.startTime
+    calculates:
+      - pod=$.metadata.name
+      - namespace=$.metadata.namespace
+      - status=$.status.phase
+      - restart=$.spec.restartPolicy
+      - host_ip=$.status.hostIP
+      - pod_ip=$.status.podIP
+      - creation_time=$.metadata.creationTimestamp
+      - start_time=$.status.startTime
+    protocol: http
+    http:
       host: ^_^host^_^
       port: ^_^port^_^
-      token: ^_^token^_^
-      type: pod
+      url: /api/v1/pods
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
+
+  - name: services
+    priority: 1
+    fields:
+      - field: service
+        type: 1
+      - field: namespace
+        type: 1
+      - field: type
+        type: 1
+      - field: cluster_ip
+        type: 1
+      - field: selector
+        type: 1
+      - field: creation_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.metadata.namespace
+      - $.spec.type
+      - $.spec.clusterIP
+      - $.spec.selector
+      - $.metadata.creationTimestamp
+    calculates:
+      - service=$.metadata.name
+      - namespace=$.metadata.namespace
+      - type=$.spec.type
+      - cluster_ip=$.spec.clusterIP
+      - selector=$.spec.selector
+      - creation_time=$.metadata.creationTimestamp
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/services
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
