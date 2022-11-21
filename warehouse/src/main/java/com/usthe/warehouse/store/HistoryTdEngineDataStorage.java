@@ -26,10 +26,10 @@ import com.usthe.warehouse.WarehouseWorkerPool;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,12 +46,13 @@ import java.util.regex.Pattern;
  * @author tom
  * @date 2021/11/24 18:23
  */
+@Primary
 @Configuration
 @AutoConfigureAfter(value = {WarehouseProperties.class})
 @ConditionalOnProperty(prefix = "warehouse.store.td-engine",
-        name = "enabled", havingValue = "true", matchIfMissing = true)
+        name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class TdEngineDataStorage implements DisposableBean {
+public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO %s USING %s TAGS (%s) VALUES %s";
@@ -70,22 +71,18 @@ public class TdEngineDataStorage implements DisposableBean {
             = "Table does not exist";
 
     private HikariDataSource hikariDataSource;
-    private WarehouseWorkerPool workerPool;
-    private CommonDataQueue commonDataQueue;
-    private boolean serverAvailable;
-    private int tableStrColumnDefineMaxLength;
+    private final int tableStrColumnDefineMaxLength;
 
-    public TdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
-                               CommonDataQueue commonDataQueue) {
-        this.workerPool = workerPool;
-        this.commonDataQueue = commonDataQueue;
+    public HistoryTdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
+                                      CommonDataQueue commonDataQueue) {
+        super(workerPool, properties, commonDataQueue);
         if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
         tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
         serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
-        startStorageData(serverAvailable);
+        this.startStorageData("warehouse-tdengine-data-storage", serverAvailable);
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
@@ -119,28 +116,7 @@ public class TdEngineDataStorage implements DisposableBean {
         return true;
     }
 
-    private void startStorageData(boolean consume) {
-        Runnable runnable = () -> {
-            Thread.currentThread().setName("warehouse-tdEngine-data-storage");
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
-                    if (consume && metricsData != null) {
-                        saveData(metricsData);
-                    }
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-            }
-        };
-        workerPool.executeJob(runnable);
-        workerPool.executeJob(runnable);
-    }
-
-    public boolean isServerAvailable() {
-        return serverAvailable;
-    }
-
+    @Override
     public void saveData(CollectRep.MetricsData metricsData) {
         if (metricsData == null || metricsData.getValuesList().isEmpty() || metricsData.getFieldsList().isEmpty()) {
             return;
@@ -264,6 +240,7 @@ public class TdEngineDataStorage implements DisposableBean {
      * @param history 历史范围
      * @return 指标历史数据列表
      */
+    @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
@@ -312,8 +289,9 @@ public class TdEngineDataStorage implements DisposableBean {
         return instanceValuesMap;
     }
 
+    @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                    String metric, String instance, String history) {
+                                                                 String metric, String instance, String history) {
         if (!serverAvailable) {
             log.error("\n\t---------------TdEngine Init Failed---------------\n" +
                     "\t--------------Please Config Tdengine--------------\n" +
@@ -369,13 +347,13 @@ public class TdEngineDataStorage implements DisposableBean {
                 while (resultSet.next()) {
                     Timestamp ts = resultSet.getTimestamp(1);
                     double origin = resultSet.getDouble(2);
-                    String originStr = new BigDecimal(origin).stripTrailingZeros().toPlainString();
+                    String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double avg = resultSet.getDouble(3);
-                    String avgStr = new BigDecimal(avg).stripTrailingZeros().toPlainString();
+                    String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double min = resultSet.getDouble(4);
-                    String minStr = new BigDecimal(min).stripTrailingZeros().toPlainString();
+                    String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     double max = resultSet.getDouble(5);
-                    String maxStr = new BigDecimal(max).stripTrailingZeros().toPlainString();
+                    String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                     Value value = Value.builder()
                             .origin(originStr).mean(avgStr)
                             .min(minStr).max(maxStr)

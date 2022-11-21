@@ -35,6 +35,18 @@ warehouse:
          url: jdbc:TAOS-RS://localhost:6041/hertzbeat
          username: root
          password: taosdata
+      iot-db:
+         enabled: false
+         host: 127.0.0.1
+         rpc-port: 6667
+         username: root
+         password: root
+         # org.apache.iotdb.session.util.Version: V_O_12 || V_0_13
+         version: V_0_13
+         # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
+         query-timeout-in-ms: -1
+         # default '7776000000'（90days,unit:ms,-1:no-expire）
+         expire-time: '7776000000'
          
 spring:
    mail:
@@ -183,31 +195,39 @@ $ docker run -d -p 1157:1157 \
 
 **HAVE FUN**   
 
-### Docker Deployment common issues   
+### FAQ  
 
-1. **MYSQL, TDENGINE and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
+**The most common problem is network problems, please check in advance**
+
+1. **MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
 The problems lies in Docker container failed to visit and connect localhost port. Beacuse the docker default network mode is Bridge mode which can't access loacl machine through localhost.
 > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
 2. **According to the process deploy，visit http://ip:1157/ no interface**   
 Please refer to the following points to troubleshoot issues：  
-> one：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
-> three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
+> 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+> 3：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
 3. **Log an error TDengine connection or insert SQL failed**  
-> one：Check whether database account and password configured is correct, the database is created.   
-> two：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.  
+> 1：Check whether database account and password configured is correct, the database is created.   
+> 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.  
 
 4. **Historical monitoring charts have been missing data for a long time**  
-> one：Check whether you configure Tdengine. No configuration means no historical chart data.  
-> two：Check whether Tdengine database `hertzbeat` is created. 
-> three: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+> 1：Check whether you configure Tdengine or IoTDB. No configuration means no historical chart data.  
+> 2：Check whether Tdengine database `hertzbeat` is created. 
+> 3: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 
-5. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
-> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
-> Installation and initialization this database refer to [TDengine Installation and Initialization](tdengine-init).  
+5. If the history chart on the monitoring page is not displayed，popup [please configure time series database]
+> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - IoTDB or TDengine database.
+> Installation and initialization this database refer to [TDengine Installation](tdengine-init) or [IoTDB Installation](iotdb-init)  
 
 6. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed  
 > Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  
+
+7. The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]
+> Please check if the configuration parameters are correct
+> Is iot-db or td-engine enable set to true
+> Note⚠️If both hertzbeat and IotDB, TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
+> You can check the startup logs according to the logs directory

@@ -73,7 +73,7 @@ export class MonitorDetailComponent implements OnInit {
   initMetricChart() {
     // 检测历史数据服务是否可用
     const detectStatus$ = this.monitorSvc
-      .getWarehouseStorageServerStatus('tdengine')
+      .getWarehouseStorageServerStatus()
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
@@ -95,9 +95,9 @@ export class MonitorDetailComponent implements OnInit {
           if (message.code === 0 && message.data != undefined) {
             this.chartMetrics = [];
             let metrics = message.data.metrics;
-            metrics.forEach((metric: { name: any; fields: any }) => {
+            metrics.forEach((metric: { name: any; fields: any; visible: boolean }) => {
               let fields = metric.fields;
-              if (fields != undefined) {
+              if (fields != undefined && metric.visible) {
                 fields.forEach((field: { type: number; field: any; unit: any }) => {
                   if (field.type == 0) {
                     this.chartMetrics.push({
@@ -114,7 +114,7 @@ export class MonitorDetailComponent implements OnInit {
           }
         },
         error => {
-          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.tdengine.unavailable'), error);
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.time-series.unavailable'), error);
         }
       );
   }

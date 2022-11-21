@@ -177,8 +177,8 @@ public interface MonitorService {
 
     /**
      * 根据App名称获取可监控指标，不传为获取全部指标
-     * @param app
-     * @return
+     * @param app app name
+     * @return metrics
      */
     List<String> getMonitorMetrics(String app);
 

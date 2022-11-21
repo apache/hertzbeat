@@ -17,6 +17,7 @@
 
 package com.usthe.manager.service.impl;
 
+import com.usthe.alert.calculate.CalculateAlarm;
 import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
@@ -80,6 +81,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+
+    @Autowired
+    private CalculateAlarm calculateAlarm;
 
     @Override
     @Transactional(readOnly = true)
@@ -390,6 +394,7 @@ public class MonitorServiceImpl implements MonitorService {
             // Update the collection task after the storage is completed
             // 入库完成后更新采集任务
             collectJobService.updateAsyncCollectJob(appDefine);
+            calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new MonitorDatabaseException(e.getMessage());
@@ -406,6 +411,7 @@ public class MonitorServiceImpl implements MonitorService {
             paramDao.deleteParamsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+            calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
         }
     }
 
@@ -420,6 +426,7 @@ public class MonitorServiceImpl implements MonitorService {
                     .map(Monitor::getId).collect(Collectors.toList()));
             for (Monitor monitor : monitors) {
                 collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }
         }
     }
@@ -435,7 +442,9 @@ public class MonitorServiceImpl implements MonitorService {
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
             Job job = appService.getAppDefine(monitor.getApp());
-            List<String> metrics = job.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList());
+            List<String> metrics = job.getMetrics().stream()
+                    .filter(Metrics::isVisible)
+                    .map(Metrics::getName).collect(Collectors.toList());
             monitorDto.setMetrics(metrics);
             return monitorDto;
         } else {
@@ -493,6 +502,7 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setConfigmap(configmaps);
                 // Issue collection tasks       下发采集任务
                 collectJobService.addAsyncCollectJob(appDefine);
+                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }
         }
     }

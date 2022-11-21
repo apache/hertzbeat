@@ -213,7 +213,7 @@ metrics:
 ### 将`token`作为变量参数给后面的指标组采集使用   
 
 **在`app-hertzbeat.yml`新增一个指标组定义 `summary` 同教程一中的`summary`相同, 设置采集优先级为1**
-**设置此指标组的HTTP协议配置中认证方式为 `Bearer Token` 将上一个指标组`auth`采集的指标`token`作为参数给其赋值，使用`-_-`作为内部替换符标识，即`-_-token-_-`。如下:**
+**设置此指标组的HTTP协议配置中认证方式为 `Bearer Token` 将上一个指标组`auth`采集的指标`token`作为参数给其赋值，使用`^o^`作为内部替换符标识，即`^o^token^o^`。如下:**
 
 ```yaml
   - name: summary
@@ -223,7 +223,7 @@ metrics:
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: Bearer Token
-        bearerTokenToken: -_-token-_-
+        bearerTokenToken: ^o^token^o^
 ```
 
 **最终`app-hertzbeat.yml`定义如下:**   
@@ -329,7 +329,7 @@ metrics:
       authorization:
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: Bearer Token
-        bearerTokenToken: -_-token-_-
+        bearerTokenToken: ^o^token^o^
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       parseType: jsonPath
       parseScript: '$.data.apps.*'

@@ -27,7 +27,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -46,44 +45,26 @@ import java.time.temporal.ChronoUnit;
 @ConditionalOnProperty(prefix = "warehouse.store.redis",
         name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class RedisDataStorage implements DisposableBean {
+public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
 
     private RedisClient redisClient;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
-    private WarehouseWorkerPool workerPool;
-    private CommonDataQueue commonDataQueue;
 
-    public RedisDataStorage (WarehouseProperties properties, WarehouseWorkerPool workerPool,
-                             CommonDataQueue commonDataQueue) {
-        this.workerPool = workerPool;
-        this.commonDataQueue = commonDataQueue;
+    public RealTimeRedisDataStorage(WarehouseProperties properties, WarehouseWorkerPool workerPool,
+                                    CommonDataQueue commonDataQueue) {
+        super(workerPool, commonDataQueue);
         initRedisClient(properties);
-        startStorageData();
+        startStorageData("warehouse-redis-data-storage");
     }
 
+    @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
         RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
         return commands.hget(String.valueOf(monitorId), metric);
     }
 
-    private void startStorageData() {
-        Runnable runnable = () -> {
-            Thread.currentThread().setName("warehouse-redis-data-storage");
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
-                    if (metricsData != null) {
-                        saveData(metricsData);
-                    }
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-            }
-        };
-        workerPool.executeJob(runnable);
-    }
-
-    private void saveData(CollectRep.MetricsData metricsData) {
+    @Override
+    public void saveData(CollectRep.MetricsData metricsData) {
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
         if (metricsData.getValuesList().isEmpty()) {
@@ -118,7 +99,7 @@ public class RedisDataStorage implements DisposableBean {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         if (connection != null) {
             connection.close();
         }

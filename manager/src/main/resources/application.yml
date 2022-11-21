@@ -35,11 +35,23 @@ spring:
     suffix: .html
     mode: HTML
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+    enabled-by-default: on
+
 sureness:
   auths:
     - digest
     - basic
     - jwt
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 
 ---
 spring:
@@ -87,6 +99,27 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
+    iot-db:
+      enabled: false
+      host: 127.0.0.1
+      rpc-port: 6667
+      username: root
+      password: root
+      # org.apache.iotdb.session.util.Version: V_O_12 || V_0_13
+      version: V_0_13
+      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
+      query-timeout-in-ms: -1
+      # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
+      # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
+      expire-time: '7776000000'
+    memory:
+      enabled: true
+      init-size: 1024
+    redis:
+      enabled: false
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
 
 alerter:
   # custom console url

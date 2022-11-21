@@ -13,6 +13,7 @@
       "db": "数据库监控",
       "os": "操作系统监控",
       "mid": "中间件监控",
+      "cn": "云原生监控",
       "custom": "自定义监控"
     },
     "account": {
@@ -227,7 +228,7 @@
   "monitors.detail.history": "监控历史图表详情",
   "monitors.collect.time": "采集时间",
   "monitors.collect.time.tip": "最近采集时间",
-  "monitors.detail.tdengine.unavailable": "无法提供历史图表数据，请配置依赖服务TDengine时序数据库",
+  "monitors.detail.time-series.unavailable": "无法提供历史图表数据，请配置时序数据库",
   "monitors.detail.chart.zoom": "区域缩放",
   "monitors.detail.chart.back": "缩放还原",
   "monitors.detail.chart.save": "保存图片",

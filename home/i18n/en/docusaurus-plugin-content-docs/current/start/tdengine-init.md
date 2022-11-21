@@ -3,6 +3,9 @@ id: tdengine-init
 title: Dependency Service TDengine Installation and Initialization        
 sidebar_label: TDengine Init(optional)    
 ---
+
+HertzBeat's historical data storage depends on the time series database TDengine or IoTDB, you can choose one of them to initialize, or not to install (note ⚠️If you don't install it, there will be no historical chart data).
+
 TDengine is a time series database. We use TDengine to replace the InfluxDb, to store the history data collected monitoring Metrics.
 Note⚠️ TDengine is optional. And no configuration means no historical chart data. 
 Note⚠️ Need TDengine 2.4.x Version.   
@@ -71,10 +74,19 @@ Note⚠️ Need TDengine 2.4.x Version.
 
 ```
 
-###   Common issues  
+### FAQ
 
-1. If the history chart on the monitoring page is not displayed，popup [unable to provide historical chart data, please configure dependency service on TDengine time series database]
-> As shown in the popup window，the premise of history chart display is that you need install and configure HertzBeat's dependency service - TDengine database.
+1. Do both the time series databases IoTDB and TDengine need to be configured? Can they both be used?
+> You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
 
-2. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed     
+2. The historical chart of the monitoring page is not displayed, and pops up [Unable to provide historical chart data, please configure to rely on the time series database]
+> As shown in the pop-up window, the premise of displaying the history chart is to install and configure the dependent services of hertzbeat - IotDB database or TDengine database
+
+3. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed     
 > Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  
+
+4. The TDengine database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure the dependent time series database]
+> Please check if the configuration parameters are correct  
+> Is td-engine enable set to true  
+> Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+> You can check the startup logs according to the logs directory  

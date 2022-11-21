@@ -18,6 +18,7 @@
 package com.usthe.collector.collect.snmp;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
@@ -37,7 +38,9 @@ import org.snmp4j.fluent.TargetBuilder;
 import org.snmp4j.security.SecurityModel;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -57,11 +60,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                     "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }" +
                     "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
-    private SnmpCollectImpl() {
-    }
+    private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 
-    public static SnmpCollectImpl getInstance() {
-        return SnmpCollectImpl.Singleton.INSTANCE;
+    public SnmpCollectImpl() {
     }
 
     @Override
@@ -80,15 +81,7 @@ public class SnmpCollectImpl extends AbstractCollect {
         int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
         try {
             SnmpBuilder snmpBuilder = new SnmpBuilder();
-            Snmp snmpService;
-            if (snmpVersion == SnmpConstants.version3) {
-                snmpService = snmpBuilder.udp().v3().usm().threads(1).build();
-            } else if (snmpVersion == SnmpConstants.version1) {
-                snmpService = snmpBuilder.udp().v1().threads(1).build();
-            } else {
-                snmpService = snmpBuilder.udp().v2c().threads(1).build();
-            }
-
+            Snmp snmpService = getSnmpService(snmpVersion);
             Target<?> target;
             Address targetAddress = GenericAddress.parse(DEFAULT_PROTOCOL + ":" + snmpProtocol.getHost()
                     + "/" + snmpProtocol.getPort());
@@ -154,8 +147,17 @@ public class SnmpCollectImpl extends AbstractCollect {
         } catch (Exception e) {
             log.warn("[snmp collect] error: {}", e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            if (e.getMessage() == null) {
+                builder.setMsg(e.toString());
+            } else {
+                builder.setMsg(e.getMessage());
+            }
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_SNMP;
     }
 
     private void validateParams(Metrics metrics) throws Exception {
@@ -166,6 +168,23 @@ public class SnmpCollectImpl extends AbstractCollect {
         Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
         Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
         Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
+    }
+
+    private synchronized Snmp getSnmpService(int snmpVersion) throws IOException {
+        Snmp snmpService = versionSnmpService.get(snmpVersion);
+        if (snmpService != null) {
+            return snmpService;
+        }
+        SnmpBuilder snmpBuilder = new SnmpBuilder();
+        if (snmpVersion == SnmpConstants.version3) {
+            snmpService = snmpBuilder.udp().v3().usm().threads(4).build();
+        } else if (snmpVersion == SnmpConstants.version1) {
+            snmpService = snmpBuilder.udp().v1().threads(4).build();
+        } else {
+            snmpService = snmpBuilder.udp().v2c().threads(4).build();
+        }
+        versionSnmpService.put(snmpVersion, snmpService);
+        return snmpService;
     }
 
     private int getSnmpVersion(String snmpVersion) {
@@ -182,9 +201,5 @@ public class SnmpCollectImpl extends AbstractCollect {
             return SnmpConstants.version3;
         }
         return version;
-    }
-
-    private static class Singleton {
-        private static final SnmpCollectImpl INSTANCE = new SnmpCollectImpl();
     }
 }

@@ -95,7 +95,7 @@ export const dromaraFriends = [
     img: 'jpom_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/jpom.png',
     alt: 'jpom',
-    url: 'https://jpom.io/',
+    url: 'https://jpom.top/',
   },
   {
     img: 'fast_request_logo.gif',
@@ -119,7 +119,7 @@ export const dromaraFriends = [
     img: 'satoken_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/sa-token.png',
     alt: 'Sa-Token',
-    url: 'http://sa-token.dev33.cn/',
+    url: 'https://sa-token.cc/',
   },
   {
     img: 'koalas_rpc_logo.png',
@@ -179,7 +179,7 @@ export const dromaraFriends = [
     img: 'northstar_logo.png',
     remoteImg: 'https://plus.hutool.cn/images/dromara/northstar_logo.png',
     alt: 'northstar',
-    url: 'https://gitee.com/dromara/northstar',
+    url: 'https://www.quantit.tech',
   },
   {
     img: 'mendmix_logo.png',
