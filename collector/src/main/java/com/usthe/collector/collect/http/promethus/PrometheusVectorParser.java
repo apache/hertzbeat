@@ -24,7 +24,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
     public Boolean checkType(String responseStr) {
         try {
             PromVectorOrMatrix promVectorOrMatrix = GsonUtil.fromJson(responseStr, PromVectorOrMatrix.class);
-            if (DispatchConstants.PARSE_PROMETHEUS_VECTOR.equals(promVectorOrMatrix.getData().getResultType())) {
+            if (DispatchConstants.PARSE_PROM_QL_VECTOR.equals(promVectorOrMatrix.getData().getResultType())) {
                 return true;
             }
             return false;
