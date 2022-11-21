@@ -1,0 +1,229 @@
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
+category: custom
+# 监控应用类型名称(与文件名保持一致)
+app: influxdb-promql
+name:
+  zh-CN: InfluxDB-PromQL
+  en-US: InfluxDB-PromQL
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: uri
+    type: 1
+  - key: method
+    type: 1
+  - key: ssl
+    type: 1
+  - key: username
+    type: 1
+  - key: password
+    type: 2
+  - key: contentType
+    type: 1
+  - key: payload
+    type: 1
+  - key: authType
+    type: 1
+  - key: headers
+    type: 3
+  - key: params
+    type: 3
+# 指标组列表
+metrics:
+  # 第一个监控指标组 cpu
+  # 注意：内置监控指标有 (responseTime - 响应时间)
+  - name: basic_influxdb_memstats_alloc
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: instance
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+# 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        ^_^params^_^: ^_^params^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
+
+  - name: influxdb_database_numMeasurements
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: job
+        type: 1
+      - field: instance
+        type: 1
+      - field: database
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: influxdb_database_numMeasurements
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
+
+  - name: influxdb_query_rate_seconds    #每秒查询率
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: instance
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: irate(influxdb_queryExecutor_queriesFinished[5m])
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
+
+  - name: influxdb_queryExecutor_queriesFinished_10s    #每秒查询率
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: instance
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: influxdb_queryExecutor_queriesFinished[10s]
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
