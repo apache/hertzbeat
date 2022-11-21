@@ -126,8 +126,8 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
-                        parseResponseByPrometheus(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                    } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
+                        parseResponseByPromQL(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
@@ -358,8 +358,8 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseByPrometheus(String resp, List<String> aliasFields, HttpProtocol http,
-                                           CollectRep.MetricsData.Builder builder) {
+    private void parseResponseByPromQL(String resp, List<String> aliasFields, HttpProtocol http,
+                                       CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp,aliasFields,http,builder);
     }
