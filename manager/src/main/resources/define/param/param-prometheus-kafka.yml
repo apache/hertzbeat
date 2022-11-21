@@ -1,4 +1,4 @@
-app: kafka-prometheus
+app: kafka-promql
 param:
   - field: host
     name:
@@ -100,12 +100,5 @@ param:
       zh-CN: 密码
       en-US: Password
     type: password
-    required: false
-    hide: true
-  - field: keyword
-    name:
-      zh-CN: 关键字
-      en-US: Keyword
-    type: text
     required: false
     hide: true

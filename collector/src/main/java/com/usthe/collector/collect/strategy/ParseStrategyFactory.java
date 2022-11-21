@@ -7,9 +7,9 @@ import org.springframework.util.StringUtils;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 数据收集策略工厂
  * @author ：myth
  * @date ：Created 2022/7/20 16:19
- * @description： 数据收集策略工厂
  */
 public class ParseStrategyFactory {
     /**

@@ -126,7 +126,7 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_PromQL.equalsIgnoreCase(parseType)) {
+                    } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
                         parseResponseByPromQL(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
