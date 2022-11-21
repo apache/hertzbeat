@@ -20,15 +20,7 @@ package com.usthe.collector.dispatch;
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.usthe.collector.collect.AbstractCollect;
-import com.usthe.collector.collect.database.JdbcCommonCollect;
-import com.usthe.collector.collect.http.HttpCollectImpl;
-import com.usthe.collector.collect.http.SslCertificateCollectImpl;
-import com.usthe.collector.collect.icmp.IcmpCollectImpl;
-import com.usthe.collector.collect.jmx.JmxCollectImpl;
-import com.usthe.collector.collect.redis.RedisSingleCollectImpl;
-import com.usthe.collector.collect.snmp.SnmpCollectImpl;
-import com.usthe.collector.collect.ssh.SshCollectImpl;
-import com.usthe.collector.collect.telnet.TelnetCollectImpl;
+import com.usthe.collector.collect.strategy.CollectStrategyFactory;
 import com.usthe.collector.dispatch.timer.Timeout;
 import com.usthe.collector.dispatch.timer.WheelTimerTask;
 import com.usthe.collector.dispatch.unit.UnitConvert;
@@ -143,41 +135,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         response.setApp(app);
         response.setId(monitorId);
         response.setMetrics(metrics.getName());
-
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
-        AbstractCollect abstractCollect = null;
-        switch (metrics.getProtocol()) {
-            case DispatchConstants.PROTOCOL_HTTP:
-                abstractCollect = HttpCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_ICMP:
-                abstractCollect = IcmpCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_TELNET:
-                abstractCollect = TelnetCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_JDBC:
-                abstractCollect = JdbcCommonCollect.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_SSH:
-                abstractCollect = SshCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_REDIS:
-                abstractCollect = RedisSingleCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_SNMP:
-                abstractCollect = SnmpCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_JMX:
-                abstractCollect = JmxCollectImpl.getInstance();
-                break;
-            case DispatchConstants.PROTOCOL_SSL_CERT:
-                abstractCollect = SslCertificateCollectImpl.getInstance();
-                break;
-            default:
-                break;
-        }
+        AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
         if (abstractCollect == null) {
             log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
                     app, metrics.getName(), metrics.getProtocol());
@@ -324,12 +284,13 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                     try {
+                        // valueList为空时也执行,涵盖纯字符串赋值表达式
                         Object objValue = expression.execute(fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
                     } catch (Exception e) {
-                        log.warn(e.getMessage());
+                        log.info("[calculates execute warning] {}.",  e.getMessage());
                     }
                 } else {
                     // does not exist then map the alias value

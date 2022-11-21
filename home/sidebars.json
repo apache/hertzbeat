@@ -6,6 +6,7 @@
       "items": [
         "introduce",
         "start/quickstart",
+        "start/iotdb-init",
         "start/tdengine-init",
         "start/docker-deploy",
         "start/package-deploy",
@@ -71,7 +72,8 @@
             "help/mariadb",
             "help/postgresql",
             "help/sqlserver",
-            "help/oracle"
+            "help/oracle",
+            "help/dm"
           ]
         },
         {
@@ -91,6 +93,13 @@
             "help/zookeeper",
             "help/kafka",
             "help/tomcat"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "云原生",
+          "items": [
+            "help/docker"
           ]
         },
         {
@@ -120,6 +129,7 @@
       "type": "category",
       "label": "Others",
       "items": [
+        "others/developer",
         "others/contact",
         "others/design",
         "others/sponsor",

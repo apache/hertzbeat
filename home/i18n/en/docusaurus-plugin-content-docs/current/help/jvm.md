@@ -33,7 +33,7 @@ sidebar_label: JVM
 | max | kb | max size |
 | used         | kb | used size |
 
-#### Metrics Set：code_cache
+#### Metrics Set：code_cache (Only Support JDK8)
 
 | Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |

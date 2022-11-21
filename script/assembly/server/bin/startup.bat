@@ -44,6 +44,10 @@ for /f "tokens=1-5" %%i in ('netstat -ano^|findstr "0.0.0.0:%SERVER_PORT%"') do 
 
 set LOGS_DIR=%DEPLOY_DIR%\logs
 
+if not exist %LOGS_DIR% (
+    mkdir %LOGS_DIR%
+)
+
 rem JVM Configuration
 set JAVA_OPTS= -Duser.timezone=Asia/Shanghai
 

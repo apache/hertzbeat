@@ -45,7 +45,7 @@ import java.time.temporal.ChronoUnit;
 @ConditionalOnProperty(prefix = "warehouse.store.redis",
         name = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
-public class RealTimeRedisDataStorage extends RealTimeMemoryDataStorage {
+public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
 
     private RedisClient redisClient;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;

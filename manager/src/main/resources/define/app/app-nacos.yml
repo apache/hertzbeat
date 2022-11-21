@@ -1,0 +1,59 @@
+category: mid
+app: nacos
+name:
+  zh-CN: Nacos
+  en-US: Nacos
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+metrics:
+  - name: cpu
+    priority: 0
+    fields:
+      - field: system_cpu_usage
+        type: 0
+        unit: '%'
+    aliasFields:
+      - value
+    calculates:
+      - system_cpu_usage=value * 100
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /nacos/actuator/metrics/system.cpu.usage
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: $.measurements[*]
+  - name: memory
+    priority: 0
+    fields:
+      - field: jvm_memory_used
+        type: 0
+        unit: 'MB'
+    aliasFields:
+      - value
+    calculates:
+      - jvm_memory_used=value
+    units:
+      - jvm_memory_used=B->MB
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /nacos/actuator/metrics/jvm.memory.used
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: $.measurements[*]

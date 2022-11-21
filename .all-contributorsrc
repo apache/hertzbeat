@@ -5,7 +5,9 @@
   "repoHost": "https://github.com",
   "files": [
     "README.md",
-    "README_CN.md"
+    "README_CN.md",
+    "home/docs/others/developer.md",
+    "home/i18n/en/docusaurus-plugin-content-docs/current/others/developer.md"
   ],
   "imageSize": 100,
   "commit": true,
@@ -218,7 +220,8 @@
       "profile": "https://github.com/cuipiheqiuqiu",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "design"
       ]
     },
     {
@@ -322,6 +325,83 @@
       "contributions": [
         "code",
         "doc"
+      ]
+    },
+    {
+      "login": "click33",
+      "name": "click33",
+      "avatar_url": "https://avatars.githubusercontent.com/u/36243476?v=4",
+      "profile": "https://github.com/click33",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bwcx-jzy",
+      "name": "蒋小小",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16408873?v=4",
+      "profile": "https://jpom.io/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "kevinhuangwl",
+      "name": "Kevin Huang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28581579?v=4",
+      "profile": "https://www.zhihu.com/people/kevinbauer",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "TJxiaobao",
+      "name": "铁甲小宝",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85919258?v=4",
+      "profile": "https://github.com/TJxiaobao",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Jack-123-power",
+      "name": "Captain Jack",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84333501?v=4",
+      "profile": "https://github.com/Jack-123-power",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "haibo-duan",
+      "name": "haibo.duan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7974845?v=4",
+      "profile": "https://github.com/haibo-duan",
+      "contributions": [
+        "test",
+        "code"
+      ]
+    },
+    {
+      "login": "assassinfym",
+      "name": "assassin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15188754?v=4",
+      "profile": "https://github.com/assassinfym",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "csyshu",
+      "name": "Reverse wind",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46591658?v=4",
+      "profile": "https://github.com/csyshu",
+      "contributions": [
+        "test",
+        "code"
       ]
     }
   ],

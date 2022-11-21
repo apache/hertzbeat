@@ -18,6 +18,7 @@
 package com.usthe.collector.collect.http;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.HttpProtocol;
@@ -54,11 +55,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     private static final String NAME_END_TIME = "end_time";
     private static final String NAME_END_TIMESTAMP = "end_timestamp";
 
-    private SslCertificateCollectImpl() {}
-
-    public static SslCertificateCollectImpl getInstance() {
-        return Singleton.INSTANCE;
-    }
+    public SslCertificateCollectImpl() {}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
@@ -152,6 +149,11 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         }
     }
 
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_SSL_CERT;
+    }
+
     private void validateParams(Metrics metrics) throws Exception {
         if (metrics == null || metrics.getHttp() == null) {
             throw new Exception("Http/Https collect must has http params");
@@ -162,9 +164,5 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 || !httpProtocol.getUrl().startsWith("/")) {
             httpProtocol.setUrl(httpProtocol.getUrl() == null ? "/" : "/" + httpProtocol.getUrl().trim());
         }
-    }
-
-    private static class Singleton {
-        private static final SslCertificateCollectImpl INSTANCE = new SslCertificateCollectImpl();
     }
 }

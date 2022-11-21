@@ -22,6 +22,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.JdbcConnect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
@@ -53,11 +54,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
 
-    private JdbcCommonCollect(){}
-
-    public static JdbcCommonCollect getInstance() {
-        return Singleton.INSTANCE;
-    }
+    public JdbcCommonCollect(){}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -112,6 +109,11 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_JDBC;
     }
 
 
@@ -199,7 +201,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     /**
      * 查询一行数据, 通过查询的两列数据(key-value)，key和查询的字段匹配，value为查询字段的值
      * eg:
-     * 查询字段：one tow three four
+     * 查询字段：one two three four
      * 查询SQL：select key, value from book;
      * 返回的key映射查询字段
      * @param statement 执行器
@@ -299,14 +301,13 @@ public class JdbcCommonCollect extends AbstractCollect {
                 url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
                 break;
+            case "dm":
+                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" +jdbcProtocol.getPort();
+                break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
 
         }
         return url;
-    }
-
-    private static class Singleton {
-        private static final JdbcCommonCollect INSTANCE = new JdbcCommonCollect();
     }
 }

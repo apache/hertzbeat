@@ -21,6 +21,7 @@ import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.RedisConnect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
@@ -56,10 +57,6 @@ public class RedisSingleCollectImpl extends AbstractCollect {
 
     public RedisSingleCollectImpl() {
         defaultClientResources = DefaultClientResources.create();
-    }
-
-    public static RedisSingleCollectImpl getInstance() {
-        return RedisSingleCollectImpl.Singleton.INSTANCE;
     }
 
     @Override
@@ -102,6 +99,11 @@ public class RedisSingleCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_REDIS;
     }
 
     /**
@@ -191,7 +193,4 @@ public class RedisSingleCollectImpl extends AbstractCollect {
         return value.replace("\r", "");
     }
 
-    private static class Singleton {
-        private static final RedisSingleCollectImpl INSTANCE = new RedisSingleCollectImpl();
-    }
 }

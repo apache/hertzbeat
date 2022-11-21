@@ -13,6 +13,7 @@
       "db": "DB Monitor",
       "os": "OS Monitor",
       "mid": "Mid Monitor",
+      "cn": "Cloud Native",
       "custom": "Custom Monitor"
     },
     "account": {
@@ -217,7 +218,7 @@
   "monitors.detect.success": "Detect Success",
   "monitors.detect.failed": "Detect Failed",
   "monitors.detect.tip": "Detect monitor available before apply",
-  "monitors.detail.tdengine.unavailable": "Unable to provide historical chart, please configure the dependent service TDengine Database",
+  "monitors.detail.time-series.unavailable": "Unable to provide historical chart, please configure time series database",
   "monitors.detail": "Monitor Detail",
   "monitors.detail.name": "Name",
   "monitors.detail.port": "Port",
@@ -297,7 +298,7 @@
   "app.theme.default": "Light Theme",
   "app.theme.dark": "Dark Theme",
   "app.theme.compact": "Compact Theme",
-  "app.role.admin": "Administrator",
+  "app.role.admin": "administrator",
   "app.lock": "Lock",
   "app.lock.placeholder": "Enter Any To Unlock",
   "app.passport.desc": "An open-source real-time monitoring system",

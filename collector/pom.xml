@@ -49,6 +49,11 @@
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <!-- etcd -->
         <dependency>
             <groupId>io.etcd</groupId>
@@ -102,6 +107,12 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.28</version>
         </dependency>
+        <!-- dm -->
+        <dependency>
+            <groupId>com.dameng</groupId>
+            <artifactId>DmJdbcDriver18</artifactId>
+            <version>8.1.2.141</version>
+        </dependency>
         <!-- postgresql -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -141,6 +152,12 @@
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
             <version>3.6.7</version>
+        </dependency>
+        <!-- k8s client -->
+        <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java</artifactId>
+            <version>10.0.1</version>
         </dependency>
     </dependencies>
 

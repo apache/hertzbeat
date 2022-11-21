@@ -57,6 +57,7 @@ excludedResource:
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
+  - /actuator/**===get
   # web ui 前端静态资源
   - /===get
   - /dashboard/**===get

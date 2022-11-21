@@ -40,13 +40,23 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String DOUBLE_QUOTATION_MARKS = "\"";
     private static final String SPACE = " ";
     private static final String DOT = ".";
+    /**
+     * set ttl never expire
+     */
+    private static final String NEVER_EXPIRE = "-1";
 
     /**
      * storage group (存储组)
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
+    private static final String SET_TTL = "set ttl to %s %s";
+
+    private static final String CANCEL_TTL = "unset ttl to %s";
+
     private static final String SHOW_DEVICES = "SHOW DEVICES %s";
+
+    private static final String SHOW_STORAGE_GROUP = "show storage group";
 
     private static final String QUERY_HISTORY_SQL
             = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
@@ -55,8 +65,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private SessionPool sessionPool;
 
-    // Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
     /**
+     * Session有这两个字段的set方法,sessionPool暂未发现,目前存储在此类中
      * version: ioTDb version
      * <p>用来区分不同版本的ioTDb</p>
      */
@@ -96,8 +106,41 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
         this.sessionPool = builder.build();
-        log.info("IotDB session pool init success");
-        return true;
+        boolean available = checkConnection();
+        if (available) {
+            this.initTtl(properties.getExpireTime());
+            log.info("IotDB session pool init success");
+        }
+        return available;
+    }
+
+    private boolean checkConnection() {
+        try {
+            this.sessionPool.executeQueryStatement(SHOW_STORAGE_GROUP);
+            return true;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private void initTtl(String expireTime) {
+        if (expireTime == null || expireTime.isEmpty()) {
+            return;
+        }
+        try {
+            if (NEVER_EXPIRE.equals(expireTime)) {
+                // 删除原本可能已经存在的ttl
+                String cancelTtlSql = String.format(CANCEL_TTL, STORAGE_GROUP);
+                this.sessionPool.executeNonQueryStatement(cancelTtlSql);
+            } else {
+                String sstTtlSql = String.format(SET_TTL, STORAGE_GROUP, expireTime);
+                this.sessionPool.executeNonQueryStatement(sstTtlSql);
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            // 失败不影响主业务
+            log.error("IoTDB init ttl error, expireTime: {}, error: {}", expireTime, e.getMessage());
+        }
     }
 
     @Override
@@ -166,6 +209,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
+            log.error("\n\t---------------IotDb Init Failed---------------\n" +
+                    "\t--------------Please Config IotDb--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
@@ -199,15 +245,23 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistorySelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
-        log.debug("iot select sql: {}", selectSql);
-        while (dataSet.hasNext()) {
-            RowRecord rowRecord = dataSet.next();
-            long timestamp = rowRecord.getTimestamp();
-            double value = rowRecord.getFields().get(0).getDoubleV();
-            String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
-            valueList.add(new Value(strValue, timestamp));
+        SessionDataSetWrapper dataSet = null;
+        try {
+            dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
+            log.debug("iot select sql: {}", selectSql);
+            while (dataSet.hasNext()) {
+                RowRecord rowRecord = dataSet.next();
+                long timestamp = rowRecord.getTimestamp();
+                double value = rowRecord.getFields().get(0).getDoubleV();
+                String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                valueList.add(new Value(strValue, timestamp));
+            }
+        } finally {
+            if (dataSet != null) {
+                // 需要关闭结果集！！！否则会造成服务端堆积
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
     }
 
@@ -215,6 +269,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
+            log.error("\n\t---------------IotDb Init Failed---------------\n" +
+                    "\t--------------Please Config IotDb--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
@@ -249,26 +306,34 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
-        log.debug("iot select sql: {}", selectSql);
-        while (dataSet.hasNext()) {
-            RowRecord rowRecord = dataSet.next();
-            long timestamp = rowRecord.getTimestamp();
-            double origin = rowRecord.getFields().get(0).getDoubleV();
-            String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double avg = rowRecord.getFields().get(1).getDoubleV();
-            String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double min = rowRecord.getFields().get(2).getDoubleV();
-            String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            double max = rowRecord.getFields().get(3).getDoubleV();
-            String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-            Value value = Value.builder()
-                    .origin(originStr).mean(avgStr)
-                    .min(minStr).max(maxStr)
-                    .time(timestamp)
-                    .build();
-            List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
-            valueList.add(value);
+        SessionDataSetWrapper dataSet = null;
+        try {
+            dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
+            log.debug("iot select sql: {}", selectSql);
+            while (dataSet.hasNext()) {
+                RowRecord rowRecord = dataSet.next();
+                long timestamp = rowRecord.getTimestamp();
+                double origin = rowRecord.getFields().get(0).getDoubleV();
+                String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double avg = rowRecord.getFields().get(1).getDoubleV();
+                String avgStr = BigDecimal.valueOf(avg).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double min = rowRecord.getFields().get(2).getDoubleV();
+                String minStr = BigDecimal.valueOf(min).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                double max = rowRecord.getFields().get(3).getDoubleV();
+                String maxStr = BigDecimal.valueOf(max).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                Value value = Value.builder()
+                        .origin(originStr).mean(avgStr)
+                        .min(minStr).max(maxStr)
+                        .time(timestamp)
+                        .build();
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                valueList.add(value);
+            }
+        } finally {
+            if (dataSet != null) {
+                // 需要关闭结果集！！！否则会造成服务端堆积
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
     }
 

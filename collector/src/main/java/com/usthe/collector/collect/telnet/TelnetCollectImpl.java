@@ -18,6 +18,7 @@
 package com.usthe.collector.collect.telnet;
 
 import com.usthe.collector.collect.AbstractCollect;
+import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectorConstants;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.TelnetProtocol;
@@ -37,12 +38,7 @@ import java.net.ConnectException;
 @Slf4j
 public class TelnetCollectImpl extends AbstractCollect {
 
-    private TelnetCollectImpl(){}
-
-    public static TelnetCollectImpl getInstance() {
-        return TelnetCollectImpl.Singleton.INSTANCE;
-    }
-
+    public TelnetCollectImpl(){}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -104,7 +100,8 @@ public class TelnetCollectImpl extends AbstractCollect {
         }
     }
 
-    private static class Singleton {
-        private static final TelnetCollectImpl INSTANCE = new TelnetCollectImpl();
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_TELNET;
     }
 }
