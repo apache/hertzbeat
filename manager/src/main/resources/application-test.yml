@@ -38,17 +38,26 @@ spring:
           ssl:
             enable: true
         debug: false
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
+
 warehouse:
   store:
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
-      url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+      url: jdbc:TAOS-RS://127.0.0.1:6041/hertzbeat
       username: root
       password: taosdata
+    iot-db:
+      enabled: false
+      host: 127.0.0.1
+      rpc-port: 6667
+      username: root
+      password: root
+    redis:
+      enabled: false
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+    memory:
+      enabled: true
+      init-size: 1024
