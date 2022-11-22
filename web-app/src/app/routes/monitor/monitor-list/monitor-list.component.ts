@@ -83,9 +83,9 @@ export class MonitorListComponent implements OnInit {
     this.loadMonitorTable();
   }
 
-  loadMonitorTable() {
+  loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize).subscribe(
+    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -320,6 +320,9 @@ export class MonitorListComponent implements OnInit {
     const { pageSize, pageIndex, sort, filter } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.loadMonitorTable();
+    const currentSort = sort.find(item => item.value !== null);
+    const sortField = (currentSort && currentSort.key) || null;
+    const sortOrder = (currentSort && currentSort.value) || null;
+    this.loadMonitorTable(sortField, sortOrder);
   }
 }
