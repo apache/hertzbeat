@@ -67,7 +67,7 @@ public class MonitorsController {
             @Parameter(description = "en: Monitor Name,zh: 监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
             @Parameter(description = "en: Monitor Host,zh: 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
             @Parameter(description = "en: Monitor Status,zh: 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
-            @Parameter(description = "en: Sort Field,default id,zh: 排序字段，默认id", example = "name") @RequestParam(defaultValue = "id") final String sort,
+            @Parameter(description = "en: Sort Field,default id,zh: 排序字段，默认更新时间", example = "name") @RequestParam(defaultValue = "gmtUpdate") final String sort,
             @Parameter(description = "en: Sort by,zh: 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "en: List current page,zh: 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "en: Number of list pagination,zh: 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
