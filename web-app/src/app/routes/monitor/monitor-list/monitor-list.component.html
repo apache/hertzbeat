@@ -90,11 +90,11 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>{{ 'monitor.name' | i18n }}</th>
-      <th nzAlign="center">{{ 'monitor.status' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
+      <th nzAlign="center" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
       <th nzAlign="center">{{ 'monitor.host' | i18n }}</th>
       <th nzAlign="center">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
