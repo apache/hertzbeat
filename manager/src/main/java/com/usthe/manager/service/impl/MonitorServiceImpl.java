@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -389,6 +390,8 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             monitor.setJobId(preMonitor.getJobId());
             monitor.setStatus(preMonitor.getStatus());
+            // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
+            monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
             paramDao.saveAll(params);
             // Update the collection task after the storage is completed
