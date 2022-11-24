@@ -63,6 +63,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
     <td align="center"><a href="https://github.com/haibo-duan"><img src="https://avatars.githubusercontent.com/u/7974845?v=4?s=100" width="100px;" alt=""/><br /><sub><b>haibo.duan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=haibo-duan" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/assassinfym"><img src="https://avatars.githubusercontent.com/u/15188754?v=4?s=100" width="100px;" alt=""/><br /><sub><b>assassin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aassassinfym" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=assassinfym" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/csyshu"><img src="https://avatars.githubusercontent.com/u/46591658?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Reverse wind</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/luxx-lq"><img src="https://avatars.githubusercontent.com/u/58515565?v=4?s=100" width="100px;" alt=""/><br /><sub><b>luxx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luxx-lq" title="Code">💻</a></td>
   </tr>
 </table>
 
