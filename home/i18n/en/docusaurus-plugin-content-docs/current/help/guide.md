@@ -19,6 +19,9 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br /> 
 &emsp;&#x1F449;&emsp;[Port availability](port) <br /> 
 &emsp;&#x1F449;&emsp;[Full site monitoring](fullsite) <br />
+&emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
+&emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
+&emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 
 ### Database monitoring  
 
@@ -26,7 +29,9 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[MariaDB database monitoring](mariadb) <br />
 &emsp;&#x1F449;&emsp;[PostgreSQL database monitoring](postgresql) <br />
 &emsp;&#x1F449;&emsp;[SqlServer database monitoring](sqlserver) <br />
-&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />        
+&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />   
+&emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />  
+&emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
 
 ### Operating system monitoring     
 
@@ -36,7 +41,15 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[Centos operating system monitoring](centos) <br />
 
 ### Middleware monitoring
+
 &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
+&emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
+&emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
+
+### CloudNative monitoring
+
+&emsp;&#x1F449;&emsp;[Docker](docker) <br />
+&emsp;&#x1F449;&emsp;[Kubernetes](kubernetes) <br />
 
 ***
 

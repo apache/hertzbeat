@@ -403,6 +403,15 @@
         "test",
         "code"
       ]
+    },
+    {
+      "login": "luxx-lq",
+      "name": "luxx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58515565?v=4",
+      "profile": "https://github.com/luxx-lq",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
