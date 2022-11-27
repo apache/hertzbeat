@@ -3,6 +3,7 @@ package com.usthe.manager.controller;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.GsonUtil;
 import com.usthe.manager.pojo.dto.LoginDto;
+import com.usthe.sureness.util.JsonWebTokenUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,10 @@ class AccountControllerTest {
 
     @Test
     void authGetToken() throws Exception {
+        JsonWebTokenUtil.setDefaultSecretKey("dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp"
+                + "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R"
+                + "LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9"
+                + "dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp");
         LoginDto loginDto = LoginDto.builder()
                 .identifier("admin")
                 .credential("hertzbeat")
