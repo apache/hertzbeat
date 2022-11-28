@@ -33,14 +33,12 @@ import java.util.Collections;
 @Configuration
 public class SecurityCorsConfiguration {
 
-    private static final String ORIGIN_PATTERN = "http://localhost:*";
-
     @Bean
     public FilterRegistrationBean corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setAllowedOriginPatterns(Collections.singletonList(ORIGIN_PATTERN));
+        corsConfiguration.setAllowedOriginPatterns(Collections.singletonList(CorsConfiguration.ALL));
         corsConfiguration.addAllowedHeader(CorsConfiguration.ALL);
         corsConfiguration.addAllowedMethod(CorsConfiguration.ALL);
         source.registerCorsConfiguration("/**", corsConfiguration);
