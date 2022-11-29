@@ -1,18 +1,17 @@
 ---
-id: springboot2
-title: 监控：SpringBoot2.0 监控      
-sidebar_label: SpringBoot2.0 监控
+id: springboot2  
+Title: SpringBoot 2.0 monitoring      
+sidebar_label: SpringBoot 2.0 monitoring
 
 ---
 
-> 对SpringBoot2.0 actuator 暴露的通用性能指标进行采集监控。
+> Collect and monitor the general performance metrics exposed by the SpringBoot 2.0 actuator.
 
+## Pre-monitoring operations
 
-## 监控前操作
+If you want to monitor information in 'SpringBoot' with this monitoring type, you need to integrate your SpringBoot application and enable the SpringBoot Actuator.
 
-如果想要通过此监控类型监控 `SpringBoot` 中的信息，则需要您的SpringBoot应用集成并开启SpringBoot Actuator。
-
-**1、添加POM.XML依赖：**
+**1、Add POM .XML dependencies:**
 
 ```xml
 <dependency>
@@ -20,7 +19,7 @@ sidebar_label: SpringBoot2.0 监控
     <artifactId>spring-boot-starter-actuator</artifactId>
 </dependency>
 ```
-**2、修改YML配置暴露指标接口：**
+**2. Modify the YML configuration exposure metric interface:**
 
 ```yaml
 management:
@@ -31,47 +30,47 @@ management:
     enabled-by-default: on
 ```
 
-### 配置参数
+### Configure parameters
 
-| 参数名称     | 参数帮助描述                                               |
+| Parameter name | Parameter Help describes the |
 | ------------ |------------------------------------------------------|
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。                                  |
-| 端口         | 数据库对外提供的端口，默认为8080。                                  |
-| 启用HTTPS   | 是否通过HTTPS访问网站，注意⚠️开启HTTPS一般默认对应端口需要改为443  |
-| 采集间隔     | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒                       |
-| 是否探测     | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
-| 描述备注     | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
+| Monitor Host | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://). |
+| Monitoring Name | A name that identifies this monitoring that needs to be unique. |
+| Port | The default port provided by the database is 8080. |
+| Enable HTTPS | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443 |
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 10 seconds |
+| Whether to probe the | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation | will continue only if the probe is successful
+| Description Comment | For more information identifying and describing the remarks for this monitoring, users can remark the information here |
 
-### 采集指标
+### Collect metrics
 
-#### 指标集合：health
+#### metric Collection: Health
 
-| 指标名称           | 指标单位 | 指标帮助描述                         |
+| Metric Name | metric unit | Metrics help describe |
 | ------------------ | -------- |--------------------------------|
-| status             | 无       | 服务健康状态: UP,Down                |
+| status             | None | Service health: UP, Down |
 
-#### 指标集合：enviroment
+#### metric Collection: enviroment
 
-| 指标名称    | 指标单位 | 指标帮助描述                     |
+| Metric Name | metric unit | Metrics help describe |
 |---------| -------- |----------------------------|
-| profile | 无       | 应用运行profile: prod,dev,test |
-| port    | 无       | 应用暴露端口                     |
-| os      | 无       | 运行所在操作系统                   |
-| os_arch | 无       | 运行所在操作系统架构                 |
-| jdk_vendor   | 无       | jdk vendor                 |
-| jvm_version  | 无       | jvm version                |
+| profile | None | The application runs profile: prod, dev, test |
+| port    | None | Apply the exposed port |
+| os      | None | Run the operating system |
+| os_arch | None | Run the operating system architecture |
+| jdk_vendor   | None | jdk vendor                 |
+| jvm_version  | None | jvm version                |
 
-#### 指标集合：threads
+#### metric Collection: threads
 
-| 指标名称         | 指标单位 | 指标帮助描述             |
+| Metric Name | metric unit | Metrics help describe |
 | ---------------- |------|--------------------|
-| state             | 无    | 线程状态               |
-| number | 无    | 此线程状态对应的线程数量       |
+| state             | None | Thread status |
+| number | None | This thread state corresponds to | number of threads
 
-#### 指标集合：memory_used
+#### metric Collection: memory_used
 
-| 指标名称    | 指标单位 | 指标帮助描述     |
+| Metric Name | metric unit | Metrics help describe |
 |---------|------|------------|
-| space | 无    | 内存空间名称     |
-| mem_used    | MB   | 此空间占用内存大小  |
+| space | None | Memory space name |
+| mem_used    | MB   | This space occupies a memory size of |
