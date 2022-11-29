@@ -468,5 +468,20 @@
   },
   "sponsor": {
     "message": "特别赞助"
+  },
+  "support hertzbeat": {
+    "message": "支持 HertzBeat"
+  },
+  "click": {
+    "message": "点击"
+  },
+  "go github": {
+    "message": "前往 Github"
+  },
+  "If you like HertzBeat, give us a star on GitHub": {
+    "message": "如果您喜欢 HertzBeat，欢迎给 HertzBeat 一个 Star。"
+  },
+  "We will grow better with your support.": {
+    "message": "有您的支持 HertzBeat 社区会发展得更好，也是我们的最大动力。"
   }
 }
