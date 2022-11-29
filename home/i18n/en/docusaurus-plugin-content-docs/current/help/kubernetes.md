@@ -1,73 +1,71 @@
 ---
-id: kubernetes
-title: 监控：Kubernetes 监控      
-sidebar_label: Kubernetes 监控
+id: kubernetes   
+Title: Monitoring Kubernetes monitoring      
+sidebar_label: Kubernetes monitoring
 
 ---
 
-> 对kubernetes的通用性能指标进行采集监控。
+> Collect and monitor the general performance metrics of Kubernetes.
 
+## Pre-monitoring operations
 
-## 监控前操作
+If you want to monitor the information in 'Kubernetes', you need to obtain an authorization token that can access the API Server, so that the collection request can obtain the corresponding information.
 
-如果想要监控 `Kubernetes` 中的信息，则需要获取到可访问Api Server的授权TOKEN，让采集请求获取到对应的信息。
+### Configure parameters
 
-
-### 配置参数
-
-| 参数名称        | 参数帮助描述                                               |
+| Parameter name | Parameter Help describes the |
 |-------------|------------------------------------------------------|
-| 监控Host      | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称        | 标识此监控的名称，名称需要保证唯一性。                                  |
-| APiServer端口 | K8s APiServer端口，默认6443                                   |
-| token       | 授权Access Token                                       |
-| URL         | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数      |
-| 采集间隔        | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒                       |
-| 是否探测        | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
-| 描述备注        | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
+| Monitor Host | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://). |
+| Monitoring Name | A name that identifies this monitoring that needs to be unique. |
+| APiServer port | K8s APiServer port, default 6443 |
+| token       | Authorize the Access Token |
+| URL         | The database connection URL is optional, if configured, the database name, user name and password parameters in the URL will override the parameter | configured above
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 10 seconds |
+| Whether to probe the | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation | will continue only if the probe is successful
+| Description Comment | For more information identifying and describing the remarks for this monitoring, users can remark the information here |
 
-### 采集指标
+### Collect metrics
 
-#### 指标集合：nodes
+#### metric collection: nodes
 
-| 指标名称           | 指标单位 | 指标帮助描述 |
+| Metric Name | metric unit | Metrics help describe |
 | ------------------ | -------- |--------|
-| node_name               | 无       | 节点名称   |
-| is_ready            | 无       | 节点状态   |
-| capacity_cpu                 | 无       | CPU容量  |
-| allocatable_cpu           | 无       | 已分配CPU |
-| capacity_memory         | 无       | 内存容量   |
-| allocatable_memory | 无       | 已分配内存  |
-| creation_time  | 无       | 节点创建时间 |
+| node_name               | None | Node name |
+| is_ready            | None | Node Status |
+| capacity_cpu                 | None | CPU capacity |
+| allocatable_cpu           | None | CPU | allotted
+| capacity_memory         | None | Memory capacity |
+| allocatable_memory | None | Memory | allocated
+| creation_time  | None | Node creation time |
 
-#### 指标集合：namespaces
+#### metric Collection: namespaces
 
-| 指标名称 | 指标单位 | 指标帮助描述      |
+| Metric Name | metric unit | Metrics help describe |
 | -------- | -------- |-------------|
-| namespace       | 无       | namespace名称 |
-| status     | 无       | 状态          |
-| creation_time    | 无       | 创建时间        |
+| namespace       | None | namespace name |
+| status     | None | Status |
+| creation_time    | None | Created |
 
-#### 指标集合：pods
+#### metric collection: pods
 
-| 指标名称         | 指标单位 | 指标帮助描述         |
+| Metric Name | metric unit | Metrics help describe |
 | ---------------- | -------- |----------------|
-| pod             | 无       | pod名称          |
-| namespace | 无       | pod所属namespace |
-| status      | 无       | pod状态          |
-| restart     | 无       | 重启次数           |
-| host_ip        | 无       | 所在主机IP         |
-| pod_ip      | 无       | pod ip         |
-| creation_time        | 无       | pod创建时间        |
-| start_time        | 无       | pod启动时间        |
+| pod             | None | Pod name |
+| namespace | None | The namespace | to which the pod belongs
+| status      | None | Pod status |
+| restart     | None | Number of restarts |
+| host_ip        | None | The IP address of the host is |
+| pod_ip      | None | pod ip         |
+| creation_time        | None | Pod creation time |
+| start_time        | None | Pod startup time |
 
-#### 指标集合：services
+#### metric Collection: services
 
-| 指标名称         | 指标单位 | 指标帮助描述                                                 |
+| Metric Name | metric unit | Metrics help describe |
 | ---------------- |------|--------------------------------------------------------|
-| service             | 无    | service名称                                              |
-| namespace | 无    | service所属namespace                                     |
-| type      | 无    | service类型 ClusterIP NodePort LoadBalancer ExternalName |
-| cluster_ip     | 无    | cluster ip                                             |
-| selector        | 无    | tag selector匹配                                         |
-| creation_time      | 无    | 创建时间                                                   |
+| service             | None | Service Name |
+| namespace | None | The namespace | to which the service belongs
+| type      | None | Service Type ClusterIP NodePort LoadBalancer ExternalName |
+| cluster_ip     | None | cluster ip                                             |
+| selector        | None | tag selector matches |
+| creation_time      | None | Created |
