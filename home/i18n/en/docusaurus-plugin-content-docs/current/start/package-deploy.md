@@ -13,9 +13,10 @@ video tutorial of installation and deployment: [HertzBeat installation and deplo
    After installation use command line to check whether you install it successfully.   
    ```
    $ java -version
-   openjdk version "1.8.0_312"
-   OpenJDK Runtime Environment (Zulu 8.58.0.13-CA-macos-aarch64) (build 1.8.0_312-b07)
-   OpenJDK 64-Bit Server VM (Zulu 8.58.0.13-CA-macos-aarch64) (build 25.312-b07, mixed mode)
+   java version "11.0.12" 
+   Java(TM) SE Runtime Environment 18.9 (build 11.0.12+8-LTS-237)
+   Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
+
    ```
 2. Download HertzBeat installation package
    Download installation package corresponding to your system environment
