@@ -9,20 +9,33 @@ sidebar_label: 快速开始
 - 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登录注册](https://console.tancloud.cn)免费使用。  
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
 
-安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)
-
 ### 🐵 依赖服务部署(可选)
 
-> HertzBeat依赖于 关系型数据库 H2(已内置无需安装) 和 时序性数据库 [TDengine2+](https://www.taosdata.com/getting-started) (可选，未配置则无历史图表数据)
+> HertzBeat依赖于 关系型数据库 H2(已内置无需安装) 和 时序性数据库 [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选，未配置则无历史图表数据)  
 
-##### 安装TDengine
+**注意⚠️ 若需要部署时序数据库，IotDB 和 TDengine 任选其一即可！**  
+
+##### 安装TDengine(可选) 
+
 1. docker安装TDengine   
    `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
 2. 创建名称为hertzbeat的数据库
 3. 在hertzbeat的配置文件`application.yml`配置tdengine连接   
 
-详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init.md)
+详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init)  
 
+##### 安装IotDB(可选)  
+
+1. Docker安装IoTDB 
+
+```shell
+$ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
+    -v /opt/iotdb/data:/iotdb/data \ 
+    --name iotdb \
+    apache/iotdb:0.13.3-node
+```
+
+详细步骤参考 [依赖服务IotDB安装初始化](iotdb-init)  
 
 ### 🍞 HertzBeat安装   
 > HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
