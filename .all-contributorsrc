@@ -430,6 +430,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "BKing2020",
+      "name": "BKing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28869121?v=4",
+      "profile": "https://github.com/BKing2020",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
