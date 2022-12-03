@@ -69,6 +69,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
   <tr>
     <td align="center"><a href="https://github.com/zenan08"><img src="https://avatars.githubusercontent.com/u/80514991?v=4?s=100" width="100px;" alt=""/><br /><sub><b>leizenan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zenan08" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/BKing2020"><img src="https://avatars.githubusercontent.com/u/28869121?v=4?s=100" width="100px;" alt=""/><br /><sub><b>BKing</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=BKing2020" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/xingshuaiLi"><img src="https://avatars.githubusercontent.com/u/119487588?v=4?s=100" width="100px;" alt=""/><br /><sub><b>xingshuaiLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xingshuaiLi" title="Documentation">📖</a></td>
   </tr>
 </table>
 
