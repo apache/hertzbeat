@@ -92,6 +92,11 @@ module.exports = {
           to: 'docs/others/developer',
         },
         {
+          label: 'enterprise',
+          position: 'left',
+          to: 'docs/others/private',
+        },
+        {
           label: '关于',
           position: 'left',
           items: [
