@@ -120,6 +120,11 @@ public interface DispatchConstants {
      */
     String PARSE_PROMETHEUS = "prometheus";
     /**
+     * Parsing method prometheus exporter data
+     * 解析方式 exporter接口获取的数据
+     */
+    String PARSE_PROMETHEUS_EXPORTER = "prometheus_exporter";
+    /**
      * prometheus accept header
      */
     String PARSE_PROMETHEUS_ACCEPT = "application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1";

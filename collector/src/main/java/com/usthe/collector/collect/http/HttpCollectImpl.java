@@ -23,6 +23,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.usthe.collector.collect.AbstractCollect;
 import com.usthe.collector.collect.common.http.CommonHttpClient;
+import com.usthe.collector.collect.http.promethus.exporter.ExporterParser;
+import com.usthe.collector.collect.http.promethus.exporter.MetricFamily;
 import com.usthe.collector.dispatch.DispatchConstants;
 import com.usthe.collector.util.CollectUtil;
 import com.usthe.collector.util.CollectorConstants;
@@ -76,6 +78,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -128,6 +131,8 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
                         parseResponseByPromQL(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                    } else if (DispatchConstants.PARSE_PROMETHEUS_EXPORTER.equals(parseType)) {
+                        parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
@@ -362,6 +367,36 @@ public class HttpCollectImpl extends AbstractCollect {
                                        CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp,aliasFields,http,builder);
+    }
+
+    private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
+                                                   CollectRep.MetricsData.Builder builder) {
+        ExporterParser parser = new ExporterParser();
+        Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
+        String metrics = builder.getMetrics();
+        if (metricFamilyMap.containsKey(metrics)) {
+            MetricFamily metricFamily = metricFamilyMap.get(metrics);
+            for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
+                Map<String, String> labelMap = metric.getLabelPair()
+                        .stream()
+                        .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String aliasField : aliasFields) {
+                    if ("value".equals(aliasField)) {
+                        if (metric.getCounter() != null) {
+                            valueRowBuilder.addColumns(metric.getCounter().getValue() + "");
+                        } else if (metric.getGauge() != null) {
+                            valueRowBuilder.addColumns(metric.getGauge().getValue() + "");
+                        } else if (metric.getUntyped() != null) {
+                            valueRowBuilder.addColumns(metric.getUntyped().getValue() + "");
+                        }
+                    } else {
+                        valueRowBuilder.addColumns(labelMap.get(aliasField));
+                    }
+                }
+                builder.addValues(valueRowBuilder.build());
+            }
+        }
     }
 
     private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,

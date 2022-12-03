@@ -37,7 +37,7 @@ public class MetricFamily {
     private List<Metric> metricList;
 
     @Data
-    static class Metric {
+    public static class Metric {
 
         /**
          * 标签数据, 主要对应{}内容
@@ -58,7 +58,7 @@ public class MetricFamily {
     }
 
     @Data
-    static class Label {
+    public static class Label {
 
         private String name;
 
@@ -66,7 +66,7 @@ public class MetricFamily {
     }
 
     @Data
-    static class Counter {
+    public static class Counter {
 
         private double value;
 
@@ -74,19 +74,19 @@ public class MetricFamily {
     }
 
     @Data
-    static class Gauge {
+    public static class Gauge {
 
         private double value;
     }
 
     @Data
-    static class Untyped {
+    public static class Untyped {
 
         private double value;
     }
 
     @Data
-    static class Summary {
+    public static class Summary {
 
         private long count;
 
@@ -96,7 +96,7 @@ public class MetricFamily {
     }
 
     @Data
-    static class Quantile {
+    public static class Quantile {
         // 对应 prometheus 的 quantile 字段
         private double xLabel;
 
@@ -104,7 +104,7 @@ public class MetricFamily {
     }
 
     @Data
-    static class Histogram {
+    public static class Histogram {
 
         private long count;
 
@@ -114,7 +114,7 @@ public class MetricFamily {
     }
 
     @Data
-    static class Bucket {
+    public static class Bucket {
 
         private long cumulativeCount;
 
