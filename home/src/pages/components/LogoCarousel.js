@@ -7,6 +7,8 @@ import Slider from "react-slick";
 
 const iconCommonUrl = '/img/icons/'
 
+// const cdnUrl = '/img/icons/'
+
 var settings = {
     dots: false,
     infinite: true,

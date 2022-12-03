@@ -74,7 +74,13 @@ export class MonitorService {
     return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
   }
 
-  public getMonitors(app: string, pageIndex: number, pageSize: number): Observable<Message<Page<Monitor>>> {
+  public getMonitors(
+    app: string,
+    pageIndex: number,
+    pageSize: number,
+    sortField?: string | null,
+    sortOrder?: string | null
+  ): Observable<Message<Page<Monitor>>> {
     app = app.trim();
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
@@ -85,6 +91,12 @@ export class MonitorService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (sortField != null && sortOrder != null) {
+      httpParams = httpParams.appendAll({
+        sort: sortField,
+        order: sortOrder == 'ascend' ? 'asc' : 'desc'
+      });
+    }
     const options = { params: httpParams };
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }

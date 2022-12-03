@@ -87,9 +87,9 @@ module.exports = {
           to: 'docs/others/contact',
         },
         {
-          label: '私有化部署',
+          label: '开发者们',
           position: 'left',
-          to: 'docs/others/private',
+          to: 'docs/others/developer',
         },
         {
           label: '关于',

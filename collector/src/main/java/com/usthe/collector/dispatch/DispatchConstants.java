@@ -25,11 +25,11 @@ package com.usthe.collector.dispatch;
  */
 public interface DispatchConstants {
 
-    // Protocol type related    协议类型相关 - start //
     /**
      * protocol http
      */
     String PROTOCOL_HTTP = "http";
+
     /**
      * protocol icmp
      */
@@ -119,9 +119,15 @@ public interface DispatchConstants {
      * 解析方式 prometheus规则
      */
     String PARSE_PROMETHEUS = "prometheus";
+    /**
+     * prometheus accept header
+     */
     String PARSE_PROMETHEUS_ACCEPT = "application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1";
-    String PARSE_PROMETHEUS_VECTOR = "vector";
-    String PARSE_PROMETHEUS_MATRIX = "matrix";
-
-    // http协议相关 - end //
+    /**
+     * PromQL Prometheus Query Language
+     * 解析方式 Prometheus Query Language
+     */
+    String PARSE_PROM_QL = "PromQL";
+    String PARSE_PROM_QL_VECTOR = "vector";
+    String PARSE_PROM_QL_MATRIX = "matrix";
 }

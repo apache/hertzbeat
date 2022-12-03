@@ -25,7 +25,6 @@ import com.usthe.common.util.GsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -46,8 +45,8 @@ public class CollectUtil {
     private static final String SMILING_PLACEHOLDER_REX = "\\^_\\^";
     private static final String SMILING_PLACEHOLDER_REGEX = "(\\^_\\^)(\\w|-|$|\\.)+(\\^_\\^)";
     private static final Pattern SMILING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(SMILING_PLACEHOLDER_REGEX);
-    private static final String CRYING_PLACEHOLDER = "-_-";
-    private static final String CRYING_PLACEHOLDER_REGEX = "(-_-)(\\w|-|$|\\.)+(-_-)";
+    private static final String CRYING_PLACEHOLDER_REX = "\\^o\\^";
+    private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("G", "g", "M", "m", "K", "k", "B", "b", "%");
 
@@ -211,7 +210,7 @@ public class CollectUtil {
                         cryingMatcher.reset();
                         while (cryingMatcher.find()) {
                             String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER, "");
+                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
                             Configmap param = configmap.get(replaceField);
                             if (param != null) {
                                 if (param.getValue() == null) {
@@ -246,7 +245,7 @@ public class CollectUtil {
                         cryingMatcher.reset();
                         while (cryingMatcher.find()) {
                             String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER, "");
+                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
                             Configmap param = configmap.get(replaceField);
                             if (param != null) {
                                 if (param.getValue() == null) {
@@ -379,5 +378,11 @@ public class CollectUtil {
             }
         }
         return jsonElement;
+    }
+
+    public static String replaceUriSpecialChar(String uri) {
+        uri = uri.replaceAll(" ", "%20");
+        // todo more special
+        return uri;
     }
 }

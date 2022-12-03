@@ -42,6 +42,7 @@ param:
       zh-CN: 数据库名称
       en-US: Database Name
     type: text
+    defaultValue: postgres
     required: false
   - field: username
     name:

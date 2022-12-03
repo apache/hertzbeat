@@ -86,11 +86,7 @@ import java.util.Map;
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
 
-    private HttpCollectImpl() {}
-
-    public static HttpCollectImpl getInstance() {
-        return Singleton.INSTANCE;
-    }
+    public HttpCollectImpl() {}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
@@ -130,8 +126,8 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
-                        parseResponseByPrometheus(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                    } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
+                        parseResponseByPromQL(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
@@ -182,6 +178,11 @@ public class HttpCollectImpl extends AbstractCollect {
                 request.abort();
             }
         }
+    }
+
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_HTTP;
     }
 
     private void validateParams(Metrics metrics) throws Exception {
@@ -306,43 +307,59 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
-        List<Map<String, Object>> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
+        List<Object> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (int i = 0; i < results.size(); i++) {
-            Map<String, Object> stringMap = results.get(i);
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            // 监控目标版本问题可能出现属性不存在，stringMap为空时过滤。参考app-elasticsearch.yml的name: nodes
-            if (stringMap == null) {
+            Object objectValue = results.get(i);
+            // 监控目标版本问题可能出现属性不存在，为空时过滤。参考app-elasticsearch.yml的name: nodes
+            if (objectValue == null) {
                 continue;
             }
-            for (String alias : aliasFields) {
-                Object value = stringMap.get(alias);
-                if (value != null) {
-                    valueRowBuilder.addColumns(String.valueOf(value));
-                } else {
-                    if (alias.startsWith("$.")) {
-                        List<Map<String, Object>> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
-                        if (subResults != null && subResults.size() > i) {
-                            Object resultValue = subResults.get(i);
-                            valueRowBuilder.addColumns(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
+            if (objectValue instanceof Map) {
+                Map<String, Object> stringMap = (Map<String, Object>)objectValue;
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : aliasFields) {
+                    Object value = stringMap.get(alias);
+                    if (value != null) {
+                        valueRowBuilder.addColumns(String.valueOf(value));
+                    } else {
+                        if (alias.startsWith("$.")) {
+                            List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
+                            if (subResults != null && subResults.size() > i) {
+                                Object resultValue = subResults.get(i);
+                                valueRowBuilder.addColumns(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
+                            } else {
+                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            }
+                        } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumns(responseTime.toString());
+                        } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumns(Integer.toString(keywordNum));
                         } else {
                             valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                         }
-                    } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    }
+                }
+                builder.addValues(valueRowBuilder.build());
+            } else if (objectValue instanceof String) {
+                String stringValue = (String) objectValue;
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : aliasFields) {
+                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Integer.toString(keywordNum));
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        valueRowBuilder.addColumns(stringValue);
                     }
                 }
+                builder.addValues(valueRowBuilder.build());
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 
-    private void parseResponseByPrometheus(String resp, List<String> aliasFields, HttpProtocol http,
-                                           CollectRep.MetricsData.Builder builder) {
+    private void parseResponseByPromQL(String resp, List<String> aliasFields, HttpProtocol http,
+                                       CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp,aliasFields,http,builder);
     }
@@ -397,7 +414,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http protocol
      * @return context
      */
-    private HttpContext createHttpContext(HttpProtocol httpProtocol) {
+    public HttpContext createHttpContext(HttpProtocol httpProtocol) {
         HttpProtocol.Authorization auth = httpProtocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
@@ -422,7 +439,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http参数配置
      * @return 请求体
      */
-    private HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
+    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
         RequestBuilder requestBuilder;
         // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();
@@ -446,7 +463,8 @@ public class HttpCollectImpl extends AbstractCollect {
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
                 if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(param.getKey(), param.getValue());
+                    requestBuilder.addParameter(CollectUtil.replaceUriSpecialChar(param.getKey()),
+                            CollectUtil.replaceUriSpecialChar(param.getValue()));
                 }
             }
         }
@@ -459,7 +477,8 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(header.getKey(), header.getValue());
+                    requestBuilder.addHeader(CollectUtil.replaceUriSpecialChar(header.getKey()),
+                            CollectUtil.replaceUriSpecialChar(header.getValue()));
                 }
             }
         }
@@ -499,14 +518,15 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // uri
+        String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
-            requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + httpProtocol.getUrl());
+            requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri("https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort() + httpProtocol.getUrl());
+                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
             } else {
-                requestBuilder.setUri("http://" + httpProtocol.getHost() + ":" + httpProtocol.getPort() + httpProtocol.getUrl());
+                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
             }
         }
 
@@ -521,9 +541,5 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
-    }
-
-    private static class Singleton {
-        private static final HttpCollectImpl INSTANCE = new HttpCollectImpl();
     }
 }

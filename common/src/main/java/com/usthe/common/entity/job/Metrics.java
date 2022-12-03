@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Details of the collection of indicators collected by monitoring
@@ -64,6 +65,11 @@ public class Metrics {
      * 可用性指标组(availability)默认优先级为0,其它普通指标组范围为1-127,即需要等availability采集成功后才会调度后面的指标组任务
      */
     private Byte priority;
+    /**
+     * Is it visible true or false
+     * if false, web ui will not see this metrics.
+     */
+    private boolean visible = true;
     /**
      * Public attribute - collection and monitoring final result attribute set eg: speed | times | size
      * 公共属性-采集监控的最终结果属性集合 eg: speed | times | size
@@ -125,13 +131,11 @@ public class Metrics {
      * 使用公共的redis协议的监控配置信息
      */
     private RedisProtocol redis;
-
     /**
      * Get monitoring configuration information using public JMX protocol
      * 使用公共JMX协议获取监控配置信息
      */
     private JmxProtocol jmx;
-
     /**
      * Monitoring configuration information using the public snmp protocol
      * 使用公共的snmp协议的监控配置信息
@@ -143,7 +147,7 @@ public class Metrics {
      * collector使用 - 临时存储分级任务指标响应数据
      */
     @JsonIgnore
-    private transient CollectRep.MetricsData subTaskDataTmp;
+    private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
@@ -178,11 +182,11 @@ public class Metrics {
         }
         synchronized (subTaskNum) {
             int index = subTaskNum.decrementAndGet();
-            if (subTaskDataTmp == null) {
-                subTaskDataTmp = metricsData;
+            if (subTaskDataRef.get() == null) {
+                subTaskDataRef.set(metricsData);
             } else {
-                if (metricsData.getValuesCount() > 1) {
-                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataTmp);
+                if (metricsData.getValuesCount() >= 1) {
+                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
                     for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                         if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
                             dataBuilder.addValues(valueRow);
@@ -190,7 +194,7 @@ public class Metrics {
                             log.error("consume subTask data value not mapping filed");
                         }
                     }
-                    subTaskDataTmp = dataBuilder.build();
+                    subTaskDataRef.set(dataBuilder.build());
                 }
             }
             return index == 0;

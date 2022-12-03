@@ -19,6 +19,6 @@ This version is a paid version. For tancloud privatization deployment plan and p
 
 #### Privatized custom function development (paid) 
 
-Support the development of custom functions and features. Please contact us on WeChat tomsun28, and please note: privatization + team name.   
+Support the development of custom functions and features. Please contact us on WeChat tan-cloud, and please note: privatization + team name.   
 
 **Welcome to introduce business and become a recommender. We will give the recommender 20% - 30% commission reward for orders**      

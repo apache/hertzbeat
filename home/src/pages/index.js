@@ -20,6 +20,7 @@ import cdnTransfer from '../CdnTransfer'
 import styles from './styles.module.css'
 import {features, dromaraFriends, friendsLink, usersLink} from '../constants'
 import LogoCarouselStatic from './components/LogoCarouselStatic'
+import Sponsor from "./components/Sponsor";
 
 function Home() {
   const context = useDocusaurusContext()
@@ -193,6 +194,10 @@ function Home() {
             ))}
           </Section>
         )}
+
+        <Section>
+          <Sponsor headerTitle={translate({ message: 'sponsor' })}/>
+        </Section>
 
         {/*Friend Links*/}
         <Section>

@@ -55,7 +55,7 @@ metrics:
         type: 1
       - field: max_connections
         type: 0
-        unit: 连接数
+        unit: sbc
     protocol: jdbc
     jdbc:
       # 主机host: ipv4 ipv6 域名
@@ -81,16 +81,16 @@ metrics:
         type: 1
       - field: conflicts
         type: 0
-        unit: 次数
+        unit: times
       - field: deadlocks
         type: 0
-        unit: 个数
+        unit: times
       - field: blks_read
         type: 0
-        unit: 次数
+        unit: blocks per second
       - field: blks_hit
         type: 0
-        unit: 次数
+        unit: blocks per second
       - field: blk_read_time
         type: 0
         unit: ms
@@ -122,7 +122,7 @@ metrics:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: running
         type: 0
-        unit: 连接数
+        unit: sbc
     protocol: jdbc
     jdbc:
       # 主机host: ipv4 ipv6 域名
