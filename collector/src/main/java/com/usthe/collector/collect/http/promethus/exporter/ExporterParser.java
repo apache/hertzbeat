@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ExporterParser {
     private static final String HELP = "HELP";
     private static final String TYPE = "TYPE";
+    private static final String EOF = "EOF";
 
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
@@ -28,6 +29,9 @@ public class ExporterParser {
     private static final String SUM_SUFFIX = "_sum";
     private static final String COUNT_SUFFIX = "_count";
     private static final String BUCKET_SUFFIX = "_bucket";
+    private static final String INFO_SUFFIX = "_info";
+    private static final String TOTAL_SUFFIX = "_total";
+    private static final String CREATED_SUFFIX = "_created";
 
     private String currentQuantile;
     private String currentBucket;
@@ -63,6 +67,9 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         String token = this.readTokenUnitWhitespace(buffer);
+        if (token.equals(EOF)) {
+            return;
+        }
         if (!token.equals(HELP) && !token.equals(TYPE)) {
             log.error("parse comment error {}, start without {} or {}", buffer.toStr(), HELP, TYPE);
             return;
@@ -106,14 +113,18 @@ public class ExporterParser {
                 metricFamily = metricMap.get(metricName.substring(0, metricName.length() - SUM_SUFFIX.length()));
             } else if (this.isBucket(metricName)) {
                 metricFamily = metricMap.get(metricName.substring(0, metricName.length() - BUCKET_SUFFIX.length()));
+            } else if (this.isInfo(metricName)) {
+                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - INFO_SUFFIX.length()));
+            } else if (this.isTotal(metricName)) {
+                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - TOTAL_SUFFIX.length()));
+            } else if (this.isCreated(metricName)) {
+                // metricFamily = metricMap.get(metricName.substring(0, metricName.length() - CREATED_SUFFIX.length()));
+                // ignore counter _created value
+                return;
             }
             if (metricFamily == null) {
-                log.error("line {} parse error, no such HELP and TYPE", buffer.toStr());
+                log.error("line {} parse has no such HELP and TYPE", metricName);
                 return;
-            } else if (this.isCount(metricName) || this.isSum(metricName)) {
-                MetricFamily.Label label = new MetricFamily.Label();
-                label.setName(metricName);
-                this.readLabels(metricFamily, metricFamily.getMetricList().get(0), label, buffer);
             }
         }
         List<MetricFamily.Metric> metricList = metricFamily.getMetricList();
@@ -207,6 +218,11 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (metricFamily.getMetricType()) {
+            case INFO:
+                MetricFamily.Info info = new MetricFamily.Info();
+                info.setValue(buffer.toDouble());
+                metric.setInfo(info);
+                break;
             case COUNTER:
                 MetricFamily.Counter counter = new MetricFamily.Counter();
                 counter.setValue(buffer.toDouble());
@@ -389,8 +405,19 @@ public class ExporterParser {
         return s != null && s.endsWith(COUNT_SUFFIX);
     }
 
+    private boolean isInfo(String s) {
+        return s != null && s.endsWith(INFO_SUFFIX);
+    }
+
+    private boolean isTotal(String s) {
+        return s != null && s.endsWith(TOTAL_SUFFIX);
+    }
+
+    private boolean isCreated(String s) {
+        return s != null && s.endsWith(CREATED_SUFFIX);
+    }
+
     private boolean isBucket(String s) {
         return s != null && s.endsWith(BUCKET_SUFFIX);
     }
-
 }

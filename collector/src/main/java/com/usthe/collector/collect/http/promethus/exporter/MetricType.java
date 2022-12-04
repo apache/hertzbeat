@@ -1,10 +1,13 @@
 package com.usthe.collector.collect.http.promethus.exporter;
 
 /**
+ * prometheus metrics type
  * @author ceilzcx
  * @since 7/11/2022
  */
 public enum MetricType {
+    // for string metric info
+    INFO("info"),
     // 代表单调递增的计数器, 例: 统计次数
     COUNTER("counter"),
     // 任意上下波动的指标类型, 例: CPU的使用率

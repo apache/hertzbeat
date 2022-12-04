@@ -97,7 +97,7 @@ public class StrBuffer {
         if (NEGATIVE_INF.equalsIgnoreCase(s)) {
             return NEGATIVE_INF_VALUE;
         }
-        return Long.parseLong(s);
+        return Double.valueOf(s).longValue();
     }
 
     // string -> double, 需要判断是否为INF

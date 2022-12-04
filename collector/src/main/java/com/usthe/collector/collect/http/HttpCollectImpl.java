@@ -389,6 +389,8 @@ public class HttpCollectImpl extends AbstractCollect {
                             valueRowBuilder.addColumns(metric.getGauge().getValue() + "");
                         } else if (metric.getUntyped() != null) {
                             valueRowBuilder.addColumns(metric.getUntyped().getValue() + "");
+                        } else if (metric.getInfo() != null) {
+                            valueRowBuilder.addColumns(metric.getInfo().getValue() + "");
                         }
                     } else {
                         valueRowBuilder.addColumns(labelMap.get(aliasField));

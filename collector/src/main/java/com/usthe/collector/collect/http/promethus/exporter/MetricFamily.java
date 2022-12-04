@@ -44,6 +44,8 @@ public class MetricFamily {
          */
         private List<Label> labelPair;
 
+        private Info info;
+
         private Gauge gauge;
 
         private Counter counter;
@@ -63,6 +65,13 @@ public class MetricFamily {
         private String name;
 
         private String value;
+    }
+
+    @Data
+    public static class Info {
+
+        private double value;
+
     }
 
     @Data
