@@ -29,20 +29,50 @@ configmap:
     type: 0
 # 指标组列表
 metrics:
-  # 第一个监控指标组 cpu
-  # 注意：内置监控指标有 (responseTime - 响应时间)
+  - name: cluster_node_status
+    priority: 0
+    fields:
+      - field: name
+        type: 1
+        instance: true
+      - field: status
+        type: 0
+    aliasFields:
+      - name
+      - value
+    calculates:
+      - name=name
+      - status=value
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus_exporter
+
   - name: jvm_memory_committed_bytes
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
-    priority: 0
+    priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: area
         type: 1
       - field: id
         type: 1
+        instance: true
       - field: value
         type: 0
+        unit: MB
+    units:
+      - value=B->MB
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置

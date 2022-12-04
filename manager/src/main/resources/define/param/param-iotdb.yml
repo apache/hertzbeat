@@ -27,6 +27,7 @@ param:
       en-US: Port
     type: number
     range: '[0,65535]'
+    defaultValue: 9091
     required: true
   - field: timeout
     name:
