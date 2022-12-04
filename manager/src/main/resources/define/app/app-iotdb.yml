@@ -55,7 +55,7 @@ metrics:
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
-      parseType: prometheus_exporter
+      parseType: prometheus
 
   - name: jvm_memory_committed_bytes
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
@@ -85,4 +85,4 @@ metrics:
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
-      parseType: prometheus_exporter
+      parseType: prometheus
