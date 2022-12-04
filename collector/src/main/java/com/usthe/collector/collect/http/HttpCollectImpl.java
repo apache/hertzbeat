@@ -525,9 +525,6 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
         } else if (DispatchConstants.PARSE_XML_PATH.equals(httpProtocol.getParseType())) {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/xml,application/xml");
-        } else if (DispatchConstants.PARSE_PROMETHEUS.equals(httpProtocol.getParseType())) {
-            requestBuilder.addHeader(HttpHeaders.ACCEPT, DispatchConstants.PARSE_PROMETHEUS_ACCEPT);
-            requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
         } else {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
         }
