@@ -373,7 +373,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    CollectRep.MetricsData.Builder builder) {
-        ExporterParser parser = ExporterParser.getInstance();
+        ExporterParser parser = new ExporterParser();
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         String metrics = builder.getMetrics();
         if (metricFamilyMap.containsKey(metrics)) {

@@ -28,25 +28,14 @@ public class ExporterParser {
     private static final String NAME_LABEL = "__name__";
     private static final String SUM_SUFFIX = "_sum";
     private static final String COUNT_SUFFIX = "_count";
-    private static final String BUCKET_SUFFIX = "_bucket";
-    private static final String INFO_SUFFIX = "_info";
-    private static final String TOTAL_SUFFIX = "_total";
-    private static final String CREATED_SUFFIX = "_created";
+//    private static final String BUCKET_SUFFIX = "_bucket";
+//    private static final String INFO_SUFFIX = "_info";
+//    private static final String TOTAL_SUFFIX = "_total";
+//    private static final String CREATED_SUFFIX = "_created";
 
+    private MetricFamily currentMetricFamily;
     private String currentQuantile;
     private String currentBucket;
-
-    private static ExporterParser instance;
-
-    public static synchronized ExporterParser getInstance() {
-        if (instance == null) {
-            instance = new ExporterParser();
-        }
-        return instance;
-    }
-
-    private ExporterParser() {
-    }
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
@@ -64,6 +53,7 @@ public class ExporterParser {
         switch (buffer.charAt(0)) {
             case '#':
                 buffer.read();
+                this.currentMetricFamily = null;
                 this.parseComment(metricMap, buffer);
                 break;
             case '\n':
@@ -71,7 +61,7 @@ public class ExporterParser {
             default:
                 this.currentBucket = null;
                 this.currentQuantile = null;
-                this.parseMetric(metricMap, buffer);
+                this.parseMetric(buffer);
         }
     }
 
@@ -87,98 +77,80 @@ public class ExporterParser {
             return;
         }
         String metricName = this.readTokenAsMetricName(buffer);
-        MetricFamily metricFamily = metricMap.computeIfAbsent(metricName, key -> new MetricFamily());
-        metricFamily.setName(metricName);
+        this.currentMetricFamily = metricMap.computeIfAbsent(metricName, key -> new MetricFamily());
+        this.currentMetricFamily.setName(metricName);
         switch (token) {
             case HELP:
-                this.parseHelp(metricFamily, buffer);
+                this.parseHelp(buffer);
                 break;
             case TYPE:
-                this.parseType(metricFamily, buffer);
+                this.parseType(buffer);
                 break;
             default:
         }
     }
 
-    private void parseHelp(MetricFamily metricFamily, StrBuffer line) {
+    private void parseHelp(StrBuffer line) {
         line.skipBlankTabs();
-        metricFamily.setHelp(line.toStr());
+        this.currentMetricFamily.setHelp(line.toStr());
     }
 
-    private void parseType(MetricFamily metricFamily, StrBuffer line) {
+    private void parseType(StrBuffer line) {
         line.skipBlankTabs();
         String type = line.toStr().toLowerCase();
         MetricType metricType = MetricType.getType(type);
         if (metricType == null) {
             throw new ParseException("pare type error");
         }
-        metricFamily.setMetricType(metricType);
+        this.currentMetricFamily.setMetricType(metricType);
     }
 
-    private void parseMetric(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
+    private void parseMetric(StrBuffer buffer) {
         String metricName = this.readTokenAsMetricName(buffer);
-        MetricFamily metricFamily = metricMap.get(metricName);
-        if (metricFamily == null) {
-            if (this.isCount(metricName)) {
-                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - COUNT_SUFFIX.length()));
-            } else if (this.isSum(metricName)) {
-                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - SUM_SUFFIX.length()));
-            } else if (this.isBucket(metricName)) {
-                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - BUCKET_SUFFIX.length()));
-            } else if (this.isInfo(metricName)) {
-                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - INFO_SUFFIX.length()));
-            } else if (this.isTotal(metricName)) {
-                metricFamily = metricMap.get(metricName.substring(0, metricName.length() - TOTAL_SUFFIX.length()));
-            } else if (this.isCreated(metricName)) {
-                // metricFamily = metricMap.get(metricName.substring(0, metricName.length() - CREATED_SUFFIX.length()));
-                // ignore counter _created value
-                return;
-            }
-            if (metricFamily == null) {
-                log.error("line {} parse has no such HELP and TYPE", metricName);
-                return;
-            }
+        if (StringUtils.isEmpty(metricName)) {
+            log.error("error parse metric, metric name is null, line: {}", buffer.toStr());
+            return;
         }
-        List<MetricFamily.Metric> metricList = metricFamily.getMetricList();
+        List<MetricFamily.Metric> metricList = this.currentMetricFamily.getMetricList();
         if (metricList == null) {
             metricList = new ArrayList<>();
-            metricFamily.setMetricList(metricList);
+            this.currentMetricFamily.setMetricList(metricList);
         }
         // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
         //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
         MetricFamily.Metric metric;
         if (!metricList.isEmpty() &&
-                (metricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
-                        metricFamily.getMetricType().equals(MetricType.SUMMARY))) {
+                (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
+                        this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
             metric = metricList.get(0);
         } else {
             metric = new MetricFamily.Metric();
             metricList.add(metric);
         }
 
-        this.readLabels(metricFamily, metric, buffer);
+        this.readLabels(metric, buffer);
     }
 
-    private void readLabels(MetricFamily metricFamily, MetricFamily.Metric metric, StrBuffer buffer) {
+    private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         metric.setLabelPair(new ArrayList<>());
         if (buffer.charAt(0) == '{') {
             buffer.read();
-            this.startReadLabelName(metricFamily, metric, buffer);
+            this.startReadLabelName(metric, buffer);
         } else {
-            this.readLabelValue(metricFamily, metric, null, buffer);
+            this.readLabelValue(metric, null, buffer);
         }
     }
 
-    private void startReadLabelName(MetricFamily metricFamily, MetricFamily.Metric metric, StrBuffer buffer) {
+    private void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         if (buffer.charAt(0) == '}') {
             buffer.read();
             buffer.skipBlankTabs();
             if (buffer.isEmpty()) return;
-            this.readLabelValue(metricFamily, metric, new MetricFamily.Label(), buffer);
+            this.readLabelValue(metric, new MetricFamily.Label(), buffer);
             return;
         }
         String labelName = this.readTokenAsLabelName(buffer);
@@ -190,10 +162,10 @@ public class ExporterParser {
         if (buffer.read() != '=') {
             throw new ParseException("parse error, not match the format of labelName=labelValue");
         }
-        this.startReadLabelValue(metricFamily, metric, label, buffer);
+        this.startReadLabelValue(metric, label, buffer);
     }
 
-    private void startReadLabelValue(MetricFamily metricFamily, MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
+    private void startReadLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         char c = buffer.read();
@@ -205,9 +177,9 @@ public class ExporterParser {
         if (!this.isValidLabelValue(labelValue)) {
             throw new ParseException("no valid label value: " + labelValue);
         }
-        if (metricFamily.getMetricType().equals(MetricType.SUMMARY) && label.getName().equals(QUANTILE_LABEL)) {
+        if (this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY) && label.getName().equals(QUANTILE_LABEL)) {
             this.currentQuantile = labelValue;
-        } else if (metricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL)) {
+        } else if (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL)) {
             this.currentBucket = labelValue;
         } else {
             metric.getLabelPair().add(label);
@@ -216,20 +188,20 @@ public class ExporterParser {
         c = buffer.read();
         switch (c) {
             case ',':
-                this.startReadLabelName(metricFamily, metric, buffer);
+                this.startReadLabelName(metric, buffer);
                 break;
             case '}':
-                this.readLabelValue(metricFamily, metric, label, buffer);
+                this.readLabelValue(metric, label, buffer);
                 break;
             default:
                 throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
-    private void readLabelValue(MetricFamily metricFamily, MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
+    private void readLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
-        switch (metricFamily.getMetricType()) {
+        switch (this.currentMetricFamily.getMetricType()) {
             case INFO:
                 MetricFamily.Info info = new MetricFamily.Info();
                 info.setValue(buffer.toDouble());
@@ -416,19 +388,4 @@ public class ExporterParser {
         return s != null && s.endsWith(COUNT_SUFFIX);
     }
 
-    private boolean isInfo(String s) {
-        return s != null && s.endsWith(INFO_SUFFIX);
-    }
-
-    private boolean isTotal(String s) {
-        return s != null && s.endsWith(TOTAL_SUFFIX);
-    }
-
-    private boolean isCreated(String s) {
-        return s != null && s.endsWith(CREATED_SUFFIX);
-    }
-
-    private boolean isBucket(String s) {
-        return s != null && s.endsWith(BUCKET_SUFFIX);
-    }
 }
