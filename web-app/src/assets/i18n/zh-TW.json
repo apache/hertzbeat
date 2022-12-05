@@ -305,6 +305,7 @@
   "app.login.tab-login-credentials": "賬戶密碼登錄",
   "app.login.remember-me": "自動登錄",
   "app.login.login": "登錄",
+  "app.login.notify": "请先登錄!",
   "tag.new": "新增標簽",
   "tag.edit": "編輯標簽",
   "tag.search": "搜索標簽",

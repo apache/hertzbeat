@@ -22,6 +22,7 @@
     "@docusaurus/remark-plugin-npm2yarn": "2.0.0-rc.1",
     "@docusaurus/theme-live-codeblock": "2.0.0-rc.1",
     "@docusaurus/theme-search-algolia": "2.0.0-rc.1",
+    "@douyinfe/semi-ui": "^2.24.1",
     "@mdx-js/react": "^1.6.21",
     "@svgr/webpack": "^5.5.0",
     "clsx": "^1.2.1",
@@ -32,10 +33,10 @@
     "react-slick": "^0.29.0",
     "sharp": "^0.28.3",
     "slick-carousel": "^1.8.1",
+    "swiper": "^7.0.1",
     "url-loader": "^4.1.1",
     "workbox-routing": "^6.1.0",
-    "workbox-strategies": "^6.1.0",
-    "swiper": "^7.0.1"
+    "workbox-strategies": "^6.1.0"
   },
   "browserslist": {
     "production": [

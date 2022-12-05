@@ -309,6 +309,7 @@
   "app.login.tab-login-credentials": "Credentials",
   "app.login.remember-me": "Remember me",
   "app.login.login": "Login",
+  "app.login.notify": "Please Login!",
   "tag.new": "New Tag",
   "tag.edit": "Edit Tag",
   "tag.search": "Search Tag",

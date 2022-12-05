@@ -36,10 +36,9 @@ Even small corrections to typos are very welcome :)
 
 - Backend start
 
-1. Deploy and start dependent services `MYSQL` and `TDengine` database
-2. Requires `maven3+`, `java8+` and `lombok` environments
-3. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
-4. Start `springboot manager` service `manager/src/main/java/com/usthe/manager/Manager.java`
+1. Requires `maven3+`, `java8+` and `lombok` environments
+2. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
+3. Start `springboot manager` service `manager/src/main/java/com/usthe/manager/Manager.java`
 
 - Front-web start
 
