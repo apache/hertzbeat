@@ -36,6 +36,18 @@ public class ExporterParser {
     private String currentQuantile;
     private String currentBucket;
 
+    private static ExporterParser instance;
+
+    public static synchronized ExporterParser getInstance() {
+        if (instance == null) {
+            instance = new ExporterParser();
+        }
+        return instance;
+    }
+
+    private ExporterParser() {
+    }
+
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
         Map<String, MetricFamily> metricMap = new ConcurrentHashMap<>();
@@ -144,10 +156,10 @@ public class ExporterParser {
             metricList.add(metric);
         }
 
-        this.readLabels(metricFamily, metric, null, buffer);
+        this.readLabels(metricFamily, metric, buffer);
     }
 
-    private void readLabels(MetricFamily metricFamily, MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
+    private void readLabels(MetricFamily metricFamily, MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         metric.setLabelPair(new ArrayList<>());
@@ -155,7 +167,7 @@ public class ExporterParser {
             buffer.read();
             this.startReadLabelName(metricFamily, metric, buffer);
         } else {
-            this.readLabelValue(metricFamily, metric, label, buffer);
+            this.readLabelValue(metricFamily, metric, null, buffer);
         }
     }
 
@@ -269,8 +281,7 @@ public class ExporterParser {
                 }
                 if (label != null && this.isSum(label.getName())) {
                     histogram.setSum(buffer.toDouble());
-                }
-                else if (label != null && this.isCount(label.getName())) {
+                } else if (label != null && this.isCount(label.getName())) {
                     histogram.setCount(buffer.toLong());
                 }
                 // 处理 "xxx{quantile=\"0\"} 0" 的格式

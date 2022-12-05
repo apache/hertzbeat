@@ -40,7 +40,7 @@ class ExporterParserTest {
                         "jvm_gc_collection_seconds_count{gc=\"G1 Old Generation\"} 0.0\n" +
                         "jvm_gc_collection_seconds_sum{gc=\"G1 Old Generation\"} 0.0\n" +
                         "# EOF";
-        ExporterParser parser = new ExporterParser();
+        ExporterParser parser = ExporterParser.getInstance();
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         assertEquals(metricFamilyMap.size(), 6);
     }

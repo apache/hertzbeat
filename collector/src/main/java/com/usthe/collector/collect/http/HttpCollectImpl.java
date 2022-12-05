@@ -117,6 +117,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 return;
             } else {
                 // 2xx 3xx 状态码 成功
+                // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
+                // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
                 String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                 // 根据不同的解析方式解析
                 if (resp == null || "".equals(resp)) {
@@ -371,7 +373,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    CollectRep.MetricsData.Builder builder) {
-        ExporterParser parser = new ExporterParser();
+        ExporterParser parser = ExporterParser.getInstance();
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         String metrics = builder.getMetrics();
         if (metricFamilyMap.containsKey(metrics)) {
