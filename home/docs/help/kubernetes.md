@@ -12,6 +12,18 @@ sidebar_label: Kubernetes 监控
 
 如果想要监控 `Kubernetes` 中的信息，则需要获取到可访问Api Server的授权TOKEN，让采集请求获取到对应的信息。
 
+参考获取token步骤：
+a.创建service account并绑定默认cluster-admin管理员集群角色
+kubectl create serviceaccount dashboard-admin -n kube-system
+b.用户授权
+ kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount
+=kube-system:dashboard-admin
+kubectl -n kube-system get secret | grep dashboard-admin
+kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
+kubectl describe secret <上一步查出来的数据> kube-system
+注：这里用的是admin权限组，需要其它权限组自行修改就行
+
+
 
 ### 配置参数
 
