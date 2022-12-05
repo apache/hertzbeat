@@ -72,6 +72,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center"><a href="https://github.com/BKing2020"><img src="https://avatars.githubusercontent.com/u/28869121?v=4?s=100" width="100px;" alt="BKing"/><br /><sub><b>BKing</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=BKing2020" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/xingshuaiLi"><img src="https://avatars.githubusercontent.com/u/119487588?v=4?s=100" width="100px;" alt="xingshuaiLi"/><br /><sub><b>xingshuaiLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xingshuaiLi" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/wangke6666"><img src="https://avatars.githubusercontent.com/u/113656595?v=4?s=100" width="100px;" alt="wangke6666"/><br /><sub><b>wangke6666</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wangke6666" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/LWBobo"><img src="https://avatars.githubusercontent.com/u/50368698?v=4?s=100" width="100px;" alt="刺猬"/><br /><sub><b>刺猬</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ALWBobo" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LWBobo" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
