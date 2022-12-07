@@ -84,31 +84,31 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '1240px' }"
 >
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>{{ 'alert.center.target' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.monitor' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.priority' | i18n }}</th>
+      <th nzAlign="center" nzWidth="300px">{{ 'alert.center.monitor' | i18n }}</th>
+      <th nzAlign="center">{{ 'alert.center.target' | i18n }}</th>
+      <th nzAlign="center" nzWidth="120px">{{ 'alert.center.priority' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.tags' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="280px">{{ 'alert.center.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="100px">{{ 'alert.center.status' | i18n }}</th>
       <th nzAlign="center">{{ 'alert.center.time' | i18n }}</th>
       <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of fixedTable.data" [ngStyle]="{ 'background-color': data.status === 0 ? '#E1E7A89B' : 'inherit' }">
+    <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center" nzLeft>{{ data.target }}</td>
-      <td nzAlign="center">
+      <td nzAlign="left">
         <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags?.monitorId]">
           {{ data.tags?.monitorName }}
           <span nz-icon nzType="area-chart"></span>
         </button>
       </td>
+      <td nzAlign="center">{{ data.target }}</td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
@@ -123,14 +123,16 @@
           <span>{{ 'alert.priority.2' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.content }}</td>
-      <td nzAlign="center">
+      <td nzAlign="left">{{ data.content }}</td>
+      <td nzAlign="left">
         <nz-tag style="margin-top: 2px" *ngFor="let tag of data?.tmp; let i = index">
           {{ sliceTagName(tag) }}
         </nz-tag>
       </td>
       <td nzAlign="center">
-        {{ 'alert.status.' + data.status | i18n }}
+        <nz-tag [nzColor]="data.status == 3 ? '' : 'orange'">
+          {{ 'alert.status.' + data.status | i18n }}
+        </nz-tag>
       </td>
       <td nzAlign="center">{{ data?.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
