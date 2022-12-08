@@ -467,6 +467,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "zanglikun",
+      "name": "Haste",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61591648?v=4",
+      "profile": "http://www.zanglikun.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
