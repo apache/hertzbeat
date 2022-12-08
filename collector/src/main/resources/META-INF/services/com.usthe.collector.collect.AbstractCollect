@@ -1,4 +1,5 @@
 com.usthe.collector.collect.http.HttpCollectImpl
+com.usthe.collector.collect.http.SslCertificateCollectImpl
 com.usthe.collector.collect.database.JdbcCommonCollect
 com.usthe.collector.collect.icmp.IcmpCollectImpl
 com.usthe.collector.collect.jmx.JmxCollectImpl
