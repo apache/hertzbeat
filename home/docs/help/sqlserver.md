@@ -54,4 +54,20 @@ sidebar_label: SqlServer数据库
 | user_connection   | 无 | 已连接的会话数 |
 
 
+### 连接问题修复
+jdk版本：jdk11
+问题描述：SQL Server2019使用SA用户连接报错；
+错误信息：
+The driver could not establish a secure connection to SQL Server by using Secure Sockets Layer (SSL) encryption. Error: "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target". ClientConnectionId:xxxxxxxxxxxxxxxxx
+问题截图：
+![ad3ea326b6487f7cebca79d859d2f00](https://user-images.githubusercontent.com/38679717/206621658-c0741d48-673d-45ff-9a3b-47d113064c12.png)
 
+解决方案：
+项目collector模块，com.usthe.collector.collect.database.JdbcCommonCollect.java文件，constructDatabaseUrl方法中连接sqlserver拼接的jdbc url后面加上参数配置，"trustServerCertificate=true;"这个参数true表示无条件信任server端返回的任何根证书，具体修改代码如下：
+    case "sqlserver":
+        url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase()) + ";encrypt=true;trustServerCertificate=true";
+        break;
+
+其它参考文档：
+https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building-failed-unable-to-find-valid-certification/ba-p/2591304
