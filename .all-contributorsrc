@@ -476,6 +476,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "SuitSmile",
+      "name": "zhongshi.yi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38679717?v=4",
+      "profile": "https://github.com/SuitSmile",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
