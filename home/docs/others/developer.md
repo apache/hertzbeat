@@ -74,6 +74,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center"><a href="https://github.com/wangke6666"><img src="https://avatars.githubusercontent.com/u/113656595?v=4?s=100" width="100px;" alt="wangke6666"/><br /><sub><b>wangke6666</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wangke6666" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/LWBobo"><img src="https://avatars.githubusercontent.com/u/50368698?v=4?s=100" width="100px;" alt="刺猬"/><br /><sub><b>刺猬</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ALWBobo" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LWBobo" title="Code">💻</a></td>
       <td align="center"><a href="http://www.zanglikun.com"><img src="https://avatars.githubusercontent.com/u/61591648?v=4?s=100" width="100px;" alt="Haste"/><br /><sub><b>Haste</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zanglikun" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/SuitSmile"><img src="https://avatars.githubusercontent.com/u/38679717?v=4?s=100" width="100px;" alt="zhongshi.yi"/><br /><sub><b>zhongshi.yi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SuitSmile" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
