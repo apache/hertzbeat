@@ -54,4 +54,22 @@ sidebar_label: SqlServer database
 | user_connection   | none | Number of connected sessions |
 
 
+### Common Problem
 
+1. SSL connection problem fixed
+
+jdk version: jdk11   
+Description of the problem: SQL Server 2019 uses the SA user connection to report an error   
+Error message:   
+```text
+The driver could not establish a secure connection to SQL Server by using Secure Sockets Layer (SSL) encryption. Error: "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target". ClientConnectionId:xxxxxxxxxxxxxxxxxxxx
+```
+Screenshot of the problem:   
+![issue](https://user-images.githubusercontent.com/38679717/206621658-c0741d48-673d-45ff-9a3b-47d113064c12.png)
+
+solution:     
+Use advanced settings when adding `SqlServer` monitoring, customize JDBC URL, add parameter configuration after the spliced jdbc url, ```;encrypt=true;trustServerCertificate=true;```This parameter true means unconditionally trust the server returned any root certificate.
+
+Example: ```jdbc:sqlserver://127.0.0.1:1433;DatabaseName=demo;encrypt=true;trustServerCertificate=true;```
+
+Reference document: [microsoft pkix-path-building-failed-unable-to-find-valid-certification](https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building- failed-unable-to-find-valid-certification/ba-p/2591304)
