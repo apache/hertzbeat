@@ -172,6 +172,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center"><a href="http://www.zanglikun.com"><img src="https://avatars.githubusercontent.com/u/61591648?v=4?s=100" width="100px;" alt="Haste"/><br /><sub><b>Haste</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zanglikun" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/SuitSmile"><img src="https://avatars.githubusercontent.com/u/38679717?v=4?s=100" width="100px;" alt="zhongshi.yi"/><br /><sub><b>zhongshi.yi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SuitSmile" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center"><a href="https://www.smallq.cn"><img src="https://avatars.githubusercontent.com/u/39754275?v=4?s=100" width="100px;" alt="Qi Zhang"/><br /><sub><b>Qi Zhang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zzzhangqi" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
