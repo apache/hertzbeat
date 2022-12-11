@@ -1,6 +1,6 @@
 ---
 id: package-deploy  
-title: 通过安装包安装HertzBeat    
+title: 通过安装包安装 HertzBeat    
 sidebar_label: 安装包方式部署    
 ---
 > HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。由于安装包自身不包含JAVA运行环境，需您提前准备JAVA运行环境。
