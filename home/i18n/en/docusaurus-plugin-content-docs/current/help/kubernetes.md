@@ -11,6 +11,22 @@ sidebar_label: Kubernetes monitoring
 
 If you want to monitor the information in 'Kubernetes', you need to obtain an authorization token that can access the API Server, so that the collection request can obtain the corresponding information.
 
+Refer to the steps to obtain token
+
+#### method one:
+
+1. Create a service account and bind the default cluster-admin administrator cluster role
+
+```kubectl create serviceaccount dashboard-admin -n kube-system```
+
+2. User Authorization
+
+```shell
+kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
+kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
+kubectl describe secret {secret} -n kube-system
+```
+
 ### Configure parameters
 
 | Parameter name | Parameter Help describes the |

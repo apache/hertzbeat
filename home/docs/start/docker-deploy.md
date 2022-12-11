@@ -1,6 +1,6 @@
 ---
 id: docker-deploy  
-title: 通过Docker方式安装HertzBeat    
+title: 通过 Docker 方式安装 HertzBeat    
 sidebar_label: Docker方式部署    
 ---
 
