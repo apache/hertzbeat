@@ -23,6 +23,7 @@ import com.usthe.common.entity.alerter.Alert;
  * 报警持久化
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
+ * @author <a href="mailto:1252532896@qq.com">Hua Cheng</a>
  * @since 2022/4/24
  */
 public interface AlertStoreHandler {
@@ -34,4 +35,12 @@ public interface AlertStoreHandler {
      * @param alert 报警
      */
     void store(Alert alert);
+
+    /**
+     * 更新某些告警记录状态
+     * 主要是监控自动恢复将以前的未处理告警置为已恢复
+     *
+     * @param alert  报警
+     */
+    void updateAlertStatus(Alert alert);
 }

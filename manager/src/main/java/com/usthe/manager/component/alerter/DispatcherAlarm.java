@@ -35,6 +35,7 @@ import java.util.Map;
  * 告警信息入库分发
  *
  * @author tom
+ * @author <a href="mailto:1252532896@qq.com">Hua Cheng</a>
  * @date 2021/12/10 12:58
  */
 @Component
@@ -104,6 +105,8 @@ public class DispatcherAlarm implements InitializingBean {
                     if (alert != null) {
                         // Determining alarm type storage   判断告警类型入库
                         alertStoreHandler.store(alert);
+                        // 告警待处理转恢复
+                        alertStoreHandler.updateAlertStatus(alert);
                         // 通知分发
                         sendNotify(alert);
                     }

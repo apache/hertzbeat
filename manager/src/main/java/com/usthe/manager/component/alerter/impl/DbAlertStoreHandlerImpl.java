@@ -25,20 +25,41 @@ import com.usthe.manager.component.alerter.AlertStoreHandler;
 import com.usthe.manager.service.MonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 报警持久化 - 落地到数据库
  * Alarm data persistence - landing in the database
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
+ * @author <a href="mailto:1252532896@qq.com">Hua Cheng</a>
  * @since 2022/4/24
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
+
+    private static Integer pageNum = 0;
+
+    private static Integer pageSize = 20;
+
+    private static String ORDER_TYPE = "desc";
+
+
+
     private final MonitorService monitorService;
     private final AlertService alertService;
 
@@ -82,7 +103,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             }
         } else {
             // If the alarm is restored, the monitoring state needs to be restored
-            // 若是恢复告警 需对监控状态进行恢复
+            // 若是恢复告警 需对监控状态进行恢复，并将其这段时间的未处理告警置为已恢复
             if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
                 monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
             }
@@ -90,4 +111,48 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         // Alarm drop library  告警落库
         alertService.addAlert(alert);
     }
+
+    @SuppressWarnings("InterruptedException")
+    @Override
+    public void updateAlertStatus(Alert alert) {
+        Map<String, String> tags = alert.getTags();
+        String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
+        if (monitorIdStr == null) {
+            log.error("alert tags monitorId is null.");
+            return;
+        }
+        long monitorId = Long.parseLong(monitorIdStr);
+        // If the alarm is recovered, set the unprocessed alarm in this period as recovered
+        // 若是恢复告警 将其这段时间的未处理告警置为已恢复
+        if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+            // Find out the alarm information not processed before the current monitoring time
+            // 找出改监控当前时间之前未处理的告警信息
+            Specification<Alert> specification = (root, query, criteriaBuilder) -> {
+                List<Predicate> andList = new ArrayList<>();
+
+                andList.add(criteriaBuilder.equal(root.get("monitorId"), monitorId));
+                andList.add(criteriaBuilder.equal(root.get("status"), CommonConstants.ALERT_STATUS_CODE_PENDING));
+                andList.add(criteriaBuilder.lessThan(root.get("gmtCreate"),new Date()));
+                Predicate[] predicates = new Predicate[andList.size()];
+                return criteriaBuilder.and(andList.toArray(predicates));
+            };
+            Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(ORDER_TYPE), "gmtCreate"));
+            PageRequest pageRequest = PageRequest.of(pageNum, pageSize, sortExp);
+            while (true) {
+                Page<Alert> alertPage = alertService.getAlerts(specification, pageRequest);
+                List<Alert> alertList = alertPage.getContent();
+                if (CollectionUtils.isEmpty(alertList)) {
+                    return;
+                }
+                List<Long> idList = alertList.stream().map(Alert::getId).collect(Collectors.toList());
+                alertService.editAlertStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED,idList);
+                try {
+                    Thread.sleep(100L);
+                } catch (InterruptedException e) {
+                    //
+                }
+            }
+        }
+    }
+
 }
