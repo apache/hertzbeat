@@ -121,7 +121,7 @@
       "eslint --fix"
     ],
     "(src)/**/*.less": [
-      "stylelint --syntax less --fix"
+      "npm run lint:style"
     ]
   }
 }
