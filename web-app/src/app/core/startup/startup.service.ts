@@ -31,7 +31,7 @@ export class StartupService {
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
     iconSrv.fetchFromIconfont({
-      scriptUrl: 'https://at.alicdn.com/t/font_3113282_flj0py4g7ft.js'
+      scriptUrl: './assets/img/icon-gitee.js'
     });
   }
 
