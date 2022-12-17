@@ -131,7 +131,7 @@
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
-          [nzLabel]="(alert.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss')?.trim()"
+          [nzLabel]="(alert.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
         >
           <p style="font-weight: 400">
             <nz-tag *ngIf="alert.priority == 0" nzColor="red">
@@ -146,7 +146,7 @@
               <i nz-icon nzType="bell" nzTheme="outline"></i>
               <span>{{ 'alert.priority.2' | i18n }}</span>
             </nz-tag>
-            <span>[{{ alert.tags?.monitorName }}] </span>
+            <span>[{{ alert.tags.monitorName }}] </span>
             {{ alert.content }}
           </p>
         </nz-timeline-item>
