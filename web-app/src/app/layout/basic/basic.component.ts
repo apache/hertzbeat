@@ -101,7 +101,7 @@ export class LayoutBasicComponent {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
   };
-  avatar: string = `./assets/logo.svg`;
+  avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
   version = CONSTS.VERSION;

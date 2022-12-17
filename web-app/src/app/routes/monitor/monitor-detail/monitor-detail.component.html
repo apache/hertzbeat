@@ -42,13 +42,13 @@
           ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.name }}</p></div
+          ><p style="text-align: left">{{ monitor.name }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.host }}</p></div
+          ><p style="text-align: left">{{ monitor.host }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
@@ -64,7 +64,7 @@
           ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.description }}</p></div
+          ><p style="text-align: left">{{ monitor.description }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
@@ -72,19 +72,19 @@
           ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
         >
         <div nz-col nzSpan="16">
-          <nz-tag *ngIf="monitor?.status == 0" nzColor="default">
+          <nz-tag *ngIf="monitor.status == 0" nzColor="default">
             <i nz-icon nzType="robot" nzTheme="outline"></i>
             <span>{{ 'monitor.status.un-manage' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor?.status == 1" nzColor="success">
+          <nz-tag *ngIf="monitor.status == 1" nzColor="success">
             <i nz-icon nzType="smile" nzTheme="outline"></i>
             <span>{{ 'monitor.status.available' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor?.status == 2" nzColor="warning">
+          <nz-tag *ngIf="monitor.status == 2" nzColor="warning">
             <i nz-icon nzType="meh" nzTheme="outline"></i>
             <span>{{ 'monitor.status.unavailable' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor?.status == 3" nzColor="error">
+          <nz-tag *ngIf="monitor.status == 3" nzColor="error">
             <i nz-icon nzType="frown" nzTheme="outline"></i>
             <span>{{ 'monitor.status.unreachable' | i18n }}</span>
           </nz-tag>
@@ -95,7 +95,7 @@
           ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.intervals }}s</p></div
+          ><p style="text-align: left">{{ monitor.intervals }}s</p></div
         >
       </div>
       <div nz-row nzGutter="16">
@@ -103,7 +103,7 @@
           ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtCreate | date: 'YYYY-MM-dd HH:mm:ss' }}</p></div
+          ><p style="text-align: left">{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
         >
       </div>
       <div nz-row nzGutter="16">
@@ -111,7 +111,7 @@
           ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor?.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss' }}</p></div
+          ><p style="text-align: left">{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
         >
       </div>
     </nz-card>

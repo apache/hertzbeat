@@ -103,8 +103,8 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="left">
-        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags?.monitorId]">
-          {{ data.tags?.monitorName }}
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags.monitorId]">
+          {{ data.tags.monitorName }}
           <span nz-icon nzType="area-chart"></span>
         </button>
       </td>
@@ -134,7 +134,7 @@
           {{ 'alert.status.' + data.status | i18n }}
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data?.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">{{ data.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button
           *ngIf="data.status != 3"
