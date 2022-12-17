@@ -59,6 +59,11 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * 指标组采集任务超时时间值
      */
     private static final long DURATION_TIME = 240_000L;
+    /**
+     * trigger sub task max num
+     * 触发子任务最大数量
+     */
+    private static final int MAX_SUB_TASK_NUM = 50;
     private static final Gson GSON = new Gson();
     /**
      * Priority queue of index group collection tasks
@@ -238,14 +243,15 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
                 metricsSet.forEach(metricItem -> {
                     if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(GSON.toJsonTree(metricItem))) {
-                        AtomicInteger subTaskNum = new AtomicInteger(configmapList.size());
+                        int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
+                        AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
                         AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
-                        for (int index = 0; index < configmapList.size(); index ++) {
+                        for (int index = 0; index < subTaskNum; index ++) {
                             Map<String, Configmap> configmap = configmapList.get(index);
                             JsonElement metricJson = GSON.toJsonTree(metricItem);
                             CollectUtil.replaceCryPlaceholder(metricJson, configmap);
                             Metrics metric = GSON.fromJson(metricJson, Metrics.class);
-                            metric.setSubTaskNum(subTaskNum);
+                            metric.setSubTaskNum(subTaskNumAtomic);
                             metric.setSubTaskId(index);
                             metric.setSubTaskDataRef(metricsDataReference);
                             MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
