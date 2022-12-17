@@ -326,7 +326,7 @@
           {{ 'monitor.intervals' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="10" [nzMax]="604800" [nzStep]="60" name="intervals" id="intervals">
+          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="30" [nzMax]="86400" [nzStep]="60" name="intervals" id="intervals">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>
