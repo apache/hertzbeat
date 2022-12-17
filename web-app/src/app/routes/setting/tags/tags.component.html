@@ -87,7 +87,7 @@
           data.name + ':' + data.value
         }}</nz-tag>
       </td>
-      <td nzAlign="center">{{ data.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onEditOneTag(data)" nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
