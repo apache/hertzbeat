@@ -46,6 +46,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Alarm Management API 告警管理API
  *
  * @author tom
+ * @author <a href="mailto:1252532896@qq.com">Hua.Cheng</a>
  * @date 2021/12/9 10:32
  */
 @Api(tags = "Alarm Manage Batch API | 告警批量管理API")
@@ -78,10 +79,6 @@ public class AlertsController {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
-            }
-            if (monitorId != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("monitorId"), monitorId);
-                andList.add(predicate);
             }
             if (priority != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
