@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author ceilzcx
@@ -37,12 +39,22 @@ public class ExporterParser {
     private String currentQuantile;
     private String currentBucket;
 
+    private final Lock lock = new ReentrantLock();
+
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
         Map<String, MetricFamily> metricMap = new ConcurrentHashMap<>();
-        String[] lines = resp.split("\n");
-        for (String line : lines) {
-            this.parseLine(metricMap, new StrBuffer(line));
+        lock.lock();
+        try {
+            String[] lines = resp.split("\n");
+            for (String line : lines) {
+                this.parseLine(metricMap, new StrBuffer(line));
+            }
+            return metricMap;
+        } catch (Exception e) {
+            log.error("parse prometheus exporter data error, msg: {}", e.getMessage());
+        } finally {
+            lock.unlock();
         }
         return metricMap;
     }
