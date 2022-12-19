@@ -47,6 +47,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  *
  *
+ *
  */
 @Tag(name = "Alarm Manage Batch API | 告警批量管理API")
 @RestController
@@ -78,10 +79,6 @@ public class AlertsController {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
-            }
-            if (monitorId != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("monitorId"), monitorId);
-                andList.add(predicate);
             }
             if (priority != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
