@@ -1,7 +1,7 @@
 ---
 id: custom-config  
-title: Param Config           
-sidebar_label: Param Config      
+title: Advanced Config           
+sidebar_label: Advanced Config      
 ---
 
 This describes how to configure the SMS server, the number of built-in availability alarm triggers, etc.
@@ -9,9 +9,10 @@ This describes how to configure the SMS server, the number of built-in availabil
 **Configuration file `application.yml` of `hertzbeat`**
 
 ### Configure the configuration file of HertzBeat
-    Modify the configuration file located at `hertzbeat/config/application.yml`   
-    Note ⚠️The docker container method needs to mount the application.yml file to the local host   
-    The installation package can be decompressed and modified in `hertzbeat/config/application.yml`   
+
+Modify the configuration file located at `hertzbeat/config/application.yml`    
+Note ⚠️The docker container method needs to mount the application.yml file to the local host     
+The installation package can be decompressed and modified in `hertzbeat/config/application.yml`    
 
 1. Configure the SMS sending server
 
