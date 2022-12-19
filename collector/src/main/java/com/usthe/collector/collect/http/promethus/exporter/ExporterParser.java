@@ -30,10 +30,6 @@ public class ExporterParser {
     private static final String NAME_LABEL = "__name__";
     private static final String SUM_SUFFIX = "_sum";
     private static final String COUNT_SUFFIX = "_count";
-//    private static final String BUCKET_SUFFIX = "_bucket";
-//    private static final String INFO_SUFFIX = "_info";
-//    private static final String TOTAL_SUFFIX = "_total";
-//    private static final String CREATED_SUFFIX = "_created";
 
     private MetricFamily currentMetricFamily;
     private String currentQuantile;
@@ -367,27 +363,47 @@ public class ExporterParser {
         return builder.toString();
     }
 
-    // 是否符合metric name首字符规则
+    /**
+     * 是否符合metric name首字符规则
+     * @param c metric字符
+     * @return true/false
+     */
     private boolean isValidMetricNameStart(char c) {
         return isValidLabelNameStart(c) || c == ':';
     }
 
-    // 是否符合metric name除首字符其他字符规则
+    /**
+     * 是否符合metric name除首字符其他字符规则
+     * @param c metric字符
+     * @return true/false
+     */
     private boolean isValidMetricNameContinuation(char c) {
         return isValidLabelNameContinuation(c) || c == ':';
     }
 
-    // 是否符合label name首字符规则
+    /**
+     * 是否符合label name首字符规则
+     * @param c metric字符
+     * @return true/false
+     */
     private boolean isValidLabelNameStart(char c) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
     }
 
-    // 是否符合label name除首字符其他字符规则
+    /**
+     * 是否符合label name除首字符其他字符规则
+     * @param c metric字符
+     * @return true/false
+     */
     private boolean isValidLabelNameContinuation(char c) {
         return isValidLabelNameStart(c) || (c >= '0' && c <= '9');
     }
 
-    // 检测是否是有效的utf8编码的字符串
+    /**
+     * 检测是否是有效的utf8编码的字符串
+     * @param s label value
+     * @return true/false
+     */
     private boolean isValidLabelValue(String s) {
         return s != null && s.equals(new String(s.getBytes(StandardCharsets.UTF_8)));
     }
