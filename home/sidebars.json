@@ -13,7 +13,8 @@
         "start/package-deploy",
         "start/rainbond-deploy",
         "start/ssl-cert-practice",
-        "start/mysql-change"
+        "start/mysql-change",
+        "start/custom-config"
       ]
     },
     {
