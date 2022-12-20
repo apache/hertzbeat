@@ -278,7 +278,12 @@ public class ExporterParser {
         }
     }
 
-    // 读取第一个空格符前的token
+    /**
+     * 读取第一个空格符前的token
+     *
+     * @param buffer 行数据对象
+     * @return token unit
+     */
     private String readTokenUnitWhitespace(StrBuffer buffer) {
         StringBuilder builder = new StringBuilder();
         while (!buffer.isEmpty()) {
@@ -291,7 +296,12 @@ public class ExporterParser {
         return builder.toString();
     }
 
-    // 获取指标的名称
+    /**
+     * 获取指标的名称
+     *
+     * @param buffer 行数据对象
+     * @return token name
+     */
     private String readTokenAsMetricName(StrBuffer buffer) {
         StringBuilder builder = new StringBuilder();
         if (this.isValidMetricNameStart(buffer.charAt(0))) {
@@ -308,7 +318,12 @@ public class ExporterParser {
         throw new ParseException("parse metric name error");
     }
 
-    // 获取Label的名称
+    /**
+     * 获取label的名称
+     *
+     * @param buffer 行数据对象
+     * @return label name
+     */
     private String readTokenAsLabelName(StrBuffer buffer) {
         StringBuilder builder = new StringBuilder();
         char c = buffer.read();
@@ -327,7 +342,12 @@ public class ExporterParser {
         throw new ParseException("parse label name error");
     }
 
-    // 获取Label的值
+    /**
+     * 获取Label的值
+     *
+     * @param buffer 行数据对象
+     * @return label value
+     */
     private String readTokenAsLabelValue(StrBuffer buffer) {
         StringBuilder builder = new StringBuilder();
         boolean escaped = false;
@@ -365,6 +385,7 @@ public class ExporterParser {
 
     /**
      * 是否符合metric name首字符规则
+     *
      * @param c metric字符
      * @return true/false
      */
@@ -374,6 +395,7 @@ public class ExporterParser {
 
     /**
      * 是否符合metric name除首字符其他字符规则
+     *
      * @param c metric字符
      * @return true/false
      */
@@ -383,6 +405,7 @@ public class ExporterParser {
 
     /**
      * 是否符合label name首字符规则
+     *
      * @param c metric字符
      * @return true/false
      */
@@ -392,6 +415,7 @@ public class ExporterParser {
 
     /**
      * 是否符合label name除首字符其他字符规则
+     *
      * @param c metric字符
      * @return true/false
      */
@@ -401,6 +425,7 @@ public class ExporterParser {
 
     /**
      * 检测是否是有效的utf8编码的字符串
+     *
      * @param s label value
      * @return true/false
      */

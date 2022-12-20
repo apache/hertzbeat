@@ -23,6 +23,7 @@ public class StrBuffer {
 
     /**
      * 读取当前字符, left++
+     *
      * @return 当前下标字符
      */
     public char read() {
@@ -43,6 +44,7 @@ public class StrBuffer {
 
     /**
      * 只查询left+i的下标字符, 不会进行left++的操作
+     *
      * @param i 下标
      * @return left+i下标对应的字符
      */
@@ -55,7 +57,8 @@ public class StrBuffer {
 
     /**
      * 转string对象
-      * @return char数组对应的字符串
+     *
+     * @return char数组对应的字符串
      */
     public String toStr() {
         StringBuilder builder = new StringBuilder();
@@ -67,6 +70,7 @@ public class StrBuffer {
 
     /**
      * 转double
+     *
      * @return char数组对应的浮点数
      */
     public double toDouble() {
@@ -76,6 +80,7 @@ public class StrBuffer {
 
     /**
      * 转long
+     *
      * @return char数组对应的长整数
      */
     public long toLong() {
@@ -110,6 +115,7 @@ public class StrBuffer {
 
     /**
      * string -> long, 需要判断是否为INF
+     *
      * @param s 字符串
      * @return 长整数
      */
@@ -125,6 +131,7 @@ public class StrBuffer {
 
     /**
      * string -> double, 需要判断是否为INF
+     *
      * @param s 字符串
      * @return 浮点数
      */
