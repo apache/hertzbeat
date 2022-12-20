@@ -106,7 +106,9 @@ public class MetricFamily {
 
     @Data
     public static class Quantile {
-        // 对应 prometheus 的 quantile 字段
+        /**
+         * 对应 prometheus 的 quantile 字段
+         */
         private double xLabel;
 
         private double value;

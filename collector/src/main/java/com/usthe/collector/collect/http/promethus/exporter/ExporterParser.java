@@ -31,6 +31,14 @@ public class ExporterParser {
     private static final String SUM_SUFFIX = "_sum";
     private static final String COUNT_SUFFIX = "_count";
 
+    private static final char LEFT_CURLY_BRACKET = '{';
+    private static final char RIGHT_CURLY_BRACKET = '}';
+    private static final char EQUALS = '=';
+    private static final char QUOTES = '"';
+    private static final char ENTER = '\n';
+    private static final char SPACE = ' ';
+    private static final char COMMA = ',';
+
     private MetricFamily currentMetricFamily;
     private String currentQuantile;
     private String currentBucket;
@@ -39,7 +47,7 @@ public class ExporterParser {
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
-        Map<String, MetricFamily> metricMap = new ConcurrentHashMap<>();
+        Map<String, MetricFamily> metricMap = new ConcurrentHashMap<>(10);
         lock.lock();
         try {
             String[] lines = resp.split("\n");
@@ -64,7 +72,7 @@ public class ExporterParser {
                 this.currentMetricFamily = null;
                 this.parseComment(metricMap, buffer);
                 break;
-            case '\n':
+            case ENTER:
                 break;
             default:
                 this.currentBucket = null;
@@ -77,10 +85,10 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         String token = this.readTokenUnitWhitespace(buffer);
-        if (token.equals(EOF)) {
+        if (EOF.equals(token)) {
             return;
         }
-        if (!token.equals(HELP) && !token.equals(TYPE)) {
+        if (!HELP.equals(token) && !TYPE.equals(token)) {
             log.error("parse comment error {}, start without {} or {}", buffer.toStr(), HELP, TYPE);
             return;
         }
@@ -143,7 +151,7 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         metric.setLabelPair(new ArrayList<>());
-        if (buffer.charAt(0) == '{') {
+        if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
             this.startReadLabelName(metric, buffer);
         } else {
@@ -154,7 +162,7 @@ public class ExporterParser {
     private void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
-        if (buffer.charAt(0) == '}') {
+        if (buffer.charAt(0) == RIGHT_CURLY_BRACKET) {
             buffer.read();
             buffer.skipBlankTabs();
             if (buffer.isEmpty()) return;
@@ -167,7 +175,7 @@ public class ExporterParser {
         }
         MetricFamily.Label label = new MetricFamily.Label();
         label.setName(labelName);
-        if (buffer.read() != '=') {
+        if (buffer.read() != EQUALS) {
             throw new ParseException("parse error, not match the format of labelName=labelValue");
         }
         this.startReadLabelValue(metric, label, buffer);
@@ -177,7 +185,7 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         char c = buffer.read();
-        if (c != '"') {
+        if (c != QUOTES) {
             throw new ParseException("expected '\"' at start of label value, line: " + buffer.toStr());
         }
         String labelValue = this.readTokenAsLabelValue(buffer);
@@ -195,10 +203,10 @@ public class ExporterParser {
         if (buffer.isEmpty()) return;
         c = buffer.read();
         switch (c) {
-            case ',':
+            case COMMA:
                 this.startReadLabelName(metric, buffer);
                 break;
-            case '}':
+            case RIGHT_CURLY_BRACKET:
                 this.readLabelValue(metric, label, buffer);
                 break;
             default:
@@ -288,7 +296,7 @@ public class ExporterParser {
         StringBuilder builder = new StringBuilder();
         while (!buffer.isEmpty()) {
             char c = buffer.read();
-            if (c == ' ') {
+            if (c == SPACE) {
                 break;
             }
             builder.append(c);
@@ -356,7 +364,7 @@ public class ExporterParser {
             // 处理 '\\' 转义
             if (escaped) {
                 switch (c) {
-                    case '"':
+                    case QUOTES:
                     case '\\':
                         builder.append(c);
                         break;
@@ -368,9 +376,9 @@ public class ExporterParser {
                 }
             } else {
                 switch (c) {
-                    case '"':
+                    case QUOTES:
                         return builder.toString();
-                    case '\n':
+                    case ENTER:
                         throw new ParseException("parse label value error, next line");
                     case '\\':
                         escaped = true;
