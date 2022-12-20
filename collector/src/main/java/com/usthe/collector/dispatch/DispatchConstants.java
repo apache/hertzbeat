@@ -115,8 +115,8 @@ public interface DispatchConstants {
      */
     String PARSE_SITE_MAP = "sitemap";
     /**
-     * Parsing method prometheus rules
-     * 解析方式 prometheus规则
+     * Parsing method prometheus exporter data
+     * 解析方式 prometheus exporter接口获取的数据
      */
     String PARSE_PROMETHEUS = "prometheus";
     /**
