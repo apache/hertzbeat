@@ -103,4 +103,5 @@ public class CommonUtil {
         Matcher m = PHONE_PATTERN.matcher(phoneNum);
         return m.find();
     }
+
 }
