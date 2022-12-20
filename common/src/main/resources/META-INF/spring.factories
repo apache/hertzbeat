@@ -19,4 +19,5 @@ com.usthe.common.config.CommonProperties,\
 com.usthe.common.config.CommonConfig,\
 com.usthe.common.config.AviatorConfiguration,\
 com.usthe.common.queue.impl.InMemoryCommonDataQueue,\
+com.usthe.common.service.TencentSmsClient,\
 com.usthe.common.support.SpringContextHolder

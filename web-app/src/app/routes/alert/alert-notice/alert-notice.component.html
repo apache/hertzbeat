@@ -212,7 +212,7 @@
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="type">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select [(ngModel)]="receiver.type" nzPlaceHolder="Choose" required name="type" id="type">
-            <nz-option [nzValue]="0" nzDisabled [nzLabel]="'alert.notice.type.sms' | i18n"></nz-option>
+            <nz-option [nzValue]="0" [nzLabel]="'alert.notice.type.sms' | i18n"></nz-option>
             <nz-option [nzValue]="1" [nzLabel]="'alert.notice.type.email' | i18n"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
             <nz-option [nzValue]="3" nzDisabled [nzLabel]="'alert.notice.type.wechat' | i18n"></nz-option>
@@ -225,15 +225,7 @@
       <nz-form-item *ngIf="receiver.type === 0">
         <nz-form-label [nzSpan]="7" nzFor="phone" [nzRequired]="receiver.type === 0">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.phone.invalid' | i18n">
-          <input
-            [(ngModel)]="receiver.phone"
-            nz-input
-            [required]="receiver.type === 0"
-            pattern="/^1\d{10}$/"
-            name="phone"
-            type="tel"
-            id="phone"
-          />
+          <input [(ngModel)]="receiver.phone" nz-input [required]="receiver.type === 0" name="phone" type="tel" id="phone" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 1">
