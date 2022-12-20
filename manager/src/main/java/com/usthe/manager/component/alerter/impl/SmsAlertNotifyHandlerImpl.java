@@ -19,16 +19,48 @@ package com.usthe.manager.component.alerter.impl;
 
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.service.TencentSmsClient;
+import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.ResourceBundleUtil;
 import com.usthe.manager.component.alerter.AlertNotifyHandler;
+import com.usthe.manager.support.exception.AlertNoticeException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+import java.util.ResourceBundle;
 
 /**
  *
  * @since 2022/4/24
  */
+@Component
+@RequiredArgsConstructor
+@Slf4j
+@ConditionalOnProperty("common.sms.tencent.app-id")
 final class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
+    private final TencentSmsClient tencentSmsClient;
+
+    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        // todo SMS notification    短信通知
+        // SMS notification 短信通知
+        try {
+            String monitorName = null;
+            if (alert.getTags() != null) {
+                monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+            }
+            String[] params = new String[3];
+            params[0] = monitorName == null ? alert.getTarget() : monitorName;
+            params[1] = bundle.getString("alerter.priority." + alert.getPriority());
+            params[2] = alert.getContent();
+            tencentSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+        } catch (Exception e) {
+            throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
+        }
     }
 
     @Override
