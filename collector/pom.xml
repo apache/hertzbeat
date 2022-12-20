@@ -47,7 +47,7 @@
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
-            <scope>provided</scope>
+<!--            <scope>provided</scope>-->
         </dependency>
         <!-- validation -->
         <dependency>
