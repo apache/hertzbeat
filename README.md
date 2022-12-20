@@ -28,7 +28,7 @@ Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless. Support web service, database, os, middleware and more.          
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless. Support web service, database, os, middleware, cloud-native and more.          
 > We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.   
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
 > HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, dingDing, weChat, feiShu, webhook and more.  
@@ -162,6 +162,18 @@ Thanks these wonderful people, welcome to join us:
       <td align="center"><a href="https://github.com/csyshu"><img src="https://avatars.githubusercontent.com/u/46591658?v=4?s=100" width="100px;" alt="Reverse wind"/><br /><sub><b>Reverse wind</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=csyshu" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/luxx-lq"><img src="https://avatars.githubusercontent.com/u/58515565?v=4?s=100" width="100px;" alt="luxx"/><br /><sub><b>luxx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luxx-lq" title="Code">💻</a></td>
       <td align="center"><a href="https://bandism.net/"><img src="https://avatars.githubusercontent.com/u/22633385?v=4?s=100" width="100px;" alt="Ikko Ashimine"/><br /><sub><b>Ikko Ashimine</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=eltociear" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/zenan08"><img src="https://avatars.githubusercontent.com/u/80514991?v=4?s=100" width="100px;" alt="leizenan"/><br /><sub><b>leizenan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zenan08" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/BKing2020"><img src="https://avatars.githubusercontent.com/u/28869121?v=4?s=100" width="100px;" alt="BKing"/><br /><sub><b>BKing</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=BKing2020" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/xingshuaiLi"><img src="https://avatars.githubusercontent.com/u/119487588?v=4?s=100" width="100px;" alt="xingshuaiLi"/><br /><sub><b>xingshuaiLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xingshuaiLi" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/wangke6666"><img src="https://avatars.githubusercontent.com/u/113656595?v=4?s=100" width="100px;" alt="wangke6666"/><br /><sub><b>wangke6666</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wangke6666" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/LWBobo"><img src="https://avatars.githubusercontent.com/u/50368698?v=4?s=100" width="100px;" alt="刺猬"/><br /><sub><b>刺猬</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/issues?q=author%3ALWBobo" title="Bug reports">🐛</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LWBobo" title="Code">💻</a></td>
+      <td align="center"><a href="http://www.zanglikun.com"><img src="https://avatars.githubusercontent.com/u/61591648?v=4?s=100" width="100px;" alt="Haste"/><br /><sub><b>Haste</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zanglikun" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/SuitSmile"><img src="https://avatars.githubusercontent.com/u/38679717?v=4?s=100" width="100px;" alt="zhongshi.yi"/><br /><sub><b>zhongshi.yi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SuitSmile" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://www.smallq.cn"><img src="https://avatars.githubusercontent.com/u/39754275?v=4?s=100" width="100px;" alt="Qi Zhang"/><br /><sub><b>Qi Zhang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zzzhangqi" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

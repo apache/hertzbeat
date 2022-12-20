@@ -78,6 +78,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
@@ -89,7 +90,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
 
-    public HttpCollectImpl() {}
+    public HttpCollectImpl() {
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
@@ -117,12 +119,14 @@ public class HttpCollectImpl extends AbstractCollect {
                 return;
             } else {
                 // 2xx 3xx 状态码 成功
+                // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
+                // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
                 String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                 // 根据不同的解析方式解析
                 if (resp == null || "".equals(resp)) {
                     log.info("http response entity is empty, status: {}.", statusCode);
                 }
-                Long responseTime  = System.currentTimeMillis() - startTime;
+                Long responseTime = System.currentTimeMillis() - startTime;
                 String parseType = metrics.getHttp().getParseType();
                 try {
                     if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
@@ -135,7 +139,7 @@ public class HttpCollectImpl extends AbstractCollect {
                         parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
                         parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                    } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)){
+                    } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
                         parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
                         parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
@@ -321,7 +325,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 continue;
             }
             if (objectValue instanceof Map) {
-                Map<String, Object> stringMap = (Map<String, Object>)objectValue;
+                Map<String, Object> stringMap = (Map<String, Object>) objectValue;
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     Object value = stringMap.get(alias);
@@ -366,12 +370,17 @@ public class HttpCollectImpl extends AbstractCollect {
     private void parseResponseByPromQL(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
-        prometheusParser.handle(resp,aliasFields,http,builder);
+        prometheusParser.handle(resp, aliasFields, http, builder);
     }
+
+    private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
 
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    CollectRep.MetricsData.Builder builder) {
-        ExporterParser parser = new ExporterParser();
+        if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
+            EXPORTER_PARSER_TABLE.put(builder.getId(), new ExporterParser());
+        }
+        ExporterParser parser = EXPORTER_PARSER_TABLE.get(builder.getId());
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         String metrics = builder.getMetrics();
         if (metricFamilyMap.containsKey(metrics)) {
@@ -473,6 +482,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * 根据http配置参数构造请求头
+     *
      * @param httpProtocol http参数配置
      * @return 请求体
      */
@@ -481,9 +491,9 @@ public class HttpCollectImpl extends AbstractCollect {
         // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();
         if (HttpMethod.GET.matches(httpMethod)) {
-            requestBuilder =  RequestBuilder.get();
+            requestBuilder = RequestBuilder.get();
         } else if (HttpMethod.POST.matches(httpMethod)) {
-            requestBuilder =  RequestBuilder.post();
+            requestBuilder = RequestBuilder.post();
         } else if (HttpMethod.PUT.matches(httpMethod)) {
             requestBuilder = RequestBuilder.put();
         } else if (HttpMethod.DELETE.matches(httpMethod)) {
@@ -508,7 +518,7 @@ public class HttpCollectImpl extends AbstractCollect {
         // The default request header can be overridden if customized
         // keep-alive
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT,"Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
         // headers  The custom request header is overwritten here
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
@@ -541,13 +551,13 @@ public class HttpCollectImpl extends AbstractCollect {
                         && StringUtils.hasText(authorization.getBasicAuthPassword())) {
                     String authStr = authorization.getBasicAuthUsername() + ":" + authorization.getBasicAuthPassword();
                     String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                    requestBuilder.addHeader(HttpHeaders.AUTHORIZATION,  DispatchConstants.BASIC + " " + encodedAuth);
+                    requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, DispatchConstants.BASIC + " " + encodedAuth);
                 }
             }
         }
 
         // 请求内容，会覆盖post协议的params
-        if(StringUtils.hasLength(httpProtocol.getPayload())){
+        if (StringUtils.hasLength(httpProtocol.getPayload())) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 

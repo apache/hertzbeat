@@ -213,7 +213,9 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageReceiverModalVisible = false;
-              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.receiver.next'), {
+                nzDuration: 15000
+              });
               this.loadReceiversTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
@@ -237,7 +239,9 @@ export class AlertNoticeComponent implements OnInit {
           message => {
             if (message.code === 0) {
               this.isManageReceiverModalVisible = false;
-              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), this.i18nSvc.fanyi('alert.notice.receiver.next'), {
+                nzDuration: 15000
+              });
               this.loadReceiversTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);

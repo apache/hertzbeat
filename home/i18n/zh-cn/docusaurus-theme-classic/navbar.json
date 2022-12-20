@@ -54,5 +54,13 @@
   "item.label.关于": {
     "message": "关于",
     "description": "Navbar item with label 关于"
+  },
+  "item.label.开发者们": {
+    "message": "开发者们",
+    "description": "Navbar item with label 开发者们"
+  },
+  "item.label.enterprise": {
+    "message": "企业版",
+    "description": "Navbar item with label enterprise"
   }
 }
