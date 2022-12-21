@@ -120,9 +120,11 @@ public class SshCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("对端连接失败 " + ioException.getMessage());
         } catch (Exception exception) {
-            log.debug(exception.getMessage());
+            String errorMsg = exception.getMessage() != null ? exception.getMessage() : exception.getLocalizedMessage();
+            errorMsg = errorMsg != null ? errorMsg : exception.toString();
+            log.warn(errorMsg, exception);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(exception.getMessage());
+            builder.setMsg(errorMsg);
         }
     }
 
