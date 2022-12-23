@@ -9,7 +9,6 @@
         "start/iotdb-init",
         "start/tdengine-init",
         "start/docker-deploy",
-        "start/rainbond-deploy",
         "start/package-deploy",
         "start/rainbond-deploy",
         "start/ssl-cert-practice",
