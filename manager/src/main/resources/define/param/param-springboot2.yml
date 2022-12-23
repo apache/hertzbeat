@@ -43,3 +43,10 @@ param:
     # 当type为boolean时,前端用switch展示开关
     type: boolean
     required: false
+  - field: context_path
+    name:
+      zh-CN: Context Path
+      en-US: Context Path
+    type: text
+    required: false
+    hide: true
