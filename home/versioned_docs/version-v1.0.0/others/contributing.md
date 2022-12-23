@@ -45,7 +45,7 @@ sidebar_label: 贡献者指南
 1. 需要`nodejs npm angular-cli`环境
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
+4. 全局安装angular-cli `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 6. 浏览器访问 localhost:4200 即可开始
 

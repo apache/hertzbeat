@@ -1,7 +1,7 @@
 ---
 id: iotdb-init  
-title: Depends on the time series database IoTDB installation
-sidebar_label: Time series database IoTDB installation (optional) 
+title: The time series database IoTDB installation
+sidebar_label: IoTDB init (optional) 
 ---
 
 HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to initialize, or not to install (note ⚠️If you don't install it, there will be no historical chart data)

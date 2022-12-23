@@ -403,6 +403,106 @@
         "test",
         "code"
       ]
+    },
+    {
+      "login": "luxx-lq",
+      "name": "luxx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58515565?v=4",
+      "profile": "https://github.com/luxx-lq",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "eltociear",
+      "name": "Ikko Ashimine",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22633385?v=4",
+      "profile": "https://bandism.net/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "zenan08",
+      "name": "leizenan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/80514991?v=4",
+      "profile": "https://github.com/zenan08",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "BKing2020",
+      "name": "BKing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28869121?v=4",
+      "profile": "https://github.com/BKing2020",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "xingshuaiLi",
+      "name": "xingshuaiLi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119487588?v=4",
+      "profile": "https://github.com/xingshuaiLi",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "wangke6666",
+      "name": "wangke6666",
+      "avatar_url": "https://avatars.githubusercontent.com/u/113656595?v=4",
+      "profile": "https://github.com/wangke6666",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "LWBobo",
+      "name": "刺猬",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50368698?v=4",
+      "profile": "https://github.com/LWBobo",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "zanglikun",
+      "name": "Haste",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61591648?v=4",
+      "profile": "http://www.zanglikun.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SuitSmile",
+      "name": "zhongshi.yi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38679717?v=4",
+      "profile": "https://github.com/SuitSmile",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "zzzhangqi",
+      "name": "Qi Zhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39754275?v=4",
+      "profile": "https://www.smallq.cn",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "MrAndyMing",
+      "name": "MrAndyMing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49541483?v=4",
+      "profile": "https://github.com/MrAndyMing",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7

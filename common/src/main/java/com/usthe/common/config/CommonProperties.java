@@ -40,6 +40,11 @@ public class CommonProperties {
      */
     private DataQueueProperties queue;
 
+    /**
+     * sms impl properties
+     */
+    private SmsProperties sms;
+
     public String getSecretKey() {
         return secretKey;
     }
@@ -54,6 +59,14 @@ public class CommonProperties {
 
     public void setQueue(DataQueueProperties queue) {
         this.queue = queue;
+    }
+
+    public SmsProperties getSms() {
+        return sms;
+    }
+
+    public void setSms(SmsProperties sms) {
+        this.sms = sms;
     }
 
     public static class DataQueueProperties {
@@ -76,5 +89,85 @@ public class CommonProperties {
         Kafka,
         /** rabbit mq **/
         Rabbit_Mq
+    }
+
+    public static class SmsProperties {
+        private TencentSmsProperties tencent;
+
+        public TencentSmsProperties getTencent() {
+            return tencent;
+        }
+
+        public void setTencent(TencentSmsProperties tencent) {
+            this.tencent = tencent;
+        }
+    }
+
+    public static class TencentSmsProperties {
+
+        /**
+         * 腾讯云账户访问密钥id
+         */
+        private String secretId;
+
+        /**
+         * 腾讯云账户访问密钥key
+         */
+        private String secretKey;
+
+        /**
+         * SMS短信应用app id
+         */
+        private String appId;
+
+        /**
+         * 短信签名
+         */
+        private String signName;
+
+        /**
+         * 短信模版ID
+         */
+        private String templateId;
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getSecretId() {
+            return secretId;
+        }
+
+        public void setSecretId(String secretId) {
+            this.secretId = secretId;
+        }
+
+        public String getSecretKey() {
+            return secretKey;
+        }
+
+        public void setSecretKey(String secretKey) {
+            this.secretKey = secretKey;
+        }
+
+        public String getSignName() {
+            return signName;
+        }
+
+        public void setSignName(String signName) {
+            this.signName = signName;
+        }
+
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public void setTemplateId(String templateId) {
+            this.templateId = templateId;
+        }
     }
 }

@@ -54,5 +54,9 @@
   "sidebar.docs.category.Others": {
     "message": "Others",
     "description": "The label for category Others in sidebar docs"
+  },
+  "sidebar.docs.category.云原生": {
+    "message": "云原生",
+    "description": "The label for category 云原生 in sidebar docs"
   }
 }

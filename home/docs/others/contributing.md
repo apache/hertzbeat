@@ -35,17 +35,16 @@ sidebar_label: 贡献者指南
 
 - 后端启动
 
-1. 部署启动依赖服务`MYSQL`和`TDengine`数据库
-2. 需要`maven3+`, `java8+`和`lombok`环境
-3. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
-4. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`
+1. 需要`maven3+`, `java11+`和`lombok`环境
+2. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
+3. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`
 
 - 前端启动
 
 1. 需要`nodejs npm angular-cli`环境
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
+4. 全局安装angular-cli `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 6. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat
 

@@ -1,3 +1,3 @@
 export const CONSTS = {
-  VERSION: 'v1.2.1'
+  VERSION: 'v1.2.2'
 };

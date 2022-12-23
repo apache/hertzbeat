@@ -1,6 +1,6 @@
 ---
 id: package-deploy  
-title: 通过安装包安装HertzBeat    
+title: 通过安装包安装 HertzBeat    
 sidebar_label: 安装包方式部署    
 ---
 > HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。由于安装包自身不包含JAVA运行环境，需您提前准备JAVA运行环境。
@@ -13,9 +13,10 @@ sidebar_label: 安装包方式部署
    安装后命令行检查是否成功安装   
    ```
    $ java -version
-   openjdk version "1.8.0_312"
-   OpenJDK Runtime Environment (Zulu 8.58.0.13-CA-macos-aarch64) (build 1.8.0_312-b07)
-   OpenJDK 64-Bit Server VM (Zulu 8.58.0.13-CA-macos-aarch64) (build 25.312-b07, mixed mode)
+   java version "11.0.12"
+   Java(TM) SE Runtime Environment 18.9 (build 11.0.12+8-LTS-237)
+   Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
+
    ```
 2. 下载HertzBeat安装包
    下载您系统环境对应的安装包

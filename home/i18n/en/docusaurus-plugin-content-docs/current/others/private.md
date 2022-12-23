@@ -15,7 +15,7 @@ We also provide paid remote installation and deployment services.
 #### Cluster SAAS version of HertzBeat-TanCloud (paid)      
 
 This version is the corresponding version of [TanCloud Official website](https://console.tancloud.cn) environment. Compared with hertzbeat, it has functions of clustering, users, tenants and so on, which is suitable for medium and large-scale team enterprises. 
-This version is a paid version. For tancloud privatization deployment plan and price, please consult us on WeChat tomsun28, and add WeChat please note: privatization + team name.  
+This version is a paid version. For tancloud privatization deployment plan and price, please consult us on WeChat tan-cloud, and add WeChat please note: privatization + team name.  
 
 #### Privatized custom function development (paid) 
 

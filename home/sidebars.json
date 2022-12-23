@@ -9,9 +9,12 @@
         "start/iotdb-init",
         "start/tdengine-init",
         "start/docker-deploy",
+        "start/rainbond-deploy",
         "start/package-deploy",
+        "start/rainbond-deploy",
         "start/ssl-cert-practice",
-        "start/mysql-change"
+        "start/mysql-change",
+        "start/custom-config"
       ]
     },
     {
@@ -61,7 +64,9 @@
             "help/ping",
             "help/port",
             "help/fullsite",
-            "help/jvm"
+            "help/ssl_cert",
+            "help/jvm",
+            "help/springboot2"
           ]
         },
         {
@@ -73,7 +78,8 @@
             "help/postgresql",
             "help/sqlserver",
             "help/oracle",
-            "help/dm"
+            "help/dm",
+            "help/opengauss"
           ]
         },
         {
@@ -99,7 +105,8 @@
           "type": "category",
           "label": "云原生",
           "items": [
-            "help/docker"
+            "help/docker",
+            "help/kubernetes"
           ]
         },
         {
