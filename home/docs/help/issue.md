@@ -49,3 +49,11 @@ sidebar_label: 常见问题
 2. **日志报错TDengine连接或插入SQL失败**
 > 一：排查配置的数据库账户密码是否正确，数据库是否创建   
 > 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+
+### 监控常见问题
+
+1. **配置了k8s监控，但是实际监控时间并未按照正确间隔时间执行**   
+   请参考下面几点排查问题：
+> 一：首先查看hertzbeat的错误日志，如果出现了'desc: SQL statement too long, check maxSQLLength config'，信息
+> 二：需要调整tdengine配置文件，可在服务器创建taos.cfg文件，调整# max length of an SQL : maxSQLLength 654800，然后重启tdengine，需要加入配置文件的挂载
+> 三：如果遇到了重启tdengine失败，需要调整挂载数据文件中的配置，见 .../taosdata/dnode/dnodeEps.json，中dnodeFqdn调整为启动失败的dockerId即可，然后docker restart tdengine
