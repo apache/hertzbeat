@@ -27,7 +27,7 @@ configmap:
     type: 0
   - key: ssl
     type: 1
-  - key: context_path
+  - key: base_path
     type: 1
 metrics:
   - name: environment
@@ -72,7 +72,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/env
+      url: ^_^base_path^_^/env
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -94,7 +94,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/metrics/jvm.threads.states
+      url: ^_^base_path^_^/metrics/jvm.threads.states
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -122,7 +122,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
+      url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -144,7 +144,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/metrics/jvm.memory.used
+      url: ^_^base_path^_^/metrics/jvm.memory.used
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -175,7 +175,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
+      url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
@@ -201,7 +201,7 @@ metrics:
       # 端口
       port: ^_^port^_^
       # url请求接口路径
-      url: ^_^context_path^_^/actuator/health
+      url: ^_^base_path^_^/health
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
       # 是否启用ssl/tls,即是http还是https,默认false
