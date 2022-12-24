@@ -17,13 +17,13 @@
 # limitations under the License.
 
 # 重启脚本执行的起始时间
-starttime=$(date -d now +%s)
-echo -e "\033[0;31m当前时间是：$(date "+%Y-%m-%d %H:%M:%S") 开始全部重启\033[0m"
+startTime=$(date +%s)
+echo -e "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Now!\033[0m"
 ./shutdown.sh
 echo
 sleep 2
 echo
 ./startup.sh
 # 重启脚本执行的结束时间
-endtime=$(date -d now +%s)
-echo -e  "\033[0;31m当前时间是：$(date "+%Y-%m-%d %H:%M:%S") 已经完全重启了！重启一共耗费了$(($endtime - $starttime))秒 \033[0m";
+endTime=$(date +%s)
+echo -e  "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Success！Spend $((endTime - startTime)) seconds \033[0m";
