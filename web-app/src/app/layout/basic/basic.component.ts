@@ -80,7 +80,7 @@ import { CONSTS } from 'src/app/shared/consts';
       <div style="margin-top: 30px">
         HertzBeat {{ version }}<br />
         Copyright
-        <i nz-icon nzType="copyright"></i> 2022
+        <i nz-icon nzType="copyright"></i> 2023
         <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
