@@ -503,6 +503,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "idongliming",
+      "name": "idongliming",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31564353?v=4",
+      "profile": "https://idongliming.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
