@@ -210,7 +210,7 @@ module.exports = {
       },
       copyright:
         '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' +
-        ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,
+        ` | Copyright © 2021-${new Date().getFullYear()} TANCLOUD`,
     },
   },
   presets: [
