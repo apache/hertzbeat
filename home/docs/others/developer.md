@@ -80,6 +80,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center"><a href="https://www.smallq.cn"><img src="https://avatars.githubusercontent.com/u/39754275?v=4?s=100" width="100px;" alt="Qi Zhang"/><br /><sub><b>Qi Zhang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zzzhangqi" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/MrAndyMing"><img src="https://avatars.githubusercontent.com/u/49541483?v=4?s=100" width="100px;" alt="MrAndyMing"/><br /><sub><b>MrAndyMing</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=MrAndyMing" title="Documentation">📖</a></td>
       <td align="center"><a href="https://idongliming.github.io/"><img src="https://avatars.githubusercontent.com/u/31564353?v=4?s=100" width="100px;" alt="idongliming"/><br /><sub><b>idongliming</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=idongliming" title="Code">💻</a></td>
+      <td align="center"><a href="https://earthjasonlin.github.io"><img src="https://avatars.githubusercontent.com/u/83632110?v=4?s=100" width="100px;" alt="Zichao Lin"/><br /><sub><b>Zichao Lin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=earthjasonlin" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=earthjasonlin" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
