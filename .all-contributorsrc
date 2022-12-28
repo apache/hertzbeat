@@ -512,6 +512,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "earthjasonlin",
+      "name": "Zichao Lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83632110?v=4",
+      "profile": "https://earthjasonlin.github.io",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
