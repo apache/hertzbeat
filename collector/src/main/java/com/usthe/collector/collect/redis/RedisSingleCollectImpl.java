@@ -27,6 +27,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -91,13 +92,15 @@ public class RedisSingleCollectImpl extends AbstractCollect {
             });
             builder.addValues(valueRowBuilder.build());
         } catch (RedisConnectionException connectionException) {
-            log.info("[redis connection] error: {}", connectionException.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(connectionException);
+            log.info("[redis connection] error: {}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(connectionException.getMessage());
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[redis collect] error: {}", e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            builder.setMsg(errorMsg);
         }
     }
 

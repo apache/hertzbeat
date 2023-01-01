@@ -24,6 +24,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.TelnetProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.telnet.TelnetClient;
 
@@ -82,13 +83,20 @@ public class TelnetCollectImpl extends AbstractCollect {
             }
             telnetClient.disconnect();
         } catch (ConnectException connectException) {
-            log.debug(connectException.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(connectException);
+            log.debug(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("对端拒绝连接：服务未启动端口监听或防火墙");
+            builder.setMsg("The peer refused to connect: service port does not listening or firewall: " + errorMsg);
         } catch (IOException ioException) {
-            log.debug(ioException.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("对端连接失败 " + ioException.getMessage());
+            builder.setMsg("Peer connection failed: " + errorMsg);
+        } catch (Exception e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.warn(errorMsg, e);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (telnetClient != null) {
                 try {
