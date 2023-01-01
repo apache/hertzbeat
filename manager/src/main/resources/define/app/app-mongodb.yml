@@ -1,0 +1,117 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: mongodb
+name:
+  zh-CN: Mongodb数据库
+  en-US: Mongodb
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: username
+    type: 1
+  - key: password
+    type: 2
+  - key: database
+    type: 1
+  - key: authenticationDatabase
+    type: 1
+# 主要执行serverStatus获取监控信息，重点关注其中的metrics，db.runCommand('serverStatus').metrics
+metrics:
+
+  # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
+  - name: serverStatus.metrics.document
+    priority: 0
+    fields:
+      - field: deleted 
+        type: 0
+      - field: inserted 
+        type: 0
+      - field: returned 
+        type: 0
+      - field: updated 
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      
+  - name: serverStatus.metrics.operation
+    priority: 1
+    fields:
+      - field: scanAndOrder  
+        type: 0
+      - field: writeConflicts  
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      
+  - name: serverStatus.metrics.ttl
+    priority: 1
+    fields:
+      - field: deletedDocuments  
+        type: 0
+      - field: passes  
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+
+  # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
+  - name: buildInfo
+    priority: 1
+    fields:
+      - field: version
+        type: 1
+      - field: gitVersion
+        type: 1
+      - field: sysInfo
+        type: 1
+      - field: loaderFlags
+        type: 1
+      - field: compilerFlags
+        type: 1
+      - field: allocator
+        type: 1
+      - field: javascriptEngine
+        type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
