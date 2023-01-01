@@ -29,6 +29,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
 
@@ -105,9 +106,10 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
         } catch (Exception e) {
-            log.error("Jdbc error: {}.", e.getMessage(), e);
+            String errorMessage = CommonUtil.getMessageFromThrowable(e);
+            log.error("Jdbc error: {}.", errorMessage, e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Query Error: " + e.getMessage());
+            builder.setMsg("Query Error: " + errorMessage);
         }
     }
 

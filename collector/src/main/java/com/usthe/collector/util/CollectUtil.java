@@ -163,10 +163,7 @@ public class CollectUtil {
     }
 
     /**
-     *
-     *
-     *
-     *
+     * assert prom field
      */
     public static Boolean assertPromRequireField(String aliasField){
         if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)){

@@ -9,6 +9,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JmxProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -79,13 +80,15 @@ public class JmxCollectImpl extends AbstractCollect {
                 builder.addValues(valueRowBuilder.build());
             }
         } catch (IOException exception) {
-            log.error("JMX IOException :{}", exception.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(exception);
+            log.error("JMX IOException :{}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(exception.getMessage());
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.error("JMX Error :{}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            log.error("JMX Error :{}", e.getMessage());
+            builder.setMsg(errorMsg);
         }
     }
 

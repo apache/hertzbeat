@@ -25,6 +25,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.SnmpProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
@@ -141,17 +142,15 @@ public class SnmpCollectImpl extends AbstractCollect {
             }
             builder.addValues(valueRowBuilder.build());
         } catch (ExecutionException | InterruptedException ex) {
-            log.info("[snmp collect] error: {}", ex.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(ex);
+            log.info("[snmp collect] error: {}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(ex.getMessage());
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
-            log.warn("[snmp collect] error: {}", e.getMessage(), e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.warn("[snmp collect] error: {}", errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
-            if (e.getMessage() == null) {
-                builder.setMsg(e.toString());
-            } else {
-                builder.setMsg(e.getMessage());
-            }
+            builder.setMsg(errorMsg);
         }
     }
 

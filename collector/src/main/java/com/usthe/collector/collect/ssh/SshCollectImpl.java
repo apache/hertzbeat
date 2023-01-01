@@ -28,6 +28,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.SshProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ClientChannel;
@@ -112,16 +113,17 @@ public class SshCollectImpl extends AbstractCollect {
                     break;
             }
         } catch (ConnectException connectException) {
-            log.debug(connectException.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(connectException);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("对端拒绝连接：服务未启动端口监听或防火墙");
+            builder.setMsg("The peer refused to connect: service port does not listening or firewall: " + errorMsg);
         } catch (IOException ioException) {
-            log.debug(ioException.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("对端连接失败 " + ioException.getMessage());
+            builder.setMsg("Peer connection failed: " + errorMsg);
         } catch (Exception exception) {
-            String errorMsg = exception.getMessage() != null ? exception.getMessage() : exception.getLocalizedMessage();
-            errorMsg = errorMsg != null ? errorMsg : exception.toString();
+            String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);

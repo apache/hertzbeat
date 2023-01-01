@@ -24,6 +24,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.IcmpProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -78,17 +79,18 @@ public class IcmpCollectImpl extends AbstractCollect {
                 return;
             }
         } catch (UnknownHostException unknownHostException) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("UnknownHost " + unknownHostException.getMessage());
-            return;
+            builder.setMsg("UnknownHost " + errorMsg);
         } catch (IOException ioException) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("IOException " + ioException.getMessage());
-            return;
+            builder.setMsg("IOException " + errorMsg);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.error(errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("IllegalArgument " + e.getMessage());
+            builder.setMsg(errorMsg);
         }
 
     }
