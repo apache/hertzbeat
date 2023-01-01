@@ -74,9 +74,11 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         MongoClient mongoClient = getClient(metrics);
         MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        if (metrics.getName().startsWith("serverStatus")) {
+        String serverStatusKey = "serverStatus";
+        String buildInfoKey = "buildInfo";
+        if (metrics.getName().startsWith(serverStatusKey)) {
             // https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
-            Document serverStatus = mongoDatabase.runCommand(new Document("serverStatus", 1));
+            Document serverStatus = mongoDatabase.runCommand(new Document(serverStatusKey, 1));
             // the name of metrics is like serverStatus.metrics.document, split it and get the related sub document
             String[] metricsParts = metrics.getName().split("\\.");
             Document metricsDocument = serverStatus;
@@ -85,9 +87,9 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             }
             fillBuilder(metrics, valueRowBuilder, metricsDocument);
         }
-        else if(metrics.getName().equals("buildInfo")) {
+        else if(metrics.getName().equals(buildInfoKey)) {
             // https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
-            Document buildInfo = mongoDatabase.runCommand(new Document("buildInfo", 1));
+            Document buildInfo = mongoDatabase.runCommand(new Document(buildInfoKey, 1));
             fillBuilder(metrics, valueRowBuilder, buildInfo);
         }
         builder.addValues(valueRowBuilder.build());
