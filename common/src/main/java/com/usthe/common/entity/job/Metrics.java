@@ -132,6 +132,11 @@ public class Metrics {
      */
     private RedisProtocol redis;
     /**
+     * Monitoring configuration information using the public mongodb protocol
+     * 使用公共的mongodb协议的监控配置信息
+     */
+    private MongodbProtocol mongodb;
+    /**
      * Get monitoring configuration information using public JMX protocol
      * 使用公共JMX协议获取监控配置信息
      */
