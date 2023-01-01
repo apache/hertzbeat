@@ -147,6 +147,12 @@
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
         </dependency>
+        <!-- mongodb -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.8.1</version>
+        </dependency>
         <!--snmp-->
         <dependency>
             <groupId>org.snmp4j</groupId>
