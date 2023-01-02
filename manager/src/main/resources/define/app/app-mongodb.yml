@@ -33,9 +33,36 @@ configmap:
     type: 1
   - key: authenticationDatabase
     type: 1
-# 主要执行serverStatus获取监控信息，重点关注其中的metrics，db.runCommand('serverStatus').metrics
+# 可以通过执行 Diagnostic Commands 获取 mongdb 的状态信息以及一些性能、配置参数
+# https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
+# name 必须为 Diagnostic Commands 名称，支持 . 方式获取子文档，需注意连接的用户是否具有相应命令的权限
 metrics:
-
+  # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
+  - name: buildInfo
+    priority: 1
+    fields:
+      - field: version
+        type: 1
+      - field: gitVersion
+        type: 1
+      - field: sysInfo
+        type: 1
+      - field: loaderFlags
+        type: 1
+      - field: compilerFlags
+        type: 1
+      - field: allocator
+        type: 1
+      - field: javascriptEngine
+        type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
   # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
   - name: serverStatus.metrics.document
     priority: 0
@@ -56,7 +83,6 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-      
   - name: serverStatus.metrics.operation
     priority: 1
     fields:
@@ -72,7 +98,6 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-      
   - name: serverStatus.metrics.ttl
     priority: 1
     fields:
@@ -88,25 +113,72 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-
-  # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
-  - name: buildInfo
+  # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
+  - name: hostInfo.system
     priority: 1
     fields:
-      - field: version
+      - field: currentTime  
         type: 1
-      - field: gitVersion
+      - field: hostname  
         type: 1
-      - field: sysInfo
+      - field: cpuAddrSize  
+        type: 0
+      - field: memSizeMB  
+        type: 0
+        unit: MB
+      - field: memLimitMB  
+        type: 0
+        unit: MB
+      - field: numCores  
+        type: 0
+      - field: cpuArch  
         type: 1
-      - field: loaderFlags
+      - field: numaEnabled  
         type: 1
-      - field: compilerFlags
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+  - name: hostInfo.os
+    priority: 1
+    fields:
+      - field: type  
         type: 1
-      - field: allocator
+      - field: name  
         type: 1
-      - field: javascriptEngine
+      - field: version  
         type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+  - name: hostInfo.extra.extra
+    priority: 1
+    fields:
+      - field: versionString  
+        type: 1
+      - field: libcVersion  
+        type: 1
+      - field: kernelVersion  
+        type: 1
+      - field: cpuFrequencyMHz  
+        type: 1
+      - field: cpuFeatures  
+        type: 1
+      - field: pageSize  
+        type: 0
+      - field: numPages  
+        type: 0
+      - field: maxOpenFiles  
+        type: 0
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
