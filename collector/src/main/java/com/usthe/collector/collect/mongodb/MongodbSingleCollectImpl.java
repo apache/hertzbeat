@@ -17,39 +17,25 @@
 
 package com.usthe.collector.collect.mongodb;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+
+import org.bson.Document;
+import org.springframework.util.Assert;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 import com.usthe.collector.collect.AbstractCollect;
-import com.usthe.collector.collect.common.cache.CacheIdentifier;
-import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.dispatch.DispatchConstants;
-import com.usthe.collector.util.CollectUtil;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.MongodbProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.entity.message.CollectRep.MetricsData.Builder;
 import com.usthe.common.util.CommonConstants;
-import com.mongodb.*;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-import org.bson.Document;
-import org.springframework.web.util.UriUtils;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Mongodb 单机指标收集器
@@ -62,39 +48,77 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 public class MongodbSingleCollectImpl extends AbstractCollect {
+
+    /**
+     * 支持的 mongodb diagnostic 命令，排除internal/deprecated相关的命令
+     * 可参考 https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/, 
+     * https://www.mongodb.com/docs/mongodb-shell/run-commands/
+     * 注意：一些命令需要相应的权限才能执行，否则执行虽然不会报错，但是返回的结果是空的， 
+     * 详见 https://www.mongodb.com/docs/manual/reference/built-in-roles/
+     */
+    private static final String[] SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS = {
+            "buildInfo",
+            "collStats",
+            "connPoolStats",
+            "connectionStatus",
+            "dbHash",
+            "dbStats",
+            "explain",
+            "features",
+            "getCmdLineOpts",
+            "getLog",
+            "hostInfo",
+            "listCommands",
+            "profile",
+            "serverStatus",
+            "top",
+            "validateDBMetadata",
+    };
+
     @Override
     public void collect(Builder builder, long appId, String app, Metrics metrics) {
+        // metrices.name 命名规则约定为上述 mongodb diagnostic 支持的命令，同时也通过 . 支持子文档
+        // 如果 metrices.name 不包括 . 则直接执行命令，使用其返回的文档，否则需要先执行 metricsParts[0] 命令，再获取相关的子文档
+        // 例如 serverStatus.metrics.operation 支持 serverStatus 命令的 metrics 子文档下面的 operation 子文档
+        String[] metricsParts = metrics.getName().split("\\.");
+        String command = metricsParts[0];
+        // 检查 . 分割的第一部分是否是 mongodb diagnostic 支持的命令
+        if (Arrays.stream(SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS).noneMatch(command::equals)) {
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("unsupported mongodb diagnostic command: " + command);
+            return;
+        }
         try {
             preCheck(metrics);
+            MongoClient mongoClient = getClient(metrics);
+            MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            Document document = null;
+            if (metricsParts.length == 1) {
+                document = mongoDatabase.runCommand(new Document(command, 1));
+            } else {
+                document = mongoDatabase.runCommand(new Document(command, 1));
+                for (int i = 1; i < metricsParts.length; i++) {
+                    document = (Document) document.get(metricsParts[i]);
+                }
+            }
+            fillBuilder(metrics, valueRowBuilder, document);
+            builder.addValues(valueRowBuilder.build());
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
             return;
         }
-        MongoClient mongoClient = getClient(metrics);
-        MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        String serverStatusKey = "serverStatus";
-        String buildInfoKey = "buildInfo";
-        if (metrics.getName().startsWith(serverStatusKey)) {
-            // https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
-            Document serverStatus = mongoDatabase.runCommand(new Document(serverStatusKey, 1));
-            // the name of metrics is like serverStatus.metrics.document, split it and get the related sub document
-            String[] metricsParts = metrics.getName().split("\\.");
-            Document metricsDocument = serverStatus;
-            for(int i = 1; i < metricsParts.length; i++) {
-                metricsDocument = (Document) metricsDocument.get(metricsParts[i]);
-            }
-            fillBuilder(metrics, valueRowBuilder, metricsDocument);
-        }
-        else if(metrics.getName().equals(buildInfoKey)) {
-            // https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
-            Document buildInfo = mongoDatabase.runCommand(new Document(buildInfoKey, 1));
-            fillBuilder(metrics, valueRowBuilder, buildInfo);
-        }
-        builder.addValues(valueRowBuilder.build());
     }
 
+    @Override
+    public String supportProtocol() {
+        return DispatchConstants.PROTOCOL_MONGODB;
+    }
+
+    /**
+     * 使用 metrics 中配置的收集指标以及执行mongodb命令返回的文档，填充 valueRowBuilder
+     */
     private void fillBuilder(Metrics metrics, CollectRep.ValueRow.Builder valueRowBuilder, Document document) {
         metrics.getAliasFields().forEach(it -> {
             if (document.containsKey(it)) {
@@ -110,13 +134,8 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         });
     }
 
-    @Override
-    public String supportProtocol() {
-        return DispatchConstants.PROTOCOL_MONGODB;
-    }
-
     /**
-     * preCheck params
+     * 检查 metrics 中的 mongodb 连接信息是否完整
      */
     private void preCheck(Metrics metrics) {
         if (metrics == null || metrics.getMongodb() == null) {
@@ -129,11 +148,15 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         Assert.hasText(mongodbProtocol.getPassword(), "Mongodb Protocol password is required.");
     }
 
+    /**
+     * 通过metrics中的mongodb连接信息获取 mongodb client
+     */
     private MongoClient getClient(Metrics metrics) {
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
         // connect to mongodb
         String url = null;
         try {
+            // 密码可能包含特殊字符，需要使用类似js的encodeURIComponent进行编码，这里使用java的URLEncoder
             url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
                     URLEncoder.encode(mongodbProtocol.getPassword(), "UTF-8"), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
                     mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
