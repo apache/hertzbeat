@@ -220,7 +220,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     return new Object[]{field, expression};
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1]));
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1], (oldValue, newValue) -> newValue));
 
         if (metrics.getUnits() == null) {
             metrics.setUnits(Collections.emptyList());
@@ -239,7 +239,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     return new Object[]{field, Pair.of(originUnit, newUnit)};
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1]));
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
@@ -247,13 +247,20 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         Map<String, Object> fieldValueMap = new HashMap<>(16);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
+            int nullSize = 0;
             for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
                 } else {
+                    nullSize++;
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), null);
                 }
+            }
+            if (nullSize > aliasFields.size() / 2) {
+                // most of the fields in this row are null, ignore
+                aliasFieldValueMap.clear();
+                continue;
             }
             StringBuilder instanceBuilder = new StringBuilder();
             for (Metrics.Field field : fields) {

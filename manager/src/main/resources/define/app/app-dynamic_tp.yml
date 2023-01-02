@@ -1,0 +1,181 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: dynamic_tp
+name:
+  zh-CN: DynamicTp
+  en-US: DynamicTp
+# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 强制固定必须参数 - host
+configmap:
+  - key: host
+    type: 1
+  - key: port
+    type: 0
+  - key: ssl
+    type: 1
+  - key: base_path
+    type: 1
+metrics:
+  - name: memory
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: max_memory
+        type: 0
+        unit: MB
+      - field: total_memory
+        type: 0
+        unit: MB
+      - field: free_memory
+        type: 0
+        unit: MB
+      - field: usable_memory
+        type: 0
+        unit: MB
+    aliasFields:
+      - maxMemory
+      - totalMemory
+      - freeMemory
+      - usableMemory
+    calculates:
+      - max_memory=maxMemory
+      - total_memory=totalMemory
+      - free_memory=freeMemory
+      - usable_memory=usableMemory
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+
+  - name: thread_pool
+    priority: 1
+    fields:
+      - field: pool_name
+        type: 1
+        instance: true
+      - field: core_pool_size
+        type: 0
+      - field: maximum_pool_size
+        type: 0
+      - field: queue_type
+        type: 1
+      - field: queue_capacity
+        type: 0
+        unit: MB
+      - field: queue_size
+        type: 0
+      - field: fair
+        type: 1
+      - field: queue_remaining_capacity
+        type: 0
+        unit: MB
+      - field: active_count
+        type: 0
+      - field: task_count
+        type: 0
+      - field: completed_task_count
+        type: 0
+      - field: largest_pool_size
+        type: 0
+      - field: pool_size
+        type: 0
+      - field: wait_task_count
+        type: 0
+      - field: reject_count
+        type: 0
+      - field: reject_handler_name
+        type: 1
+      - field: dynamic
+        type: 1
+      - field: run_timeout_count
+        type: 0
+      - field: queue_timeout_count
+        type: 0
+    aliasFields:
+      - poolName
+      - corePoolSize
+      - maximumPoolSize
+      - queueType
+      - queueCapacity
+      - queueSize
+      - fair
+      - queueRemainingCapacity
+      - activeCount
+      - taskCount
+      - completedTaskCount
+      - largestPoolSize
+      - poolSize
+      - waitTaskCount
+      - rejectCount
+      - rejectHandlerName
+      - dynamic
+      - runTimeoutCount
+      - queueTimeoutCount
+    calculates:
+      - pool_name=poolName
+      - core_pool_size=corePoolSize
+      - maximum_pool_size=maximumPoolSize
+      - queue_type=queueType
+      - queue_capacity=queueCapacity
+      - queue_size=queueSize
+      - fair=fair
+      - queue_remaining_capacity=queueRemainingCapacity
+      - active_count=activeCount
+      - task_count=taskCount
+      - completed_task_count=completedTaskCount
+      - largest_pool_size=largestPoolSize
+      - pool_size=poolSize
+      - wait_task_count=waitTaskCount
+      - reject_count=rejectCount
+      - reject_handler_name=rejectHandlerName
+      - dynamic=dynamic
+      - run_timeout_count=runTimeoutCount
+      - queue_timeout_count=queueTimeoutCount
+    units:
+      - queue_capacity=B->MB
+      - queue_remaining_capacity=B->MB
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
