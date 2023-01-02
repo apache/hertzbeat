@@ -49,11 +49,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MongodbSingleCollectImpl extends AbstractCollect {
 
-    // 支持的 mongodb diagnostic 命令，排除internal/deprecated相关的命令
-    // 可参考 https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/, 
-    // https://www.mongodb.com/docs/mongodb-shell/run-commands/
-    // 注意：一些命令需要相应的权限才能执行，否则执行虽然不会报错，但是返回的结果是空的， 
-    // 详见 https://www.mongodb.com/docs/manual/reference/built-in-roles/
+    /**
+     * 支持的 mongodb diagnostic 命令，排除internal/deprecated相关的命令
+     * 可参考 https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/, 
+     * https://www.mongodb.com/docs/mongodb-shell/run-commands/
+     * 注意：一些命令需要相应的权限才能执行，否则执行虽然不会报错，但是返回的结果是空的， 
+     * 详见 https://www.mongodb.com/docs/manual/reference/built-in-roles/
+     */
     private static final String[] SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS = {
             "buildInfo",
             "collStats",
