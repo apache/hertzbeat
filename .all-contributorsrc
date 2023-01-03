@@ -532,6 +532,16 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "orangeyts",
+      "name": "Jerry",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4250869?v=4",
+      "profile": "https://github.com/orangeyts",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7
