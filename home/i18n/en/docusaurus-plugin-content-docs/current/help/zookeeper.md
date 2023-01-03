@@ -1,7 +1,7 @@
 ---
 id: zookeeper  
-title: Monitoring：Zookeeper monitoring      
-sidebar_label: Zookeeper monitoring   
+title: Monitoring Zookeeper       
+sidebar_label: Zookeeper Monitor   
 ---
 
 > Collect and monitor the general performance Metrics of Zookeeper.

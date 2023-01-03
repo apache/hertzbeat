@@ -1,7 +1,7 @@
 ---
 id: jvm  
-title: Monitor：JVM      
-sidebar_label: JVM
+title: Monitoring JVM      
+sidebar_label: JVM Monitor
 ---
 
 > Collect and monitor the general performance Metrics of JVM.

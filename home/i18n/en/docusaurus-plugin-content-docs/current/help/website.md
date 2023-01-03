@@ -1,7 +1,7 @@
 ---
 id: website  
-title: Monitoring：website monitoring       
-sidebar_label: Website monitoring   
+title: Monitoring Website         
+sidebar_label: Website Monitor   
 ---
 
 > Monitor whether the website is available, response time and other Metrics.       
