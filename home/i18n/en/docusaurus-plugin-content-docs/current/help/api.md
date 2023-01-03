@@ -1,6 +1,6 @@
 ---
 id: api  
-title: Monitoring：HTTP API      
+title: Monitoring HTTP API      
 sidebar_label: HTTP API   
 ---
 

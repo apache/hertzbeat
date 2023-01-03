@@ -1,7 +1,7 @@
 ---
 id: dm  
-title: Monitor：DM database monitoring      
-sidebar_label: DM DB   
+title: Monitoring DM database      
+sidebar_label: DM Database   
 ---
 
 > Collect and monitor the general performance metrics of the DM database. DM8+ is supported.
