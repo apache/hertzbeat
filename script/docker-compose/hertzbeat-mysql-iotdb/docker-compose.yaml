@@ -21,7 +21,7 @@ networks:
 
 services:
   mysql:
-    image: "mysql:5.7"
+    image: mysql:8
     container_name: mysql
     hostname: mysql
     restart: always
@@ -36,23 +36,23 @@ services:
     networks:
       - heartzbeat
 
-  TDengine:
-    image: "tdengine/tdengine:2.4.0.12"
-    container_name: tdengine
-    hostname: tdengine
+  iotdb:
+    image: apache/iotdb:0.13.3-node
+    container_name: iotdb
+    hostname: iotdb
     restart: always
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "6030-6049:6030-6049"
-      - "6030-6049:6030-6049/udp"
+      - "8181:8181"
+      - "6667:6667"
     volumes:
-      - ./dbdata/taosdata:/var/lib/taos/
+      - ./dbdata/taosdata:/iotdb/data
     networks:
       - heartzbeat
 
   hertzbeat:
-    image: "tancloud/hertzbeat"
+    image: tancloud/hertzbeat
     container_name: hertzbeat
     hostname: hertzbeat
     restart: always
