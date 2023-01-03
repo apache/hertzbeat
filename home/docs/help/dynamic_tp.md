@@ -78,25 +78,25 @@ management:
 
 #### 指标集合：thread_pool
 
-| 指标名称    | 指标单位 | 指标帮助描述 |
-|---------|------|--------|
-| pool_name | 无    | xx     |
-| core_pool_size    | 无    | xx     |
-| maximum_pool_size      | 无    | xx     |
-| queue_type | 无    | xx     |
-| queue_capacity   | MB   | xx     |
-| queue_size  | 无    | xx     |
-| fair  | 无    | jvmxx  |
-| queue_remaining_capacity  | MB   | jvmxx  |
-| active_count  | 无    | jvmxx  |
-| task_count  | 无    | jvmxx  |
-| completed_task_count  | 无    | jvmxx  |
-| largest_pool_size  | 无    | jvmxx  |
-| pool_size  | 无    | jvmxx  |
-| wait_task_count  | 无    | jvmxx  |
-| reject_count  | 无    | jvmxx  |
-| reject_handler_name  | 无    | jvmxx  |
-| dynamic  | 无    | jvmxx  |
-| run_timeout_count  | 无    | jvmxx  |
-| queue_timeout_count  | 无    | jvmxx  |
+| 指标名称    | 指标单位 | 指标帮助描述                 |
+|---------|------|------------------------|
+| pool_name | 无    | 线程池名称                  |
+| core_pool_size    | 无    | 核心线程数                  |
+| maximum_pool_size      | 无    | 最大线程数                  |
+| queue_type | 无    | 任务队列类型                 |
+| queue_capacity   | MB   | 任务队列容量                 |
+| queue_size  | 无    | 任务队列当前占用大小             |
+| fair  | 无    | 队列模式，SynchronousQueue会用到 |
+| queue_remaining_capacity  | MB   | 任务队列剩余大小               |
+| active_count  | 无    | 活跃线程数                  |
+| task_count  | 无    | 任务总数                   |
+| completed_task_count  | 无    | 已完成任务数                 |
+| largest_pool_size  | 无    | 历史最大线程数                |
+| pool_size  | 无    | 当前线程数                  |
+| wait_task_count  | 无    | 等待执行任务数                |
+| reject_count  | 无    | 拒绝任务数                  |
+| reject_handler_name  | 无    | 拒绝策略类型                 |
+| dynamic  | 无    | 是否动态线程池                |
+| run_timeout_count  | 无    | 运行超时任务数                |
+| queue_timeout_count  | 无    | 等待超时任务数                |
 
