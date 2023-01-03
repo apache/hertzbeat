@@ -36,7 +36,7 @@ kubectl describe secret {secret} -n kube-system
 | APiServer port | K8s APiServer port, default 6443 |
 | token       | Authorize the Access Token |
 | URL         | The database connection URL is optional, if configured, the database name, user name and password parameters in the URL will override the parameter | configured above
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 10 seconds |
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds |
 | Whether to probe the | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation | will continue only if the probe is successful
 | Description Comment | For more information identifying and describing the remarks for this monitoring, users can remark the information here |
 

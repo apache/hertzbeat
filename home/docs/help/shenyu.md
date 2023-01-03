@@ -1,6 +1,6 @@
 ---
 id: shenyu  
-title: 监控：Apache ShenYu API网关      
+title: 监控 Apache ShenYu API网关      
 sidebar_label: ShenYu网关监控    
 ---
 
