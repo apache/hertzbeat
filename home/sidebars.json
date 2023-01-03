@@ -98,6 +98,7 @@
             "help/zookeeper",
             "help/kafka",
             "help/tomcat",
+            "help/shenyu",
             "help/dynamic_tp"
           ]
         },
