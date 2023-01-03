@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # 监控应用类型名称(与文件名保持一致)
-app: springboot2
+app: dynamic_tp
 # 强制固定必须参数 - host(ipv4,ipv6,域名)
 param:
   # field-字段名称标识符
