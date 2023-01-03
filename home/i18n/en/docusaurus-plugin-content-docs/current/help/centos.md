@@ -1,6 +1,6 @@
 ---
 id: centos  
-title: Monitoring：CentOS operating system monitoring      
+title: CentOS operating system monitoring      
 sidebar_label: CentOS operating system       
 ---
 

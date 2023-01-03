@@ -1,7 +1,7 @@
 ---
 id: springboot2  
-Title: SpringBoot 2.0 monitoring      
-sidebar_label: SpringBoot 2.0 monitoring
+Title: Monitoring SpringBoot 2.0      
+sidebar_label: SpringBoot 2.0
 
 ---
 

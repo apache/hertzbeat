@@ -97,7 +97,8 @@
           "items": [
             "help/zookeeper",
             "help/kafka",
-            "help/tomcat"
+            "help/tomcat",
+            "help/shenyu"
           ]
         },
         {

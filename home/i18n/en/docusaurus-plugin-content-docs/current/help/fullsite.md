@@ -1,7 +1,7 @@
 ---
 id: fullsite  
-title: Monitoring：Full site monitoring      
-sidebar_label: Full site monitoring   
+title: Monitoring Full site      
+sidebar_label: Full site Monitor   
 ---
 
 > Available or not to monitor all pages of the website.    
