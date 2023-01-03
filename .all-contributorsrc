@@ -551,6 +551,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "fengshunli",
+      "name": "fsl",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18587688?v=4",
+      "profile": "https://www.jianshu.com/u/a8f822c04f67",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
