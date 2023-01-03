@@ -70,7 +70,7 @@ Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has respo
 | Port | The port provided by the application service, the default is 8080. |
 | Enable HTTPS | Whether to access the website through HTTPS, note ⚠️Enable HTTPS, the default corresponding port needs to be changed to 443 |
 | Base Path | Exposed interface path prefix, default /actuator |
-| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 10 seconds |
+| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
 | Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
 | Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 

@@ -78,7 +78,8 @@
             "help/sqlserver",
             "help/oracle",
             "help/dm",
-            "help/opengauss"
+            "help/opengauss",
+            "help/iotdb"
           ]
         },
         {
