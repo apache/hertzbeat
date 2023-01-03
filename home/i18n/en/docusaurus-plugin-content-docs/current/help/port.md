@@ -14,7 +14,7 @@ sidebar_label: Port availability
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
 | Port        | Ports provided by website, http generally defaults to 80 and https generally defaults to 443 |
 | Connection timeout | Waiting timeout for port connection, unit:ms, default: 3000ms |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

@@ -14,7 +14,7 @@ sidebar_label: SSL Monitor
 | Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
 | Port | The port provided by the website, https generally defaults to 443. |
 | Relative path | The suffix path of the website address except the IP port, for example, `www.tancloud.cn/console` The relative path of the website is `/console`. |
-| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 10 seconds |
+| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
 | Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
 | Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 
