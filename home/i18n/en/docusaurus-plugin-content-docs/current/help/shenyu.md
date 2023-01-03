@@ -10,7 +10,7 @@ sidebar_label: Apache ShenYu
 
 Enable `metrics` plugin in ShenYu, expose it's prometheus metrics endpoint。  
 
-Refer [ShenYu Document](https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin)  
+Refer [ShenYu Document](https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin)  
 
 Two Steps Mainly: 
 
