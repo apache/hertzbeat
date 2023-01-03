@@ -1,7 +1,7 @@
 ---
 id: kubernetes   
-Title: Monitoring Kubernetes monitoring      
-sidebar_label: Kubernetes monitoring
+Title: Monitoring Kubernetes
+sidebar_label: Kubernetes Monitor
 
 ---
 
