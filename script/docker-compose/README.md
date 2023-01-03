@@ -23,7 +23,7 @@
 
 2. 进入部署脚本 docker-compose 目录, 执行  
 
-   `docker-compose up -d`
+   `docker compose up -d`
 
 3. 进入tdengine创建hertzbeat数据库     
 

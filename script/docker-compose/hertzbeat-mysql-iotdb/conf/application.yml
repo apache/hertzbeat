@@ -56,12 +56,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 123456
-    url: jdbc:mysql://mysql:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    url: jdbc:mysql://mysql:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
     platform: mysql
     hikari:
       max-lifetime: 120000
   jpa:
     database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
   # Not Require, Please config if you need email notify
@@ -85,9 +86,9 @@ spring:
 
 warehouse:
   store:
-    td-engine:
+    iot-db:
       enabled: true
-      driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
-      url: jdbc:TAOS-RS://tdengine:6041/hertzbeat
+      host: iotdb
+      rpc-port: 6667
       username: root
-      password: taosdata
+      password: root
