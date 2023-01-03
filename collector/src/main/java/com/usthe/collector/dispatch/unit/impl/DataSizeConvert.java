@@ -28,7 +28,7 @@ public final class DataSizeConvert implements UnitConvert {
                 size = size.multiply(new BigDecimal(dataUnit.getScale()));
             }
             if (dataUnit.getUnit().equals(newUnit.toUpperCase())) {
-                size = size.divide(new BigDecimal(dataUnit.getScale()), 4, RoundingMode.HALF_UP);
+                size = size.divide(new BigDecimal(dataUnit.getScale()), 12, RoundingMode.HALF_UP);
             }
         }
         return size.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
