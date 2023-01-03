@@ -542,6 +542,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "yanhom1314",
+      "name": "yanhom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13051908?v=4",
+      "profile": "https://dynamictp.cn",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
