@@ -62,7 +62,6 @@ spring:
       max-lifetime: 120000
   jpa:
     database: mysql
-    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
   # Not Require, Please config if you need email notify
