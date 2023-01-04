@@ -22,7 +22,7 @@ networks:
 services:
   mysql:
     image: mysql:8
-    container_name: mysql
+    container_name: compose-mysql
     hostname: mysql
     restart: always
     ports:
@@ -38,7 +38,7 @@ services:
 
   tdengine:
     image: tdengine/tdengine:2.4.0.12
-    container_name: tdengine
+    container_name: compose-tdengine
     hostname: tdengine
     restart: always
     environment:
@@ -53,12 +53,15 @@ services:
 
   hertzbeat:
     image: tancloud/hertzbeat
-    container_name: hertzbeat
+    container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
     environment:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
+    depends_on:
+      - mysql
+      - tdengine
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml

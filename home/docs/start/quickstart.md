@@ -68,10 +68,10 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
 
-#### 方式四：Docker-Compose统一安装hertzbeat及其依赖服务
+##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 
-通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把mysql数据库,tdengine数据库和hertzbeat安装部署。
+通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [docker-compose安装](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
+详细步骤参考 [docker-compose部署方案](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
 
 **HAVE FUN**
