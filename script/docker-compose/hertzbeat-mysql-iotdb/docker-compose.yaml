@@ -22,7 +22,7 @@ networks:
 services:
   mysql:
     image: mysql:8
-    container_name: mysql
+    container_name: compose-mysql
     hostname: mysql
     restart: always
     ports:
@@ -38,7 +38,7 @@ services:
 
   iotdb:
     image: apache/iotdb:0.13.3-node
-    container_name: iotdb
+    container_name: compose-iotdb
     hostname: iotdb
     restart: always
     environment:
@@ -47,18 +47,21 @@ services:
       - "8181:8181"
       - "6667:6667"
     volumes:
-      - ./dbdata/taosdata:/iotdb/data
+      - ./dbdata/iotdbdata:/iotdb/data
     networks:
       - heartzbeat
 
   hertzbeat:
     image: tancloud/hertzbeat
-    container_name: hertzbeat
+    container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
     environment:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
+    depends_on:
+      - mysql
+      - iotdb
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
