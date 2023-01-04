@@ -26,7 +26,7 @@ services:
     hostname: mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3306"
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 123456
@@ -44,8 +44,8 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "8181:8181"
-      - "6667:6667"
+      - "8181"
+      - "6667"
     volumes:
       - ./dbdata/iotdbdata:/iotdb/data
     networks:
