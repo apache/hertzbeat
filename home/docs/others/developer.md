@@ -87,6 +87,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
     </tr>
     <tr>
       <td align="center"><a href="https://www.jianshu.com/u/a8f822c04f67"><img src="https://avatars.githubusercontent.com/u/18587688?v=4?s=100" width="100px;" alt="fsl"/><br /><sub><b>fsl</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=fengshunli" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/xttttv"><img src="https://avatars.githubusercontent.com/u/116323904?v=4?s=100" width="100px;" alt="xttttv"/><br /><sub><b>xttttv</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xttttv" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
