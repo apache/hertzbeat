@@ -22,9 +22,9 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
+**官网: [hertzbeat.com](https://hertzbeat.com)**
 
-在开源运行时社区 [osrc.com](https://osrc.com/osrc/projects/project_805480734937636864) 运行 HertzBeat   
+**云服务: [tancloud.cn](https://tancloud.cn)**
 
 ## 🎡 <font color="green">介绍</font>
 
@@ -194,7 +194,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 社区交流
 
-HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项目   
+HertzBeat赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目。   
 
 ##### 微信交流群
 
@@ -225,13 +225,13 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 ##### 友情链接   
 
-- [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
+- [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能      
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件   
 
 ##### 赞助     
-- Eoapi[开源 API 管理工具 ](https://github.com/eolinker/eoapi) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
-- 感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
-- 感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点,CDN        
+- Postcat [开源 API 管理工具 ](https://postcat.com/?utm_source=sponsor&utm_campaign=s-hertzbeat) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
+- 感谢 [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
+- 感谢 [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点        
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)

@@ -22,9 +22,9 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**Home: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
+**Home: [hertzbeat.com](https://hertzbeat.com)**
 
-Running HertzBeat in [osrc.com](https://osrc.com/osrc/projects/project_805480734937636864) Open Source Runtime Community  
+**Cloud: [tancloud.cn](https://tancloud.cn)**
 
 ## 🎡 <font color="green">Introduction</font>
 
@@ -195,9 +195,13 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 Join discussion  
 
-HertzBeat is an incubation project of [Dromara Open Source Community](https://dromara.org/).
+HertzBeat is a project under the [Dromara Open Source Community](https://dromara.org/).
 
 ##### Channel
+
+**WeChat Group** : Add friend `tan-cloud`, and will invite you to the group.   
+
+[QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Add group num `718618151`   
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
@@ -215,14 +219,14 @@ HertzBeat is an incubation project of [Dromara Open Source Community](https://dr
 
 ##### Friends   
 
-- [hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
+- [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 
 
 ##### Sponsor     
-- Eoapi [An Open source development tool](https://github.com/eolinker/eoapi) supporting API testing, Mock, documentation, team collaboration etc.
+- Postcat [An Open source development tool](https://postcat.com/?utm_source=sponsor&utm_campaign=s-hertzbeat) supporting API testing, mock, documentation, team collaboration etc.
 - Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.        
-- Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node and cdn.       
+- Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.       
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
