@@ -224,7 +224,7 @@ HertzBeat is a project under the [Dromara Open Source Community](https://dromara
 
 
 ##### Sponsor     
-- Postcat [An Open source development tool](https://postcat.com/?utm_source=sponsor&utm_campaign=s-hertzbeat) supporting API testing, mock, documentation, team collaboration etc.
+- Postcat [An Open Source API Tool](https://postcat.com/?utm_source=sponsor&utm_campaign=s-hertzbeat) supporting api test, mock, documentation, team collaboration etc.
 - Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.        
 - Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.       
 
