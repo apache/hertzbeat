@@ -22,11 +22,11 @@
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
     {{ 'alert.center.deal' | i18n }}
   </button>
-  <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()">
+  <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()" class="mobile-hide">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
     {{ 'alert.center.no-deal' | i18n }}
   </button>
-  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()">
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()" class="mobile-hide">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.center.delete' | i18n }}
   </button>
@@ -35,7 +35,7 @@
     {{ 'alert.center.clear' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
   <input
@@ -46,8 +46,10 @@
     nzSize="default"
     (keyup.enter)="loadAlertsTable()"
     [(ngModel)]="filterContent"
+    class="mobile-hide"
   />
   <nz-select
+    class="mobile-hide"
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-status' | i18n"
@@ -59,6 +61,7 @@
     <nz-option [nzLabel]="'alert.status.3' | i18n" nzValue="3"></nz-option>
   </nz-select>
   <nz-select
+    class="mobile-hide"
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
@@ -84,19 +87,19 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="300px">{{ 'alert.center.monitor' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.target' | i18n }}</th>
-      <th nzAlign="center" nzWidth="120px">{{ 'alert.center.priority' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center" nzWidth="280px">{{ 'alert.center.tags' | i18n }}</th>
-      <th nzAlign="center" nzWidth="100px">{{ 'alert.center.status' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.time' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.monitor' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.target' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.priority' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.content' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.center.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.center.time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>

@@ -266,7 +266,7 @@ export class AlertSettingComponent implements OnInit {
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  define!: AlertDefine;
+  define: AlertDefine = new AlertDefine();
   cascadeValues: string[] = [];
   otherMetrics: string[] = [];
   cascadeOnChange(values: string[]): void {
