@@ -46,25 +46,25 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>{{ 'alert.setting.target' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.setting.expr' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.priority' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.setting.times' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.setting.template' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.setting.default' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.setting.enable' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.setting.target' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'alert.setting.expr' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.priority' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.times' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.default' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center" nzLeft>
+      <td nzAlign="center">
         <span>{{ data.app + '.' + data.metric + '.' + data.field }}</span>
       </td>
       <td nzAlign="center">
