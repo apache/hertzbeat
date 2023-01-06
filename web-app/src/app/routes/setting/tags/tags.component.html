@@ -33,10 +33,11 @@
     {{ 'tag.delete' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
   <input
+    class="mobile-hide"
     style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
