@@ -28,7 +28,7 @@ export class MonitorDetailComponent implements OnInit {
   isSpinning: boolean = false;
   monitorId!: number;
   app!: string;
-  monitor!: Monitor;
+  monitor: Monitor = new Monitor();
   options: any;
   port: number | undefined;
   metrics!: string[];
