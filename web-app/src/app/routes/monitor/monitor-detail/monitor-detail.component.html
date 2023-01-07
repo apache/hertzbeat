@@ -18,7 +18,7 @@
     <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5">
       <span>{{ 'monitor.app.' + app | i18n }}</span>
     </nz-tag>
-    <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%">
+    <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
       <button nz-button nzType="primary">
         <span>{{ 'common.button.help' | i18n }} </span>
         <span nz-icon nzType="question-circle"></span>
@@ -29,7 +29,7 @@
 <nz-divider></nz-divider>
 
 <nz-layout>
-  <nz-sider nzWidth="19%" nzTheme="light">
+  <nz-sider class="mobile-hide" nzWidth="19%" nzTheme="light">
     <nz-card nzHoverable style="width: 100%; height: 100%" [nzBordered]="true" [nzTitle]="monitor_basic_card_title">
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>

@@ -63,4 +63,9 @@ public class MongodbProtocol {
      */
     private String authenticationDatabase;
 
+    /**
+     * run command
+     */
+    private String command;
+
 }
