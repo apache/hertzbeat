@@ -135,7 +135,7 @@
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
             {{ 'monitors.detail.history' | i18n }}
           </ng-template>
-          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
+          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap; overflow-x: scroll">
             <div *ngFor="let item of chartMetrics; let i = index">
               <app-monitor-data-chart
                 [app]="app"
