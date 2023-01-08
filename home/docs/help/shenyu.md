@@ -29,7 +29,7 @@ sidebar_label: ShenYu网关监控
 ```yaml
 shenyu:
   metrics:
-    enabled: false  #设置为 true 表示开启
+    enabled: true  #设置为 true 表示开启
     name : prometheus 
     host: 127.0.0.1 #暴露的ip
     port: 8090 #暴露的端口
