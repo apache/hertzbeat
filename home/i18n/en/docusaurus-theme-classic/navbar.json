@@ -7,7 +7,7 @@
     "message": "Home",
     "description": "Navbar item with label 首页"
   },
-  "item.label.文档": {
+  "item.label.文档中心": {
     "message": "Document",
     "description": "Navbar item with label 文档"
   },

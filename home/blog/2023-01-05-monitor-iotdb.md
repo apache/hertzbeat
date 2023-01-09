@@ -18,9 +18,9 @@ tags: [opensource, practice]
 
 > HertzBeat 是一款开源，易用友好的实时监控系统，无需Agent，拥有强大自定义监控能力。    
 > 支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书)。   
-> HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。     
+> HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-### 在 HertzBeat 5分钟搞定监控 IoTDB   
+### 在 HertzBeat 5分钟搞定监控 IoTDB
 
 #### 操作前提，您已拥有 IoTDB 环境和 HertzBeat 环境。  
 
@@ -122,7 +122,7 @@ metricReporterList:
 
 ## 小结   
 
-这篇实践文章带我们体验了如果使用 HertzBeat 监控 IoTDB 数据库指标数据，可以发现将 监控-告警-通知 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 IoTDB 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
+这篇实践文章带我们体验了如何使用 HertzBeat 监控 IoTDB 数据库指标数据，可以发现将 监控-告警-通知 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 IoTDB 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
 
 IoTDB Github: https://github.com/apache/iotdb    
 HertzBeat Github: https://github.com/dromara/hertzbeat 
