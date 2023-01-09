@@ -12,7 +12,7 @@ sidebar_label: Zookeeper监控
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | Zookeeper对外提供的端口，默认为2181。  |
+| 端口        | Zookeeper的Linux服务器SSH端口。  |
 | 查询超时时间 | 设置Zookeeper连接的超时时间，单位ms毫秒，默认3000毫秒。  |
 | 用户名      | Zookeeper所在Linux连接用户名 |
 | 密码        | Zookeeper所在Linux连接密码 |
