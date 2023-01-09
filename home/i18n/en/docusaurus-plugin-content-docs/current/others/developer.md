@@ -89,6 +89,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://www.jianshu.com/u/a8f822c04f67"><img src="https://avatars.githubusercontent.com/u/18587688?v=4?s=100" width="100px;" alt="fsl"/><br /><sub><b>fsl</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=fengshunli" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xttttv"><img src="https://avatars.githubusercontent.com/u/116323904?v=4?s=100" width="100px;" alt="xttttv"/><br /><sub><b>xttttv</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xttttv" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/NavinKumarBarnwal"><img src="https://avatars.githubusercontent.com/u/44504274?v=4?s=100" width="100px;" alt="NavinKumarBarnwal"/><br /><sub><b>NavinKumarBarnwal</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=NavinKumarBarnwal" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/z641205699"><img src="https://avatars.githubusercontent.com/u/45276423?v=4?s=100" width="100px;" alt="Zakkary"/><br /><sub><b>Zakkary</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=z641205699" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
