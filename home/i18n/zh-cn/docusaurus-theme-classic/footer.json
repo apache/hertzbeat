@@ -54,9 +54,5 @@
   "link.item.label.相关资源": {
     "message": "相关资源",
     "description": "The label of footer link with label=相关资源 linking to docs/others/resource"
-  },
-  "copyright": {
-    "message": "<a target=\"_blank\" href=\"https://beian.miit.gov.cn/\">蜀ICP备2022002218号</a> | Copyright TANCLOUD© 2022",
-    "description": "The footer copyright"
   }
 }
