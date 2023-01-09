@@ -107,6 +107,12 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.28</version>
         </dependency>
+        <!-- clickhouse -->
+        <dependency>
+            <groupId>cc.blynk.clickhouse</groupId>
+            <artifactId>clickhouse4j</artifactId>
+            <version>1.4.4</version>
+        </dependency>
         <!-- dm -->
         <dependency>
             <groupId>com.dameng</groupId>

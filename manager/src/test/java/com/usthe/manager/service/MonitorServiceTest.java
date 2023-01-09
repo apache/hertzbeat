@@ -42,6 +42,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
+ * newBranch feature-clickhouse#179
+ * 配置带密码的clickhouse
+ * https://www.cnblogs.com/it1042290135/p/16202478.html
+
+ 9363是promethus的http端口(在config.xml里面打开), http://clickhouse:9363/metrics
+ docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
+
+ *
+ * https://hub.docker.com/r/clickhouse/clickhouse-server/
+ * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server
+ * curl 'http://localhost:18123/'
+ * web UI
+ * http://localhost:18123/play
+ *
+ * 明文密码linux可以登录了,但是navicat还是无法登录
+ * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
  * @see TagServiceTest
  */
