@@ -14,8 +14,8 @@ param:
     required: true
   - field: port
     name:
-      zh-CN: 端口
-      en-US: Port
+      zh-CN: HTTP 端口
+      en-US: HTTP Port
     type: number
     # 当type为number时,用range表示范围
     range: '[0,65535]'
