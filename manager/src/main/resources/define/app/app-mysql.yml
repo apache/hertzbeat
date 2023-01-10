@@ -16,8 +16,8 @@
 category: db
 app: mysql
 name:
-  zh-CN: MYSQL数据库
-  en-US: MYSQL DB
+  zh-CN: Mysql数据库
+  en-US: Mysql DB
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
