@@ -8,6 +8,22 @@ sidebar_label: Apache Kafka
 
 **Protocol Use：JMX**
 
+### Kafka Enable JMX Protocol
+
+1. Install Kafka
+
+2. Modify `kafka-server-start.sh`
+
+Append content in kafka-server-start.sh, Attention Replace Port And IP.
+
+```shell
+export JMX_PORT=9999;
+export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
+
+# Already Has 
+exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
+```
+
 ### Configuration parameter
 
 | Parameter name      | Parameter help description |
@@ -75,20 +91,5 @@ sidebar_label: Apache Kafka
 | FifteenMinuteRate            | % | Fifteen Minute Rate |
 
 
-### Kafka Enable JMX Protocol
-
-1. Install Kafka
-
-2. Modify `kafka-server-start.sh` 
-
-Append content in kafka-server-start.sh, Attention Replace Port And IP.
-
-```shell
-export JMX_PORT=9999;
-export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
-
-# Already Has 
-exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
-```
 
 

@@ -100,7 +100,9 @@
             "help/kafka",
             "help/tomcat",
             "help/shenyu",
-            "help/dynamic_tp"
+            "help/dynamic_tp",
+            "help/rabbitmq",
+            "help/activemq"
           ]
         },
         {

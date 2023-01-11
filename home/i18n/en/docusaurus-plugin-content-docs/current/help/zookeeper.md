@@ -6,6 +6,45 @@ sidebar_label: Zookeeper Monitor
 
 > Collect and monitor the general performance Metrics of Zookeeper.
 
+### PreRequisites
+
+#### Zookeeper four word command
+>The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
+Users need to add the four word command of zookeeper to the white list by themselves.
+
+Steps
+> 1.Find our zookeeper configuration file, which is usually zoo.cfg.
+>
+> 2.Add the following commands to the configuration file
+
+```shell
+# Add the required command to the white list
+4lw.commands.whitelist=stat, ruok, conf, isro
+
+# Add all commands to the white list
+4lw.commands.whitelist=*
+```
+
+> 3.Restart service
+
+```shell 
+zkServer.sh restart
+```
+
+#### netcat protocol
+The current implementation scheme requires us to deploy the Linux server of zookeeper
+Command environment for installing netcat
+
+> netcat installation steps
+```shell
+yum install -y nc
+```
+
+If the terminal displays the following information, the installation is successful
+```shell
+Complete!
+```
+
 ### Configuration parameter
 
 | Parameter name      | Parameter help description |
@@ -58,40 +97,3 @@ sidebar_label: Zookeeper Monitor
 | zk_min_latency | ms | Min latency |
 
 
-# Note
-## Zookeeper four word command
->The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
-Users need to add the four word command of zookeeper to the white list by themselves.
-
-Steps
-> 1.Find our zookeeper configuration file, which is usually zoo.cfg. 
-> 
-> 2.Add the following commands to the configuration file   
-
-```shell
-# Add the required command to the white list
-4lw.commands.whitelist=stat, ruok, conf, isro
-
-# Add all commands to the white list
-4lw.commands.whitelist=*
-```
-
-> 3.Restart service   
-
-```shell 
-zkServer.sh restart
-```
-
-## netcat protocol
-The current implementation scheme requires us to deploy the Linux server of zookeeper
-Command environment for installing netcat
-
-> netcat installation steps   
-```shell
-yum install -y nc
-```
-
-If the terminal displays the following information, the installation is successful   
-```shell
-Complete!
-```
