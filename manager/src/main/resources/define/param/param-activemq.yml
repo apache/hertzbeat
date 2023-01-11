@@ -19,7 +19,7 @@ param:
     range: '[0,65535]'
     required: true
     # 端口默认值
-    defaultValue: 9999
+    defaultValue: 11099
   - field: url
     name:
       zh-CN: JMX URL
