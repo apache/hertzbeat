@@ -8,6 +8,30 @@ sidebar_label: Kafka监控
 
 **使用协议：JMX** 
 
+### 监控前操作
+
+> 您需要在 Kafka 开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 Kafka 进行指标采集。
+
+1. 安装部署 Kafka 服务
+
+2. 修改 Kafka 启动脚本
+
+修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`    
+在倒数第二行添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址  
+
+```shell
+export JMX_PORT=9999;
+export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
+
+#  这是最后一行本来就存在的
+# exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
+```
+
+3. 重启 Kafka 服务
+
+
+
+
 ### 配置参数
 
 | 参数名称      | 参数帮助描述 |
@@ -76,22 +100,5 @@ sidebar_label: Kafka监控
 | FifteenMinuteRate            | 无 | 十五分钟处理率 |
 
 
-> 其他指标见文知意
-
-### Kafka开启JMX协议步骤
-
-1. 安装Kafka
-
-2. 修改启动脚本
-
-找到Kafka安装目录/bin/kafka-server-start.sh在 倒数第二行添加如下内容,⚠️注意替换端口和IP地址
-
-```shell
-export JMX_PORT=9999;
-export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
-
-//  这是最后一行本来就存在的
-exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
-```
-
+> 其他指标见文知意，欢迎贡献一起优化文档。  
 

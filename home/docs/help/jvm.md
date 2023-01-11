@@ -8,6 +8,23 @@ sidebar_label: JVM虚拟机
 
 **使用协议：JMX**
 
+### 监控前操作
+
+> 您需要在 JVM 应用开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 JVM 进行指标采集。
+
+#### JVM应用开启JMX协议步骤
+
+应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
+
+参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
+
+```shell
+-Djava.rmi.server.hostname=对外ip地址 
+-Dcom.sun.management.jmxremote.port=9999
+-Dcom.sun.management.jmxremote.ssl=false
+-Dcom.sun.management.jmxremote.authenticate=false 
+```
+
 ### 配置参数
 
 | 参数名称      | 参数帮助描述 |
@@ -63,16 +80,4 @@ sidebar_label: JVM虚拟机
 | CurrentThreadUserTime | ms | 使用时间 |
 | CurrentThreadCpuTime | ms | 使用CPU时间 |
 
-### JVM应用开启JMX协议步骤
-
-1. 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
-
-参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote 
-
-```shell
--Djava.rmi.server.hostname=对外ip地址 
--Dcom.sun.management.jmxremote.port=9999
--Dcom.sun.management.jmxremote.ssl=false
--Dcom.sun.management.jmxremote.authenticate=false 
-```
 

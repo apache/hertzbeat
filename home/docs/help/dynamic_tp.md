@@ -1,7 +1,7 @@
 ---
 id: dynamic_tp
 title: 监控：DynamicTp 线程池监控      
-sidebar_label: DynamicTp 线程池监控
+sidebar_label: DynamicTp线程池监控
 
 ---
 
