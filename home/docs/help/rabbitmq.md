@@ -4,7 +4,7 @@ title: 监控 RabbitMQ 消息中间件
 sidebar_label: RabbitMQ消息中间件    
 ---
 
-> 对 RabbitMQ 消息中间件的运行状态（JVM相关），内存性能等相关指标进行监测。         
+> 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标进行监测。         
 
 ### 监控前操作  
 

@@ -29,9 +29,6 @@ export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.
 
 3. 重启 Kafka 服务
 
-
-
-
 ### 配置参数
 
 | 参数名称      | 参数帮助描述 |

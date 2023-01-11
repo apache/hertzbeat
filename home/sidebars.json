@@ -101,7 +101,8 @@
             "help/tomcat",
             "help/shenyu",
             "help/dynamic_tp",
-            "help/rabbitmq"
+            "help/rabbitmq",
+            "help/activemq"
           ]
         },
         {

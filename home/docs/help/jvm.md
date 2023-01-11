@@ -44,40 +44,40 @@ sidebar_label: JVM虚拟机
 #### 指标集合：memory_pool
 
 | 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| name         | 无 | 指标名称 |
-| committed            | kb | 总量 |
-| init         | kb | 初始化大小 |
-| max | kb | 最大 |
-| used         | kb | 已使用 |
+|-----------| ----------- | ----------- |
+| name      | 无 | 指标名称 |
+| committed | kb | 总量 |
+| init      | kb | 初始化大小 |
+| max       | kb | 最大 |
+| used      | kb | 已使用 |
 
 #### 指标集合：code_cache (限JDK8及以下)
 
 | 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| committed            | kb | 总量 |
-| init         | kb | 初始化大小 |
-| max | kb | 最大 |
-| used         | kb | 已使用 |
+|-----------| ----------- | ----------- |
+| committed | kb | 总量 |
+| init      | kb | 初始化大小 |
+| max       | kb | 最大 |
+| used      | kb | 已使用 |
 
 #### 指标集合：class_loading
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| LoadedClassCount            | 个 | 已加载类数量 |
-| TotalLoadedClassCount        | 个 | 历史已加载类总量 |
-| UnloadedClassCount | 个 | 未加载类数量 |
+| 指标名称                  | 指标单位 | 指标帮助描述 |
+|-----------------------| ----------- | ----------- |
+| LoadedClassCount      | 个 | 已加载类数量 |
+| TotalLoadedClassCount | 个 | 历史已加载类总量 |
+| UnloadedClassCount    | 个 | 未加载类数量 |
 
 
 #### 指标集合：thread
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| TotalStartedThreadCount            | 个 | 已经开始的线程数量 |
-| ThreadCount        | 个 | 线程数 |
-| PeakThreadCount | 个 | 未加载类数量 |
-| DaemonThreadCount | 个 | 守护进程数 |
-| CurrentThreadUserTime | ms | 使用时间 |
-| CurrentThreadCpuTime | ms | 使用CPU时间 |
+| 指标名称                    | 指标单位 | 指标帮助描述 |
+|-------------------------| ----------- | ----------- |
+| TotalStartedThreadCount | 个 | 已经开始的线程数量 |
+| ThreadCount             | 个 | 线程数 |
+| PeakThreadCount         | 个 | 未加载类数量 |
+| DaemonThreadCount       | 个 | 守护进程数 |
+| CurrentThreadUserTime   | ms | 使用时间 |
+| CurrentThreadCpuTime    | ms | 使用CPU时间 |
 
 
