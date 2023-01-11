@@ -129,8 +129,6 @@ metrics:
         type: 0
       - field: DispatchCount
         type: 0
-      - field: DuplicateFromStoreCount
-        type: 0
       - field: ExpiredCount
         type: 0
       - field: StoreMessageSize
