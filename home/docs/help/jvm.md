@@ -8,6 +8,23 @@ sidebar_label: JVM虚拟机
 
 **使用协议：JMX**
 
+### 监控前操作
+
+> 您需要在 JVM 应用开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 JVM 进行指标采集。
+
+#### JVM应用开启JMX协议步骤
+
+应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
+
+参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
+
+```shell
+-Djava.rmi.server.hostname=对外ip地址 
+-Dcom.sun.management.jmxremote.port=9999
+-Dcom.sun.management.jmxremote.ssl=false
+-Dcom.sun.management.jmxremote.authenticate=false 
+```
+
 ### 配置参数
 
 | 参数名称      | 参数帮助描述 |
@@ -27,52 +44,40 @@ sidebar_label: JVM虚拟机
 #### 指标集合：memory_pool
 
 | 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| name         | 无 | 指标名称 |
-| committed            | kb | 总量 |
-| init         | kb | 初始化大小 |
-| max | kb | 最大 |
-| used         | kb | 已使用 |
+|-----------| ----------- | ----------- |
+| name      | 无 | 指标名称 |
+| committed | kb | 总量 |
+| init      | kb | 初始化大小 |
+| max       | kb | 最大 |
+| used      | kb | 已使用 |
 
 #### 指标集合：code_cache (限JDK8及以下)
 
 | 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| committed            | kb | 总量 |
-| init         | kb | 初始化大小 |
-| max | kb | 最大 |
-| used         | kb | 已使用 |
+|-----------| ----------- | ----------- |
+| committed | kb | 总量 |
+| init      | kb | 初始化大小 |
+| max       | kb | 最大 |
+| used      | kb | 已使用 |
 
 #### 指标集合：class_loading
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| LoadedClassCount            | 个 | 已加载类数量 |
-| TotalLoadedClassCount        | 个 | 历史已加载类总量 |
-| UnloadedClassCount | 个 | 未加载类数量 |
+| 指标名称                  | 指标单位 | 指标帮助描述 |
+|-----------------------| ----------- | ----------- |
+| LoadedClassCount      | 个 | 已加载类数量 |
+| TotalLoadedClassCount | 个 | 历史已加载类总量 |
+| UnloadedClassCount    | 个 | 未加载类数量 |
 
 
 #### 指标集合：thread
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- | ----------- | ----------- |
-| TotalStartedThreadCount            | 个 | 已经开始的线程数量 |
-| ThreadCount        | 个 | 线程数 |
-| PeakThreadCount | 个 | 未加载类数量 |
-| DaemonThreadCount | 个 | 守护进程数 |
-| CurrentThreadUserTime | ms | 使用时间 |
-| CurrentThreadCpuTime | ms | 使用CPU时间 |
+| 指标名称                    | 指标单位 | 指标帮助描述 |
+|-------------------------| ----------- | ----------- |
+| TotalStartedThreadCount | 个 | 已经开始的线程数量 |
+| ThreadCount             | 个 | 线程数 |
+| PeakThreadCount         | 个 | 未加载类数量 |
+| DaemonThreadCount       | 个 | 守护进程数 |
+| CurrentThreadUserTime   | ms | 使用时间 |
+| CurrentThreadCpuTime    | ms | 使用CPU时间 |
 
-### JVM应用开启JMX协议步骤
-
-1. 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
-
-参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote 
-
-```shell
--Djava.rmi.server.hostname=对外ip地址 
--Dcom.sun.management.jmxremote.port=9999
--Dcom.sun.management.jmxremote.ssl=false
--Dcom.sun.management.jmxremote.authenticate=false 
-```
 

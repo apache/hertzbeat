@@ -8,6 +8,19 @@ sidebar_label: JVM Monitor
 
 **Protocol Use：JMX**
 
+### JVM App Enable JMX Protocol
+
+1. Add JVM `VM options` When Start Server ⚠️ customIP
+
+Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
+
+```shell
+-Djava.rmi.server.hostname=customIP  
+-Dcom.sun.management.jmxremote.port=9999
+-Dcom.sun.management.jmxremote.ssl=false
+-Dcom.sun.management.jmxremote.authenticate=false 
+```
+
 ### Configuration parameter
 
 | Parameter name      | Parameter help description |
@@ -62,16 +75,4 @@ sidebar_label: JVM Monitor
 | CurrentThreadUserTime | ms | Current Thread User Time |
 | CurrentThreadCpuTime | ms | Current Thread Cpu Time |
 
-### JVM App Enable JMX Protocol 
-
-1. Add JVM `VM options` When Start Server ⚠️ customIP
-
-Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
-
-```shell
--Djava.rmi.server.hostname=yourIP  
--Dcom.sun.management.jmxremote.port=9999
--Dcom.sun.management.jmxremote.ssl=false
--Dcom.sun.management.jmxremote.authenticate=false 
-```
 
