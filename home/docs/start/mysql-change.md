@@ -17,7 +17,12 @@ MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默
    ```
 2. Docker安装MYSQl  
    ```
-   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+   $ docker run -d --name mysql \
+   -p 3306:3306 \
+   -v /opt/data:/var/lib/mysql \
+   -e MYSQL_ROOT_PASSWORD=123456 \
+   --restart=always \
+   mysql:5.7
    ```
    `-v /opt/data:/var/lib/mysql` 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录           
    使用```$ docker ps```查看数据库是否启动成功
@@ -26,7 +31,7 @@ MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默
 1. 进入MYSQL或使用客户端连接MYSQL服务   
    `mysql -uroot -p123456`  
 2. 创建名称为hertzbeat的数据库    
-   `create database hertzbeat;`
+   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
 3. 查看hertzbeat数据库是否创建成功
    `show databases;`
 
