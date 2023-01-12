@@ -588,6 +588,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "898349230",
+      "name": "sunxinbo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21972532?v=4",
+      "profile": "https://github.com/898349230",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7
