@@ -1,25 +1,51 @@
 ---
-id: jvm  
-title: Monitoring JVM      
-sidebar_label: JVM Monitor
+id: jetty  
+title: Monitoring Jetty Web Server      
+sidebar_label: Jetty Web Server
 ---
 
-> Collect and monitor the general performance Metrics of JVM.
+> Collect and monitor general performance metrics of Jetty application server
 
-**Protocol Use：JMX**
+**Usage protocol: JMX**
 
-### JVM App Enable JMX Protocol
+### Pre-monitoring Operations
 
-1. Add JVM `VM options` When Start Server ⚠️ customIP
+> You need to enable the `JMX` service in the JVM application. HertzBeat uses the JMX protocol to collect metrics for the JVM.
 
-Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
+#### Jetty application server opens JMX protocol steps
+
+[Refer to official documentation](https://www.eclipse.org/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote)
+
+1. Start the JMX JMX-REMOTE module in Jetty
 
 ```shell
--Djava.rmi.server.hostname=customIP  
--Dcom.sun.management.jmxremote.port=9999
--Dcom.sun.management.jmxremote.ssl=false
--Dcom.sun.management.jmxremote.authenticate=false 
+java -jar $JETTY_HOME/start.jar --add-module=jmx
+java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
 ```
+Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file
+
+2. Edit the `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file to modify the JMX IP port and other parameters.
+
+**`localhost` needs to be modified to expose the IP**
+
+```text
+## The host/address to bind the RMI server to.
+# jetty.jmxremote.rmiserverhost=localhost
+
+## The port the RMI server listens to (0 means a random port is chosen).
+# jetty.jmxremote.rmiserverport=1099
+
+## The host/address to bind the RMI registry to.
+# jetty.jmxremote.rmiregistryhost=localhost
+
+## The port the RMI registry listens to.
+# jetty.jmxremote.rmiregistryport=1099
+
+## The host name exported in the RMI stub.
+-Djava.rmi.server.hostname=localhost
+```
+
+3. Restart Jetty Server.
 
 ### Configuration parameter
 
@@ -46,14 +72,6 @@ Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#rem
 | max         | kb          | max size                |
 | used        | kb          | used size               |
 
-#### Metrics Set：code_cache (Only Support JDK8)
-
-| Metric name | Metric unit | Metric help description |
-|-------------|-------------|-------------------------|
-| committed   | kb          | total size              |
-| init        | kb          | init size               |
-| max         | kb          | max size                |
-| used        | kb          | used size               |
 
 #### Metrics Set：class_loading
 
@@ -74,5 +92,4 @@ Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#rem
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-
 
