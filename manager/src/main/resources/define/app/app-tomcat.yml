@@ -1,8 +1,8 @@
 category: mid
 app: tomcat
 name:
-  zh-CN: Tomcat
-  en-US: Tomcat
+  zh-CN: Tomcat应用服务器
+  en-US: Tomcat WebServer
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
