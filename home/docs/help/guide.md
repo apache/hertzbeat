@@ -50,6 +50,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
   &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
   &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
+  &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
 
 ### 云原生监控
 

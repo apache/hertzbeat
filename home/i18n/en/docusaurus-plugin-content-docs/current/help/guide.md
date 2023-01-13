@@ -50,6 +50,7 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
 &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
 &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
+&emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
 
 ### CloudNative monitoring
 
