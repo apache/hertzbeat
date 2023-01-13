@@ -16,8 +16,8 @@
 category: mid
 app: zookeeper
 name:
-  zh-CN: Zookeeper
-  en-US: Zookeeper
+  zh-CN: Zookeeper注册配置中心
+  en-US: Zookeeper Server
 configmap:
   - key: host
     type: 1

@@ -1,8 +1,8 @@
 category: mid
 app: kafka
 name:
-  zh-CN: Kafka
-  en-US: Kafka
+  zh-CN: Kafka消息系统
+  en-US: Kafka Message
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
