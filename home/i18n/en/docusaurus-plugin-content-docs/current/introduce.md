@@ -7,15 +7,20 @@ slug: /
 
 > An open-source, real-time monitoring system with custom-monitor and agentless.  
 
-![tan-cloud](https://img.shields.io/badge/web-monitor-4EB1BA)
-![tan-cloud](https://img.shields.io/badge/api-monitor-lightgrey)
-![tan-cloud](https://img.shields.io/badge/ping-connect-brightgreen)
-![tan-cloud](https://img.shields.io/badge/port-available-green)
-![tan-cloud](https://img.shields.io/badge/database-monitor-yellowgreen)
-![tan-cloud](https://img.shields.io/badge/os-monitor-yellow)
-![tan-cloud](https://img.shields.io/badge/custom-monitor-orange)
-![tan-cloud](https://img.shields.io/badge/threshold-red)
-![tan-cloud](https://img.shields.io/badge/alert-notify-bule)
+[![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
+[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![QQ](https://img.shields.io/badge/qq-718618151-orange)](https://jq.qq.com/?_wv=1027&k=Bud9OzdI)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
+![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+
 
 
 ## 🎡 <font color="green">Introduction</font>
