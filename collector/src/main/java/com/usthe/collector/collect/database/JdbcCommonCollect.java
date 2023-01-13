@@ -136,7 +136,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                 // 设置查询最大行数1000行
                 statement.setMaxRows(1000);
             } catch (Exception e) {
-                log.info("The jdbc connect form cache, create statement error: {}", e.getMessage());
+                log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
                 try {
                     if (statement != null) {
                         statement.close();
