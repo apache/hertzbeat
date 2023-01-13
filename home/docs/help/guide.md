@@ -26,11 +26,11 @@ sidebar_label: 帮助入门
 ### 数据库监控  
 
   &emsp;&#x1F449;&emsp;[MYSQL数据库监控](mysql) <br />
-  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br /> 
-  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br /> 
+  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br />
+  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br />
   &emsp;&#x1F449;&emsp;[SqlServer数据库监控](sqlserver) <br />
-  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />      
-  &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />  
+  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />
+  &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />
   &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
   &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
 
