@@ -18,6 +18,8 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
+![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
@@ -42,7 +44,7 @@
 
 ----   
 
-[![hertzbeat](hertzbeat.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
+[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
 ----   
 
@@ -198,18 +200,18 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 社区交流
 
-HertzBeat赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目。   
+HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目。   
 
 ##### 微信交流群
 
 加微信号 tan-cloud 或 扫描下面账号二维码拉您进微信群。   
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
+<img alt="tan-cloud" src="home/static/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
 
 ##### QQ交流群
 
 加QQ群号 718618151 或 扫描下面的群二维码进群, 验证信息: tancloud
 
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
+<img alt="tan-cloud" src="home/static/img/docs/help/qq-qr.jpg" width="200"/>          
 
 ##### Channel 
 
@@ -221,11 +223,11 @@ HertzBeat赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目�
 
 ##### 公众号与星球     
 
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="400"/>  
+<img alt="tan-cloud" src="home/static/img/wechat.png" width="400"/>  
 
 <br/>
 
-<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg" width="400"/>    
+<img alt="planet" src="home/static/img/planet.jpg" width="400"/>    
 
 ##### 友情链接   
 
