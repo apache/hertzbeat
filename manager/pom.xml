@@ -142,6 +142,7 @@
                 <includes>
                     <include>*.yml</include>
                     <include>*.properties</include>
+                    <include>*.xml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
                     <include>**/*.html</include>
