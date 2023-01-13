@@ -33,7 +33,7 @@ configmap:
     type: 1
   - key: authenticationDatabase
     type: 1
-# 可以通过执行 Diagnostic Commands 获取 mongdb 的状态信息以及一些性能、配置参数
+# 可以通过执行 Diagnostic Commands 获取 mongodb 的状态信息以及一些性能、配置参数
 # https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
 # name 必须为 Diagnostic Commands 名称，支持 . 方式获取子文档，需注意连接的用户是否具有相应命令的权限
 metrics:
@@ -63,17 +63,19 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      command: buildInfo
+
   # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
-  - name: serverStatus.metrics.document
+  - name: server_document
     priority: 0
     fields:
-      - field: deleted 
+      - field: deleted
         type: 0
-      - field: inserted 
+      - field: inserted
         type: 0
-      - field: returned 
+      - field: returned
         type: 0
-      - field: updated 
+      - field: updated
         type: 0
     protocol: mongodb
     mongodb:
@@ -83,12 +85,14 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-  - name: serverStatus.metrics.operation
+      command: serverStatus.metrics.document
+
+  - name: server_operation
     priority: 1
     fields:
-      - field: scanAndOrder  
+      - field: scanAndOrder
         type: 0
-      - field: writeConflicts  
+      - field: writeConflicts
         type: 0
     protocol: mongodb
     mongodb:
@@ -98,12 +102,14 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-  - name: serverStatus.metrics.ttl
+      command: serverStatus.metrics.operation
+
+  - name: server_ttl
     priority: 1
     fields:
-      - field: deletedDocuments  
+      - field: deletedDocuments
         type: 0
-      - field: passes  
+      - field: passes
         type: 0
     protocol: mongodb
     mongodb:
@@ -113,27 +119,29 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.metrics.ttl
+
   # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
-  - name: hostInfo.system
+  - name: systemInfo
     priority: 1
     fields:
-      - field: currentTime  
+      - field: currentTime
         type: 1
-      - field: hostname  
+      - field: hostname
         type: 1
-      - field: cpuAddrSize  
+      - field: cpuAddrSize
         type: 0
-      - field: memSizeMB  
+      - field: memSizeMB
         type: 0
         unit: MB
-      - field: memLimitMB  
+      - field: memLimitMB
         type: 0
         unit: MB
-      - field: numCores  
+      - field: numCores
         type: 0
-      - field: cpuArch  
+      - field: cpuArch
         type: 1
-      - field: numaEnabled  
+      - field: numaEnabled
         type: 1
     protocol: mongodb
     mongodb:
@@ -143,14 +151,16 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-  - name: hostInfo.os
+      command: hostInfo.system
+
+  - name: os
     priority: 1
     fields:
-      - field: type  
+      - field: type
         type: 1
-      - field: name  
+      - field: name
         type: 1
-      - field: version  
+      - field: version
         type: 1
     protocol: mongodb
     mongodb:
@@ -160,24 +170,26 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-  - name: hostInfo.extra.extra
+      command: hostInfo.os
+
+  - name: extra
     priority: 1
     fields:
-      - field: versionString  
+      - field: versionString
         type: 1
-      - field: libcVersion  
+      - field: libcVersion
         type: 1
-      - field: kernelVersion  
+      - field: kernelVersion
         type: 1
-      - field: cpuFrequencyMHz  
+      - field: cpuFrequencyMHz
         type: 1
-      - field: cpuFeatures  
+      - field: cpuFeatures
         type: 1
-      - field: pageSize  
+      - field: pageSize
         type: 0
-      - field: numPages  
+      - field: numPages
         type: 0
-      - field: maxOpenFiles  
+      - field: maxOpenFiles
         type: 0
     protocol: mongodb
     mongodb:
@@ -187,3 +199,4 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      command: hostInfo.extra.extra
