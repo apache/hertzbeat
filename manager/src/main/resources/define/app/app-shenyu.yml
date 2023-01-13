@@ -16,8 +16,8 @@
 category: mid
 app: shenyu
 name:
-  zh-CN: ShenYu
-  en-US: ShenYu
+  zh-CN: ShenYu网关
+  en-US: ShenYu Gateway
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:

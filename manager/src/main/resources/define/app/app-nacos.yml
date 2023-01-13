@@ -1,8 +1,8 @@
 category: mid
 app: nacos
 name:
-  zh-CN: Nacos
-  en-US: Nacos
+  zh-CN: Nacos注册配置中心
+  en-US: Nacos Server
 configmap:
   - key: host
     type: 1
