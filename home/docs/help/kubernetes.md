@@ -12,6 +12,23 @@ sidebar_label: Kubernetes 监控
 
 如果想要监控 `Kubernetes` 中的信息，则需要获取到可访问Api Server的授权TOKEN，让采集请求获取到对应的信息。
 
+参考获取token步骤  
+
+#### 方式一: 
+
+1. 创建service account并绑定默认cluster-admin管理员集群角色
+
+```kubectl create serviceaccount dashboard-admin -n kube-system```
+
+2. 用户授权
+
+```shell
+kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
+kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
+kubectl describe secret {secret} -n kube-system
+```
+
+
 
 ### 配置参数
 
@@ -22,7 +39,7 @@ sidebar_label: Kubernetes 监控
 | APiServer端口 | K8s APiServer端口，默认6443                                   |
 | token       | 授权Access Token                                       |
 | URL         | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数      |
-| 采集间隔        | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒                       |
+| 采集间隔        | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |
 | 是否探测        | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
 | 描述备注        | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
 

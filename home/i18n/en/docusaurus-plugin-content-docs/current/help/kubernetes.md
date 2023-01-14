@@ -1,7 +1,7 @@
 ---
 id: kubernetes   
-Title: Monitoring Kubernetes monitoring      
-sidebar_label: Kubernetes monitoring
+Title: Monitoring Kubernetes
+sidebar_label: Kubernetes Monitor
 
 ---
 
@@ -10,6 +10,22 @@ sidebar_label: Kubernetes monitoring
 ## Pre-monitoring operations
 
 If you want to monitor the information in 'Kubernetes', you need to obtain an authorization token that can access the API Server, so that the collection request can obtain the corresponding information.
+
+Refer to the steps to obtain token
+
+#### method one:
+
+1. Create a service account and bind the default cluster-admin administrator cluster role
+
+```kubectl create serviceaccount dashboard-admin -n kube-system```
+
+2. User Authorization
+
+```shell
+kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
+kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
+kubectl describe secret {secret} -n kube-system
+```
 
 ### Configure parameters
 
@@ -20,7 +36,7 @@ If you want to monitor the information in 'Kubernetes', you need to obtain an au
 | APiServer port | K8s APiServer port, default 6443 |
 | token       | Authorize the Access Token |
 | URL         | The database connection URL is optional, if configured, the database name, user name and password parameters in the URL will override the parameter | configured above
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 10 seconds |
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds |
 | Whether to probe the | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation | will continue only if the probe is successful
 | Description Comment | For more information identifying and describing the remarks for this monitoring, users can remark the information here |
 

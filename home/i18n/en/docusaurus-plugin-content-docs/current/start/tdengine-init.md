@@ -1,6 +1,6 @@
 ---
 id: tdengine-init  
-title: Dependency Service TDengine Installation and Initialization        
+title: Dependency Service TDengine Installation        
 sidebar_label: TDengine Init(optional)    
 ---
 

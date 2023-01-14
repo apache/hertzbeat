@@ -35,7 +35,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appCountCustom: AppCount = new AppCount();
 
   // start 数量全局概览
-  interval$!: number;
+  interval$!: any;
   appsCountLoading: boolean = true;
   appsCountTableData: any[] = [];
   appsCountEChartOption!: EChartsOption;

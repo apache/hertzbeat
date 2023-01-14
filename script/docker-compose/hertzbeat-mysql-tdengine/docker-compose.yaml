@@ -21,12 +21,12 @@ networks:
 
 services:
   mysql:
-    image: "mysql:5.7"
-    container_name: mysql
+    image: mysql:8
+    container_name: compose-mysql
     hostname: mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3306"
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 123456
@@ -36,29 +36,32 @@ services:
     networks:
       - heartzbeat
 
-  TDengine:
-    image: "tdengine/tdengine:2.4.0.12"
-    container_name: tdengine
+  tdengine:
+    image: tdengine/tdengine:2.4.0.12
+    container_name: compose-tdengine
     hostname: tdengine
     restart: always
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "6030-6049:6030-6049"
-      - "6030-6049:6030-6049/udp"
+      - "6030-6049"
+      - "6030-6049/udp"
     volumes:
       - ./dbdata/taosdata:/var/lib/taos/
     networks:
       - heartzbeat
 
   hertzbeat:
-    image: "tancloud/hertzbeat"
-    container_name: hertzbeat
+    image: tancloud/hertzbeat
+    container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
     environment:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
+    depends_on:
+      - mysql
+      - tdengine
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml

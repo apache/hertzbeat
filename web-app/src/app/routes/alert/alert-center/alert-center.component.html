@@ -22,11 +22,11 @@
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
     {{ 'alert.center.deal' | i18n }}
   </button>
-  <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()">
+  <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()" class="mobile-hide">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
     {{ 'alert.center.no-deal' | i18n }}
   </button>
-  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()">
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()" class="mobile-hide">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.center.delete' | i18n }}
   </button>
@@ -35,7 +35,7 @@
     {{ 'alert.center.clear' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
   <input
@@ -46,8 +46,10 @@
     nzSize="default"
     (keyup.enter)="loadAlertsTable()"
     [(ngModel)]="filterContent"
+    class="mobile-hide"
   />
   <nz-select
+    class="mobile-hide"
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-status' | i18n"
@@ -59,6 +61,7 @@
     <nz-option [nzLabel]="'alert.status.3' | i18n" nzValue="3"></nz-option>
   </nz-select>
   <nz-select
+    class="mobile-hide"
     style="margin-right: 10px; float: right; width: 120px"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
@@ -84,31 +87,31 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>{{ 'alert.center.target' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.monitor' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.priority' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.tags' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.status' | i18n }}</th>
-      <th nzAlign="center">{{ 'alert.center.time' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.monitor' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.target' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.priority' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.content' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.center.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.center.time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of fixedTable.data" [ngStyle]="{ 'background-color': data.status === 0 ? '#E1E7A89B' : 'inherit' }">
+    <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center" nzLeft>{{ data.target }}</td>
-      <td nzAlign="center">
-        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags?.monitorId]">
-          {{ data.tags?.monitorName }}
+      <td nzAlign="left">
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags.monitorId]">
+          {{ data.tags.monitorName }}
           <span nz-icon nzType="area-chart"></span>
         </button>
       </td>
+      <td nzAlign="center">{{ data.target }}</td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
@@ -123,16 +126,18 @@
           <span>{{ 'alert.priority.2' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.content }}</td>
-      <td nzAlign="center">
+      <td nzAlign="left">{{ data.content }}</td>
+      <td nzAlign="left">
         <nz-tag style="margin-top: 2px" *ngFor="let tag of data?.tmp; let i = index">
           {{ sliceTagName(tag) }}
         </nz-tag>
       </td>
       <td nzAlign="center">
-        {{ 'alert.status.' + data.status | i18n }}
+        <nz-tag [nzColor]="data.status == 3 ? '' : 'orange'">
+          {{ 'alert.status.' + data.status | i18n }}
+        </nz-tag>
       </td>
-      <td nzAlign="center">{{ data?.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">{{ data.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button
           *ngIf="data.status != 3"

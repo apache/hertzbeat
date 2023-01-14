@@ -1,7 +1,7 @@
 ---
 id: zookeeper  
-title: Monitoring：Zookeeper monitoring      
-sidebar_label: Zookeeper monitoring   
+title: Monitoring Zookeeper       
+sidebar_label: Zookeeper Monitor   
 ---
 
 > Collect and monitor the general performance Metrics of Zookeeper.
@@ -16,7 +16,7 @@ sidebar_label: Zookeeper monitoring
 | Query timeout | Set the timeout of Zookeeper connection, unit: ms, default: 3000ms |
 | Username      | User name of the Linux connection where Zookeeper is located |
 | Password        | Password of the Linux connection where Zookeeper is located |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

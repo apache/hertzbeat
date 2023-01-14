@@ -1,105 +1,116 @@
 <div nz-row nzGutter="16" style="margin-top: 70px">
-  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
-    <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-      <div nz-col nzSpan="10" class="p-md text-white">
-        <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
-        <p class="h5 text-nowrap mb0">
-          <i nz-icon nzType="cloud" nzTheme="outline"></i>
-          {{ 'monitor.category.service' | i18n }}
-        </p>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: 'website' }">
+      <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
+        <div nz-col nzSpan="10" class="p-md text-white">
+          <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
+          <p class="h5 text-nowrap mb0">
+            <i nz-icon nzType="cloud" nzTheme="outline"></i>
+            {{ 'monitor.category.service' | i18n }}
+          </p>
+        </div>
+        <div nz-col nzSpan="14">
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.available' | i18n }} </span
+            ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unavailable' | i18n }} </span
+            ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unreachable' | i18n }} </span
+            ><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+          </nz-tag>
+        </div>
       </div>
-      <div nz-col nzSpan="14" class="p-md text-white">
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unreachable' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountService.unReachableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
-        </nz-tag>
-      </div>
-    </div>
+    </a>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
-    <div nz-row nzAlign="middle" class="bg-success rounded-lg">
-      <div nz-col nzSpan="10" class="p-md text-white">
-        <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
-        <p class="h5 text-nowrap mb0">
-          <i nz-icon nzType="database" nzTheme="outline"></i>
-          {{ 'monitor.category.db' | i18n }}
-        </p>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: 'mysql' }">
+      <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
+        <div nz-col nzSpan="10" class="p-md text-white">
+          <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
+          <p class="h5 text-nowrap mb0">
+            <i nz-icon nzType="database" nzTheme="outline"></i>
+            {{ 'monitor.category.db' | i18n }}
+          </p>
+        </div>
+        <div nz-col nzSpan="14">
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unReachableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+          </nz-tag>
+        </div>
       </div>
-      <div nz-col nzSpan="14">
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unReachableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
-        </nz-tag>
-      </div>
-    </div>
+    </a>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
-    <div nz-row nzAlign="middle" class="bg-orange rounded-lg">
-      <div nz-col nzSpan="10" class="p-md text-white">
-        <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
-        <p class="h5 text-nowrap mb0">
-          <i nz-icon nzType="windows" nzTheme="outline"></i>
-          {{ 'monitor.category.os' | i18n }}
-        </p>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: 'linux' }">
+      <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
+        <div nz-col nzSpan="10" class="p-md text-white">
+          <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
+          <p class="h5 text-nowrap mb0">
+            <i nz-icon nzType="windows" nzTheme="outline"></i>
+            {{ 'monitor.category.os' | i18n }}
+          </p>
+        </div>
+        <div nz-col nzSpan="14">
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unReachableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+          </nz-tag>
+        </div>
       </div>
-      <div nz-col nzSpan="14">
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unReachableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
-        </nz-tag>
-      </div>
-    </div>
+    </a>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md">
-    <div nz-row nzAlign="middle" class="bg-magenta rounded-lg">
-      <div nz-col nzSpan="10" class="p-md text-white">
-        <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
-        <p class="h5 text-nowrap mb0">
-          <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
-          {{ 'monitor.category.mid' | i18n }}
-        </p>
+  <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: 'kafka' }">
+      <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
+        <div nz-col nzSpan="10" class="p-md text-white">
+          <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
+          <p class="h5 text-nowrap mb0">
+            <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
+            {{ 'monitor.category.mid' | i18n }}
+          </p>
+        </div>
+        <div nz-col nzSpan="14">
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unavailable' | i18n }} </span
+            ><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.unreachable' | i18n }} </span
+            ><span style="font-weight: bolder">{{ appCountMid.unReachableSize }}</span>
+          </nz-tag>
+          <nz-tag class="mb-xs">
+            <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
+          </nz-tag>
+        </div>
       </div>
-      <div nz-col nzSpan="14">
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unreachable' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unReachableSize }}</span>
-        </nz-tag>
-        <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
-        </nz-tag>
-      </div>
-    </div>
+    </a>
   </div>
 </div>
 
@@ -114,13 +125,13 @@
   style="width: 100%; height: 400px; margin-top: 1%"
 ></div>
 
-<div nz-row nzGutter="16" style="margin-top: 10px">
+<div nz-row nzGutter="16" style="margin-top: 25px">
   <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md">
     <nz-card nzHoverable [nzTitle]="'dashboard.alerts.title' | i18n" [nzExtra]="extraTemplate">
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
-          [nzLabel]="(alert.lastTriggerTime | date: 'YYYY-MM-dd HH:mm:ss')?.trim()"
+          [nzLabel]="(alert.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
         >
           <p style="font-weight: 400">
             <nz-tag *ngIf="alert.priority == 0" nzColor="red">
@@ -135,7 +146,7 @@
               <i nz-icon nzType="bell" nzTheme="outline"></i>
               <span>{{ 'alert.priority.2' | i18n }}</span>
             </nz-tag>
-            <span>[{{ alert.tags?.monitorName }}] </span>
+            <span>[{{ alert.tags.monitorName }}] </span>
             {{ alert.content }}
           </p>
         </nz-timeline-item>
@@ -151,6 +162,7 @@
       [loading]="alertsLoading"
       (chartInit)="onAlertNumChartInit($event)"
       style="width: 100%; min-height: 300px"
+      class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>
   <div nz-col nzXs="24" nzSm="12" nzMd="5" class="mb-md">
@@ -162,6 +174,7 @@
       [loading]="alertsDealLoading"
       (chartInit)="onAlertRateChartInit($event)"
       style="width: 100%; min-height: 300px"
+      class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>
 </div>

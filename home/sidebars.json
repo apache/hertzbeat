@@ -10,8 +10,10 @@
         "start/tdengine-init",
         "start/docker-deploy",
         "start/package-deploy",
+        "start/rainbond-deploy",
         "start/ssl-cert-practice",
-        "start/mysql-change"
+        "start/mysql-change",
+        "start/custom-config"
       ]
     },
     {
@@ -76,7 +78,8 @@
             "help/sqlserver",
             "help/oracle",
             "help/dm",
-            "help/opengauss"
+            "help/opengauss",
+            "help/iotdb"
           ]
         },
         {
@@ -95,7 +98,9 @@
           "items": [
             "help/zookeeper",
             "help/kafka",
-            "help/tomcat"
+            "help/tomcat",
+            "help/shenyu",
+            "help/dynamic_tp"
           ]
         },
         {

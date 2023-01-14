@@ -103,4 +103,29 @@ public class CommonUtil {
         Matcher m = PHONE_PATTERN.matcher(phoneNum);
         return m.find();
     }
+
+    public static String getMessageFromThrowable(Throwable throwable) {
+        if (throwable == null) {
+            return "throwable is null, unknown error.";
+        }
+        String message = null;
+        Throwable cause = throwable.getCause();
+        if (cause != null) {
+            message = cause.getMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.getMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.getLocalizedMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.toString();
+        }
+        if (message == null || "".equals(message)) {
+            message = "unknown error.";
+        }
+        return message;
+    }
+
 }

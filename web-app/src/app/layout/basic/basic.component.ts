@@ -79,8 +79,7 @@ import { CONSTS } from 'src/app/shared/consts';
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
         HertzBeat {{ version }}<br />
-        Copyright
-        <i nz-icon nzType="copyright"></i> 2022
+        Copyright &copy; 2021-2023
         <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
@@ -101,7 +100,7 @@ export class LayoutBasicComponent {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
   };
-  avatar: string = `./assets/logo.svg`;
+  avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
   version = CONSTS.VERSION;

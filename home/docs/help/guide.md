@@ -32,6 +32,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />      
   &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />  
   &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
+  &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
 
 ### 操作系统监控     
 
@@ -45,6 +46,8 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
   &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
   &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
+  &emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
+  &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
 
 ### 云原生监控
 

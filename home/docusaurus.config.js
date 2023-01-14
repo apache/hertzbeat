@@ -72,7 +72,7 @@ module.exports = {
           to: '/',
         },
         {
-          label: '文档',
+          label: '文档中心',
           position: 'left',
           to: 'docs/',
         },
@@ -210,7 +210,7 @@ module.exports = {
       },
       copyright:
         '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' +
-        ` | Copyright TANCLOUD© ${new Date().getFullYear()}`,
+        ` | Copyright © 2021-${new Date().getFullYear()} TANCLOUD`,
     },
   },
   presets: [
@@ -235,7 +235,7 @@ module.exports = {
         },
         blog: {
           showReadingTime: true,
-          postsPerPage: 3,
+          postsPerPage: 1,
           feedOptions: {
             type: 'all',
             copyright: `Copyright © ${new Date().getFullYear()} TANCLOUD, Inc.`,
@@ -243,6 +243,7 @@ module.exports = {
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
           editLocalizedFiles: true,
+          blogSidebarCount: 'ALL'
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
