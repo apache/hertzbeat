@@ -15,25 +15,15 @@
  * limitations under the License.
  */
 
-package com.usthe.common.config;
+package com.usthe.alert.config;
 
-import com.usthe.common.util.AesUtil;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 
 /**
- * @author tom
- * @date 2022/6/30 09:23
+ * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
+ * @version 2.1
+ * Created by Musk.Chen on 2023/1/14
  */
-@ComponentScan(basePackages = "com.usthe.common")
-@EnableConfigurationProperties(CommonProperties.class)
-@Configuration
-public class CommonConfig {
-
-    public CommonConfig(CommonProperties commonProperties) {
-        if (commonProperties != null && commonProperties.getSecretKey() != null) {
-            AesUtil.setDefaultSecretKey(commonProperties.getSecretKey());
-        }
-    }
+@ComponentScan(basePackages = "com.usthe.alert")
+public class AlerterAutoConfiguration {
 }

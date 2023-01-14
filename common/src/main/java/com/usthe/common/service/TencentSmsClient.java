@@ -9,14 +9,14 @@ import com.usthe.common.config.CommonProperties;
 import com.usthe.common.support.exception.SendMessageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 /**
  * sms service client for tencent cloud
  * @author tom
  * @date 2022/12/17 17:41
  */
-@Configuration
+@Component
 @ConditionalOnProperty("common.sms.tencent.app-id")
 @Slf4j
 public class TencentSmsClient {
