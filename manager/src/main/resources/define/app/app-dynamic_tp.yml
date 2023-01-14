@@ -16,8 +16,8 @@
 category: mid
 app: dynamic_tp
 name:
-  zh-CN: DynamicTp
-  en-US: DynamicTp
+  zh-CN: DynamicTp线程池
+  en-US: DynamicTp Pool
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:

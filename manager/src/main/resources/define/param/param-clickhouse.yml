@@ -23,12 +23,12 @@ param:
     required: true
   - field: port
     name:
-      zh-CN: 端口
-      en-US: Port
+      zh-CN: HTTP端口
+      en-US: HTTP Port
     type: number
     range: '[0,65535]'
     required: true
-    defaultValue: 3306
+    defaultValue: 8123
   - field: timeout
     name:
       zh-CN: 查询超时时间(ms)
@@ -56,18 +56,3 @@ param:
       en-US: Password
     type: password
     required: false
-  - field: url
-    name:
-      zh-CN: URL
-      en-US: URL
-    type: text
-    required: false
-    hide: true
-  - field: keyword
-    name:
-      zh-CN: 关键字计数
-      en-US: Keyword Num
-    type: text
-    placeholder: 'Input Keyword'
-    required: false
-    hide: true

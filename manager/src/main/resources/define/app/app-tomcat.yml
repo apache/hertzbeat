@@ -1,8 +1,8 @@
 category: mid
 app: tomcat
 name:
-  zh-CN: Tomcat
-  en-US: Tomcat
+  zh-CN: Tomcat应用服务器
+  en-US: Tomcat WebServer
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -84,42 +84,8 @@ metrics:
       objectName: java.lang:type=MemoryPool,name=*
       url: ^_^url^_^
 
-  - name: code_cache
-    priority: 5
-    # 指标组中的具体监控指标
-    fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: committed
-        type: 0
-      - field: init
-        type: 0
-      - field: max
-        type: 0
-      - field: used
-        type: 0
-    aliasFields:
-      - Usage->committed
-      - Usage->init
-      - Usage->max
-      - Usage->used
-    calculates:
-      - committed=Usage->committed
-      - init=Usage->init
-      - max=Usage->max
-      - used=Usage->used
-    protocol: jmx
-    jmx:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      objectName: java.lang:type=MemoryPool,name=Code Cache
-      url: ^_^url^_^
-
   - name: class_loading
-    priority: 6
+    priority: 1
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -141,7 +107,7 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 7
+    priority: 1
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -171,7 +137,7 @@ metrics:
       url: ^_^url^_^
 
   - name: application
-    priority: 8
+    priority: 1
     fields:
       - field: name
         type: 1

@@ -18,6 +18,8 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
+![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
@@ -42,7 +44,7 @@
 
 ----   
 
-[![hertzbeat](hertzbeat.gif)](https://www.bilibili.com/video/BV1DY4y1i7ts)             
+[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1DY4y1i7ts)   
 
 ----   
 
@@ -186,6 +188,8 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xttttv"><img src="https://avatars.githubusercontent.com/u/116323904?v=4?s=100" width="100px;" alt="xttttv"/><br /><sub><b>xttttv</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xttttv" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/NavinKumarBarnwal"><img src="https://avatars.githubusercontent.com/u/44504274?v=4?s=100" width="100px;" alt="NavinKumarBarnwal"/><br /><sub><b>NavinKumarBarnwal</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=NavinKumarBarnwal" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/z641205699"><img src="https://avatars.githubusercontent.com/u/45276423?v=4?s=100" width="100px;" alt="Zakkary"/><br /><sub><b>Zakkary</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=z641205699" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/898349230"><img src="https://avatars.githubusercontent.com/u/21972532?v=4?s=100" width="100px;" alt="sunxinbo"/><br /><sub><b>sunxinbo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ldzbook"><img src="https://avatars.githubusercontent.com/u/13903790?v=4?s=100" width="100px;" alt="ldzbook"/><br /><sub><b>ldzbook</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ldzbook" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aldzbook" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
