@@ -14,14 +14,5 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.usthe.collector.dispatch.timer.TimerDispatcher,\
-com.usthe.collector.dispatch.CommonDispatcher,\
-com.usthe.collector.dispatch.DispatchProperties,\
-com.usthe.collector.dispatch.MetricsCollectorQueue,\
-com.usthe.collector.dispatch.WorkerPool,\
-com.usthe.collector.dispatch.entrance.internal.CollectJobService,\
-com.usthe.collector.collect.database.JdbcSpiLoader,\
-com.usthe.collector.collect.http.promethus.PrometheusParseCreater,\
-com.usthe.collector.dispatch.unit.impl.DataSizeConvert,\
-com.usthe.collector.collect.strategy.CollectStrategyFactory
+com.usthe.collector.config.CollectorAutoConfiguration
 
