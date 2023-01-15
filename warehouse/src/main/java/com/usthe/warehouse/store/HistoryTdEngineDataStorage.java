@@ -21,15 +21,14 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
+import com.usthe.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,10 +46,9 @@ import java.util.regex.Pattern;
  *
  */
 @Primary
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
+@Component
 @ConditionalOnProperty(prefix = "warehouse.store.td-engine",
-        name = "enabled", havingValue = "true", matchIfMissing = false)
+        name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 

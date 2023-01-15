@@ -3,7 +3,7 @@ package com.usthe.warehouse.store;
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseProperties;
+import com.usthe.warehouse.config.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;

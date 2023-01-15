@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package com.usthe.warehouse;
+package com.usthe.warehouse.config;
 
 import org.apache.iotdb.session.util.Version;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.time.ZoneId;
 import java.util.List;
@@ -29,7 +28,6 @@ import java.util.List;
  *
  *
  */
-@Component
 @ConfigurationProperties(prefix = "warehouse")
 public class WarehouseProperties {
 

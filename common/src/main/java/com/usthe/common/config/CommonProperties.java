@@ -18,7 +18,6 @@
 package com.usthe.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * common properties
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
  *
  *
  */
-@Component
 @ConfigurationProperties(prefix = "common")
 public class CommonProperties {
 
