@@ -49,9 +49,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.appsCountTheme = {
       title: {
-        text: this.i18nSvc.fanyi('dashboard.monitors.title'),
-        subtext: this.i18nSvc.fanyi('dashboard.monitors.sub-title'),
-        left: 'center'
+        text: `{a|${this.i18nSvc.fanyi('dashboard.monitors.title')}}`,
+        subtext: `{b|${this.i18nSvc.fanyi('dashboard.monitors.sub-title')}}`,
+        left: 'center',
+        textStyle: {
+          rich: {
+            a: {
+              fontWeight: 'bolder',
+              align: 'center',
+              fontSize: 26
+            }
+          }
+        },
+        subtextStyle: {
+          rich: {
+            b: {
+              fontWeight: 'normal',
+              align: 'center',
+              fontSize: 14
+            }
+          }
+        }
       },
       tooltip: {
         trigger: 'item',
@@ -74,10 +92,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           radius: [0, '30%'],
           label: {
             position: 'center',
-            fontSize: 15,
+            fontSize: 26,
+            fontWeight: 'bolder',
             color: '#ffffff',
             fontStyle: 'oblique',
-            formatter: '{a}:{c}'
+            formatter: '{c}'
           },
           labelLine: {
             show: false
@@ -92,7 +111,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             length: 30
           },
           label: {
-            formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}：}{c}  {per|{d}%}  ',
+            formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}}   {per|{d}%}  ',
             backgroundColor: '#F6F8FC',
             borderColor: '#8C8D8E',
             borderWidth: 1,
@@ -128,8 +147,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.alertsTheme = {
       title: {
-        subtext: this.i18nSvc.fanyi('dashboard.alerts.distribute'),
-        left: 'center'
+        subtext: `{b|${this.i18nSvc.fanyi('dashboard.alerts.distribute')}}`,
+        left: 'center',
+        subtextStyle: {
+          rich: {
+            b: {
+              fontWeight: 'bold',
+              align: 'center',
+              fontSize: 14
+            }
+          }
+        }
       },
       tooltip: {
         trigger: 'axis',
@@ -177,8 +205,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     this.alertsDealTheme = {
       title: {
-        subtext: this.i18nSvc.fanyi('dashboard.alerts.deal'),
-        left: 'center'
+        subtext: `{b|${this.i18nSvc.fanyi('dashboard.alerts.deal')}}`,
+        left: 'center',
+        subtextStyle: {
+          rich: {
+            b: {
+              fontWeight: 'bold',
+              align: 'center',
+              fontSize: 14
+            }
+          }
+        }
       },
       tooltip: {
         formatter: '{b} : {c}%'

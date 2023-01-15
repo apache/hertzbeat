@@ -81,9 +81,9 @@
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)
 
 ##### 方式三：本地代码启动
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
-2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改YML配置信息并启动manager服务
-3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在web-app目录下启动 `ng serve --open`
+1. 此为前后端分离项目，本地代码调试需要分别启动后端工程`manager`和前端工程`web-app`
+2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改`YML`配置信息并启动`manager`服务
+3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
 4. 浏览器访问 `localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
