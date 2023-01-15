@@ -127,7 +127,7 @@
 
 <div nz-row nzGutter="16" style="margin-top: 25px">
   <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md">
-    <nz-card nzHoverable [nzTitle]="'dashboard.alerts.title' | i18n" [nzExtra]="extraTemplate">
+    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate">
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
@@ -180,5 +180,9 @@
 </div>
 
 <ng-template #extraTemplate>
-  <a [routerLink]="['/alert/center']">{{ 'dashboard.alerts.enter' | i18n }}</a>
+  <a [routerLink]="['/alert/center']" style="font-weight: bold">{{ 'dashboard.alerts.enter' | i18n }}</a>
+</ng-template>
+
+<ng-template #alertCardTitleTemplate>
+  <span style="font-size: 14px; font-weight: bold">{{ 'dashboard.alerts.title' | i18n }}</span>
 </ng-template>
