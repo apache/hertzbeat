@@ -14,10 +14,4 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.usthe.warehouse.WarehouseProperties,\
-com.usthe.warehouse.WarehouseWorkerPool,\
-com.usthe.warehouse.store.RealTimeMemoryDataStorage,\
-com.usthe.warehouse.store.RealTimeRedisDataStorage,\
-com.usthe.warehouse.store.HistoryTdEngineDataStorage,\
-com.usthe.warehouse.store.HistoryIotDbDataStorage,\
-com.usthe.warehouse.controller.MetricsDataController
+com.usthe.warehouse.config.WarehouseAutoConfiguration

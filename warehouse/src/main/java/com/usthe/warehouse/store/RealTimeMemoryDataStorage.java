@@ -19,14 +19,12 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,8 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2021/11/25 10:26
  */
 @Primary
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
+@Component
 @ConditionalOnProperty(prefix = "warehouse.store.memory",
         name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
