@@ -95,7 +95,7 @@
             <span *ngIf="data.type == 4">{{ data.wechatId }}</span>
             <span *ngIf="data.type == 5">{{ data.accessToken }}</span>
             <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
-            <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br/>{{ data.tgUserId }}</span>
+            <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br />{{ data.tgUserId }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -289,7 +289,7 @@
       <nz-form-item *ngIf="receiver.type === 7">
         <nz-form-label [nzSpan]="7" nzFor="tgUserId" [nzRequired]="receiver.type === 7">{{
           'alert.notice.type.telegram-bot-user-id' | i18n
-          }}</nz-form-label>
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.tgUserId" nz-input [required]="receiver.type === 7" name="wechatId" type="text" />
         </nz-form-control>
