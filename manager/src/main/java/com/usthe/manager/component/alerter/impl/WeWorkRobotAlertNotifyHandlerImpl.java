@@ -52,7 +52,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final AlerterProperties alerterProperties;
 
-    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {

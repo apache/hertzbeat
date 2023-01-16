@@ -68,8 +68,8 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot",
-            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人",
+    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot",
+            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人",
             accessMode = READ_WRITE)
     @Min(0)
     @Max(8)
@@ -105,6 +105,16 @@ public class NoticeReceiver {
             example = "34823984635647", accessMode = READ_WRITE)
     @Length(max = 300)
     private String accessToken;
+
+    @Schema(title = "Telegram bot token : The notification method is valid for Telegram Bot",
+            description = "Telegram bot token : 通知方式为Telegram机器人有效",
+            example = "1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJMXXXXXX", accessMode = READ_WRITE)
+    private String tgBotToken;
+
+    @Schema(title = "Telegram user id: The notification method is valid for Telegram Bot",
+            description = "Telegram user id : 通知方式为Telegram机器人有效",
+            example = "779294123", accessMode = READ_WRITE)
+    private String tgUserId;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
