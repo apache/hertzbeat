@@ -82,6 +82,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>{{ 'alert.notice.type.fei-shu' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 7" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>{{ 'alert.notice.type.telegram-bot' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -91,6 +95,7 @@
             <span *ngIf="data.type == 4">{{ data.wechatId }}</span>
             <span *ngIf="data.type == 5">{{ data.accessToken }}</span>
             <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
+            <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br />{{ data.tgUserId }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -219,6 +224,7 @@
             <nz-option [nzValue]="4" [nzLabel]="'alert.notice.type.wework' | i18n"></nz-option>
             <nz-option [nzValue]="5" [nzLabel]="'alert.notice.type.ding' | i18n"></nz-option>
             <nz-option [nzValue]="6" [nzLabel]="'alert.notice.type.fei-shu' | i18n"></nz-option>
+            <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -270,6 +276,22 @@
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 6" name="wechatId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 7">
+        <nz-form-label [nzSpan]="7" nzFor="tgBotToken" [nzRequired]="receiver.type === 7">{{
+          'alert.notice.type.telegram-bot-token' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.tgBotToken" nz-input [required]="receiver.type === 7" name="tgBotToken" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 7">
+        <nz-form-label [nzSpan]="7" nzFor="tgUserId" [nzRequired]="receiver.type === 7">{{
+          'alert.notice.type.telegram-bot-user-id' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.tgUserId" nz-input [required]="receiver.type === 7" name="wechatId" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
