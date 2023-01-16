@@ -111,8 +111,9 @@ final class TelegramBotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         @JsonProperty("chat_id")
         private String chatId;
         private String text;
+        @JsonProperty("disable_web_page_preview")
         @Builder.Default
-        private boolean disable_web_page_preview = true;
+        private boolean disableWebPagePreview = true;
     }
 
     @NoArgsConstructor
