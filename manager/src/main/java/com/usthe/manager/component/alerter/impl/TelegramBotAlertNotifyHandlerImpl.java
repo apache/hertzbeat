@@ -47,6 +47,7 @@ final class TelegramBotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                 .chatId(receiver.getTgUserId())
                 .text(buildMessage(alert))
+                .disableWebPagePreview(true)
                 .build();
         try {
             ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, notifyBody, TelegramBotNotifyResponse.class);
@@ -112,8 +113,7 @@ final class TelegramBotAlertNotifyHandlerImpl implements AlertNotifyHandler {
         private String chatId;
         private String text;
         @JsonProperty("disable_web_page_preview")
-        @Builder.Default
-        private boolean disableWebPagePreview = true;
+        private Boolean disableWebPagePreview;
     }
 
     @NoArgsConstructor
