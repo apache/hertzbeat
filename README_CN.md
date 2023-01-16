@@ -81,9 +81,9 @@
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)
 
 ##### 方式三：本地代码启动
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
-2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改YML配置信息并启动manager服务
-3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在web-app目录下启动 `ng serve --open`
+1. 此为前后端分离项目，本地代码调试需要分别启动后端工程`manager`和前端工程`web-app`
+2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改`YML`配置信息并启动`manager`服务
+3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
 4. 浏览器访问 `localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
@@ -189,6 +189,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/z641205699"><img src="https://avatars.githubusercontent.com/u/45276423?v=4?s=100" width="100px;" alt="Zakkary"/><br /><sub><b>Zakkary</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=z641205699" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/898349230"><img src="https://avatars.githubusercontent.com/u/21972532?v=4?s=100" width="100px;" alt="sunxinbo"/><br /><sub><b>sunxinbo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ldzbook"><img src="https://avatars.githubusercontent.com/u/13903790?v=4?s=100" width="100px;" alt="ldzbook"/><br /><sub><b>ldzbook</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ldzbook" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aldzbook" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/SurryChen"><img src="https://avatars.githubusercontent.com/u/91116490?v=4?s=100" width="100px;" alt="余与雨"/><br /><sub><b>余与雨</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
