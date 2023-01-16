@@ -91,13 +91,8 @@ final class TelegramBotAlertNotifyHandlerImpl implements AlertNotifyHandler {
             content.append(bundle.getString("alerter.notify.monitorName")).append(" : ")
                     .append(monitorName).append("\n");
         }
-        if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
-            content.append(bundle.getString("alerter.notify.priority")).append(" : ")
-                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("\n");
-        } else {
-            content.append(bundle.getString("alerter.notify.priority")).append(" : ")
-                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("\n");
-        }
+        content.append(bundle.getString("alerter.notify.priority")).append(" : ")
+                .append(bundle.getString("alerter.priority." + alert.getPriority())).append("\n");
         String triggerTime = DTF.format(Instant.ofEpochMilli(alert.getLastTriggerTime()).atZone(ZoneId.systemDefault()).toLocalDateTime());
         content.append(bundle.getString("alerter.notify.triggerTime")).append(" : ")
                 .append(triggerTime).append("\n");
