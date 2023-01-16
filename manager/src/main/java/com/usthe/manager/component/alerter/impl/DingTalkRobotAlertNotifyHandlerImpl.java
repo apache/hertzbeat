@@ -17,7 +17,6 @@
 
 package com.usthe.manager.component.alerter.impl;
 
-import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.manager.support.exception.AlertNoticeException;
@@ -40,17 +39,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
-    private final AlerterProperties alerterProperties;
-
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
-        MarkdownDTO markdownDTO = new MarkdownDTO();
-        markdownDTO.setText(renderContext(alert));
-        markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
-        dingTalkWebHookDto.setMarkdown(markdownDTO);
-        String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
         try {
+            DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
+            MarkdownDTO markdownDTO = new MarkdownDTO();
+            markdownDTO.setText(renderContext(alert));
+            markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
+            dingTalkWebHookDto.setMarkdown(markdownDTO);
+            String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
                     dingTalkWebHookDto, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
@@ -104,7 +101,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
     }
 
     @Data
-    public static class MarkdownDTO {
+    private static class MarkdownDTO {
         /**
          * 消息内容
          */

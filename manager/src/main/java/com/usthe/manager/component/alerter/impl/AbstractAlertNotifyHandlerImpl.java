@@ -1,5 +1,6 @@
 package com.usthe.manager.component.alerter.impl;
 
+import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.util.CommonUtil;
 import com.usthe.common.util.ResourceBundleUtil;
@@ -29,6 +30,9 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     @Resource
     protected RestTemplate restTemplate;
+
+    @Resource
+    protected AlerterProperties alerterProperties;
 
     protected String renderContext(Alert alert) {
         Context context = new Context();

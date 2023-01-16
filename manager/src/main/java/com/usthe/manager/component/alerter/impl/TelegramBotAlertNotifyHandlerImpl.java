@@ -28,17 +28,16 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private final RestTemplate restTemplate;
-    private static final String TG_BOT_URL_TEMPLATE = "https://api.telegram.org/bot%s/sendMessage";
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
-        String url = String.format(TG_BOT_URL_TEMPLATE, receiver.getTgBotToken());
-        TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
-                .chatId(receiver.getTgUserId())
-                .text(renderContext(alert))
-                .disableWebPagePreview(true)
-                .build();
         try {
+            String url = String.format(alerterProperties.getTelegramBotApiUrl(), receiver.getTgBotToken());
+            TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
+                    .chatId(receiver.getTgUserId())
+                    .text(renderContext(alert))
+                    .disableWebPagePreview(true)
+                    .build();
             ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, notifyBody, TelegramBotNotifyResponse.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 TelegramBotNotifyResponse body = entity.getBody();
