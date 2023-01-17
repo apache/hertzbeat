@@ -94,8 +94,8 @@ public class NoticeReceiver {
     @Length(max = 300)
     private String hookUrl;
 
-    @Schema(title = "openId : The notification method is valid for WeChat official account or enterprise WeChat robot",
-            description = "openId : 通知方式为微信公众号或企业微信机器人有效",
+    @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
+            description = "openId : 通知方式为微信公众号，企业微信机器人或飞书机器人有效",
             example = "343432", accessMode = READ_WRITE)
     @Length(max = 300)
     private String wechatId;
