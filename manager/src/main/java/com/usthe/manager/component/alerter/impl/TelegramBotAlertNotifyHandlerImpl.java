@@ -35,7 +35,7 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             String url = String.format(alerterProperties.getTelegramBotApiUrl(), receiver.getTgBotToken());
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
-                    .text(renderContext(alert))
+                    .text(renderContent(alert))
                     .disableWebPagePreview(true)
                     .build();
             ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, notifyBody, TelegramBotNotifyResponse.class);
