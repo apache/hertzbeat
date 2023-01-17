@@ -96,6 +96,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MysticalDream"><img src="https://avatars.githubusercontent.com/u/78899028?v=4?s=100" width="100px;" alt="MysticalDream"/><br /><sub><b>MysticalDream</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhouyoulin12"><img src="https://avatars.githubusercontent.com/u/17086633?v=4?s=100" width="100px;" alt="zhouyoulin12"/><br /><sub><b>zhouyoulin12</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zhouyoulin12" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=zhouyoulin12" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
