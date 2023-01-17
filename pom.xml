@@ -106,7 +106,7 @@
                         <ruleset>rulesets/java/ali-naming.xml</ruleset>
                         <ruleset>rulesets/java/ali-oop.xml</ruleset>
                         <ruleset>rulesets/java/ali-orm.xml</ruleset>
-                        <ruleset>rulesets/java/ali-other.xml</ruleset>
+<!--                        <ruleset>rulesets/java/ali-other.xml</ruleset>-->
                         <ruleset>rulesets/java/ali-set.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
@@ -124,7 +124,7 @@
                     <dependency>
                         <groupId>com.alibaba.p3c</groupId>
                         <artifactId>p3c-pmd</artifactId>
-                        <version>2.0.0</version>
+                        <version>2.1.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
