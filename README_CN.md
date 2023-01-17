@@ -52,6 +52,27 @@
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
 
+## ⛄ Supported
+
+- [网站监控](manager/src/main/resources/define/app/app-website.yml), [端口可用性](manager/src/main/resources/define/app/app-port.yml),
+  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping联通性](manager/src/main/resources/define/app/app-ping.yml),
+  [Jvm](manager/src/main/resources/define/app/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app/app-fullsite.yml),
+  [Ssl证书](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml)
+- [Mysql](manager/src/main/resources/define/app/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app/app-postgresql.yml),
+  [MariaDB](manager/src/main/resources/define/app/app-mariadb.yml), [Redis](manager/src/main/resources/define/app/app-redis.yml),
+  [ElasticSearch](manager/src/main/resources/define/app/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app/app-sqlserver.yml),
+  [Oracle](manager/src/main/resources/define/app/app-oracle.yml), [MongoDB](manager/src/main/resources/define/app/app-mongodb.yml),
+  [达梦](manager/src/main/resources/define/app/app-dm.yml), [OpenGauss](manager/src/main/resources/define/app/app-opengauss.yml),
+  [ClickHouse](manager/src/main/resources/define/app/app-clickhouse.yml), [IoTDB](manager/src/main/resources/define/app/app-iotdb.yml)
+- [Linux](manager/src/main/resources/define/app/app-linux.yml), [Ubuntu](manager/src/main/resources/define/app/app-ubuntu.yml),
+  [CentOS](manager/src/main/resources/define/app/app-centos.yml), [Windows](manager/src/main/resources/define/app/app-windows.yml)
+- [Tomcat](manager/src/main/resources/define/app/app-tomcat.yml), [Nacos](manager/src/main/resources/define/app/app-nacos.yml),
+  [Zookeeper](manager/src/main/resources/define/app/app-zookeeper.yml), [RabbitMQ](manager/src/main/resources/define/app/app-rabbitmq.yml),
+  [Flink](manager/src/main/resources/define/app/app-flink.yml), [Kafka](manager/src/main/resources/define/app/app-kafka.yml),
+  [ShenYu](manager/src/main/resources/define/app/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app/app-dynamic_tp.yml),
+  [Jetty](manager/src/main/resources/define/app/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app/app-activemq.yml)
+- [Kubernetes](manager/src/main/resources/define/app/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app/app-docker.yml)
+- 和更多您的自定义监控。
 
 ## 🐕 快速开始  
 
@@ -190,6 +211,10 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/898349230"><img src="https://avatars.githubusercontent.com/u/21972532?v=4?s=100" width="100px;" alt="sunxinbo"/><br /><sub><b>sunxinbo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=898349230" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ldzbook"><img src="https://avatars.githubusercontent.com/u/13903790?v=4?s=100" width="100px;" alt="ldzbook"/><br /><sub><b>ldzbook</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ldzbook" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aldzbook" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SurryChen"><img src="https://avatars.githubusercontent.com/u/91116490?v=4?s=100" width="100px;" alt="余与雨"/><br /><sub><b>余与雨</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Tests">⚠️</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MysticalDream"><img src="https://avatars.githubusercontent.com/u/78899028?v=4?s=100" width="100px;" alt="MysticalDream"/><br /><sub><b>MysticalDream</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zhouyoulin12"><img src="https://avatars.githubusercontent.com/u/17086633?v=4?s=100" width="100px;" alt="zhouyoulin12"/><br /><sub><b>zhouyoulin12</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zhouyoulin12" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=zhouyoulin12" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
