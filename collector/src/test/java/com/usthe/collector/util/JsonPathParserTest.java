@@ -1,7 +1,6 @@
 package com.usthe.collector.util;
 
 import com.jayway.jsonpath.TypeRef;
-import com.usthe.collector.collect.common.cache.CommonCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,8 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test case for {@link JsonPathParser}
- * @author zhouyl
- * modified by zhouyl at 2023-01-17
  */
 class JsonPathParserTest {
 
@@ -86,8 +83,6 @@ class JsonPathParserTest {
     }
 
     /**
-     * @author zhouyl
-     * modified by zhouyl at 2023-01-17
      * @throws java.lang.UnsupportedOperationException: Json-smart provider does not support TypeRef! Use a Jackson or Gson based provider
      * need provid an provider to support TypeRef,like this:
      *   final Configuration configuration = Configuration.builder()//
