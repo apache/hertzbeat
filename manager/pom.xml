@@ -145,6 +145,7 @@
                     <include>*.xml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
+                    <include>templates/**</include>
                     <include>**/*.html</include>
                 </includes>
             </resource>
