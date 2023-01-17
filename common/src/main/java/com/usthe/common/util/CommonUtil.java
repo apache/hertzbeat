@@ -128,4 +128,11 @@ public class CommonUtil {
         return message;
     }
 
+    public static String removeBlankLine(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");
+    }
+
 }

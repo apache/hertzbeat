@@ -37,6 +37,7 @@ spring:
     cache: true
     suffix: .html
     mode: HTML
+    template-resolver-order: 1
 
 management:
   endpoints:
