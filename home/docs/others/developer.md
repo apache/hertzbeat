@@ -94,6 +94,9 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ldzbook"><img src="https://avatars.githubusercontent.com/u/13903790?v=4?s=100" width="100px;" alt="ldzbook"/><br /><sub><b>ldzbook</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ldzbook" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/issues?q=author%3Aldzbook" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SurryChen"><img src="https://avatars.githubusercontent.com/u/91116490?v=4?s=100" width="100px;" alt="余与雨"/><br /><sub><b>余与雨</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=SurryChen" title="Tests">⚠️</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MysticalDream"><img src="https://avatars.githubusercontent.com/u/78899028?v=4?s=100" width="100px;" alt="MysticalDream"/><br /><sub><b>MysticalDream</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=MysticalDream" title="Tests">⚠️</a></td>
+    </tr>
   </tbody>
 </table>
 
