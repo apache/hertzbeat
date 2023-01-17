@@ -68,8 +68,8 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot",
-            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人",
+    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook",
+            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人 8-SlackWebHook",
             accessMode = READ_WRITE)
     @Min(0)
     @Max(8)
@@ -115,6 +115,12 @@ public class NoticeReceiver {
             description = "Telegram user id : 通知方式为Telegram机器人有效",
             example = "779294123", accessMode = READ_WRITE)
     private String tgUserId;
+
+    @Schema(title = "URL address: The notification method is valid for Slack",
+            description = "URL地址 : 通知方式为Slack有效",
+            example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
+    @Length(max = 300)
+    private String slackWebHookUrl;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
