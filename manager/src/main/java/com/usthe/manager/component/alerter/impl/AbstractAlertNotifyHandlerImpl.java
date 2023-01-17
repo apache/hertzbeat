@@ -34,7 +34,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Resource
     protected AlerterProperties alerterProperties;
 
-    protected String renderContext(Alert alert) {
+    protected String renderContent(Alert alert) {
         Context context = new Context();
         context.setVariable("title", "[" + bundle.getString("alerter.notify.title") + "]");
         if (alert.getTags() != null) {

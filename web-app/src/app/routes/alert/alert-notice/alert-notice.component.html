@@ -86,6 +86,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>{{ 'alert.notice.type.telegram-bot' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 8" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>{{ 'alert.notice.type.slack' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -96,6 +100,7 @@
             <span *ngIf="data.type == 5">{{ data.accessToken }}</span>
             <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
             <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br />{{ data.tgUserId }}</span>
+            <span *ngIf="data.type == 8">{{ data.slackWebHookUrl }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -225,6 +230,7 @@
             <nz-option [nzValue]="5" [nzLabel]="'alert.notice.type.ding' | i18n"></nz-option>
             <nz-option [nzValue]="6" [nzLabel]="'alert.notice.type.fei-shu' | i18n"></nz-option>
             <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
+            <nz-option [nzValue]="8" [nzLabel]="'alert.notice.type.slack' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -291,7 +297,15 @@
           'alert.notice.type.telegram-bot-user-id' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="receiver.tgUserId" nz-input [required]="receiver.type === 7" name="wechatId" type="text" />
+          <input [(ngModel)]="receiver.tgUserId" nz-input [required]="receiver.type === 7" name="tgUserId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 8">
+        <nz-form-label [nzSpan]="7" nzFor="slackWebHookUrl" [nzRequired]="receiver.type === 8">{{
+          'alert.notice.type.slack-webHook-url' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.slackWebHookUrl" nz-input [required]="receiver.type === 8" name="slackWebHookUrl" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

@@ -57,7 +57,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             List<FlyBookContent> contents1 = new ArrayList<>();
             FlyBookContent flyBookContent = new FlyBookContent();
             flyBookContent.setTag("text");
-            flyBookContent.setText(renderContext(alert));
+            flyBookContent.setText(renderContent(alert));
             contents1.add(flyBookContent);
             FlyBookContent bookContent = new FlyBookContent();
             bookContent.setTag("a");

@@ -44,7 +44,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         try {
             DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
             MarkdownDTO markdownDTO = new MarkdownDTO();
-            markdownDTO.setText(renderContext(alert));
+            markdownDTO.setText(renderContent(alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
             String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();

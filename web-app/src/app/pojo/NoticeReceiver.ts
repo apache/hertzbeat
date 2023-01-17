@@ -7,6 +7,7 @@ export class NoticeReceiver {
   email!: string;
   tgBotToken!: string;
   tgUserId!: string;
+  slackWebHookUrl!: string;
   hookUrl!: string;
   wechatId!: string;
   accessToken!: string;
