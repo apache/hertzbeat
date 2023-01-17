@@ -326,6 +326,9 @@ export class AlertNoticeComponent implements OnInit {
                 case 6:
                   label = `${label}FeiShu`;
                   break;
+                case 7:
+                  label = `${label}TelegramBot`;
+                  break;
               }
               this.receiversOption.push({
                 value: item.id,

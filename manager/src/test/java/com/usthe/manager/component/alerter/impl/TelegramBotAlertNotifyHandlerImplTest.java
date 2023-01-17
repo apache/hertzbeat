@@ -13,25 +13,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test case for {@link DingTalkRobotAlertNotifyHandlerImpl}
+ * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
+ * @version 2.1
+ * Created by Musk.Chen on 2023/1/16
  */
 @Slf4j
-class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
+class TelegramBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
     @Resource
-    private DingTalkRobotAlertNotifyHandlerImpl dingTalkRobotAlertNotifyHandler;
+    private TelegramBotAlertNotifyHandlerImpl telegramBotAlertNotifyHandler;
 
     @Test
     void send() {
-        String ddAccessToken = System.getenv("DD_ACCESS_TOKEN");
-        if (!StringUtils.hasText(ddAccessToken)) {
-            log.warn("Please provide environment variables DD_ACCESS_TOKEN");
+        String tgBotToken = System.getenv("TG_BOT_TOKEN");
+        String tgUserId = System.getenv("TG_USER_ID");
+        if (!StringUtils.hasText(tgBotToken) || !StringUtils.hasText(tgUserId)) {
+            log.warn("Please provide environment variables TG_BOT_TOKEN, TG_USER_ID");
             return;
         }
         NoticeReceiver receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("Mock 告警");
-        receiver.setAccessToken(ddAccessToken);
+        receiver.setTgBotToken(tgBotToken);
+        receiver.setTgUserId(tgUserId);
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
@@ -43,7 +47,6 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
         alert.setPriority((byte) 0);
         alert.setLastTriggerTime(System.currentTimeMillis());
 
-        dingTalkRobotAlertNotifyHandler.send(receiver, alert);
+        telegramBotAlertNotifyHandler.send(receiver, alert);
     }
-
 }

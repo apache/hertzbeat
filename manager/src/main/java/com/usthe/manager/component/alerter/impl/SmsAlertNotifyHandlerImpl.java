@@ -43,7 +43,7 @@ final class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final TencentSmsClient tencentSmsClient;
 
-    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
