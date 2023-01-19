@@ -61,6 +61,11 @@ public class AlerterProperties {
     private String telegramBotApiUrl = "https://api.telegram.org/bot%s/sendMessage";
 
     /**
+     * Discord Notify url
+     */
+    private String discordNotifyUrl = "https://discord.com/api/v9/channels/%s/messages";
+
+    /**
      * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
      * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
      */
