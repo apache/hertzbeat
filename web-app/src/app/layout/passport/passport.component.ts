@@ -18,6 +18,8 @@ export class LayoutPassportComponent implements OnInit {
     }
   ];
 
+  currentYear = new Date().getFullYear();
+
   constructor(@Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnInit(): void {
