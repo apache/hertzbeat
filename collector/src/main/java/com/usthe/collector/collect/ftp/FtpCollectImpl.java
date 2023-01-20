@@ -101,10 +101,10 @@ public class FtpCollectImpl extends AbstractCollect {
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         try {
             if(!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
-                throw new IllegalArgumentException("The host or port may be wrong.");
+                throw new IllegalArgumentException("The username or password may be wrong.");
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("Please send the request later.");
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
