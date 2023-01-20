@@ -6,6 +6,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.FtpProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.util.Assert;
@@ -35,14 +36,15 @@ public class FtpCollectImpl extends AbstractCollect {
             connect(ftpClient, ftpProtocol);
             login(ftpClient, ftpProtocol);
         } catch (Exception e) {
-            log.info("[ftp connection] error: {}", e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.info("[ftp connection] error: {}", errorMsg, e);
             try {
                 ftpClient.disconnect();
             } catch (Exception ex) {
-                log.info("[FtpClient] unknown error: {}", ex);
+                log.info("[FtpClient] unknown error: {}", ex.getMessage(), ex);
             }
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(e.getMessage());
+            builder.setMsg(errorMsg);
             return;
         }
         // Collection finished, so we need to load the data in CollectRep.ValueRow.Builder's object
@@ -66,9 +68,9 @@ public class FtpCollectImpl extends AbstractCollect {
             try {
                 ftpClient.disconnect();
             } catch (Exception ex) {
-                log.info("[FtpClient] unknown error: {}", ex);
+                log.info("[FtpClient] unknown error: {}", ex.getMessage(), ex);
             }
-            log.info("[FtpClient] unknown error: {}", e);
+            log.info("[FtpClient] unknown error: {}", e.getMessage(), e);
         }
         builder.addValues(valueRowBuilder.build());
     }

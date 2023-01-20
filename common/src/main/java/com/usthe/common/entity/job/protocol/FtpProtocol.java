@@ -5,6 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * ftp protocol
+ * @author 落阳
+ */
 @Data
 @Builder
 @AllArgsConstructor
