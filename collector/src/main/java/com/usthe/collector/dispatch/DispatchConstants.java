@@ -67,6 +67,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_SNMP = "snmp";
     /**
+     * protocol ftp
+     */
+    String PROTOCOL_FTP = "ftp";
+    /**
      * protocol ssl Certificate - custom
      */
     String PROTOCOL_SSL_CERT = "ssl_cert";
