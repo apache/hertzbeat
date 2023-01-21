@@ -3,7 +3,7 @@ package com.usthe.collector.collect.http.promethus.exporter;
 import com.usthe.collector.collect.http.promethus.ParseException;
 import com.usthe.common.util.StrBuffer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -253,7 +253,7 @@ public class ExporterParser {
                     summary.setCount(buffer.toLong());
                 }
                 // 处理 "xxx{quantile=\"0\"} 0" 的格式
-                else if (StringUtils.isNotEmpty(this.currentQuantile)) {
+                else if (StringUtils.hasText(this.currentQuantile)) {
                     List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
                     MetricFamily.Quantile quantile = new MetricFamily.Quantile();
                     quantile.setXLabel(StrBuffer.parseDouble(this.currentQuantile));
@@ -273,7 +273,7 @@ public class ExporterParser {
                     histogram.setCount(buffer.toLong());
                 }
                 // 处理 "xxx{quantile=\"0\"} 0" 的格式
-                else if (StringUtils.isNotEmpty(this.currentBucket)) {
+                else if (StringUtils.hasText(this.currentBucket)) {
                     List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
                     MetricFamily.Bucket bucket = new MetricFamily.Bucket();
                     bucket.setUpperBound(StrBuffer.parseDouble(this.currentBucket));

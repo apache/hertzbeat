@@ -16,7 +16,7 @@
 category: service
 app: fullsite
 name:
-  zh-CN: 全站监控
+  zh-CN: SiteMap全站
   en-US: SITE MAP
 configmap:
   - key: host

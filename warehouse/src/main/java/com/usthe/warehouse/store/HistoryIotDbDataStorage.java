@@ -143,6 +143,13 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     void saveData(CollectRep.MetricsData metricsData) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
+        if (metricsData.getValuesList().isEmpty()) {
+            log.info("[warehouse iotdb] flush metrics data {} is null, ignore.", metricsData.getId());
+            return;
+        }
         // tablet的deviceId添加引号会导致数据插入失败
         List<MeasurementSchema> schemaList = new ArrayList<>();
 

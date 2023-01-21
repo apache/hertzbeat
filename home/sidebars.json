@@ -128,6 +128,7 @@
           "items": [
             "help/alert_email",
             "help/alert_webhook",
+            "help/alert_telegram",
             "help/alert_wework",
             "help/alert_dingtalk",
             "help/alert_feishu",
