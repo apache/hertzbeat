@@ -35,7 +35,7 @@ public class FtpCollectImpl extends AbstractCollect {
         try {
             preCheck(metrics);
         } catch (Exception e) {
-            log.info("[FtpProtocol] error: {}", CommonUtil.getMessageFromThrowable(e));
+            log.info("[FtpProtocol] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e.getMessage());
             return;
@@ -82,7 +82,7 @@ public class FtpCollectImpl extends AbstractCollect {
             responseTime = (endTime - startTime) + "";
             ftpClient.disconnect();
         } catch (Exception e) {
-            log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e));
+            log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
         }
         return new HashMap<>(8) {{
@@ -108,7 +108,7 @@ public class FtpCollectImpl extends AbstractCollect {
                 throw new IllegalArgumentException("The server may not allow anonymous access, we need to username and password.");
             }
         } catch (Exception e) {
-            log.info("[ftp login] error: {}", CommonUtil.getMessageFromThrowable(e));
+            log.info("[ftp login] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
         }
     }
@@ -120,7 +120,7 @@ public class FtpCollectImpl extends AbstractCollect {
         try {
             ftpClient.connect(ftpProtocol.getHost(), Integer.parseInt(ftpProtocol.getPort()));
         } catch (Exception e) {
-            log.info("[ftp connection] error: {}", CommonUtil.getMessageFromThrowable(e));
+            log.info("[ftp connection] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException("The host or port may be wrong.");
         }
     }
