@@ -116,7 +116,11 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        if (metricsData == null || metricsData.getValuesList().isEmpty() || metricsData.getFieldsList().isEmpty()) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
+        if (metricsData.getValuesList().isEmpty()) {
+            log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
