@@ -58,8 +58,11 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
         String hashKey = metricsData.getId() + metricsData.getMetrics();
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
         if (metricsData.getValuesList().isEmpty()) {
-            log.debug("[warehouse memory] redis flush metrics data {} is null, ignore.", hashKey);
+            log.info("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         metricsDataMap.put(hashKey, metricsData);
