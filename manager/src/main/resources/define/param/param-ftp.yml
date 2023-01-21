@@ -46,13 +46,15 @@ param:
     type: text
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
-    required: true
+    required: false
+    hide: true
   - field: password
     name:
       zh-CN: 用户密码
       en-US: Password
     type: password
-    required: true
+    required: false
+    hide: true
   - field: direction
     name:
       zh-CN: 目录

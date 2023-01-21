@@ -27,10 +27,6 @@ configmap:
     type: 1
   - key: port
     type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
   - key: direction
     type: 1
   - key: timeout
