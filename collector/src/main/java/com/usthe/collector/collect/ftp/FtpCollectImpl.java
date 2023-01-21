@@ -25,6 +25,9 @@ import java.util.Map;
 @Slf4j
 public class FtpCollectImpl extends AbstractCollect {
 
+    private final String ANONYMOUS = "anonymous";
+    private final String PASSWORD = "password";
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
         FTPClient ftpClient = new FTPClient();
@@ -95,8 +98,6 @@ public class FtpCollectImpl extends AbstractCollect {
      * login
      */
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
-        String username = "anonymous";
-        String password = "123@qq.com";
         try {
             // username: not empty, password: not empty
             if(StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
@@ -106,7 +107,7 @@ public class FtpCollectImpl extends AbstractCollect {
                 return;
             }
             // anonymous access
-            if(!ftpClient.login(username, password)) {
+            if(!ftpClient.login(ANONYMOUS, PASSWORD)) {
                 throw new IllegalArgumentException("The server may not allow anonymous access, we need to username and password.");
             }
         } catch (Exception e) {
