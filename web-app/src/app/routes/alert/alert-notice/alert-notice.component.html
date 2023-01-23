@@ -356,13 +356,13 @@
     <form nz-form #ruleForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">{{ 'alert.notice.rule.name' | i18n }}</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="10" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="rule.name" nz-input required name="rule_name" type="text" id="rule_name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="receiver">{{ 'alert.notice.receiver.people' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="10" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="rule.receiverId"
             (nzOpenChange)="loadReceiversOption()"
@@ -379,13 +379,13 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="filterAll">{{ 'alert.notice.rule.all' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-switch [(ngModel)]="rule.filterAll" name="filterAll" id="filterAll"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.notice.rule.tag' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-select
             [(ngModel)]="filterTags"
             (nzOpenChange)="loadTagsOption()"
@@ -405,7 +405,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.notice.rule.priority' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-select
             [(ngModel)]="rule.priorities"
             [nzDisabled]="rule.filterAll"
@@ -427,7 +427,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-switch [(ngModel)]="rule.enable" name="enable" id="enable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
