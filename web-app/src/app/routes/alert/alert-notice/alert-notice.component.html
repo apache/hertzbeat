@@ -226,17 +226,16 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="type">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select [(ngModel)]="receiver.type" nzPlaceHolder="Choose" required name="type" id="type">
+          <nz-select [(ngModel)]="receiver.type" nzPlaceHolder="Choose" required name="type" id="type" [nzOptionOverflowSize]="10">
             <nz-option [nzValue]="0" [nzLabel]="'alert.notice.type.sms' | i18n"></nz-option>
             <nz-option [nzValue]="1" [nzLabel]="'alert.notice.type.email' | i18n"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
-            <nz-option [nzValue]="3" nzDisabled [nzLabel]="'alert.notice.type.wechat' | i18n"></nz-option>
+            <nz-option [nzValue]="9" [nzLabel]="'alert.notice.type.discord' | i18n"></nz-option>
+            <nz-option [nzValue]="8" [nzLabel]="'alert.notice.type.slack' | i18n"></nz-option>
             <nz-option [nzValue]="4" [nzLabel]="'alert.notice.type.wework' | i18n"></nz-option>
             <nz-option [nzValue]="5" [nzLabel]="'alert.notice.type.ding' | i18n"></nz-option>
             <nz-option [nzValue]="6" [nzLabel]="'alert.notice.type.fei-shu' | i18n"></nz-option>
             <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
-            <nz-option [nzValue]="8" [nzLabel]="'alert.notice.type.slack' | i18n"></nz-option>
-            <nz-option [nzValue]="9" [nzLabel]="'alert.notice.type.discord' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -356,13 +355,13 @@
     <form nz-form #ruleForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">{{ 'alert.notice.rule.name' | i18n }}</nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="10" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="rule.name" nz-input required name="rule_name" type="text" id="rule_name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="receiver">{{ 'alert.notice.receiver.people' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="10" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="rule.receiverId"
             (nzOpenChange)="loadReceiversOption()"
@@ -379,13 +378,13 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="filterAll">{{ 'alert.notice.rule.all' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-switch [(ngModel)]="rule.filterAll" name="filterAll" id="filterAll"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.notice.rule.tag' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-select
             [(ngModel)]="filterTags"
             (nzOpenChange)="loadTagsOption()"
@@ -405,7 +404,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.notice.rule.priority' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-select
             [(ngModel)]="rule.priorities"
             [nzDisabled]="rule.filterAll"
@@ -427,7 +426,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-control nzSpan="10">
           <nz-switch [(ngModel)]="rule.enable" name="enable" id="enable"></nz-switch>
         </nz-form-control>
       </nz-form-item>

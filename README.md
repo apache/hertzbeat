@@ -33,7 +33,7 @@
 > [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless. Support web service, database, os, middleware, cloud-native and more.          
 > We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.   
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
-> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, dingDing, weChat, feiShu, webhook and more.  
+> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS` and more.  
 > HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.   
 > Welcome to join us to build hertzbeat together.    
 
