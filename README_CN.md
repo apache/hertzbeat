@@ -34,7 +34,7 @@
 > 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
 > HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
 > HertzBeat 模块化，`manager, collector, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书, webhook等及时通知送达。            
+> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等及时通知送达。            
 > 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。       
 
 > 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您仅仅只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
