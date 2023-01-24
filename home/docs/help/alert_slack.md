@@ -8,6 +8,8 @@ sidebar_label: 告警 Slack Webhook 通知
 
 ## 操作步骤   
 
+> 部署网络本身需支持科学上网，不支持设置代理 
+
 ### 在 Slack 开启 Webhook, 获取 Webhook URL  
 
 参考官网文档 [Sending messages using Incoming Webhooks](https://api.slack.com/messaging/webhooks)    

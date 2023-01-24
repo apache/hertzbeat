@@ -8,6 +8,8 @@ sidebar_label: 告警 Discord 机器人通知
 
 ## 操作步骤   
 
+> 部署网络本身需支持科学上网，不支持设置代理   
+
 ### 在 Discord 创建应用, 应用下创建机器人, 获取机器人 Token 
 
 1. 访问 [https://discord.com/developers/applications](https://discord.com/developers/applications) 创建应用    

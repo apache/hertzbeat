@@ -8,6 +8,8 @@ sidebar_label: 告警 Telegram 机器人通知
 
 ## 操作步骤   
 
+> 部署网络本身需支持科学上网，不支持设置代理  
+
 ### 在 Telegram 创建机器人, 获取 Bot Token 和 UserId
 
 1. 使用 [@BotFather](https://t.me/BotFather) 创建自己的机器人并获取访问令牌`Token`   
