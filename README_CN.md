@@ -73,6 +73,7 @@
   [Jetty](manager/src/main/resources/define/app/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app/app-docker.yml)
 - 和更多您的自定义监控。
+- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
 ## 🐕 快速开始  
 
