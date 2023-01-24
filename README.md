@@ -73,7 +73,7 @@
   [Jetty](manager/src/main/resources/define/app/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app/app-docker.yml)
 - And More Your Custom Define.
-- Notified support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
+- Notified Support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
 
 ## 🐕 Quick Start   
