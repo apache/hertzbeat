@@ -8,7 +8,7 @@
 
 ## HertzBeat 赫兹跳动 | [English Documentation](README.md)           
 
-> 易用友好的实时监控系统，无需Agent，强大自定义监控能力。
+> 易用友好的实时监控告警系统，无需Agent，强大自定义监控能力。
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -73,6 +73,7 @@
   [Jetty](manager/src/main/resources/define/app/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app/app-docker.yml)
 - 和更多您的自定义监控。
+- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
 ## 🐕 快速开始  
 

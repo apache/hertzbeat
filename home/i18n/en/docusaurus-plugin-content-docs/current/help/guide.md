@@ -82,8 +82,11 @@ More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br />
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
 
 
-&emsp;&#x1F449;&emsp;[Configure email notification](alert_email) <br /> 
-&emsp;&#x1F449;&emsp;[Configure WebHook notification](alert_webhook) <br /> 
-&emsp;&#x1F449;&emsp;[Configure enterprise wechat robot notification](alert_wework) <br />    
-&emsp;&#x1F449;&emsp;[Configure DingDing robot notification](alert_dingtalk) <br /> 
-&emsp;&#x1F449;&emsp;[Configure FeiShu robot notification](alert_feishu) <br />   
+&emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
+&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br /> 
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />    
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br /> 
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />   
