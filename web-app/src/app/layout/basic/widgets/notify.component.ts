@@ -29,7 +29,7 @@ export class HeaderNotifyComponent implements OnInit {
       title: this.i18nSvc.fanyi('dashboard.alerts.title-no'),
       list: [],
       emptyText: this.i18nSvc.fanyi('dashboard.alerts.no'),
-      emptyImage: 'https://gw.alipayobjects.com/zos/rmsportal/wAhyIChODzsoKIOBHcBk.svg',
+      emptyImage: '/assets/img/empty-full.svg',
       clearText: this.i18nSvc.fanyi('dashboard.alerts.enter')
     }
   ];
@@ -68,7 +68,7 @@ export class HeaderNotifyComponent implements OnInit {
           alerts.forEach(alert => {
             let item = {
               id: alert.id,
-              avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png',
+              avatar: '/assets/img/notification.svg',
               title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
               datetime: new Date(alert.lastTriggerTime).toLocaleString(),
               color: 'blue',
@@ -93,9 +93,5 @@ export class HeaderNotifyComponent implements OnInit {
 
   gotoAlertCenter(type: string): void {
     this.router.navigateByUrl(`/alert/center`);
-  }
-
-  select(res: NoticeIconSelect): void {
-    this.msg.success(`点击了 ${res.title} 的 ${res.item.title}`);
   }
 }
