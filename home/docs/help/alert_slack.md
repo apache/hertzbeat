@@ -27,11 +27,11 @@ sidebar_label: 告警 Slack Webhook 通知
 ![email](/img/docs/help/alert-notice-policy.png)    
 
 
-### Telegram 机器人通知常见问题   
+### Slack 机器人通知常见问题   
 
-1. Telegram 未收到机器人告警通知  
+1. Slack 未收到机器人告警通知  
 
 > 请排查在告警中心是否已有触发的告警信息   
-> 请排查是否配置正确机器人Token, UserId，是否已配置告警策略关联   
+> 请排查是否配置正确 Slack Webhook URL，是否已配置告警策略关联   
 
 其它问题可以通过交流群ISSUE反馈哦！  
