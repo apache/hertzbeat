@@ -11,7 +11,7 @@ tags: [opensource]
 
 Home: hertzbeat.com | tancloud.cn
 
-Hi gays! HertzBeat v1.2.3 is coming. This release we support prometheus exporter and more. Now we can collect prometheus exporter metrics using hertzbeat. For this, we support monitor apache shenyu and apache iotdb. Fixed several bugs and improved the overall stable usability.
+Hi guys! HertzBeat v1.2.3 is coming. This release we support prometheus exporter and more. Now we can collect prometheus exporter metrics using hertzbeat. For this, we support monitor apache shenyu and apache iotdb. Fixed several bugs and improved the overall stable usability.
 
 Let's Try It Now!
 
