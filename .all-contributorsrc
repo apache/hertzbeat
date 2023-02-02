@@ -656,6 +656,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ngyhd",
+      "name": "Sean",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29095207?v=4",
+      "profile": "https://github.com/ngyhd",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
