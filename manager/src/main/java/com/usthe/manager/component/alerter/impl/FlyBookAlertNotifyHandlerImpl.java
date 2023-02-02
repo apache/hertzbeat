@@ -49,7 +49,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
             Content content = new Content();
             Post post = new Post();
-            zhCn zhCn = new zhCn();
+            ZhCn zhCn = new ZhCn();
             content.setPost(post);
             post.setZhCn(zhCn);
             flyBookWebHookDto.setMsgType("post");
@@ -57,7 +57,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             List<FlyBookContent> contents1 = new ArrayList<>();
             FlyBookContent flyBookContent = new FlyBookContent();
             flyBookContent.setTag("text");
-            flyBookContent.setText(renderContext(alert));
+            flyBookContent.setText(renderContent(alert));
             contents1.add(flyBookContent);
             FlyBookContent bookContent = new FlyBookContent();
             bookContent.setTag("a");
@@ -145,11 +145,11 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Data
     private static class Post {
         @JsonProperty("zh_cn")
-        public zhCn zhCn;
+        public ZhCn zhCn;
     }
 
     @Data
-    private static class zhCn {
+    private static class ZhCn {
         /**
          * 标题
          */

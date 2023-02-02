@@ -8,3 +8,4 @@ com.usthe.collector.collect.mongodb.MongodbSingleCollectImpl
 com.usthe.collector.collect.snmp.SnmpCollectImpl
 com.usthe.collector.collect.ssh.SshCollectImpl
 com.usthe.collector.collect.telnet.TelnetCollectImpl
+com.usthe.collector.collect.ftp.FtpCollectImpl
