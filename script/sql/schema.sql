@@ -190,6 +190,7 @@ CREATE TABLE  hzb_notice_rule
     id             bigint           not null auto_increment comment '通知策略主键索引ID',
     name           varchar(100)     not null comment '策略名称',
     receiver_id    bigint           not null comment '消息接收人ID',
+    period_id      bigint           comment '通知时间策略ID',
     receiver_name  varchar(100)     not null comment '消息接收人标识',
     enable         boolean          not null default true comment '是否启用此策略',
     filter_all     boolean          not null default true comment '是否转发所有',
@@ -216,7 +217,6 @@ CREATE TABLE  hzb_notice_receiver
     hook_url     varchar(255)     comment 'URL地址, 通知方式为webhook有效',
     wechat_id    varchar(255)     comment 'openId, 通知方式为微信公众号或企业微信机器人有效',
     access_token varchar(255)     comment '访问token, 通知方式为钉钉机器人有效',
-    notice_setting_id bigint      comment '通知策略id',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
@@ -226,13 +226,13 @@ CREATE TABLE  hzb_notice_receiver
 
 COMMIT;
 
-DROP TABLE IF EXISTS  hzb_notice_receiver ;
-CREATE TABLE hzb_notice_setting
+DROP TABLE IF EXISTS  hzb_notice_period ;
+CREATE TABLE hzb_notice_period
 (
-    id           bigint       not null auto_increment comment '通知策略主键索引ID',
+    id           bigint       not null auto_increment comment '通知时间周期策略主键索引ID',
     type         tinyint      not null default 0 comment '类型 0-每日',
     start_time   datetime     not null default current_timestamp comment '开始时间',
-    end_time     datetime comment '结束时间',
+    end_time     datetime     comment '结束时间',
     period_start varchar(50)  not null default '' comment '限制时间段起始',
     period_end   varchar(50)  not null default '' comment '限制时间段截止',
     creator      varchar(100) not null default '' comment '创建者',
@@ -240,7 +240,6 @@ CREATE TABLE hzb_notice_setting
     gmt_create   timestamp    not null default current_timestamp comment 'create time',
     gmt_update   datetime     not null default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 COMMIT;
