@@ -36,19 +36,61 @@ metrics:
       - field: pool_name
         type: 1
         instance: true
+      - field: queue_type
+        type: 1
       - field: core_pool_size
         type: 0
       - field: maximum_pool_size
         type: 0
-      - field: queue_type
+      - field: fair
         type: 1
+      - field: reject_handler_name
+        type: 1
+      - field: dynamic
+        type: 1
+    aliasFields:
+      - poolName
+      - corePoolSize
+      - maximumPoolSize
+      - queueType
+      - fair
+      - rejectHandlerName
+      - dynamic
+    calculates:
+      - pool_name=poolName
+      - core_pool_size=corePoolSize
+      - maximum_pool_size=maximumPoolSize
+      - queue_type=queueType
+      - fair=fair
+      - reject_handler_name=rejectHandlerName
+      - dynamic=dynamic
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+
+  - name: thread_pool_running
+    priority: 1
+    fields:
+      - field: pool_name
+        type: 1
+        instance: true
       - field: queue_capacity
         type: 0
         unit: MB
       - field: queue_size
         type: 0
-      - field: fair
-        type: 1
       - field: queue_remaining_capacity
         type: 0
         unit: MB
@@ -66,22 +108,14 @@ metrics:
         type: 0
       - field: reject_count
         type: 0
-      - field: reject_handler_name
-        type: 1
-      - field: dynamic
-        type: 1
       - field: run_timeout_count
         type: 0
       - field: queue_timeout_count
         type: 0
     aliasFields:
       - poolName
-      - corePoolSize
-      - maximumPoolSize
-      - queueType
       - queueCapacity
       - queueSize
-      - fair
       - queueRemainingCapacity
       - activeCount
       - taskCount
@@ -90,18 +124,12 @@ metrics:
       - poolSize
       - waitTaskCount
       - rejectCount
-      - rejectHandlerName
-      - dynamic
       - runTimeoutCount
       - queueTimeoutCount
     calculates:
       - pool_name=poolName
-      - core_pool_size=corePoolSize
-      - maximum_pool_size=maximumPoolSize
-      - queue_type=queueType
       - queue_capacity=queueCapacity
       - queue_size=queueSize
-      - fair=fair
       - queue_remaining_capacity=queueRemainingCapacity
       - active_count=activeCount
       - task_count=taskCount
@@ -110,8 +138,6 @@ metrics:
       - pool_size=poolSize
       - wait_task_count=waitTaskCount
       - reject_count=rejectCount
-      - reject_handler_name=rejectHandlerName
-      - dynamic=dynamic
       - run_timeout_count=runTimeoutCount
       - queue_timeout_count=queueTimeoutCount
     units:
