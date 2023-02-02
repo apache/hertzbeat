@@ -20,6 +20,8 @@ package com.usthe.manager.dao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 /**
  * NoticeReceiver数据库操作
@@ -28,4 +30,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface NoticeReceiverDao extends JpaRepository<NoticeReceiver, Long>, JpaSpecificationExecutor<NoticeReceiver> {
 
+    @Modifying
+    @Query(value = "update NoticeReceiver set noticeSettingId = null where noticeSettingId = ?1")
+    void clearNoticeSetting(Long noticeSettingId);
 }

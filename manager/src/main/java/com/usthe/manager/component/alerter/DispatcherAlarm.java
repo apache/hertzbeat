@@ -18,16 +18,20 @@
 package com.usthe.manager.component.alerter;
 
 import com.google.common.collect.Maps;
+import com.usthe.common.entity.manager.NoticeSetting;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.service.NoticeConfigService;
 import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -74,11 +78,11 @@ public class DispatcherAlarm implements InitializingBean {
     /**
      * send alert msg to receiver
      * @param receiver receiver
-     * @param alert alert msg
+     * @param alert    alert msg
      * @return send success or failed
      */
     public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert) {
-        if(receiver == null || receiver.getType() == null){
+        if (receiver == null || receiver.getType() == null) {
             log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
             return false;
         }
@@ -120,11 +124,42 @@ public class DispatcherAlarm implements InitializingBean {
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
                 try {
-                    sendNoticeMsg(receiver, alert);
+                    if (checkReceive(receiver)) {
+                        sendNoticeMsg(receiver, alert);
+                    }
                 } catch (AlertNoticeException e) {
                     log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                 }
             }
+        }
+
+        private boolean checkReceive(NoticeReceiver receiver) {
+            // todo use cache 缓存
+            Long noticeSettingId = receiver.getNoticeSettingId();
+            if (noticeSettingId == null) {
+                return true;
+            }
+            NoticeSetting noticeSetting = noticeConfigService.getNoticeSettingById(noticeSettingId);
+            if (noticeSetting == null) {
+                return true;
+            }
+            LocalDateTime now = LocalDateTime.now();
+            if ((noticeSetting.getStartTime() != null && noticeSetting.getStartTime().isAfter(now)) ||
+                    (noticeSetting.getEndTime() != null && noticeSetting.getEndTime().isBefore(now))) {
+                return false;
+            }
+            if (receiver.getType() == CommonConstants.NOTICE_SETTING_DAILY) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String nowDate = now.format(DateTimeFormatter.ISO_DATE);
+                try {
+                    LocalDateTime periodStart = LocalDateTime.parse(nowDate + " " + noticeSetting.getPeriodStart(), formatter);
+                    LocalDateTime periodEnd = LocalDateTime.parse(nowDate + " " + noticeSetting.getPeriodEnd(), formatter);
+                    return now.isAfter(periodStart) && now.isBefore(periodEnd);
+                } catch (Exception e) {
+                    return true;
+                }
+            }
+            return true;
         }
     }
 

@@ -216,11 +216,31 @@ CREATE TABLE  hzb_notice_receiver
     hook_url     varchar(255)     comment 'URL地址, 通知方式为webhook有效',
     wechat_id    varchar(255)     comment 'openId, 通知方式为微信公众号或企业微信机器人有效',
     access_token varchar(255)     comment '访问token, 通知方式为钉钉机器人有效',
+    notice_setting_id bigint      comment '通知策略id',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+COMMIT;
+
+DROP TABLE IF EXISTS  hzb_notice_receiver ;
+CREATE TABLE hzb_notice_setting
+(
+    id           bigint       not null auto_increment comment '通知策略主键索引ID',
+    type         tinyint      not null default 0 comment '类型 0-每日',
+    start_time   datetime     not null default current_timestamp comment '开始时间',
+    end_time     datetime comment '结束时间',
+    period_start varchar(50)  not null default '' comment '限制时间段起始',
+    period_end   varchar(50)  not null default '' comment '限制时间段截止',
+    creator      varchar(100) not null default '' comment '创建者',
+    modifier     varchar(100) not null default '' comment '最新修改者',
+    gmt_create   timestamp    not null default current_timestamp comment 'create time',
+    gmt_update   datetime     not null default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
 COMMIT;

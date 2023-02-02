@@ -20,6 +20,7 @@ package com.usthe.manager.controller;
 import com.usthe.common.entity.dto.Message;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
+import com.usthe.common.entity.manager.NoticeSetting;
 import com.usthe.manager.service.NoticeConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -158,5 +159,40 @@ public class NoticeConfigController {
                 .code(FAIL_CODE)
                 .build();
         return ResponseEntity.ok(message);
+    }
+
+    @PostMapping(path = "/setting")
+    @Operation(summary = "add a notice setting", description = "新增一个通知设置")
+    public ResponseEntity<Message<Void>> addNewNoticeSetting(@Valid @RequestBody NoticeSetting noticeSetting) {
+        noticeConfigService.validateNoticeSetting(noticeSetting);
+        noticeConfigService.addNoticeSetting(noticeSetting);
+        return ResponseEntity.ok(new Message<>("Add success"));
+    }
+
+    @PutMapping(path = "/setting")
+    @Operation(summary = "Modify existing notice setting", description = "修改已存在的通知设置")
+    public ResponseEntity<Message<Void>> editNoticeSetting(@Valid @RequestBody NoticeSetting noticeSetting) {
+        noticeConfigService.validateNoticeSetting(noticeSetting);
+        noticeConfigService.editNoticeSetting(noticeSetting);
+        return ResponseEntity.ok(new Message<>("Edit success"));
+    }
+
+    @DeleteMapping(path = "/setting/{id}")
+    @Operation(summary = "Delete existing notice setting", description = "删除已存在的通知策略信息")
+    public ResponseEntity<Message<Void>> deleteNoticeSetting(
+            @Parameter(description = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long noticeSettingId) {
+        NoticeSetting noticeSetting = noticeConfigService.getNoticeSettingById(noticeSettingId);
+        if (noticeSetting == null) {
+            return ResponseEntity.ok(new Message<>("The notice setting could not be queried, please check whether the parameters are correct"));
+        }
+        noticeConfigService.deleteNoticeSetting(noticeSettingId);
+        return ResponseEntity.ok(new Message<>("Delete success"));
+    }
+
+    @GetMapping("/settings")
+    @Operation(summary = "query all notice settings", description = "获取全部通知策略信息")
+    public ResponseEntity<Message<List<NoticeSetting>>> getNoticeSettings() {
+        List<NoticeSetting> noticeSettings = noticeConfigService.getNoticeSettings();
+        return ResponseEntity.ok(new Message<>(noticeSettings));
     }
 }

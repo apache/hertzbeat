@@ -18,20 +18,24 @@
 package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.entity.manager.NoticeSetting;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
+import com.usthe.manager.dao.NoticeSettingDao;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -57,6 +61,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
+
+    @Autowired
+    private NoticeSettingDao noticeSettingDao;
 
     @Autowired
     @Lazy
@@ -140,12 +147,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     public NoticeReceiver getReceiverById(Long receiverId) {
-        return noticeReceiverDao.getOne(receiverId);
+        return noticeReceiverDao.getReferenceById(receiverId);
     }
 
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
-        return noticeRuleDao.getOne(ruleId);
+        return noticeRuleDao.getReferenceById(ruleId);
     }
 
     @Override
@@ -158,5 +165,53 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setLastTriggerTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+    }
+
+    @Override
+    public NoticeSetting getNoticeSettingById(Long noticeSettingId) {
+        return noticeSettingDao.getReferenceById(noticeSettingId);
+    }
+
+    @Override
+    public List<NoticeSetting> getNoticeSettings() {
+        return noticeSettingDao.findAll();
+    }
+
+    @Override
+    public void addNoticeSetting(NoticeSetting noticeSetting) {
+        noticeSettingDao.save(noticeSetting);
+    }
+
+    @Override
+    public void validateNoticeSetting(NoticeSetting noticeSetting) throws IllegalArgumentException{
+        // 验证结束时间大于等于开始时间
+        if (noticeSetting.getStartTime().isAfter(noticeSetting.getEndTime())) {
+            throw new IllegalArgumentException("notice setting start time is after end time");
+        }
+        if (noticeSetting.getType() == CommonConstants.NOTICE_SETTING_DAILY) {
+            if (StringUtils.isEmpty(noticeSetting.getPeriodStart()) || StringUtils.isEmpty(noticeSetting.getPeriodEnd())) {
+                throw new IllegalArgumentException("notice setting period start or end field is null");
+            }
+            // 验证periodStart和periodEnd字段是否为时间格式
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            try {
+                formatter.parse(noticeSetting.getPeriodStart());
+                formatter.parse(noticeSetting.getPeriodEnd());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("notice setting period start or end field format is not a time type");
+            }
+        }
+    }
+
+    @Override
+    public void editNoticeSetting(NoticeSetting noticeSetting) {
+        noticeSettingDao.save(noticeSetting);
+    }
+
+    @Override
+    public void deleteNoticeSetting(Long noticeSettingId) {
+        noticeSettingDao.deleteById(noticeSettingId);
+        // 需要清空notice receiver所有关联该id
+        noticeReceiverDao.clearNoticeSetting(noticeSettingId);
     }
 }

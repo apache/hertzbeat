@@ -20,6 +20,7 @@ package com.usthe.manager.service;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
+import com.usthe.common.entity.manager.NoticeSetting;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -133,4 +134,46 @@ public interface NoticeConfigService {
      * @return true send success | false send fail
      */
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
+
+    /**
+     * 根据id查询通知发送配置
+     * @param noticeSettingId 配置id
+     * @return 消息设置
+     */
+    NoticeSetting getNoticeSettingById(Long noticeSettingId);
+
+    /**
+     * 查询所有的通知发送配置
+     * @return 通知配置列表
+     */
+    List<NoticeSetting> getNoticeSettings();
+
+    /**
+     * add notice setting
+     * 添加通知发送配置
+     * @param noticeSetting 消息设置
+     */
+    void addNoticeSetting(NoticeSetting noticeSetting);
+
+    /**
+     * validate notice setting
+     * 验证消息发送配置参数
+     * @param noticeSetting 消息设置
+     * @throws IllegalArgumentException 参数检测异常
+     */
+    void validateNoticeSetting(NoticeSetting noticeSetting) throws IllegalArgumentException;
+
+    /**
+     * modify notice setting
+     * 修改通知发送配置
+     * @param noticeSetting 消息设置
+     */
+    void editNoticeSetting(NoticeSetting noticeSetting);
+
+    /**
+     * delete notice setting
+     * 删除通知发送配置
+     * @param noticeSettingId 配置id
+     */
+    void deleteNoticeSetting(Long noticeSettingId);
 }

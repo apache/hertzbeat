@@ -251,4 +251,9 @@ public interface CommonConstants {
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
+
+    /**
+     * notice_setting type 类型字段, 每日类型
+     */
+    int NOTICE_SETTING_DAILY = 0;
 }
