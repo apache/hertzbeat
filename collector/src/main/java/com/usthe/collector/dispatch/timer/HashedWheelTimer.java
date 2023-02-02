@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * and Hierarchical Timing Wheels: data structures to efficiently implement a
  * timer facility'</a>.  More comprehensive slides are located
  * <a href="http://www.cse.wustl.edu/~cdgill/courses/cs6874/TimingWheels.ppt">here</a>.
- * @author from netty | dubbo
+ * @author from netty | <a href="https://github.com/apache/dubbo">dubbo</a>
  */
 @SuppressWarnings("PMD")
 public class HashedWheelTimer implements Timer {
@@ -801,9 +801,9 @@ public class HashedWheelTimer implements Timer {
             return head;
         }
     }
-    
+
     private static final boolean IS_OS_WINDOWS = System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
-    
+
     private boolean isWindows() {
         return IS_OS_WINDOWS;
     }

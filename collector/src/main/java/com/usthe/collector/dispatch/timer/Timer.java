@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Schedules {@link TimerTask}s for one-time future execution in a background
  * thread.
- * @author from netty | dubbo
+ * @author from netty | <a href="https://github.com/apache/dubbo">dubbo</a>
  */
 public interface Timer {
 
