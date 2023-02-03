@@ -264,7 +264,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 Timestamp ts = resultSet.getTimestamp(1);
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
-                    instanceValue = "NULL";
+                    instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
                 String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
@@ -338,7 +338,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                             metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
             if ("''".equals(instanceValue)) {
-                instanceValue = "NULL";
+                instanceValue = "";
             }
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;
