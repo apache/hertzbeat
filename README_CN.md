@@ -55,7 +55,7 @@
 ## ⛄ Supported
 
 - [网站监控](manager/src/main/resources/define/app/app-website.yml), [端口可用性](manager/src/main/resources/define/app/app-port.yml),
-  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping联通性](manager/src/main/resources/define/app/app-ping.yml),
+  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping连通性](manager/src/main/resources/define/app/app-ping.yml),
   [Jvm](manager/src/main/resources/define/app/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app/app-fullsite.yml),
   [Ssl证书](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml)
 - [Mysql](manager/src/main/resources/define/app/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app/app-postgresql.yml),
