@@ -132,10 +132,6 @@ public class NoticeReceiver {
     @Length(max = 300)
     private String discordBotToken;
 
-    @Schema(title = "notice setting id", description = "通知配置id",
-            example = "1", accessMode = READ_WRITE)
-    private Long noticeSettingId;
-
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy

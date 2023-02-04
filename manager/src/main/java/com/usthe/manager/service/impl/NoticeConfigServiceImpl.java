@@ -18,14 +18,14 @@
 package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.alerter.Alert;
-import com.usthe.common.entity.manager.NoticeSetting;
+import com.usthe.common.entity.manager.NoticePeriod;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
-import com.usthe.manager.dao.NoticeSettingDao;
+import com.usthe.manager.dao.NoticePeriodDao;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -63,7 +63,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     private NoticeRuleDao noticeRuleDao;
 
     @Autowired
-    private NoticeSettingDao noticeSettingDao;
+    private NoticePeriodDao noticePeriodDao;
 
     @Autowired
     @Lazy
@@ -77,6 +77,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification) {
         return noticeRuleDao.findAll(specification);
+    }
+
+    @Override
+    public NoticeRule getNoticeRuleByReceiverId(Long receiveId) {
+        List<NoticeRule> noticeRules = noticeRuleDao.findNoticeRulesByReceiverId(receiveId);
+        return noticeRules.isEmpty() ? null : noticeRules.get(0);
     }
 
     @Override
@@ -168,35 +174,35 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public NoticeSetting getNoticeSettingById(Long noticeSettingId) {
-        return noticeSettingDao.getReferenceById(noticeSettingId);
+    public NoticePeriod getNoticeSettingById(Long noticeSettingId) {
+        return noticePeriodDao.getReferenceById(noticeSettingId);
     }
 
     @Override
-    public List<NoticeSetting> getNoticeSettings() {
-        return noticeSettingDao.findAll();
+    public List<NoticePeriod> getNoticeSettings() {
+        return noticePeriodDao.findAll();
     }
 
     @Override
-    public void addNoticeSetting(NoticeSetting noticeSetting) {
-        noticeSettingDao.save(noticeSetting);
+    public void addNoticeSetting(NoticePeriod noticePeriod) {
+        noticePeriodDao.save(noticePeriod);
     }
 
     @Override
-    public void validateNoticeSetting(NoticeSetting noticeSetting) throws IllegalArgumentException{
+    public void validateNoticeSetting(NoticePeriod noticePeriod) throws IllegalArgumentException{
         // 验证结束时间大于等于开始时间
-        if (noticeSetting.getStartTime().isAfter(noticeSetting.getEndTime())) {
+        if (noticePeriod.getStartTime().isAfter(noticePeriod.getEndTime())) {
             throw new IllegalArgumentException("notice setting start time is after end time");
         }
-        if (noticeSetting.getType() == CommonConstants.NOTICE_SETTING_DAILY) {
-            if (StringUtils.isEmpty(noticeSetting.getPeriodStart()) || StringUtils.isEmpty(noticeSetting.getPeriodEnd())) {
+        if (noticePeriod.getType() == CommonConstants.NOTICE_PERIOD_DAILY) {
+            if (StringUtils.isEmpty(noticePeriod.getPeriodStart()) || StringUtils.isEmpty(noticePeriod.getPeriodEnd())) {
                 throw new IllegalArgumentException("notice setting period start or end field is null");
             }
             // 验证periodStart和periodEnd字段是否为时间格式
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
             try {
-                formatter.parse(noticeSetting.getPeriodStart());
-                formatter.parse(noticeSetting.getPeriodEnd());
+                formatter.parse(noticePeriod.getPeriodStart());
+                formatter.parse(noticePeriod.getPeriodEnd());
             } catch (Exception e) {
                 throw new IllegalArgumentException("notice setting period start or end field format is not a time type");
             }
@@ -204,14 +210,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public void editNoticeSetting(NoticeSetting noticeSetting) {
-        noticeSettingDao.save(noticeSetting);
+    public void editNoticeSetting(NoticePeriod noticePeriod) {
+        noticePeriodDao.save(noticePeriod);
     }
 
     @Override
     public void deleteNoticeSetting(Long noticeSettingId) {
-        noticeSettingDao.deleteById(noticeSettingId);
+        noticePeriodDao.deleteById(noticeSettingId);
         // 需要清空notice receiver所有关联该id
-        noticeReceiverDao.clearNoticeSetting(noticeSettingId);
+        noticeRuleDao.clearNoticeSetting(noticeSettingId);
     }
 }

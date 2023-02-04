@@ -18,7 +18,8 @@
 package com.usthe.manager.component.alerter;
 
 import com.google.common.collect.Maps;
-import com.usthe.common.entity.manager.NoticeSetting;
+import com.usthe.common.entity.manager.NoticePeriod;
+import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
@@ -77,6 +78,7 @@ public class DispatcherAlarm implements InitializingBean {
 
     /**
      * send alert msg to receiver
+     *
      * @param receiver receiver
      * @param alert    alert msg
      * @return send success or failed
@@ -135,25 +137,25 @@ public class DispatcherAlarm implements InitializingBean {
 
         private boolean checkReceive(NoticeReceiver receiver) {
             // todo use cache 缓存
-            Long noticeSettingId = receiver.getNoticeSettingId();
-            if (noticeSettingId == null) {
+            NoticeRule noticeRule = noticeConfigService.getNoticeRuleByReceiverId(receiver.getId());
+            if (noticeRule == null || noticeRule.getPeriodId() == null) {
                 return true;
             }
-            NoticeSetting noticeSetting = noticeConfigService.getNoticeSettingById(noticeSettingId);
-            if (noticeSetting == null) {
+            NoticePeriod noticePeriod = noticeConfigService.getNoticeSettingById(noticeRule.getPeriodId());
+            if (noticePeriod == null) {
                 return true;
             }
             LocalDateTime now = LocalDateTime.now();
-            if ((noticeSetting.getStartTime() != null && noticeSetting.getStartTime().isAfter(now)) ||
-                    (noticeSetting.getEndTime() != null && noticeSetting.getEndTime().isBefore(now))) {
+            if ((noticePeriod.getStartTime() != null && noticePeriod.getStartTime().isAfter(now)) ||
+                    (noticePeriod.getEndTime() != null && noticePeriod.getEndTime().isBefore(now))) {
                 return false;
             }
-            if (receiver.getType() == CommonConstants.NOTICE_SETTING_DAILY) {
+            if (receiver.getType() == CommonConstants.NOTICE_PERIOD_DAILY) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String nowDate = now.format(DateTimeFormatter.ISO_DATE);
                 try {
-                    LocalDateTime periodStart = LocalDateTime.parse(nowDate + " " + noticeSetting.getPeriodStart(), formatter);
-                    LocalDateTime periodEnd = LocalDateTime.parse(nowDate + " " + noticeSetting.getPeriodEnd(), formatter);
+                    LocalDateTime periodStart = LocalDateTime.parse(nowDate + " " + noticePeriod.getPeriodStart(), formatter);
+                    LocalDateTime periodEnd = LocalDateTime.parse(nowDate + " " + noticePeriod.getPeriodEnd(), formatter);
                     return now.isAfter(periodStart) && now.isBefore(periodEnd);
                 } catch (Exception e) {
                     return true;

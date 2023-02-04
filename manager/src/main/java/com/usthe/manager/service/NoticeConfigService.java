@@ -18,9 +18,9 @@
 package com.usthe.manager.service;
 
 import com.usthe.common.entity.alerter.Alert;
+import com.usthe.common.entity.manager.NoticePeriod;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
-import com.usthe.common.entity.manager.NoticeSetting;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -51,6 +51,8 @@ public interface NoticeConfigService {
      * @return Search result    查询结果
      */
     List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification);
+
+    NoticeRule getNoticeRuleByReceiverId(Long receiveId);
 
     /**
      * Add a notification recipient
@@ -140,35 +142,35 @@ public interface NoticeConfigService {
      * @param noticeSettingId 配置id
      * @return 消息设置
      */
-    NoticeSetting getNoticeSettingById(Long noticeSettingId);
+    NoticePeriod getNoticeSettingById(Long noticeSettingId);
 
     /**
      * 查询所有的通知发送配置
      * @return 通知配置列表
      */
-    List<NoticeSetting> getNoticeSettings();
+    List<NoticePeriod> getNoticeSettings();
 
     /**
      * add notice setting
      * 添加通知发送配置
-     * @param noticeSetting 消息设置
+     * @param noticePeriod 消息设置
      */
-    void addNoticeSetting(NoticeSetting noticeSetting);
+    void addNoticeSetting(NoticePeriod noticePeriod);
 
     /**
      * validate notice setting
      * 验证消息发送配置参数
-     * @param noticeSetting 消息设置
+     * @param noticePeriod 消息设置
      * @throws IllegalArgumentException 参数检测异常
      */
-    void validateNoticeSetting(NoticeSetting noticeSetting) throws IllegalArgumentException;
+    void validateNoticeSetting(NoticePeriod noticePeriod) throws IllegalArgumentException;
 
     /**
      * modify notice setting
      * 修改通知发送配置
-     * @param noticeSetting 消息设置
+     * @param noticePeriod 消息设置
      */
-    void editNoticeSetting(NoticeSetting noticeSetting);
+    void editNoticeSetting(NoticePeriod noticePeriod);
 
     /**
      * delete notice setting

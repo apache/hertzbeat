@@ -25,14 +25,14 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * @since 1/2/2023
  */
 @Entity
-@Table(name = "hzb_notice_setting")
+@Table(name = "hzb_notice_period")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "notice setting | 通知设置")
 @EntityListeners(AuditingEntityListener.class)
-public class NoticeSetting {
+public class NoticePeriod {
 
     /**
      * notice setting ID

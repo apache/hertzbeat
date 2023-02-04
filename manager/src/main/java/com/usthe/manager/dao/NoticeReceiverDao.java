@@ -30,7 +30,4 @@ import org.springframework.data.jpa.repository.Query;
  */
 public interface NoticeReceiverDao extends JpaRepository<NoticeReceiver, Long>, JpaSpecificationExecutor<NoticeReceiver> {
 
-    @Modifying
-    @Query(value = "update NoticeReceiver set noticeSettingId = null where noticeSettingId = ?1")
-    void clearNoticeSetting(Long noticeSettingId);
 }

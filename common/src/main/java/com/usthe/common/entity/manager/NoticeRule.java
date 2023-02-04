@@ -100,6 +100,10 @@ public class NoticeRule {
     @Convert(converter = JsonTagListAttributeConverter.class)
     private List<TagItem> tags;
 
+    @Schema(title = "notice period id", description = "通知时间策略ID",
+            example = "1", accessMode = READ_WRITE)
+    private Long periodId;
+
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;

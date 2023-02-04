@@ -253,7 +253,7 @@ public interface CommonConstants {
     String TAG_MONITOR_APP = "app";
 
     /**
-     * notice_setting type 类型字段, 每日类型
+     * notice_period type 类型字段, 每日类型
      */
-    int NOTICE_SETTING_DAILY = 0;
+    int NOTICE_PERIOD_DAILY = 0;
 }
