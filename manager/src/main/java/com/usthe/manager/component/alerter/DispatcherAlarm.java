@@ -25,6 +25,8 @@ import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.manager.cache.CacheFactory;
+import com.usthe.manager.cache.ICacheService;
 import com.usthe.manager.service.NoticeConfigService;
 import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.extern.slf4j.Slf4j;
@@ -137,11 +139,19 @@ public class DispatcherAlarm implements InitializingBean {
 
         private boolean checkReceive(NoticeReceiver receiver) {
             // todo use cache 缓存
-            NoticeRule noticeRule = noticeConfigService.getNoticeRuleByReceiverId(receiver.getId());
-            if (noticeRule == null || noticeRule.getPeriodId() == null) {
-                return true;
+            ICacheService cache = CacheFactory.getCache();
+            NoticePeriod noticePeriod;
+            if (cache.containsKey(receiver.getId())) {
+                noticePeriod = cache.get(receiver.getId(), NoticePeriod.class);
+            } else {
+                NoticeRule noticeRule = noticeConfigService.getNoticeRuleByReceiverId(receiver.getId());
+                if (noticeRule == null || noticeRule.getPeriodId() == null) {
+                    cache.put(receiver.getId(), null);
+                    return true;
+                }
+                noticePeriod = noticeConfigService.getNoticeSettingById(noticeRule.getPeriodId());
+                cache.put(receiver.getId(), noticePeriod);
             }
-            NoticePeriod noticePeriod = noticeConfigService.getNoticeSettingById(noticeRule.getPeriodId());
             if (noticePeriod == null) {
                 return true;
             }

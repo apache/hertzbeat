@@ -131,6 +131,14 @@
             <version>${h2.version}</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- caffeine-->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
+            <version>2.9.3</version>
+        </dependency>
     </dependencies>
 
     <build>
