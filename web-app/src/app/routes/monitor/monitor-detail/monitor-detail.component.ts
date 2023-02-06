@@ -38,6 +38,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   countDownTime: number = 0;
   interval$!: any;
   whichTabIndex = 0;
+  showBasic = true;
 
   ngOnInit(): void {
     this.loadRealTimeMetric();
@@ -137,6 +138,10 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           console.error(error.msg);
         }
       );
+  }
+
+  showBasicStatus(show: boolean) {
+    this.showBasic = show;
   }
 
   countDown() {
