@@ -46,4 +46,9 @@ public class CaffeineCacheService implements ICacheService {
     public boolean containsKey(Object key) {
         return DEFAULT_CACHE.asMap().containsKey(key);
     }
+
+    @Override
+    public void remove(Object key) {
+        DEFAULT_CACHE.invalidate(key);
+    }
 }

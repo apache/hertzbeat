@@ -20,6 +20,8 @@ package com.usthe.manager.service.impl;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticePeriod;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.manager.cache.CacheFactory;
+import com.usthe.manager.cache.ICacheService;
 import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
@@ -108,11 +110,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public void editNoticeRule(NoticeRule noticeRule) {
         noticeRuleDao.save(noticeRule);
+        this.clearNoticePeriodCache(noticeRule);
     }
 
     @Override
     public void deleteNoticeRule(Long ruleId) {
+        NoticeRule noticeRule = noticeRuleDao.getReferenceById(ruleId);
         noticeRuleDao.deleteById(ruleId);
+        this.clearNoticePeriodCache(noticeRule);
     }
 
     @Override
@@ -174,22 +179,22 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public NoticePeriod getNoticeSettingById(Long noticeSettingId) {
-        return noticePeriodDao.getReferenceById(noticeSettingId);
+    public NoticePeriod getNoticePeriodById(Long noticePeriodId) {
+        return noticePeriodDao.getReferenceById(noticePeriodId);
     }
 
     @Override
-    public List<NoticePeriod> getNoticeSettings() {
+    public List<NoticePeriod> getNoticePeriods() {
         return noticePeriodDao.findAll();
     }
 
     @Override
-    public void addNoticeSetting(NoticePeriod noticePeriod) {
+    public void addNoticePeriod(NoticePeriod noticePeriod) {
         noticePeriodDao.save(noticePeriod);
     }
 
     @Override
-    public void validateNoticeSetting(NoticePeriod noticePeriod) throws IllegalArgumentException{
+    public void validateNoticePeriod(NoticePeriod noticePeriod) throws IllegalArgumentException{
         // 验证结束时间大于等于开始时间
         if (noticePeriod.getStartTime().isAfter(noticePeriod.getEndTime())) {
             throw new IllegalArgumentException("notice setting start time is after end time");
@@ -210,14 +215,28 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public void editNoticeSetting(NoticePeriod noticePeriod) {
+    public void editNoticePeriod(NoticePeriod noticePeriod) {
         noticePeriodDao.save(noticePeriod);
+        this.clearNoticePeriodCache(noticePeriod.getId());
     }
 
     @Override
-    public void deleteNoticeSetting(Long noticeSettingId) {
-        noticePeriodDao.deleteById(noticeSettingId);
+    public void deleteNoticePeriod(Long noticePeriodId) {
+        noticePeriodDao.deleteById(noticePeriodId);
         // 需要清空notice receiver所有关联该id
-        noticeRuleDao.clearNoticeSetting(noticeSettingId);
+        noticeRuleDao.clearNoticePeriod(noticePeriodId);
+        // 删除缓存
+        this.clearNoticePeriodCache(noticePeriodId);
+    }
+
+    private void clearNoticePeriodCache(Long noticePeriodId) {
+        List<NoticeRule> noticeRules = noticeRuleDao.findNoticeRulesByPeriodId(noticePeriodId);
+        noticeRules.forEach(this::clearNoticePeriodCache);
+    }
+
+    private void clearNoticePeriodCache(NoticeRule noticeRule) {
+        ICacheService cache = CacheFactory.getCache();
+        String key = CommonConstants.RECEIVER_NOTICE_PERIOD_CACHE_PREFIX + noticeRule.getReceiverId();
+        cache.remove(key);
     }
 }

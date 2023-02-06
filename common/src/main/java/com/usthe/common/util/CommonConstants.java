@@ -256,4 +256,9 @@ public interface CommonConstants {
      * notice_period type 类型字段, 每日类型
      */
     int NOTICE_PERIOD_DAILY = 0;
+
+    /**
+     * key为receiver.id, value为noticePeriod的缓存key前缀
+     */
+    String RECEIVER_NOTICE_PERIOD_CACHE_PREFIX = "receiver_notice_period:";
 }

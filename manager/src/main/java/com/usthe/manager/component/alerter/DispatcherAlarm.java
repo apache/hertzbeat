@@ -138,19 +138,19 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private boolean checkReceive(NoticeReceiver receiver) {
-            // todo use cache 缓存
             ICacheService cache = CacheFactory.getCache();
             NoticePeriod noticePeriod;
-            if (cache.containsKey(receiver.getId())) {
-                noticePeriod = cache.get(receiver.getId(), NoticePeriod.class);
+            String key = CommonConstants.RECEIVER_NOTICE_PERIOD_CACHE_PREFIX + receiver.getId();
+            if (cache.containsKey(key)) {
+                noticePeriod = cache.get(key, NoticePeriod.class);
             } else {
                 NoticeRule noticeRule = noticeConfigService.getNoticeRuleByReceiverId(receiver.getId());
                 if (noticeRule == null || noticeRule.getPeriodId() == null) {
-                    cache.put(receiver.getId(), null);
+                    cache.put(key, null);
                     return true;
                 }
-                noticePeriod = noticeConfigService.getNoticeSettingById(noticeRule.getPeriodId());
-                cache.put(receiver.getId(), noticePeriod);
+                noticePeriod = noticeConfigService.getNoticePeriodById(noticeRule.getPeriodId());
+                cache.put(key, noticePeriod);
             }
             if (noticePeriod == null) {
                 return true;

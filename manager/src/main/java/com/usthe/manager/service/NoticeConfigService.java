@@ -138,44 +138,44 @@ public interface NoticeConfigService {
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
 
     /**
-     * 根据id查询通知发送配置
-     * @param noticeSettingId 配置id
+     * 根据id查询通知发送时间段配置
+     * @param noticePeriodId 配置id
      * @return 消息设置
      */
-    NoticePeriod getNoticeSettingById(Long noticeSettingId);
+    NoticePeriod getNoticePeriodById(Long noticePeriodId);
 
     /**
      * 查询所有的通知发送配置
-     * @return 通知配置列表
+     * @return 通知发送时间段配置列表
      */
-    List<NoticePeriod> getNoticeSettings();
+    List<NoticePeriod> getNoticePeriods();
 
     /**
      * add notice setting
-     * 添加通知发送配置
-     * @param noticePeriod 消息设置
+     * 添加通知发送时间段配置
+     * @param noticePeriod 通知发送时间段配置
      */
-    void addNoticeSetting(NoticePeriod noticePeriod);
+    void addNoticePeriod(NoticePeriod noticePeriod);
 
     /**
      * validate notice setting
      * 验证消息发送配置参数
-     * @param noticePeriod 消息设置
+     * @param noticePeriod 通知发送时间段配置
      * @throws IllegalArgumentException 参数检测异常
      */
-    void validateNoticeSetting(NoticePeriod noticePeriod) throws IllegalArgumentException;
+    void validateNoticePeriod(NoticePeriod noticePeriod) throws IllegalArgumentException;
 
     /**
      * modify notice setting
-     * 修改通知发送配置
-     * @param noticePeriod 消息设置
+     * 修改通知发送时间段配置
+     * @param noticePeriod 通知发送时间段配置
      */
-    void editNoticeSetting(NoticePeriod noticePeriod);
+    void editNoticePeriod(NoticePeriod noticePeriod);
 
     /**
      * delete notice setting
      * 删除通知发送配置
-     * @param noticeSettingId 配置id
+     * @param noticePeriodId 通知发送时间段配置id
      */
-    void deleteNoticeSetting(Long noticeSettingId);
+    void deleteNoticePeriod(Long noticePeriodId);
 }

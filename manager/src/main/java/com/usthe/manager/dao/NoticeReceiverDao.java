@@ -20,8 +20,6 @@ package com.usthe.manager.dao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 
 /**
  * NoticeReceiver数据库操作

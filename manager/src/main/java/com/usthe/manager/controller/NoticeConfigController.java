@@ -161,38 +161,38 @@ public class NoticeConfigController {
         return ResponseEntity.ok(message);
     }
 
-    @PostMapping(path = "/setting")
-    @Operation(summary = "add a notice setting", description = "新增一个通知设置")
-    public ResponseEntity<Message<Void>> addNewNoticeSetting(@Valid @RequestBody NoticePeriod noticePeriod) {
-        noticeConfigService.validateNoticeSetting(noticePeriod);
-        noticeConfigService.addNoticeSetting(noticePeriod);
+    @PostMapping(path = "/notice_period")
+    @Operation(summary = "add a notice period", description = "新增一个通知设置")
+    public ResponseEntity<Message<Void>> addNewNoticePeriod(@Valid @RequestBody NoticePeriod noticePeriod) {
+        noticeConfigService.validateNoticePeriod(noticePeriod);
+        noticeConfigService.addNoticePeriod(noticePeriod);
         return ResponseEntity.ok(new Message<>("Add success"));
     }
 
-    @PutMapping(path = "/setting")
-    @Operation(summary = "Modify existing notice setting", description = "修改已存在的通知设置")
-    public ResponseEntity<Message<Void>> editNoticeSetting(@Valid @RequestBody NoticePeriod noticePeriod) {
-        noticeConfigService.validateNoticeSetting(noticePeriod);
-        noticeConfigService.editNoticeSetting(noticePeriod);
+    @PutMapping(path = "/notice_period")
+    @Operation(summary = "Modify existing notice period", description = "修改已存在的通知设置")
+    public ResponseEntity<Message<Void>> editNoticePeriod(@Valid @RequestBody NoticePeriod noticePeriod) {
+        noticeConfigService.validateNoticePeriod(noticePeriod);
+        noticeConfigService.editNoticePeriod(noticePeriod);
         return ResponseEntity.ok(new Message<>("Edit success"));
     }
 
-    @DeleteMapping(path = "/setting/{id}")
-    @Operation(summary = "Delete existing notice setting", description = "删除已存在的通知策略信息")
-    public ResponseEntity<Message<Void>> deleteNoticeSetting(
-            @Parameter(description = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long noticeSettingId) {
-        NoticePeriod noticePeriod = noticeConfigService.getNoticeSettingById(noticeSettingId);
+    @DeleteMapping(path = "/notice_period/{id}")
+    @Operation(summary = "Delete existing notice period", description = "删除已存在的通知策略信息")
+    public ResponseEntity<Message<Void>> deleteNoticePeriod(
+            @Parameter(description = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long noticePeriodId) {
+        NoticePeriod noticePeriod = noticeConfigService.getNoticePeriodById(noticePeriodId);
         if (noticePeriod == null) {
             return ResponseEntity.ok(new Message<>("The notice setting could not be queried, please check whether the parameters are correct"));
         }
-        noticeConfigService.deleteNoticeSetting(noticeSettingId);
+        noticeConfigService.deleteNoticePeriod(noticePeriodId);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
 
-    @GetMapping("/settings")
-    @Operation(summary = "query all notice settings", description = "获取全部通知策略信息")
-    public ResponseEntity<Message<List<NoticePeriod>>> getNoticeSettings() {
-        List<NoticePeriod> noticePeriods = noticeConfigService.getNoticeSettings();
+    @GetMapping("/notice_periods")
+    @Operation(summary = "query all notice periods", description = "获取全部通知策略信息")
+    public ResponseEntity<Message<List<NoticePeriod>>> getNoticePeriods() {
+        List<NoticePeriod> noticePeriods = noticeConfigService.getNoticePeriods();
         return ResponseEntity.ok(new Message<>(noticePeriods));
     }
 }

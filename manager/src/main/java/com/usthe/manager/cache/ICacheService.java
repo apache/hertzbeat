@@ -13,4 +13,6 @@ public interface ICacheService {
     void put(Object key, Object value);
 
     boolean containsKey(Object key);
+
+    void remove(Object key);
 }
