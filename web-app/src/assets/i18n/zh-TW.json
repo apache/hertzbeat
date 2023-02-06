@@ -231,6 +231,7 @@
   "monitors.detail.auto-refresh": "自動刷新 {{time}} 秒",
   "monitors.detail.config-refresh": "設置 {{time}} 秒自動刷新",
   "monitors.detail.close-refresh": "關閉自動刷新",
+  "monitors.detail.show-basic": "顯示監控基本屬性",
   "monitors.detail.name": "名稱",
   "monitors.detail.port": "端口",
   "monitors.detail.description": "描述",

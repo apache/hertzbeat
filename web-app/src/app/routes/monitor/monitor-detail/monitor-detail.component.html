@@ -29,8 +29,14 @@
 <nz-divider></nz-divider>
 
 <nz-layout>
-  <nz-sider class="mobile-hide" nzWidth="19%" nzTheme="light">
-    <nz-card nzHoverable style="width: 100%; height: 100%" [nzBordered]="true" [nzTitle]="monitor_basic_card_title">
+  <nz-sider *ngIf="showBasic" class="mobile-hide" nzWidth="19%" nzTheme="light">
+    <nz-card
+      nzHoverable
+      style="width: 100%; height: 100%"
+      [nzBordered]="true"
+      [nzTitle]="monitor_basic_card_title"
+      [nzExtra]="monitor_basic_card_extra"
+    >
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
         <div nz-col nzSpan="16"
@@ -158,8 +164,23 @@
   <p style="font-size: small; text-align: left; margin-bottom: 3px">{{ 'monitors.detail.basic' | i18n }}</p>
 </ng-template>
 
+<ng-template #monitor_basic_card_extra>
+  <a nz-icon nzType="close-circle" nzTheme="outline" (click)="showBasicStatus(false)"></a>
+</ng-template>
+
 <ng-template #tab_extra_template>
-  <nz-button-group>
+  <nz-button-group class="mobile-hide">
+    <button
+      *ngIf="!showBasic"
+      style="margin-right: 20px"
+      nz-button
+      nzType="default"
+      (click)="showBasicStatus(true)"
+      nz-tooltip
+      [nzTooltipTitle]="'monitors.detail.show-basic' | i18n"
+    >
+      <i nz-icon nzType="right-circle" nzTheme="outline"></i>
+    </button>
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
       <span *ngIf="deadline > 0"> {{ 'monitors.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
       <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
