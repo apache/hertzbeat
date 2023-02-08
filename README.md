@@ -30,17 +30,16 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless. Support web service, database, os, middleware, cloud-native and more.          
-> We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.   
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless.       
+> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native and more.            
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
-> HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS` and more.  
-> HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.   
-> Welcome to join us to build hertzbeat together.    
+> More liberal threshold alarm configuration (calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 
 > We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to custom collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring YML?   
 
-> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
+> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
+> We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ----   
 
@@ -57,7 +56,8 @@
 - [Website](manager/src/main/resources/define/app/app-website.yml), [Port Telnet](manager/src/main/resources/define/app/app-port.yml),
   [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping Connect](manager/src/main/resources/define/app/app-ping.yml),
   [Jvm](manager/src/main/resources/define/app/app-jvm.yml), [SiteMap](manager/src/main/resources/define/app/app-fullsite.yml),
-  [Ssl Certificate](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml)
+  [Ssl Certificate](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml),
+  [FTP Server](manager/src/main/resources/define/app/app-ftp.yml)
 - [Mysql](manager/src/main/resources/define/app/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app/app-postgresql.yml),
   [MariaDB](manager/src/main/resources/define/app/app-mariadb.yml), [Redis](manager/src/main/resources/define/app/app-redis.yml),
   [ElasticSearch](manager/src/main/resources/define/app/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app/app-sqlserver.yml),
