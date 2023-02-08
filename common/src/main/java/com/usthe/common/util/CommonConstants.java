@@ -261,4 +261,9 @@ public interface CommonConstants {
      * key为receiver.id, value为noticePeriod的缓存key前缀
      */
     String RECEIVER_NOTICE_PERIOD_CACHE_PREFIX = "receiver_notice_period:";
+
+    /**
+     * cache key notice_rule
+     */
+    String CACHE_NOTICE_RULE = "notice_rule";
 }

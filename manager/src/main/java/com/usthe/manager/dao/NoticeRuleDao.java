@@ -20,8 +20,6 @@ package com.usthe.manager.dao;
 import com.usthe.common.entity.manager.NoticeRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -43,18 +41,4 @@ public interface NoticeRuleDao extends JpaRepository<NoticeRule, Long>, JpaSpeci
      * @return 通知策略
      */
     List<NoticeRule> findNoticeRulesByReceiverId(Long receiveId);
-
-    /**
-     * 查询对应时间段配置对应的规则
-     * @return 通知策略
-     */
-    List<NoticeRule> findNoticeRulesByPeriodId(Long periodId);
-
-    /**
-     * 清空对应规则的通知时间策略ID
-     * @param periodId 通知时间策略ID
-     */
-    @Modifying
-    @Query(value = "update NoticeRule set periodId = null where periodId = ?1")
-    void clearNoticePeriod(Long periodId);
 }

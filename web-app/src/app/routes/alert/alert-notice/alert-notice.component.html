@@ -382,7 +382,7 @@
           <nz-switch [(ngModel)]="rule.filterAll" name="filterAll" id="filterAll"></nz-switch>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="!rule.filterAll">
         <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.notice.rule.tag' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="10">
           <nz-select
@@ -402,7 +402,7 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="!rule.filterAll">
         <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.notice.rule.priority' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="10">
           <nz-select
@@ -422,6 +422,38 @@
             <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
             <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
           </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="isLimit">{{ 'alert.notice.rule.period' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="10">
+          <nz-switch
+            [(ngModel)]="isLimit"
+            (ngModelChange)="onNoticeRuleLimitChange(isLimit)"
+            name="isLimit"
+            id="isLimit"
+            [nzCheckedChildren]="'alert.notice.rule.period.custom' | i18n"
+            [nzUnCheckedChildren]="'alert.notice.rule.period.no-limit' | i18n"
+          ></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="isLimit">
+        <nz-form-label nzSpan="7" nzFor="days">{{ 'alert.notice.rule.period-chose' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="10">
+          <nz-checkbox-group
+            name="days"
+            id="days"
+            [(ngModel)]="dayCheckOptions"
+            (ngModelChange)="onNoticeRuleDaysChange(dayCheckOptions)"
+          ></nz-checkbox-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="time">{{ 'alert.notice.rule.time' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="10">
+          <nz-time-picker [(ngModel)]="rule.periodStart" nzFormat="HH:mm" name="periodStart" id="periodStart"></nz-time-picker>
+          <span nz-icon nzType="right-circle" nzTheme="outline" style="margin-right: 6px; margin-left: 6px"></span>
+          <nz-time-picker [(ngModel)]="rule.periodEnd" nzFormat="HH:mm" name="periodEnd" id="periodEnd"></nz-time-picker>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

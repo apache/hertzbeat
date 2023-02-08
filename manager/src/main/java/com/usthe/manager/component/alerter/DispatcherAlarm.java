@@ -18,23 +18,16 @@
 package com.usthe.manager.component.alerter;
 
 import com.google.common.collect.Maps;
-import com.usthe.common.entity.manager.NoticePeriod;
-import com.usthe.common.entity.manager.NoticeRule;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.alert.AlerterWorkerPool;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.manager.cache.CacheFactory;
-import com.usthe.manager.cache.ICacheService;
 import com.usthe.manager.service.NoticeConfigService;
 import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -99,7 +92,6 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
-        // todo use cache 使用缓存
         return noticeConfigService.getReceiverFilterRule(alert);
     }
 
@@ -128,50 +120,11 @@ public class DispatcherAlarm implements InitializingBean {
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (NoticeReceiver receiver : receivers) {
                 try {
-                    if (checkReceive(receiver)) {
-                        sendNoticeMsg(receiver, alert);
-                    }
+                    sendNoticeMsg(receiver, alert);
                 } catch (AlertNoticeException e) {
                     log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                 }
             }
-        }
-
-        private boolean checkReceive(NoticeReceiver receiver) {
-            ICacheService cache = CacheFactory.getCache();
-            NoticePeriod noticePeriod;
-            String key = CommonConstants.RECEIVER_NOTICE_PERIOD_CACHE_PREFIX + receiver.getId();
-            if (cache.containsKey(key)) {
-                noticePeriod = cache.get(key, NoticePeriod.class);
-            } else {
-                NoticeRule noticeRule = noticeConfigService.getNoticeRuleByReceiverId(receiver.getId());
-                if (noticeRule == null || noticeRule.getPeriodId() == null) {
-                    cache.put(key, null);
-                    return true;
-                }
-                noticePeriod = noticeConfigService.getNoticePeriodById(noticeRule.getPeriodId());
-                cache.put(key, noticePeriod);
-            }
-            if (noticePeriod == null) {
-                return true;
-            }
-            LocalDateTime now = LocalDateTime.now();
-            if ((noticePeriod.getStartTime() != null && noticePeriod.getStartTime().isAfter(now)) ||
-                    (noticePeriod.getEndTime() != null && noticePeriod.getEndTime().isBefore(now))) {
-                return false;
-            }
-            if (receiver.getType() == CommonConstants.NOTICE_PERIOD_DAILY) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                String nowDate = now.format(DateTimeFormatter.ISO_DATE);
-                try {
-                    LocalDateTime periodStart = LocalDateTime.parse(nowDate + " " + noticePeriod.getPeriodStart(), formatter);
-                    LocalDateTime periodEnd = LocalDateTime.parse(nowDate + " " + noticePeriod.getPeriodEnd(), formatter);
-                    return now.isAfter(periodStart) && now.isBefore(periodEnd);
-                } catch (Exception e) {
-                    return true;
-                }
-            }
-            return true;
         }
     }
 

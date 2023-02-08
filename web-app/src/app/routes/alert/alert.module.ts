@@ -14,6 +14,7 @@ import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
+import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 
 const COMPONENTS: Array<Type<void>> = [AlertCenterComponent, AlertSettingComponent, AlertNoticeComponent];
 
@@ -29,7 +30,8 @@ const COMPONENTS: Array<Type<void>> = [AlertCenterComponent, AlertSettingCompone
     NzCascaderModule,
     NzTransferModule,
     NzCollapseModule,
-    NzListModule
+    NzListModule,
+    NzTimePickerModule
   ],
   declarations: COMPONENTS
 })

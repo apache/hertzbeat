@@ -37,6 +37,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
@@ -105,30 +107,55 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public void addNoticeRule(NoticeRule noticeRule) {
         noticeRuleDao.save(noticeRule);
+        clearNoticeRulesCache();
     }
 
     @Override
     public void editNoticeRule(NoticeRule noticeRule) {
         noticeRuleDao.save(noticeRule);
-        this.clearNoticePeriodCache(noticeRule);
+        clearNoticeRulesCache();
     }
 
     @Override
     public void deleteNoticeRule(Long ruleId) {
-        NoticeRule noticeRule = noticeRuleDao.getReferenceById(ruleId);
         noticeRuleDao.deleteById(ruleId);
-        this.clearNoticePeriodCache(noticeRule);
+        clearNoticeRulesCache();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
-        // todo use cache   使用缓存
-        List<NoticeRule> rules = noticeRuleDao.findNoticeRulesByEnableTrue();
+        // use cache
+        ICacheService commonCache = CacheFactory.getCache();
+        List<NoticeRule> rules = (List<NoticeRule>) commonCache.get(CommonConstants.CACHE_NOTICE_RULE);
+        if (rules == null) {
+            rules = noticeRuleDao.findNoticeRulesByEnableTrue();
+            commonCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
+        }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
         Set<Long> filterReceivers = rules.stream()
                 .filter(rule -> {
+                    LocalDateTime nowDate = LocalDateTime.now();
+                    // filter day
+                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
+                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                        if (!dayMatch) {
+                            return false;
+                        }
+                    }
+                    // filter time
+                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
+                        LocalTime nowTime = nowDate.toLocalTime();
+
+                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
+                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
+                            return false;
+                        }
+                    }
+
                     if (rule.isFilterAll()) {
                         return true;
                     }
@@ -217,26 +244,15 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public void editNoticePeriod(NoticePeriod noticePeriod) {
         noticePeriodDao.save(noticePeriod);
-        this.clearNoticePeriodCache(noticePeriod.getId());
     }
 
     @Override
     public void deleteNoticePeriod(Long noticePeriodId) {
         noticePeriodDao.deleteById(noticePeriodId);
-        // 需要清空notice receiver所有关联该id
-        noticeRuleDao.clearNoticePeriod(noticePeriodId);
-        // 删除缓存
-        this.clearNoticePeriodCache(noticePeriodId);
     }
 
-    private void clearNoticePeriodCache(Long noticePeriodId) {
-        List<NoticeRule> noticeRules = noticeRuleDao.findNoticeRulesByPeriodId(noticePeriodId);
-        noticeRules.forEach(this::clearNoticePeriodCache);
-    }
-
-    private void clearNoticePeriodCache(NoticeRule noticeRule) {
-        ICacheService cache = CacheFactory.getCache();
-        String key = CommonConstants.RECEIVER_NOTICE_PERIOD_CACHE_PREFIX + noticeRule.getReceiverId();
-        cache.remove(key);
+    private void clearNoticeRulesCache() {
+        ICacheService cache = CacheFactory.getCache();;
+        cache.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
 }

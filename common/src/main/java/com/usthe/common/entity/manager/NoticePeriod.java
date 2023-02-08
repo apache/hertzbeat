@@ -12,8 +12,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -30,12 +30,12 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "notice setting | 通知设置")
+@Schema(description = "notice period | 通知时间周期策略")
 @EntityListeners(AuditingEntityListener.class)
 public class NoticePeriod {
 
     /**
-     * notice setting ID
+     * notice period ID
      * 主键ID
      */
     @Id
@@ -44,10 +44,10 @@ public class NoticePeriod {
     private Long id;
 
 
-    @Schema(title = "时间段设置类型", example = "0", accessMode = READ_WRITE)
+    @Schema(title = "时间段设置类型 0-每日", example = "0", accessMode = READ_WRITE)
     @Min(0)
-    @Max(1)
-    private Integer type;
+    @NotNull
+    private Byte type;
 
     /**
      * set the valid start time
@@ -97,7 +97,7 @@ public class NoticePeriod {
      * record creation time (millisecond timestamp)
      * 记录创建时间
      */
-    @Schema(title = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
@@ -105,7 +105,7 @@ public class NoticePeriod {
      * Record the latest modification time (timestamp in milliseconds)
      * 记录最新修改时间
      */
-    @Schema(title = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 }
