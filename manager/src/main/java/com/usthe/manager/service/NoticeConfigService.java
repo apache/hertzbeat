@@ -18,7 +18,6 @@
 package com.usthe.manager.service;
 
 import com.usthe.common.entity.alerter.Alert;
-import com.usthe.common.entity.manager.NoticePeriod;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
 import org.springframework.data.jpa.domain.Specification;
@@ -136,46 +135,4 @@ public interface NoticeConfigService {
      * @return true send success | false send fail
      */
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
-
-    /**
-     * 根据id查询通知发送时间段配置
-     * @param noticePeriodId 配置id
-     * @return 消息设置
-     */
-    NoticePeriod getNoticePeriodById(Long noticePeriodId);
-
-    /**
-     * 查询所有的通知发送配置
-     * @return 通知发送时间段配置列表
-     */
-    List<NoticePeriod> getNoticePeriods();
-
-    /**
-     * add notice setting
-     * 添加通知发送时间段配置
-     * @param noticePeriod 通知发送时间段配置
-     */
-    void addNoticePeriod(NoticePeriod noticePeriod);
-
-    /**
-     * validate notice setting
-     * 验证消息发送配置参数
-     * @param noticePeriod 通知发送时间段配置
-     * @throws IllegalArgumentException 参数检测异常
-     */
-    void validateNoticePeriod(NoticePeriod noticePeriod) throws IllegalArgumentException;
-
-    /**
-     * modify notice setting
-     * 修改通知发送时间段配置
-     * @param noticePeriod 通知发送时间段配置
-     */
-    void editNoticePeriod(NoticePeriod noticePeriod);
-
-    /**
-     * delete notice setting
-     * 删除通知发送配置
-     * @param noticePeriodId 通知发送时间段配置id
-     */
-    void deleteNoticePeriod(Long noticePeriodId);
 }

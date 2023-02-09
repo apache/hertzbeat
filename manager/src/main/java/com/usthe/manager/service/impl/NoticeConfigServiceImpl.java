@@ -18,7 +18,6 @@
 package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.alerter.Alert;
-import com.usthe.common.entity.manager.NoticePeriod;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.cache.CacheFactory;
 import com.usthe.manager.cache.ICacheService;
@@ -27,10 +26,8 @@ import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
 import com.usthe.common.entity.manager.NoticeReceiver;
 import com.usthe.common.entity.manager.NoticeRule;
-import com.usthe.manager.dao.NoticePeriodDao;
 import com.usthe.manager.service.NoticeConfigService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -65,9 +61,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
-
-    @Autowired
-    private NoticePeriodDao noticePeriodDao;
 
     @Autowired
     @Lazy
@@ -205,54 +198,8 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
     }
 
-    @Override
-    public NoticePeriod getNoticePeriodById(Long noticePeriodId) {
-        return noticePeriodDao.getReferenceById(noticePeriodId);
-    }
-
-    @Override
-    public List<NoticePeriod> getNoticePeriods() {
-        return noticePeriodDao.findAll();
-    }
-
-    @Override
-    public void addNoticePeriod(NoticePeriod noticePeriod) {
-        noticePeriodDao.save(noticePeriod);
-    }
-
-    @Override
-    public void validateNoticePeriod(NoticePeriod noticePeriod) throws IllegalArgumentException{
-        // 验证结束时间大于等于开始时间
-        if (noticePeriod.getStartTime().isAfter(noticePeriod.getEndTime())) {
-            throw new IllegalArgumentException("notice setting start time is after end time");
-        }
-        if (noticePeriod.getType() == CommonConstants.NOTICE_PERIOD_DAILY) {
-            if (StringUtils.isEmpty(noticePeriod.getPeriodStart()) || StringUtils.isEmpty(noticePeriod.getPeriodEnd())) {
-                throw new IllegalArgumentException("notice setting period start or end field is null");
-            }
-            // 验证periodStart和periodEnd字段是否为时间格式
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-            try {
-                formatter.parse(noticePeriod.getPeriodStart());
-                formatter.parse(noticePeriod.getPeriodEnd());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("notice setting period start or end field format is not a time type");
-            }
-        }
-    }
-
-    @Override
-    public void editNoticePeriod(NoticePeriod noticePeriod) {
-        noticePeriodDao.save(noticePeriod);
-    }
-
-    @Override
-    public void deleteNoticePeriod(Long noticePeriodId) {
-        noticePeriodDao.deleteById(noticePeriodId);
-    }
-
     private void clearNoticeRulesCache() {
-        ICacheService cache = CacheFactory.getCache();;
+        ICacheService cache = CacheFactory.getCache();
         cache.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
 }
