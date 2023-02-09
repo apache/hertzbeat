@@ -73,12 +73,13 @@ public class DispatcherAlarm implements InitializingBean {
 
     /**
      * send alert msg to receiver
+     *
      * @param receiver receiver
-     * @param alert alert msg
+     * @param alert    alert msg
      * @return send success or failed
      */
     public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert) {
-        if(receiver == null || receiver.getType() == null){
+        if (receiver == null || receiver.getType() == null) {
             log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
             return false;
         }
@@ -91,7 +92,6 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
-        // todo use cache 使用缓存
         return noticeConfigService.getReceiverFilterRule(alert);
     }
 
