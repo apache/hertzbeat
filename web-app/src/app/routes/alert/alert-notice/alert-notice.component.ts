@@ -277,12 +277,18 @@ export class AlertNoticeComponent implements OnInit {
 
   onNewNoticeRule() {
     this.rule = new NoticeRule();
+    this.isLimit = false;
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = true;
   }
 
   onEditOneNoticeRule(rule: NoticeRule) {
     this.rule = rule;
+    if (this.rule.days == null || this.rule.days.length == 7) {
+      this.isLimit = false;
+    } else {
+      this.isLimit = true;
+    }
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption.push({
