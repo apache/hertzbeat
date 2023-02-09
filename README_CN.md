@@ -30,17 +30,15 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需Agent的实时监控系统。应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书)。  
-> 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
-> HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
-> HertzBeat 模块化，`manager, collector, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等及时通知送达。            
-> 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。       
+> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的实时监控告警系统。     
+> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生等指标监控，阈值告警，告警通知一步到位。   
+> 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。             
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您仅仅只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
-> 您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
+> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
+> 您相信只需配置YML就能立刻适配一款K8s或Docker等新的监控类型吗？   
 
-> `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
+> `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。    
+> 当然我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
 ----   
 
@@ -55,9 +53,10 @@
 ## ⛄ Supported
 
 - [网站监控](manager/src/main/resources/define/app/app-website.yml), [端口可用性](manager/src/main/resources/define/app/app-port.yml),
-  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping联通性](manager/src/main/resources/define/app/app-ping.yml),
+  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping连通性](manager/src/main/resources/define/app/app-ping.yml),
   [Jvm](manager/src/main/resources/define/app/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app/app-fullsite.yml),
-  [Ssl证书](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml)
+  [Ssl证书](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml),
+  [FTP服务器](manager/src/main/resources/define/app/app-ftp.yml)
 - [Mysql](manager/src/main/resources/define/app/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app/app-postgresql.yml),
   [MariaDB](manager/src/main/resources/define/app/app-mariadb.yml), [Redis](manager/src/main/resources/define/app/app-redis.yml),
   [ElasticSearch](manager/src/main/resources/define/app/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app/app-sqlserver.yml),

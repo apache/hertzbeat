@@ -70,8 +70,9 @@ public class JdbcCommonCollect extends AbstractCollect {
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
         // 查询超时时间默认6000毫秒
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
+        Statement statement = null;
         try {
-            Statement statement = getConnection(jdbcProtocol.getUsername(),
+            statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW:
@@ -110,6 +111,14 @@ public class JdbcCommonCollect extends AbstractCollect {
             log.error("Jdbc error: {}.", errorMessage, e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + errorMessage);
+        } finally {
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (Exception e) {
+                    log.error("Jdbc close statement error: {}", e.getMessage());
+                }
+            }
         }
     }
 

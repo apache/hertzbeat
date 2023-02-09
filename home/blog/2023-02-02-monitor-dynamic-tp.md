@@ -125,8 +125,8 @@ management:
 
 路径：菜单 -> 告警阈值 -> 新增阈值  
 
-- 选择配置的指标对象，DynamicTp监控主要是一些线程池相关指标，我们举例对 `运行超时线程数量` `thread_pool` -> `run_timeout_count` 这个指标进行阈值设置， 当线程运行超时数量大于1时发出告警。       
-- 这里我们就配置当此指标`thread_pool` 的 `run_timeout_count>3000` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。  
+- 选择配置的指标对象，DynamicTp监控主要是一些线程池相关指标，我们举例对 `运行超时线程数量` `thread_pool_running` -> `run_timeout_count` 这个指标进行阈值设置， 当线程运行超时数量大于1时发出告警。       
+- 这里我们就配置当此指标`thread_pool_running` 的 `run_timeout_count>1` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。  
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)   
 
@@ -157,7 +157,7 @@ management:
 
 ```
 [HertzBeat告警通知]
-告警目标对象 : dynamic_tp.thread_pool.run_timeout_count
+告警目标对象 : dynamic_tp.thread_pool_running.run_timeout_count
 所属监控ID : 205540620349493
 所属监控名称 : DynamicTp_localhost
 告警级别 : 严重告警
@@ -168,7 +168,7 @@ management:
 ## 小结   
 
 :::tip
-这篇实践文章带我们体验了如何使用 HertzBeat 监控 DynamicTp线程池 指标数据，可以发现将 `监控-告警-通知` 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 DynamicTp线程池 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
+这篇实践文章带我们体验了如何使用 HertzBeat 监控 DynamicTp线程池 指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 DynamicTp线程池 纳入监控并告警通知，再也不需要部署多个组件写YML配置文件那些繁琐操作了。  
 :::
 
 DynamicTp Github: https://github.com/dromara/dynamic-tp           
