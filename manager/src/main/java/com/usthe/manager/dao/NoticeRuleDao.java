@@ -35,10 +35,4 @@ public interface NoticeRuleDao extends JpaRepository<NoticeRule, Long>, JpaSpeci
      * @return 通知策略
      */
     List<NoticeRule> findNoticeRulesByEnableTrue();
-
-    /**
-     * 查询某接收人对应的规则
-     * @return 通知策略
-     */
-    List<NoticeRule> findNoticeRulesByReceiverId(Long receiveId);
 }

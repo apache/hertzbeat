@@ -77,12 +77,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public NoticeRule getNoticeRuleByReceiverId(Long receiveId) {
-        List<NoticeRule> noticeRules = noticeRuleDao.findNoticeRulesByReceiverId(receiveId);
-        return noticeRules.isEmpty() ? null : noticeRules.get(0);
-    }
-
-    @Override
     public void addReceiver(NoticeReceiver noticeReceiver) {
         noticeReceiverDao.save(noticeReceiver);
     }

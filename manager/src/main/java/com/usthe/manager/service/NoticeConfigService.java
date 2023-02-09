@@ -51,8 +51,6 @@ public interface NoticeConfigService {
      */
     List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification);
 
-    NoticeRule getNoticeRuleByReceiverId(Long receiveId);
-
     /**
      * Add a notification recipient
      * 新增一个通知接收人

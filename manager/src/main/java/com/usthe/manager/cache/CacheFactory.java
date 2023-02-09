@@ -7,8 +7,12 @@ package com.usthe.manager.cache;
 public class CacheFactory {
     private CacheFactory() {}
 
-    // todo 后续优化
+    /**
+     * 获取默认的cache
+     * todo 后续优化
+     * @return caffeine cache
+     */
     public static ICacheService getCache() {
-        return new CaffeineCacheService();
+        return new CaffeineCacheServiceImpl();
     }
 }

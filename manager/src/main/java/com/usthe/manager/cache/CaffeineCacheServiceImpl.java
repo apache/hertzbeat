@@ -10,7 +10,7 @@ import java.time.Duration;
  * @author ceilzcx
  * @since 4/2/2023
  */
-public class CaffeineCacheService implements ICacheService {
+public class CaffeineCacheServiceImpl implements ICacheService {
     private static final Cache<Object, Object> DEFAULT_CACHE;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
