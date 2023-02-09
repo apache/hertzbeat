@@ -19,6 +19,8 @@ package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.manager.cache.CacheFactory;
+import com.usthe.manager.cache.ICacheService;
 import com.usthe.manager.component.alerter.DispatcherAlarm;
 import com.usthe.manager.dao.NoticeReceiverDao;
 import com.usthe.manager.dao.NoticeRuleDao;
@@ -32,6 +34,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -90,27 +94,55 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     public void addNoticeRule(NoticeRule noticeRule) {
         noticeRuleDao.save(noticeRule);
+        clearNoticeRulesCache();
     }
 
     @Override
     public void editNoticeRule(NoticeRule noticeRule) {
         noticeRuleDao.save(noticeRule);
+        clearNoticeRulesCache();
     }
 
     @Override
     public void deleteNoticeRule(Long ruleId) {
         noticeRuleDao.deleteById(ruleId);
+        clearNoticeRulesCache();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
-        // todo use cache   使用缓存
-        List<NoticeRule> rules = noticeRuleDao.findNoticeRulesByEnableTrue();
+        // use cache
+        ICacheService commonCache = CacheFactory.getCache();
+        List<NoticeRule> rules = (List<NoticeRule>) commonCache.get(CommonConstants.CACHE_NOTICE_RULE);
+        if (rules == null) {
+            rules = noticeRuleDao.findNoticeRulesByEnableTrue();
+            commonCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
+        }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
         Set<Long> filterReceivers = rules.stream()
                 .filter(rule -> {
+                    LocalDateTime nowDate = LocalDateTime.now();
+                    // filter day
+                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
+                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                        if (!dayMatch) {
+                            return false;
+                        }
+                    }
+                    // filter time
+                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
+                        LocalTime nowTime = nowDate.toLocalTime();
+
+                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
+                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
+                            return false;
+                        }
+                    }
+
                     if (rule.isFilterAll()) {
                         return true;
                     }
@@ -140,12 +172,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     public NoticeReceiver getReceiverById(Long receiverId) {
-        return noticeReceiverDao.getOne(receiverId);
+        return noticeReceiverDao.getReferenceById(receiverId);
     }
 
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
-        return noticeRuleDao.getOne(ruleId);
+        return noticeRuleDao.getReferenceById(ruleId);
     }
 
     @Override
@@ -158,5 +190,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setLastTriggerTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+    }
+
+    private void clearNoticeRulesCache() {
+        ICacheService cache = CacheFactory.getCache();
+        cache.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
 }
