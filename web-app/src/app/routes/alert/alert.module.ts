@@ -8,6 +8,7 @@ import { NzListModule } from 'ng-zorro-antd/list';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
@@ -29,7 +30,8 @@ const COMPONENTS: Array<Type<void>> = [AlertCenterComponent, AlertSettingCompone
     NzCascaderModule,
     NzTransferModule,
     NzCollapseModule,
-    NzListModule
+    NzListModule,
+    NzTimePickerModule
   ],
   declarations: COMPONENTS
 })
