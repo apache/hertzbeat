@@ -2,6 +2,7 @@
 id: fullsite  
 title: Monitoring Full site      
 sidebar_label: Full site Monitor   
+keywords: [open source monitoring system, open source website monitoring system, monitoring sitemap metrics]
 ---
 
 > Available or not to monitor all pages of the website.    

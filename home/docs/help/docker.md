@@ -2,7 +2,7 @@
 id: docker
 title: 监控：Docker 监控      
 sidebar_label: Docker 容器监控
-
+keywords: [开源监控系统, 开源容器监控, Docker容器监控]
 ---
 
 > 对Docker容器的通用性能指标进行采集监控。

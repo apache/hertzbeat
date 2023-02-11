@@ -2,6 +2,7 @@
 id: tomcat  
 title: 监控：Tomcat监控      
 sidebar_label: Tomcat监控
+keywords: [开源监控系统, 开源网站监控, Tomcat监控]
 ---
 
 > 对Tomcat的通用性能指标进行采集监控

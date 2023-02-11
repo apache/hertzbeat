@@ -2,6 +2,7 @@
 id: rabbitmq  
 title: 监控 RabbitMQ 消息中间件      
 sidebar_label: RabbitMQ消息中间件    
+keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间件监控]
 ---
 
 > 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标进行监测。         

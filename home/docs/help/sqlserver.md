@@ -2,6 +2,7 @@
 id: sqlserver  
 title: 监控：SqlServer数据库监控      
 sidebar_label: SqlServer数据库   
+keywords: [开源监控系统, 开源数据库监控, SqlServer数据库监控]
 ---
 
 > 对SqlServer数据库的通用性能指标进行采集监控。支持SqlServer 2017+。

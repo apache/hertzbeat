@@ -2,6 +2,7 @@
 id: alert_webhook
 title: Alert WebHook callback notification     
 sidebar_label: Alert webHook notification   
+keywords: [open source monitoring system, open source alerter, open source webhook notification]
 ---
 
 > After the threshold is triggered send alarm information and call the Webhook interface through post request to notify the recipient.          

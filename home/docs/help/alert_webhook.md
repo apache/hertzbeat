@@ -2,6 +2,7 @@
 id: alert_webhook
 title: 告警 Webhook 回调通知      
 sidebar_label: 告警 Webhook 回调通知    
+keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警系统]
 ---
 
 > 阈值触发后发送告警信息，通过post请求方式调用WebHook接口通知到接收人。          

@@ -2,6 +2,7 @@
 id: alert_slack
 title: Alert Slack Webhook Notifications
 sidebar_label: Alert Slack Webhook Notification
+keywords: [open source monitoring system, open source alerter, open source slack webhook notification]
 ---
 
 > Send an alarm message after the threshold is triggered, and notify the recipient through the Slack Webhook.
