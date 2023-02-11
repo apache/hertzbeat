@@ -5,6 +5,7 @@ author_title: tom
 author_url: https://github.com/tomsun28  
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource]  
+keywords: [开源监控系统, 开源告警系统]
 ---
 
 # 开源监控告警项目HertzBeat发布并进入Dromara孵化
