@@ -1,7 +1,8 @@
 ---
 id: alert_telegram  
 title: 告警 Telegram 机器人通知      
-sidebar_label: 告警 Telegram 机器人通知      
+sidebar_label: 告警 Telegram 机器人通知     
+keywords: [告警 Telegram 通知, 开源告警系统, 开源监控告警系统]
 ---
 
 > 阈值触发后发送告警信息，通过 Telegram 机器人通知到接收人。      

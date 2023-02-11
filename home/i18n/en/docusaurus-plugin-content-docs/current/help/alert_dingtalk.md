@@ -2,6 +2,7 @@
 id: alert_dingtalk  
 title: Alert DingDing robot notification      
 sidebar_label: Alert DingDing robot notification      
+keywords: [open source monitoring system, open source alerter, open source DingDing robot notification]
 ---
 
 > After the threshold is triggered send alarm information and notify the recipient by DingDing robot.      

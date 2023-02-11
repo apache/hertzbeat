@@ -2,6 +2,7 @@
 id: linux  
 title: 监控：Linux操作系统监控      
 sidebar_label: Linux操作系统       
+keywords: [开源监控系统, 开源操作系统监控, Linux操作系统监控]
 ---
 
 > 对Linux操作系统的通用性能指标进行采集监控。

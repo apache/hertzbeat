@@ -2,6 +2,7 @@
 id: port  
 title: Monitoring：port availability      
 sidebar_label: Port availability    
+keywords: [open source monitoring system, open source port monitoring system, monitoring port metrics]
 ---
 
 > Judge whether the exposed port of the opposite end service is available, then judge whether the opposite end service is available, and collect Metrics such as response time for monitoring.

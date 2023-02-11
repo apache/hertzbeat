@@ -2,7 +2,7 @@
 id: kubernetes
 title: 监控：Kubernetes 监控      
 sidebar_label: Kubernetes 监控
-
+keywords: [开源监控系统, 开源Kubernetes监控]
 ---
 
 > 对kubernetes的通用性能指标进行采集监控。

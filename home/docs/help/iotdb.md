@@ -2,6 +2,7 @@
 id: iotdb  
 title: 监控 Apache IoTDB 物联网时序数据库      
 sidebar_label: IoTDB数据库    
+keywords: [开源监控系统, 开源数据库监控, IoTDB数据库监控]
 ---
 
 > 对 Apache IoTDB 物联网时序数据库的运行状态（JVM相关），内存任务集群等相关指标进行监测。         

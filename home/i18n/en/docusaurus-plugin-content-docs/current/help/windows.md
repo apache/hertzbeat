@@ -2,6 +2,7 @@
 id: windows  
 title: Monitoring：Windows operating system monitoring      
 sidebar_label: Windows operating system       
+keywords: [open source monitoring system, open source windows monitoring system, monitoring windows metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Windows operating system through SNMP protocol.

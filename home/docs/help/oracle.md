@@ -2,6 +2,7 @@
 id: oracle  
 title: 监控：ORACLE数据库监控      
 sidebar_label: ORACLE数据库   
+keywords: [开源监控系统, 开源数据库监控, Oracle数据库监控]
 ---
 
 > 对ORACLE数据库的通用性能指标进行采集监控。

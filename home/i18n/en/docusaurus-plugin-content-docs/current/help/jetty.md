@@ -2,6 +2,7 @@
 id: jetty  
 title: Monitoring Jetty Web Server      
 sidebar_label: Jetty Web Server
+keywords: [open source monitoring system, open source jetty web server monitoring system, monitoring jetty metrics]
 ---
 
 > Collect and monitor general performance metrics of Jetty application server
