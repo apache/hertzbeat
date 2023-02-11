@@ -2,6 +2,7 @@
 id: tomcat  
 title: Monitor：Apache Tomcat      
 sidebar_label: Apache Tomcat
+keywords: [open source monitoring system, open source tomcat monitoring system, monitoring tomcat metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Apache Tomcat.

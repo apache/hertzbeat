@@ -2,6 +2,7 @@
 id: website  
 title: Monitoring Website         
 sidebar_label: Website Monitor   
+keywords: [open source monitoring system, open source website monitoring system, monitoring website metrics]
 ---
 
 > Monitor whether the website is available, response time and other Metrics.       

@@ -2,6 +2,7 @@
 id: alert_slack  
 title: 告警 Slack Webhook 通知      
 sidebar_label: 告警 Slack Webhook 通知      
+keywords: [告警 Slack Webhook 通知, 开源告警系统, 开源监控告警系统]
 ---
 
 > 阈值触发后发送告警信息，通过 Slack Webhook 通知到接收人。      

@@ -2,7 +2,7 @@
 id: springboot2  
 Title: Monitoring SpringBoot 2.0      
 sidebar_label: SpringBoot 2.0
-
+keywords: [open source monitoring system, open source springboot2 monitoring system, monitoring springboot2 metrics]
 ---
 
 > Collect and monitor the general performance metrics exposed by the SpringBoot 2.0 actuator.

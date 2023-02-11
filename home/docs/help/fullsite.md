@@ -2,6 +2,7 @@
 id: fullsite  
 title: 监控：全站监控      
 sidebar_label: 全站监控   
+keywords: [开源监控系统, 开源网站监控, SiteMap监控]
 ---
 
 > 对网站的全部页面监测是否可用    

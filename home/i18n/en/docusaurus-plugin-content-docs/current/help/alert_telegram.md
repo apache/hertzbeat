@@ -2,6 +2,7 @@
 id: alert_telegram
 title: Alert Telegram Bot Notification
 sidebar_label: Alert Telegram bot notification
+keywords: [open source monitoring system, open source alerter, open source Telegram bot notification]
 ---
 
 > Send an alarm message after the threshold is triggered, and notify the recipient through the Telegram robot.

@@ -1,7 +1,8 @@
 ---
 id: ubuntu  
 title: Monitoring：Ubuntu operating system monitoring   
-sidebar_label: Ubuntu operating system       
+sidebar_label: Ubuntu operating system   
+keywords: [open source monitoring system, open source linux ubuntu monitoring system, monitoring ubuntu metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Ubuntu operating system.

@@ -2,7 +2,7 @@
 id: springboot2
 title: 监控：SpringBoot2.0 监控      
 sidebar_label: SpringBoot2.0 监控
-
+keywords: [开源监控系统, 开源消息中间件监控, SpringBoot2.0 监控]
 ---
 
 > 对SpringBoot2.0 actuator 暴露的通用性能指标进行采集监控。

@@ -2,6 +2,7 @@
 id: rabbitmq  
 title: Monitoring RabbitMQ
 sidebar_label: RabbitMQ Monitor   
+keywords: [open source monitoring system, open source rabbitmq monitoring system, monitoring rabbitmq metrics]
 ---
 
 > Monitoring the running status of RabbitMQ message middleware, nodes, topics and other related metrics.

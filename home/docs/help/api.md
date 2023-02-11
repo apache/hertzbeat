@@ -2,6 +2,7 @@
 id: api  
 title: 监控：HTTP API      
 sidebar_label: HTTP API   
+keywords: [开源监控系统, 开源网站监控, HTTP API监控]
 ---
 
 > 调用HTTP API接口，查看接口是否可用，对其响应时间等指标进行监测   

@@ -2,6 +2,7 @@
 id: jvm  
 title: 监控：JVM虚拟机监控      
 sidebar_label: JVM虚拟机
+keywords: [开源监控系统, 开源JAVA监控, JVM虚拟机监控]
 ---
 
 > 对JVM虚拟机的通用性能指标进行采集监控

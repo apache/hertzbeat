@@ -2,6 +2,7 @@
 id: opengauss  
 title: OpenGauss Database Monitor
 sidebar_label: OpenGauss Database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring opengauss database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of OpenGauss database.   

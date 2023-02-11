@@ -2,6 +2,7 @@
 id: ping  
 title: 监控：PING连通性      
 sidebar_label: PING连通性       
+keywords: [开源监控系统, 开源网络监控, 网络PING监控]
 ---
 
 > 对对端HOST地址进行PING操作，判断其连通性   
