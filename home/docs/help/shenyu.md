@@ -2,6 +2,7 @@
 id: shenyu  
 title: 监控 Apache ShenYu API网关      
 sidebar_label: ShenYu网关监控    
+keywords: [开源监控系统, 开源消息中间件监控, ShenYu网关监控监控]
 ---
 
 > 对 ShenYu 网关的运行状态（JVM相关），请求响应等相关指标进行监测。         

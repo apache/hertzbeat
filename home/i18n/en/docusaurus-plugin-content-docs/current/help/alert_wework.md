@@ -2,6 +2,7 @@
 id: alert_wework  
 title: Alert enterprise Wechat notification      
 sidebar_label: Alert enterprise Wechat notification     
+keywords: [open source monitoring system, open source alerter, open source WeWork notification]
 ---
 
 > After the threshold is triggered send alarm information and notify the recipient by enterprise Wechat robot.         

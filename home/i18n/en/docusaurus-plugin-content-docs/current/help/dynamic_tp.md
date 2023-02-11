@@ -2,7 +2,7 @@
 id: dynamic_tp
 title: Monitoring DynamicTp ThreadPool      
 sidebar_label: DynamicTp Monitor
-
+keywords: [open source monitoring system, open source dynamicTp monitoring system, monitoring DynamicTp metrics]
 ---
 
 > Collect and monitor the thread pool performance Metrics exposed by DynamicTp actuator.

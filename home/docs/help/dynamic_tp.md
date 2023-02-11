@@ -2,7 +2,7 @@
 id: dynamic_tp
 title: 监控：DynamicTp 线程池监控      
 sidebar_label: DynamicTp线程池监控
-
+keywords: [开源监控系统, 开源中间件监控, DynamicTp线程池监控]
 ---
 
 > 对DynamicTp actuator 暴露的线程池性能指标进行采集监控。

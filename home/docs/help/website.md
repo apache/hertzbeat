@@ -2,6 +2,7 @@
 id: website  
 title: 监控：网站监测      
 sidebar_label: 网站监测    
+keywords: [开源监控系统, 开源网站监控]
 ---
 
 > 对网站是否可用，响应时间等指标进行监测       

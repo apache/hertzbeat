@@ -2,6 +2,7 @@
 id: jetty  
 title: 监控：Jetty应用服务器      
 sidebar_label: Jetty应用服务器
+keywords: [开源监控系统, 开源中间件监控, Jetty应用服务器监控]
 ---
 
 > 对Jetty应用服务器的通用性能指标进行采集监控

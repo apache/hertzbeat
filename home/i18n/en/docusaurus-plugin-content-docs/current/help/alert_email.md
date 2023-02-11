@@ -2,6 +2,7 @@
 id: alert_email  
 title: Alert email notification       
 sidebar_label: Alert email notification   
+keywords: [open source monitoring system, open source alerter, open source email notification]
 ---
 
 > After the threshold is triggered send alarm information and notify the recipient by email.      

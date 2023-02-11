@@ -2,6 +2,7 @@
 id: mariadb  
 title: 监控：MariaDB数据库监控      
 sidebar_label: MariaDB数据库   
+keywords: [开源监控系统, 开源数据库监控, MariaDB数据库监控]
 ---
 
 > 对MariaDB数据库的通用性能指标进行采集监控。支持MariaDB5+。

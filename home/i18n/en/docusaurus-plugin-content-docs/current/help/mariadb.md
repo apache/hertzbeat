@@ -2,6 +2,7 @@
 id: mariadb  
 title: Monitoring：MariaDB database monitoring      
 sidebar_label: MariaDB database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring mariadb database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of MariaDB database. Support MariaDB5+.
