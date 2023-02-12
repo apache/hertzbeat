@@ -115,6 +115,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jerjjj"><img src="https://avatars.githubusercontent.com/u/93431283?v=4?s=100" width="100px;" alt="jerjjj"/><br /><sub><b>jerjjj</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jerjjj" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://wjl110.xyz/"><img src="https://avatars.githubusercontent.com/u/53851034?v=4?s=100" width="100px;" alt="wjl110"/><br /><sub><b>wjl110</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wjl110" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ngyhd"><img src="https://avatars.githubusercontent.com/u/29095207?v=4?s=100" width="100px;" alt="Sean"/><br /><sub><b>Sean</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ngyhd" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Daydreamer-ia"><img src="https://avatars.githubusercontent.com/u/83362909?v=4?s=100" width="100px;" alt="chenyiqin"/><br /><sub><b>chenyiqin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Daydreamer-ia" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Daydreamer-ia" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
