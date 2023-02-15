@@ -24,7 +24,7 @@ class WarehouseWorkerPoolTest {
         AtomicInteger counter = new AtomicInteger();
         CountDownLatch latch = new CountDownLatch(numberOfThreads);
 
-        for (int i = 0; i <= numberOfThreads; i++) {
+        for (int i = 0; i < numberOfThreads; i++) {
             pool.executeJob(() -> {
                 latch.countDown();
                 counter.incrementAndGet();
