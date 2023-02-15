@@ -26,8 +26,8 @@ class WarehouseWorkerPoolTest {
 
         for (int i = 0; i < numberOfThreads; i++) {
             pool.executeJob(() -> {
-                latch.countDown();
                 counter.incrementAndGet();
+                latch.countDown();
             });
         }
         latch.await();
