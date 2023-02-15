@@ -118,6 +118,9 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Daydreamer-ia"><img src="https://avatars.githubusercontent.com/u/83362909?v=4?s=100" width="100px;" alt="chenyiqin"/><br /><sub><b>chenyiqin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Daydreamer-ia" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Daydreamer-ia" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hudongdong129"><img src="https://avatars.githubusercontent.com/u/34374227?v=4?s=100" width="100px;" alt="hudongdong129"/><br /><sub><b>hudongdong129</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=hudongdong129" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=hudongdong129" title="Tests">⚠️</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/TherChenYang"><img src="https://avatars.githubusercontent.com/u/124348939?v=4?s=100" width="100px;" alt="TherChenYang"/><br /><sub><b>TherChenYang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Tests">⚠️</a></td>
+    </tr>
   </tbody>
 </table>
 
