@@ -1,7 +1,11 @@
 package com.usthe.warehouse;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test case for {@link WarehouseWorkerPool}
@@ -15,19 +19,20 @@ class WarehouseWorkerPoolTest {
     }
 
     @Test
-    void executeJob() {
-        for (int i = 1; i <= 10; i++) {
-            int c = i;
+    void executeJob() throws InterruptedException {
+        int numberOfThreads = 10;
+        AtomicInteger counter = new AtomicInteger();
+        CountDownLatch latch = new CountDownLatch(numberOfThreads);
+
+        for (int i = 0; i < numberOfThreads; i++) {
             pool.executeJob(() -> {
-                System.out.println("currentTIme ==> " + System.currentTimeMillis() + " threadName " + " ==> " + Thread.currentThread() + " current = " + c);
+                latch.countDown();
+                counter.incrementAndGet();
             });
         }
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("currentTIme ==> " + System.currentTimeMillis() + " threadName " + " ==> " + Thread.currentThread() + " done... ");
+        latch.await();
+
+        Assertions.assertEquals(numberOfThreads, counter.get());
     }
 
 }
