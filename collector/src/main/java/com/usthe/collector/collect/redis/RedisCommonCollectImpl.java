@@ -97,7 +97,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol
      * @return
      */
-    protected RedisURI doRedisURI(RedisProtocol redisProtocol) {
+    protected RedisURI redisUri(RedisProtocol redisProtocol) {
         RedisURI redisUri = RedisURI.create(redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
             redisUri.setUsername(redisProtocol.getUsername());
@@ -129,10 +129,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     /**
      * get redis connection
      * @param identifier
-     * @param redisProtocol
      * @return
      */
-    protected StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier, RedisProtocol redisProtocol) {
+    protected StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
         Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
         if (cacheOption.isPresent()) {

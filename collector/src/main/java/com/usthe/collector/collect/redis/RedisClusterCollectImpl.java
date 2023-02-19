@@ -58,7 +58,7 @@ public class RedisClusterCollectImpl extends RedisCommonCollectImpl {
     private StatefulRedisClusterConnection<String, String> getConnection(RedisProtocol redisProtocol) {
         CacheIdentifier identifier = doIdentifier(redisProtocol);
 
-        StatefulRedisClusterConnection<String, String> connection = (StatefulRedisClusterConnection<String, String>) getStatefulConnection(identifier, redisProtocol);
+        StatefulRedisClusterConnection<String, String> connection = (StatefulRedisClusterConnection<String, String>) getStatefulConnection(identifier);
         if (connection == null) {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClient(redisProtocol);
@@ -76,6 +76,6 @@ public class RedisClusterCollectImpl extends RedisCommonCollectImpl {
      * @return redis single client
      */
     private RedisClusterClient buildClient(RedisProtocol redisProtocol) {
-        return RedisClusterClient.create(defaultClientResources, doRedisURI(redisProtocol));
+        return RedisClusterClient.create(defaultClientResources, redisUri(redisProtocol));
     }
 }

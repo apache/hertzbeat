@@ -68,7 +68,7 @@ public class RedisSingleCollectImpl extends RedisCommonCollectImpl {
 
     private StatefulRedisConnection<String, String> getConnection(RedisProtocol redisProtocol) {
         CacheIdentifier identifier = doIdentifier(redisProtocol);
-        StatefulRedisConnection<String, String> connection = (StatefulRedisConnection<String, String>) getStatefulConnection(identifier, redisProtocol);
+        StatefulRedisConnection<String, String> connection = (StatefulRedisConnection<String, String>) getStatefulConnection(identifier);
         if (Objects.isNull(connection)) {
             // reuse connection failed, new one
             RedisClient redisClient = buildClient(redisProtocol);
@@ -85,7 +85,7 @@ public class RedisSingleCollectImpl extends RedisCommonCollectImpl {
      * @return redis single client
      */
     private RedisClient buildClient(RedisProtocol redisProtocol) {
-        return RedisClient.create(defaultClientResources, doRedisURI(redisProtocol));
+        return RedisClient.create(defaultClientResources, redisUri(redisProtocol));
     }
 
 
