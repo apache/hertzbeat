@@ -440,6 +440,59 @@ metrics:
     fields:
       - field: cluster_enabled
         type: 0
+      - field: cluster_state
+        type: 1
+      - field: cluster_slots_assigned
+        type: 0
+      - field: cluster_slots_ok
+        type: 0
+      - field: cluster_slots_pfail
+        type: 0
+      - field: cluster_slots_fail
+        type: 0
+      - field: cluster_known_nodes
+        type: 0
+      - field: cluster_size
+        type: 0
+      - field: cluster_current_epoch
+        type: 0
+      - field: cluster_my_epoch
+        type: 0
+      - field: cluster_stats_messages_ping_sent
+        type: 0
+      - field: cluster_stats_messages_pong_sent
+        type: 0
+      - field: cluster_stats_messages_sent
+        type: 0
+      - field: cluster_stats_messages_ping_received
+        type: 0
+      - field: cluster_stats_messages_pong_received
+        type: 0
+      - field: cluster_stats_messages_meet_received
+        type: 0
+      - field: cluster_stats_messages_received
+        type: 0
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+
+  - name: sentinel
+    priority: 9
+    fields:
+      - field: sentinel_masters
+        type: 1
+      - field: sentinel_tilt
+        type: 1
+      - field: sentinel_running_scripts
+        type: 1
+      - field: sentinel_scripts_queue_length
+        type: 1
+      - field: sentinel_simulate_failure_flags
+        type: 1
     protocol: redis
     redis:
       host: ^_^host^_^

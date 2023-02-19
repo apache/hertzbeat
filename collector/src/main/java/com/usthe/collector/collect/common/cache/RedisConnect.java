@@ -17,6 +17,7 @@
 
 package com.usthe.collector.collect.common.cache;
 
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RedisConnect implements CacheCloseable {
 
-    private StatefulRedisConnection<String, String> connection;
+    private StatefulConnection<String, String> connection;
 
-    public RedisConnect(StatefulRedisConnection<String, String> connection) {
+    public RedisConnect(StatefulConnection<String, String> connection) {
         this.connection = connection;
     }
 
@@ -52,7 +53,7 @@ public class RedisConnect implements CacheCloseable {
         super.finalize();
     }
 
-    public StatefulRedisConnection<String, String> getConnection() {
+    public StatefulConnection<String, String> getConnection() {
         return connection;
     }
 }

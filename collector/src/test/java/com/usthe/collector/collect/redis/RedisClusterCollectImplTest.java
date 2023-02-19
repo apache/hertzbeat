@@ -1,6 +1,5 @@
 package com.usthe.collector.collect.redis;
 
-import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
 import com.usthe.common.entity.message.CollectRep;
@@ -14,26 +13,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
- * Test case for {@link RedisSingleCollectImpl}
+ * Test case for {@link RedisClusterCollectImpl}
+ * @author: hdd
+ * @create: 2023/02/17
  */
 @ExtendWith(MockitoExtension.class)
-class RedisSingleCollectImplTest {
-
+public class RedisClusterCollectImplTest {
 
     @Mock
     private RedisProtocol redisProtocol;
 
     @InjectMocks
-    private RedisSingleCollectImpl redisSingleCollect;
+    private RedisClusterCollectImpl redisClusterCollect;
 
     @BeforeEach
     void setUp() {
         redisProtocol = RedisProtocol.builder()
                 .host("192.168.77.100")
-                .port("26379")
-                .pattern(1)
+                .port("6380")
                 .build();
     }
 
@@ -49,6 +47,6 @@ class RedisSingleCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setRedis(redisProtocol);
         metrics.setAliasFields(aliasField);
-        redisSingleCollect.collect(builder, 1L, "test", metrics);
+        redisClusterCollect.collect(builder, 1L, "test", metrics);
     }
 }
