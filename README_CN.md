@@ -12,7 +12,7 @@
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![QQ](https://img.shields.io/badge/qq-718618151-orange)](https://jq.qq.com/?_wv=1027&k=Bud9OzdI)
+[![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
@@ -244,7 +244,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目�
 
 ##### QQ交流群
 
-加QQ群号 718618151 或 扫描下面的群二维码进群, 验证信息: tancloud
+加QQ群号 236915833 或 扫描下面的群二维码进群
 
 <img alt="tan-cloud" src="home/static/img/docs/help/qq-qr.jpg" width="200"/>          
 
