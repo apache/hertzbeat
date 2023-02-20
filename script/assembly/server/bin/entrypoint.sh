@@ -44,7 +44,7 @@ if [ ! -d $LOGS_DIR ]; then
 fi
 
 # JVM Configuration
-JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC "
+JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"
 
 # 加载外部log文件的配置
 LOG_IMPL_FILE=logback-spring.xml
