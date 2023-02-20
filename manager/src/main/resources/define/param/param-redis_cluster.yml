@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-app: redis
+app: redis_cluster
 param:
   - field: host
     name:
@@ -50,3 +50,11 @@ param:
       en-US: Password
     type: password
     required: false
+  - field: pattern
+    name:
+      zh-CN: 模式
+      en-US: Pattern
+    type: number
+    required: true
+    defaultValue: 3
+    hide: true

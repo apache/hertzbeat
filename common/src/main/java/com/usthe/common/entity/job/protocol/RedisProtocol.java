@@ -54,6 +54,11 @@ public class RedisProtocol {
     private String password;
 
     /**
+     * 1 - single 2 - sentinel 3 - cluster
+     */
+    private String pattern;
+
+    /**
      * 超时时间
      */
     private String timeout;

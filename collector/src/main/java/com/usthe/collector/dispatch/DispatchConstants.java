@@ -50,6 +50,7 @@ public interface DispatchConstants {
      * protocol redis
      */
     String PROTOCOL_REDIS = "redis";
+
     /**
      * protocol mongodb
      */
