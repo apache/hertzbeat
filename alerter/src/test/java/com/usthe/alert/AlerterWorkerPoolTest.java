@@ -1,5 +1,9 @@
 package com.usthe.alert;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,26 +13,28 @@ import org.junit.jupiter.api.Test;
  */
 class AlerterWorkerPoolTest {
 
+    private static final int NUMBER_OF_THREADS = 10;
     private AlerterWorkerPool pool ;
+    private AtomicInteger counter;
+    private CountDownLatch latch;
 
     @BeforeEach
     void setUp() {
         pool = new AlerterWorkerPool();
+        counter = new AtomicInteger();
+        latch = new CountDownLatch(NUMBER_OF_THREADS);
     }
 
     @Test
-    void executeJob() {
-        for (int i = 1; i <= 10; i++) {
-            int c = i;
+    void executeJob() throws InterruptedException {
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             pool.executeJob(() -> {
-                System.out.println("currentTIme ==> " + System.currentTimeMillis() + " threadName " + " ==> " + Thread.currentThread() + " current = " + c);
+                counter.incrementAndGet();
+                latch.countDown();
             });
         }
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("currentTIme ==> " + System.currentTimeMillis() + " threadName " + " ==> " + Thread.currentThread() + " done... ");
+        latch.await();
+
+        assertEquals(NUMBER_OF_THREADS, counter.get());
     }
 }
