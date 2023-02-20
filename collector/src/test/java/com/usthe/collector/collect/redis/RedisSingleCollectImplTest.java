@@ -33,7 +33,7 @@ class RedisSingleCollectImplTest {
         redisProtocol = RedisProtocol.builder()
                 .host("192.168.77.100")
                 .port("26379")
-                .pattern(1)
+                .pattern("1")
                 .build();
     }
 

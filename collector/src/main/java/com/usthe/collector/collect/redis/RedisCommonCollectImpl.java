@@ -30,7 +30,7 @@ import java.util.*;
 public class RedisCommonCollectImpl extends AbstractCollect {
 
 
-    private static final int CLUSTER = 3;
+    private static final String CLUSTER = "3";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -43,7 +43,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         }
         try {
             Map<String, String> redisInfo ;
-            if (Objects.nonNull(metrics.getRedis().getPattern()) && metrics.getRedis().getPattern() == CLUSTER) {
+            if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 RedisClusterCollectImpl redisClusterCollect = new RedisClusterCollectImpl();
                 redisInfo = redisClusterCollect.getRedisInfo(metrics);
             } else {

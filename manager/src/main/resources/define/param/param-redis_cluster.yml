@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-app: redis
+app: redis_cluster
 param:
   - field: host
     name:
@@ -56,5 +56,5 @@ param:
       en-US: Pattern
     type: number
     required: true
-    defaultValue: 1
+    defaultValue: 3
     hide: true

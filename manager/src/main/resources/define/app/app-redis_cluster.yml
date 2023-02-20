@@ -14,10 +14,10 @@
 # limitations under the License.
 
 category: db
-app: redis
+app: redis_cluster
 name:
-  zh-CN: Redis数据库
-  en-US: Redis
+  zh-CN: Redis Cluster数据库
+  en-US: Redis Cluster
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -90,6 +90,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: clients
     priority: 1
@@ -117,6 +118,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: memory
     priority: 2
@@ -219,6 +221,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: persistence
     priority: 3
@@ -276,6 +279,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: stats
     priority: 4
@@ -363,6 +367,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: replication
     priority: 5
@@ -396,6 +401,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: cpu
     priority: 6
@@ -419,6 +425,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: errorstats
     priority: 8
@@ -434,11 +441,44 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: cluster
     priority: 9
     fields:
       - field: cluster_enabled
+        type: 0
+      - field: cluster_state
+        type: 1
+      - field: cluster_slots_assigned
+        type: 0
+      - field: cluster_slots_ok
+        type: 0
+      - field: cluster_slots_pfail
+        type: 0
+      - field: cluster_slots_fail
+        type: 0
+      - field: cluster_known_nodes
+        type: 0
+      - field: cluster_size
+        type: 0
+      - field: cluster_current_epoch
+        type: 0
+      - field: cluster_my_epoch
+        type: 0
+      - field: cluster_stats_messages_ping_sent
+        type: 0
+      - field: cluster_stats_messages_pong_sent
+        type: 0
+      - field: cluster_stats_messages_sent
+        type: 0
+      - field: cluster_stats_messages_ping_received
+        type: 0
+      - field: cluster_stats_messages_pong_received
+        type: 0
+      - field: cluster_stats_messages_meet_received
+        type: 0
+      - field: cluster_stats_messages_received
         type: 0
     protocol: redis
     redis:
@@ -447,6 +487,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: keyspace
     priority: 9
@@ -490,3 +531,4 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^

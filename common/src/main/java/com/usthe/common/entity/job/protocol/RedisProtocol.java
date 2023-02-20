@@ -56,7 +56,7 @@ public class RedisProtocol {
     /**
      * 1 - single 2 - sentinel 3 - cluster
      */
-    private Integer pattern;
+    private String pattern;
 
     /**
      * 超时时间

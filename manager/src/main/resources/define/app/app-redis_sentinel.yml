@@ -14,10 +14,10 @@
 # limitations under the License.
 
 category: db
-app: redis
+app: redis_sentinel
 name:
-  zh-CN: Redis数据库
-  en-US: Redis
+  zh-CN: Redis Sentinel数据库
+  en-US: Redis Sentinel
 # 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
 # 强制固定必须参数 - host
 configmap:
@@ -90,6 +90,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: clients
     priority: 1
@@ -117,168 +118,10 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-
-  - name: memory
-    priority: 2
-    fields:
-      - field: used_memory
-        type: 0
-      - field: used_memory_human
-        type: 0
-        unit: MB
-      - field: used_memory_rss
-        type: 0
-      - field: used_memory_rss_human
-        type: 0
-        unit: MB
-      - field: used_memory_peak
-        type: 0
-      - field: used_memory_peak_human
-        type: 0
-        unit: MB
-      - field: used_memory_peak_perc
-        type: 0
-        unit: '%'
-      - field: used_memory_overhead
-        type: 0
-      - field: used_memory_startup
-        type: 0
-      - field: used_memory_dataset
-        type: 0
-      - field: used_memory_dataset_perc
-        type: 0
-        unit: '%'
-      - field: allocator_allocated
-        type: 0
-      - field: allocator_active
-        type: 0
-      - field: allocator_resident
-        type: 0
-      - field: total_system_memory
-        type: 0
-      - field: total_system_memory_human
-        type: 0
-        unit: GB
-      - field: used_memory_lua
-        type: 0
-      - field: used_memory_lua_human
-        type: 0
-        unit: KB
-      - field: used_memory_scripts
-        type: 0
-      - field: used_memory_scripts_human
-        type: 0
-        unit: KB
-      - field: number_of_cached_scripts
-        type: 0
-      - field: maxmemory
-        type: 0
-      - field: maxmemory_human
-        type: 0
-        unit: MB
-      - field: maxmemory_policy
-        type: 1
-      - field: allocator_frag_ratio
-        type: 0
-      - field: allocator_frag_bytes
-        type: 0
-      - field: allocator_rss_ratio
-        type: 0
-      - field: allocator_rss_bytes
-        type: 0
-      - field: rss_overhead_ratio
-        type: 0
-      - field: rss_overhead_bytes
-        type: 0
-      - field: mem_fragmentation_ratio
-        type: 0
-      - field: mem_fragmentation_bytes
-        type: 0
-      - field: mem_not_counted_for_evict
-        type: 0
-      - field: mem_replication_backlog
-        type: 0
-      - field: mem_clients_slaves
-        type: 0
-      - field: mem_clients_normal
-        type: 0
-      - field: mem_aof_buffer
-        type: 0
-      - field: mem_allocator
-        type: 1
-      - field: active_defrag_running
-        type: 0
-      - field: lazyfree_pending_objects
-        type: 0
-      - field: lazyfreed_objects
-        type: 0
-    protocol: redis
-    redis:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      timeout: ^_^timeout^_^
-
-  - name: persistence
-    priority: 3
-    fields:
-      - field: loading
-        type: 0
-      - field: current_cow_size
-        type: 0
-      - field: current_cow_size_age
-        type: 0
-      - field: current_fork_perc
-        type: 0
-      - field: current_save_keys_processed
-        type: 0
-      - field: current_save_keys_total
-        type: 0
-      - field: rdb_changes_since_last_save
-        type: 0
-      - field: rdb_bgsave_in_progress
-        type: 0
-      - field: rdb_last_save_time
-        type: 0
-      - field: rdb_last_bgsave_status
-        type: 1
-      - field: rdb_last_bgsave_time_sec
-        type: 0
-      - field: rdb_current_bgsave_time_sec
-        type: 0
-      - field: rdb_last_cow_size
-        type: 0
-      - field: aof_enabled
-        type: 0
-      - field: aof_rewrite_in_progress
-        type: 0
-      - field: aof_rewrite_scheduled
-        type: 0
-      - field: aof_last_rewrite_time_sec
-        type: 0
-      - field: aof_current_rewrite_time_sec
-        type: 0
-      - field: aof_last_bgrewrite_status
-        type: 1
-      - field: aof_last_write_status
-        type: 1
-      - field: aof_last_cow_size
-        type: 0
-      - field: module_fork_in_progress
-        type: 0
-      - field: module_fork_last_cow_size
-        type: 0
-    protocol: redis
-    redis:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: stats
-    priority: 4
+    priority: 2
     fields:
       - field: total_connections_received
         type: 0
@@ -363,42 +206,10 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-
-  - name: replication
-    priority: 5
-    fields:
-      - field: role
-        type: 1
-      - field: connected_slaves
-        type: 0
-      - field: master_failover_state
-        type: 1
-      - field: master_replid
-        type: 1
-      - field: master_replid2
-        type: 0
-      - field: master_repl_offset
-        type: 0
-      - field: second_repl_offset
-        type: 0
-      - field: repl_backlog_active
-        type: 0
-      - field: repl_backlog_size
-        type: 0
-      - field: repl_backlog_first_byte_offset
-        type: 0
-      - field: repl_backlog_histlen
-        type: 0
-    protocol: redis
-    redis:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
   - name: cpu
-    priority: 6
+    priority: 3
     fields:
       - field: used_cpu_sys
         type: 0
@@ -419,13 +230,20 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
 
-  - name: errorstats
-    priority: 8
+  - name: sentinel
+    priority: 4
     fields:
-      - field: errorstat_ERR
+      - field: sentinel_masters
         type: 1
-      - field: errorstat_MISCONF
+      - field: sentinel_tilt
+        type: 1
+      - field: sentinel_running_scripts
+        type: 1
+      - field: sentinel_scripts_queue_length
+        type: 1
+      - field: sentinel_simulate_failure_flags
         type: 1
     protocol: redis
     redis:
@@ -434,59 +252,4 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-
-  - name: cluster
-    priority: 9
-    fields:
-      - field: cluster_enabled
-        type: 0
-    protocol: redis
-    redis:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      timeout: ^_^timeout^_^
-
-  - name: keyspace
-    priority: 9
-    fields:
-      - field: db0
-        type: 1
-      - field: db1
-        type: 1
-      - field: db2
-        type: 1
-      - field: db3
-        type: 1
-      - field: db4
-        type: 1
-      - field: db5
-        type: 1
-      - field: db6
-        type: 1
-      - field: db7
-        type: 1
-      - field: db8
-        type: 1
-      - field: db9
-        type: 1
-      - field: db10
-        type: 1
-      - field: db11
-        type: 1
-      - field: db12
-        type: 1
-      - field: db13
-        type: 1
-      - field: db14
-        type: 1
-      - field: db15
-        type: 1
-    protocol: redis
-    redis:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
