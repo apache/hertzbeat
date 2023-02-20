@@ -22,7 +22,6 @@ class WarehouseWorkerPoolTest {
         pool = new WarehouseWorkerPool();
         counter = new AtomicInteger();
         latch = new CountDownLatch(NUMBER_OF_THREADS);
-
     }
 
     @Test
