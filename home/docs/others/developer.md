@@ -121,6 +121,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/TherChenYang"><img src="https://avatars.githubusercontent.com/u/124348939?v=4?s=100" width="100px;" alt="TherChenYang"/><br /><sub><b>TherChenYang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/HattoriHenzo"><img src="https://avatars.githubusercontent.com/u/5141285?v=4?s=100" width="100px;" alt="HattoriHenzo"/><br /><sub><b>HattoriHenzo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=HattoriHenzo" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=HattoriHenzo" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ycilry"><img src="https://avatars.githubusercontent.com/u/63967101?v=4?s=100" width="100px;" alt="ycilry"/><br /><sub><b>ycilry</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ycilry" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
