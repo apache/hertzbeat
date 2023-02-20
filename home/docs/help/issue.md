@@ -26,6 +26,7 @@ sidebar_label: 常见问题
 > 一：首先查看hertzbeat的错误日志，如果出现了'desc: SQL statement too long, check maxSQLLength config'，信息  
 > 二：需要调整tdengine配置文件，可在服务器创建taos.cfg文件，调整# max length of an SQL : maxSQLLength 654800，然后重启tdengine，需要加入配置文件的挂载  
 > 三：如果遇到了重启tdengine失败，需要调整挂载数据文件中的配置，见 .../taosdata/dnode/dnodeEps.json，中dnodeFqdn调整为启动失败的dockerId即可，然后docker restart tdengine  
+6.配置http api监控，用于进行业务接口探测，确保业务可以用，另外接口有进行token鉴权校验，"Authorization：Bearer eyJhbGciOiJIUzI1...."，配置后测试，提示“StatusCode 401”。服务端应用收到的token为"Authorization：Bearer%20eyJhbGciOiJIUzI1....",hertzbeat对空格进行转义为“%20”，服务器没有转义导致鉴权失败，建议转义功能作为可选项。
 
 
 ### Docker部署常见问题   
