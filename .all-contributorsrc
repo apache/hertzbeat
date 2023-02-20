@@ -705,6 +705,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "ycilry",
+      "name": "ycilry",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63967101?v=4",
+      "profile": "https://github.com/ycilry",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
