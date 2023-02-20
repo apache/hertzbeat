@@ -226,6 +226,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/TherChenYang"><img src="https://avatars.githubusercontent.com/u/124348939?v=4?s=100" width="100px;" alt="TherChenYang"/><br /><sub><b>TherChenYang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=TherChenYang" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HattoriHenzo"><img src="https://avatars.githubusercontent.com/u/5141285?v=4?s=100" width="100px;" alt="HattoriHenzo"/><br /><sub><b>HattoriHenzo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=HattoriHenzo" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=HattoriHenzo" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
