@@ -219,8 +219,9 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // If the availability collection fails, the next indicator group scheduling will be cancelled and the next round of scheduling will be entered directly.
             // 若metricsSet为null表示执行完成
             // 或判断采集指标组是否优先级为0，即为可用性采集指标组 若可用性采集失败 则取消后面的指标组调度直接进入下一轮调度
-            if (metricsSet == null
-                    || (metrics.getPriority() == (byte) 0 && metricsData.getCode() != CollectRep.Code.SUCCESS)) {
+            boolean isAvailableCollectFailed = metricsSet != null && !metricsSet.isEmpty()
+                    && metrics.getPriority() == (byte) 0 && metricsData.getCode() != CollectRep.Code.SUCCESS;
+            if (metricsSet == null || isAvailableCollectFailed) {
                 // The collection and execution of all index groups of this job are completed.
                 // The periodic task pushes the task to the time wheel again.
                 // First, determine the execution time of the task and the task collection interval.
