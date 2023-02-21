@@ -524,7 +524,6 @@ class MonitorServiceTest {
          * 修改一个DB中不存在的的monitor
          */
         String value = "value";
-        Boolean checkException = true;
 
         MonitorDto dto = new MonitorDto();
         List<Param> params = new ArrayList<>();
@@ -542,9 +541,7 @@ class MonitorServiceTest {
         try {
             monitorService.modifyMonitor(dto.getMonitor(),dto.getParams());
         } catch (IllegalArgumentException e) {
-            if (checkException){
-                assertEquals("The Monitor " + monitorId + " not exists",e.getMessage());
-            }
+            assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
         reset();
         /**
@@ -555,18 +552,13 @@ class MonitorServiceTest {
         try {
             monitorService.modifyMonitor(dto.getMonitor(),dto.getParams());
         } catch (IllegalArgumentException e) {
-            if (checkException){
-                assertEquals("Can not modify monitor's app type",e.getMessage());
-            }
+            assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
         Monitor existOKMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
-        Job job = new Job();
-        job.setId(2L);
-        when(appService.getAppDefine(existOKMonitor.getApp())).thenReturn(job);
         assertThrows(MonitorDatabaseException.class,()->monitorService.modifyMonitor(dto.getMonitor(),dto.getParams()));
     }
 
