@@ -489,6 +489,39 @@ metrics:
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
 
+  - name: commandstats
+    priority: 9
+    fields:
+      - field: cmdstat_set
+        type: 1
+      - field: cmdstat_get
+        type: 1
+      - field: cmdstat_setnx
+        type: 1
+      - field: cmdstat_hset
+        type: 1
+      - field: cmdstat_hget
+        type: 1
+      - field: cmdstat_lpush
+        type: 1
+      - field: cmdstat_rpush
+        type: 1
+      - field: cmdstat_lpop
+        type: 1
+      - field: cmdstat_rpop
+        type: 1
+      - field: cmdstat_llen
+        type: 1
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+
+
   - name: keyspace
     priority: 9
     fields:
