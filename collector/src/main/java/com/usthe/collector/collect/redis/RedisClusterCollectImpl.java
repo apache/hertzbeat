@@ -35,7 +35,7 @@ public class RedisClusterCollectImpl extends RedisCommonCollectImpl {
 
     public Map<String, String> getRedisInfo(Metrics metrics) {
         StatefulRedisClusterConnection<String, String> connection = getConnection(metrics.getRedis());
-        String info = connection.sync().info();
+        String info = connection.sync().info(metrics.getName());
         Map<String, String> valueMap = parseInfo(info);
         if (Objects.equals(metrics.getName(), CLUSTER_INFO)) {
             String clusterNodes = connection.sync().clusterInfo();
