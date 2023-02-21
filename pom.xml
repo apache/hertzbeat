@@ -17,14 +17,15 @@
     </modules>
 
     <properties>
+        <lombok.version>1.18.20</lombok.version>
         <java.version>11</java.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.7.21</slf4j.version>
-        <xml.bind.version>2.3.0</xml.bind.version>
-        <lombok.version>1.18.20</lombok.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <springdoc.version>1.6.11</springdoc.version>
+        <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
+        <xml.bind.version>2.3.0</xml.bind.version>
         <!-- Test 3rd-party dependencies: -->
         <junit.version>5.7.0</junit.version>
     </properties>
@@ -35,7 +36,7 @@
                 <!-- Import dependency management from Spring Boot -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.7.4</version>
+                <version>${spring-boot-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -106,7 +107,7 @@
                         <ruleset>rulesets/java/ali-naming.xml</ruleset>
                         <ruleset>rulesets/java/ali-oop.xml</ruleset>
                         <ruleset>rulesets/java/ali-orm.xml</ruleset>
-<!--                        <ruleset>rulesets/java/ali-other.xml</ruleset>-->
+                        <!--<ruleset>rulesets/java/ali-other.xml</ruleset>-->
                         <ruleset>rulesets/java/ali-set.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
