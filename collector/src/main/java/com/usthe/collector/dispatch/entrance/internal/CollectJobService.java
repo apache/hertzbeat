@@ -64,7 +64,7 @@ public class CollectJobService {
         };
         timerDispatch.addJob(job, listener);
         try {
-            countDownLatch.await(100, TimeUnit.SECONDS);
+            countDownLatch.await(120, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.info("The sync task runs for 100 seconds with no response and returns");
         }
@@ -79,10 +79,8 @@ public class CollectJobService {
      * @return long Job ID      任务ID
      */
     public long addAsyncCollectJob(Job job) {
-        if (job.getId() == 0L) {
-            long jobId = SnowFlakeIdGenerator.generateId();
-            job.setId(jobId);
-        }
+        long jobId = SnowFlakeIdGenerator.generateId();
+        job.setId(jobId);
         timerDispatch.addJob(job, null);
         return job.getId();
     }
@@ -92,10 +90,15 @@ public class CollectJobService {
      * 更新已经下发的周期性异步采集任务
      *
      * @param modifyJob Collect task details        采集任务详情
+     * @return long Job ID      新任务ID
      */
-    public void updateAsyncCollectJob(Job modifyJob) {
-        timerDispatch.deleteJob(modifyJob.getId(), true);
+    public long updateAsyncCollectJob(Job modifyJob) {
+        long preJobId = modifyJob.getId();
+        long newJobId = SnowFlakeIdGenerator.generateId();
+        modifyJob.setId(newJobId);
+        timerDispatch.deleteJob(preJobId, true);
         timerDispatch.addJob(modifyJob, null);
+        return newJobId;
     }
 
     /**
@@ -105,7 +108,9 @@ public class CollectJobService {
      * @param jobId Job ID      任务ID
      */
     public void cancelAsyncCollectJob(Long jobId) {
-        timerDispatch.deleteJob(jobId, true);
+        if (jobId != null) {
+            timerDispatch.deleteJob(jobId, true);
+        }
     }
 
 }
