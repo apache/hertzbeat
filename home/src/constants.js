@@ -216,6 +216,12 @@ export const dromaraFriends = [
     remoteImg: 'https://plus.hutool.cn/images/dromara/go-view.png',
     alt: 'go-view',
     url: 'https://gitee.com/dromara/go-view',
+  },
+  {
+    img: 'neutrino-proxy_logo.png',
+    remoteImg: 'https://neutrino-proxy.oss-cn-hangzhou.aliyuncs.com/logo-text-cross-0.5x.png',
+    alt: 'neutrino-proxy',
+    url: 'https://gitee.com/dromara/neutrino-proxy',
   }
 ]
 
