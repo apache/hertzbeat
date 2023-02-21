@@ -102,7 +102,7 @@ metrics:
       parseType: netcat
 
   - name: stats
-    priority: 0
+    priority: 1
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -163,8 +163,6 @@ metrics:
       - field: zk_min_latency
         type: 0
         unit: ms
-
-
     # 协议
     protocol: ssh
     ssh:

@@ -33,7 +33,7 @@ metrics:
       parseType: jsonPath
       parseScript: $.measurements[*]
   - name: memory
-    priority: 0
+    priority: 1
     fields:
       - field: jvm_memory_used
         type: 0
