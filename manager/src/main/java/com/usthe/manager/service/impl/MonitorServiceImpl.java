@@ -109,7 +109,7 @@ public class MonitorServiceImpl implements MonitorService {
         // If the detection result fails, a detection exception is thrown
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
-            throw new MonitorDetectException("No collector response");
+            throw new MonitorDetectException("Collect Timeout No Response");
         }
         if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
@@ -119,7 +119,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
-        // Apply for monitor id         申请 monitor id
+        // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
         List<Tag> tags = monitor.getTags();
@@ -354,7 +354,7 @@ public class MonitorServiceImpl implements MonitorService {
         // Check to determine whether the monitor corresponding to the monitor id exists
         // 查判断monitorId对应的此监控是否存在
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
-        if (!queryOption.isPresent()) {
+        if (queryOption.isEmpty()) {
             throw new IllegalArgumentException("The Monitor " + monitorId + " not exists");
         }
         Monitor preMonitor = queryOption.get();
@@ -374,32 +374,34 @@ public class MonitorServiceImpl implements MonitorService {
                 tag.setValue(monitor.getName());
             }
         }
-        // Construct the collection task Job entity
-        // 构造采集任务Job实体
-        Job appDefine = appService.getAppDefine(monitor.getApp());
-        appDefine.setId(preMonitor.getJobId());
-        appDefine.setMonitorId(monitorId);
-        appDefine.setInterval(monitor.getIntervals());
-        appDefine.setCyclic(true);
-        appDefine.setTimestamp(System.currentTimeMillis());
-        List<Configmap> configmaps = params.stream().map(param ->
-                new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
-        appDefine.setConfigmap(configmaps);
-        // After the update is successfully released, refresh the library
+        if (preMonitor.getStatus() != CommonConstants.UN_MANAGE_CODE) {
+            // Construct the collection task Job entity
+            // 构造采集任务Job实体
+            Job appDefine = appService.getAppDefine(monitor.getApp());
+            appDefine.setMonitorId(monitorId);
+            appDefine.setInterval(monitor.getIntervals());
+            appDefine.setCyclic(true);
+            appDefine.setTimestamp(System.currentTimeMillis());
+            List<Configmap> configmaps = params.stream().map(param ->
+                    new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+            appDefine.setConfigmap(configmaps);
+            long newJobId = collectJobService.updateAsyncCollectJob(appDefine);
+            monitor.setJobId(newJobId);
+        }
+        // After the update is successfully released, refresh the database
         // 下发更新成功后刷库
         try {
-            monitor.setJobId(preMonitor.getJobId());
             monitor.setStatus(preMonitor.getStatus());
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
             paramDao.saveAll(params);
-            // Update the collection task after the storage is completed
-            // 入库完成后更新采集任务
-            collectJobService.updateAsyncCollectJob(appDefine);
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            // Repository brushing abnormally cancels the previously delivered task
+            // 刷库异常取消之前的下发任务
+            collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -468,14 +470,15 @@ public class MonitorServiceImpl implements MonitorService {
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE && monitor.getJobId() != null)
+                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
-            monitorDao.saveAll(managedMonitors);
             for (Monitor monitor : managedMonitors) {
                 collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+                monitor.setJobId(null);
             }
+            monitorDao.saveAll(managedMonitors);
         }
     }
 
@@ -485,17 +488,15 @@ public class MonitorServiceImpl implements MonitorService {
         // 更新监控状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE && monitor.getJobId() != null)
+                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
                 .collect(Collectors.toList());
         if (!unManagedMonitors.isEmpty()) {
-            monitorDao.saveAll(unManagedMonitors);
             for (Monitor monitor : unManagedMonitors) {
                 // Construct the collection task Job entity
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setId(monitor.getJobId());
                 appDefine.setInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
@@ -504,9 +505,11 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
                 // Issue collection tasks       下发采集任务
-                collectJobService.addAsyncCollectJob(appDefine);
+                long newJobId = collectJobService.addAsyncCollectJob(appDefine);
+                monitor.setJobId(newJobId);
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }
+            monitorDao.saveAll(unManagedMonitors);
         }
     }
 
