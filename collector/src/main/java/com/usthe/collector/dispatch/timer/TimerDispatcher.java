@@ -62,9 +62,9 @@ public class TimerDispatcher implements TimerDispatch {
             ret.setDaemon(true);
             return ret;
         }, 1, TimeUnit.SECONDS, 512);
-        this.currentCyclicTaskMap = new ConcurrentHashMap<>(1024);
-        this.currentTempTaskMap = new ConcurrentHashMap<>(64);
-        eventListeners = new ConcurrentHashMap<>(64);
+        this.currentCyclicTaskMap = new ConcurrentHashMap<>(64);
+        this.currentTempTaskMap = new ConcurrentHashMap<>(8);
+        eventListeners = new ConcurrentHashMap<>(8);
     }
 
     @Override
