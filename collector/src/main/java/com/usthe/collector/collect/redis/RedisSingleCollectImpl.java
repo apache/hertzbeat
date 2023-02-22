@@ -56,7 +56,7 @@ public class RedisSingleCollectImpl extends RedisCommonCollectImpl {
      */
     public Map<String, String> getRedisInfo(Metrics metrics) {
         StatefulRedisConnection<String, String> connection = getConnection(metrics.getRedis());
-        String info = connection.sync().info();
+        String info = connection.sync().info(metrics.getName());
         Map<String, String> valueMap = parseInfo(info);
         if (log.isDebugEnabled()) {
             log.debug("[RedisSingleCollectImpl] fetch redis info");
