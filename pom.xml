@@ -19,15 +19,17 @@
     <properties>
         <lombok.version>1.18.20</lombok.version>
         <java.version>11</java.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <slf4j.version>1.7.21</slf4j.version>
+        <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>1.7.21</slf4j.version>
         <springdoc.version>1.6.11</springdoc.version>
         <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
         <xml.bind.version>2.3.0</xml.bind.version>
-        <!-- Test 3rd-party dependencies: -->
-        <junit.version>5.7.0</junit.version>
     </properties>
 
     <dependencyManagement>
@@ -65,13 +67,7 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Test 3rd-party dependencies: -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- Test dependencies: -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -84,18 +80,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven-compiler-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <!-- java code style check -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.12.0</version>
+                <version>${maven-pmd-plugin.version}</version>
                 <configuration>
                     <linkXRef>false</linkXRef>
                     <rulesets>
@@ -125,7 +121,7 @@
                     <dependency>
                         <groupId>com.alibaba.p3c</groupId>
                         <artifactId>p3c-pmd</artifactId>
-                        <version>2.1.1</version>
+                        <version>${p3c-pmd.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
