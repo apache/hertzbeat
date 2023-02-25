@@ -66,6 +66,7 @@
             "help/ssl_cert",
             "help/jvm",
             "help/springboot2"
+
           ]
         },
         {
@@ -79,7 +80,8 @@
             "help/oracle",
             "help/dm",
             "help/opengauss",
-            "help/iotdb"
+            "help/iotdb",
+            "help/redis"
           ]
         },
         {
