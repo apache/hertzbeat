@@ -1,0 +1,287 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: elasticsearch
+name:
+  zh-CN: ElasticSearch
+  en-US: ElasticSearch
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9200
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: index
+    name:
+      zh-CN: 索引名称
+      en-US: Index Name
+    type: text
+    hide: true
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+metrics:
+  #集群健康状况检查
+  - name: health
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 集群名称
+      - field: cluster_name
+        type: 1
+        instance: true
+      # 集群状态
+      - field: status
+        type: 1
+      # 集群节点数
+      - field: nodes
+        type: 0
+      # 数据节点数
+      - field: data_nodes
+        type: 0
+      # 集群中主节点活跃分片数
+      - field: active_primary_shards
+        type: 0
+      # 集群中所有活跃的分片数
+      - field: active_shards
+        type: 0
+      # 集群分片健康度，活跃分片数占总分片数比例
+      - field: active_percentage
+        type: 0
+        unit: '%'
+      # 正在初始化的分片
+      - field: initializing_shards
+        type: 0
+      # 未分配的分片数，通常为0，当有某个节点的副本分片丢失该值就会增加
+      - field: unassigned_shards
+        type: 0
+
+
+    #(非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - cluster_name
+      - status
+      - number_of_nodes
+      - number_of_data_nodes
+      - active_primary_shards
+      - active_shards
+      - initializing_shards
+      - unassigned_shards
+      - active_shards_percent_as_number
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - cluster_name=cluster_name
+      - status=status
+      - nodes=number_of_nodes
+      - data_nodes=number_of_data_nodes
+      - active_primary_shards=active_primary_shards
+      - active_shards=active_shards
+      - active_percentage=active_shards_percent_as_number
+      - initializing_shards=initializing_shards
+      - unassigned_shards=unassigned_shards
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /_cluster/health?pretty
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: default
+  - name: nodes
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 节点个数
+      - field: total
+        type: 0
+        unit: 个
+      # 在线节点数
+      - field: successful
+        type: 0
+        unit: 个
+      # 离线节点数
+      - field: failed
+        type: 0
+        unit: 个
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /_nodes/stats
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$._nodes'
+  - name: nodes_detail
+    priority: 2
+    fields:
+      - field: node_name
+        type: 1
+        instance: true
+      - field: ip
+        type: 1
+      - field: cpu_load_average
+        type: 0
+      - field: cpu_percent
+        type: 0
+        unit: '%'
+      - field: heap_used
+        type: 0
+        unit: MB
+      - field: heap_used_percent
+        type: 0
+        unit: '%'
+      - field: heap_total
+        type: 0
+        unit: 'MB'
+      - field: disk_free
+        type: 0
+        unit: 'GB'
+      - field: disk_total
+        type: 0
+        unit: 'GB'
+      - field: disk_used_percent
+        type: 0
+        unit: '%'
+    aliasFields:
+      - $.name
+      - $.ip
+      # $.os.cpu.load_average.1m 支持 5.x 及以上版本；$.os.load_average 支持 2.x 及以上版本
+      - $.os.cpu.load_average.1m
+      - $.os.load_average
+      # $.os.cpu.percent 支持 5.x 及以上版本；$.os.cpu_percent 支持 2.x 及以上版本
+      - $.os.cpu_percent
+      - $.os.cpu.percent
+      - $.jvm.mem.heap_used_in_bytes
+      - $.jvm.mem.heap_used_percent
+      - $.jvm.mem.heap_max_in_bytes
+      - $.fs.total.free_in_bytes
+      - $.fs.total.total_in_bytes
+    calculates:
+      - node_name=$.name
+      - ip=$.ip
+      - cpu_load_average=#`$.os.cpu.load_average.1m` | $.os.load_average
+      - cpu_percent=$.os.cpu.percent | $.os.cpu_percent
+      - heap_used=$.jvm.mem.heap_used_in_bytes
+      - heap_used_percent=$.jvm.mem.heap_used_percent
+      - heap_total=$.jvm.mem.heap_max_in_bytes
+      - disk_free=$.fs.total.free_in_bytes
+      - disk_total=$.fs.total.total_in_bytes
+      - disk_used_percent=(1-$.fs.total.free_in_bytes/$.fs.total.total_in_bytes)*100
+    units:
+      - heap_used=B->MB
+      - heap_total=B->MB
+      - disk_free=B->GB
+      - disk_total=B->GB
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /_nodes/stats
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.nodes.*'

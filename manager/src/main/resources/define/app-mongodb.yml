@@ -1,0 +1,231 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: mongodb
+name:
+  zh-CN: MongoDB数据库
+  en-US: MongoDB
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 27017
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: database
+    name:
+      zh-CN: 数据库
+      en-US: database
+    type: text
+    limit: 20
+    required: true
+    defaultValue: 'test'
+  - field: authenticationDatabase
+    name:
+      zh-CN: 认证数据库
+      en-US: authenticationDatabase
+    type: text
+    limit: 20
+    required: true
+    defaultValue: 'admin'
+# 可以通过执行 Diagnostic Commands 获取 mongodb 的状态信息以及一些性能、配置参数
+# https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
+# name 必须为 Diagnostic Commands 名称，支持 . 方式获取子文档，需注意连接的用户是否具有相应命令的权限
+metrics:
+  # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
+  - name: buildInfo
+    priority: 1
+    fields:
+      - field: version
+        type: 1
+      - field: gitVersion
+        type: 1
+      - field: sysInfo
+        type: 1
+      - field: loaderFlags
+        type: 1
+      - field: compilerFlags
+        type: 1
+      - field: allocator
+        type: 1
+      - field: javascriptEngine
+        type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: buildInfo
+
+  # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
+  - name: server_document
+    priority: 0
+    fields:
+      - field: deleted
+        type: 0
+      - field: inserted
+        type: 0
+      - field: returned
+        type: 0
+      - field: updated
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.metrics.document
+
+  - name: server_operation
+    priority: 1
+    fields:
+      - field: scanAndOrder
+        type: 0
+      - field: writeConflicts
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.metrics.operation
+
+  - name: server_ttl
+    priority: 1
+    fields:
+      - field: deletedDocuments
+        type: 0
+      - field: passes
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.metrics.ttl
+
+  # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
+  - name: systemInfo
+    priority: 1
+    fields:
+      - field: currentTime
+        type: 1
+      - field: hostname
+        type: 1
+      - field: cpuAddrSize
+        type: 0
+      - field: memSizeMB
+        type: 0
+        unit: MB
+      - field: memLimitMB
+        type: 0
+        unit: MB
+      - field: numCores
+        type: 0
+      - field: cpuArch
+        type: 1
+      - field: numaEnabled
+        type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: hostInfo.system
+
+  - name: os
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+      - field: name
+        type: 1
+      - field: version
+        type: 1
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: hostInfo.os
+
+  - name: extra
+    priority: 1
+    fields:
+      - field: versionString
+        type: 1
+      - field: libcVersion
+        type: 1
+      - field: kernelVersion
+        type: 1
+      - field: cpuFrequencyMHz
+        type: 1
+      - field: cpuFeatures
+        type: 1
+      - field: pageSize
+        type: 0
+      - field: numPages
+        type: 0
+      - field: maxOpenFiles
+        type: 0
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: hostInfo.extra.extra

@@ -12,18 +12,18 @@ Note⚠️ The response data is JSON format.
 #### JsonPath Operator   
 [JSONPath online verification](https://www.jsonpath.cn)     
 
-| JSONPATH      | Help description |
-| ----------- | ----------- |
-| $     | Root object or element |
-| @     | Current object or element |
-| . or [] | Child element operator |
-| ..    | Recursively match all child elements |
-| *     | Wildcard.  Match all objects or elements |
-| []     | Subscript operator, jsonpath index starts from 0 |
-| [,]     | Join operator, return multiple results as an array. Jsonpath allows the use of aliases |
-| [start:end:step]     | Array slice operator |
-| ?()     | Filter (script) expression |
-| ()     | Script Expression  |
+| JSONPATH         | Help description                                                                       |
+|------------------|----------------------------------------------------------------------------------------|
+| $                | Root object or element                                                                 |
+| @                | Current object or element                                                              |
+| . or []          | Child element operator                                                                 |
+| ..               | Recursively match all child elements                                                   |
+| *                | Wildcard.  Match all objects or elements                                               |
+| []               | Subscript operator, jsonpath index starts from 0                                       |
+| [,]              | Join operator, return multiple results as an array. Jsonpath allows the use of aliases |
+| [start:end:step] | Array slice operator                                                                   |
+| ?()              | Filter (script) expression                                                             |
+| ()               | Script Expression                                                                      |
 
 #### HertzBeat data format specification    
 Single layer format ：key-value
@@ -105,14 +105,29 @@ app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# parameter mapping map. These are input parameter variables which can be written to the configuration in form of ^_^host^_^. The system automatically replace variable's value.
-# type means parameter type: 0-number number, 1-string cleartext string, 2-secret encrypted string
-# required parameters - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
+params:
+  # field-field name identifier
+  - field: host
+    # name-parameter field display name
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-field type, style(most mappings are input label type attribute)
+    type: host
+    # required or not  true-required  false-optional
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # When type is number, range is used to represent the range.
+    range: '[0,65535]'
+    required: true
+    # port default
+    defaultValue: 80
+    # Prompt information of parameter input box
+    placeholder: 'Please enter the port'
 # Metric group list
 metrics:
 # The first monitoring Metric group person

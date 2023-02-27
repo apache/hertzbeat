@@ -1,0 +1,148 @@
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
+category: mid
+# 监控应用类型名称(与文件名保持一致)
+app: flink
+name:
+  zh-CN: Flink流引擎
+  en-US: Flink Stream
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 8081
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+metrics:
+  # 第一个监控指标组 cpu
+  # 注意：内置监控指标有 (responseTime - 响应时间)
+  - name: basic
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: flink-version
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /v1/config
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+
+  - name: overview
+    priority: 1
+    fields:
+      - field: slots_total        # slots总数
+        type: 0
+      - field: slots_used        # slots已经使用的数量
+        type: 0
+      - field: task_total        # 任务总数
+        type: 0
+      - field: jobs_running        # 正在运行的任务数
+        type: 0
+      - field: jobs_failed        # 已经失败的任务数
+        type: 0
+    aliasFields:
+      - slots-total
+      - slots-available
+      - jobs-running
+      - jobs-finished
+      - jobs-cancelled
+      - jobs-failed
+    calculates:
+      - slots_total=#`slots-total`
+      - slots_used=#`slots-total`-#`slots-available`
+      - task_total=#`jobs-running`+#`jobs-finished`+#`jobs-cancelled`+#`jobs-failed`
+      - jobs_running=#`jobs-running`
+      - jobs_failed=#`jobs-failed`
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /v1/overview
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default

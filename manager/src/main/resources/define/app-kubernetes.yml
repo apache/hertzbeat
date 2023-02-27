@@ -1,0 +1,224 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: cn
+app: kubernetes
+name:
+  zh-CN: Kubernetes
+  en-US: Kubernetes
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: ApiServer端口
+      en-US: ApiServer Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 6443
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: true
+    options:
+      - label: Bearer Token
+        value: Bearer Token
+    defaultValue: Bearer Token
+  - field: token
+    name:
+      zh-CN: 认证Token
+      en-US: Access Token
+    type: text
+    required: true
+metrics:
+  - name: nodes
+    priority: 0
+    fields:
+      - field: node_name
+        type: 1
+      - field: is_ready
+        type: 1
+      - field: capacity_cpu
+        type: 0
+      - field: allocatable_cpu
+        type: 0
+      - field: capacity_memory
+        type: 0
+        unit: Mi
+      - field: allocatable_memory
+        type: 0
+        unit: Mi
+      - field: creation_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.status.conditions[?(@.type=='Ready')].status
+      - $.status.capacity.cpu
+      - $.status.capacity.memory
+      - $.status.allocatable.cpu
+      - $.status.allocatable.memory
+      - $.metadata.creationTimestamp
+    calculates:
+      - node_name=$.metadata.name
+      - is_ready=$.status.conditions[?(@.type=='Ready')].status
+      - capacity_cpu=$.status.capacity.cpu
+      - allocatable_cpu=$.status.allocatable.cpu
+      - capacity_memory=$.status.capacity.memory
+      - allocatable_memory=$.status.allocatable.memory
+      - creation_time=$.metadata.creationTimestamp
+    units:
+      - capacity_memory=Ki->Mi
+      - allocatable_memory=Ki->Mi
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/nodes
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
+
+  - name: namespaces
+    priority: 1
+    fields:
+      - field: namespace
+        type: 1
+      - field: status
+        type: 1
+      - field: creation_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.status.phase
+      - $.metadata.creationTimestamp
+    calculates:
+      - namespace=$.metadata.name
+      - status=$.status.phase
+      - creation_time=$.metadata.creationTimestamp
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/namespaces
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
+
+  - name: pods
+    priority: 1
+    fields:
+      - field: pod
+        type: 1
+      - field: namespace
+        type: 1
+      - field: status
+        type: 1
+      - field: restart
+        type: 1
+      - field: host_ip
+        type: 1
+      - field: pod_ip
+        type: 1
+      - field: creation_time
+        type: 1
+      - field: start_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.metadata.namespace
+      - $.status.phase
+      - $.spec.restartPolicy
+      - $.status.hostIP
+      - $.status.podIP
+      - $.metadata.creationTimestamp
+      - $.status.startTime
+    calculates:
+      - pod=$.metadata.name
+      - namespace=$.metadata.namespace
+      - status=$.status.phase
+      - restart=$.spec.restartPolicy
+      - host_ip=$.status.hostIP
+      - pod_ip=$.status.podIP
+      - creation_time=$.metadata.creationTimestamp
+      - start_time=$.status.startTime
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/pods
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
+
+  - name: services
+    priority: 1
+    fields:
+      - field: service
+        type: 1
+      - field: namespace
+        type: 1
+      - field: type
+        type: 1
+      - field: cluster_ip
+        type: 1
+      - field: selector
+        type: 1
+      - field: creation_time
+        type: 1
+    aliasFields:
+      - $.metadata.name
+      - $.metadata.namespace
+      - $.spec.type
+      - $.spec.clusterIP
+      - $.spec.selector
+      - $.metadata.creationTimestamp
+    calculates:
+      - service=$.metadata.name
+      - namespace=$.metadata.namespace
+      - type=$.spec.type
+      - cluster_ip=$.spec.clusterIP
+      - selector=$.spec.selector
+      - creation_time=$.metadata.creationTimestamp
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/services
+      method: GET
+      ssl: true
+      authorization:
+        type: ^_^authType^_^
+        bearerTokenToken: ^_^token^_^
+      parseType: jsonPath
+      parseScript: '$.items.*'
