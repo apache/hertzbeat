@@ -63,8 +63,6 @@ public class SnmpCollectImpl extends AbstractCollect {
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 
-    public SnmpCollectImpl() {
-    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -143,7 +141,7 @@ public class SnmpCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         } catch (ExecutionException | InterruptedException ex) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ex);
-            log.info("[snmp collect] error: {}", errorMsg);
+            log.warn("[snmp collect] error: {}", errorMsg, ex);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
@@ -159,7 +157,8 @@ public class SnmpCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SNMP;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
+
+    private void validateParams(Metrics metrics) {
         if (metrics == null || metrics.getSnmp() == null) {
             throw new IllegalArgumentException("Snmp collect must has snmp params");
         }
