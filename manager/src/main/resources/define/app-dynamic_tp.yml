@@ -1,0 +1,184 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: dynamic_tp
+name:
+  zh-CN: DynamicTp线程池
+  en-US: DynamicTp Pool
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 8080
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+  - field: base_path
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    type: text
+    defaultValue: /actuator
+    required: true
+    hide: true
+metrics:
+  - name: thread_pool
+    priority: 0
+    fields:
+      - field: pool_name
+        type: 1
+        instance: true
+      - field: queue_type
+        type: 1
+      - field: core_pool_size
+        type: 0
+      - field: maximum_pool_size
+        type: 0
+      - field: fair
+        type: 1
+      - field: reject_handler_name
+        type: 1
+      - field: dynamic
+        type: 1
+    aliasFields:
+      - poolName
+      - corePoolSize
+      - maximumPoolSize
+      - queueType
+      - fair
+      - rejectHandlerName
+      - dynamic
+    calculates:
+      - pool_name=poolName
+      - core_pool_size=corePoolSize
+      - maximum_pool_size=maximumPoolSize
+      - queue_type=queueType
+      - fair=fair
+      - reject_handler_name=rejectHandlerName
+      - dynamic=dynamic
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+
+  - name: thread_pool_running
+    priority: 1
+    fields:
+      - field: pool_name
+        type: 1
+        instance: true
+      - field: queue_capacity
+        type: 0
+        unit: MB
+      - field: queue_size
+        type: 0
+      - field: queue_remaining_capacity
+        type: 0
+        unit: MB
+      - field: active_count
+        type: 0
+      - field: task_count
+        type: 0
+      - field: completed_task_count
+        type: 0
+      - field: largest_pool_size
+        type: 0
+      - field: pool_size
+        type: 0
+      - field: wait_task_count
+        type: 0
+      - field: reject_count
+        type: 0
+      - field: run_timeout_count
+        type: 0
+      - field: queue_timeout_count
+        type: 0
+    aliasFields:
+      - poolName
+      - queueCapacity
+      - queueSize
+      - queueRemainingCapacity
+      - activeCount
+      - taskCount
+      - completedTaskCount
+      - largestPoolSize
+      - poolSize
+      - waitTaskCount
+      - rejectCount
+      - runTimeoutCount
+      - queueTimeoutCount
+    calculates:
+      - pool_name=poolName
+      - queue_capacity=queueCapacity
+      - queue_size=queueSize
+      - queue_remaining_capacity=queueRemainingCapacity
+      - active_count=activeCount
+      - task_count=taskCount
+      - completed_task_count=completedTaskCount
+      - largest_pool_size=largestPoolSize
+      - pool_size=poolSize
+      - wait_task_count=waitTaskCount
+      - reject_count=rejectCount
+      - run_timeout_count=runTimeoutCount
+      - queue_timeout_count=queueTimeoutCount
+    units:
+      - queue_capacity=B->MB
+      - queue_remaining_capacity=B->MB
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
