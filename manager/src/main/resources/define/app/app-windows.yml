@@ -49,6 +49,8 @@ metrics:
       - field: responseTime
         type: 0
         unit: ms
+      - field: location
+        type: 1
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -63,3 +65,104 @@ metrics:
         numUsers: 1.3.6.1.2.1.25.1.5.0
         services: 1.3.6.1.2.1.1.7.0
         processes: 1.3.6.1.2.1.25.1.6.0
+        location: 1.3.6.1.2.1.1.6.0
+
+  - name: cpu
+    priority: 1
+    fields:
+      - field: userCpu
+        type: 1
+      - field: kernalCPU
+        type: 1
+      - field: ssCpuRawUser
+        type: 1
+      - field: ssCpuRawSystem
+        type: 1
+      - field: ssCpuRawIdle
+        type: 1
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      oids:
+        userCpu: 1.3.6.1.4.1.2021.11.9.0
+        kernalCPU: 1.3.6.1.4.1.2021.11.10.0
+        cpu: 1.3.6.1.4.1.2021.11.11.0
+        ssCpuRawUser: 1.3.6.1.4.1.2021.11.50.0
+        ssCpuRawSystem: 1.3.6.1.4.1.2021.11.52.0
+        ssCpuRawIdle: 1.3.6.1.4.1.2021.11.53.0
+
+  - name: memory
+    priority: 2
+    fields:
+      - field: size
+        type: 1
+      - field: swapSize
+        type: 1
+      - field: availSwapSize
+        type: 1
+      - field: totalRAM
+        type: 1
+      - field: usedRAM
+        type: 1
+      - field: freeRAM
+        type: 1
+      - field: sharedRAM
+        type: 1
+      - field: bufferedRAM
+        type: 1
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      oids:
+        size: 1.3.6.1.2.1.25.2.2.0
+        swapSize: 1.3.6.1.4.1.2021.4.3.0
+        availSwapSize: 1.3.6.1.4.1.2021.4.4.0
+        totalRAM: 1.3.6.1.4.1.2021.4.5.0
+        usedRAM: 1.3.6.1.4.1.2021.4.6.0
+        freeRAM: 1.3.6.1.4.1.2021.4.11.0
+        sharedRAM: 1.3.6.1.4.1.2021.4.13.0
+        bufferedRAM: 1.3.6.1.4.1.2021.4.14.0
+
+  - name: disk
+    priority: 3
+    fields:
+      - field: dskPath
+        type: 1
+      - field: dskDevice
+        type: 1
+      - field: dskTotal
+        type: 1
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      oids:
+        dskPath: 1.3.6.1.4.1.2021.9.1.2
+        dskDevice: 1.3.6.1.4.1.2021.9.1.3
+        dskTotal: 1.3.6.1.4.1.2021.9.1.6
+
+  - name: network
+    priority: 4
+    fields:
+      - field: number
+        type: 1
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      oids:
+        number: 1.3.6.1.2.1.2.1.0
