@@ -1,0 +1,284 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: redis_sentinel
+name:
+  zh-CN: Redis Sentinel数据库
+  en-US: Redis Sentinel
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 26379
+  - field: timeout
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
+    type: number
+    range: '[0,100000]'
+    required: true
+    defaultValue: 3000
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: pattern
+    name:
+      zh-CN: 模式
+      en-US: Pattern
+    type: number
+    required: true
+    defaultValue: 2
+    hide: true
+metrics:
+  - name: server
+    priority: 0
+    fields:
+      - field: redis_version
+        type: 1
+      - field: redis_git_sha1
+        type: 0
+      - field: redis_git_dirty
+        type: 0
+      - field: redis_build_id
+        type: 1
+      - field: redis_mode
+        type: 1
+      - field: os
+        type: 1
+      - field: arch_bits
+        type: 0
+      - field: multiplexing_api
+        type: 1
+      - field: atomicvar_api
+        type: 1
+      - field: gcc_version
+        type: 1
+      - field: process_id
+        type: 0
+      - field: process_supervised
+        type: 1
+      - field: run_id
+        type: 1
+      - field: tcp_port
+        type: 0
+      - field: server_time_usec
+        type: 0
+      - field: uptime_in_seconds
+        type: 0
+      - field: uptime_in_days
+        type: 0
+      - field: hz
+        type: 0
+      - field: configured_hz
+        type: 0
+      - field: lru_clock
+        type: 0
+      - field: executable
+        type: 1
+      - field: config_file
+        type: 1
+      - field: io_threads_active
+        type: 0
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+
+  - name: clients
+    priority: 1
+    fields:
+      - field: connected_clients
+        type: 0
+      - field: cluster_connections
+        type: 0
+      - field: maxclients
+        type: 0
+      - field: client_recent_max_input_buffer
+        type: 0
+      - field: client_recent_max_output_buffer
+        type: 0
+      - field: blocked_clients
+        type: 0
+      - field: tracking_clients
+        type: 0
+      - field: clients_in_timeout_table
+        type: 0
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+
+  - name: stats
+    priority: 2
+    fields:
+      - field: total_connections_received
+        type: 0
+      - field: total_commands_processed
+        type: 0
+      - field: instantaneous_ops_per_sec
+        type: 0
+      - field: total_net_input_bytes
+        type: 0
+      - field: total_net_output_bytes
+        type: 0
+      - field: instantaneous_input_kbps
+        type: 0
+      - field: instantaneous_output_kbps
+        type: 0
+      - field: rejected_connections
+        type: 0
+      - field: sync_full
+        type: 0
+      - field: sync_partial_ok
+        type: 0
+      - field: sync_partial_err
+        type: 0
+      - field: expired_keys
+        type: 0
+      - field: expired_stale_perc
+        type: 0
+      - field: expired_time_cap_reached_count
+        type: 0
+      - field: expire_cycle_cpu_milliseconds
+        type: 0
+      - field: evicted_keys
+        type: 0
+      - field: keyspace_hits
+        type: 0
+      - field: keyspace_misses
+        type: 0
+      - field: pubsub_channels
+        type: 0
+      - field: pubsub_patterns
+        type: 0
+      - field: latest_fork_usec
+        type: 0
+      - field: total_forks
+        type: 0
+      - field: migrate_cached_sockets
+        type: 0
+      - field: slave_expires_tracked_keys
+        type: 0
+      - field: active_defrag_hits
+        type: 0
+      - field: active_defrag_misses
+        type: 0
+      - field: active_defrag_key_hits
+        type: 0
+      - field: active_defrag_key_misses
+        type: 0
+      - field: tracking_total_keys
+        type: 0
+      - field: tracking_total_items
+        type: 0
+      - field: tracking_total_prefixes
+        type: 0
+      - field: unexpected_error_replies
+        type: 0
+      - field: total_error_replies
+        type: 0
+      - field: dump_payload_sanitizations
+        type: 0
+      - field: total_reads_processed
+        type: 0
+      - field: total_writes_processed
+        type: 0
+      - field: io_threaded_reads_processed
+        type: 0
+      - field: io_threaded_writes_processed
+        type: 0
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+
+  - name: cpu
+    priority: 3
+    fields:
+      - field: used_cpu_sys
+        type: 0
+      - field: used_cpu_user
+        type: 0
+      - field: used_cpu_sys_children
+        type: 0
+      - field: used_cpu_user_children
+        type: 0
+      - field: used_cpu_sys_main_thread
+        type: 0
+      - field: used_cpu_user_main_thread
+        type: 0
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+
+  - name: sentinel
+    priority: 4
+    fields:
+      - field: sentinel_masters
+        type: 1
+      - field: sentinel_tilt
+        type: 1
+      - field: sentinel_running_scripts
+        type: 1
+      - field: sentinel_scripts_queue_length
+        type: 1
+      - field: sentinel_simulate_failure_flags
+        type: 1
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^

@@ -52,25 +52,25 @@
 
 ## ⛄ Supported
 
-- [网站监控](manager/src/main/resources/define/app/app-website.yml), [端口可用性](manager/src/main/resources/define/app/app-port.yml),
-  [Http Api](manager/src/main/resources/define/app/app-api.yml), [Ping连通性](manager/src/main/resources/define/app/app-ping.yml),
-  [Jvm](manager/src/main/resources/define/app/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app/app-fullsite.yml),
-  [Ssl证书](manager/src/main/resources/define/app/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app/app-springboot2.yml),
-  [FTP服务器](manager/src/main/resources/define/app/app-ftp.yml)
-- [Mysql](manager/src/main/resources/define/app/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app/app-postgresql.yml),
-  [MariaDB](manager/src/main/resources/define/app/app-mariadb.yml), [Redis](manager/src/main/resources/define/app/app-redis.yml),
-  [ElasticSearch](manager/src/main/resources/define/app/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app/app-sqlserver.yml),
-  [Oracle](manager/src/main/resources/define/app/app-oracle.yml), [MongoDB](manager/src/main/resources/define/app/app-mongodb.yml),
-  [达梦](manager/src/main/resources/define/app/app-dm.yml), [OpenGauss](manager/src/main/resources/define/app/app-opengauss.yml),
-  [ClickHouse](manager/src/main/resources/define/app/app-clickhouse.yml), [IoTDB](manager/src/main/resources/define/app/app-iotdb.yml)
-- [Linux](manager/src/main/resources/define/app/app-linux.yml), [Ubuntu](manager/src/main/resources/define/app/app-ubuntu.yml),
-  [CentOS](manager/src/main/resources/define/app/app-centos.yml), [Windows](manager/src/main/resources/define/app/app-windows.yml)
-- [Tomcat](manager/src/main/resources/define/app/app-tomcat.yml), [Nacos](manager/src/main/resources/define/app/app-nacos.yml),
-  [Zookeeper](manager/src/main/resources/define/app/app-zookeeper.yml), [RabbitMQ](manager/src/main/resources/define/app/app-rabbitmq.yml),
-  [Flink](manager/src/main/resources/define/app/app-flink.yml), [Kafka](manager/src/main/resources/define/app/app-kafka.yml),
-  [ShenYu](manager/src/main/resources/define/app/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app/app-dynamic_tp.yml),
-  [Jetty](manager/src/main/resources/define/app/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app/app-activemq.yml)
-- [Kubernetes](manager/src/main/resources/define/app/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app/app-docker.yml)
+- [网站监控](manager/src/main/resources/define/app-website.yml), [端口可用性](manager/src/main/resources/define/app-port.yml),
+  [Http Api](manager/src/main/resources/define/app-api.yml), [Ping连通性](manager/src/main/resources/define/app-ping.yml),
+  [Jvm](manager/src/main/resources/define/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app-fullsite.yml),
+  [Ssl证书](manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app-springboot2.yml),
+  [FTP服务器](manager/src/main/resources/define/app-ftp.yml)
+- [Mysql](manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app-postgresql.yml),
+  [MariaDB](manager/src/main/resources/define/app-mariadb.yml), [Redis](manager/src/main/resources/define/app-redis.yml),
+  [ElasticSearch](manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app-sqlserver.yml),
+  [Oracle](manager/src/main/resources/define/app-oracle.yml), [MongoDB](manager/src/main/resources/define/app-mongodb.yml),
+  [达梦](manager/src/main/resources/define/app-dm.yml), [OpenGauss](manager/src/main/resources/define/app-opengauss.yml),
+  [ClickHouse](manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](manager/src/main/resources/define/app-iotdb.yml)
+- [Linux](manager/src/main/resources/define/app-linux.yml), [Ubuntu](manager/src/main/resources/define/app-ubuntu.yml),
+  [CentOS](manager/src/main/resources/define/app-centos.yml), [Windows](manager/src/main/resources/define/app-windows.yml)
+- [Tomcat](manager/src/main/resources/define/app-tomcat.yml), [Nacos](manager/src/main/resources/define/app-nacos.yml),
+  [Zookeeper](manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](manager/src/main/resources/define/app-rabbitmq.yml),
+  [Flink](manager/src/main/resources/define/app-flink.yml), [Kafka](manager/src/main/resources/define/app-kafka.yml),
+  [ShenYu](manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app-dynamic_tp.yml),
+  [Jetty](manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app-activemq.yml)
+- [Kubernetes](manager/src/main/resources/define/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app-docker.yml)
 - 和更多您的自定义监控。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 

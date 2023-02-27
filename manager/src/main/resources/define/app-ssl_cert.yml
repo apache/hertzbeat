@@ -1,0 +1,69 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: service
+app: ssl_cert
+name:
+  zh-CN: SSL证书
+  en-US: SSL Certificate
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 443
+  - field: uri
+    name:
+      zh-CN: 相对路径
+      en-US: URI
+    type: text
+    limit: 200
+    required: false
+    placeholder: 'Website uri path(no ip port) EG:/console'
+    hide: true
+metrics:
+  - name: certificate
+    priority: 0
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: subject
+        type: 1
+        instance: true
+      - field: expired
+        type: 1
+      - field: start_time
+        type: 1
+      - field: start_timestamp
+        type: 0
+        unit: ms
+      - field: end_time
+        type: 1
+      - field: end_timestamp
+        type: 0
+        unit: ms
+    protocol: ssl_cert
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^

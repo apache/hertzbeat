@@ -8,20 +8,19 @@ sidebar_label: Custom Monitoring
 
 ### Custom Steps  
 
-In order to configure a custom monitoring type, you need to add and configure two YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example.yml should be in the installation directory /hertzbeat/define/app/
-2. Monitoring parameter definition file named after monitoring type - eg：example.yml should be in the installation directory /hertzbeat/define/param/
-3. Restart hertzbeat system, we successfully fit a new custom monitoring type.  
+In order to configure a custom monitoring type, you need to add and configure YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example.yml should be in the installation directory /hertzbeat/app/
+2. Restart hertzbeat system, we successfully fit a new custom monitoring type.  
 
 ------- 
-Configuration usages of the two files are detailed below.
+Configuration usages of the file are detailed below.
 
 ### Monitoring configuration definition file   
 
 > Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
 eg：Define a custom monitoring type named example which use the HTTP protocol to collect data.    
-The file name: example.yml in /define/app/example.yml   
+The file name: example.yml in /define/example.yml   
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -31,18 +30,66 @@ app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# parameter mapping map. These are input parameter variables which can be written to the configuration in form of ^_^host^_^. The system automatically replace variable's value.
-# type means parameter type: 0-number number, 1-string cleartext string, 2-secret encrypted string
-# required parameters - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
+param:
+  # field-field name identifier 
+  - field: host
+    # name-parameter field display name 
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-field type, style(most mappings are input label type attribute)
+    type: host
+    # required or not  true-required  false-optional
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # When type is number, range is used to represent the range.
+    range: '[0,65535]'
+    required: true
+    # port default
+    defaultValue: 80
+    # Prompt information of parameter input box 
+    placeholder: 'Please enter the port'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    # When type is text, use limit to indicate the string limit size
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: Enable SSL
+    # When type is boolean, front end uses switch to show the switch
+    type: boolean
+    required: false
+  - field: method
+    name:
+      zh-CN: 请求方式
+      en-US: Method
+    type: radio
+    required: true
+    # When type is radio or checkbox, option indicates the list of selectable values {name1:value1,name2:value2}
+    options:
+      - label: GET request
+        value: GET
+      - label: POST request
+        value: POST
+      - label: PUT request
+        value: PUT
+      - label: DELETE request
+        value: DELETE
 # Metric group list
 metrics:
 # The first monitoring Metric group cpu
@@ -142,77 +189,4 @@ metrics:
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
       parseType: default
-```
-
-### Monitoring parameter definition file
-
-> Monitoring parameter definition file is used to define *required input parameter field structure definition (Front-end page render input parameter box according to structure)*.   
-
-eg：Define a custom monitoring type named example which use the HTTP protocol to collect data.    
-The file name: example.yml in /define/param/example.yml   
-
-```yaml
-# Monitoring application type name(consistent with the file name) eg: linux windows tomcat mysql aws...
-app: example
-# required parameters - host(ipv4, ipv6, domain name)
-param:
-    # field-field name identifier 
-  - field: host
-    # name-parameter field display name 
-    name: 
-      zh-CN: 主机Host
-      en-US: Host
-    # type-field type, style(most mappings are input label type attribute)
-    type: host
-    # required or not  true-required  false-optional
-    required: true
-  - field: port
-    name: 
-      zh-CN: 端口
-      en-US: Port
-    type: number
-    # When type is number, range is used to represent the range.
-    range: '[0,65535]'
-    required: true
-    # port default
-    defaultValue: 80
-    # Prompt information of parameter input box 
-    placeholder: 'Please enter the port'
-  - field: username
-    name: 
-      zh-CN: 用户名
-      en-US: Username
-    type: text
-    # When type is text, use limit to indicate the string limit size
-    limit: 20
-    required: false
-  - field: password
-    name: 
-      zh-CN: 密码
-      en-US: Password
-    type: password
-    required: false
-  - field: ssl
-    name: 
-      zh-CN: 启动SSL
-      en-US: Enable SSL
-    # When type is boolean, front end uses switch to show the switch
-    type: boolean
-    required: false
-  - field: method
-    name: 
-      zh-CN: 请求方式
-      en-US: Method
-    type: radio
-    required: true
-    # When type is radio or checkbox, option indicates the list of selectable values {name1:value1,name2:value2}
-    options:
-      - label: GET request
-        value: GET
-      - label: POST request
-        value: POST
-      - label: PUT request
-        value: PUT
-      - label: DELETE request
-        value: DELETE
 ```
