@@ -19,6 +19,7 @@ package com.usthe.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.GsonUtil;
 import lombok.AllArgsConstructor;
@@ -94,6 +95,10 @@ public class Job {
      * 是否是循环周期性任务 true为是,false为否
      */
     private boolean isCyclic = false;
+    /**
+     * monitor input need params
+     */
+    private List<ParamDefine> params;
     /**
      * Indicator group configuration eg: cpu memory
      * 指标组配置 eg: cpu memory

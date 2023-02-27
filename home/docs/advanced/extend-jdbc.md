@@ -49,20 +49,21 @@ SQL响应数据：
 
 ### 自定义步骤  
 
-配置自定义监控类型需新增配置两个YML文件
-1. 用监控类型命名的监控配置定义文件 - 例如：example_sql.yml 需位于安装目录 /hertzbeat/define/app/ 下
-2. 用监控类型命名的监控参数定义文件 - 例如：example_sql.yml 需位于安装目录 /hertzbeat/define/param/ 下
-3. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。
+配置自定义监控类型需新增配置YML文件   
+
+1. 用监控类型命名的监控配置定义文件 - 例如：example_sql.yml 需位于安装目录 /hertzbeat/define/ 下   
+2. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。
 
 ------- 
-下面详细介绍下这俩文件的配置用法，请注意看使用注释。   
+下面详细介绍下文件的配置用法，请注意看使用注释。   
 
 ### 监控配置定义文件   
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数映射, 指标信息, 采集协议配置信息*等。  
+> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 即我们通过自定义这个YML文件，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
 样例：自定义一个名称为example_sql的自定义监控类型，其使用JDBC协议采集指标数据。    
-文件名称: example_sql.yml 位于 /define/app/example_sql.yml   
+文件名称: example_sql.yml 位于 /define/example_sql.yml   
 
 ```yaml
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
@@ -72,22 +73,49 @@ app: example_sql
 name:
   zh-CN: 模拟MYSQL应用类型
   en-US: MYSQL EXAMPLE APP
-# 参数映射map. 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 监控参数定义. field 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
 # 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
-  - key: database
-    type: 1
-  - key: url
-    type: 1
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+    placeholder: '请输入端口'
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database
+    type: text
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: Url
+      en-US: Url
+    type: text
+    required: false
 # 指标组列表
 metrics:
   - name: basic
@@ -209,56 +237,4 @@ metrics:
       # sql
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
-```
-
-### 监控参数定义文件
-
-> 监控参数定义文件用于定义 *需要的输入参数字段结构定义(前端页面根据结构渲染输入参数框)*。
-
-样例：自定义一个名称为example_sql的自定义监控类型，其使用JDBC协议采集指标数据。    
-文件名称: example_sql.yml 位于 /define/param/example_sql.yml   
-
-```yaml
-app: example_sql
-param:
-  - field: host
-    name: 
-      zh-CN: 主机Host
-      en-US: Host
-    type: host
-    required: true
-  - field: port
-    name: 
-      zh-CN: 端口
-      en-US: Port
-    type: number
-    range: '[0,65535]'
-    required: true
-    defaultValue: 80
-    placeholder: '请输入端口'
-  - field: database
-    name: 
-      zh-CN: 数据库名称
-      en-US: Database
-    type: text
-    required: false
-  - field: username
-    name: 
-      zh-CN: 用户名
-      en-US: Username
-    type: text
-    limit: 20
-    required: false
-  - field: password
-    name: 
-      zh-CN: 密码
-      en-US: Password
-    type: password
-    required: false
-  - field: url
-    name: 
-      zh-CN: Url
-      en-US: Url
-    type: text
-    required: false
 ```

@@ -85,14 +85,31 @@ app: example
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# 参数映射map. 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
+# 监控参数定义. field 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
 # 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    # 端口默认值
+    defaultValue: 80
+    # 参数输入框提示信息
+    placeholder: '请输入端口'
 # 指标组列表
 metrics:
 # 第一个监控指标组 cpu

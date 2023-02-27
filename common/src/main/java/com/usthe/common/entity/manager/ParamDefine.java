@@ -38,7 +38,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * todo 字段默认值
  * Monitoring parameter definitions
  * 监控参数定义
  *

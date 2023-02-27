@@ -37,23 +37,23 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 ### 新增自定义监控类型`hertzbeat_token`
 
-1. 自定义监控类型需新增配置两个YML文件,我们直接复用教程一的 `hertzbeat` 监控类型，在其基础上修改
+1. 自定义监控类型需新增配置YML文件,我们直接复用教程一的 `hertzbeat` 监控类型，在其基础上修改
 
-用监控类型命名的监控配置定义文件 - app-hertzbeat_token.yml 需位于安装目录 /hertzbeat/define/app/ 下
-用监控类型命名的监控参数定义文件 - param-hertzbeat_token.yml 需位于安装目录 /hertzbeat/define/param/ 下
+用监控类型命名的监控配置定义文件 - app-hertzbeat_token.yml 需位于安装目录 /hertzbeat/define/ 下
 
-2. 配置参数定义文件 param-hertzbeat.yml
-
-参数定义文件是定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，
-我们直接复用 param-hertzbeat.yml 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。
-定义内容如下:注意⚠️app属性值需要改为监控类型名称`hertzbeat_token`
+监控配置定义文件是用来定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。
+我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。
 
 ```yaml
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+category: custom
+# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
-# 强制固定必须参数 - host(ipv4,ipv6,域名)
-param:
-    # field-字段名称标识符
+name:
+  zh-CN: HertzBeat监控(Token)
+  en-US: HertzBeat Monitor(Token) 
+params:
+  # field-字段名称标识符
   - field: host
     # name-参数字段显示名称
     name:
@@ -96,32 +96,6 @@ param:
     type: textarea
     placeholder: 'Available When POST PUT'
     required: false
-```
-
-2. 初步配置监控配置定义文件 app-hertzbeat.yml
-
-监控配置定义文件是用来定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。
-我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。
-
-```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
-category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: hertzbeat_token
-name:
-  zh-CN: HertzBeat监控(Token)
-  en-US: HertzBeat Monitor(Token) 
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串, 3-map映射的json串
-# 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: contentType
-    type: 1
-  - key: payload
-    type: 1
 # 指标组列表 todo 下方配置
 metrics: ......
 
@@ -129,7 +103,7 @@ metrics: ......
 
 ### 定义指标组`auth`登录请求获取`token`  
 
-1. 在`app-hertzbeat.yml`新增一个指标组定义 `auth`, 设置采集优先级为最高0，采集指标 `token`.  
+1. 在`app-hertzbeat_token.yml`新增一个指标组定义 `auth`, 设置采集优先级为最高0，采集指标 `token`.  
 
 ```yaml
 
@@ -140,17 +114,50 @@ app: hertzbeat_token
 name:
   zh-CN: HertzBeat监控(Token)
   en-US: HertzBeat Monitor(Token) 
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串, 3-map映射的json串
-# 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: contentType
-    type: 1
-  - key: payload
-    type: 1
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    # 端口默认值
+    defaultValue: 1157
+    # 参数输入框提示信息
+    placeholder: '请输入端口'
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+  - field: contentType
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+    type: text
+    placeholder: 'Request Body Type'
+    required: false
+  - field: payload
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+    type: textarea
+    placeholder: 'Available When POST PUT'
+    required: false
 # 指标组列表
 metrics:
   # 第一个监控指标组 auth
@@ -212,7 +219,7 @@ metrics:
 
 ### 将`token`作为变量参数给后面的指标组采集使用   
 
-**在`app-hertzbeat.yml`新增一个指标组定义 `summary` 同教程一中的`summary`相同, 设置采集优先级为1**
+**在`app-hertzbeat_token.yml`新增一个指标组定义 `summary` 同教程一中的`summary`相同, 设置采集优先级为1**
 **设置此指标组的HTTP协议配置中认证方式为 `Bearer Token` 将上一个指标组`auth`采集的指标`token`作为参数给其赋值，使用`^o^`作为内部替换符标识，即`^o^token^o^`。如下:**
 
 ```yaml
@@ -226,7 +233,7 @@ metrics:
         bearerTokenToken: ^o^token^o^
 ```
 
-**最终`app-hertzbeat.yml`定义如下:**   
+**最终`app-hertzbeat_token.yml`定义如下:**   
 
 ```yaml
 
@@ -237,23 +244,50 @@ app: hertzbeat_token
 name:
   zh-CN: HertzBeat监控(Token)
   en-US: HertzBeat Monitor(Token)
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串, 3-map映射的json串
-# 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
-  - key: headers
-    type: 3
-  - key: contentType
-    type: 1
-  - key: payload
-    type: 1
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    # 端口默认值
+    defaultValue: 1157
+    # 参数输入框提示信息
+    placeholder: '请输入端口'
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+  - field: contentType
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+    type: text
+    placeholder: 'Request Body Type'
+    required: false
+  - field: payload
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+    type: textarea
+    placeholder: 'Available When POST PUT'
+    required: false
 # 指标组列表
 metrics:
 # 第一个监控指标组 cpu

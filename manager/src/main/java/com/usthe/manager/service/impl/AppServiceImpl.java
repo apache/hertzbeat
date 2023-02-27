@@ -19,20 +19,17 @@ package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
-import com.usthe.manager.dao.ParamDefineDao;
 import com.usthe.manager.pojo.dto.Hierarchy;
-import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.common.entity.manager.ParamDefine;
+import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,7 +44,7 @@ import java.util.stream.Collectors;
 /**
  * Monitoring Type Management Implementation
  * 监控类型管理实现
- * TODO temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
+ * temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
  * 暂时将监控配置和参数配置存放内存 之后存入数据库
  *
  *
@@ -59,18 +56,15 @@ import java.util.stream.Collectors;
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
-    private final Map<String, List<ParamDefine>> paramDefines = new ConcurrentHashMap<>();
-
-    @Autowired
-    private ParamDefineDao paramDefineDao;
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        List<ParamDefine> params = paramDefines.get(app);
-        if (params == null) {
-            params = Collections.emptyList();
+        Job appDefine = appDefines.get(app);
+        if (appDefine != null && appDefine.getParams() != null) {
+            return appDefine.getParams();
+        } else {
+            return Collections.emptyList();
         }
-        return params;
     }
 
     @Override
@@ -114,17 +108,14 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 }
                 i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
-        }
-        for (Map.Entry<String, List<ParamDefine>> entry : paramDefines.entrySet()) {
-            String app = entry.getKey();
-            for (ParamDefine paramDefine : entry.getValue()) {
-                Map<String, String> name = paramDefine.getName();
-                if (name != null && !name.isEmpty()) {
-                    String i18nName = name.get(lang);
+            for (ParamDefine paramDefine : job.getParams()) {
+                Map<String, String> paramDefineName = paramDefine.getName();
+                if (paramDefineName != null && !paramDefineName.isEmpty()) {
+                    String i18nName = paramDefineName.get(lang);
                     if (i18nName == null) {
-                        i18nName = name.values().stream().findFirst().get();
+                        i18nName = paramDefineName.values().stream().findFirst().get();
                     }
-                    i18nMap.put("monitor.app." + app + ".param." + paramDefine.getField(), i18nName);
+                    i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nName);
                 }
             }
         }
@@ -174,16 +165,17 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        loadDefineFromOldFile();
         boolean loadFromFile = true;
         final List<InputStream> inputStreams = new LinkedList<>();
-        // 读取app定义配置加载到内存中 define/app/*.yml
+        // 读取监控定义配置加载到内存中 define/*.yml
         Yaml yaml = new Yaml();
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
-        String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+        String defineAppPath = classpath + File.separator + "define";
         File directory = new File(defineAppPath);
         if (!directory.exists() || directory.listFiles() == null) {
             classpath = this.getClass().getResource(File.separator).getPath();
-            defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+            defineAppPath = classpath + File.separator + "define";
             directory = new File(defineAppPath);
             if (!directory.exists() || directory.listFiles() == null) {
                 // load define app yml in jar
@@ -191,7 +183,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 loadFromFile = false;
                 try {
                     ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                    Resource[] resources = resolver.getResources("classpath:define/app/*.yml");
+                    Resource[] resources = resolver.getResources("classpath:define/*.yml");
                     for (Resource resource : resources) {
                         inputStreams.add(resource.getInputStream());
                     }
@@ -204,7 +196,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (loadFromFile) {
             log.info("load define path {}", defineAppPath);
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
-                if (appFile.exists()) {
+                if (appFile.exists() && appFile.isFile()) {
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         Job app = yaml.loadAs(fileInputStream, Job.class);
                         appDefines.put(app.getApp().toLowerCase(), app);
@@ -229,23 +221,67 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 });
             }
         }
+    }
+
+    private void loadDefineFromOldFile() {
+        boolean loadFromFile = true;
+        final List<InputStream> inputStreams = new LinkedList<>();
+        // 读取app定义配置加载到内存中 define/app/*.yml
+        Yaml yaml = new Yaml();
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+        File directory = new File(defineAppPath);
+        if (!directory.exists() || directory.listFiles() == null) {
+            classpath = this.getClass().getResource(File.separator).getPath();
+            defineAppPath = classpath + File.separator + "define" + File.separator + "app";
+            directory = new File(defineAppPath);
+            if (!directory.exists() || directory.listFiles() == null) {
+                // load define app yml in jar
+                loadFromFile = false;
+                try {
+                    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                    Resource[] resources = resolver.getResources("classpath:define/app/*.yml");
+                    for (Resource resource : resources) {
+                        inputStreams.add(resource.getInputStream());
+                    }
+                } catch (Exception e) {}
+            }
+        }
+        if (loadFromFile && directory.listFiles() != null) {
+            for (File appFile : directory.listFiles()) {
+                if (appFile.exists()) {
+                    try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
+                        Job app = yaml.loadAs(fileInputStream, Job.class);
+                        appDefines.put(app.getApp().toLowerCase(), app);
+                    } catch (IOException e) {}
+                }
+            }
+        } else {
+            if (!inputStreams.isEmpty()) {
+                inputStreams.forEach(stream -> {
+                    try (stream) {
+                        Job app = yaml.loadAs(stream, Job.class);
+                        appDefines.put(app.getApp().toLowerCase(), app);
+                    } catch (Exception e) {}
+                });
+            } else {
+                return;
+            }
+        }
 
         // 读取监控参数定义配置加载到数据库中 define/param/*.yml
         if (loadFromFile) {
             String defineParamPath = classpath + File.separator + "define" + File.separator + "param";
             directory = new File(defineParamPath);
             if (!directory.exists() || directory.listFiles() == null) {
-                throw new IllegalArgumentException("define param directory not exist: " + defineParamPath);
+                return;
             }
-            for (File appFile : Objects.requireNonNull(directory.listFiles())) {
+            for (File appFile : directory.listFiles()) {
                 if (appFile.exists()) {
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         ParamDefineDto paramDefine = yaml.loadAs(fileInputStream, ParamDefineDto.class);
-                        paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
-                    } catch (IOException e) {
-                        log.error(e.getMessage(), e);
-                        throw new IOException(e);
-                    }
+                        appDefines.get(paramDefine.getApp().toLowerCase()).setParams(paramDefine.getParam());
+                    } catch (IOException e) {}
                 }
             }
         } else {
@@ -255,13 +291,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 for (Resource resource : resources) {
                     InputStream stream = resource.getInputStream();
                     ParamDefineDto paramDefine = yaml.loadAs(stream, ParamDefineDto.class);
-                    paramDefines.put(paramDefine.getApp().toLowerCase(), paramDefine.getParam());
+                    appDefines.get(paramDefine.getApp().toLowerCase()).setParams(paramDefine.getParam());
                     stream.close();
                 }
-            } catch (Exception e) {
-                log.error("define param yml not exist");
-                throw e;
-            }
+            } catch (Exception e) {}
         }
     }
 }
