@@ -34,12 +34,8 @@ import com.usthe.common.util.Pair;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -183,16 +179,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
-        List<CollectRep.Field> fieldList = new LinkedList<>();
-        for (Metrics.Field field : metrics.getFields()) {
-            CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
-            fieldBuilder.setName(field.getField()).setType(field.getType());
-            if (field.getUnit() != null) {
-                fieldBuilder.setUnit(field.getUnit());
-            }
-            fieldList.add(fieldBuilder.build());
-        }
-        collectData.addAllFields(fieldList);
         List<CollectRep.ValueRow> aliasRowList = collectData.getValuesList();
         if (aliasRowList == null || aliasRowList.isEmpty()) {
             return;
@@ -206,19 +192,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
-                .map(cal -> {
-                    int splitIndex = cal.indexOf("=");
-                    String field = cal.substring(0, splitIndex).trim();
-                    String expressionStr = cal.substring(splitIndex + 1).trim();
-                    Expression expression = null;
-                    try {
-                        expression = AviatorEvaluator.compile(expressionStr, true);
-                    } catch (Exception e) {
-                        fieldAliasMap.put(field, expressionStr);
-                        return null;
-                    }
-                    return new Object[]{field, expression};
-                })
+                .map(cal -> transformCal(cal, fieldAliasMap))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1], (oldValue, newValue) -> newValue));
 
@@ -227,43 +201,28 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         }
         Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
                 .stream()
-                .map(unit -> {
-                    int equalIndex = unit.indexOf("=");
-                    int arrowIndex = unit.indexOf("->");
-                    if (equalIndex < 0 || arrowIndex < 0) {
-                        return null;
-                    }
-                    String field = unit.substring(0, equalIndex).trim();
-                    String originUnit = unit.substring(equalIndex + 1, arrowIndex).trim();
-                    String newUnit = unit.substring(arrowIndex + 2).trim();
-                    return new Object[]{field, Pair.of(originUnit, newUnit)};
-                })
+                .map(this::transformUnit)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
+        Map<String, Metrics.Field> fieldMap = fields.stream().collect(Collectors.toMap(Metrics.Field::getField, Function.identity(), (oldValue, newValue) -> newValue));
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, String> aliasFieldValueMap = new HashMap<>(16);
         Map<String, Object> fieldValueMap = new HashMap<>(16);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
+        List<Metrics.Field> notNullFields = new ArrayList<>(fields.size());
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
-            int nullSize = 0;
             for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
-                } else {
-                    nullSize++;
-                    aliasFieldValueMap.put(aliasFields.get(aliasIndex), null);
+                    notNullFields.add(fieldMap.get(aliasFields.get(aliasIndex)));
                 }
             }
-            if (nullSize > aliasFields.size() / 2) {
-                // most of the fields in this row are null, ignore
-                aliasFieldValueMap.clear();
-                continue;
-            }
+
             StringBuilder instanceBuilder = new StringBuilder();
-            for (Metrics.Field field : fields) {
+            for (Metrics.Field field : notNullFields) {
                 String realField = field.getField();
                 Expression expression = fieldExpressionMap.get(realField);
                 String value = null;
@@ -347,10 +306,67 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             }
             aliasFieldValueMap.clear();
             // set instance         设置实例instance
+            List<CollectRep.Field> collect = notNullFields
+                    .stream().map(this::doCollectRepField)
+                    .collect(Collectors.toList());
+            collectData.addAllFields(collect);
             realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
+    }
+
+
+    /**
+     *
+     * @param cal
+     * @param fieldAliasMap
+     * @return
+     */
+    private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
+        int splitIndex = cal.indexOf("=");
+        String field = cal.substring(0, splitIndex).trim();
+        String expressionStr = cal.substring(splitIndex + 1).trim();
+        Expression expression;
+        try {
+            expression = AviatorEvaluator.compile(expressionStr, true);
+        } catch (Exception e) {
+            fieldAliasMap.put(field, expressionStr);
+            return null;
+        }
+        return new Object[]{field, expression};
+    }
+
+
+    /**
+     * transform unit
+     * @param unit
+     * @return
+     */
+    private Object[] transformUnit(String unit) {
+        int equalIndex = unit.indexOf("=");
+        int arrowIndex = unit.indexOf("->");
+        if (equalIndex < 0 || arrowIndex < 0) {
+            return null;
+        }
+        String field = unit.substring(0, equalIndex).trim();
+        String originUnit = unit.substring(equalIndex + 1, arrowIndex).trim();
+        String newUnit = unit.substring(arrowIndex + 2).trim();
+        return new Object[]{field, Pair.of(originUnit, newUnit)};
+    }
+
+    /**
+     * build CollectRep.Field
+     * @param field
+     * @return
+     */
+    private CollectRep.Field doCollectRepField(Metrics.Field field) {
+        CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
+        fieldBuilder.setName(field.getField()).setType(field.getType());
+        if (field.getUnit() != null) {
+            fieldBuilder.setUnit(field.getUnit());
+        }
+        return fieldBuilder.build();
     }
 
     private boolean fastFailed() {
