@@ -206,7 +206,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
-        Map<String, Metrics.Field> fieldMap = fields.stream().collect(Collectors.toMap(Metrics.Field::getField, Function.identity(), (oldValue, newValue) -> newValue));
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, String> aliasFieldValueMap = new HashMap<>(16);
         Map<String, Object> fieldValueMap = new HashMap<>(16);
@@ -217,12 +216,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
-                    notNullFields.add(fieldMap.get(aliasFields.get(aliasIndex)));
                 }
             }
 
             StringBuilder instanceBuilder = new StringBuilder();
-            for (Metrics.Field field : notNullFields) {
+            for (Metrics.Field field : fields) {
                 String realField = field.getField();
                 Expression expression = fieldExpressionMap.get(realField);
                 String value = null;
@@ -296,8 +294,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
                 if (value == null) {
-                    value = CommonConstants.NULL_VALUE;
+                    continue;
                 }
+                notNullFields.add(field);
                 realValueRowBuilder.addColumns(value);
                 fieldValueMap.clear();
                 if (field.isInstance() && !CommonConstants.NULL_VALUE.equals(value)) {
