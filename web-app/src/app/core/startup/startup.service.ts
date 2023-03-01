@@ -16,7 +16,9 @@ import { I18NService } from '../i18n/i18n.service';
  * Used for application startup
  * Generally used to get the basic data of the application, like: Menu Data, User Data, etc.
  */
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class StartupService {
   constructor(
     iconSrv: NzIconService,
@@ -35,7 +37,7 @@ export class StartupService {
     });
   }
 
-  private viaHttp(): Observable<void> {
+  public loadConfigResourceViaHttp(): Observable<void> {
     const defaultLang = this.i18n.defaultLang;
     return zip(
       this.i18n.loadLangData(defaultLang),
@@ -125,7 +127,7 @@ export class StartupService {
 
   load(): Observable<void> {
     // http
-    return this.viaHttp();
+    return this.loadConfigResourceViaHttp();
     // mock: Don’t use it in a production environment. ViaMock is just to simulate some data to make the scaffolding work normally
     // mock：请勿在生产环境中这么使用，viaMock 单纯只是为了模拟一些数据使脚手架一开始能正常运行
     // return this.viaMockI18n();

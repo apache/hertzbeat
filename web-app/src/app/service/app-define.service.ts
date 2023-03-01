@@ -28,6 +28,23 @@ export class AppDefineService {
     return this.http.get<Message<any>>(`/apps/${app}/define`);
   }
 
+  public getAppDefineYmlContent(app: string | undefined | null): Observable<Message<any>> {
+    if (app === null || app === undefined) {
+      console.log('getAppDefine app can not null');
+    }
+    return this.http.get<Message<any>>(`/apps/${app}/define/yml`);
+  }
+
+  public saveAppDefineYmlContent(defineContent: string | undefined | null): Observable<Message<any>> {
+    if (defineContent === null || defineContent === undefined) {
+      console.log('defineContent can not null');
+    }
+    let body = {
+      define: defineContent
+    };
+    return this.http.post<Message<any>>(`/apps/define/yml`, body);
+  }
+
   public getAppHierarchy(lang: string | undefined): Observable<Message<any>> {
     if (lang == undefined) {
       lang = 'en_US';
