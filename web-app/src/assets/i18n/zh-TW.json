@@ -34,6 +34,7 @@
     "extras": {
       "": "更多",
       "tags": "標簽管理",
+      "define": "監控定義",
       "help": "幫助中心",
       "setting": "設置"
     },
@@ -347,6 +348,11 @@
   "tag.display": "效果",
   "tag.bind": "綁定標簽",
   "tag.bind.tip": "您可以使用標簽(Tag)進行監控資源的分類管理， 例如給資源分別綁定生産環境、測試環境的標簽。",
+  "define.save-apply": "保存並應用",
+  "define.new": "新增監控類型",
+  "define.new.code": "# 請在此通過編寫YML內容來定義新的監控類型, 參考文檔: https://hertzbeat.com/docs/advanced/extend-point ",
+  "define.save-apply.no-code": "監控類型定義內容不能為空。",
+  "define.save-apply.confirm": "請確認是否保存修改並應用此監控類型定義? 這會影響到您的監控內容。",
   "validation.email.required": "請輸入郵箱地址！",
   "validation.email.wrong-format": "郵箱地址格式錯誤！",
   "validation.email.invalid": "無效的郵箱地址！",

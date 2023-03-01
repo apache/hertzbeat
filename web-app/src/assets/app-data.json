@@ -109,6 +109,14 @@
           "link": "/setting/tags"
         },
         {
+          "text": "define",
+          "i18n": "menu.extras.define",
+          "icon": "anticon-code",
+          "link": "/setting/define",
+          "badgeDot": true,
+          "badge": 1
+        },
+        {
           "text": "helpCenter",
           "externalLink": "https://hertzbeat.com/docs/help/guide",
           "target": "_blank",

@@ -45,7 +45,7 @@ export class AlertSettingComponent implements OnInit {
     this.loadAlertDefineTable();
     // 查询监控层级
     const getHierarchy$ = this.appDefineSvc
-      .getAppHierarchy(this.settingsSvc.layout.lang)
+      .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
         finalize(() => {
           getHierarchy$.unsubscribe();

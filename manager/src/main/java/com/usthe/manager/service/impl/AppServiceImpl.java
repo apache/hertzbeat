@@ -24,12 +24,14 @@ import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -37,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -59,7 +62,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        Job appDefine = appDefines.get(app);
+        if (app == null) {
+            return Collections.emptyList();
+        }
+        Job appDefine = appDefines.get(app.toLowerCase());
         if (appDefine != null && appDefine.getParams() != null) {
             return appDefine.getParams();
         } else {
@@ -69,7 +75,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
-        Job appDefine = appDefines.get(app);
+        if (app == null) {
+            throw new IllegalArgumentException("The app can not null.");
+        }
+        Job appDefine = appDefines.get(app.toLowerCase());
         if (appDefine == null) {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
@@ -80,7 +89,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
         if (StringUtils.hasLength(app)) {
-            Job appDefine = appDefines.get(app);
+            Job appDefine = appDefines.get(app.toLowerCase());
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
@@ -161,6 +170,65 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             hierarchies.add(hierarchyApp);
         }
         return hierarchies;
+    }
+
+    @Override
+    public String getMonitorDefineFileContent(String app) {
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+        File defineAppFile = new File(defineAppPath);
+        if (!defineAppFile.exists() || !defineAppFile.isFile()) {
+            classpath = this.getClass().getResource(File.separator).getPath();
+            defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+            defineAppFile = new File(defineAppPath);
+            if (!defineAppFile.exists() || !defineAppFile.isFile()) {
+                try {
+                    // load define app yml in jar
+                    log.info("load define app yml in internal jar");
+                    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                    Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
+                    InputStream inputStream = resource.getInputStream();
+                    String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+                    inputStream.close();
+                    return content;
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+            }
+        }
+        log.info("load {} define app yml in file: {}", app, defineAppPath);
+        try {
+            return FileUtils.readFileToString(defineAppFile, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        throw new IllegalArgumentException("can not find " + app + " define yml");
+    }
+
+    @Override
+    public void applyMonitorDefineYml(String ymlContent) {
+        Yaml yaml = new Yaml();
+        Job app;
+        try {
+            app = yaml.loadAs(ymlContent, Job.class);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new IllegalArgumentException("parse yml define error: " + e.getMessage());
+        }
+        // app params need todo more
+        if (app == null || app.getApp() == null || app.getCategory() == null) {
+            throw new IllegalArgumentException("define yml required params can not null");
+        }
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app.getApp() + ".yml";
+        File defineAppFile = new File(defineAppPath);
+        try {
+            FileUtils.writeStringToFile(defineAppFile, ymlContent, StandardCharsets.UTF_8, false);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
+        }
+        appDefines.put(app.getApp().toLowerCase(), app);
     }
 
     @Override
