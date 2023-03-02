@@ -35,6 +35,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -222,10 +223,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             log.error(e.getMessage());
             throw new IllegalArgumentException("parse yml define error: " + e.getMessage());
         }
-        // app params need todo more
-        if (app == null || app.getApp() == null || app.getCategory() == null) {
-            throw new IllegalArgumentException("define yml required params can not null");
-        }
+        // app params verify
+        verifyDefineAppContent(app);
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
         String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app.getApp() + ".yml";
         File defineAppFile = new File(defineAppPath);
@@ -236,6 +235,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
         }
         appDefines.put(app.getApp().toLowerCase(), app);
+    }
+
+    private void verifyDefineAppContent(Job app) {
+        Assert.notNull(app, "define yml can not null");
+        Assert.notNull(app.getApp(), "define yml require attributes app");
+        Assert.notNull(app.getCategory(), "define yml require attributes category");
+        Assert.notEmpty(app.getName(), "define yml require attributes name");
+        Assert.notEmpty(app.getParams(), "define yml require attributes params");
+        Assert.notEmpty(app.getMetrics(), "define yml require attributes metrics");
     }
 
     @Override
