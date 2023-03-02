@@ -7,7 +7,6 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { AppDefineService } from '../../../service/app-define.service';
-import { NzEditorMode } from 'ng-zorro-antd/code-editor/typings';
 
 @Component({
   selector: 'app-define',
