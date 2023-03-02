@@ -92,4 +92,10 @@ public interface AppService {
      */
     void applyMonitorDefineYml(String ymlContent);
 
+    /**
+     * delete monitor define yml
+     * @param app app
+     */
+    void deleteMonitorDefine(String app);
+
 }

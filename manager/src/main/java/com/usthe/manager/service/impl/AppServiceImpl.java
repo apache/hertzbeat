@@ -19,12 +19,16 @@ package com.usthe.manager.service.impl;
 
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
+import com.usthe.common.entity.manager.Monitor;
+import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.pojo.dto.Hierarchy;
 import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.manager.pojo.dto.ParamDefineDto;
 import com.usthe.manager.service.AppService;
+import com.usthe.manager.service.MonitorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
@@ -57,6 +61,9 @@ import java.util.stream.Collectors;
 @Order(value = 1)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
+
+    @Autowired
+    private MonitorDao monitorDao;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
@@ -229,6 +236,22 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
         }
         appDefines.put(app.getApp().toLowerCase(), app);
+    }
+
+    @Override
+    public void deleteMonitorDefine(String app) {
+        // if app has monitors now, delete failed
+        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(app);
+        if (monitors != null && !monitors.isEmpty()) {
+            throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
+        }
+        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+        File defineAppFile = new File(defineAppPath);
+        if (defineAppFile.exists() && defineAppFile.isFile()) {
+            defineAppFile.delete();
+        }
+        appDefines.remove(app.toLowerCase());
     }
 
     @Override

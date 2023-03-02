@@ -73,6 +73,20 @@ public class AppController {
         return ResponseEntity.ok(Message.<String>builder().data(defineContent).build());
     }
 
+    @DeleteMapping(path = "/{app}/define/yml")
+    @Operation(summary = "Delete monitor define yml", description = "根据app删除指定监控类型的定义YML")
+    public ResponseEntity<Message<Void>> deleteAppDefineYml(
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
+        try {
+            appService.deleteMonitorDefine(app);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.<Void>builder()
+                    .code(CommonConstants.FAIL_CODE)
+                    .msg(e.getMessage()).build());
+        }
+        return ResponseEntity.ok(Message.<Void>builder().build());
+    }
+
     @PostMapping(path = "/define/yml")
     @Operation(summary = "Save and apply monitoring type define yml", description = "保存并应用监控类型的定义YML")
     public ResponseEntity<Message<Void>> applyAppDefineYml(@RequestBody MonitorDefineDto defineDto) {

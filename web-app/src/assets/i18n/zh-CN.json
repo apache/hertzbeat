@@ -349,6 +349,8 @@
   "tag.bind": "绑定标签",
   "tag.bind.tip": "您可以使用标签(Tag)进行监控资源的分类管理， 例如给资源分别绑定生产环境、测试环境的标签。",
   "define.save-apply": "保存并应用",
+  "define.delete": "删除监控类型",
+  "define.delete.confirm": "请确认是否删除 {{app}} 监控类型? 删除后无法添加此类监控。",
   "define.new": "新增监控类型",
   "define.new.code": "# 请在此通过编写YML内容来定义新的监控类型, 参考文档: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "监控类型定义内容不能为空。",
