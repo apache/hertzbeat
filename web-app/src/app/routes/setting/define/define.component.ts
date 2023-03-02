@@ -30,10 +30,15 @@ export class DefineComponent implements OnInit {
   dark: boolean = true;
   currentApp: any = null;
   saveLoading = false;
+  deleteLoading = false;
 
   ngOnInit(): void {
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');
+    this.loadMenus();
+  }
+
+  loadMenus() {
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
@@ -44,6 +49,7 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
+            this.appMenus = {};
             message.data.forEach((app: any) => {
               let menus = this.appMenus[app.category];
               if (menus == undefined) {
@@ -116,6 +122,21 @@ export class DefineComponent implements OnInit {
     });
   }
 
+  onDeleteDefineYml() {
+    if (this.currentApp == null) {
+      return;
+    }
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('define.delete.confirm', { app: this.currentApp.label }),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzClosable: false,
+      nzOnOk: () => this.deleteYml()
+    });
+  }
+
   onNewMonitorDefine() {
     this.currentApp = null;
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
@@ -134,12 +155,43 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
+            this.loadMenus();
             if (this.currentApp != null) {
               this.loadAppDefineContent(this.currentApp);
             }
-            this.startUpSvc.loadConfigResourceViaHttp();
+            this.startUpSvc.loadConfigResourceViaHttp().subscribe(() => {});
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
           } else {
-            this.notifySvc.error(message.msg, '');
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
+  }
+
+  deleteYml() {
+    this.deleteLoading = true;
+    const saveDefine$ = this.appDefineSvc
+      .deleteAppDefine(this.currentApp.value)
+      .pipe(
+        finalize(() => {
+          saveDefine$.unsubscribe();
+          this.deleteLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.currentApp = null;
+            this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
+            this.originalCode = this.i18nSvc.fanyi('define.new.code');
+            this.loadMenus();
+            this.startUpSvc.loadConfigResourceViaHttp().subscribe(() => {});
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
           }
         },
         error => {

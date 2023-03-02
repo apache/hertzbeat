@@ -353,6 +353,8 @@
   "tag.bind": "Bind Tags",
   "tag.bind.tip": "You can use tags for classification management.eg: assign tags to resources in production environment and test environment.",
   "define.save-apply": "Save And Apply",
+  "define.delete": "Delete Monitor Type",
+  "define.delete.confirm": "Please confirm whether to delete {{app}} monitoring type? This type of monitoring cannot be added after deletion.",
   "define.new": "New Monitor Type",
   "define.new.code": "# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "The monitoring type definition content cannot be empty.",
