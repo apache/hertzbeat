@@ -69,6 +69,10 @@
           <i nz-icon nzType="save" nzTheme="outline"></i>
           {{ 'define.new' | i18n }}
         </button>
+        <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+          {{ 'define.delete' | i18n }}
+        </button>
 
         <nz-switch
           style="margin-right: 25px; float: right"
@@ -91,7 +95,7 @@
           [nzOriginalText]="originalCode"
           [(ngModel)]="code"
           [nzEditorMode]="'diff'"
-          [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark' }"
+          [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true }"
         ></nz-code-editor>
       </div>
     </nz-content>
