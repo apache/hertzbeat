@@ -64,10 +64,10 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
     password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
     hikari:
       max-lifetime: 120000
 
@@ -104,7 +104,7 @@ warehouse:
       username: root
       password: taosdata
     iot-db:
-      enabled: false
+      enabled: true
       host: 127.0.0.1
       rpc-port: 6667
       username: root
