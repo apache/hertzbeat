@@ -155,16 +155,87 @@ metrics:
       sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
       url: ^_^url^_^
 
-  - name: user_connect
+  - name: total_sessions
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select count(*) as num from v$session
+      url: ^_^url^_^
+
+  - name: active_sessions
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select count(*) as num from v$session where username is not null and status = 'ACTIVE'
+      url: ^_^url^_^
+
+  - name: background_sessions
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select count(*) as num from v$session where username is null
+      url: ^_^url^_^
+
+  - name: connection
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: username
         type: 1
         instance: true
-      - field: counts
+      - field: count
         type: 0
-        unit: 连接数
     protocol: jdbc
     jdbc:
       # 主机host: ipv4 ipv6 域名
@@ -238,10 +309,10 @@ metrics:
         type: 1
       - field: used_percentage
         type: 0
-        unit: 百分比
+        unit: '%'
       - field: free_percentage
         type: 0
-        unit: 百分比
+        unit: '%'
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -253,4 +324,201 @@ metrics:
       timeout: ^_^timeout^_^
       queryType: multiRow
       sql: SELECT a.tablespace_name AS tablespace_name, a.bytes AS total, b.bytes AS used, c.bytes AS free , b.bytes * 100 / a.bytes AS used_percentage , c.bytes * 100 / a.bytes AS free_percentage FROM sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c WHERE a.tablespace_name = b.tablespace_name AND a.tablespace_name = c.tablespace_name
+      url: ^_^url^_^
+
+  - name: process
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: process_count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select count(*) as process_count from v$process
+      url: ^_^url^_^
+
+  - name: transaction
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: commits
+        type: 0
+        unit: '次/s'
+      - field: rollbacks
+        type: 0
+        unit: '次/s'
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - User Commits Per Sec
+      - User Rollbacks Per Sec
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - commits=User Commits Per Sec
+      - rollbacks=User Rollbacks Per Sec
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'
+      url: ^_^url^_^
+
+  - name: wait
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: concurrent_wait_time
+        type: 0
+        unit: ms
+      - field: commit_wait_time
+        type: 0
+        unit: ms
+      - field: app_wait_time
+        type: 0
+        unit: ms
+      - field: network_wait_time
+        type: 0
+        unit: ms
+      - field: system_io_wait_time
+        type: 0
+        unit: ms
+      - field: user_io_wait_time
+        type: 0
+        unit: ms
+      - field: configure_wait_time
+        type: 0
+        unit: ms
+      - field: scheduler_wait_time
+        type: 0
+        unit: ms
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - System I/O
+      - Application
+      - User I/O
+      - Commit
+      - Concurrency
+      - Configuration
+      - Idle
+      - Other
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - system_io_wait_time=System I/O
+      - app_wait_time=Application
+      - user_io_wait_time=User I/O
+      - commit_wait_time=Commit
+      - concurrent_wait_time=Concurrency
+      - configure_wait_time=Configuration
+      - scheduler_wait_time=Idle
+      - network_wait_time=Other
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select wait_class, sum(time_waited) total_wait_time from v$active_session_history where session_state = 'WAITING' GROUP BY wait_class ORDER BY total_wait_time DESC
+      url: ^_^url^_^
+
+  - name: cpu_stats
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+        instance: true
+      - field: num
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'
+      url: ^_^url^_^
+
+  - name: mem_stats
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+        instance: true
+      - field: num
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: select stat_name as type, value as num from v$osstat where stat_name like '%BYTES'
+      url: ^_^url^_^
+
+  - name: cache_hit_ratio
+    priority: 1
+    fields:
+      - field: lib_cache_hit_ratio
+        type: 0
+      - field: buffer_cache_hit_ratio
+        type: 0
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - Library Cache Hit Ratio
+      - Buffer Cache Hit Ratio
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - lib_cache_hit_ratio=Library Cache Hit Ratio
+      - buffer_cache_hit_ratio=Buffer Cache Hit Ratio
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
       url: ^_^url^_^
