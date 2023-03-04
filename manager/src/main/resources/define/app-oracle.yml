@@ -176,7 +176,7 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: select count(*) as num from v$session
+      sql: select count(*) as count from v$session
       url: ^_^url^_^
 
   - name: active_sessions
@@ -200,7 +200,7 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: select count(*) as num from v$session where username is not null and status = 'ACTIVE'
+      sql: select count(*) as count from v$session where username is not null and status = 'ACTIVE'
       url: ^_^url^_^
 
   - name: background_sessions
@@ -224,7 +224,7 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: select count(*) as num from v$session where username is null
+      sql: select count(*) as count from v$session where username is null
       url: ^_^url^_^
 
   - name: connection
@@ -250,7 +250,7 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: SELECT username, count( username ) as counts FROM v$session WHERE username IS NOT NULL GROUP BY username
+      sql: SELECT username, count( username ) as count FROM v$session WHERE username IS NOT NULL GROUP BY username
       url: ^_^url^_^
 
   - name: performance
