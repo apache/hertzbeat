@@ -28,7 +28,10 @@
     <artifactId>alerter</artifactId>
 
     <properties>
-
+        <common.version>1.0</common.version>
+        <influxdb-client-java.version>3.4.0</influxdb-client-java.version>
+        <kafka-clients.version>3.0.0</kafka-clients.version>
+        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
     </properties>
 
     <dependencies>
@@ -36,7 +39,7 @@
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${common.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- spring -->
@@ -75,13 +78,13 @@
         <dependency>
             <groupId>com.influxdb</groupId>
             <artifactId>influxdb-client-java</artifactId>
-            <version>3.4.0</version>
+            <version>${influxdb-client-java.version}</version>
         </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>3.0.0</version>
+            <version>${kafka-clients.version}</version>
         </dependency>
         <!--redis-->
         <dependency>
@@ -99,7 +102,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>3.0.5</version>
+            <version>${spring-cloud-starter-openfeign.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
