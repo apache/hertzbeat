@@ -179,6 +179,16 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
+        List<CollectRep.Field> fieldList = new LinkedList<>();
+        for (Metrics.Field field : metrics.getFields()) {
+            CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
+            fieldBuilder.setName(field.getField()).setType(field.getType());
+            if (field.getUnit() != null) {
+                fieldBuilder.setUnit(field.getUnit());
+            }
+            fieldList.add(fieldBuilder.build());
+        }
+        collectData.addAllFields(fieldList);
         List<CollectRep.ValueRow> aliasRowList = collectData.getValuesList();
         if (aliasRowList == null || aliasRowList.isEmpty()) {
             return;
@@ -210,7 +220,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         Map<String, String> aliasFieldValueMap = new HashMap<>(16);
         Map<String, Object> fieldValueMap = new HashMap<>(16);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
-        List<Metrics.Field> notNullFields = new ArrayList<>(fields.size());
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
             for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
@@ -294,9 +303,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
                 if (value == null) {
-                    continue;
+                    value = CommonConstants.NULL_VALUE;
                 }
-                notNullFields.add(field);
                 realValueRowBuilder.addColumns(value);
                 fieldValueMap.clear();
                 if (field.isInstance() && !CommonConstants.NULL_VALUE.equals(value)) {
@@ -304,11 +312,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
             }
             aliasFieldValueMap.clear();
-            // set instance         设置实例instance
-            List<CollectRep.Field> collect = notNullFields
-                    .stream().map(this::doCollectRepField)
-                    .collect(Collectors.toList());
-            collectData.addAllFields(collect);
+            // set instance
             realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
