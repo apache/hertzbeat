@@ -85,9 +85,24 @@ spring:
 
 warehouse:
   store:
+# store history metrics data, enable only one below
+# 存储历史数据方式, 下方只能enabled启用一种方式
+    jpa:
+      enabled: false
+      expire-time: 7D
     td-engine:
       enabled: true
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
       url: jdbc:TAOS-RS://tdengine:6041/hertzbeat
       username: root
       password: taosdata
+# store real-time metrics data, enable only one below
+# 存储实时数据方式, 下方只能enabled启用一种方式
+    memory:
+      enabled: true
+      init-size: 1024
+    redis:
+      enabled: false
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
