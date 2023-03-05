@@ -23,7 +23,7 @@
 <nz-divider></nz-divider>
 
 <div style="margin-bottom: 20px" nz-row>
-  <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10 }">
+  <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 14 }">
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
@@ -47,7 +47,7 @@
       {{ 'monitors.delete' | i18n }}
     </button>
   </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 6 }" class="mobile-hide">
+  <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 2 }" class="mobile-hide">
     <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
       {{ 'common.search' | i18n }}
     </button>
