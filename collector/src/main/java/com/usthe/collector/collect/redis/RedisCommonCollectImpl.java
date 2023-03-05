@@ -21,6 +21,9 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.util.*;
 
+import static com.usthe.common.util.MapCapUtil.calInitMap;
+import static com.usthe.common.util.SignConstants.*;
+
 /**
  * @description:
  *
@@ -42,15 +45,15 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             return;
         }
         try {
-            Map<String, String> redisInfo ;
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 RedisClusterCollectImpl redisClusterCollect = new RedisClusterCollectImpl();
-                redisInfo = redisClusterCollect.getRedisInfo(metrics);
+                List<Map<String, String>> redisInfoList = redisClusterCollect.getRedisInfo(metrics);
+                doMetricsDataList(builder, redisInfoList, metrics);
             } else {
                 RedisSingleCollectImpl redisSingleCollect = new RedisSingleCollectImpl();
-                redisInfo = redisSingleCollect.getRedisInfo(metrics);
+                Map<String, String> redisInfo = redisSingleCollect.getRedisInfo(metrics);
+                doMetricsData(builder, redisInfo, metrics);
             }
-            doMetricsData(builder, redisInfo, metrics);
         } catch (RedisConnectionException connectionException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectionException);
             log.info("[redis connection] error: {}", errorMsg);
@@ -77,12 +80,12 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @return parsed redis info
      */
     protected Map<String, String> parseInfo(String info) {
-        String[] lines = info.split("\n");
-        Map<String, String> result = new HashMap<>(128);
+        String[] lines = info.split(LINE_FEED);
+        Map<String, String> result = new HashMap<>(calInitMap(lines.length));
         Arrays.stream(lines)
-                .filter(it -> StringUtils.hasText(it) && !it.startsWith("#") && it.contains(":"))
+                .filter(it -> StringUtils.hasText(it) && !it.startsWith(WELL_NO) && it.contains(DOUBLE_MARK))
                 .map(this::removeCr)
-                .map(r -> r.split(":"))
+                .map(r -> r.split(DOUBLE_MARK))
                 .forEach(it -> {
                     if (it.length > 1) {
                         result.put(it[0], it[1]);
@@ -94,6 +97,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * structure
+     *
      * @param redisProtocol
      * @return
      */
@@ -113,6 +117,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * build redis cache key
+     *
      * @param redisProtocol
      * @return
      */
@@ -128,6 +133,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * get redis connection
+     *
      * @param identifier
      * @return
      */
@@ -153,6 +159,17 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * Build monitoring parameters according to redis info
+     * @param builder
+     * @param valueMapList
+     * @param metrics
+     */
+    private void doMetricsDataList(CollectRep.MetricsData.Builder builder, List<Map<String, String>> valueMapList, Metrics metrics) {
+        valueMapList.forEach(e -> doMetricsData(builder, e, metrics));
+    }
+
+    /**
+     * Build monitoring parameters according to redis info
+     *
      * @param builder
      * @param valueMap
      * @param metrics
@@ -189,7 +206,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
 
     private String removeCr(String value) {
-        return value.replace("\r", "");
+        return value.replace(CARRIAGE_RETURN, "");
     }
 
 
