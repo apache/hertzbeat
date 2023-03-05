@@ -66,6 +66,8 @@ metrics:
   - name: server
     priority: 0
     fields:
+      - field: identity
+        type: 1
       - field: redis_version
         type: 1
       - field: redis_git_sha1
@@ -124,6 +126,8 @@ metrics:
   - name: clients
     priority: 1
     fields:
+      - field: identity
+        type: 1
       - field: connected_clients
         type: 0
       - field: cluster_connections
@@ -152,6 +156,8 @@ metrics:
   - name: memory
     priority: 2
     fields:
+      - field: identity
+        type: 1
       - field: used_memory
         type: 0
       - field: used_memory_human
@@ -255,6 +261,8 @@ metrics:
   - name: persistence
     priority: 3
     fields:
+      - field: identity
+        type: 1
       - field: loading
         type: 0
       - field: current_cow_size
@@ -313,6 +321,8 @@ metrics:
   - name: stats
     priority: 4
     fields:
+      - field: identity
+        type: 1
       - field: total_connections_received
         type: 0
       - field: total_commands_processed
@@ -401,6 +411,8 @@ metrics:
   - name: replication
     priority: 5
     fields:
+      - field: identity
+        type: 1
       - field: role
         type: 1
       - field: connected_slaves
@@ -435,6 +447,8 @@ metrics:
   - name: cpu
     priority: 6
     fields:
+      - field: identity
+        type: 1
       - field: used_cpu_sys
         type: 0
       - field: used_cpu_user
@@ -459,6 +473,8 @@ metrics:
   - name: errorstats
     priority: 8
     fields:
+      - field: identity
+        type: 1
       - field: errorstat_ERR
         type: 1
       - field: errorstat_MISCONF
@@ -475,6 +491,8 @@ metrics:
   - name: cluster
     priority: 9
     fields:
+      - field: identity
+        type: 1
       - field: cluster_enabled
         type: 0
       - field: cluster_state
@@ -521,6 +539,8 @@ metrics:
   - name: commandstats
     priority: 9
     fields:
+      - field: identity
+        type: 1
       - field: cmdstat_set
         type: 1
       - field: cmdstat_get
@@ -554,6 +574,8 @@ metrics:
   - name: keyspace
     priority: 9
     fields:
+      - field: identity
+        type: 1
       - field: db0
         type: 1
       - field: db1
