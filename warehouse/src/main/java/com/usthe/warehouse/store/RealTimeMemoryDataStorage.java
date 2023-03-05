@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *
  */
-@Primary
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.memory",
         name = "enabled", havingValue = "true", matchIfMissing = true)

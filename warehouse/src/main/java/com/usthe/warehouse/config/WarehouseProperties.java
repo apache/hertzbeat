@@ -136,6 +136,11 @@ public class WarehouseProperties {
     public static class StoreProperties {
 
         /**
+         * use mysql/h2 jpa store metrics history data
+         */
+        private JpaProperties jpa;
+
+        /**
          * 内存存储配置信息
          */
         private MemoryProperties memory;
@@ -156,6 +161,14 @@ public class WarehouseProperties {
          * IoTDB配置信息
          */
         private IotDbProperties iotDb;
+
+        public JpaProperties getJpa() {
+            return jpa;
+        }
+
+        public void setJpa(JpaProperties jpa) {
+            this.jpa = jpa;
+        }
 
         public MemoryProperties getMemory() {
             return memory;
@@ -222,6 +235,22 @@ public class WarehouseProperties {
             public void setInitSize(Integer initSize) {
                 this.initSize = initSize;
             }
+        }
+
+        public static class JpaProperties {
+            /**
+             * use mysql/h2 jpa store metrics history data
+             */
+            private boolean enabled = true;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
         }
 
         public static class InfluxdbProperties {

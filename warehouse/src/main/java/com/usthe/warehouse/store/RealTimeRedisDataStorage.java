@@ -28,6 +28,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +40,7 @@ import java.time.temporal.ChronoUnit;
  *
  *
  */
+@Primary
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.redis",
         name = "enabled", havingValue = "true")
