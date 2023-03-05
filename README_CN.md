@@ -229,6 +229,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ycilry"><img src="https://avatars.githubusercontent.com/u/63967101?v=4?s=100" width="100px;" alt="ycilry"/><br /><sub><b>ycilry</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ycilry" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/aoshiguchen"><img src="https://avatars.githubusercontent.com/u/10580997?v=4?s=100" width="100px;" alt="aoshiguchen"/><br /><sub><b>aoshiguchen</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=aoshiguchen" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caibenxiang"><img src="https://avatars.githubusercontent.com/u/4568241?v=4?s=100" width="100px;" alt="蔡本祥"/><br /><sub><b>蔡本祥</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=caibenxiang" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.fckeverything.cn:4000/"><img src="https://avatars.githubusercontent.com/u/13827124?v=4?s=100" width="100px;" alt="浮游"/><br /><sub><b>浮游</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=lifefloating" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
