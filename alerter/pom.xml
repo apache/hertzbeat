@@ -30,7 +30,7 @@
     <properties>
         <common.version>1.0</common.version>
         <influxdb-client-java.version>3.4.0</influxdb-client-java.version>
-        <kafka-clients.version>3.0.0</kafka-clients.version>
+        <kafka-clients.version>3.4.0</kafka-clients.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
     </properties>
 
