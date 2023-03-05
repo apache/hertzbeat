@@ -1,14 +1,14 @@
 ---
 id: iotdb-init  
 title: 依赖时序数据库服务IoTDB安装初始化        
-sidebar_label: 时序数据库IoTDB安装(可选)    
+sidebar_label: 使用IoTDB存储指标数据(可选)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库 IoTDB 或 TDengine，任选其一安装初始化即可，也可不安装(注意⚠️不安装则无历史图表数据)
+HertzBeat的历史数据存储依赖时序数据库 IoTDB 或 TDengine，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)   
 
-Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据的软件系统，我们使用其存储分析采集到的监控指标历史数据。
+Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据的软件系统，我们使用其存储分析采集到的监控指标历史数据。支持V0.12 - V0.13版本，推荐使用V0.13.*版本。
 
-注意⚠️ IoTDB为可选项，未配置则无历史图表数据，支持V0.12 - V0.13版本，推荐使用V0.13.*版本。
+**注意⚠️ 时序数据库安装配置为可选项，但强烈建议生产环境配置，以提供更完善的历史图表功能和高性能**
 
 > 如果您已有IoTDB环境，可直接跳到YML配置那一步。
 
@@ -38,12 +38,17 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
    配置HertzBeat的配置文件    
    修改位于 `hertzbeat/config/application.yml` 的配置文件   
-   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
-   替换里面的`warehouse.store.iot-db`数据源参数，HOST账户密码等    
+   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地，安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
 
-```
+**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置`warehouse.store.iot-db`数据源参数，HOST账户密码等，并启用`enabled`为`true`**    
+
+```yaml
 warehouse:
   store:
+    # 关闭默认JPA
+    jpa:
+      enabled: false
+    # 启用IotDB
     iot-db:
       enabled: true
       host: 127.0.0.1

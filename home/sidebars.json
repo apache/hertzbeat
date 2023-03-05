@@ -6,14 +6,15 @@
       "items": [
         "introduce",
         "start/quickstart",
-        "start/iotdb-init",
-        "start/tdengine-init",
         "start/docker-deploy",
         "start/package-deploy",
         "start/rainbond-deploy",
-        "start/ssl-cert-practice",
+        "start/iotdb-init",
+        "start/tdengine-init",
         "start/mysql-change",
-        "start/custom-config"
+        "start/account-modify",
+        "start/custom-config",
+        "start/ssl-cert-practice"
       ]
     },
     {
