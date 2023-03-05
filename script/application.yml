@@ -91,6 +91,7 @@ warehouse:
 # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
       enabled: true
+      expire-time: 7D
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
