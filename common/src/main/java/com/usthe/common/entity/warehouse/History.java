@@ -18,7 +18,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "history")
+@Table(name = "hzb_history")
 @Data
 @Builder
 @AllArgsConstructor

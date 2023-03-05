@@ -5,13 +5,16 @@ import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.entity.warehouse.History;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.TimePeriodUtil;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import com.usthe.warehouse.dao.HistoryDao;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.criteria.Predicate;
@@ -34,16 +37,42 @@ import java.util.*;
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private HistoryDao historyDao;
+    private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
     public HistoryJpaDatabaseDataStorage(WarehouseWorkerPool workerPool,
                                          WarehouseProperties properties,
                                          HistoryDao historyDao,
                                          CommonDataQueue commonDataQueue) {
         super(workerPool, properties, commonDataQueue);
-
+        this.jpaProperties = properties.getStore().getJpa();
         this.serverAvailable = true;
         this.historyDao = historyDao;
         this.startStorageData("warehouse-jpa-data-storage", isServerAvailable());
+    }
+
+    @Scheduled(cron = "0 0 23 * * ?")
+    public void expiredDataCleaner() {
+        String expireTimeStr = jpaProperties.getExpireTime();
+        long expireTime = 0;
+        try {
+            if (NumberUtils.isParsable(expireTimeStr)) {
+                expireTime = NumberUtils.toLong(expireTimeStr);
+                expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000;
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                expireTime = dateTime.toEpochSecond() * 1000;
+            }
+        } catch (Exception e) {
+            log.error("expiredDataCleaner time error: {}. use default expire time to clean: 7d", e.getMessage());
+            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(7));
+            expireTime = dateTime.toEpochSecond() * 1000;
+        }
+        try {
+            historyDao.deleteHistoriesByTimeBefore(expireTime);
+        } catch (Exception e) {
+            log.error("expiredDataCleaner database error: {}.", e.getMessage());
+        }
     }
 
     @Override
@@ -130,7 +159,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             }
             if (history != null) {
                 try {
-                    TemporalAmount temporalAmount = Duration.parse("PT" + history);
+                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
                     ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
                     long timeBefore = dateTime.toEpochSecond() * 1000;
                     Predicate timePredicate = criteriaBuilder.ge(root.get("time"), timeBefore);

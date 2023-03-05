@@ -12,4 +12,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface HistoryDao extends JpaRepository<History, Long>, JpaSpecificationExecutor<History> {
 
+    /**
+     * delete history before expireTime
+     * @param expireTime expireTime
+     */
+    void deleteHistoriesByTimeBefore(Long expireTime);
 }
