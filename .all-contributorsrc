@@ -733,6 +733,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lifefloating",
+      "name": "浮游",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13827124?v=4",
+      "profile": "http://www.fckeverything.cn:4000/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
