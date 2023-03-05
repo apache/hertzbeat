@@ -97,6 +97,10 @@ spring:
 
 warehouse:
   store:
+# store history metrics data, enable only one below
+# 存储历史数据方式, 下方只能enabled启用一种方式
+    jpa:
+      enabled: true
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
@@ -116,6 +120,8 @@ warehouse:
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'
+# store real-time metrics data, enable only one below
+# 存储实时数据方式, 下方只能enabled启用一种方式
     memory:
       enabled: true
       init-size: 1024
