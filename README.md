@@ -98,9 +98,9 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ##### 2：Install via package  
 
 1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. Need Jdk Environment, `jdk11`
-3. [optional]Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`  
-4. Run shell `$ ./startup.sh `
+2. Need `Java11` Environment
+3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
+4. Run shell `$ ./startup.sh ` or `startup.bat`
 5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
