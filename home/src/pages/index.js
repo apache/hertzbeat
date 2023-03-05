@@ -88,13 +88,13 @@ function Home() {
               </div>
               <div className={styles.buttons}>
                 <Link
-                    to="https://console.tancloud.cn"
+                    to="/docs/"
                     className={clsx(
-                        'button button--outline button--secondary button--lg',
+                        'button button--primary button--lg',
                         styles.getStarted
                     )}
                 >
-                  <Translate>即刻登录免费使用</Translate>
+                  <Translate>quickstart</Translate>
                 </Link>
               </div>
             </div>

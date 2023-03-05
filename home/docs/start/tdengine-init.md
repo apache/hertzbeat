@@ -1,13 +1,14 @@
 ---
 id: tdengine-init  
 title: 依赖时序数据库服务TDengine安装初始化        
-sidebar_label: 时序数据库TDengine安装(可选)    
+sidebar_label: 使用TDengine存储指标数据(可选)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库 TDengine 或 IoTDB，任选其一安装初始化即可，也可不安装(注意⚠️不安装则无历史图表数据)
+HertzBeat的历史数据存储依赖时序数据库 TDengine 或 IoTDB，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
-TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意⚠️ 2.4.x版本。   
-注意⚠️ TDengine为可选项，未配置则无历史图表数据。
+TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意支持⚠️ 2.4.x版本。   
+
+**注意⚠️ 时序数据库安装配置为可选项，但强烈建议生产环境配置，以提供更完善的历史图表功能和高性能**
 
 > 如果您已有TDengine环境，可直接跳到创建数据库实例那一步。
 
@@ -89,17 +90,21 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
 1. 配置HertzBeat的配置文件
    修改位于 `hertzbeat/config/application.yml` 的配置文件   
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
-   替换里面的`warehouse.store.td-engine`数据源参数，URL账户密码    
+
+**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.td-engine`数据源参数，URL账户密码，并启用`enabled`为`true`**    
 
 ```yaml
 warehouse:
-  store:
-    td-engine:
-      enabled: true
-      driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
-      url: jdbc:TAOS-RS://localhost:6041/hertzbeat
-      username: root
-      password: taosdata
+   store:
+      # 关闭默认JPA
+      jpa:
+         enabled: false
+      td-engine:
+         enabled: true
+         driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+         url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+         username: root
+         password: taosdata
 ```
 
 ### 常见问题   
