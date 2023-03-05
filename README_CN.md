@@ -96,9 +96,9 @@
 
 ##### 方式二：通过安装包安装
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. 需要已安装java环境, `jdk11`   
-3. [可选]配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`
-4. 部署启动 `$ ./startup.sh `
+2. 需要已安装`java11`环境   
+3. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
+4. 部署启动 `$ ./startup.sh ` 或 `startup.bat`
 5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)
@@ -113,7 +113,7 @@
 
 ##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 
-通过 [docker-compose部署脚本](script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
+通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
 详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
 
