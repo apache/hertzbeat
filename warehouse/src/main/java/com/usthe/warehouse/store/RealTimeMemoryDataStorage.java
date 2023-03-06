@@ -18,11 +18,8 @@
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -42,10 +39,8 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
 
     private final Map<String, CollectRep.MetricsData> metricsDataMap;
 
-    public RealTimeMemoryDataStorage(WarehouseWorkerPool workerPool, CommonDataQueue commonDataQueue) {
-        super(workerPool, commonDataQueue);
+    public RealTimeMemoryDataStorage() {
         metricsDataMap = new ConcurrentHashMap<>(1024);
-        super.startStorageData("warehouse-memory-data-storage");
     }
 
     @Override
@@ -61,7 +56,7 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
             return;
         }
         if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
+            log.debug("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         metricsDataMap.put(hashKey, metricsData);

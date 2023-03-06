@@ -2,9 +2,6 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.config.WarehouseProperties;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 
@@ -18,37 +15,7 @@ import java.util.Map;
  */
 @Slf4j
 public abstract class AbstractHistoryDataStorage implements DisposableBean {
-    protected final WarehouseWorkerPool workerPool;
-    protected final WarehouseProperties properties;
-    protected final CommonDataQueue commonDataQueue;
-
     protected boolean serverAvailable;
-
-    protected AbstractHistoryDataStorage(WarehouseWorkerPool workerPool,
-                                         WarehouseProperties properties,
-                                         CommonDataQueue commonDataQueue) {
-        this.workerPool = workerPool;
-        this.properties = properties;
-        this.commonDataQueue = commonDataQueue;
-    }
-
-    protected void startStorageData(String threadName, boolean consume) {
-        Runnable runnable = () -> {
-            Thread.currentThread().setName(threadName);
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
-                    if (consume && metricsData != null) {
-                        saveData(metricsData);
-                    }
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-            }
-        };
-        workerPool.executeJob(runnable);
-        workerPool.executeJob(runnable);
-    }
 
     /**
      * @return data storage是否可用

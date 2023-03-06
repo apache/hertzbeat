@@ -19,9 +19,7 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -71,16 +69,13 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
 
-    public HistoryTdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
-                                      CommonDataQueue commonDataQueue) {
-        super(workerPool, properties, commonDataQueue);
+    public HistoryTdEngineDataStorage(WarehouseProperties properties) {
         if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
         tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
         serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
-        this.startStorageData("warehouse-tdengine-data-storage", serverAvailable);
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
