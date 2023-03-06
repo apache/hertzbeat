@@ -3,10 +3,8 @@ package com.usthe.warehouse.store;
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.entity.warehouse.History;
-import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.common.util.TimePeriodUtil;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import com.usthe.warehouse.dao.HistoryDao;
 import lombok.extern.slf4j.Slf4j;
@@ -39,15 +37,11 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private HistoryDao historyDao;
     private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
-    public HistoryJpaDatabaseDataStorage(WarehouseWorkerPool workerPool,
-                                         WarehouseProperties properties,
-                                         HistoryDao historyDao,
-                                         CommonDataQueue commonDataQueue) {
-        super(workerPool, properties, commonDataQueue);
+    public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
+                                         HistoryDao historyDao) {
         this.jpaProperties = properties.getStore().getJpa();
         this.serverAvailable = true;
         this.historyDao = historyDao;
-        this.startStorageData("warehouse-jpa-data-storage", isServerAvailable());
     }
 
     @Scheduled(cron = "0 0 23 * * ?")

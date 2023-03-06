@@ -30,7 +30,6 @@ import com.usthe.warehouse.store.AbstractRealTimeDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,18 +57,22 @@ public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
 
-    @Autowired(required = false)
-    private AbstractRealTimeDataStorage realTimeDataStorage;
+    private List<AbstractRealTimeDataStorage> realTimeDataStorages;
 
-    @Autowired(required = false)
-    private AbstractHistoryDataStorage historyDataStorage;
+    private List<AbstractHistoryDataStorage> historyDataStorages;
+
+    public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
+                                 List<AbstractHistoryDataStorage> historyDataStorages) {
+        this.realTimeDataStorages = realTimeDataStorages;
+        this.historyDataStorages = historyDataStorages;
+    }
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
         boolean available = false;
-        if (historyDataStorage != null) {
-            available = historyDataStorage.isServerAvailable();
+        if (historyDataStorages != null) {
+            available = historyDataStorages.stream().anyMatch(AbstractHistoryDataStorage::isServerAvailable);
         }
         if (available) {
             return ResponseEntity.ok(Message.<Void>builder().build());
@@ -85,6 +88,10 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
+        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream().findFirst().orElse(null);
+        if (realTimeDataStorage == null) {
+            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "real time store not available"));
+        }
         CollectRep.MetricsData storageData = realTimeDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
             return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
@@ -123,8 +130,10 @@ public class MetricsDataController {
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
-        if (historyDataStorage == null || !historyDataStorage.isServerAvailable()) {
-            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "Time series database not available"));
+        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
+                .filter(AbstractHistoryDataStorage::isServerAvailable).findFirst().orElse(null);
+        if (historyDataStorage == null) {
+            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "time series database not available"));
         }
         String[] names = metricFull.split("\\.");
         if (names.length != METRIC_FULL_LENGTH) {

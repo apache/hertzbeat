@@ -18,10 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.NestedServletException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,8 +45,15 @@ class MetricsDataControllerTest {
     @Mock
     AbstractRealTimeDataStorage realTimeDataStorage;
 
+    private List<AbstractHistoryDataStorage> historyDataStorages = new LinkedList<>();
+
+    private List<AbstractRealTimeDataStorage> realTimeDataStorages = new LinkedList<>();
+
     @BeforeEach
     void setUp() {
+        historyDataStorages.add(historyDataStorage);
+        realTimeDataStorages.add(realTimeDataStorage);
+        metricsDataController = new MetricsDataController(realTimeDataStorages, historyDataStorages);
         this.mockMvc = MockMvcBuilders.standaloneSetup(metricsDataController).build();
     }
 
@@ -129,7 +133,7 @@ class MetricsDataControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                .andExpect(jsonPath("$.msg").value("Time series database not available"))
+                .andExpect(jsonPath("$.msg").value("time series database not available"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andReturn();
 

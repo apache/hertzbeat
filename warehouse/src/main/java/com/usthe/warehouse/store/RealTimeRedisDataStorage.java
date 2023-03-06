@@ -18,8 +18,6 @@
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -50,11 +48,8 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     private RedisClient redisClient;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
-    public RealTimeRedisDataStorage(WarehouseProperties properties, WarehouseWorkerPool workerPool,
-                                    CommonDataQueue commonDataQueue) {
-        super(workerPool, commonDataQueue);
+    public RealTimeRedisDataStorage(WarehouseProperties properties) {
         initRedisClient(properties);
-        startStorageData("warehouse-redis-data-storage");
     }
 
     @Override
