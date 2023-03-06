@@ -1,32 +1,33 @@
 ---
 id: ssl_cert  
-title: 监控：SSL证书监控      
-sidebar_label: SSL证书监控    
+title: Monitoring SSL Certificate      
+sidebar_label: SSL Monitor  
+keywords: [open source monitoring system, open source ssl cert monitoring system, monitoring website ssl metrics]
 ---
 
-> 对网站的SSL证书过期时间，响应时间等指标进行监测       
+> Monitor the website's SSL certificate expiration time, response time and other Metrics
 
-### 配置参数   
+### Configuration parameters
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 网站对外提供的端口，https一般默认为443。  |
-| 相对路径     | 网站地址除IP端口外的后缀路径，例如 `www.tancloud.cn/console` 网站的相对路径为 `/console`。 |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒 |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作 |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息 |
+| Monitoring Host | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
+| Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
+| Port | The port provided by the website, https generally defaults to 443. |
+| Relative path | The suffix path of the website address except the IP port, for example, `www.tancloud.cn/console` The relative path of the website is `/console`. |
+| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
+| Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
+| Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 
-### 采集指标   
+### Collect metrics
 
-#### 指标集合：certificate  
+#### Metric collection: certificate
 
-| 指标名称      | 指标单位 | 指标帮助描述   |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|----------|
-| subject   | 无    | 证书名称     |
-| expired      | 无    | 是否过期     |
-| start_time | 无    | 有效期开始时间  |
-| start_timestamp   | ms毫秒 | 有效期开始时间戳 |
-| end_time  | 无    | 过期时间     |
-| end_timestamp | ms毫秒 | 过期时间戳    |  
+| subject | none | certificate name |
+| expired | no | expired or not |
+| start_time | None | Validity start time |
+| start_timestamp | ms millisecond | Validity start timestamp |
+| end_time | None | Expiration time |
+| end_timestamp | ms milliseconds | expiration timestamp |

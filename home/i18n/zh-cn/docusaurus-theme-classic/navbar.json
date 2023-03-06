@@ -7,9 +7,9 @@
     "message": "首页",
     "description": "Navbar item with label 首页"
   },
-  "item.label.文档": {
-    "message": "文档",
-    "description": "Navbar item with label 文档"
+  "item.label.文档中心": {
+    "message": "文档中心",
+    "description": "Navbar item with label 文档中心"
   },
   "item.label.博客": {
     "message": "博客",

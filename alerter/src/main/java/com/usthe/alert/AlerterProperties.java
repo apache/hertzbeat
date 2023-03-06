@@ -17,6 +17,8 @@
 
 package com.usthe.alert;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "alerter")
+@Getter
+@Setter
 public class AlerterProperties {
 
     /**
@@ -52,6 +56,16 @@ public class AlerterProperties {
     private String flyBookWebHookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/";
 
     /**
+     * Telegram Bot api url
+     */
+    private String telegramBotApiUrl = "https://api.telegram.org/bot%s/sendMessage";
+
+    /**
+     * Discord Notify url
+     */
+    private String discordNotifyUrl = "https://discord.com/api/v9/channels/%s/messages";
+
+    /**
      * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
      * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
      */
@@ -74,75 +88,12 @@ public class AlerterProperties {
      */
     private EntranceProperties entrance;
 
-    public String getConsoleUrl() {
-        return consoleUrl;
-    }
-
-    public void setConsoleUrl(String url) {
-        this.consoleUrl = url;
-    }
-
-    public String getWeWorkWebHookUrl() {
-        return weWorkWebHookUrl;
-    }
-
-    public void setWeWorkWebHookUrl(String weWorkWebHookUrl) {
-        this.weWorkWebHookUrl = weWorkWebHookUrl;
-    }
-
-    public String getDingTalkWebHookUrl() {
-        return dingTalkWebHookUrl;
-    }
-
-    public void setDingTalkWebHookUrl(String dingTalkWebHookUrl) {
-        this.dingTalkWebHookUrl = dingTalkWebHookUrl;
-    }
-
-    public String getFlyBookWebHookUrl() {
-        return flyBookWebHookUrl;
-    }
-
-    public void setFlyBookWebHookUrl(String flyBookWebHookUrl) {
-        this.flyBookWebHookUrl = flyBookWebHookUrl;
-    }
-
-    public long getAlertEvalIntervalBase() {
-        return alertEvalIntervalBase;
-    }
-
-    public void setAlertEvalIntervalBase(long alertEvalIntervalBase) {
-        this.alertEvalIntervalBase = alertEvalIntervalBase;
-    }
-
-    public long getMaxAlertEvalInterval() {
-        return maxAlertEvalInterval;
-    }
-
-    public void setMaxAlertEvalInterval(long maxAlertEvalInterval) {
-        this.maxAlertEvalInterval = maxAlertEvalInterval;
-    }
-
-    public int getSystemAlertTriggerTimes() {
-        return systemAlertTriggerTimes;
-    }
-
-    public void setSystemAlertTriggerTimes(int systemAlertTriggerTimes) {
-        this.systemAlertTriggerTimes = systemAlertTriggerTimes;
-    }
-
-    public EntranceProperties getEntrance() {
-        return entrance;
-    }
-
-    public void setEntrance(EntranceProperties entrance) {
-        this.entrance = entrance;
-    }
-
-
     /**
      * Data entry configuration properties 数据入口配置属性
      * The entry can obtain data from messaging middleware such as kafka rabbitmq rocketmq 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
      */
+    @Getter
+    @Setter
     public static class EntranceProperties {
 
         /**
@@ -150,14 +101,8 @@ public class AlerterProperties {
          */
         private KafkaProperties kafka;
 
-        public KafkaProperties getKafka() {
-            return kafka;
-        }
-
-        public void setKafka(KafkaProperties kafka) {
-            this.kafka = kafka;
-        }
-
+        @Getter
+        @Setter
         public static class KafkaProperties {
             /**
              * Whether the kafka data entry is started kafka数据入口是否启动
@@ -177,37 +122,6 @@ public class AlerterProperties {
              */
             private String groupId;
 
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getServers() {
-                return servers;
-            }
-
-            public void setServers(String servers) {
-                this.servers = servers;
-            }
-
-            public String getTopic() {
-                return topic;
-            }
-
-            public void setTopic(String topic) {
-                this.topic = topic;
-            }
-
-            public String getGroupId() {
-                return groupId;
-            }
-
-            public void setGroupId(String groupId) {
-                this.groupId = groupId;
-            }
         }
 
     }

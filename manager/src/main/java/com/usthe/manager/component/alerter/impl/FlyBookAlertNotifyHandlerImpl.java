@@ -17,27 +17,19 @@
 
 package com.usthe.manager.component.alerter.impl;
 
-import com.usthe.alert.AlerterProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.ResourceBundleUtil;
-import com.usthe.manager.component.alerter.AlertNotifyHandler;
-import com.usthe.manager.pojo.dto.FlyBookWebHookDto;
 import com.usthe.manager.support.exception.AlertNoticeException;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.ResourceBundle;
 
 /**
  * Send alert information through FeiShu
@@ -49,64 +41,34 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
-
-    private final RestTemplate restTemplate;
-
-    private final AlerterProperties alerterProperties;
-
-    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = null;
-        String monitorName = null;
-        if (alert.getTags() != null) {
-            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
-        }
-        FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
-        FlyBookWebHookDto.Content content = new FlyBookWebHookDto.Content();
-        FlyBookWebHookDto.Post post = new FlyBookWebHookDto.Post();
-        FlyBookWebHookDto.zh_cn zhCn = new FlyBookWebHookDto.zh_cn();
-        content.setPost(post);
-        post.setZh_cn(zhCn);
-        flyBookWebHookDto.setMsg_type("post");
-        List<List<FlyBookWebHookDto.FlyBookContent>> contents = new ArrayList<>();
-        List<FlyBookWebHookDto.FlyBookContent> contents1 = new ArrayList<>();
-        FlyBookWebHookDto.FlyBookContent flyBookContent = new FlyBookWebHookDto.FlyBookContent();
-        flyBookContent.setTag("text");
-        StringBuilder textBuilder = new StringBuilder(bundle.getString("alerter.notify.target") + " :");
-        textBuilder.append(alert.getTarget());
-        if (monitorId != null) {
-            textBuilder.append("\n").append(bundle.getString("alerter.notify.monitorId"))
-                    .append(" :").append(monitorId);
-        }
-        if (monitorName != null) {
-            textBuilder.append("\n").append(bundle.getString("alerter.notify.monitorName"))
-                    .append(" :").append(monitorName);
-        }
-        textBuilder.append("\n").append(bundle.getString("alerter.notify.priority")).append(" :")
-            .append(bundle.getString("alerter.priority." + alert.getPriority()));
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        textBuilder.append("\n").append(bundle.getString("alerter.notify.triggerTime"))
-                .append(" : ").append(triggerTime);
-        textBuilder.append("\n").append(bundle.getString("alerter.notify.content"))
-                .append(" : ").append(alert.getContent());
-        flyBookContent.setText(textBuilder.toString());
-        contents1.add(flyBookContent);
-        FlyBookWebHookDto.FlyBookContent bookContent = new FlyBookWebHookDto.FlyBookContent();
-        bookContent.setTag("a");
-        bookContent.setText(bundle.getString("alerter.notify.console"));
-        bookContent.setHref(alerterProperties.getConsoleUrl());
-        contents1.add(bookContent);
-        contents.add(contents1);
-        zhCn.setTitle("[" + bundle.getString("alerter.notify.title") + "]");
-        zhCn.setContent(contents);
-        flyBookWebHookDto.setContent(content);
-        String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
         try {
+            FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
+            Content content = new Content();
+            Post post = new Post();
+            ZhCn zhCn = new ZhCn();
+            content.setPost(post);
+            post.setZhCn(zhCn);
+            flyBookWebHookDto.setMsgType("post");
+            List<List<FlyBookContent>> contents = new ArrayList<>();
+            List<FlyBookContent> contents1 = new ArrayList<>();
+            FlyBookContent flyBookContent = new FlyBookContent();
+            flyBookContent.setTag("text");
+            flyBookContent.setText(renderContent(alert));
+            contents1.add(flyBookContent);
+            FlyBookContent bookContent = new FlyBookContent();
+            bookContent.setTag("a");
+            bookContent.setText(bundle.getString("alerter.notify.console"));
+            bookContent.setHref(alerterProperties.getConsoleUrl());
+            contents1.add(bookContent);
+            contents.add(contents1);
+            zhCn.setTitle("[" + bundle.getString("alerter.notify.title") + "]");
+            zhCn.setContent(contents);
+            flyBookWebHookDto.setContent(content);
+            String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
                     flyBookWebHookDto, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
@@ -130,4 +92,72 @@ final class FlyBookAlertNotifyHandlerImpl implements AlertNotifyHandler {
     public byte type() {
         return 6;
     }
+
+    @Override
+    protected String templateName() {
+        return "alertNotifyFlyBook";
+    }
+
+    @Data
+    private static class FlyBookWebHookDto {
+        private static final String MARKDOWN = "post";
+
+        /**
+         * 消息类型
+         */
+        @JsonProperty("msg_type")
+        private String msgType = MARKDOWN;
+
+        private Content content;
+
+    }
+
+    /**
+     * 消息内容
+     */
+    @Data
+    private static class Content {
+        public Post post;
+    }
+
+    @Data
+    private static class FlyBookContent {
+        /**
+         * 格式  目前支持文本、超链接、@人的功能  text  a  at
+         */
+        public String tag;
+        /**
+         * 文本
+         */
+        public String text;
+        /**
+         * 超链接地址
+         */
+        public String href;
+
+        @JsonProperty("user_id")
+        public String userId;
+
+        @JsonProperty("user_name")
+        public String userName;
+    }
+
+    @Data
+    private static class Post {
+        @JsonProperty("zh_cn")
+        public ZhCn zhCn;
+    }
+
+    @Data
+    private static class ZhCn {
+        /**
+         * 标题
+         */
+        public String title;
+        /**
+         * 内容
+         */
+        public List<List<FlyBookContent>> content;
+    }
+
 }

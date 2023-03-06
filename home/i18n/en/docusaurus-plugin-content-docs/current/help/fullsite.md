@@ -1,7 +1,8 @@
 ---
 id: fullsite  
-title: Monitoring：Full site monitoring      
-sidebar_label: Full site monitoring   
+title: Monitoring Full site      
+sidebar_label: Full site Monitor   
+keywords: [open source monitoring system, open source website monitoring system, monitoring sitemap metrics]
 ---
 
 > Available or not to monitor all pages of the website.    
@@ -17,7 +18,7 @@ sidebar_label: Full site monitoring
 | Port        | Ports provided by website, http generally defaults to 80 and https generally defaults to 443 |
 | SiteMap     | Relative path of website SiteMap address, eg：/sitemap.xml |
 | Enable HTTPS   | Whether to access the website through HTTPS. Note⚠️When HTTPS is enabled, the default corresponding port needs to be changed to 443 |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

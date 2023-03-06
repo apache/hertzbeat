@@ -2,9 +2,49 @@
 id: zookeeper  
 title: 监控：Zookeeper监控      
 sidebar_label: Zookeeper监控  
+keywords: [开源监控系统, Zookeeper监控监控]
 ---
 
 > 对Zookeeper的通用性能指标进行采集监控
+
+### 监控前操作
+
+> 监控 zookeeper 目前的实现方案使用的是 zookeeper 提供的四字命令 + netcat 来收集指标数据  
+> 需要用户自己将zookeeper的四字命令加入白名单
+
+1. 加白名单步骤   
+
+> 1.找到我们 zookeeper 的配置文件，一般是 `zoo.cfg`
+>
+> 2.配置文件中加入以下命令
+
+```shell
+# 将需要的命令添加到白名单中
+4lw.commands.whitelist=stat, ruok, conf, isro
+
+# 将所有命令添加到白名单中
+4lw.commands.whitelist=*
+```
+> 3.重启服务
+
+```shell 
+zkServer.sh restart
+```
+
+2. netcat 协议 
+
+目前实现方案需要我们部署zookeeper的linux服务器，安装netcat的命令环境
+
+> netcat安装步骤
+```shell
+yum install -y nc
+```
+
+如果终端显示以下信息则说明安装成功
+```shell
+Complete!
+```
+
 
 ### 配置参数
 
@@ -12,11 +52,11 @@ sidebar_label: Zookeeper监控
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | Zookeeper对外提供的端口，默认为2181。  |
+| 端口        | Zookeeper的Linux服务器SSH端口。  |
 | 查询超时时间 | 设置Zookeeper连接的超时时间，单位ms毫秒，默认3000毫秒。  |
 | 用户名      | Zookeeper所在Linux连接用户名 |
 | 密码        | Zookeeper所在Linux连接密码 |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒  |
+| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
 | 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
 | 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
 
@@ -58,40 +98,3 @@ sidebar_label: Zookeeper监控
 | zk_min_latency | ms | 最小延时 |
 
 
-# 注意
-## zookeeper四字命令
->目前的实现方案使用的是zookeeper提供的四字命令来收集指标
-需要用户自己将zookeeper的四字命令加入白名单
-
-加白步骤
-> 1.找到我们zookeeper的配置文件，一般是zoo.cfg 
-> 
-> 2.配置文件中加入以下命令   
-
-```shell
-# 将需要的命令添加到白名单中
-4lw.commands.whitelist=stat, ruok, conf, isro
-
-# 将所有命令添加到白名单中
-4lw.commands.whitelist=*
-```
-
-> 3.重启服务   
-
-```shell 
-zkServer.sh restart
-```
-
-## netcat协议
-目前实现方案需要我们部署zookeeper的linux服务器
-安装netcat的命令环境
-
-> netcat安装步骤   
-```shell
-yum install -y nc
-```
-
-如果终端显示以下信息则说明安装成功   
-```shell
-Complete!
-```

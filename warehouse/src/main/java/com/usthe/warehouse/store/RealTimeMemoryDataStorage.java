@@ -19,14 +19,12 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,9 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author tom
  * @date 2021/11/25 10:26
  */
-@Primary
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
+@Component
 @ConditionalOnProperty(prefix = "warehouse.store.memory",
         name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
@@ -61,8 +57,11 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
         String hashKey = metricsData.getId() + metricsData.getMetrics();
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
         if (metricsData.getValuesList().isEmpty()) {
-            log.debug("[warehouse memory] redis flush metrics data {} is null, ignore.", hashKey);
+            log.info("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         metricsDataMap.put(hashKey, metricsData);

@@ -3,7 +3,7 @@ id: extend-ssh
 title: SSH Protocol Custom Monitoring  
 sidebar_label: SSH Protocol Custom Monitoring     
 ---
->  From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring. 
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring. 
 > SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.     
 
 ### SSH protocol collection process   
@@ -57,20 +57,19 @@ Here the Metric field and the response data can be mapped into collected data on
 
 ### Custom Steps  
 
-In order to configure a custom monitoring type, you need to add and configure two YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example_linux.yml in the installation directory /hertzbeat/define/app/
-2. Monitoring parameter definition file named after monitoring type - eg：example_linux.yml in the installation directory /hertzbeat/define/param/
-3. Restart hertzbeat system, we successfully fit a new custom monitoring type.
+In order to configure a custom monitoring type, you need to add and configure YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example_linux.yml in the installation directory /hertzbeat/app/
+2. Restart hertzbeat system, we successfully fit a new custom monitoring type.
 
 ------- 
-Configuration usages of the two files are detailed below. Please pay attention to usage annotation.   
+Configuration usages of the file are detailed below. Please pay attention to usage annotation.   
 
 ### Monitoring configuration definition file   
 
 > Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
 eg：Define a custom monitoring type named example_linux which use the SSH protocol to collect data.    
-The file name: example_linux.yml in /define/app/example_linux.yml   
+The file name: example_linux.yml in /define/example_linux.yml   
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -80,18 +79,35 @@ app: example_linux
 name:
   zh-CN: 模拟LINUX应用类型
   en-US: LINUX EXAMPLE APP
-# parameter mapping map. These are input parameter variables which can be written to the configuration in form of ^_^host^_^. The system automatically replace variable's value.
-# type means parameter type: 0-number number, 1-string cleartext string, 2-secret encrypted string
-# required parameters - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 22
+    placeholder: 'Please enter the port'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: true
 # Metric group list
 metrics:
   # The first monitoring Metric group basic
@@ -185,44 +201,4 @@ metrics:
       password: ^_^password^_^
       script: free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'
       parseType: multiRow
-```
-
-### Monitoring parameter definition file
-
-> Monitoring parameter definition file is used to define *required input parameter field structure definition (Front-end page render input parameter box according to structure)*. 
-
-eg：Define a custom monitoring type named example_linux which use the SSH protocol to collect data.    
-The file name: example_linux.yml in /define/param/example_linux.yml   
-
-```yaml
-app: example_linux
-param:
-  - field: host
-    name: 
-      zh-CN: 主机Host
-      en-US: Host
-    type: host
-    required: true
-  - field: port
-    name: 
-      zh-CN: 端口
-      en-US: Port
-    type: number
-    range: '[0,65535]'
-    required: true
-    defaultValue: 22
-    placeholder: 'Please enter the port'
-  - field: username
-    name: 
-      zh-CN: 用户名
-      en-US: Username
-    type: text
-    limit: 20
-    required: true
-  - field: password
-    name:
-      zh-CN: 密码
-      en-US: Password
-    type: password
-    required: true
 ```

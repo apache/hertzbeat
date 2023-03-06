@@ -251,4 +251,19 @@ public interface CommonConstants {
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
+
+    /**
+     * notice_period type 类型字段, 每日类型
+     */
+    int NOTICE_PERIOD_DAILY = 0;
+
+    /**
+     * key为receiver.id, value为noticePeriod的缓存key前缀
+     */
+    String RECEIVER_NOTICE_PERIOD_CACHE_PREFIX = "receiver_notice_period:";
+
+    /**
+     * cache key notice_rule
+     */
+    String CACHE_NOTICE_RULE = "notice_rule";
 }

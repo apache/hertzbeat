@@ -33,10 +33,11 @@
     {{ 'tag.delete' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
   <input
+    class="mobile-hide"
     style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
@@ -60,17 +61,17 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center">{{ 'tag.name' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.value' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.color' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.display' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.update-time' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.color' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.display' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -135,7 +136,7 @@
             cpOutputFormat="hex"
             [style.background]="tag.color"
             required
-            style="border-radius: 25px"
+            style="border-radius: 5px; width: 100%"
             name="color"
             id="color"
           />

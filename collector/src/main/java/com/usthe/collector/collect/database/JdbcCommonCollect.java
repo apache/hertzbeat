@@ -29,6 +29,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.JdbcProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
 
@@ -69,8 +70,9 @@ public class JdbcCommonCollect extends AbstractCollect {
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
         // 查询超时时间默认6000毫秒
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
+        Statement statement = null;
         try {
-            Statement statement = getConnection(jdbcProtocol.getUsername(),
+            statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW:
@@ -105,9 +107,18 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
         } catch (Exception e) {
-            log.error("Jdbc error: {}.", e.getMessage(), e);
+            String errorMessage = CommonUtil.getMessageFromThrowable(e);
+            log.error("Jdbc error: {}.", errorMessage, e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Query Error: " + e.getMessage());
+            builder.setMsg("Query Error: " + errorMessage);
+        } finally {
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (Exception e) {
+                    log.error("Jdbc close statement error: {}", e.getMessage());
+                }
+            }
         }
     }
 
@@ -134,7 +145,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                 // 设置查询最大行数1000行
                 statement.setMaxRows(1000);
             } catch (Exception e) {
-                log.info("The jdbc connect form cache, create statement error: {}", e.getMessage());
+                log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
                 try {
                     if (statement != null) {
                         statement.close();
@@ -291,6 +302,10 @@ public class JdbcCommonCollect extends AbstractCollect {
                 break;
             case "postgresql":
                 url = "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+                break;
+            case "clickhouse":
+                url = "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
                 break;
             case "sqlserver":

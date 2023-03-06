@@ -4,8 +4,8 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
+import com.usthe.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -16,9 +16,8 @@ import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,8 +29,7 @@ import java.util.*;
  * @author ceilzcx
  * @since 2022/10/12
  */
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
+@Component
 @ConditionalOnProperty(prefix = "warehouse.store.iot-db",
         name = "enabled", havingValue = "true")
 @Slf4j
@@ -145,6 +143,13 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     void saveData(CollectRep.MetricsData metricsData) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
+        if (metricsData.getValuesList().isEmpty()) {
+            log.info("[warehouse iotdb] flush metrics data {} is null, ignore.", metricsData.getId());
+            return;
+        }
         // tablet的deviceId添加引号会导致数据插入失败
         List<MeasurementSchema> schemaList = new ArrayList<>();
 
@@ -276,36 +281,30 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
         String selectSql = "";
-        try {
-            if (instance != null) {
+        if (instance != null) {
+            selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
+                    addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
+            handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
+        } else {
+            List<String> devices = queryAllDevices(deviceId);
+            if (devices.isEmpty()) {
                 selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                         addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
                 handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
             } else {
-                List<String> devices = queryAllDevices(deviceId);
-                if (devices.isEmpty()) {
+                for (String device : devices) {
+                    String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
+                    String instanceId = device.substring(prefixDeviceId.length() + 1);
                     selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
-                    handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
-                } else {
-                    for (String device : devices) {
-                        String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
-                        String instanceId = device.substring(prefixDeviceId.length() + 1);
-                        selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                                addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
-                        handleHistoryIntervalSelect(selectSql, instanceId, instanceValuesMap);
-                    }
+                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
+                    handleHistoryIntervalSelect(selectSql, instanceId, instanceValuesMap);
                 }
             }
-        } catch (StatementExecutionException | IoTDBConnectionException e) {
-            log.error("select error history interval sql: {}", selectSql);
-            log.error(e.getMessage(), e);
         }
         return instanceValuesMap;
     }
 
-    private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
-            throws IoTDBConnectionException, StatementExecutionException {
+    private void handleHistoryIntervalSelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap) {
         SessionDataSetWrapper dataSet = null;
         try {
             dataSet = this.sessionPool.executeQueryStatement(selectSql, this.queryTimeoutInMs);
@@ -329,6 +328,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
                 valueList.add(value);
             }
+        } catch (StatementExecutionException | IoTDBConnectionException e) {
+            log.error("select error history interval sql: {}", selectSql);
+            log.error(e.getMessage(), e);
         } finally {
             if (dataSet != null) {
                 // 需要关闭结果集！！！否则会造成服务端堆积
@@ -342,13 +344,24 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      *
      * @param deviceId 设备/实体
      */
-    private List<String> queryAllDevices(String deviceId) throws IoTDBConnectionException, StatementExecutionException {
+    private List<String> queryAllDevices(String deviceId) {
         String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");
-        SessionDataSetWrapper dataSet = this.sessionPool.executeQueryStatement(showDevicesSql, this.queryTimeoutInMs);
+        SessionDataSetWrapper dataSet = null;
         List<String> devices = new ArrayList<>();
-        while (dataSet.hasNext()) {
-            RowRecord rowRecord = dataSet.next();
-            devices.add(rowRecord.getFields().get(0).getStringValue());
+        try {
+            dataSet = this.sessionPool.executeQueryStatement(showDevicesSql, this.queryTimeoutInMs);
+            while (dataSet.hasNext()) {
+                RowRecord rowRecord = dataSet.next();
+                devices.add(rowRecord.getFields().get(0).getStringValue());
+            }
+        } catch (StatementExecutionException | IoTDBConnectionException e) {
+            log.error("query show all devices sql error. sql: {}", showDevicesSql);
+            log.error(e.getMessage(), e);
+        } finally {
+            if (dataSet != null) {
+                // 需要关闭结果集！！！否则会造成服务端堆积
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
         return devices;
     }

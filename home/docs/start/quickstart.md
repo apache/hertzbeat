@@ -11,9 +11,20 @@ sidebar_label: 快速开始
 
 ### 🐵 依赖服务部署(可选)
 
-> HertzBeat依赖于 关系型数据库 H2(已内置无需安装) 和 时序性数据库 [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选，未配置则无历史图表数据)  
+> HertzBeat依赖于 **关系型数据库** H2(默认已内置无需安装) 或 [Mysql](mysql-change) 和 **时序性数据库** [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选)  
 
 **注意⚠️ 若需要部署时序数据库，IotDB 和 TDengine 任选其一即可！**  
+
+##### 安装Mysql(可选)  
+
+1. docker安装Mysql    
+   `   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`   
+   `-v /opt/data:/var/lib/mysql` - 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录
+2. 创建名称为hertzbeat的数据库    
+   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`    
+3. 在hertzbeat的配置文件`application.yml`配置Mysql数据库替换H2内置数据库连接参数    
+
+详细步骤参考 [使用Mysql替换内置H2数据库](mysql-change)   
 
 ##### 安装TDengine(可选) 
 
@@ -22,7 +33,7 @@ sidebar_label: 快速开始
 2. 创建名称为hertzbeat的数据库
 3. 在hertzbeat的配置文件`application.yml`配置tdengine连接   
 
-详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init)  
+详细步骤参考 [使用时序数据库TDengine存储指标数据(可选)](tdengine-init)  
 
 ##### 安装IotDB(可选)  
 
@@ -35,7 +46,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     apache/iotdb:0.13.3-node
 ```
 
-详细步骤参考 [依赖服务IotDB安装初始化](iotdb-init)  
+详细步骤参考 [使用时序数据库IoTDB存储指标数据(可选)](iotdb-init)  
 
 ### 🍞 HertzBeat安装   
 > HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
@@ -68,10 +79,10 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
 
-#### 方式四：Docker-Compose统一安装hertzbeat及其依赖服务
+##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 
-通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把mysql数据库,tdengine数据库和hertzbeat安装部署。
+通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [docker-compose安装](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
+详细步骤参考 [docker-compose部署方案](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
 
 **HAVE FUN**

@@ -33,6 +33,7 @@ import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.HttpProtocol;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.CommonUtil;
 import com.usthe.common.util.IpDomainUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
@@ -134,7 +135,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
                         parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
-                        parseResponseByPromQL(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                        parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
                         parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                     } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
@@ -153,35 +154,34 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             }
         } catch (ClientProtocolException e1) {
-            String errorMsg;
-            if (e1.getCause() != null) {
-                errorMsg = e1.getCause().getMessage();
-            } else {
-                errorMsg = e1.getMessage();
-            }
+            String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
             // 对端不可达
-            log.info(e2.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(e2);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("unknown host");
+            builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             // 对端连接失败
-            log.info(e3.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(e3);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(e3.getMessage());
+            builder.setMsg(errorMsg);
         } catch (IOException e4) {
             // 其它IO异常
-            log.info(e4.getMessage());
+            String errorMsg = CommonUtil.getMessageFromThrowable(e4);
+            log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e4.getMessage());
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             // 其它异常
-            log.error(e.getMessage(), e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.error(errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            builder.setMsg(errorMsg);
         } finally {
             if (request != null) {
                 request.abort();
@@ -367,7 +367,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseByPromQL(String resp, List<String> aliasFields, HttpProtocol http,
+    private void parseResponseByPromQl(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp, aliasFields, http, builder);

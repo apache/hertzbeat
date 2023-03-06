@@ -1,0 +1,576 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: postgresql
+name:
+  zh-CN: PostgreSQL数据库
+  en-US: PostgreSQL DB
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 5432
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    defaultValue: postgres
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+    hide: true
+metrics:
+  - name: basic
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: server_version
+        type: 1
+        instance: true
+      - field: port
+        type: 1
+      - field: server_encoding
+        type: 1
+      - field: data_directory
+        type: 1
+      - field: max_connections
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
+      url: ^_^url^_^
+
+  - name: state
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: db_name
+        type: 1
+        instance: true
+      - field: conflicts
+        type: 0
+        unit: times
+      - field: deadlocks
+        type: 0
+        unit: times
+      - field: blks_read
+        type: 0
+        unit: blocks per second
+      - field: blks_hit
+        type: 0
+        unit: blocks per second
+      - field: blk_read_time
+        type: 0
+        unit: ms
+      - field: blk_write_time
+        type: 0
+        unit: ms
+      - field: stats_reset
+        type: 1
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      url: ^_^url^_^
+
+  - name: activity
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: running
+        type: 0
+        unit: sbc
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: SELECT count(*) as running FROM pg_stat_activity WHERE NOT pid=pg_backend_pid();
+      url: ^_^url^_^
+
+  - name: resource_config
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: shared_buffers
+        type: 0
+        unit: MB
+      - field: work_mem
+        type: 0
+        unit: MB
+      - field: shared_buffers
+        type: 0
+        unit: MB
+      - field: autovacuum
+        type: 1
+      - field: max_connections
+        type: 0
+      - field: effective_cache_size
+        type: 0
+        unit: MB
+      - field: wal_buffers
+        type: 0
+        unit: MB
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show all;
+      url: ^_^url^_^
+
+  - name: connection
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: active
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select count(1) as active from pg_stat_activity;
+      url: ^_^url^_^
+
+  - name: connection_state
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: state
+        type: 1
+        instance: true
+      - field: num
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select COALESCE(state, 'other') as state, count(*) as num from pg_stat_activity group by state;
+      url: ^_^url^_^
+
+  - name: connection_db
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: db_name
+        type: 1
+        instance: true
+      - field: active
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select count(*) as active, COALESCE(datname, 'other') as db_name from pg_stat_activity group by datname;
+      url: ^_^url^_^
+
+  - name: tuple
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: fetched
+        type: 0
+      - field: returned
+        type: 0
+      - field: inserted
+        type: 0
+      - field: updated
+        type: 0
+      - field: deleted
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select sum(tup_fetched) as fetched, sum(tup_updated) as updated, sum(tup_deleted) as deleted, sum(tup_inserted) as inserted, sum(tup_returned) as returned from pg_stat_database;
+      url: ^_^url^_^
+
+  - name: temp_file
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: db_name
+        type: 1
+        instance: true
+      - field: num
+        type: 0
+      - field: size
+        type: 0
+        unit: B
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select COALESCE(datname, 'other') as db_name, sum(temp_files) as num, sum(temp_bytes) as size from pg_stat_database group by datname;
+      url: ^_^url^_^
+
+  - name: lock
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: db_name
+        type: 1
+        instance: true
+      - field: conflicts
+        type: 0
+        unit: times
+      - field: deadlocks
+        type: 0
+        unit: times
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      url: ^_^url^_^
+
+  - name: slow_sql
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: sql_text
+        type: 1
+        instance: true
+      - field: calls
+        type: 0
+      - field: rows
+        type: 0
+      - field: avg_time
+        type: 0
+        unit: ms
+      - field: total_time
+        type: 0
+        unit: ms
+    aliasFields:
+      - query
+      - calls
+      - rows
+      - total_exec_time
+      - mean_exec_time
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - sql_text=query
+      - avg_time=mean_exec_time
+      - total_time=total_exec_time
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select * from pg_stat_statements;
+      url: ^_^url^_^
+
+  - name: transaction
+    priority: 2
+    fields:
+      - field: db_name
+        type: 1
+        instance: true
+      - field: commits
+        type: 0
+        unit: times
+      - field: rollbacks
+        type: 0
+        unit: times
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select COALESCE(datname, 'other') as db_name, sum(xact_commit) as commits, sum(xact_rollback) as rollbacks from pg_stat_database group by datname;
+      url: ^_^url^_^
+
+  - name: conflicts
+    priority: 2
+    fields:
+      - field: db_name
+        type: 1
+        instance: true
+      - field: tablespace
+        type: 0
+      - field: lock
+        type: 0
+      - field: snapshot
+        type: 0
+      - field: bufferpin
+        type: 0
+      - field: deadlock
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select datname as db_name, confl_tablespace as tablespace, confl_lock as lock, confl_snapshot as snapshot, confl_bufferpin as bufferpin, confl_deadlock as deadlock from pg_stat_database_conflicts;
+      url: ^_^url^_^
+
+  - name: cache_hit_ratio
+    priority: 2
+    fields:
+      - field: db_name
+        type: 1
+        instance: true
+      - field: ratio
+        type: 0
+        unit: '%'
+    aliasFields:
+      - blks_hit
+      - blks_read
+      - db_name
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - ratio=(blks_hit + 1) / (blks_read + blks_hit + 1) * 100
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select datname as db_name, blks_hit, blks_read from pg_stat_database;
+      url: ^_^url^_^
+
+  - name: checkpoint
+    priority: 2
+    fields:
+      - field: checkpoint_sync_time
+        type: 0
+        unit: ms
+      - field: checkpoint_write_time
+        type: 0
+        unit: ms
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select checkpoint_sync_time, checkpoint_write_time from pg_stat_bgwriter;
+      url: ^_^url^_^
+
+  - name: buffer
+    priority: 2
+    fields:
+      - field: allocated
+        type: 0
+      - field: fsync_calls_by_backend
+        type: 0
+      - field: written_directly_by_backend
+        type: 0
+      - field: written_by_background_writer
+        type: 0
+      - field: written_during_checkpoints
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select buffers_alloc as allocated, buffers_backend_fsync as fsync_calls_by_backend, buffers_backend as written_directly_by_backend, buffers_clean as written_by_background_writer, buffers_checkpoint as written_during_checkpoints from pg_stat_bgwriter;
+      url: ^_^url^_^

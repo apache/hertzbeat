@@ -139,7 +139,7 @@ public class Monitor {
      * record creation time (millisecond timestamp)
      * 记录创建时间
      */
-    @Schema(title = "记录创建时间(毫秒时间戳)", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
@@ -147,7 +147,7 @@ public class Monitor {
      * Record the latest modification time (timestamp in milliseconds)
      * 记录最新修改时间
      */
-    @Schema(title = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

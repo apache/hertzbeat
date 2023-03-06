@@ -9,7 +9,7 @@ tags: [opensource]
 
 Home: hertzbeat.com | tancloud.cn
 
-Hi gays! HertzBeat v1.1.3 is coming. This version supports kafka monitor, ssl certificate expired monitor and more. Fixed several bugs and improved the overall stable usability.
+Hi guys! HertzBeat v1.1.3 is coming. This version supports kafka monitor, ssl certificate expired monitor and more. Fixed several bugs and improved the overall stable usability.
 
 Only one docker command is needed to install and experience hertzbeat：
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`

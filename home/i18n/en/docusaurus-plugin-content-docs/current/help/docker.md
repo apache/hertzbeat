@@ -2,7 +2,7 @@
 id: docker
 title: Monitor：Docker Monitor      
 sidebar_label: Docker Monitor
-
+keywords: [open source monitoring system, open source docker monitoring system, monitoring docker metrics]
 ---
 
 > Collect and monitor general performance Metrics of Docker containers.
@@ -60,7 +60,7 @@ firewall-cmd --reload
 | username | connection username, optional |
 | password | connection password, optional |
 | URL | Database connection URL, optional, if configured, the parameters such as database name, username and password in the URL will override the parameters configured above |
-| Collection Interval | Monitor periodical collection data interval, in seconds, the minimum interval that can be set is 10 seconds |
+| Collection Interval | Monitor periodical collection data interval, in seconds, the minimum interval that can be set is 30 seconds |
 | Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and then continue to add and modify operations if the detection is successful |
 | Description Remarks | More remarks that identify and describe this monitoring, users can remark information here |
 

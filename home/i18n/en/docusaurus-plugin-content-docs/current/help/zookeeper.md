@@ -1,10 +1,50 @@
 ---
 id: zookeeper  
-title: Monitoring：Zookeeper monitoring      
-sidebar_label: Zookeeper monitoring   
+title: Monitoring Zookeeper       
+sidebar_label: Zookeeper Monitor   
+keywords: [open source monitoring system, open source zookeeper monitoring system, monitoring zookeeper metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Zookeeper.
+
+### PreRequisites
+
+#### Zookeeper four word command
+>The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
+Users need to add the four word command of zookeeper to the white list by themselves.
+
+Steps
+> 1.Find our zookeeper configuration file, which is usually zoo.cfg.
+>
+> 2.Add the following commands to the configuration file
+
+```shell
+# Add the required command to the white list
+4lw.commands.whitelist=stat, ruok, conf, isro
+
+# Add all commands to the white list
+4lw.commands.whitelist=*
+```
+
+> 3.Restart service
+
+```shell 
+zkServer.sh restart
+```
+
+#### netcat protocol
+The current implementation scheme requires us to deploy the Linux server of zookeeper
+Command environment for installing netcat
+
+> netcat installation steps
+```shell
+yum install -y nc
+```
+
+If the terminal displays the following information, the installation is successful
+```shell
+Complete!
+```
 
 ### Configuration parameter
 
@@ -16,7 +56,7 @@ sidebar_label: Zookeeper monitoring
 | Query timeout | Set the timeout of Zookeeper connection, unit: ms, default: 3000ms |
 | Username      | User name of the Linux connection where Zookeeper is located |
 | Password        | Password of the Linux connection where Zookeeper is located |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
@@ -58,40 +98,3 @@ sidebar_label: Zookeeper monitoring
 | zk_min_latency | ms | Min latency |
 
 
-# Note
-## Zookeeper four word command
->The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
-Users need to add the four word command of zookeeper to the white list by themselves.
-
-Steps
-> 1.Find our zookeeper configuration file, which is usually zoo.cfg. 
-> 
-> 2.Add the following commands to the configuration file   
-
-```shell
-# Add the required command to the white list
-4lw.commands.whitelist=stat, ruok, conf, isro
-
-# Add all commands to the white list
-4lw.commands.whitelist=*
-```
-
-> 3.Restart service   
-
-```shell 
-zkServer.sh restart
-```
-
-## netcat protocol
-The current implementation scheme requires us to deploy the Linux server of zookeeper
-Command environment for installing netcat
-
-> netcat installation steps   
-```shell
-yum install -y nc
-```
-
-If the terminal displays the following information, the installation is successful   
-```shell
-Complete!
-```

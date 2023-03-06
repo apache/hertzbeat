@@ -2,6 +2,7 @@
 id: alert_email  
 title: 告警邮件通知      
 sidebar_label: 告警邮件通知   
+keywords: [告警邮件通知, 开源告警系统, 开源监控告警系统]
 ---
 
 > 阈值触发后发送告警信息，通过邮件通知到接收人。      

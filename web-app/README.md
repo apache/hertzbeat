@@ -19,7 +19,7 @@
 
 1. Execute command in web-app  
 
-```ng build --prod```
+```ng build --configuration production```
 
 2. Execute command in manager  
 

@@ -2,6 +2,7 @@
 id: postgresql  
 title: Monitoring：PostgreSQL database monitoring      
 sidebar_label: PostgreSQL database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring postgresql database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of PostgreSQL database. Support PostgreSQL 10+.
@@ -18,7 +19,7 @@ sidebar_label: PostgreSQL database
 | Username      | Database connection user name, optional |
 | Password        | Database connection password, optional |
 | URL        | Database connection URL，optional，If configured, the database name, user name, password and other parameters in the URL will overwrite the above configured parameters |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

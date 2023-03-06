@@ -1,7 +1,8 @@
 ---
 id: api  
-title: Monitoring：HTTP API      
+title: Monitoring HTTP API      
 sidebar_label: HTTP API   
+keywords: [open source monitoring system, monitoring http api]
 ---
 
 > Call HTTP API interface, check whether the interface is available, and monitor its response time and other Metrics.   
@@ -20,7 +21,7 @@ sidebar_label: HTTP API
 | Password        | Password used for interface Basic authentication or Digest authentication |
 | Content-Type  | Set the resource type when carrying the BODY request body data request |
 | Request BODY    | Set the carry BODY request body data, which is valid when PUT or POST request method is used |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

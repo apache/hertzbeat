@@ -18,12 +18,16 @@
 package com.usthe.common.config;
 
 import com.usthe.common.util.AesUtil;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * @author tom
  * @date 2022/6/30 09:23
  */
+@ComponentScan(basePackages = "com.usthe.common")
+@EnableConfigurationProperties(CommonProperties.class)
 @Configuration
 public class CommonConfig {
 

@@ -132,6 +132,11 @@ public class Metrics {
      */
     private RedisProtocol redis;
     /**
+     * Monitoring configuration information using the public mongodb protocol
+     * 使用公共的mongodb协议的监控配置信息
+     */
+    private MongodbProtocol mongodb;
+    /**
      * Get monitoring configuration information using public JMX protocol
      * 使用公共JMX协议获取监控配置信息
      */
@@ -141,6 +146,11 @@ public class Metrics {
      * 使用公共的snmp协议的监控配置信息
      */
     private SnmpProtocol snmp;
+    /**
+     * Monitoring configuration information using the public ftp protocol
+     * 使用公共的ftp协议的监控配置信息
+     */
+    private FtpProtocol ftp;
 
     /**
      * collector use - Temporarily store subTask indicator group response data

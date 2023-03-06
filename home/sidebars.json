@@ -6,15 +6,15 @@
       "items": [
         "introduce",
         "start/quickstart",
-        "start/iotdb-init",
-        "start/tdengine-init",
         "start/docker-deploy",
-        "start/rainbond-deploy",
         "start/package-deploy",
         "start/rainbond-deploy",
-        "start/ssl-cert-practice",
+        "start/iotdb-init",
+        "start/tdengine-init",
         "start/mysql-change",
-        "start/custom-config"
+        "start/account-modify",
+        "start/custom-config",
+        "start/ssl-cert-practice"
       ]
     },
     {
@@ -67,6 +67,7 @@
             "help/ssl_cert",
             "help/jvm",
             "help/springboot2"
+
           ]
         },
         {
@@ -79,7 +80,9 @@
             "help/sqlserver",
             "help/oracle",
             "help/dm",
-            "help/opengauss"
+            "help/opengauss",
+            "help/iotdb",
+            "help/redis"
           ]
         },
         {
@@ -98,7 +101,12 @@
           "items": [
             "help/zookeeper",
             "help/kafka",
-            "help/tomcat"
+            "help/tomcat",
+            "help/shenyu",
+            "help/dynamic_tp",
+            "help/rabbitmq",
+            "help/activemq",
+            "help/jetty"
           ]
         },
         {
@@ -123,6 +131,9 @@
           "items": [
             "help/alert_email",
             "help/alert_webhook",
+            "help/alert_discord",
+            "help/alert_slack",
+            "help/alert_telegram",
             "help/alert_wework",
             "help/alert_dingtalk",
             "help/alert_feishu",

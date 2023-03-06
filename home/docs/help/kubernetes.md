@@ -2,7 +2,7 @@
 id: kubernetes
 title: 监控：Kubernetes 监控      
 sidebar_label: Kubernetes 监控
-
+keywords: [开源监控系统, 开源Kubernetes监控]
 ---
 
 > 对kubernetes的通用性能指标进行采集监控。
@@ -39,7 +39,7 @@ kubectl describe secret {secret} -n kube-system
 | APiServer端口 | K8s APiServer端口，默认6443                                   |
 | token       | 授权Access Token                                       |
 | URL         | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数      |
-| 采集间隔        | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒                       |
+| 采集间隔        | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |
 | 是否探测        | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
 | 描述备注        | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
 

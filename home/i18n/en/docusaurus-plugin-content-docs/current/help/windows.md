@@ -2,6 +2,7 @@
 id: windows  
 title: Monitoring：Windows operating system monitoring      
 sidebar_label: Windows operating system       
+keywords: [open source monitoring system, open source windows monitoring system, monitoring windows metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Windows operating system through SNMP protocol.
@@ -23,7 +24,7 @@ References:
 | SNMP version   | SNMP protocol version V1 V2c V3 |
 | SNMP community Word | SNMP agreement community name(Community Name). It is used to realize the authentication of SNMP network administrator when accessing SNMP management agent. Similar to password, the default value is public |
 | Timeout    | Protocol connection timeout |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

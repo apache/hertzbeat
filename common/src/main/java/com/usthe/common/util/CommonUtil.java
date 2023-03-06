@@ -104,4 +104,35 @@ public class CommonUtil {
         return m.find();
     }
 
+    public static String getMessageFromThrowable(Throwable throwable) {
+        if (throwable == null) {
+            return "throwable is null, unknown error.";
+        }
+        String message = null;
+        Throwable cause = throwable.getCause();
+        if (cause != null) {
+            message = cause.getMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.getMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.getLocalizedMessage();
+        }
+        if (message == null || "".equals(message)) {
+            message = throwable.toString();
+        }
+        if (message == null || "".equals(message)) {
+            message = "unknown error.";
+        }
+        return message;
+    }
+
+    public static String removeBlankLine(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");
+    }
+
 }

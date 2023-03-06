@@ -26,12 +26,13 @@ sidebar_label: 帮助入门
 ### 数据库监控  
 
   &emsp;&#x1F449;&emsp;[MYSQL数据库监控](mysql) <br />
-  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br /> 
-  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br /> 
+  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br />
+  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br />
   &emsp;&#x1F449;&emsp;[SqlServer数据库监控](sqlserver) <br />
-  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />      
-  &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />  
+  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />
+  &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />
   &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
+  &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
 
 ### 操作系统监控     
 
@@ -45,6 +46,11 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
   &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
   &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
+  &emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
+  &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
+  &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
+  &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
+  &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
 
 ### 云原生监控
 
@@ -75,7 +81,10 @@ sidebar_label: 帮助入门
 
 
 &emsp;&#x1F449;&emsp;[配置邮箱通知](alert_email) <br />
-&emsp;&#x1F449;&emsp;[配置WebHook通知](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[配置 Webhook 通知](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[配置 Telegram 通知](alert_telegram) <br />
+&emsp;&#x1F449;&emsp;[配置 Discord 通知](alert_discord) <br />
+&emsp;&#x1F449;&emsp;[配置 Slack 通知](alert_slack) <br />
 &emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
 &emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />  

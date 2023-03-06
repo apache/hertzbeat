@@ -20,18 +20,17 @@ package com.usthe.manager.controller;
 import com.usthe.common.entity.dto.Message;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.manager.ParamDefine;
+import com.usthe.common.util.CommonConstants;
 import com.usthe.manager.pojo.dto.Hierarchy;
+import com.usthe.manager.pojo.dto.MonitorDefineDto;
 import com.usthe.manager.service.AppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Locale;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -64,6 +63,41 @@ public class AppController {
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         Job define = appService.getAppDefine(app.toLowerCase());
         return ResponseEntity.ok(new Message<>(define));
+    }
+
+    @GetMapping(path = "/{app}/define/yml")
+    @Operation(summary = "The definition yml of the specified monitoring type according to the app query", description = "根据app查询指定监控类型的定义YML")
+    public ResponseEntity<Message<String>> queryAppDefineYml(
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
+        String defineContent = appService.getMonitorDefineFileContent(app);
+        return ResponseEntity.ok(Message.<String>builder().data(defineContent).build());
+    }
+
+    @DeleteMapping(path = "/{app}/define/yml")
+    @Operation(summary = "Delete monitor define yml", description = "根据app删除指定监控类型的定义YML")
+    public ResponseEntity<Message<Void>> deleteAppDefineYml(
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
+        try {
+            appService.deleteMonitorDefine(app);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.<Void>builder()
+                    .code(CommonConstants.FAIL_CODE)
+                    .msg(e.getMessage()).build());
+        }
+        return ResponseEntity.ok(Message.<Void>builder().build());
+    }
+
+    @PostMapping(path = "/define/yml")
+    @Operation(summary = "Save and apply monitoring type define yml", description = "保存并应用监控类型的定义YML")
+    public ResponseEntity<Message<Void>> applyAppDefineYml(@RequestBody MonitorDefineDto defineDto) {
+        try {
+            appService.applyMonitorDefineYml(defineDto.getDefine());
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.<Void>builder()
+                            .code(CommonConstants.FAIL_CODE)
+                            .msg(e.getMessage()).build());
+        }
+        return ResponseEntity.ok(Message.<Void>builder().build());
     }
 
     @GetMapping(path = "/hierarchy")

@@ -29,9 +29,10 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[MariaDB database monitoring](mariadb) <br />
 &emsp;&#x1F449;&emsp;[PostgreSQL database monitoring](postgresql) <br />
 &emsp;&#x1F449;&emsp;[SqlServer database monitoring](sqlserver) <br />
-&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />   
-&emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />  
+&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />
+&emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
+&emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
 
 ### Operating system monitoring     
 
@@ -45,6 +46,11 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
 &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
 &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
+&emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
+&emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
+&emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
+&emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
 
 ### CloudNative monitoring
 
@@ -76,8 +82,11 @@ More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br />
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
 
 
-&emsp;&#x1F449;&emsp;[Configure email notification](alert_email) <br /> 
-&emsp;&#x1F449;&emsp;[Configure WebHook notification](alert_webhook) <br /> 
-&emsp;&#x1F449;&emsp;[Configure enterprise wechat robot notification](alert_wework) <br />    
-&emsp;&#x1F449;&emsp;[Configure DingDing robot notification](alert_dingtalk) <br /> 
-&emsp;&#x1F449;&emsp;[Configure FeiShu robot notification](alert_feishu) <br />   
+&emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
+&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br /> 
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />    
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br /> 
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />   

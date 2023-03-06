@@ -1,8 +1,8 @@
 ---
 id: springboot2  
-Title: SpringBoot 2.0 monitoring      
-sidebar_label: SpringBoot 2.0 monitoring
-
+Title: Monitoring SpringBoot 2.0      
+sidebar_label: SpringBoot 2.0
+keywords: [open source monitoring system, open source springboot2 monitoring system, monitoring springboot2 metrics]
 ---
 
 > Collect and monitor the general performance metrics exposed by the SpringBoot 2.0 actuator.
@@ -38,7 +38,7 @@ management:
 | Monitoring Name | A name that identifies this monitoring that needs to be unique. |
 | Port | The default port provided by the database is 8080. |
 | Enable HTTPS | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443 |
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 10 seconds |
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds |
 | Whether to probe the | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation | will continue only if the probe is successful
 | Description Comment | For more information identifying and describing the remarks for this monitoring, users can remark the information here |
 

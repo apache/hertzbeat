@@ -55,8 +55,8 @@ public interface AppService {
 
     /**
      * 获取app定义的指标
-     * @param app
-     * @return
+     * @param app 监控类型
+     * @return 指标
      */
     List<String> getAppDefineMetricNames(String app);
 
@@ -78,5 +78,24 @@ public interface AppService {
      * @return level information        层级信息
      */
     List<Hierarchy> getAllAppHierarchy(String lang);
+
+    /**
+     * app define file content str
+     * @param app app
+     * @return file content
+     */
+    String getMonitorDefineFileContent(String app);
+
+    /**
+     * update and apply app define yml
+     * @param ymlContent yml content
+     */
+    void applyMonitorDefineYml(String ymlContent);
+
+    /**
+     * delete monitor define yml
+     * @param app app
+     */
+    void deleteMonitorDefine(String app);
 
 }

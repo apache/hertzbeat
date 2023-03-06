@@ -17,12 +17,8 @@
 
 package com.usthe.manager.component.alerter.impl;
 
-import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.ResourceBundleUtil;
-import com.usthe.manager.component.alerter.AlertNotifyHandler;
 import com.usthe.manager.pojo.dto.WeWorkWebHookDto;
 import com.usthe.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.ResourceBundle;
 
 /**
  * Send alarm information through enterprise WeChat
@@ -46,52 +37,16 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
-
-    private final RestTemplate restTemplate;
-
-    private final AlerterProperties alerterProperties;
-
-    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = null;
-        String monitorName = null;
-        if (alert.getTags() != null) {
-            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
-        }
-        WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
-        WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-        StringBuilder content = new StringBuilder();
-        content.append("<font color=\"info\">[").append(bundle.getString("alerter.notify.title"))
-                .append("]</font>\n").append(bundle.getString("alerter.notify.target"))
-                .append(" : <font color=\"info\">").append(alert.getTarget()).append("</font>\n");
-        if (monitorId != null) {
-            content.append(bundle.getString("alerter.notify.monitorId")).append(" : ")
-                    .append(monitorId).append("\n");
-        }
-        if (monitorName != null) {
-            content.append(bundle.getString("alerter.notify.monitorName")).append(" : ")
-                    .append(monitorName).append("\n");
-        }
-        if (alert.getPriority() < CommonConstants.ALERT_PRIORITY_CODE_WARNING) {
-            content.append(bundle.getString("alerter.notify.priority")).append(" : <font color=\"warning\">")
-                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("</font>\n");
-        } else {
-            content.append(bundle.getString("alerter.notify.priority")).append(" : <font color=\"comment\">")
-                    .append(bundle.getString("alerter.priority." + alert.getPriority())).append("</font>\n");
-        }
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        content.append(bundle.getString("alerter.notify.triggerTime")).append(" : ")
-                .append(triggerTime).append("\n");
-        content.append(bundle.getString("alerter.notify.content")).append(" : ").append(alert.getContent());
-        markdownDTO.setContent(content.toString());
-        weWorkWebHookDTO.setMarkdown(markdownDTO);
-        String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
         try {
+            WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
+            WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
+            markdownDTO.setContent(renderContent(alert));
+            weWorkWebHookDTO.setMarkdown(markdownDTO);
+            String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
@@ -114,4 +69,10 @@ final class WeWorkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
     public byte type() {
         return 4;
     }
+
+    @Override
+    protected String templateName() {
+        return "alertNotifyWeWorkRobot";
+    }
+
 }

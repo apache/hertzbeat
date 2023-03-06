@@ -1,7 +1,8 @@
 ---
 id: centos  
-title: Monitoring：CentOS operating system monitoring      
+title: CentOS operating system monitoring      
 sidebar_label: CentOS operating system       
+keywords: [open source monitoring system, open source os monitoring system, monitoring CentOS operating system metrics]
 ---
 
 > Collect and monitor the general performance Metrics of CentOS operating system.
@@ -15,7 +16,7 @@ sidebar_label: CentOS operating system
 | Port        | Port provided by Linux SSH. The default is 22 |
 | Username      | SSH connection user name, optional |
 | Password       | SSH connection password, optional |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 10 seconds |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
 | Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 

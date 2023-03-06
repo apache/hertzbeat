@@ -17,24 +17,15 @@
 
 package com.usthe.manager.component.alerter.impl;
 
-import com.usthe.alert.AlerterProperties;
 import com.usthe.common.entity.alerter.Alert;
 import com.usthe.common.entity.manager.NoticeReceiver;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.ResourceBundleUtil;
-import com.usthe.manager.component.alerter.AlertNotifyHandler;
-import com.usthe.manager.pojo.dto.DingTalkWebHookDto;
 import com.usthe.manager.support.exception.AlertNoticeException;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.ResourceBundle;
 
 /**
  * Send alarm information through DingTalk robot
@@ -46,48 +37,17 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
-
-    private final RestTemplate restTemplate;
-
-    private final AlerterProperties alerterProperties;
-
-    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
-        String monitorId = null;
-        String monitorName = null;
-        if (alert.getTags() != null) {
-            monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
-            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
-        }
-        DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
-        DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
-        StringBuilder contentBuilder = new StringBuilder("#### [" + bundle.getString("alerter.notify.title")
-                + "]\n##### **" + bundle.getString("alerter.notify.target") + "** : " +
-                alert.getTarget() + "\n   ");
-        if (monitorId != null) {
-            contentBuilder.append("##### **").append(bundle.getString("alerter.notify.monitorId"))
-                    .append("** : ").append(monitorId).append("\n   ");
-        }
-        if (monitorName != null) {
-            contentBuilder.append("##### **").append(bundle.getString("alerter.notify.monitorName"))
-                    .append("** : ").append(monitorName).append("\n   ");
-        }
-        contentBuilder.append("##### **").append(bundle.getString("alerter.notify.priority"))
-                .append("** : ").append(bundle.getString("alerter.priority." + alert.getPriority())).append("\n   ");
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        contentBuilder.append("##### **").append(bundle.getString("alerter.notify.triggerTime"))
-                .append("** : ").append(triggerTime).append("\n   ");
-        contentBuilder.append("##### **").append(bundle.getString("alerter.notify.content"))
-                .append("** : ").append(alert.getContent());
-        markdownDTO.setText(contentBuilder.toString());
-        markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
-        dingTalkWebHookDto.setMarkdown(markdownDTO);
-        String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
         try {
+            DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
+            MarkdownDTO markdownDTO = new MarkdownDTO();
+            markdownDTO.setText(renderContent(alert));
+            markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
+            dingTalkWebHookDto.setMarkdown(markdownDTO);
+            String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
                     dingTalkWebHookDto, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
@@ -111,4 +71,45 @@ final class DingTalkRobotAlertNotifyHandlerImpl implements AlertNotifyHandler {
     public byte type() {
         return 5;
     }
+
+    @Override
+    protected String templateName() {
+        return "alertNotifyDingTalkRobot";
+    }
+
+    /**
+     * 钉钉机器人请求消息体
+     *
+     * @author 花城
+     * @version 1.0
+     * @date 2022/2/21 6:55 下午
+     */
+    @Data
+    private static class DingTalkWebHookDto {
+        private static final String MARKDOWN = "markdown";
+
+        /**
+         * 消息类型
+         */
+        private String msgtype = MARKDOWN;
+
+        /**
+         * markdown消息
+         */
+        private MarkdownDTO markdown;
+
+    }
+
+    @Data
+    private static class MarkdownDTO {
+        /**
+         * 消息内容
+         */
+        private String text;
+        /**
+         * 消息标题
+         */
+        private String title;
+    }
+
 }

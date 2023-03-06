@@ -62,6 +62,7 @@
     <logger name="org.apache.http" level="info"/>
     <logger name="com.zaxxer" level="info"/>
     <logger name="springfox" level="info"/>
+    <logger name="org.mongodb" level="warn"/>
 
     <!-- 生产环境配置 -->
     <springProfile name="prod">
@@ -74,7 +75,7 @@
 
     <!-- 开发环境配置 -->
     <springProfile name="dev">
-        <root level="DEBUG">
+        <root level="INFO">
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>

@@ -1,7 +1,8 @@
 ---
 id: dm  
-title: Monitor：DM database monitoring      
-sidebar_label: DM DB   
+title: Monitoring DM database      
+sidebar_label: DM Database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring DM database metrics]
 ---
 
 > Collect and monitor the general performance metrics of the DM database. DM8+ is supported.
@@ -18,7 +19,7 @@ sidebar_label: DM DB
 | username | database connection username, optional |
 | password | database connection password, optional |
 | URL | Database connection URL, optional |
-| Collection Interval | Monitor periodical collection data interval, in seconds, the minimum interval that can be set is 10 seconds |
+| Collection Interval | Monitor periodical collection data interval, in seconds, the minimum interval that can be set is 30 seconds |
 | Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and then continue to add and modify operations if the detection is successful |
 | Description Remarks | More remarks that identify and describe this monitoring, users can remark information here |
 

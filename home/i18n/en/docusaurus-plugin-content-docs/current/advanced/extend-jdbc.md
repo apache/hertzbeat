@@ -38,31 +38,30 @@ queried fields：one two three four
 query SQL：select key, value from book;   
 SQL response data：   
 
-| key      | value |
-| ----------- | ----------- |
-| one    | 243 |
-| two    | 435 |
-| three  | 332 |
-| four   | 643 |
+| key     | value |
+|---------|-------|
+| one     | 243   |
+| two     | 435   |
+| three   | 332   |
+| four    | 643   |
 
 Here by mapping the Metric field with the key of the response data, we can  obtain the corresponding value as collection and monitoring data.
 
 ### Custom Steps  
 
-In order to configure a custom monitoring type, you need to add and configure two YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example_sql.yml in the installation directory /hertzbeat/define/app/
-2. Monitoring parameter definition file named after monitoring type - eg ：example_sql.yml in the installation directory /hertzbeat/define/param/
-3. Restart hertzbeat system, we successfully fit a new custom monitoring type.
+In order to configure a custom monitoring type, you need to add and configure YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example_sql.yml in the installation directory /hertzbeat/app/
+2. Restart hertzbeat system, we successfully fit a new custom monitoring type.
 
 ------- 
-Configuration usages of the two files are detailed below. Please pay attention to usage annotation.   
+Configuration usages of the file is detailed below. Please pay attention to usage annotation.   
 
 ### Monitoring configuration definition file   
 
 > Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
 eg：Define a custom monitoring type named example_sql which use the JDBC protocol to collect data.    
-The file name: example_sql.yml in /define/app/example_sql.yml   
+The file name: example_sql.yml in /define/example_sql.yml   
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -72,22 +71,48 @@ app: example_sql
 name:
   zh-CN: 模拟MYSQL应用类型
   en-US: MYSQL EXAMPLE APP
-# parameter mapping map. These are input parameter variables which can be written to the configuration in form of ^_^host^_^. The system automatically replace variable's value.
-# type means parameter type: 0-number number, 1-string cleartext string, 2-secret encrypted string
-# required parameters - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
-  - key: database
-    type: 1
-  - key: url
-    type: 1
+# Monitoring parameter definition file is used to define required input parameter field structure definition Front-end page render input parameter box according to structure
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+    placeholder: 'Please enter the port'
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database
+    type: text
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: Url
+      en-US: Url
+    type: text
+    required: false
 # Metric group list
 metrics:
   - name: basic
@@ -209,56 +234,4 @@ metrics:
       # sql
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
-```
-
-### Monitoring parameter definition file
-
-> Monitoring parameter definition file is used to define *required input parameter field structure definition (Front-end page render input parameter box according to structure)*.
-
-eg：Define a custom monitoring type named example_sql which use the JDBC protocol to collect data.
-The file name: example_sql.yml in /define/param/example_sql.yml   
-
-```yaml
-app: example_sql
-param:
-  - field: host
-    name: 
-      zh-CN: 主机Host
-      en-US: Host
-    type: host
-    required: true
-  - field: port
-    name: 
-      zh-CN: 端口
-      en-US: Port
-    type: number
-    range: '[0,65535]'
-    required: true
-    defaultValue: 80
-    placeholder: 'Please enter the port'
-  - field: database
-    name: 
-      zh-CN: 数据库名称
-      en-US: Database
-    type: text
-    required: false
-  - field: username
-    name: 
-      zh-CN: 用户名
-      en-US: Username
-    type: text
-    limit: 20
-    required: false
-  - field: password
-    name: 
-      zh-CN: 密码
-      en-US: Password
-    type: password
-    required: false
-  - field: url
-    name: 
-      zh-CN: Url
-      en-US: Url
-    type: text
-    required: false
 ```

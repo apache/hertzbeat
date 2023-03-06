@@ -19,6 +19,7 @@ package com.usthe.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.GsonUtil;
 import lombok.AllArgsConstructor;
@@ -95,6 +96,10 @@ public class Job {
      */
     private boolean isCyclic = false;
     /**
+     * monitor input need params
+     */
+    private List<ParamDefine> params;
+    /**
      * Indicator group configuration eg: cpu memory
      * 指标组配置 eg: cpu memory
      */
@@ -130,7 +135,7 @@ public class Job {
      * 127 - lastPriorMetrics
      */
     @JsonIgnore
-    private transient List<Set<Metrics>> priorMetrics;
+    private transient LinkedList<Set<Metrics>> priorMetrics;
 
     /**
      * collector use - Temporarily store one-time task indicator group response data
@@ -194,11 +199,10 @@ public class Job {
         if (priorMetrics == null || priorMetrics.isEmpty()) {
             return null;
         }
-        Set<Metrics> metricsSet = priorMetrics.get(0);
+        Set<Metrics> metricsSet = priorMetrics.peek();
         if (first) {
             if (metricsSet.isEmpty()) {
                 log.error("metrics must has one [availability] metrics at least.");
-
             }
             return metricsSet;
         }
@@ -211,11 +215,11 @@ public class Job {
                     id, monitorId, app, metrics.getName());
         }
         if (metricsSet.isEmpty()) {
-            priorMetrics.remove(0);
-            if (priorMetrics.size() == 0) {
+            priorMetrics.poll();
+            if (priorMetrics.isEmpty()) {
                 return null;
             }
-            return priorMetrics.get(0);
+            return priorMetrics.peek();
         } else {
             return Collections.emptySet();
         }

@@ -21,15 +21,14 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseProperties;
 import com.usthe.warehouse.WarehouseWorkerPool;
+import com.usthe.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,10 +46,9 @@ import java.util.regex.Pattern;
  * @date 2021/11/24 18:23
  */
 @Primary
-@Configuration
-@AutoConfigureAfter(value = {WarehouseProperties.class})
+@Component
 @ConditionalOnProperty(prefix = "warehouse.store.td-engine",
-        name = "enabled", havingValue = "true", matchIfMissing = false)
+        name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
@@ -118,7 +116,11 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        if (metricsData == null || metricsData.getValuesList().isEmpty() || metricsData.getFieldsList().isEmpty()) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
+        if (metricsData.getValuesList().isEmpty()) {
+            log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
@@ -262,7 +264,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 Timestamp ts = resultSet.getTimestamp(1);
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
-                    instanceValue = "NULL";
+                    instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
                 String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
@@ -336,7 +338,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                             metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
             if ("''".equals(instanceValue)) {
-                instanceValue = "NULL";
+                instanceValue = "";
             }
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;

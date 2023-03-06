@@ -30,7 +30,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -68,11 +67,10 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot",
-            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人",
+    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot",
+            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人 8-SlackWebHook 9-Discord机器人",
             accessMode = READ_WRITE)
     @Min(0)
-    @Max(8)
     @NotNull
     private Byte type;
 
@@ -94,8 +92,8 @@ public class NoticeReceiver {
     @Length(max = 300)
     private String hookUrl;
 
-    @Schema(title = "openId : The notification method is valid for WeChat official account or enterprise WeChat robot",
-            description = "openId : 通知方式为微信公众号或企业微信机器人有效",
+    @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
+            description = "openId : 通知方式为微信公众号，企业微信机器人或飞书机器人有效",
             example = "343432", accessMode = READ_WRITE)
     @Length(max = 300)
     private String wechatId;
@@ -105,6 +103,34 @@ public class NoticeReceiver {
             example = "34823984635647", accessMode = READ_WRITE)
     @Length(max = 300)
     private String accessToken;
+
+    @Schema(title = "Telegram bot token : The notification method is valid for Telegram Bot",
+            description = "Telegram bot token : 通知方式为Telegram机器人有效",
+            example = "1499012345:AAEOB_wEYS-DZyPM3h5NzI8voJMXXXXXX", accessMode = READ_WRITE)
+    private String tgBotToken;
+
+    @Schema(title = "Telegram user id: The notification method is valid for Telegram Bot",
+            description = "Telegram user id : 通知方式为Telegram机器人有效",
+            example = "779294123", accessMode = READ_WRITE)
+    private String tgUserId;
+
+    @Schema(title = "URL address: The notification method is valid for Slack",
+            description = "URL地址 : 通知方式为Slack有效",
+            example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
+    @Length(max = 300)
+    private String slackWebHookUrl;
+
+    @Schema(title = "Discord channel id: The notification method is valid for Discord",
+            description = "Discord 频道id: 通知方式为Discord有效",
+            example = "1065303416030642266", accessMode = READ_WRITE)
+    @Length(max = 300)
+    private String discordChannelId;
+
+    @Schema(title = "Discord bot token: The notification method is valid for Discord",
+            description = "Discord 机器人Token: 通知方式为Discord有效",
+            example = "MTA2NTMwMzU0ODY4Mzg4MjUzNw.xxxxx.xxxxxxx", accessMode = READ_WRITE)
+    @Length(max = 300)
+    private String discordBotToken;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
@@ -116,13 +142,13 @@ public class NoticeReceiver {
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "Record creation time (millisecond timestamp)", description = "记录创建时间(毫秒时间戳)",
+    @Schema(title = "Record creation time (millisecond timestamp)", description = "记录创建时间",
             example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
     @Schema(title = "Record the latest modification time (timestamp in milliseconds)",
-            description = "记录最新修改时间(毫秒时间戳)", example = "1612198444000", accessMode = READ_ONLY)
+            description = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
