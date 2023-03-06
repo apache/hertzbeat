@@ -2,9 +2,7 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
@@ -72,13 +70,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private long queryTimeoutInMs;
 
-    public HistoryIotDbDataStorage(WarehouseWorkerPool workerPool,
-                                   WarehouseProperties properties,
-                                   CommonDataQueue commonDataQueue) {
-        super(workerPool, properties, commonDataQueue);
-
+    public HistoryIotDbDataStorage(WarehouseProperties properties) {
         this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
-        this.startStorageData("warehouse-iotdb-data-storage", isServerAvailable());
     }
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {

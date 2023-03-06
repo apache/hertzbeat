@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 import { MonitorService } from '../../../service/monitor.service';
 
@@ -27,7 +28,7 @@ export class MonitorDataTableComponent {
   rowValues!: any[];
   isTable: boolean = true;
 
-  constructor(private monitorSvc: MonitorService) {}
+  constructor(private monitorSvc: MonitorService, private notifySvc: NzNotificationService) {}
 
   loadData() {
     // 读取实时指标数据
@@ -43,6 +44,7 @@ export class MonitorDataTableComponent {
             this.rowValues = this.valueRows[0].values;
           }
         } else {
+          this.notifySvc.warning(`${this.metrics}:${message.msg}`, '');
           console.info(`${this.metrics}:${message.msg}`);
         }
       },
