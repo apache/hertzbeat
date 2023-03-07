@@ -43,7 +43,7 @@ export class MonitorDataTableComponent {
             this.isTable = false;
             this.rowValues = this.valueRows[0].values;
           }
-        } else {
+        } else if (message.code !== 0) {
           this.notifySvc.warning(`${this.metrics}:${message.msg}`, '');
           console.info(`${this.metrics}:${message.msg}`);
         }

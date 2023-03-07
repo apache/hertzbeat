@@ -90,6 +90,7 @@ metrics:
       timeout: ^_^timeout^_^
       community: ^_^community^_^
       version: ^_^version^_^
+      operation: get
       oids:
         name: 1.3.6.1.2.1.1.5.0
         descr: 1.3.6.1.2.1.1.1.0
@@ -198,3 +199,89 @@ metrics:
       version: ^_^version^_^
       oids:
         number: 1.3.6.1.2.1.2.1.0
+
+  - name: interfaces
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+      - field: descr
+        type: 1
+      - field: mtu
+        type: 0
+        unit: 'byte'
+      - field: speed
+        type: 0
+        unit: 'byte/s'
+      - field: in_octets
+        type: 0
+        unit: 'byte'
+      - field: in_discards
+        type: 0
+        unit: 'package'
+      - field: in_errors
+        type: 0
+        unit: 'package'
+      - field: out_octets
+        type: 0
+        unit: 'byte'
+      - field: out_discards
+        type: 0
+        unit: 'package'
+      - field: out_errors
+        type: 0
+        unit: 'package'
+      - field: admin_status
+        type: 1
+      - field: oper_status
+        type: 1
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - ifIndex
+      - ifDescr
+      - ifMtu
+      - ifSpeed
+      - ifInOctets
+      - ifInDiscards
+      - ifInErrors
+      - ifOutOctets
+      - ifOutDiscards
+      - ifOutErrors
+      - ifAdminStatus
+      - ifOperStatus
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - index=ifIndex
+      - descr=ifDescr
+      - mtu=ifMtu
+      - speed=ifSpeed
+      - in_octets=ifInOctets
+      - in_discards=ifInDiscards
+      - in_errors=ifInErrors
+      - out_octets=ifOutOctets
+      - out_discards=ifOutDiscards
+      - out_errors=ifOutErrors
+      - admin_status=ifAdminStatus
+      - oper_status=ifOperStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        ifIndex: 1.3.6.1.2.1.2.2.1.1
+        ifDescr: 1.3.6.1.2.1.2.2.1.2
+        ifMtu: 1.3.6.1.2.1.2.2.1.4
+        ifSpeed: 1.3.6.1.2.1.2.2.1.5
+        ifInOctets: 1.3.6.1.2.1.2.2.1.10
+        ifInDiscards: 1.3.6.1.2.1.2.2.1.13
+        ifInErrors: 1.3.6.1.2.1.2.2.1.14
+        ifOutOctets: 1.3.6.1.2.1.2.2.1.16
+        ifOutDiscards: 1.3.6.1.2.1.2.2.1.19
+        ifOutErrors: 1.3.6.1.2.1.2.2.1.20
+        ifAdminStatus: 1.3.6.1.2.1.2.2.1.7
+        ifOperStatus: 1.3.6.1.2.1.2.2.1.8
