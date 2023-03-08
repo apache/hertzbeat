@@ -31,6 +31,7 @@ import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.*;
+import org.snmp4j.util.*;
 import org.springframework.util.Assert;
 import org.snmp4j.*;
 import org.snmp4j.fluent.SnmpBuilder;
@@ -55,6 +56,9 @@ import java.util.concurrent.ExecutionException;
 public class SnmpCollectImpl extends AbstractCollect {
 
     private static final String DEFAULT_PROTOCOL = "udp";
+    private static final String OPERATION_GET = "get";
+    private static final String OPERATION_WALK = "walk";
+    private static final String HEX_SPLIT = ":";
     private static final String FORMAT_PATTERN =
             "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }" +
                     "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }" +
@@ -108,37 +112,79 @@ public class SnmpCollectImpl extends AbstractCollect {
                         .build();
                 target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
             }
-
-            PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).build();
-            SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
-            List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
-            long responseTime = System.currentTimeMillis() - startTime;
-            Map<String, String> oidsMap = snmpProtocol.getOids();
-            Map<String, String> oidsValueMap = new HashMap<>(oidsMap.size());
-            for (VariableBinding binding : vbs) {
-                Variable variable = binding.getVariable();
-                if (variable instanceof TimeTicks) {
-                    String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
-                    oidsValueMap.put(binding.getOid().toDottedString(), value);
-                } else {
-                    oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
-                }
-            }
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            for (String alias : metrics.getAliasFields()) {
-                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(Long.toString(responseTime));
-                } else {
-                    String oid = oidsMap.get(alias);
-                    String value = oidsValueMap.get(oid);
-                    if (value != null) {
-                        valueRowBuilder.addColumns(value);
+            String operation = snmpProtocol.getOperation();
+            operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
+            if (OPERATION_GET.equalsIgnoreCase(operation)) {
+                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).build();
+                SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
+                List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
+                long responseTime = System.currentTimeMillis() - startTime;
+                Map<String, String> oidsMap = snmpProtocol.getOids();
+                Map<String, String> oidsValueMap = new HashMap<>(oidsMap.size());
+                for (VariableBinding binding : vbs) {
+                    Variable variable = binding.getVariable();
+                    if (variable instanceof TimeTicks) {
+                        String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                        oidsValueMap.put(binding.getOid().toDottedString(), value);
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
                     }
                 }
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : metrics.getAliasFields()) {
+                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumns(Long.toString(responseTime));
+                    } else {
+                        String oid = oidsMap.get(alias);
+                        String value = oidsValueMap.get(oid);
+                        if (value != null) {
+                            valueRowBuilder.addColumns(value);
+                        } else {
+                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        }
+                    }
+                }
+                builder.addValues(valueRowBuilder.build());
+            } else if (OPERATION_WALK.equalsIgnoreCase(operation)) {
+                Map<String, String> oidMap = snmpProtocol.getOids();
+                Assert.notEmpty(oidMap, "snmp oids is required when operation is walk.");
+                TableUtils tableUtils = new TableUtils(snmpService, new DefaultPDUFactory(PDU.GETBULK));
+                OID[] oids = oidMap.values().stream().map(OID::new).toArray(OID[]::new);
+                List<TableEvent> tableEvents = tableUtils.getTable(target, oids, null, null);
+                Assert.notNull(tableEvents, "snmp walk response empty content.");
+                long responseTime = System.currentTimeMillis() - startTime;
+                for (TableEvent tableEvent : tableEvents) {
+                    if (tableEvent == null || tableEvent.isError()) {
+                        continue;
+                    }
+                    VariableBinding[] varBindings = tableEvent.getColumns();
+                    Map<String, String> oidsValueMap = new HashMap<>(varBindings.length);
+                    for (VariableBinding binding : varBindings) {
+                        Variable variable = binding.getVariable();
+                        if (variable instanceof TimeTicks) {
+                            String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                            oidsValueMap.put(binding.getOid().trim().toDottedString(), value);
+                        } else {
+                            oidsValueMap.put(binding.getOid().trim().toDottedString(), bingdingHexValueToString(binding));
+                        }
+                    }
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                    for (String alias : metrics.getAliasFields()) {
+                        if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumns(Long.toString(responseTime));
+                        } else {
+                            String oid = oidMap.get(alias);
+                            String value = oidsValueMap.get(oid);
+                            if (value != null) {
+                                valueRowBuilder.addColumns(value);
+                            } else {
+                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            }
+                        }
+                    }
+                    builder.addValues(valueRowBuilder.build());
+                }
             }
-            builder.addValues(valueRowBuilder.build());
         } catch (ExecutionException | InterruptedException ex) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ex);
             log.warn("[snmp collect] error: {}", errorMsg, ex);
@@ -199,5 +245,24 @@ public class SnmpCollectImpl extends AbstractCollect {
             return SnmpConstants.version3;
         }
         return version;
+    }
+
+    private String bingdingHexValueToString(VariableBinding binding) {
+        // whether if binding is hex
+        String hexString = binding.toValueString();
+        if (hexString.contains(HEX_SPLIT)) {
+            try {
+                StringBuilder output = new StringBuilder();
+                String[] hexArr = hexString.split(HEX_SPLIT);
+                for (String hex : hexArr) {
+                    output.append((char) Integer.parseInt(hex, 16));
+                }
+                return output.toString();
+            } catch (Exception e) {
+                return hexString;
+            }
+        } else {
+            return hexString;
+        }
     }
 }
