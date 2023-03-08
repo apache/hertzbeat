@@ -70,6 +70,10 @@ public class SnmpProtocol {
      */
     private String privPassphrase;
     /**
+     * operation: get, walk
+     */
+    private String operation = "get";
+    /**
      * oid map
      */
     private Map<String, String> oids;

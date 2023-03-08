@@ -111,7 +111,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
         if (metricsData.getValuesList().isEmpty()) {
