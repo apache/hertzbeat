@@ -17,7 +17,6 @@
 
 package com.usthe.warehouse.config;
 
-import org.apache.iotdb.session.util.Version;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.ZoneId;
@@ -490,7 +489,7 @@ public class WarehouseProperties {
             /**
              * the version of IotDb
              */
-            private Version version;
+            private IotDbVersion version;
 
             /**
              * query timeout(ms)
@@ -553,11 +552,11 @@ public class WarehouseProperties {
                 this.nodeUrls = nodeUrls;
             }
 
-            public Version getVersion() {
+            public IotDbVersion getVersion() {
                 return version;
             }
 
-            public void setVersion(Version version) {
+            public void setVersion(IotDbVersion version) {
                 this.version = version;
             }
 
