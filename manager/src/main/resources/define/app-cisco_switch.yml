@@ -1,0 +1,182 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: network
+app: cisco_switch
+name:
+  zh-CN: Cisco通用交换机
+  en-US: Cisco Switch
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 161
+  - field: version
+    name:
+      zh-CN: SNMP 版本
+      en-US: SNMP Version
+    type: radio
+    required: true
+    options:
+      - label: SNMPv1
+        value: 0
+      - label: SNMPv2c
+        value: 1
+  - field: community
+    name:
+      zh-CN: SNMP 团体字
+      en-US: SNMP Community
+    type: text
+    limit: 100
+    required: true
+    placeholder: 'Snmp community for v1 v2c'
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    range: '[0,100000]'
+    required: false
+    hide: true
+    defaultValue: 6000
+
+metrics:
+  - name: system
+    priority: 0
+    fields:
+      - field: name
+        type: 1
+      - field: descr
+        type: 1
+      - field: uptime
+        type: 1
+      - field: location
+        type: 1
+      - field: contact
+        type: 1
+      - field: responseTime
+        type: 0
+        unit: ms
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: get
+      oids:
+        name: 1.3.6.1.2.1.1.5.0
+        descr: 1.3.6.1.2.1.1.1.0
+        uptime: 1.3.6.1.2.1.1.3.0
+        location: 1.3.6.1.2.1.1.6.0
+        contact: 1.3.6.1.2.1.1.4.0
+
+  - name: interfaces
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+      - field: descr
+        type: 1
+        instance: true
+      - field: mtu
+        type: 0
+        unit: 'byte'
+      - field: speed
+        type: 0
+        unit: 'KB/s'
+      - field: in_octets
+        type: 0
+        unit: 'byte'
+      - field: in_discards
+        type: 0
+        unit: 'package'
+      - field: in_errors
+        type: 0
+        unit: 'package'
+      - field: out_octets
+        type: 0
+        unit: 'byte'
+      - field: out_discards
+        type: 0
+        unit: 'package'
+      - field: out_errors
+        type: 0
+        unit: 'package'
+      - field: admin_status
+        type: 1
+      - field: oper_status
+        type: 1
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - ifIndex
+      - ifDescr
+      - ifMtu
+      - ifSpeed
+      - ifInOctets
+      - ifInDiscards
+      - ifInErrors
+      - ifOutOctets
+      - ifOutDiscards
+      - ifOutErrors
+      - ifAdminStatus
+      - ifOperStatus
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - index=ifIndex
+      - descr=ifDescr
+      - mtu=ifMtu
+      - speed=ifSpeed / 1024
+      - in_octets=ifInOctets
+      - in_discards=ifInDiscards
+      - in_errors=ifInErrors
+      - out_octets=ifOutOctets
+      - out_discards=ifOutDiscards
+      - out_errors=ifOutErrors
+      - admin_status=ifAdminStatus
+      - oper_status=ifOperStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        ifIndex: 1.3.6.1.2.1.2.2.1.1
+        ifDescr: 1.3.6.1.2.1.2.2.1.2
+        ifMtu: 1.3.6.1.2.1.2.2.1.4
+        ifSpeed: 1.3.6.1.2.1.2.2.1.5
+        ifInOctets: 1.3.6.1.2.1.2.2.1.10
+        ifInDiscards: 1.3.6.1.2.1.2.2.1.13
+        ifInErrors: 1.3.6.1.2.1.2.2.1.14
+        ifOutOctets: 1.3.6.1.2.1.2.2.1.16
+        ifOutDiscards: 1.3.6.1.2.1.2.2.1.19
+        ifOutErrors: 1.3.6.1.2.1.2.2.1.20
+        ifAdminStatus: 1.3.6.1.2.1.2.2.1.7
+        ifOperStatus: 1.3.6.1.2.1.2.2.1.8
