@@ -365,7 +365,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         String deviceId = STORAGE_GROUP + "." +
                 (useQuote ? addQuote(app) : app) + "." +
                 (useQuote ? addQuote(metrics) : metrics) + "." +
-                ((IotDbVersion.V_1_00.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
+                ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
         if (instanceId != null && !instanceId.isEmpty() && !instanceId.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(instanceId);
         }
@@ -380,7 +380,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             return text;
         }
         if ((text.startsWith(DOUBLE_QUOTATION_MARKS) && text.endsWith(DOUBLE_QUOTATION_MARKS))) {
-            if (IotDbVersion.V_1_00.equals(version)) {
+            if (IotDbVersion.V_1_0.equals(version)) {
                 text = text.replace("\"", "`");
             }
             return text;
