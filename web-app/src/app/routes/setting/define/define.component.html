@@ -47,6 +47,11 @@
           <li nz-menu-item *ngFor="let app of appMenus['cn']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
         </ul>
       </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.network' | i18n">
+        <ul>
+          <li nz-menu-item *ngFor="let app of appMenus['network']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+        </ul>
+      </li>
       <li nz-submenu [nzTitle]="'menu.monitor.custom' | i18n">
         <ul>
           <li nz-menu-item *ngFor="let app of appMenus['custom']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>

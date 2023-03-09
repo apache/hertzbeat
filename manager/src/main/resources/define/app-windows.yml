@@ -63,7 +63,7 @@ params:
     defaultValue: 6000
 
 metrics:
-  - name: basic
+  - name: system
     priority: 0
     fields:
       - field: name
@@ -261,7 +261,7 @@ metrics:
         unit: 'byte'
       - field: speed
         type: 0
-        unit: 'bps'
+        unit: 'KB/s'
       - field: in_octets
         type: 0
         unit: 'byte'
@@ -304,7 +304,7 @@ metrics:
       - index=ifIndex
       - descr=ifDescr
       - mtu=ifMtu
-      - speed=ifSpeed
+      - speed=ifSpeed / 1024
       - in_octets=ifInOctets
       - in_discards=ifInDiscards
       - in_errors=ifInErrors
