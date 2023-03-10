@@ -760,6 +760,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "baiban114",
+      "name": "TableRow",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59152619?v=4",
+      "profile": "https://github.com/baiban114",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
