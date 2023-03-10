@@ -189,7 +189,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-      script: free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'
+      script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
       parseType: multiRow
 
   - name: disk
