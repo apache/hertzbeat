@@ -125,6 +125,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/aoshiguchen"><img src="https://avatars.githubusercontent.com/u/10580997?v=4?s=100" width="100px;" alt="aoshiguchen"/><br /><sub><b>aoshiguchen</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=aoshiguchen" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caibenxiang"><img src="https://avatars.githubusercontent.com/u/4568241?v=4?s=100" width="100px;" alt="蔡本祥"/><br /><sub><b>蔡本祥</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=caibenxiang" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.fckeverything.cn:4000/"><img src="https://avatars.githubusercontent.com/u/13827124?v=4?s=100" width="100px;" alt="浮游"/><br /><sub><b>浮游</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=lifefloating" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Grass-Life"><img src="https://avatars.githubusercontent.com/u/114381513?v=4?s=100" width="100px;" alt="Grass-Life"/><br /><sub><b>Grass-Life</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Grass-Life" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
