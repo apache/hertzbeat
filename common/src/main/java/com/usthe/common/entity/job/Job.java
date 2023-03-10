@@ -167,7 +167,7 @@ public class Job {
         // 构造指标组任务执行顺序链表
         priorMetrics = new LinkedList<>();
         map.values().forEach(metric -> {
-            Set<Metrics> metricsSet = new HashSet<>(metric);
+            Set<Metrics> metricsSet = Collections.synchronizedSet(new HashSet<>(metric));
             priorMetrics.add(metricsSet);
         });
         priorMetrics.sort(Comparator.comparing(e -> {
