@@ -128,7 +128,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Grass-Life"><img src="https://avatars.githubusercontent.com/u/114381513?v=4?s=100" width="100px;" alt="Grass-Life"/><br /><sub><b>Grass-Life</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Grass-Life" title="Code">💻</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaohe428"><img src="https://avatars.githubusercontent.com/u/99130317?v=4?s=100" width="100px;" alt="xiaohe428"/><br /><sub><b>xiaohe428</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaohe428"><img src="https://avatars.githubusercontent.com/u/99130317?v=4?s=100" width="100px;" alt="xiaohe428"/><br /><sub><b>xiaohe428</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
