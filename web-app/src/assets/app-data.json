@@ -63,6 +63,13 @@
           "icon": "anticon-cloud"
         },
         {
+          "key": "network",
+          "text": "网络",
+          "hide": false,
+          "i18n": "menu.monitor.network",
+          "icon": "anticon-wifi"
+        },
+        {
           "key": "custom",
           "text": "自定义",
           "i18n": "menu.monitor.custom",
@@ -107,6 +114,14 @@
           "i18n": "menu.extras.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
+        },
+        {
+          "text": "define",
+          "i18n": "menu.extras.define",
+          "icon": "anticon-code",
+          "link": "/setting/define",
+          "badgeDot": true,
+          "badge": 1
         },
         {
           "text": "helpCenter",

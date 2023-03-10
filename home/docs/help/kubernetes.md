@@ -2,7 +2,7 @@
 id: kubernetes
 title: 监控：Kubernetes 监控      
 sidebar_label: Kubernetes 监控
-
+keywords: [开源监控系统, 开源Kubernetes监控]
 ---
 
 > 对kubernetes的通用性能指标进行采集监控。
@@ -27,9 +27,15 @@ kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --
 kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
 kubectl describe secret {secret} -n kube-system
 ```
+#### 方式二:
+```
+kubectl create serviceaccount cluster-admin
 
+kubectl create clusterrolebinding cluster-admin-manual --clusterrole=cluster-admin --serviceaccount=default:cluster-admin
 
+kubectl create token --duration=1000h cluster-admin
 
+```
 ### 配置参数
 
 | 参数名称        | 参数帮助描述                                               |

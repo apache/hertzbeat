@@ -2,6 +2,7 @@
 id: mysql  
 title: 监控：MYSQL数据库监控      
 sidebar_label: MYSQL数据库   
+keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 ---
 
 > 对MYSQL数据库的通用性能指标进行采集监控。支持MYSQL5+。

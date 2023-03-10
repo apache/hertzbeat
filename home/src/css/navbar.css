@@ -44,6 +44,11 @@ html[data-theme=dark] {
     margin-right: 30px;
 }
 
+.header-console-link:hover {
+    color: var(--ifm-color-primary);
+    background-color: #fff;
+}
+
 .header-github-link:hover {
     opacity: 0.6;
 }

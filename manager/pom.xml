@@ -27,9 +27,18 @@
     <packaging>jar</packaging>
 
     <properties>
-        <mysql.version>8.0.28</mysql.version>
+        <alerter.version>1.0</alerter.version>
+        <caffeine.version>2.9.3</caffeine.version>
+        <collector.version>1.0</collector.version>
+        <common.version>1.0</common.version>
         <h2.version>2.1.212</h2.version>
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+        <mysql.version>8.0.28</mysql.version>
+        <nekohtml.version>1.9.22</nekohtml.version>
         <snake.yaml.version>1.32</snake.yaml.version>
+        <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
+        <warehouse.version>1.0</warehouse.version>
     </properties>
 
     <dependencies>
@@ -37,25 +46,25 @@
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${common.version}</version>
         </dependency>
         <!-- data warehouse -->
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>warehouse</artifactId>
-            <version>1.0</version>
+            <version>${warehouse.version}</version>
         </dependency>
         <!-- alerter -->
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>alerter</artifactId>
-            <version>1.0</version>
+            <version>${alerter.version}</version>
         </dependency>
         <!-- collector -->
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>collector</artifactId>
-            <version>1.0</version>
+            <version>${collector.version}</version>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -79,7 +88,7 @@
         <dependency>
             <groupId>net.sourceforge.nekohtml</groupId>
             <artifactId>nekohtml</artifactId>
-            <version>1.9.22</version>
+            <version>${nekohtml.version}</version>
         </dependency>
         <!-- data jdbc -->
         <dependency>
@@ -122,7 +131,7 @@
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot-starter-sureness</artifactId>
-            <version>1.0.8</version>
+            <version>${spring-boot-starter-sureness.version}</version>
         </dependency>
         <!-- h2 database-->
         <dependency>
@@ -130,6 +139,14 @@
             <artifactId>h2</artifactId>
             <version>${h2.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- caffeine-->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
+            <version>${caffeine.version}</version>
         </dependency>
     </dependencies>
 
@@ -154,7 +171,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <classesDirectory>target/classes/</classesDirectory>
                     <archive>
@@ -179,7 +196,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-assembly-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>make-zip</id>

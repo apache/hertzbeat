@@ -17,7 +17,6 @@
 
 package com.usthe.warehouse.config;
 
-import org.apache.iotdb.session.util.Version;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.ZoneId;
@@ -136,6 +135,11 @@ public class WarehouseProperties {
     public static class StoreProperties {
 
         /**
+         * use mysql/h2 jpa store metrics history data
+         */
+        private JpaProperties jpa;
+
+        /**
          * 内存存储配置信息
          */
         private MemoryProperties memory;
@@ -156,6 +160,14 @@ public class WarehouseProperties {
          * IoTDB配置信息
          */
         private IotDbProperties iotDb;
+
+        public JpaProperties getJpa() {
+            return jpa;
+        }
+
+        public void setJpa(JpaProperties jpa) {
+            this.jpa = jpa;
+        }
 
         public MemoryProperties getMemory() {
             return memory;
@@ -221,6 +233,34 @@ public class WarehouseProperties {
 
             public void setInitSize(Integer initSize) {
                 this.initSize = initSize;
+            }
+        }
+
+        public static class JpaProperties {
+            /**
+             * use mysql/h2 jpa store metrics history data
+             */
+            private boolean enabled = true;
+
+            /**
+             * save data expire time(ms)
+             */
+            private String expireTime = "7D";
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getExpireTime() {
+                return expireTime;
+            }
+
+            public void setExpireTime(String expireTime) {
+                this.expireTime = expireTime;
             }
         }
 
@@ -449,7 +489,7 @@ public class WarehouseProperties {
             /**
              * the version of IotDb
              */
-            private Version version;
+            private IotDbVersion version;
 
             /**
              * query timeout(ms)
@@ -512,11 +552,11 @@ public class WarehouseProperties {
                 this.nodeUrls = nodeUrls;
             }
 
-            public Version getVersion() {
+            public IotDbVersion getVersion() {
                 return version;
             }
 
-            public void setVersion(Version version) {
+            public void setVersion(IotDbVersion version) {
                 this.version = version;
             }
 

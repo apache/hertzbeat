@@ -2,6 +2,7 @@
 id: kafka  
 title: 监控：Kafka监控      
 sidebar_label: Kafka监控
+keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 ---
 
 > 对Kafka的通用性能指标进行采集监控

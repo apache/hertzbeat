@@ -44,7 +44,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         try {
             WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
             WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-            markdownDTO.setContent(renderContext(alert));
+            markdownDTO.setContent(renderContent(alert));
             weWorkWebHookDTO.setMarkdown(markdownDTO);
             String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, CommonRobotNotifyResp.class);

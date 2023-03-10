@@ -2,6 +2,7 @@
 id: ping  
 title: Monitoring：PING connectivity       
 sidebar_label: PING connectivity       
+keywords: [open source monitoring system, open source network monitoring system, monitoring ping metrics]
 ---
 
 > Ping the opposite end HOST address and judge its connectivity.    

@@ -1,0 +1,209 @@
+category: service
+app: jvm
+name:
+  zh-CN: JVM虚拟机
+  en-US: JVM
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    # 端口默认值
+    defaultValue: 9999
+  - field: url
+    name:
+      zh-CN: JMX URL
+      en-US: JMX URL
+    type: text
+    required: false
+    hide: true
+    placeholder: 'service:jmx:rmi:///jndi/rmi://host:port/jmxrmi'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+metrics:
+  - name: basic
+    priority: 0
+    fields:
+      - field: VmName
+        type: 1
+      - field: VmVendor
+        type: 1
+      - field: VmVersion
+        type: 1
+      - field: Uptime
+        type: 0
+        unit: ms
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: java.lang:type=Runtime
+      url: ^_^url^_^
+
+  - name: memory_pool
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 1
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: name
+        type: 1
+        instance: true
+      - field: committed
+        type: 0
+        unit: MB
+      - field: init
+        type: 0
+        unit: MB
+      - field: max
+        type: 0
+        unit: MB
+      - field: used
+        type: 0
+        unit: MB
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
+    aliasFields:
+      - Name
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - name=Name
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=MemoryPool,name=*
+      url: ^_^url^_^
+
+  - name: code_cache
+    priority: 5
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: committed
+        type: 0
+      - field: init
+        type: 0
+      - field: max
+        type: 0
+      - field: used
+        type: 0
+    aliasFields:
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=MemoryPool,name=Code Cache
+      url: ^_^url^_^
+
+  - name: class_loading
+    priority: 6
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: LoadedClassCount
+        type: 0
+      - field: TotalLoadedClassCount
+        type: 0
+      - field: UnloadedClassCount
+        type: 0
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=ClassLoading
+      url: ^_^url^_^
+
+  - name: thread
+    priority: 7
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: TotalStartedThreadCount
+        type: 0
+      - field: ThreadCount
+        type: 0
+      - field: PeakThreadCount
+        type: 0
+      - field: DaemonThreadCount
+        type: 0
+      - field: CurrentThreadUserTime
+        type: 0
+        unit: s
+      - field: CurrentThreadCpuTime
+        type: 0
+        unit: s
+    protocol: jmx
+    jmx:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=Threading
+      url: ^_^url^_^

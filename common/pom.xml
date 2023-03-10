@@ -23,10 +23,19 @@
         <groupId>com.usthe.tancloud</groupId>
         <version>1.0</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>common</artifactId>
 
+    <properties>
+        <aviator.version>5.2.7</aviator.version>
+        <gson.version>2.8.9</gson.version>
+        <guava.version>31.0.1-jre</guava.version>
+        <jetcd-core.version>0.5.11</jetcd-core.version>
+        <protobuf-java-util.version>3.19.1</protobuf-java-util.version>
+        <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
+    </properties>
 
     <dependencies>
         <!-- spring -->
@@ -72,30 +81,30 @@
         <dependency>
             <groupId>io.etcd</groupId>
             <artifactId>jetcd-core</artifactId>
-            <version>0.5.11</version>
+            <version>${jetcd-core.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- 表达式计算 -->
         <dependency>
             <groupId>com.googlecode.aviator</groupId>
             <artifactId>aviator</artifactId>
-            <version>5.2.7</version>
+            <version>${aviator.version}</version>
         </dependency>
         <!-- 工具依赖  -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.0.1-jre</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.8</version>
+            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>3.19.1</version>
+            <version>${protobuf-java-util.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -112,7 +121,7 @@
         <dependency>
             <groupId>com.tencentcloudapi</groupId>
             <artifactId>tencentcloud-sdk-java-sms</artifactId>
-            <version>3.1.648</version>
+            <version>${tencentcloud-sdk-java-sms.version}</version>
         </dependency>
     </dependencies>
 </project>

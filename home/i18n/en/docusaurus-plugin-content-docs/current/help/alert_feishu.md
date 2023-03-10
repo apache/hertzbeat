@@ -2,6 +2,7 @@
 id: alert_feishu
 title: Alert FeiShu robot notification      
 sidebar_label: Alert FeiShu robot notification     
+keywords: [open source monitoring system, open source alerter, open source feishu bot notification]
 ---
 
 > After the threshold is triggered send alarm information and notify the recipient by FeiShu robot.         

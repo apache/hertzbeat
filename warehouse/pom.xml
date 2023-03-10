@@ -23,6 +23,13 @@
         <groupId>com.usthe.tancloud</groupId>
         <version>1.0</version>
     </parent>
+    <properties>
+        <common.version>1.0</common.version>
+        <iotdb-session.version>0.13.3</iotdb-session.version>
+        <kafka-clients.version>3.4.0</kafka-clients.version>
+        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
+        <taos-jdbcdriver.version>2.0.42</taos-jdbcdriver.version>
+    </properties>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>warehouse</artifactId>
@@ -32,7 +39,7 @@
         <dependency>
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${common.version}</version>
             <scope>provided</scope>
         </dependency>
         <!-- spring -->
@@ -48,6 +55,11 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
@@ -59,19 +71,19 @@
         <dependency>
             <groupId>com.taosdata.jdbc</groupId>
             <artifactId>taos-jdbcdriver</artifactId>
-            <version>2.0.42</version>
+            <version>${taos-jdbcdriver.version}</version>
         </dependency>
         <!-- IoTDB -->
         <dependency>
             <groupId>org.apache.iotdb</groupId>
             <artifactId>iotdb-session</artifactId>
-            <version>0.13.2</version>
+            <version>${iotdb-session.version}</version>
         </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>3.0.0</version>
+            <version>${kafka-clients.version}</version>
         </dependency>
         <!--redis-->
         <dependency>
@@ -89,7 +101,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>3.0.5</version>
+            <version>${spring-cloud-starter-openfeign.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

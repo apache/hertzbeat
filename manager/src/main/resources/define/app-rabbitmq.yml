@@ -1,0 +1,326 @@
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
+category: mid
+# 监控应用类型名称(与文件名保持一致)
+app: rabbitmq
+name:
+  zh-CN: RabbitMQ消息系统
+  en-US: RabbitMQ Message
+params:
+  # field-字段名称标识符
+  - field: host
+    # name-参数字段显示名称
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: HTTP 端口
+      en-US: HTTP Port
+    type: number
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 15672
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: true
+    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+    defaultValue: Basic Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    required: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: true
+
+metrics:
+  # 注意：内置监控指标有 (responseTime - 响应时间)
+  - name: overview
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: product_version
+        type: 1
+      - field: product_name
+        type: 1
+      - field: rabbitmq_version
+        type: 1
+      - field: management_version
+        type: 1
+      - field: erlang_version
+        type: 1
+      - field: cluster_name
+        type: 1
+      - field: rates_mode
+        type: 1
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+# 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/overview
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+
+  - name: object_totals
+    priority: 1
+    fields:
+      - field: channels
+        type: 0
+      - field: connections
+        type: 0
+      - field: consumers
+        type: 0
+      - field: exchanges
+        type: 0
+      - field: queues
+        type: 0
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/overview
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.object_totals'
+
+  - name: nodes
+    priority: 1
+    fields:
+      - field: name
+        type: 1
+        instance: true
+      - field: type
+        type: 1
+      - field: running
+        type: 1
+      - field: os_pid
+        type: 1
+      - field: mem_limit
+        type: 0
+        unit: MB
+      - field: mem_used
+        type: 0
+        unit: MB
+      - field: fd_total
+        type: 0
+      - field: fd_used
+        type: 0
+      - field: sockets_total
+        type: 0
+      - field: sockets_used
+        type: 0
+      - field: proc_total
+        type: 0
+      - field: proc_used
+        type: 0
+      - field: disk_free_limit
+        type: 0
+        unit: GB
+      - field: disk_free
+        type: 0
+        unit: GB
+      - field: gc_num
+        type: 0
+      - field: gc_bytes_reclaimed
+        type: 0
+        unit: MB
+      - field: context_switches
+        type: 0
+      - field: io_read_count
+        type: 0
+      - field: io_read_bytes
+        type: 0
+        unit: KB
+      - field: io_read_avg_time
+        type: 0
+        unit: ms
+      - field: io_write_count
+        type: 0
+      - field: io_write_bytes
+        type: 0
+        unit: KB
+      - field: io_write_avg_time
+        type: 0
+        unit: ms
+      - field: io_seek_count
+        type: 0
+      - field: io_seek_avg_time
+        type: 0
+        unit: ms
+      - field: io_sync_count
+        type: 0
+      - field: io_sync_avg_time
+        type: 0
+        unit: ms
+      - field: connection_created
+        type: 0
+      - field: connection_closed
+        type: 0
+      - field: channel_created
+        type: 0
+      - field: channel_closed
+        type: 0
+      - field: queue_declared
+        type: 0
+      - field: queue_created
+        type: 0
+      - field: queue_deleted
+        type: 0
+      - field: connection_closed
+        type: 0
+    units:
+      - mem_limit=B->MB
+      - mem_used=B->MB
+      - disk_free_limit=B->GB
+      - disk_free=B->GB
+      - gc_bytes_reclaimed=B->MB
+      - io_read_bytes=B->KB
+      - io_write_bytes=B->KB
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/nodes
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+
+  - name: queues
+    priority: 1
+    fields:
+      - field: name
+        type: 1
+        instance: true
+      - field: node
+        type: 1
+      - field: state
+        type: 1
+      - field: type
+        type: 1
+      - field: vhost
+        type: 1
+      - field: auto_delete
+        type: 1
+      - field: policy
+        type: 1
+      - field: consumers
+        type: 0
+      - field: memory
+        type: 0
+        unit: B
+      - field: messages_ready
+        type: 0
+      - field: messages_unacknowledged
+        type: 0
+      - field: messages
+        type: 0
+      - field: messages_ready_ram
+        type: 0
+      - field: messages_persistent
+        type: 0
+      - field: message_bytes
+        type: 0
+        unit: B
+      - field: message_bytes_ready
+        type: 0
+        unit: B
+      - field: message_bytes_unacknowledged
+        type: 0
+        unit: B
+      - field: message_bytes_ram
+        type: 0
+        unit: B
+      - field: message_bytes_persistent
+        type: 0
+        unit: B
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/queues
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+

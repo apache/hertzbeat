@@ -50,8 +50,8 @@ public class GsonUtil {
         return gson.fromJson(jsonStr, clazz);
     }
 
-    public static <T> T fromJson(String jsonStr, Type typeOfT) {
-        return gson.fromJson(jsonStr, typeOfT);
+    public static <T> T fromJson(String jsonStr, Type type) {
+        return gson.fromJson(jsonStr, type);
     }
 
     public static <T> T fromJson(JsonElement element, Class<T> clazz) {

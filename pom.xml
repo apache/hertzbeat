@@ -17,16 +17,19 @@
     </modules>
 
     <properties>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <lombok.version>1.18.20</lombok.version>
+        <java.version>11</java.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>1.7.21</slf4j.version>
-        <xml.bind.version>2.3.0</xml.bind.version>
-        <lombok.version>1.18.20</lombok.version>
         <springdoc.version>1.6.11</springdoc.version>
-        <!-- Test 3rd-party dependencies: -->
-        <junit.version>5.7.0</junit.version>
+        <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
+        <xml.bind.version>2.3.0</xml.bind.version>
     </properties>
 
     <dependencyManagement>
@@ -35,7 +38,7 @@
                 <!-- Import dependency management from Spring Boot -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.7.4</version>
+                <version>${spring-boot-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -64,13 +67,7 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Test 3rd-party dependencies: -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- Test dependencies: -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -83,18 +80,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven-compiler-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <!-- java code style check -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.8</version>
+                <version>${maven-pmd-plugin.version}</version>
                 <configuration>
                     <linkXRef>false</linkXRef>
                     <rulesets>
@@ -106,7 +103,7 @@
                         <ruleset>rulesets/java/ali-naming.xml</ruleset>
                         <ruleset>rulesets/java/ali-oop.xml</ruleset>
                         <ruleset>rulesets/java/ali-orm.xml</ruleset>
-                        <ruleset>rulesets/java/ali-other.xml</ruleset>
+                        <!--<ruleset>rulesets/java/ali-other.xml</ruleset>-->
                         <ruleset>rulesets/java/ali-set.xml</ruleset>
                     </rulesets>
                     <printFailingErrors>true</printFailingErrors>
@@ -124,7 +121,7 @@
                     <dependency>
                         <groupId>com.alibaba.p3c</groupId>
                         <artifactId>p3c-pmd</artifactId>
-                        <version>1.3.0</version>
+                        <version>${p3c-pmd.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

@@ -18,8 +18,6 @@
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.lang.NonNull;
@@ -31,14 +29,6 @@ import org.springframework.lang.NonNull;
  */
 @Slf4j
 public abstract class AbstractRealTimeDataStorage implements DisposableBean {
-
-    private final WarehouseWorkerPool workerPool;
-    private final CommonDataQueue commonDataQueue;
-
-    public AbstractRealTimeDataStorage(WarehouseWorkerPool workerPool, CommonDataQueue commonDataQueue) {
-        this.workerPool = workerPool;
-        this.commonDataQueue = commonDataQueue;
-    }
 
     /**
      * save collect metrics data
@@ -53,25 +43,4 @@ public abstract class AbstractRealTimeDataStorage implements DisposableBean {
      * @return metrics data
      */
     public abstract CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
-
-    /**
-     * start worker thread
-     * @param threadName thread name
-     */
-    protected void startStorageData(String threadName) {
-        Runnable runnable = () -> {
-            Thread.currentThread().setName(threadName);
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
-                    if (metricsData != null) {
-                        saveData(metricsData);
-                    }
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-            }
-        };
-        workerPool.executeJob(runnable);
-    }
 }

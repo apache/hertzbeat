@@ -19,9 +19,7 @@ package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
 import com.usthe.common.util.CommonConstants;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -71,16 +69,13 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
 
-    public HistoryTdEngineDataStorage(WarehouseWorkerPool workerPool, WarehouseProperties properties,
-                                      CommonDataQueue commonDataQueue) {
-        super(workerPool, properties, commonDataQueue);
+    public HistoryTdEngineDataStorage(WarehouseProperties properties) {
         if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
         tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
         serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
-        this.startStorageData("warehouse-tdengine-data-storage", serverAvailable);
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
@@ -116,7 +111,11 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        if (metricsData == null || metricsData.getValuesList().isEmpty() || metricsData.getFieldsList().isEmpty()) {
+        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
+        if (metricsData.getValuesList().isEmpty()) {
+            log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
@@ -260,7 +259,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 Timestamp ts = resultSet.getTimestamp(1);
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
-                    instanceValue = "NULL";
+                    instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
                 String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
@@ -334,7 +333,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                             metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
             if ("''".equals(instanceValue)) {
-                instanceValue = "NULL";
+                instanceValue = "";
             }
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;

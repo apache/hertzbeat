@@ -2,7 +2,7 @@
 id: kubernetes   
 Title: Monitoring Kubernetes
 sidebar_label: Kubernetes Monitor
-
+keywords: [open source monitoring system, open source kubernetes monitoring system, monitoring kubernetes metrics]
 ---
 
 > Collect and monitor the general performance metrics of Kubernetes.
@@ -25,6 +25,13 @@ Refer to the steps to obtain token
 kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
 kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
 kubectl describe secret {secret} -n kube-system
+```
+
+#### method two:
+```shell
+kubectl create serviceaccount cluster-admin
+kubectl create clusterrolebinding cluster-admin-manual --clusterrole=cluster-admin --serviceaccount=default:cluster-admin
+kubectl create token --duration=1000h cluster-admin
 ```
 
 ### Configure parameters

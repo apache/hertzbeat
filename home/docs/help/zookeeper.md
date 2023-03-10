@@ -2,6 +2,7 @@
 id: zookeeper  
 title: 监控：Zookeeper监控      
 sidebar_label: Zookeeper监控  
+keywords: [开源监控系统, Zookeeper监控监控]
 ---
 
 > 对Zookeeper的通用性能指标进行采集监控

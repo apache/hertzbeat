@@ -50,6 +50,7 @@ public interface DispatchConstants {
      * protocol redis
      */
     String PROTOCOL_REDIS = "redis";
+
     /**
      * protocol mongodb
      */
@@ -66,6 +67,10 @@ public interface DispatchConstants {
      * protocol snmp
      */
     String PROTOCOL_SNMP = "snmp";
+    /**
+     * protocol ftp
+     */
+    String PROTOCOL_FTP = "ftp";
     /**
      * protocol ssl Certificate - custom
      */

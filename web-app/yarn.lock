@@ -8279,6 +8279,11 @@ mockjs@^1.1.0:
   dependencies:
     commander "*"
 
+monaco-editor@0.36.1:
+  version "0.36.1"
+  resolved "https://registry.npmjs.org/monaco-editor/-/monaco-editor-0.36.1.tgz#aad528c815605307473a1634612946921d8079b5"
+  integrity sha512-/CaclMHKQ3A6rnzBzOADfwdSJ25BFoFT0Emxsc4zYVyav5SkK9iA6lEtIeuN/oRYbwPgviJT+t3l+sjFa28jYg==
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.npmmirror.com/ms/download/ms-2.0.0.tgz"

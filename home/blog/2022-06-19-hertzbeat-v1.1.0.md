@@ -64,7 +64,7 @@ Have Fun!
 ## V1.1.0
 Home: hertzbeat.com | tancloud.cn
 
-Hi gays! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
+Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
 Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 Let's Try It!
 

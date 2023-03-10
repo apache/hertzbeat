@@ -18,8 +18,6 @@
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.queue.CommonDataQueue;
-import com.usthe.warehouse.WarehouseWorkerPool;
 import com.usthe.warehouse.config.WarehouseProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -28,6 +26,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +38,7 @@ import java.time.temporal.ChronoUnit;
  * @author tom
  * @date 2021/11/25 10:26
  */
+@Primary
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.redis",
         name = "enabled", havingValue = "true")
@@ -48,11 +48,8 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     private RedisClient redisClient;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
-    public RealTimeRedisDataStorage(WarehouseProperties properties, WarehouseWorkerPool workerPool,
-                                    CommonDataQueue commonDataQueue) {
-        super(workerPool, commonDataQueue);
+    public RealTimeRedisDataStorage(WarehouseProperties properties) {
         initRedisClient(properties);
-        startStorageData("warehouse-redis-data-storage");
     }
 
     @Override
@@ -65,6 +62,9 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     public void saveData(CollectRep.MetricsData metricsData) {
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return;
+        }
         if (metricsData.getValuesList().isEmpty()) {
             log.info("[warehouse redis] redis flush metrics data {} - {} is null, ignore.", key, hashKey);
             return;

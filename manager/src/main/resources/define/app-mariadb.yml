@@ -1,0 +1,678 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: mariadb
+name:
+  zh-CN: MariaDB数据库
+  en-US: MariaDB
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 3306
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    required: false
+    defaultValue: 6000
+    hide: true
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+    hide: true
+metrics:
+  - name: basic
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: version
+        type: 1
+        instance: true
+      - field: port
+        type: 1
+      - field: datadir
+        type: 1
+      - field: max_connections
+        type: 0
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - version
+      - version_compile_os
+      - version_compile_machine
+      - port
+      - datadir
+      - max_connections
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - port=port
+      - datadir=datadir
+      - max_connections=max_connections
+      - version=version+"_"+version_compile_os+"_"+version_compile_machine
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mariadb
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port';
+      url: ^_^url^_^
+
+  - name: cache
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: query_cache_hit_rate
+        type: 0
+        unit: '%'
+      - field: cache_hits
+        type: 0
+      - field: cache_inserts
+        type: 0
+      - field: cache_free_blocks
+        type: 0
+      - field: cache_free_memory
+        type: 0
+        unit: KB
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - Qcache_hits
+      - Qcache_inserts
+      - Qcache_free_blocks
+      - Qcache_free_memory
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - query_cache_hit_rate= (Qcache_hits + 1) / (Qcache_hits + Qcache_inserts + 1) * 100
+      - cache_hits=Qcache_hits
+      - cache_inserts=Qcache_inserts
+      - cache_free_blocks=Qcache_free_blocks
+      - cache_free_memory=Qcache_free_memory
+    units:
+      - cache_free_memory=B->KB
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mariadb
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status like 'QCache%';
+      url: ^_^url^_^
+
+  - name: performance
+    priority: 1
+    fields:
+      - field: questions
+        type: 0
+      - field: qps
+        type: 0
+        unit: '次/s'
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - uptime
+      - questions
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - qps=uptime / questions
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name = 'questions' or Variable_name = 'uptime';
+      url: ^_^url^_^
+
+  - name: innodb
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: innodb_data_reads
+        type: 0
+        unit: Times
+      - field: innodb_data_writes
+        type: 0
+        unit: Times
+      - field: innodb_data_read
+        type: 0
+        unit: KB
+      - field: innodb_data_written
+        type: 0
+        unit: KB
+      - field: innodb_buffer_hit_rate
+        type: 0
+        unit: '%'
+      - field: innodb_buffer_pool_size
+        type: 0
+        unit: KB
+    aliasFields:
+      - Innodb_data_reads
+      - Innodb_data_writes
+      - Innodb_data_read
+      - Innodb_data_written
+      - Innodb_buffer_pool_read_requests
+      - Innodb_buffer_pool_read_ahead
+      - Innodb_buffer_pool_reads
+      - Innodb_buffer_pool_size
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - innodb_buffer_hit_rate= (Innodb_buffer_pool_read_requests + 1) / (Innodb_buffer_pool_read_requests + Innodb_buffer_pool_read_ahead + Innodb_buffer_pool_reads + 1) * 100
+      - innodb_data_reads=Innodb_data_reads
+      - innodb_data_writes=Innodb_data_writes
+      - innodb_data_read=Innodb_data_read
+      - innodb_data_written=Innodb_data_written
+      - innodb_buffer_pool_size=Innodb_buffer_pool_size
+    units:
+      - innodb_data_read=B->KB
+      - innodb_data_written=B->KB
+      - innodb_buffer_pool_size=B->KB
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select variable_name, variable_value from information_schema.global_status WHERE Variable_name like 'innodb%' UNION select variable_name, variable_value from information_schema.global_variables where Variable_name = 'innodb_buffer_pool_size';
+      url: ^_^url^_^
+
+  - name: status
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: uptime
+        type: 0
+        unit: s
+      - field: com_select
+        type: 0
+      - field: com_insert
+        type: 0
+      - field: com_update
+        type: 0
+      - field: com_delete
+        type: 0
+      - field: com_commit
+        type: 0
+      - field: com_rollback
+        type: 0
+      - field: threads_created
+        type: 0
+      - field: threads_connected
+        type: 0
+      - field: threads_cached
+        type: 0
+      - field: threads_running
+        type: 0
+      - field: qps
+        type: 0
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - uptime
+      - com_select
+      - com_insert
+      - com_update
+      - com_delete
+      - com_commit
+      - com_rollback
+      - threads_created
+      - threads_connected
+      - threads_cached
+      - threads_running
+      - questions
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - qps=uptime / questions
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mariadb
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'thread%' or Variable_name = 'com_select' or Variable_name = 'com_insert' or Variable_name = 'com_update' or Variable_name = 'com_delete' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';
+      url: ^_^url^_^
+
+  - name: handler
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: handler_commit
+        type: 0
+      - field: handler_delete
+        type: 0
+      - field: handler_write
+        type: 0
+      - field: handler_update
+        type: 0
+      - field: handler_discover
+        type: 0
+      - field: handler_prepare
+        type: 0
+      - field: handler_read_first
+        type: 0
+      - field: handler_read_rnd
+        type: 0
+      - field: handler_read_next
+        type: 0
+      - field: handler_read_rnd_next
+        type: 0
+      - field: handler_read_key
+        type: 0
+      - field: handler_external_lock
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status like 'Handler%';
+      url: ^_^url^_^
+
+  - name: connection
+    priority: 2
+    fields:
+      - field: max_connections
+        type: 0
+      - field: connections
+        type: 0
+      - field: max_used_connections
+        type: 0
+      - field: aborted_connects
+        type: 0
+      - field: aborted_clients
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select variable_name, variable_value from information_schema.global_status WHERE Variable_name like '%connect%' or Variable_name = 'Aborted_clients'  UNION select variable_name, variable_value from information_schema.global_variables where Variable_name like '%connect%';
+      url: ^_^url^_^
+
+  - name: thread
+    priority: 2
+    fields:
+      - field: threads_created
+        type: 0
+      - field: threads_connected
+        type: 0
+      - field: threads_cached
+        type: 0
+      - field: threads_running
+        type: 0
+      - field: thread_cache_size
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select variable_name, variable_value from information_schema.global_status WHERE Variable_name like 'thread%' UNION select variable_name, variable_value from information_schema.global_variables where Variable_name = 'thread_cache_size';
+      url: ^_^url^_^
+
+  - name: table_cache
+    priority: 2
+    fields:
+      - field: table_open_cache
+        type: 0
+      - field: table_open_cache_miss_ratio
+        type: 0
+        unit: '%'
+    aliasFields:
+      - table_open_cache
+      - table_open_cache_misses
+      - table_open_cache_hits
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - table_open_cache_miss_ratio= table_open_cache_misses / table_open_cache * 100
+      - table_open_cache=table_open_cache
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select variable_name, variable_value from information_schema.global_status WHERE Variable_name like 'table_%' UNION select variable_name, variable_value from information_schema.global_variables where Variable_name = 'table_open_cache';
+      url: ^_^url^_^
+
+  - name: command
+    priority: 2
+    fields:
+      - field: com_select
+        type: 0
+      - field: com_insert
+        type: 0
+      - field: com_update
+        type: 0
+      - field: com_delete
+        type: 0
+      - field: com_commit
+        type: 0
+      - field: com_rollback
+        type: 0
+      - field: com_stmt_execute
+        type: 0
+      - field: com_admin_commands
+        type: 0
+      - field: com_show_status
+        type: 0
+      - field: com_show_slave_status
+        type: 0
+      - field: com_set_option
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'com_%';
+      url: ^_^url^_^
+
+  - name: tmp
+    priority: 2
+    fields:
+      - field: created_tmp_tables
+        type: 0
+      - field: created_tmp_disk_tables
+        type: 0
+      - field: created_tmp_files
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like '%tmp%';
+      url: ^_^url^_^
+
+  - name: select_type
+    priority: 2
+    fields:
+      - field: select_full_join
+        type: 0
+      - field: select_full_range_join
+        type: 0
+      - field: select_range
+        type: 0
+      - field: select_range_check
+        type: 0
+      - field: select_scan
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'select%';
+      url: ^_^url^_^
+
+  - name: sort
+    priority: 2
+    fields:
+      - field: sort_rows
+        type: 0
+      - field: sort_range
+        type: 0
+      - field: sort_merge_passes
+        type: 0
+      - field: sort_scan
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'sort%';
+      url: ^_^url^_^
+
+  - name: table_lock
+    priority: 2
+    fields:
+      - field: table_locks_immediate
+        type: 0
+      - field: table_locks_waited
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global status where Variable_name like 'table_lock%';
+      url: ^_^url^_^
+
+  - name: process_state
+    priority: 2
+    fields:
+      - field: state
+        type: 1
+        instance: true
+      - field: num
+        type: 0
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select if(command = 'Sleep', 'Sleep', state) as state, count(*) as num from information_schema.PROCESSLIST group by state;
+      url: ^_^url^_^
+
+  - name: slow_sql
+    priority: 2
+    fields:
+      - field: id
+        type: 1
+        instance: true
+      - field: sql_text
+        type: 0
+      - field: start_time
+        type: 1
+      - field: db
+        type: 1
+      - field: query_time
+        type: 1
+    aliasFields:
+      - sql_text
+      - start_time
+      - db
+      - query_time
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - id= start_time + sql_text
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select sql_text, start_time, db, query_time from mysql.slow_log;
+      url: ^_^url^_^

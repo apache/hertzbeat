@@ -2,6 +2,7 @@
 id: opengauss  
 title: 监控：OpenGauss数据库监控      
 sidebar_label: OpenGauss数据库   
+keywords: [开源监控系统, 开源数据库监控, OpenGauss数据库监控]
 ---
 
 > 对PostgreSQL数据库的通用性能指标进行采集监控。支持PostgreSQL 10+。

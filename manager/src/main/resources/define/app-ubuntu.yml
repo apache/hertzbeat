@@ -1,0 +1,341 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+category: os
+# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: ubuntu
+name:
+  zh-CN: Ubuntu Linux
+  en-US: Ubuntu Linux
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 22
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    defaultValue: 6000
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+metrics:
+# 第一个监控指标组 basic
+# 注意：内置监控指标有 (responseTime - 响应时间)
+  - name: basic
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: hostname
+        type: 1
+        instance: true
+      - field: version
+        type: 1
+      - field: uptime
+        type: 1
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+# 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
+      # 响应数据解析方式：oneRow, multiRow
+      parseType: multiRow
+
+  - name: cpu
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: info
+        type: 1
+      - field: cores
+        type: 0
+        unit: 核数
+      - field: interrupt
+        type: 0
+        unit: 个数
+      - field: load
+        type: 1
+      - field: context_switch
+        type: 0
+        unit: 个数
+      - field: usage
+        type: 0
+        unit: '%'
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - info
+      - cores
+      - load
+      - interrupt
+      - context_switch
+      - idle
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - info=info
+      - cores=cores
+      - load=load
+      - interrupt=interrupt
+      - context_switch=context_switch
+      - usage=100-idle
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: "LANG=C lscpu | awk -F: '/Model name/ {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
+      parseType: oneRow
+
+  - name: memory
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: total
+        type: 0
+        unit: Mb
+      - field: used
+        type: 0
+        unit: Mb
+      - field: free
+        type: 0
+        unit: Mb
+      - field: buff_cache
+        type: 0
+        unit: Mb
+      - field: available
+        type: 0
+        unit: Mb
+      - field: usage
+        type: 0
+        unit: '%'
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - total
+      - used
+      - free
+      - buff_cache
+      - available
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - total=total
+      - used=used
+      - free=free
+      - buff_cache=buff_cache
+      - available=available
+      - usage=(used / total) * 100
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
+      parseType: multiRow
+
+  - name: disk
+    priority: 3
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: disk_num
+        type: 0
+        unit: 块数
+      - field: partition_num
+        type: 0
+        unit: 分区数
+      - field: block_write
+        type: 0
+        unit: 块数
+      - field: block_read
+        type: 0
+        unit: 块数
+      - field: write_rate
+        type: 0
+        unit: iops
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
+      parseType: oneRow
+
+  - name: interface
+    priority: 4
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: interface_name
+        type: 1
+        instance: true
+      - field: receive_bytes
+        type: 0
+        unit: byte
+      - field: transmit_bytes
+        type: 0
+        unit: byte
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
+      parseType: multiRow
+
+  - name: disk_free
+    priority: 5
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: filesystem
+        type: 1
+      - field: used
+        type: 0
+        unit: Mb
+      - field: available
+        type: 0
+        unit: Mb
+      - field: usage
+        type: 0
+        unit: '%'
+      - field: mounted
+        type: 1
+        instance: true
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: df -m | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
+      parseType: multiRow
+
+  - name: top_cpu_process
+    priority: 6
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: pid
+        type: 1
+        instance: true
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+      - field: mem_usage
+        type: 0
+        unit: '%'
+      - field: command
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: ps -aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow
+
+  - name: top_mem_process
+    priority: 7
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: pid
+        type: 1
+        instance: true
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+      - field: mem_usage
+        type: 0
+        unit: '%'
+      - field: command
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # 当protocol为http协议时具体的采集配置
+    ssh:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      script: ps -aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow

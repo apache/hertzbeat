@@ -61,18 +61,23 @@ sidebar_label: 快速教程
 
 ### 新增对应的应用定义YML和参数定义YML
 
-1. 自定义监控类型需新增配置两个YML文件
+1. 自定义监控类型需新增配置YML文件
 
-用监控类型命名的监控配置定义文件 - 例如：app-hertzbeat.yml 需位于安装目录 /hertzbeat/define/app/ 下
-用监控类型命名的监控参数定义文件 - 例如：param-hertzbeat.yml 需位于安装目录 /hertzbeat/define/param/ 下
+用监控类型命名的监控配置定义文件 - 例如：app-hertzbeat.yml 需位于安装目录 /hertzbeat/define/ 下
 
-2. 配置参数定义文件 param-hertzbeat.yml
+定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 param-api.yml 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。   
 
-参数定义文件是定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 param-api.yml 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。定义内容如下:注意⚠️app属性值需要改为监控类型名称`hertzbeat`
+定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 app-api.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
 
 ```yaml
+# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+category: custom
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat
-param:
+name:
+  zh-CN: HertzBeat监控系统
+  en-US: HertzBeat Monitor
+params:
   - field: host
     name:
       zh-CN: 主机Host
@@ -127,37 +132,6 @@ param:
     type: password
     required: false
     hide: true
-```
-
-3. 配置监控配置定义文件 app-hertzbeat.yml
-
-监控配置定义文件是用来定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 app-api.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
-
-```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
-category: custom
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: hertzbeat
-name:
-  zh-CN: HertzBeat监控系统
-  en-US: HertzBeat Monitor
-# 输入参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
-# 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: ssl
-    type: 1
-  - key: timeout
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
-  - key: authType
-    type: 1
 # 指标组列表
 metrics:
   # 第一个监控指标组 summary

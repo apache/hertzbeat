@@ -2,6 +2,7 @@
 id: zookeeper  
 title: Monitoring Zookeeper       
 sidebar_label: Zookeeper Monitor   
+keywords: [open source monitoring system, open source zookeeper monitoring system, monitoring zookeeper metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Zookeeper.
