@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "Current",
+    "message": "v1.3.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.快速入门": {
