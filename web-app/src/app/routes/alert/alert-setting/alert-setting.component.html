@@ -212,7 +212,7 @@
           {{ 'alert.setting.times' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="10" [nzErrorTip]="'validation.required' | i18n">
-          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="10" [nzStep]="1" required name="duration" id="duration">
+          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="999" [nzStep]="1" required name="duration" id="duration">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>
