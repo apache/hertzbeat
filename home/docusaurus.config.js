@@ -21,7 +21,7 @@ module.exports = {
     cdnUrl,
   },
   i18n: {
-    defaultLocale: 'zh-cn',
+    defaultLocale: 'en',
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
