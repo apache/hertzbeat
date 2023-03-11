@@ -44,7 +44,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("HertzBeat")
-                        .description("An Open-Source Real-time Monitoring System.")
+                        .description("An Open-Source Real-time Monitoring Tool.")
                         .termsOfService("https://hertzbeat.com/")
                         .contact(new Contact().name("tom").url("https://github.com/tomsun28").email("tomsun28@outlook.com"))
                         .version("v1.0")

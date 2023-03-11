@@ -1,7 +1,7 @@
 ---
 id: contributing  
-title: Contributor Guide    
-sidebar_label: Contributor Guide    
+title: Contributing Guide    
+sidebar_label: Contributing Guide    
 ---
 
 > We are committed to maintaining a happy community that helps each other, welcome every contributor to join us!
