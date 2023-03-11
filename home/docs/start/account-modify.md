@@ -1,13 +1,13 @@
 ---
 id: account-modify  
-title: 配置修改账户密码(可选)        
-sidebar_label: 配置修改账户密码(可选)      
+title: Modify Account Username Password        
+sidebar_label: Update Account(Optional)      
 ---
 
-HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat        
-若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤      
-修改位于安装目录下的 `/hertzbeat/config/sureness.yml` 的配置文件，docker环境目录为`opt/hertzbeat/config/sureness.yml`，建议提前挂载映射           
-配置文件内容参考 项目仓库[/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml)  
+HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat     
+If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.
+The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+Modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**
 
 ```yaml
 
@@ -43,13 +43,13 @@ resourceRole:
    - /api/summary/**===put===[admin,user]
    - /api/summary/**===delete===[admin]
 
-# 需要被过滤保护的资源,不认证鉴权直接访问
-# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
+# Resources that need to be filtered and protected can be accessed directly without authentication
+# /api/v1/source3===get means /api/v1/source3===get it can be accessed by anyone. Don't need to authentication
 excludedResource:
    - /api/account/auth/**===*
    - /api/i18n/**===get
    - /api/apps/hierarchy===get
-   # web ui 前端静态资源
+   # web ui  the front-end static resource
    - /===get
    - /dashboard/**===get
    - /monitors/**===get
@@ -67,16 +67,16 @@ excludedResource:
    - /**/*.jpg===get
    - /**/*.svg===get
    - /**/*.json===get
-   # swagger ui 资源
+   # swagger ui resource
    - /swagger-resources/**===get
    - /v2/api-docs===get
    - /v3/api-docs===get
 
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+# user account information
+# Here is admin tom lili three accounts
+# eg: admin includes[admin,user]roles, password is hertzbeat 
+# eg: tom includes[user], password is hertzbeat
+# eg: lili includes[guest],text password is lili, salt password is 1A676730B0C7F54654B0E09184448289
 account:
    - appId: admin
      credential: hertzbeat
@@ -89,26 +89,26 @@ account:
      role: [guest]
 ```
 
-修改`sureness.yml`的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
+Modify the following **part parameters** in sureness.yml **[Note⚠️Other default sureness configuration parameters should be retained]**：
 
 ```yaml
 
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+# user account information
+# Here is admin tom lili three accounts
+# eg: admin includes[admin,user]roles, password is hertzbeat 
+# eg: tom includes[user], password is hertzbeat
+# eg: lili includes[guest], text password is lili, salt password is 1A676730B0C7F54654B0E09184448289
 account:
-   - appId: admin
-     credential: hertzbeat
-     role: [admin,user]
-   - appId: tom
-     credential: hertzbeat
-     role: [user]
-   - appId: guest
-     credential: hertzbeat
-     role: [guest]
+  - appId: admin
+    credential: hertzbeat
+    role: [admin,user]
+  - appId: tom
+    credential: hertzbeat
+    role: [user]
+  - appId: guest
+    credential: hertzbeat
+    role: [guest]
 ```
 
 
-**重启 HertzBeat 浏览器访问 http://ip:1157/ 即可探索使用 HertzBeat**  
+**Restart HertzBeat, access http://ip:1157/ to explore**  

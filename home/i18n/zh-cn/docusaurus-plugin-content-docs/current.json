@@ -3,51 +3,51 @@
     "message": "v1.3.x",
     "description": "The label for version current"
   },
-  "sidebar.docs.category.快速入门": {
+  "sidebar.docs.category.quickstart": {
     "message": "快速入门",
     "description": "The label for category 快速入门 in sidebar docs"
   },
-  "sidebar.docs.category.自定义监控": {
+  "sidebar.docs.category.custom": {
     "message": "自定义监控",
     "description": "The label for category 自定义监控 in sidebar docs"
   },
-  "sidebar.docs.category.HTTP协议": {
+  "sidebar.docs.category.http": {
     "message": "HTTP协议",
     "description": "The label for category HTTP协议 in sidebar docs"
   },
-  "sidebar.docs.category.JDBC协议": {
+  "sidebar.docs.category.jdbc": {
     "message": "JDBC协议",
     "description": "The label for category JDBC协议 in sidebar docs"
   },
-  "sidebar.docs.category.SSH协议": {
+  "sidebar.docs.category.ssh": {
     "message": "SSH协议",
     "description": "The label for category SSH协议 in sidebar docs"
   },
-  "sidebar.docs.category.帮助文档": {
+  "sidebar.docs.category.help": {
     "message": "帮助文档",
     "description": "The label for category 帮助文档 in sidebar docs"
   },
-  "sidebar.docs.category.应用服务监控": {
+  "sidebar.docs.category.service": {
     "message": "应用服务监控",
     "description": "The label for category 应用服务监控 in sidebar docs"
   },
-  "sidebar.docs.category.数据库监控": {
+  "sidebar.docs.category.database": {
     "message": "数据库监控",
     "description": "The label for category 数据库监控 in sidebar docs"
   },
-  "sidebar.docs.category.操作系统": {
+  "sidebar.docs.category.os": {
     "message": "操作系统",
     "description": "The label for category 操作系统 in sidebar docs"
   },
-  "sidebar.docs.category.中间件": {
+  "sidebar.docs.category.mid": {
     "message": "中间件",
     "description": "The label for category 中间件 in sidebar docs"
   },
-  "sidebar.docs.category.阈值告警配置": {
+  "sidebar.docs.category.threshold": {
     "message": "阈值告警配置",
     "description": "The label for category 阈值告警配置 in sidebar docs"
   },
-  "sidebar.docs.category.告警通知配置": {
+  "sidebar.docs.category.notice": {
     "message": "告警通知配置",
     "description": "The label for category 告警通知配置 in sidebar docs"
   },
@@ -55,7 +55,7 @@
     "message": "Others",
     "description": "The label for category Others in sidebar docs"
   },
-  "sidebar.docs.category.云原生": {
+  "sidebar.docs.category.cloud-native": {
     "message": "云原生",
     "description": "The label for category 云原生 in sidebar docs"
   }

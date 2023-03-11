@@ -1,48 +1,24 @@
 ---
 id: private  
-title: 企业版    
-sidebar_label: 企业版私有化部署     
+title: Privatization deployment    
+sidebar_label: Privatization deployment     
 ---
-HertzBeat监控产品分开源社区版本和企业版本，企业版本提供用户管理，日志审计等更多企业级特性，维护团队快速响应企业需求。
+If your team wants to privatize and deploy this monitoring system, we currently provide two solutions.   
 
-#### 社区开源版监控产品HertzBeat(免费需保留版权)   
+#### Community monitoring product HertzBeat (Free, copyright reserved)   
 
-我们提供社区开源版监控产品 HertzBeat, 可以直接参考[HertzBeat部署文档](/docs)下载部署, 开源版本对个人或企业免费。  
-开源版本使用必须完整保留本作品及源码和页面等中的所有版权、专利、商标和归属声明。若有需要修改，需购买授权。      
-安装部署过程中遇到的问题可以通过[社区，微信群，QQ群等](/docs/others/contact)反馈交流学习。         
-我们也提供有偿远程安装部署服务。     
+We provide community version monitoring product hertzbeat, which can be downloaded and deployed directly by referring to [HertzBeat deployment document](/docs). It is free for individuals or enterprises.  
+All copyrights, patents, trademarks and ownership statements in this work and the source code must be retained.
+You can feed back or learn problems encountered during installation and deployment through [communities, wechat groups, QQ groups, etc.](/docs/others/contact).  
+We also provide paid remote installation and deployment services.
 
-#### 企业授权版HertzBeat(付费，可修改版权LOGO)      
+#### Cluster SAAS version of HertzBeat-TanCloud (paid)      
 
-我们提供社区开源版监控产品 HertzBeat, 个人和企业可以免费使用，但需要完整保留版权，商标和归属声明。      
-有些情况企业需要拿此开源版本二次开发且修改版权LOGO和归属声明等，对有这样需求的用户我们推出了 **企业授权版HertzBeat**。     
-此授权版本为付费版本，我们实行企业规模阶梯定价，并会赠送技术支持等，关于具体方案及价格，请加我们微信 tan-cloud 咨询，加微信请备注：授权+团队名     
+This version is the corresponding version of [TanCloud Official website](https://console.tancloud.cn) environment. Compared with hertzbeat, it has functions of clustering, users, tenants and so on, which is suitable for medium and large-scale team enterprises. 
+This version is a paid version. For tancloud privatization deployment plan and price, please consult us on WeChat tan-cloud, and add WeChat please note: privatization + team name.  
 
-#### 企业版TanCloud(付费)  
+#### Privatized custom function development (paid) 
 
-企业版本为TanCloud团队针对企业级需求特别推出的版本，提供用户管理，权限，日志等众多企业级特性，得到我们维护团队的快速响应与技术支持。      
-企业版本为付费版本，我们实行企业规模阶梯定价，并会赠送技术支持，免费维护期，技术讲解等，关于具体方案及价格，请加我们微信 tan-cloud 咨询，加微信请备注：企业版+团队名     
+Support the development of custom functions and features. Please contact us on WeChat tan-cloud, and please note: privatization + team name.   
 
-欢迎介绍业务成为推荐官，交易成功有奖励哦    
-
-#### 增值服务(付费)   
-
-我们提供技术支持，讲解，企业监控方案设计咨询等系列增值服务，欢迎加微信 tan-cloud 咨询了解，加微信请备注：增值服务+团队名     
-
-- 一对一hertzbeat项目答疑讲解： 888元/2小时 
-
-如果您觉得看hertzbeat源码，文档等有疑惑，或遇到了技术难点或在功能使用上有疑惑，都可以联系我们，我们提供hertzbeat相关讲解答疑服务。   
-
-- 有偿远程安装部署服务：666元/1次  
-
-如果您不想自己部署hertzbeat，或在搭建部署中遇到困难，我们提供远程帮您安装部署hertzbeat监控服务。  
-
-- 新增适配监控类型：1000元-5000元/1款  
-
-如果您企业需要基于hertzbeat新增适配一款目前还没有的监控类型，或对您企业的内部服务定制化适配监控，我们提供定制化监控服务，根据复杂度收费1000元-5000元不等。
-
-- 快速答疑群: 1000元/1月  
-
-为您团队专门拉一个答疑小群，快速响应群内的各种问题。   
-
-> **请您理解我们这些付费点，开源不代表什么都免费，我们也是全职在做开源这件事情，因为爱和理想，但我们也需要面包和大米来保证开源这件事能持续下去，而不是做着做着就中断了。**    
+**Welcome to introduce business and become a recommender. We will give the recommender 20% - 30% commission reward for orders**      

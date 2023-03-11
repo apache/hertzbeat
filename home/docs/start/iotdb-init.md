@@ -1,28 +1,28 @@
 ---
 id: iotdb-init  
-title: 依赖时序数据库服务IoTDB安装初始化        
-sidebar_label: 使用IoTDB存储指标数据(可选)    
+title: The time series database IoTDB installation
+sidebar_label: IoTDB init (optional) 
 ---
 
-HertzBeat的历史数据存储依赖时序数据库 IoTDB 或 TDengine，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)   
+HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to initialize, or not to install (note ⚠️If you don't install it, there will be no historical chart data)
 
-Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据的软件系统，我们使用其存储分析采集到的监控指标历史数据。支持V0.12 - V0.13版本，推荐使用V0.13.*版本。
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of IoT time series data. We use it to store and analyze the collected historical data of monitoring indicators.
 
-**注意⚠️ 时序数据库安装配置为可选项，但强烈建议生产环境配置，以提供更完善的历史图表功能和高性能**
+Note ⚠️ IoTDB is optional, if not configured, there will be no historical chart data. Support V0.12 - V0.13 version, recommend to use V0.13.* version
 
-> 如果您已有IoTDB环境，可直接跳到YML配置那一步。
+> If you already have an IoTDB environment, you can skip directly to the YML configuration step.  
 
 
-### 通过Docker方式安装IoTDB 
-> 可参考官方网站[安装教程](https://iotdb.apache.org/zh/UserGuide/V0.13.x/QuickStart/WayToGetIoTDB.html)  
-1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-      安装完毕后终端查看Docker版本是否正常输出。
+### Install IoTDB via Docker
+> Refer to the official website [installation tutorial](https://iotdb.apache.org/UserGuide/V0.13.x/QuickStart/WayToGetIoTDB.html)
+1. Download and install Docker environment   
+   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
+   After the installation you can check if the Docker version normally output at the terminal.
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
-2. Docker安装IoTDB  
+2. Install IoTDB via Docker  
 
 ```shell
 $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
@@ -31,24 +31,18 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     apache/iotdb:0.13.3-node
 ```
 
-   `-v /opt/iotdb/data:/iotdb/data` 为tdengine数据目录本地持久化挂载，需将`/iotdb/data`替换为实际本地存在的目录
-   使用```$ docker ps```查看数据库是否启动成功
+   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of TDengine data directory.`/iotdb/data` should be replaced with the actual local directory.
+   use```$ docker ps``` to check if the database started successfully
 
-3. 在hertzbeat的`application.yml`配置文件配置IoTDB数据库连接   
+3. Configure the database connection in hertzbeat `application.yml`configuration file 
 
-   配置HertzBeat的配置文件    
-   修改位于 `hertzbeat/config/application.yml` 的配置文件   
-   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地，安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
+   Modify `hertzbeat/config/application.yml` configuration file   
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+   Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
 
-**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置`warehouse.store.iot-db`数据源参数，HOST账户密码等，并启用`enabled`为`true`**    
-
-```yaml
+```
 warehouse:
   store:
-    # 关闭默认JPA
-    jpa:
-      enabled: false
-    # 启用IotDB
     iot-db:
       enabled: true
       host: 127.0.0.1
@@ -59,20 +53,20 @@ warehouse:
       version: V_0_13
       # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
-      # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
+      # default '7776000000'（90days,unit:ms,-1:no-expire）
       expire-time: '7776000000'
 ```
 
-### 常见问题   
+### FAQ   
 
-1. 时序数据库IoTDB和TDengine是否都需要配置，能不能都用
-> 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
+1. Do both the time series databases IoTDB and TDengine need to be configured? Can they both be used?
+> You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
 
-2. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
-> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - IotDB数据库或TDengine数据库
+2. The historical chart of the monitoring page is not displayed, and pops up [Unable to provide historical chart data, please configure to rely on the time series database]
+> As shown in the pop-up window, the premise of displaying the history chart is to install and configure the dependent services of hertzbeat - IotDB database or TDengine database
 
-3. 安装配置了IotDB数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库] 
-> 请检查配置参数是否正确
-> iot-db enable是否设置为true
-> 注意⚠️若hertzbeat和IotDB都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
-> 可根据logs目录下启动日志排查
+3. The TDengine database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure the dependent time series database]
+> Please check if the configuration parameters are correct  
+> Is td-engine enable set to true  
+> Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+> You can check the startup logs according to the logs directory  

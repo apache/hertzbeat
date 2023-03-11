@@ -3,57 +3,53 @@
     "message": "HertzBeat",
     "description": "The title in the navbar"
   },
-  "item.label.首页": {
+  "item.label.main": {
     "message": "Home",
-    "description": "Navbar item with label 首页"
+    "description": "Navbar item with label Home"
   },
-  "item.label.文档中心": {
+  "item.label.document": {
     "message": "Document",
-    "description": "Navbar item with label 文档中心"
+    "description": "Navbar item with label Document"
   },
-  "item.label.博客": {
+  "item.label.blog": {
     "message": "Blog",
-    "description": "Navbar item with label 博客"
+    "description": "Navbar item with label Blog"
   },
-  "item.label.讨论交流": {
+  "item.label.discuss": {
     "message": "Discuss",
-    "description": "Navbar item with label 讨论交流"
+    "description": "Navbar item with label Discuss"
   },
-  "item.label.私有化部署": {
-    "message": "Enterprise",
-    "description": "Navbar item with label 私有化部署"
-  },
-  "item.label.项目看板": {
+  "item.label.kanban": {
     "message": "Dashboard",
-    "description": "Navbar item with label 项目看板"
+    "description": "Navbar item with label Dashboard"
   },
-  "item.label.关于": {
+  "item.label.about": {
     "message": "About",
-    "description": "Navbar item with label 关于"
+    "description": "Navbar item with label About"
   },
-  "item.label.登录/注册": {
+  "item.label.login": {
     "message": "Login Now",
-    "description": "Navbar item with label 登录/注册"
+    "description": "Navbar item with label Login"
   },
-  "item.label.设计文档": {
+  "item.label.design": {
     "message": "Design",
-    "description": "Navbar item with label 设计文档"
+    "description": "Navbar item with label Design"
   },
-  "item.label.赞助我们": {
+  "item.label.sponsor": {
     "message": "Sponsor",
-    "description": "Navbar item with label 赞助我们"
+    "description": "Navbar item with label Sponsor"
   },
-  "item.label.相关资源": {
+  "item.label.resource": {
     "message": "Resource",
-    "description": "Navbar item with label 相关资源"
+    "description": "Navbar item with label Resource"
   },
-  "item.label.贡献者指南": {
+  "item.label.contributing": {
     "message": "Contributor Guide",
-    "description": "Navbar item with label 贡献者指南"
+    "description": "Navbar item with label Contributor Guide"
   },
-  "item.label.开发者们": {
+  "item.label.developer": {
     "message": "Contributors",
-    "description": "Navbar item with label 开发者们"
+    "description": "Navbar item with label Contributors"
   },
   "item.label.enterprise": {
     "message": "Enterprise",

@@ -43,7 +43,7 @@ function Home() {
                 />
               </h1>
               <p className="hero__subtitle">
-                <Translate>易用友好的开源实时监控系统</Translate>
+                <Translate>slogan</Translate>
               </p>
               <div className={styles.social}>
                 <a href="https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge">

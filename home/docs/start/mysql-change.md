@@ -1,51 +1,41 @@
 ---
 id: mysql-change  
-title: 依赖的关系型数据库 H2 切换 为MYSQL           
-sidebar_label: 使用Mysql替换内置H2数据库(可选)      
+title: Dependent Relational Database H2 Switch to MYSQL            
+sidebar_label: H2 Switch to MYSQL    
 ---
-MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
+MYSQL is a reliable relational database. In addition to default built-in H2 database, HertzBeat allow you to use MYSQL to store structured relational data such as monitoring information, alarm information and configuration information.   
 
-注意⚠️ 使用外置Mysql数据库替换内置H2数据库为可选项，但建议生产环境配置，以提供更好的性能
+> If you have the MYSQL environment, can be directly to database creation step.  
 
-> 如果您已有MYSQL环境，可直接跳到数据库创建那一步。  
-
-### 通过Docker方式安装MYSQL   
-1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。  
+### Install MYSQL via Docker   
+1. Download and install the Docker environment   
+   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
+   After the installation you can check if the Docker version normally output at the terminal.  
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
-2. Docker安装MYSQl  
+2. Install MYSQl with Docker 
    ```
-   $ docker run -d --name mysql \
-   -p 3306:3306 \
-   -v /opt/data:/var/lib/mysql \
-   -e MYSQL_ROOT_PASSWORD=123456 \
-   --restart=always \
-   mysql:5.7
+   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
    ```
-   `-v /opt/data:/var/lib/mysql` 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录           
-   使用```$ docker ps```查看数据库是否启动成功
+   `-v /opt/data:/var/lib/mysql`  is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.          
+   use```$ docker ps```to check if the database started successfully
 
-### 数据库创建   
-1. 进入MYSQL或使用客户端连接MYSQL服务   
+### Database creation   
+1. Enter MYSQL or use the client to connect MYSQL service   
    `mysql -uroot -p123456`  
-2. 创建名称为hertzbeat的数据库    
-   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
-3. 查看hertzbeat数据库是否创建成功
+2. Create database named hertzbeat    
+   `create database hertzbeat;`
+3. Check if hertzbeat database has been successfully created
    `show databases;`
 
-### 修改hertzbeat的配置文件application.yml切换数据源   
+### Modify hertzbeat's configuration file application.yml and switch data source  
 
-1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件   
-   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
-   替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
-   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)  
-   
-需修改部分原参数: 
+1. Configure HertzBeat's configuration file
+   Modify `hertzbeat/config/application.yml` configuration file
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`  
+   Replace `spring.database` data source parameters, URL account and password.
 ```yaml
 spring:
   datasource:
@@ -54,7 +44,7 @@ spring:
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
 ```
-具体替换参数如下,需根据mysql环境配置账户密码IP:   
+   Specific replacement parameters is as follows and you need to configure account according to the mysql environment:   
 ```yaml
 spring:
   datasource:
@@ -64,4 +54,4 @@ spring:
     url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
 ```
 
-**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
+**Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**  
