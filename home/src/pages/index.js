@@ -251,11 +251,11 @@ function loadGitter() {
 function autoRedirect() {
   let lang = global.navigator?.language || navigator?.userLanguage
   console.log('Current lang is ' + lang)
-  if (lang != null && lang.toLowerCase() !== 'zh-cn') {
+  if (lang != null && (lang.toLowerCase() === 'zh-cn' || lang.toLowerCase().indexOf('zh') > 0)) {
     if (sessionStorage.getItem('auto_detect_redirect') !== 'true') {
-      console.log('Not zh-cn, redirect to en')
+      console.log('current lang is zh-cn, redirect to zh-cn')
       sessionStorage.setItem('auto_detect_redirect', 'true')
-      window.location.href = '/en'
+      window.location.href = '/zh-cn'
     }
   }
 }
