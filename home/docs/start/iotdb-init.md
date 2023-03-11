@@ -1,14 +1,14 @@
 ---
 id: iotdb-init  
-title: The time series database IoTDB installation
-sidebar_label: IoTDB init (optional) 
+title: Use Time Series Database IoTDB to Store Metrics Data (Optional)  
+sidebar_label: Use IoTDB Store Metrics 
 ---
 
-HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to initialize, or not to install (note ⚠️If you don't install it, there will be no historical chart data)
+HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
 
-Apache IoTDB is a software system that integrates the collection, storage, management and analysis of IoT time series data. We use it to store and analyze the collected historical data of monitoring indicators.
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring indicators collected. Support V0.13+ version.  
 
-Note ⚠️ IoTDB is optional, if not configured, there will be no historical chart data. Support V0.12 - V0.13 version, recommend to use V0.13.* version
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
 
 > If you already have an IoTDB environment, you can skip directly to the YML configuration step.  
 
@@ -36,13 +36,17 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file 
 
-   Modify `hertzbeat/config/application.yml` configuration file   
-   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
-   Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
+   Modify `hertzbeat/config/application.yml` configuration file     
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
+   Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
 
 ```
 warehouse:
   store:
+    # disable JPA
+    jpa:
+      enabled: false
+    # enable iot-db
     iot-db:
       enabled: true
       host: 127.0.0.1
@@ -56,6 +60,8 @@ warehouse:
       # default '7776000000'（90days,unit:ms,-1:no-expire）
       expire-time: '7776000000'
 ```
+
+4. Restart HertzBeat   
 
 ### FAQ   
 

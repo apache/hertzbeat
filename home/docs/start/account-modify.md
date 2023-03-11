@@ -1,7 +1,7 @@
 ---
 id: account-modify  
 title: Modify Account Username Password        
-sidebar_label: Update Account(Optional)      
+sidebar_label: Update Account        
 ---
 
 HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat     

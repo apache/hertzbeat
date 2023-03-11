@@ -63,6 +63,8 @@ warehouse:
       expire-time: '7776000000'
 ```
 
+4. 重启 HertzBeat
+
 ### 常见问题   
 
 1. 时序数据库IoTDB和TDengine是否都需要配置，能不能都用

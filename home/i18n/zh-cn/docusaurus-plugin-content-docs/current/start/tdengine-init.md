@@ -88,7 +88,7 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
 ### 在hertzbeat的`application.yml`配置文件配置此数据库连接   
 
 1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件   
+   修改位于 `hertzbeat/config/application.yml` 的配置文件 [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)      
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
 
 **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.td-engine`数据源参数，URL账户密码，并启用`enabled`为`true`**    
@@ -106,6 +106,8 @@ warehouse:
          username: root
          password: taosdata
 ```
+
+2. 重启 HertzBeat
 
 ### 常见问题   
 

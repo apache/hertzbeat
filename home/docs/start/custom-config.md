@@ -1,7 +1,7 @@
 ---
 id: custom-config  
-title: Advanced Config           
-sidebar_label: Advanced Config      
+title: Advanced Params Config           
+sidebar_label: Advanced Params Config      
 ---
 
 This describes how to configure the SMS server, the number of built-in availability alarm triggers, etc.
