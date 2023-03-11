@@ -5,51 +5,51 @@
   },
   "sidebar.docs.category.quickstart": {
     "message": "Guides",
-    "description": "The label for category Guides in sidebar docs"
+    "description": "The label for category quickstart in sidebar docs"
   },
   "sidebar.docs.category.custom": {
     "message": "Custom Monitor",
-    "description": "The label for category Custom Monitor in sidebar docs"
+    "description": "The label for category custom in sidebar docs"
   },
   "sidebar.docs.category.http": {
     "message": "HTTP Protocol",
-    "description": "The label for category HTTP Protocol in sidebar docs"
+    "description": "The label for category http in sidebar docs"
   },
   "sidebar.docs.category.jdbc": {
     "message": "JDBC Protocol",
-    "description": "The label for category JDBC Protocol in sidebar docs"
+    "description": "The label for category jdbc in sidebar docs"
   },
   "sidebar.docs.category.ssh": {
     "message": "SSH Protocol",
-    "description": "The label for category SSH Protocol in sidebar docs"
+    "description": "The label for category ssh in sidebar docs"
   },
   "sidebar.docs.category.help": {
     "message": "Help",
-    "description": "The label for category Help Doc in sidebar docs"
+    "description": "The label for category help in sidebar docs"
   },
   "sidebar.docs.category.service": {
     "message": "Service Monitor",
-    "description": "The label for category Service Monitor in sidebar docs"
+    "description": "The label for category service in sidebar docs"
   },
   "sidebar.docs.category.database": {
     "message": "Database Monitor",
-    "description": "The label for category Database Monitor in sidebar docs"
+    "description": "The label for category database in sidebar docs"
   },
   "sidebar.docs.category.os": {
     "message": "OS Monitor",
-    "description": "The label for category OS Monitor in sidebar docs"
+    "description": "The label for category os in sidebar docs"
   },
   "sidebar.docs.category.threshold": {
     "message": "Threshold Alarm Setting",
-    "description": "The label for category Threshold Alarm Setting in sidebar docs"
+    "description": "The label for category threshold in sidebar docs"
   },
   "sidebar.docs.category.notice": {
     "message": "Alarm Notice Setting",
-    "description": "The label for category Alarm Notice Setting in sidebar docs"
+    "description": "The label for category notice in sidebar docs"
   },
   "sidebar.docs.category.mid": {
     "message": "Middleware",
-    "description": "The label for category Middleware in sidebar docs"
+    "description": "The label for category mid in sidebar docs"
   },
   "sidebar.docs.category.Others": {
     "message": "Others",
@@ -57,6 +57,6 @@
   },
   "sidebar.docs.category.cloud-native": {
     "message": "CloudNative",
-    "description": "The label for category CloudNative in sidebar docs"
+    "description": "The label for category cloud-native in sidebar docs"
   }
 }

@@ -471,5 +471,8 @@
   },
   "quickstart": {
     "message": "快速开始"
+  },
+  "convenient-content": {
+    "message": "convenient-content"
   }
 }

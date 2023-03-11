@@ -1,62 +1,62 @@
 {
   "link.title.intro": {
     "message": "Introduction",
-    "description": "The title of the footer links column with title=Introduction in the footer"
+    "description": "The title of the footer links column with title=intro in the footer"
   },
   "link.title.contact": {
     "message": "Community",
-    "description": "The title of the footer links column with title=Community in the footer"
-  },
-  "link.title.relate": {
-    "message": "More",
-    "description": "The title of the footer links column with title=More in the footer"
+    "description": "The title of the footer links column with title=contact in the footer"
   },
   "link.item.label.use": {
     "message": "Introduction",
-    "description": "The label of footer link with label=Introduction linking to docs/"
+    "description": "The label of footer link with label=use linking to docs/"
   },
   "link.item.label.quickstart": {
     "message": "Quick Start",
-    "description": "The label of footer link with label=Quick Start linking to docs/start/quickstart"
+    "description": "The label of footer link with label=quickstart linking to docs/start/quickstart"
   },
   "link.item.label.custom": {
     "message": "Custom Monitor",
-    "description": "The label of footer link with label=自定义监控 linking to docs/advanced/extend-point"
+    "description": "The label of footer link with label=custom linking to docs/advanced/extend-point"
   },
   "link.item.label.help": {
     "message": "Help Doc",
-    "description": "The label of footer link with label=Help Doc linking to docs/help/guide"
+    "description": "The label of footer link with label=help linking to docs/help/guide"
   },
   "link.item.label.dromara": {
     "message": "Dromara",
-    "description": "The label of footer link with label=Dromara linking to https://dromara.org/"
+    "description": "The label of footer link with label=dromara linking to https://dromara.org/"
   },
   "link.item.label.discuss": {
     "message": "Contact",
-    "description": "The label of footer link with label=Contact linking to docs/others/contact"
+    "description": "The label of footer link with label=discuss linking to docs/others/contact"
   },
   "link.item.label.team": {
     "message": "About Us",
-    "description": "The label of footer link with label=About Us linking to https://support.qq.com/products/379369/team"
+    "description": "The label of footer link with label=team linking to https://support.qq.com/products/379369/team"
   },
   "link.item.label.tancloud": {
     "message": "TanCloud",
-    "description": "The label of footer link with label=TanCloud linking to https://tancloud.cn"
+    "description": "The label of footer link with label=tancloud linking to https://tancloud.cn"
   },
   "link.item.label.github": {
     "message": "Github",
-    "description": "The label of footer link with label=Github linking to https://github.com/dromara/hertzbeat"
+    "description": "The label of footer link with label=github linking to https://github.com/dromara/hertzbeat"
   },
   "link.item.label.gitee": {
     "message": "Gitee",
-    "description": "The label of footer link with label=Gitee linking to https://gitee.com/dromara/hertzbeat"
-  },
-  "link.item.label.resource": {
-    "message": "Resource",
-    "description": "The label of footer link with label=Resource linking to docs/others/resource"
+    "description": "The label of footer link with label=gitee linking to https://gitee.com/dromara/hertzbeat"
   },
   "copyright": {
     "message": "<a target=\"_blank\" href=\"https://beian.miit.gov.cn/\">蜀ICP备2022002218号</a> | Copyright © 2021-2023 TANCLOUD",
     "description": "The footer copyright"
+  },
+  "link.title.resource": {
+    "message": "Resource",
+    "description": "The title of the footer links column with title=resource in the footer"
+  },
+  "link.item.label.relate": {
+    "message": "Others",
+    "description": "The label of footer link with label=relate linking to docs/others/resource"
   }
 }

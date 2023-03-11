@@ -5,51 +5,51 @@
   },
   "item.label.main": {
     "message": "Home",
-    "description": "Navbar item with label Home"
+    "description": "Navbar item with label main"
   },
   "item.label.document": {
     "message": "Document",
-    "description": "Navbar item with label Document"
+    "description": "Navbar item with label document"
   },
   "item.label.blog": {
     "message": "Blog",
-    "description": "Navbar item with label Blog"
+    "description": "Navbar item with label blog"
   },
   "item.label.discuss": {
     "message": "Discuss",
-    "description": "Navbar item with label Discuss"
+    "description": "Navbar item with label discuss"
   },
   "item.label.kanban": {
     "message": "Dashboard",
-    "description": "Navbar item with label Dashboard"
+    "description": "Navbar item with label kanban"
   },
   "item.label.about": {
     "message": "About",
-    "description": "Navbar item with label About"
+    "description": "Navbar item with label about"
   },
   "item.label.login": {
     "message": "Login Now",
-    "description": "Navbar item with label Login"
+    "description": "Navbar item with label login"
   },
   "item.label.design": {
     "message": "Design",
-    "description": "Navbar item with label Design"
+    "description": "Navbar item with label design"
   },
   "item.label.sponsor": {
     "message": "Sponsor",
-    "description": "Navbar item with label Sponsor"
+    "description": "Navbar item with label sponsor"
   },
   "item.label.resource": {
     "message": "Resource",
-    "description": "Navbar item with label Resource"
+    "description": "Navbar item with label resource"
   },
   "item.label.contributing": {
     "message": "Contributor Guide",
-    "description": "Navbar item with label Contributor Guide"
+    "description": "Navbar item with label contributing"
   },
   "item.label.developer": {
     "message": "Contributors",
-    "description": "Navbar item with label Contributors"
+    "description": "Navbar item with label developer"
   },
   "item.label.enterprise": {
     "message": "Enterprise",
