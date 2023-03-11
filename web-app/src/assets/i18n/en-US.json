@@ -330,7 +330,7 @@
   "app.role.admin": "administrator",
   "app.lock": "Lock",
   "app.lock.placeholder": "Enter Any To Unlock",
-  "app.passport.desc": "An open-source real-time monitoring system",
+  "app.passport.desc": "An open source real-time monitoring tool",
   "app.passport.welcome": "Welcome To Use TanCloud-Monitoring Cloud Service-tancloud.cn",
   "app.login.message-need-identifier": "Please enter your username",
   "app.login.message-need-credential": "Please enter password",

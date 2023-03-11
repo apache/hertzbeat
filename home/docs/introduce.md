@@ -5,7 +5,7 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> An open-source, real-time monitoring system with custom-monitor and agentless.  
+> An open-source, real-time monitoring tool with custom-monitor and agentless.  
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)

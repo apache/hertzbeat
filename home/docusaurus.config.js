@@ -8,7 +8,7 @@ const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages'
 
 module.exports = {
   title: 'HertzBeat',
-  tagline: 'An open-source, real-time monitoring system with custom-monitor and agentLess.',
+  tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
   url: 'https://hertzbeat.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
