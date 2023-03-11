@@ -52,37 +52,37 @@ function Home() {
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/web-monitor.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/ping-connect.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/port-available.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/database-monitor.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/os-monitor.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
+                  <img src={cdnTransfer('/img/badge/network-monitor.svg')} alt={''} />
+                </a>
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/custom-monitor.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
-                  <img src={cdnTransfer('/img/badge/threshold.svg')} alt={''} />
-                </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/alert.svg')} alt={''} />
                 </a>
               </div>

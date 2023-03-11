@@ -20,8 +20,8 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
+![hertzbeat](https://img.shields.io/badge/monitor-network-red)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
 **Home: [hertzbeat.com](https://hertzbeat.com)**
@@ -31,7 +31,7 @@
 ## 🎡 <font color="green">Introduction</font>
 
 > [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring tool with custom-monitor and agentless.       
-> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native and more.            
+> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
 > More liberal threshold alarm configuration (calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 

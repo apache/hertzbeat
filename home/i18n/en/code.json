@@ -257,10 +257,10 @@
     "description": "The label used by the button on the collapsible TOC component"
   },
   "convenient-content": {
-    "message": "{docker} {br} Just one command to get started. The system integrates metrics collection, metrics data visualization, alarming and forwarding.All in One, No need to write cumbersome configuration files in order to add a monitoring or alarm. {br}We also provider {TANCLOUD} {SAAS}, {console}. Security is the most important, we encrypt the whole link of account and monitoring."
+    "message": "{docker} {br} Just one command to get started. Monitor+Alerter+Notify all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more. No need to write cumbersome configuration files. {br}We also provider {TANCLOUD} sass, {console}. Security is the most important, we encrypt the whole data of account and monitoring."
   },
   "custom-multi-support-content": {
-    "message": "We support monitoring of WEB, JVM, MYSQL, Linux, Kubernetes and other application, db, os, cloud-native and middleware, and more monitoring types are under rapid iteration. We provide a more liberalized threshold alarm configuration, support Email, SMS, Discord, Telegram, Slack, Webhook, DingTalk, WeChat, Feishu and more. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, through different protocols SSH, JDBC, JMX, SNMP, HTTP, etc. You only need to configure YML to customize monitoring and quickly access the monitoring system."
+    "message": "Supported WEB, JVM, MYSQL, Linux, Kubernetes and other application, db, os, cloud-native, middleware, network and more. More liberal threshold alarm configuration, timely notification delivery by Discord, Slack, Telegram, Email, DingDing, WeChat, FeiShu, Webhook, SMS. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, you can quickly support custom metrics collect through protocols SSH, JDBC, JMX, SNMP, HTTP etc."
   },
   "opensource-content": {
     "message": "HertzBeat is fully open source, unlimited, and anyone who are interested in it are very welcome to contribute. We respect everyone, not limited to the contribution of the document code or typos, we will learn and progress together, build an open source business for contributors.{br}We believe that open source can change the world！{br}{github} {br}{gitee}"

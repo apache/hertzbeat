@@ -13,7 +13,6 @@ export const features = [
           values={{
             docker: <code>{'docker run -d -p 1157:1157 tancloud/hertzbeat'}</code>,
             TANCLOUD: <strong>TANCLOUD</strong>,
-            SAAS: <strong>SAAS</strong>,
             console: (
               <a href={'https://www.console.tancloud.cn'}>
                 <strong>Login Now</strong>
