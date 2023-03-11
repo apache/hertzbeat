@@ -20,8 +20,8 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
+![hertzbeat](https://img.shields.io/badge/monitor-network-red)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
 **官网: [hertzbeat.com](https://hertzbeat.com)**
@@ -31,7 +31,7 @@
 ## 🎡 <font color="green">介绍</font>
 
 > [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的实时监控告警系统。     
-> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生等指标监控，阈值告警，告警通知一步到位。   
+> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等指标监控，阈值告警，告警通知一步到位。   
 > 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。             
 
 > 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    

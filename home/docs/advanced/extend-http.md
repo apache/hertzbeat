@@ -1,76 +1,74 @@
 ---
 id: extend-http  
-title: HTTP协议自定义监控  
-sidebar_label: HTTP协议自定义监控    
+title: HTTP Protocol Custom Monitoring  
+sidebar_label: HTTP Protocol Custom Monitoring    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用HTTP协议自定义指标监控。   
 
-### HTTP协议采集流程    
-【**HTTP接口调用**】->【**响应校验**】->【**响应数据解析**】->【**默认方式解析｜JsonPath脚本解析 | XmlPath解析(todo) | Prometheus解析(todo)**】->【**指标数据提取**】
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring   
 
-由流程可见，我们自定义一个HTTP协议的监控类型，需要配置HTTP请求参数，配置获取哪些指标，对响应数据配置解析方式和解析脚本。      
-HTTP协议支持我们自定义HTTP请求路径，请求header，请求参数，请求方式，请求体等。   
+### HTTP protocol collection process     
+【**call HTTP interface**】->【**response verification **】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing(todo)**】->【**Metric data extraction**】
 
-**系统默认解析方式**：http接口返回hertzbeat规定的json数据结构，即可用默认解析方式解析数据提取对应的指标数据，详细介绍见 [**系统默认解析**](extend-http-default)    
-**JsonPath脚本解析方式**：用JsonPath脚本对响应的json数据进行解析，返回系统指定的数据结构，然后提供对应的指标数据，详细介绍见 [**JsonPath脚本解析**](extend-http-jsonpath)    
+It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
+HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.   
+
+**System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding Metric data. For details, refer to [**System Default Parsing**](extend-http-default)    
+**JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding Metric data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)    
   
 
-### 自定义步骤  
+### Custom Steps  
 
-配置自定义监控类型需新增配置一个YML文件
-1. 用监控类型命名的监控配置定义文件 - 例如：example.yml 需位于安装目录 /hertzbeat/define/ 下
-2. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。
+In order to configure a custom monitoring type, you need to add and configure YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example.yml in the installation directory /hertzbeat/define/ 
+2. Restart hertzbeat system, we successfully fit a new custom monitoring type. 
 
 ------- 
-下面详细介绍下YML文件的配置用法，请注意看使用注释。   
+Configuration usages of the two files are detailed below. Please pay attention to usage annotation.   
 
-### 监控配置定义文件YML   
+### Monitoring configuration definition file   
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
-> 即我们通过自定义这个YML文件，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
+> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
-样例：自定义一个名称为example_http的自定义监控类型，其使用HTTP协议采集指标数据。    
-文件名称: example_http.yml 位于 /define/example_http.yml   
+eg：Define a custom monitoring type named example_http which use the HTTP protocol to collect data.    
+The file name: example_http.yml in /define/example_http.yml   
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# Monitoring application type(consistent with the file name) eg: linux windows tomcat mysql aws...
 app: example_http
 name:
   zh-CN: 模拟应用类型
   en-US: EXAMPLE APP
-# 监控参数定义. field 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# 强制固定必须参数 - host
 params:
-  # field-字段名称标识符
+  # field-field name identifier
   - field: host
-    # name-参数字段显示名称
+    # name-parameter field display name
     name:
       zh-CN: 主机Host
       en-US: Host
-    # type-字段类型,样式(大部分映射input标签type属性)
+    # type-field type, style(most mappings are input label type attribute)
     type: host
-    # 是否是必输项 true-必填 false-可选
+    # required or not  true-required  false-optional
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
     type: number
-    # 当type为number时,用range表示范围
+    # When type is number, range is used to represent the range.
     range: '[0,65535]'
     required: true
-    # 端口默认值
+    # port default
     defaultValue: 80
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    # Prompt information of parameter input box
+    placeholder: 'Please enter the port'
   - field: username
     name:
       zh-CN: 用户名
       en-US: Username
     type: text
-    # 当type为text时,用limit表示字符串限制大小
+    # When type is text, use limit to indicate the string limit size
     limit: 20
     required: false
   - field: password
@@ -83,7 +81,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: Enable SSL
-    # 当type为boolean时,前端用switch展示开关
+    # When type is boolean, front end uses switch to show the switch
     type: boolean
     required: false
   - field: method
@@ -92,27 +90,27 @@ params:
       en-US: Method
     type: radio
     required: true
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
+    # When type is radio or checkbox, option indicates the list of selectable values {name1:value1,name2:value2}
     options:
-      - label: GET请求
+      - label: GET request
         value: GET
-      - label: POST请求
+      - label: POST request
         value: POST
-      - label: PUT请求
+      - label: PUT request
         value: PUT
-      - label: DELETE请求
+      - label: DELETE request
         value: DELETE
-# 指标组列表
+# Metric group list
 metrics:
-# 第一个监控指标组 cpu
-# 注意：内置监控指标有 (responseTime - 响应时间)
+# The first monitoring Metric group cpu
+# Note：the built-in monitoring Metrics have (responseTime - response time)
   - name: cpu
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # 指标组中的具体监控指标
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # Metric information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
         instance: true
@@ -124,7 +122,7 @@ metrics:
       - field: waitTime
         type: 0
         unit: s
-# (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+# (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
     aliasFields:
       - hostname
       - core1
@@ -132,42 +130,42 @@ metrics:
       - usage
       - allTime
       - runningTime
-# (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+# (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
 # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - hostname=hostname
       - cores=core1+core2
       - usage=usage
       - waitTime=allTime-runningTime
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+# protocol for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-# 当protocol为http协议时具体的采集配置
+# Specific collection configuration when the protocol is HTTP protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: /metrics/cpu
-      # 请求方式 GET POST PUT DELETE PATCH
+      # request mode: GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # enable ssl/tls or not, that is to say, HTTP or HTTPS. The default is false
       ssl: false
-      # 请求头内容
+      # request header content
       headers:
         apiVersion: v1
-      # 请求参数内容
+      # request parameter content
       params:
         param1: param1
         param2: param2
-      # 认证
+      # authorization
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # authorization method: Basic Auth, Digest Auth, Bearer Token
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
-      # todo xmlPath-xmlPath脚本,prometheus-Prometheus数据规则
+      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability Metric monitoring
+      # todo xmlPath-xmlPath script, prometheus-Prometheus data rules
       parseType: jsonPath
       parseScript: '$'
 

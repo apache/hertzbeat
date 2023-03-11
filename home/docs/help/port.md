@@ -1,30 +1,31 @@
 ---
 id: port  
-title: 监控：端口可用性      
-sidebar_label: 端口可用性    
-keywords: [开源监控系统, 开源网络监控, 端口可用性监控]
+title: Monitoring：port availability      
+sidebar_label: Port availability    
+keywords: [open source monitoring system, open source port monitoring system, monitoring port metrics]
 ---
 
-> 判断对端服务暴露端口是否可用，进而判断对端服务是否可用，采集响应时间等指标进行监测
+> Judge whether the exposed port of the opposite end service is available, then judge whether the opposite end service is available, and collect Metrics such as response time for monitoring.
 
-### 配置参数
+### Configuration parameter   
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 网站对外提供的端口，http一般默认为80，https一般默认为443。  |
-| 连接超时时间 | 端口连接的等待超时时间，单位毫秒，默认3000毫秒。  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Ports provided by website, http generally defaults to 80 and https generally defaults to 443 |
+| Connection timeout | Waiting timeout for port connection, unit:ms, default: 3000ms |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection Metric
 
-#### 指标集合：summary
+#### Metric set：summary
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| responseTime   | ms毫秒 | 网站响应时间 |
+| responseTime   | ms | Website response time |
+
 
 

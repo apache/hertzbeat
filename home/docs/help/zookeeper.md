@@ -1,100 +1,100 @@
 ---
 id: zookeeper  
-title: 监控：Zookeeper监控      
-sidebar_label: Zookeeper监控  
-keywords: [开源监控系统, Zookeeper监控监控]
+title: Monitoring Zookeeper       
+sidebar_label: Zookeeper Monitor   
+keywords: [open source monitoring system, open source zookeeper monitoring system, monitoring zookeeper metrics]
 ---
 
-> 对Zookeeper的通用性能指标进行采集监控
+> Collect and monitor the general performance Metrics of Zookeeper.
 
-### 监控前操作
+### PreRequisites
 
-> 监控 zookeeper 目前的实现方案使用的是 zookeeper 提供的四字命令 + netcat 来收集指标数据  
-> 需要用户自己将zookeeper的四字命令加入白名单
+#### Zookeeper four word command
+>The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
+Users need to add the four word command of zookeeper to the white list by themselves.
 
-1. 加白名单步骤   
-
-> 1.找到我们 zookeeper 的配置文件，一般是 `zoo.cfg`
+Steps
+> 1.Find our zookeeper configuration file, which is usually zoo.cfg.
 >
-> 2.配置文件中加入以下命令
+> 2.Add the following commands to the configuration file
 
 ```shell
-# 将需要的命令添加到白名单中
+# Add the required command to the white list
 4lw.commands.whitelist=stat, ruok, conf, isro
 
-# 将所有命令添加到白名单中
+# Add all commands to the white list
 4lw.commands.whitelist=*
 ```
-> 3.重启服务
+
+> 3.Restart service
 
 ```shell 
 zkServer.sh restart
 ```
 
-2. netcat 协议 
+#### netcat protocol
+The current implementation scheme requires us to deploy the Linux server of zookeeper
+Command environment for installing netcat
 
-目前实现方案需要我们部署zookeeper的linux服务器，安装netcat的命令环境
-
-> netcat安装步骤
+> netcat installation steps
 ```shell
 yum install -y nc
 ```
 
-如果终端显示以下信息则说明安装成功
+If the terminal displays the following information, the installation is successful
 ```shell
 Complete!
 ```
 
+### Configuration parameter
 
-### 配置参数
-
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | Zookeeper的Linux服务器SSH端口。  |
-| 查询超时时间 | 设置Zookeeper连接的超时时间，单位ms毫秒，默认3000毫秒。  |
-| 用户名      | Zookeeper所在Linux连接用户名 |
-| 密码        | Zookeeper所在Linux连接密码 |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Port provided by Zookeeper. The default is 2181 |
+| Query timeout | Set the timeout of Zookeeper connection, unit: ms, default: 3000ms |
+| Username      | User name of the Linux connection where Zookeeper is located |
+| Password        | Password of the Linux connection where Zookeeper is located |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection Metric
 
-#### 指标集合：conf
+#### Metric set：conf
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| clientPort         | 无 | 端口 |
-| dataDir            | 无 | 数据快照文件目录，默认10万次操作生成一次快照 |
-| dataDirSize         | kb | 数据快照文件大小 |
-| dataLogDir | 无 | 事务日志文件目录，生产环境放在独立磁盘上 |
-| dataLogSize | kb | 事务日志文件大小 |
-| tickTime | ms | 服务器之间或客户端与服务器之间维持心跳的时间间隔 |
-| minSessionTimeout | ms| 最小session超时时间 心跳时间x2 指定时间小于该时间默认使用此时间 |
-| maxSessionTimeout | ms |最大session超时时间 心跳时间x20 指定时间大于该时间默认使用此时间 |
-| serverId | 无 | 服务器编号 |
+| clientPort         | none | Port |
+| dataDir            | none | Data snapshot file directory. By default, 100000 operations generate a snapshot |
+| dataDirSize         | kb | Data snapshot file size |
+| dataLogDir | none | Transaction log file directory, production environment on a separate disk |
+| dataLogSize | kb | Transaction log file size |
+| tickTime | ms | Time interval between servers or between clients and servers to maintain heartbeat |
+| minSessionTimeout | ms | Minimum session timeout. Heartbeat timex2. The specified time is less than this time, which is used by default |
+| maxSessionTimeout | ms | Maximum session timeout. Heartbeat timex20. The specified time is greater than this time, which is used by default |
+| serverId | none | Server id |
 
 
-#### 指标集合：stats
+#### Metric set：stats
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| zk_version         | 无 | 服务器版本 |
-| zk_server_state            | 无 | 服务器角色 |
-| zk_num_alive_connections         | 个 | 连接数 |
-| zk_avg_latency | ms | 平均延时 |
-| zk_outstanding_requests         | 个 | 堆积请求数 |
-| zk_znode_count            | 个 | znode结点数量 |
-| zk_packets_sent         | 个 | 发包数 |
-| zk_packets_received | 个 | 收包数 |
-| zk_watch_count         | 个 | watch数量 |
-| zk_max_file_descriptor_count            | 个 | 最大文件描述符数量 |
-| zk_approximate_data_size         | kb | 数据大小 |
-| zk_open_file_descriptor_count | 个 | 打开的文件描述符数量 |
-| zk_max_latency            | ms | 最大延时 |
-| zk_ephemerals_count         | 个 | 临时节点数 |
-| zk_min_latency | ms | 最小延时 |
+| zk_version         | none | Server version |
+| zk_server_state            | none | Server role |
+| zk_num_alive_connections         | number | Number of connections |
+| zk_avg_latency | ms | Average latency |
+| zk_outstanding_requests         | number | Number of outstanding requests |
+| zk_znode_count            | number | Number of znode |
+| zk_packets_sent         | number | Number of packets sent |
+| zk_packets_received | number | Number of packets received |
+| zk_watch_count         | number | Number of watch |
+| zk_max_file_descriptor_count            | number | Maximum number of file descriptors |
+| zk_approximate_data_size         | kb | data size |
+| zk_open_file_descriptor_count | number | Number of open file descriptors |
+| zk_max_latency            | ms | Max latency |
+| zk_ephemerals_count         | number | Number of ephemeral nodes |
+| zk_min_latency | ms | Min latency |
 
 

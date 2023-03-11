@@ -1,21 +1,21 @@
 ---
 id: shenyu  
-title: 监控 Apache ShenYu API网关      
-sidebar_label: ShenYu网关监控    
-keywords: [开源监控系统, 开源消息中间件监控, ShenYu网关监控监控]
+title: Monitoring：Apache ShenYu API Gateway      
+sidebar_label: Apache ShenYu  
+keywords: [open source monitoring system, open source apache shenyu monitoring system, monitoring apache shenyu metrics]
 ---
 
-> 对 ShenYu 网关的运行状态（JVM相关），请求响应等相关指标进行监测。         
+> monitor ShenYu running status(JVM-related), include request response and other related metrics.           
 
-## 监控前操作  
+## Pre-monitoring operations    
 
-您需要在 ShenYu 网关开启`metrics`插件，暴露对应的 prometheus metrics 接口。  
+Enable `metrics` plugin in ShenYu, expose it's prometheus metrics endpoint。  
 
-开启插件, 参考 [官方文档](https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin)  
+Refer [ShenYu Document](https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin)  
 
-主要如下两步骤: 
+Two Steps Mainly: 
 
-1. 在网关的 pom.xml 文件中添加 metrics 的依赖。
+1. add metrics plugin dependency in gateway's pom.xml.  
 
 ```xml
         <dependency>
@@ -25,107 +25,107 @@ keywords: [开源监控系统, 开源消息中间件监控, ShenYu网关监控�
         </dependency>
 ```
 
-2. 在网关的配置yaml文件中编辑如下内容：
+2. modify this config in shenyu gateway yaml. 
 
 ```yaml
 shenyu:
   metrics:
-    enabled: true  #设置为 true 表示开启
+    enabled: false #false is close, true is open
     name : prometheus 
-    host: 127.0.0.1 #暴露的ip
-    port: 8090 #暴露的端口
-    jmxConfig: #jmx配置
+    host: 127.0.0.1 
+    port: 8090 
+    jmxConfig: 
     props:
-      jvm_enabled: true #开启jvm的监控指标
+      jvm_enabled: true #enable jvm monitoring
 ```
 
-最后重启访问网关指标接口 `http://ip:8090` 响应 prometheus 格式数据即可。   
+Finally, restart the access gateway metrics endpoint `http://ip:8090` to respond to prometheus format data.
 
-### 配置参数   
+### Configuration parameters
 
-| 参数名称   | 参数帮助描述                                               |
-|--------|------------------------------------------------------|
-| 监控Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称   | 标识此监控的名称，名称需要保证唯一性。                                  |
-| 端口     | 网关指标接口对外提供的端口，默认为8090。                               |
-| 超时时间   | HTTP请求响应超时时间                                         |
-| 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |
-| 是否探测   | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
-| 描述备注   | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
+| Parameter name | Parameter help description |
+|--------|----------------------------------------- --------------|
+| Monitoring Host | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
+| Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
+| Port | The port provided by the gateway Metric interface, the default is 8090. |
+| Timeout | HTTP request response timeout |
+| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
+| Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
+| Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 
-### 采集指标   
+### Collect metrics
 
-#### 指标集合：shenyu_request_total  
+#### Index collection: shenyu_request_total
 
-| 指标名称      | 指标单位 | 指标帮助描述            |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|-------------------|
-| value   | 无    | 收集ShenYu网关的所有请求数量 |
+| value | None | Collect all requests from ShenYu gateway |
 
-#### 指标集合：shenyu_request_throw_created
+#### Metric collection: shenyu_request_throw_created
 
-| 指标名称      | 指标单位 | 指标帮助描述             |
-| ----------- |------|--------------------|
-| value   | 无    | 收集ShenYu网关的异常请求数量  |
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|-------------------|
+| value | None | Collect the number of abnormal requests from ShenYu Gateway |
 
-#### 指标集合：process_cpu_seconds_total
+#### Metric collection: process_cpu_seconds_total
 
-| 指标名称      | 指标单位 | 指标帮助描述           |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|------------------|
-| value   | 无    | 用户和系统CPU总计所用的秒数  |
+| value | none | total user and system CPU elapsed seconds |
 
-#### 指标集合：process_open_fds
+#### Metric collection: process_open_fds
 
-| 指标名称      | 指标单位 | 指标帮助描述       |
-| ----------- |------|--------------|
-| value   | 无    | 打开的文件描述符的数量  |
-
-#### 指标集合：process_max_fds
-
-| 指标名称      | 指标单位 | 指标帮助描述         |
-| ----------- |------|----------------|
-| value   | 无    | 打开的文件描述符的最大数量  |
-
-#### 指标集合：jvm_info
-
-| 指标名称      | 指标单位 | 指标帮助描述    |
-| ----------- |------|-----------|
-| runtime   | 无    | JVM 版本信息  |
-| vendor   | 无    | JVM 版本信息  |
-| version   | 无    | JVM 版本信息  |
-
-#### 指标集合：jvm_memory_bytes_used
-
-| 指标名称      | 指标单位 | 指标帮助描述           |
-| ----------- |------|------------------|
-| area   | 无    | JVM 内存区域         |
-| value   | MB    | 给定 JVM 内存区域的已用大小 |
-
-#### 指标集合：jvm_memory_pool_bytes_used
-
-| 指标名称   | 指标单位 | 指标帮助描述          |
-|--------|------|-----------------|
-| pool   | 无    | JVM 内存池         | 
-| value  | MB   | 给定 JVM 内存池的已用大小 |
-
-#### 指标集合：jvm_memory_pool_bytes_committed
-
-| 指标名称      | 指标单位 | 指标帮助描述           |
-| ----------- |------|------------------|
-| pool   | 无    | JVM 内存池          | 
-| value  | MB   | 给定 JVM 内存池的已提交大小 |
-
-#### 指标集合：jvm_memory_pool_bytes_max
-
-| 指标名称      | 指标单位 | 指标帮助描述 |
-| ----------- |------| ----------- |
-| pool   | 无    | JVM 内存池          | 
-| value  | MB   | 给定 JVM 内存池的最大大小 |
-
-#### 指标集合：jvm_threads_state
-
-| 指标名称      | 指标单位 | 指标帮助描述      |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|-------------|
-| state   | 无    | 线程状态        |
-| value   | 无    | 对应线程状态的线程数量 |
+| value | none | number of open file descriptors |
+
+#### Metric collection: process_max_fds
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|----------------|
+| value | none | maximum number of open file descriptors |
+
+#### Metric collection: jvm_info
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|-----------|
+| runtime | none | JVM version information |
+| vendor | none | JVM version information |
+| version | None | JVM version information |
+
+#### Metric collection: jvm_memory_bytes_used
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|------------------|
+| area | None | JVM memory area |
+| value | MB | used size of the given JVM memory region |
+
+#### Metric collection: jvm_memory_pool_bytes_used
+
+| Metric Name | Metric Unit | Metric Help Description |
+|--------|------|-----------------|
+| pool | None | JVM memory pool |
+| value | MB | used size of the given JVM memory pool |
+
+#### Metric collection: jvm_memory_pool_bytes_committed
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|------------------|
+| pool | None | JVM memory pool |
+| value | MB | The committed size of the given JVM memory pool |
+
+#### Metric collection: jvm_memory_pool_bytes_max
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------| ----------- |
+| pool | None | JVM memory pool |
+| value | MB | The maximum size of the memory pool for the given JVM |
+
+#### Metric collection: jvm_threads_state
+
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|-------------|
+| state | none | thread state |
+| value | None | The number of threads corresponding to the thread state |
 
 

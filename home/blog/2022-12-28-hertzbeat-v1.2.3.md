@@ -1,5 +1,5 @@
 ---
-title: HertzBeat v1.2.3 发布！支持Prometheus,ShenYu,IotDb    
+title: HertzBeat v1.2.3！Support Prometheus,ShenYu and IotDb    
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  

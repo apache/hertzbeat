@@ -2,7 +2,7 @@
   "docs": [
     {
       "type": "category",
-      "label": "快速入门",
+      "label": "quickstart",
       "items": [
         "introduce",
         "start/quickstart",
@@ -19,13 +19,13 @@
     },
     {
       "type": "category",
-      "label": "自定义监控",
+      "label": "custom",
       "items": [
         "advanced/extend-point",
         "advanced/extend-tutorial",
         {
           "type": "category",
-          "label": "HTTP协议",
+          "label": "http",
           "items": [
             "advanced/extend-http",
             "advanced/extend-http-default",
@@ -36,14 +36,14 @@
         },
         {
           "type": "category",
-          "label": "JDBC协议",
+          "label": "jdbc",
           "items": [
             "advanced/extend-jdbc"
           ]
         },
         {
           "type": "category",
-          "label": "SSH协议",
+          "label": "ssh",
           "items": [
             "advanced/extend-ssh"
           ]
@@ -52,12 +52,12 @@
     },
     {
       "type": "category",
-      "label": "帮助文档",
+      "label": "help",
       "items": [
         "help/guide",
         {
           "type": "category",
-          "label": "应用服务监控",
+          "label": "service",
           "items": [
             "help/website",
             "help/api",
@@ -72,7 +72,7 @@
         },
         {
           "type": "category",
-          "label": "数据库监控",
+          "label": "database",
           "items": [
             "help/mysql",
             "help/mariadb",
@@ -87,7 +87,7 @@
         },
         {
           "type": "category",
-          "label": "操作系统",
+          "label": "os",
           "items": [
             "help/linux",
             "help/windows",
@@ -97,7 +97,7 @@
         },
         {
           "type": "category",
-          "label": "中间件",
+          "label": "mid",
           "items": [
             "help/zookeeper",
             "help/kafka",
@@ -111,7 +111,7 @@
         },
         {
           "type": "category",
-          "label": "云原生",
+          "label": "cloud-native",
           "items": [
             "help/docker",
             "help/kubernetes"
@@ -119,7 +119,7 @@
         },
         {
           "type": "category",
-          "label": "阈值告警配置",
+          "label": "threshold",
           "items": [
             "help/alert_threshold",
             "help/alert_threshold_expr"
@@ -127,7 +127,7 @@
         },
         {
           "type": "category",
-          "label": "告警通知配置",
+          "label": "notice",
           "items": [
             "help/alert_email",
             "help/alert_webhook",
@@ -148,12 +148,12 @@
       "label": "Others",
       "items": [
         "others/developer",
+        "others/contributing",
         "others/contact",
         "others/design",
         "others/sponsor",
         "others/private",
-        "others/resource",
-        "others/contributing"
+        "others/resource"
       ]
     }
   ]

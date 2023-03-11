@@ -1,33 +1,33 @@
 ---
 id: jetty  
-title: 监控：Jetty应用服务器      
-sidebar_label: Jetty应用服务器
-keywords: [开源监控系统, 开源中间件监控, Jetty应用服务器监控]
+title: Monitoring Jetty Web Server      
+sidebar_label: Jetty Web Server
+keywords: [open source monitoring system, open source jetty web server monitoring system, monitoring jetty metrics]
 ---
 
-> 对Jetty应用服务器的通用性能指标进行采集监控
+> Collect and monitor general performance metrics of Jetty application server
 
-**使用协议：JMX**
+**Usage protocol: JMX**
 
-### 监控前操作
+### Pre-monitoring Operations
 
-> 您需要在 JVM 应用开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 JVM 进行指标采集。
+> You need to enable the `JMX` service in the JVM application. HertzBeat uses the JMX protocol to collect metrics for the JVM.
 
-#### Jetty应用服务器开启JMX协议步骤
+#### Jetty application server opens JMX protocol steps
 
-[参考官方文档](https://www.eclipse.org/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote)   
+[Refer to official documentation](https://www.eclipse.org/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote)
 
-1. 在 Jetty 启动 JMX JMX-REMOTE 模块  
+1. Start the JMX JMX-REMOTE module in Jetty
 
 ```shell
-java -jar $JETTY_HOME/start.jar --add-module=jmx  
+java -jar $JETTY_HOME/start.jar --add-module=jmx
 java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
 ```
-命令执行成功会创建出 `${JETTY_BASE}/start.d/jmx-remote.ini` 配置文件    
+Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file
 
-2. 编辑 `${JETTY_BASE}/start.d/jmx-remote.ini` 配置文件，修改 JMX 的 IP 端口等参数。  
+2. Edit the `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file to modify the JMX IP port and other parameters.
 
-**`localhost` 需修改为对外暴露 IP**
+**`localhost` needs to be modified to expose the IP**
 
 ```text
 ## The host/address to bind the RMI server to.
@@ -46,53 +46,51 @@ java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
 -Djava.rmi.server.hostname=localhost
 ```
 
-3. 重启 Jetty Server 即可。
+3. Restart Jetty Server.
 
-### 配置参数
+### Configuration parameter
 
-| 参数名称      | 参数帮助描述 |
-| ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 查询超时时间 | 设置JVM连接的超时时间，单位ms毫秒，默认3000毫秒。  |
-| 用户名      | JMX连接用户名 |
-| 密码        | JMX连接密码 |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Parameter name      | Parameter help description                                                                                                                                                |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
+| Port                | Port provided by JMX                                                                                                                                                      |
+| Username            | JMX connection user name, optional                                                                                                                                        |
+| Password            | JMX connection password, optional                                                                                                                                         |
+| Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
+| Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks | For more information about identifying and describing this monitoring, users can note information here                                                                    |
 
-### 采集指标
+### Collection Metrics
 
+#### Metrics Set：memory_pool
 
-#### 指标集合：memory_pool
-
-| 指标名称      | 指标单位 | 指标帮助描述 |
-|-----------| ----------- | ----------- |
-| name      | 无 | 指标名称 |
-| committed | kb | 总量 |
-| init      | kb | 初始化大小 |
-| max       | kb | 最大 |
-| used      | kb | 已使用 |
-
-
-#### 指标集合：class_loading
-
-| 指标名称                  | 指标单位 | 指标帮助描述 |
-|-----------------------| ----------- | ----------- |
-| LoadedClassCount      | 个 | 已加载类数量 |
-| TotalLoadedClassCount | 个 | 历史已加载类总量 |
-| UnloadedClassCount    | 个 | 未加载类数量 |
+| Metric name | Metric unit | Metric help description |
+|-------------|-------------|-------------------------|
+| name        |             | metrics name            |
+| committed   | kb          | total size              |
+| init        | kb          | init size               |
+| max         | kb          | max size                |
+| used        | kb          | used size               |
 
 
-#### 指标集合：thread
+#### Metrics Set：class_loading
 
-| 指标名称                    | 指标单位 | 指标帮助描述 |
-|-------------------------| ----------- | ----------- |
-| TotalStartedThreadCount | 个 | 已经开始的线程数量 |
-| ThreadCount             | 个 | 线程数 |
-| PeakThreadCount         | 个 | 未加载类数量 |
-| DaemonThreadCount       | 个 | 守护进程数 |
-| CurrentThreadUserTime   | ms | 使用时间 |
-| CurrentThreadCpuTime    | ms | 使用CPU时间 |
+| Metric name           | Metric unit | Metric help description  |
+|-----------------------|-------------|--------------------------|
+| LoadedClassCount      |             | Loaded Class Count       |
+| TotalLoadedClassCount |             | Total Loaded Class Count |
+| UnloadedClassCount    |             | Unloaded Class Count     |
 
+
+#### Metrics Set：thread
+
+| Metric name             | Metric unit | Metric help description    |
+|-------------------------|-------------|----------------------------|
+| TotalStartedThreadCount |             | Total Started Thread Count |
+| ThreadCount             |             | Thread Count               |
+| PeakThreadCount         |             | Peak Thread Count          |
+| DaemonThreadCount       |             | Daemon Thread Count        |
+| CurrentThreadUserTime   | ms          | Current Thread User Time   |
+| CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
 

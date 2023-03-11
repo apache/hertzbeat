@@ -1,7 +1,7 @@
 {
   "name": "hertzbeat-web-app",
   "version": "1.0.0",
-  "description": "A real-time monitoring system with custom-monitor and agentLess.",
+  "description": "A real-time monitoring tool with custom-monitor and agentLess.",
   "author": "hertzbeat community",
   "repository": {
     "type": "git",
