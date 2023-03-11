@@ -436,7 +436,7 @@
     "message": "实时编辑器",
     "description": "The live editor label of the live codeblocks"
   },
-  "convenient-content'": {
+  "convenient-content": {
     "message": "{docker} {br} 一条命令即可开始监控之旅。监控系统集指标采集，指标数据可视化，告警转发一体化。一站式全功能，无需为了加一个监控或告警而去编写繁琐的配置文件。{br}我们也提供 {TANCLOUD} {SAAS}云版本，{console}即可开始您的服务监控。安全是最重要的，我们对账户密钥和监控密钥全链路加密。"
   },
   "custom-multi-support-content": {
@@ -471,8 +471,5 @@
   },
   "quickstart": {
     "message": "快速开始"
-  },
-  "convenient-content": {
-    "message": "convenient-content"
   }
 }
