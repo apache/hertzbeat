@@ -1,58 +1,58 @@
 ---
 id: postgresql  
-title: 监控：PostgreSQL数据库监控      
-sidebar_label: PostgreSQL数据库   
-keywords: [开源监控系统, 开源数据库监控, PostgreSQL数据库监控]
+title: Monitoring：PostgreSQL database monitoring      
+sidebar_label: PostgreSQL database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring postgresql database metrics]
 ---
 
-> 对PostgreSQL数据库的通用性能指标进行采集监控。支持PostgreSQL 10+。
+> Collect and monitor the general performance Metrics of PostgreSQL database. Support PostgreSQL 10+.
 
-### 配置参数
+### Configuration parameter
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 数据库对外提供的端口，默认为5432。  |
-| 查询超时时间 | 设置SQL查询未响应数据时的超时时间，单位ms毫秒，默认3000毫秒。  |
-| 数据库名称   | 数据库实例名称，可选。  |
-| 用户名      | 数据库连接用户名，可选 |
-| 密码        | 数据库连接密码，可选 |
-| URL        | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Port provided by the database. The default is 5432 |
+| Query timeout | Set the timeout time when SQL query does not respond to data, unit: ms, default: 3000ms |
+| Database name   | Database instance name, optional |
+| Username      | Database connection user name, optional |
+| Password        | Database connection password, optional |
+| URL        | Database connection URL，optional，If configured, the database name, user name, password and other parameters in the URL will overwrite the above configured parameters |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection Metric
 
-#### 指标集合：basic
+#### Metric set：basic
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| server_version  | 无 | 数据库服务器的版本号 |
-| port            | 无 | 数据库服务器端暴露服务端口 |
-| server_encoding | 无 | 数据库服务器端的字符集编码 |
-| data_directory  | 无 | 数据库存储数据盘地址 |
-| max_connections | 连接数 | 数据库最大连接数 |
+| server_version  | none | Version number of the database server |
+| port            | none | Database server exposure service port |
+| server_encoding | none | Character set encoding of database server |
+| data_directory  | none | Database storage data disk address |
+| max_connections | connections | Database maximum connections |
 
-#### 指标集合：state
+#### Metric set：state
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| name            | 无     | 数据库名称，或share-object为共享对象。 |
-| conflicts       | 次数   | 由于与恢复冲突而在这个数据库中被取消的查询的数目 |
-| deadlocks       | 个数   | 在这个数据库中被检测到的死锁数 |
-| blks_read       | 次数   | 在这个数据库中被读取的磁盘块的数量 |
-| blks_hit        | 次数   | 磁盘块被发现已经在缓冲区中的次数，这样不需要一次读取（这只包括 PostgreSQL 缓冲区中的命中，而不包括在操作系统文件系统缓冲区中的命中） |   
-| blk_read_time   | ms    | 在这个数据库中后端花费在读取数据文件块的时间 |
-| blk_write_time  | ms    | 在这个数据库中后端花费在写数据文件块的时间 |
-| stats_reset     | 无    | 这些统计信息上次被重置的时间 |
+| name            | none     | Database name, or share-object is a shared object |
+| conflicts       | times   | The number of queries canceled in the database due to a conflict with recovery |
+| deadlocks       | number   | Number of deadlocks detected in the database |
+| blks_read       | times   | The number of disk blocks read in the database |
+| blks_hit        | times   | Times the disk block has been found to be in the buffer, so there is no need to read it once (This only includes hits in the PostgreSQL buffer, not in the operating system file system buffer) |   
+| blk_read_time   | ms    | Time spent by the backend reading data file blocks in the database |
+| blk_write_time  | ms    | Time spent by the backend writing data file blocks in the database |
+| stats_reset     | none    | The last time these statistics were reset |
 
 
-#### 指标集合：activity
+#### Metric set：activity
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| running         | 连接数 | 当前客户端连接数 |
+| running         | connections |  Number of current client connections |
 
 

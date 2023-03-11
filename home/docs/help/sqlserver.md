@@ -1,76 +1,76 @@
 ---
 id: sqlserver  
-title: 监控：SqlServer数据库监控      
-sidebar_label: SqlServer数据库   
-keywords: [开源监控系统, 开源数据库监控, SqlServer数据库监控]
+title: Monitoring：SqlServer database monitoring      
+sidebar_label: SqlServer database   
+keywords: [open source monitoring system, open source database monitoring system, monitoring sqlserver database metrics]
 ---
 
-> 对SqlServer数据库的通用性能指标进行采集监控。支持SqlServer 2017+。
+> Collect and monitor the general performance Metrics of SqlServer database. Support SqlServer 2017+.
 
-### 配置参数
+### Configuration parameter
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| 端口        | 数据库对外提供的端口，默认为1433。  |
-| 查询超时时间 | 设置SQL查询未响应数据时的超时时间，单位ms毫秒，默认3000毫秒。  |
-| 数据库名称   | 数据库实例名称，可选。  |
-| 用户名      | 数据库连接用户名，可选 |
-| 密码        | 数据库连接密码，可选 |
-| URL        | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Port        | Port provided by the database. The default is 1433 |
+| Query timeout | Set the timeout time when SQL query does not respond to data, unit: ms, default: 3000ms |
+| Database name   | Database instance name, optional |
+| Username      | Database connection user name, optional |
+| Password        | Database connection password, optional |
+| URL        | Database connection URL，optional，If configured, the database name, user name, password and other parameters in the URL will overwrite the above configured parameters |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection Metric
 
-#### 指标集合：basic
+#### Metric set：basic
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| machine_name         | 无 | 	运行服务器实例的 Windows 计算机名称 |
-| server_name            | 无 | 与Windows实例关联的服务器和实例信息SQL Server  |
-| version         | 无 | 实例的版本，SQL Server，格式为"major.minor.build.revision" |
-| edition | 无 | 	已安装的 实例的产品SQL Server版本 |
-| start_time | 无 | 数据库启动时间 | 
+| machine_name         | none | Windows computer name running the server instance |
+| server_name            | none | Server and instance information SQL Server associated with Windows instance |
+| version         | none | Version of the instance，SQL Server，format is "major.minor.build.revision" |
+| edition | none | The product SQL server version of the installed instance |
+| start_time | none | Database start time | 
 
-#### 指标集合：performance_counters
+#### Metric set：performance_counters
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| database_pages         | 无 | Database pages, 已获得的页面数(缓冲池) |
-| target_pages            | 无 | Target pages, 缓冲池必须的理想页面数 |
-| page_life_expectancy         | s,秒 | Page life expectancy, 数据页在缓冲池中驻留的时间，这个时间一般会大于 300 |
-| buffer_cache_hit_ratio | % | Buffer cache hit ratio, 数据库缓冲池高速缓冲命中率，被请求的数据在缓冲池中被找到的概率，一般会大于 80% 才算正常，否则可能是缓冲池容量太小 |
-| checkpoint_pages_sec | 无 | Checkpoint pages/sec, 检查点每秒写入磁盘的脏页个数，如果数据过高，证明缺少内存容量 |
-| page_reads_sec | 无 | Page reads/sec, 缓存池中每秒读的页数 |
-| page_writes_sec | 无 | Page writes/sec, 缓存池中每秒写的页数 |
+| database_pages         | none | Database pages, Number of pages obtained (buffer pool) |
+| target_pages            | none | Target pages, The desired number of pages that the buffer pool must have |
+| page_life_expectancy         | s | Page life expectancy. The time that data pages stay in the buffer pool. This time is generally greater than 300 |
+| buffer_cache_hit_ratio | % | Buffer cache hit ratio, Database buffer pool cache hit rate. The probability that the requested data is found in the buffer pool is generally greater than 80%, otherwise the buffer pool capacity may be too small |
+| checkpoint_pages_sec | none | Checkpoint pages/sec, The number of dirty pages written to the disk by the checkpoint per second. If the data is too high, it indicates that there is a lack of memory capacity |
+| page_reads_sec | none | Page reads/sec, Number of pages read per second in the cache pool |
+| page_writes_sec | none | Page writes/sec, Number of pages written per second in the cache pool |
 
 
-#### 指标集合：connection
+#### Metric set：connection
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| user_connection   | 无 | 已连接的会话数 |
+| user_connection   | none | Number of connected sessions |
 
 
-### 常见问题   
+### Common Problem
 
-1. SSL连接问题修复  
+1. SSL connection problem fixed
 
-jdk版本：jdk11   
-问题描述：SQL Server2019使用SA用户连接报错       
-错误信息：   
+jdk version: jdk11   
+Description of the problem: SQL Server 2019 uses the SA user connection to report an error   
+Error message:   
 ```text
-The driver could not establish a secure connection to SQL Server by using Secure Sockets Layer (SSL) encryption. Error: "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target". ClientConnectionId:xxxxxxxxxxxxxxxxx
+The driver could not establish a secure connection to SQL Server by using Secure Sockets Layer (SSL) encryption. Error: "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target". ClientConnectionId:xxxxxxxxxxxxxxxxxxxx
 ```
-问题截图：
+Screenshot of the problem:   
 ![issue](https://user-images.githubusercontent.com/38679717/206621658-c0741d48-673d-45ff-9a3b-47d113064c12.png)
 
-解决方案：  
-添加`SqlServer`监控时使用高级设置，自定义JDBC URL，拼接的jdbc url后面加上参数配置，```;encrypt=true;trustServerCertificate=true;```这个参数true表示无条件信任server端返回的任何根证书。 
+solution:     
+Use advanced settings when adding `SqlServer` monitoring, customize JDBC URL, add parameter configuration after the spliced jdbc url, ```;encrypt=true;trustServerCertificate=true;```This parameter true means unconditionally trust the server returned any root certificate.
 
-样例：```jdbc:sqlserver://127.0.0.1:1433;DatabaseName=demo;encrypt=true;trustServerCertificate=true;```    
+Example: ```jdbc:sqlserver://127.0.0.1:1433;DatabaseName=demo;encrypt=true;trustServerCertificate=true;```
 
-参考文档：[microsoft pkix-path-building-failed-unable-to-find-valid-certification](https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building-failed-unable-to-find-valid-certification/ba-p/2591304)  
+Reference document: [microsoft pkix-path-building-failed-unable-to-find-valid-certification](https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building- failed-unable-to-find-valid-certification/ba-p/2591304)

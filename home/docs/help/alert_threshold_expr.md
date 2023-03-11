@@ -1,12 +1,12 @@
 ---
 id: alert_threshold_expr  
-title: 阈值触发表达式      
-sidebar_label: 阈值触发表达式      
+title: Threshold trigger expression      
+sidebar_label: Threshold trigger expression      
 ---
 
-> 在我们配置阈值告警时，需要配置阈值触发表达式，系统根据表达式和监控指标值计算触发是否告警，这里详细介绍下表达式使用。    
+> When we configure the threshold alarm, we need to configure the threshold trigger expression. The system calculates whether to trigger the alarm according to the expression and the monitoring index value. Here is a detailed introduction to the use of the expression.    
 
-#### 表达式支持的操作符   
+#### Operators supported by expressions   
 
 ```
 equals(str1,str2) 
@@ -23,31 +23,27 @@ equals(str1,str2)
 ||
 ```
 
-丰富的操作符让我们可以很自由的定义表达式。   
-注意⚠️ 字符串的相等请用 `equals(str1,str2)` 数字类型的相等判断请用== 或 != 
+Rich operators allow us to define expressions freely.   
+Note⚠️ For the equality of string, please use `equals(str1,str2)`, while for the equality judgment of number, please use == or != 
 
-#### 表达式函数库列表
+#### Supported environment variables    
+> Environment variables, i.e. supported variables such as Metric values, are used in the expression. When the threshold value is calculated and judged, the variables will be replaced with actual values for calculation.   
 
-参考: https://www.yuque.com/boyan-avfmj/aviatorscript/ashevw
+Non fixed environment variables：These variables will change dynamically according to the monitoring Metric object we choose. For example, if we choose **response time Metric of website monitoring**, the environment variables will have `responseTime - This is the response time variable`     
+If we want to set **when the response time of website monitoring is greater than 400** to trigger an alarm，the expression is `responseTime>400`
 
-#### 支持的环境变量    
-> 环境变量即指标值等支持的变量，用于在表达式中，阈值计算判断时会将变量替换成实际值进行计算    
+Fixed environment variables(Rarely used)：`instance : Row instance value`   
+This variable is mainly used to calculate multiple instances. For example, we collected `usage`(`usage is non fixed environment variables`) of disk C and disk D, but we only want to set the alarm when **the usage of C disk is greater than 80**. Then the expression is `equals(instance,"c")&&usage>80` 
 
-非固定环境变量：这些变量会根据我们选择的监控指标对象而动态变化，例如我们选择了**网站监控的响应时间指标**，则环境变量就有 `responseTime - 此为响应时间变量`     
-如果我们想设置**网站监控的响应时间大于400时**触发告警，则表达式为 `responseTime>400`
+#### Expression setting case   
 
-固定环境变量(不常用)：`instance : 所属行实例值`   
-此变量主要用于计算多实例时，比如采集到c盘d盘的`usage`(`usage为非固定环境变量`),我们只想设置**c盘的usage大于80**时告警，则表达式为 `equals(instance,"c")&&usage>80`   
-
-#### 表达式设置案例   
-
-1. 网站监控->响应时间大于等于400ms时触发告警   
+1. Website monitoring -> Trigger alarm when the response time is greater than or equal to 400ms    
 `responseTime>=400`    
-2. API监控->响应时间大于3000ms时触发告警   
+2. API monitoring -> Trigger alarm when the response time is greater than 3000ms    
 `responseTime>3000`   
-3. 全站监控->URL(instance)路径为 `https://baidu.com/book/3` 的响应时间大于200ms时触发告警  
+3. Entire site monitoring -> Trigger alarm when URL(instance) path is `https://baidu.com/book/3` and the response time is greater than 200ms   
 `equals(instance,"https://baidu.com/book/3")&&responseTime>200`     
-4. MYSQL监控->status指标组->threads_running(运行线程数)指标大于7时触发告警   
+4. MYSQL monitoring -> status Metric group -> Trigger alarm when hreads_running(number of running threads) Metric is greater than 7   
 `threads_running>7`   
 
-若遇到问题可以通过交流群ISSUE交流反馈哦！  
+Other issues can be fed back through the communication group ISSUE!  

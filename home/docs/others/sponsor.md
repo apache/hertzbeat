@@ -1,17 +1,19 @@
 ---
 id: sponsor  
-title: 赞助我们    
-sidebar_label: 赞助我们     
+title: Sponsor    
+sidebar_label: Sponsor     
 ---
 
-**HertzBeat对个人或企业完全免费，我们也在全职做这件事情，如果您喜欢这个项目并且愿意提供帮助，请我们喝杯咖啡吧**   
 
-<img alt="planet" src="/img/docs/pay.png" width="500"/>
+**Hertzbeat is completely free for individuals or enterprises. If you like this project and are willing to help, buy us a cup of coffee**      
 
-     
-感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点      
-感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点      
-感谢[Postcat(开源 API 管理工具)](https://datayi.cn/w/xRxVBBko) 赞助      
+
+![wechat-alipay](/img/docs/pay.png)          
+
+
+Thanks [JiShi Information(build a new microwave + optical transaction network)](https://www.flarespeed.com) sponsored server node.          
+Thanks [TianShang cloud computing(new wisdom cloud)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.     
+Thanks [Postcat(An Open source development tool)](https://datayi.cn/w/xRxVBBko) sponsored.    
 
 
 
