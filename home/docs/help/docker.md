@@ -1,106 +1,106 @@
 ---
 id: docker
-title: 监控：Docker 监控      
-sidebar_label: Docker 容器监控
-keywords: [开源监控系统, 开源容器监控, Docker容器监控]
+title: Monitor：Docker Monitor      
+sidebar_label: Docker Monitor
+keywords: [open source monitoring system, open source docker monitoring system, monitoring docker metrics]
 ---
 
-> 对Docker容器的通用性能指标进行采集监控。
+> Collect and monitor general performance Metrics of Docker containers.
 
 
-## 监控前操作
+## Pre-monitoring operations
 
-如果想要监控 `Docker` 中的容器信息，则需要按照一下步骤打开端口，让采集请求获取到对应的信息。
+If you want to monitor the container information in `Docker`, you need to open the port according to the following steps, so that the collection request can obtain the corresponding information.
 
-**1、编辑docker.server文件：**
+**1. Edit the docker.server file:**
 
-```shell
+````shell
 vi /usr/lib/systemd/system/docker.service
-```
+````
 
-找到 **[Service]** 节点，修改 ExecStart 属性，增加 `-H tcp://0.0.0.0:2375`
+Find the **[Service]** node, modify the ExecStart property, and add `-H tcp://0.0.0.0:2375`
 
-```shell
+````shell
 ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H tcp://0.0.0.0:2375
-```
+````
 
-这样相当于对外开放的是 **2375** 端口，当然也可以根据自己情况修改成其他的。
+This is equivalent to the **2375** port that is open to the outside world. Of course, it can be modified to other ports according to your own situation.
 
-**2、重新加载Docker配置生效：**
+**2. Reload the Docker configuration to take effect:**
 
 ```shell
-systemctl daemon-reload 
-systemctl restart docker 
-```
+systemctl daemon-reload
+systemctl restart docker
+````
 
-**注意：记得在服务器中台打开 `2375` 端口号。**
+**Note: Remember to open the `2375` port number in the server console. **
 
-**3、如果上述方法不行则：**
+**3. If the above method does not work:**
 
-在服务器内部打开 `2375` 端口号。
+Open the `2375` port number inside the server.
 
 ```shell
 firewall-cmd --zone=public --add-port=2375/tcp --permanent
 firewall-cmd --reload
-```
+````
 
 
 
 
 
-### 配置参数
+### Configuration parameters
 
-| 参数名称     | 参数帮助描述                                                 |
-| ------------ | ------------------------------------------------------------ |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。                       |
-| 端口         | 数据库对外提供的端口，默认为2375。                           |
-| 查询超时时间 | 设置获取Docker服务器API接口时的超时时间，单位ms毫秒，默认3000毫秒。 |
-| 器名称       | 一般是监控所有运行中的容器信息。                             |
-| 用户名       | 连接用户名，可选                                             |
-| 密码         | 连接密码，可选                                               |
-| URL          | 数据库连接URL，可选，若配置，则URL里面的数据库名称，用户名密码等参数会覆盖上面配置的参数 |
-| 采集间隔     | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒   |
-| 是否探测     | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作 |
-| 描述备注     | 更多标识和描述此监控的备注信息，用户可以在这里备注信息       |
+| Parameter name | Parameter help description |
+| ------------ | ------------------------------- |
+| Monitor Host | Monitored peer IPV4, IPV6 or domain name. Note ⚠️ without protocol headers (eg: https://, http://). |
+| Monitor Name | Identifies the name of this monitor. The name needs to be unique. |
+| Port | The port provided by the database externally, the default is 2375. |
+| Query Timeout | Set the timeout when getting the Docker server API interface, in ms, the default is 3000 ms. |
+| Container Name | Generally monitors all running container information. |
+| username | connection username, optional |
+| password | connection password, optional |
+| URL | Database connection URL, optional, if configured, the parameters such as database name, username and password in the URL will override the parameters configured above |
+| Collection Interval | Monitor periodical collection data interval, in seconds, the minimum interval that can be set is 30 seconds |
+| Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and then continue to add and modify operations if the detection is successful |
+| Description Remarks | More remarks that identify and describe this monitoring, users can remark information here |
 
-### 采集指标
+### Collect metrics
 
-#### 指标集合：system
+#### Metric collection: system
 
-| 指标名称           | 指标单位 | 指标帮助描述                           |
-| ------------------ | -------- | -------------------------------------- |
-| Name               | 无       | 服务器名称                             |
-| version            | 无       | docker本版号                           |
-| os                 | 无       | 服务器版本 例如：linux x86_64          |
-| root_dir           | 无       | docker文件夹目录 例如：/var/lib/docker |
-| containers         | 无       | 容器总数（在运行+未运行）              |
-| containers_running | 无       | 运行中的容器数目                       |
-| containers_paused  | 无       | 暂停中的容器数目                       |
-| images             | 无       | 容器景象的总数目。                     |
-| ncpu               | 无       | NCPU                                   |
-| mem_total          | MB       | 占用的内存总大小                       |
-| system_time        | 无       | 系统时间                               |
+| Metric Name | Metric Unit | Metric Help Description |
+| ------------------ | -------- | ----------------------- |
+| Name | None | Server Name |
+| version | none | docker version number |
+| os | none | server version eg: linux x86_64 |
+| root_dir | none | docker folder directory eg: /var/lib/docker |
+| containers | None | Total number of containers (running + not running) |
+| containers_running | None | Number of running containers |
+| containers_paused | none | number of containers in pause |
+| images | None | The total number of container images. |
+| ncpu | none | ncpu |
+| mem_total | MB | Total size of memory used |
+| system_time | none | system time |
 
-#### 指标集合：containers
+#### Metric collection: containers
 
-| 指标名称 | 指标单位 | 指标帮助描述           |
-| -------- | -------- | ---------------------- |
-| id       | 无       | Docker中容器的ID       |
-| name     | 无       | Docker容器中的容器名称 |
-| image    | 无       | Docker容器使用的镜像   |
-| command  | 无       | Docker中的默认启动命令 |
-| state    | 无       | Docker中容器的运行状态 |
-| status   | 无       | Docker容器中的更新时间 |
+| Metric Name | Metric Unit | Metric Help Description |
+| -------- | -------- | ------------ |
+| id | None | The ID of the container in Docker |
+| name | None | The container name in the Docker container |
+| image | None | Image used by the Docker container |
+| command | None | Default startup command in Docker |
+| state | None | The running state of the container in Docker |
+| status | None | Update time in Docker container |
 
-#### 指标集合：stats
+#### Metrics collection: stats
 
-| 指标名称         | 指标单位 | 指标帮助描述                 |
-| ---------------- | -------- | ---------------------------- |
-| name             | 无       | Docker容器中的名字           |
-| available_memory | MB       | Docker容器可以利用的内存大小 |
-| used_memory      | MB       | Docker容器已经使用的内存大小 |
-| memory_usage     | 无       | Docker容器的内存使用率       |
-| cpu_delta        | 无       | Docker容器已经使用的CPU数量  |
-| number_cpus      | 无       | Docker容器可以使用的CPU数量  |
-| cpu_usage        | 无       | Docker容器CPU使用率          |
+| Metric Name | Metric Unit | Metric Help Description |
+| ---------------- | -------- | ------------------ |
+| name | None | The name in the Docker container |
+| available_memory | MB | The amount of memory that the Docker container can utilize |
+| used_memory | MB | The amount of memory already used by the Docker container |
+| memory_usage | None | Memory usage of the Docker container |
+| cpu_delta | None | The number of CPUs already used by the Docker container |
+| number_cpus | None | The number of CPUs that the Docker container can use |
+| cpu_usage | None | Docker container CPU usage |

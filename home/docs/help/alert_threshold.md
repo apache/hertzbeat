@@ -1,36 +1,36 @@
 ---
 id: alert_threshold  
-title: 阈值告警配置      
-sidebar_label: 阈值告警配置      
+title: Threshold alarm configuration      
+sidebar_label: Threshold alarm configuration      
 ---
 
-> 对监控指标配置告警阈值(警告告警，严重告警，紧急告警)，系统根据阈值配置和采集指标数据计算触发告警。         
+> Configure the alarm threshold (warning alarm, critical alarm, emergency alarm) for the monitoring Metrics, and the system calculates and triggers the alarm according to the threshold configuration and the collected Metric data.         
 
-### 操作步骤   
+### Operation steps   
 
-1. **【告警配置】->【新增阈值】-> 【配置后确定】**  
+1. **【Alarm configuration】->【Add new threshold】-> 【Confirm after configuration】**  
 
 ![threshold](/img/docs/help/alert-threshold-1.png)  
 
-如上图：     
+As shown above：     
 
-**指标对象**：选择我们需要配置阈值的监控指标对象 例如：网站监控类型下的 -> summary指标集合下的 -> responseTime响应时间指标   
-**阈值触发表达式**：根据此表达式来计算判断是否触发阈值，表达式环境变量和操作符见页面提示，例如：设置响应时间大于50触发告警，表达式为 `responseTime > 50`。阈值表达式详细帮助见 [阈值表达式帮助](alert_threshold_expr)       
-**告警级别**：触发阈值的告警级别,从低到高依次为:警告-warning，严重-critical，紧急-emergency  
-**触发次数**：设置触发阈值多少次之后才会真正的触发告警   
-**通知模版**：告警触发后发送的通知信息模版,模版环境变量见页面提示，例如：`${app}.${metrics}.${metric}指标的值为${responseTime}，大于50触发告警`   
-**全局默认**： 设置此阈值是否对全局的此类指标都应用有效，默认否。新增阈值后还需将阈值与监控对象关联，这样阈值才会对此监控生效。   
-**启用告警**：此告警阈值配置开启生效或关闭   
+**Metric object**：Select the monitoring Metric object for which we need to configure the threshold. Eg：website monitoring type -> summary Metric set -> responseTime-response time Metric    
+**Threshold trigger expression**：Calculate and judge whether to trigger the threshold according to this expression. See the page prompts for expression environment variables and operators. Eg：set the response time greater than 50 to trigger an alarm, and the expression is `responseTime > 50`. For detailed help on threshold expression, see [Threshold expression help](alert_threshold_expr)       
+**Alarm level**：The alarm level that triggers the threshold, from low to high: warning, critical, emergency.  
+**Trigger times**：How many times will the threshold be triggered before the alarm is really triggered.   
+**Notification template**：Notification information Template sent after alarm triggering, See page prompts for template environment variables, eg：`${app}.${metrics}.${metric} Metric's value is ${responseTime}, greater than 50 triggers an alarm`   
+**Global default**： Set whether this threshold is valid for such global Metrics, and the default is No. After adding a new threshold, you need to associate the threshold with the monitoring object, so that the threshold will take effect for this monitoring.   
+**Enable alarm**：This alarm threshold configuration is enabled or disabled.   
 
-2. ** 阈值关联监控⚠️ 【告警配置】-> 【将刚设置的阈值】-> 【配置关联监控】-> 【配置后确定】**  
+2. **Threshold  association monitoring⚠️ 【Alarm configuration】-> 【Threshold just set】-> 【Configure associated monitoring】-> 【Confirm after configuration】**  
 
-> ** 注意⚠️ 新增阈值后还需将阈值与监控对象关联(即设置此阈值对哪些监控有效)，这样阈值才会对此监控生效 **。   
+> **Note⚠️ After adding a new threshold, you need to associate the threshold with the monitoring object(That is, to set this threshold for which monitoring is effective), so that the threshold will take effect for this monitoring.**。   
 
 ![threshold](/img/docs/help/alert-threshold-2.png)   
 
 ![threshold](/img/docs/help/alert-threshold-3.png)   
 
-**阈值告警配置完毕，已经被成功触发的告警信息可以在【告警中心】看到。**      
-**若需要将告警信息邮件，微信，钉钉飞书通知给相关人员，可以在【告警通知】配置。**     
+**After the threshold alarm is configured, the alarm information that has been successfully triggered can be seen in 【alarm center】.**      
+**If you need to notify the relevant personnel of the alarm information by email, Wechat, DingDing and Feishu, it can be configured in 【alarm notification】.**     
 
-其它问题可以通过交流群ISSUE反馈哦！  
+Other issues can be fed back through the communication group ISSUE!  

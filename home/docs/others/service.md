@@ -1,189 +1,189 @@
 ---
 id: service
-title: TanCloud 通用服务条款    
-sidebar_label: 通用服务条款
+title: TanCloud Subscription Agreement     
+sidebar_label: Subscription Agreement
 ---
 
-> 本版更新日期：2022 年 02 月 17 日
+> Updated on: February 17, 2022
 
-欢迎您与绵阳探云科技科技有限公司（以下简称“TanCloud”）共同签署本《TanCloud 产品服务协议》（下称“本协议”）并使用 TanCloud 服务！
+Welcome to sign this 《TanCloud product service agreement》 (hereinafter referred to as "this Agreement") with MianYang TanCloud Technology Co., Ltd. (hereinafter referred to as "tancloud") and use tancloud services! 
 
-协议中条款前所列索引关键词仅为帮助您理解该条款表达的主旨之用，不影响或限制本协议条款的含义或解释。为维护您自身权益，建议您仔细阅读各条款具体表述。
+The keywords listed in front of the terms in the agreement are only for the purpose of helping you understand the main purpose of the terms, and do not affect or limit the meaning or interpretation of the terms of this agreement. In order to protect your own rights and interests, it is recommended that you carefully read the specific statements of each clause.
 
-【审慎阅读】您在同意本协议之前，应当认真阅读本协议。请您务必审慎阅读、充分理解各条款的内容，特别是免除或者限制责任的条款、法律适用和争议解决条款，这些条款将以粗体下划线标识，您应重点阅读。如您对协议有任何疑问，可以向客服和相关业务部门进行咨询。
+【Careful reading】 You should carefully read this agreement before agreeing to it. Please be sure to carefully read and fully understand the contents of each clause, especially the clauses of exemption or limitation of liability, application of law and dispute resolution. These clauses will be underlined in bold, and you should focus on reading. If you have any questions about the agreement, you can consult customer service and relevant business departments.
 
-【签约动作】当您阅读并点击同意本协议或以其他方式选择接受本协议后，即表示您已充分阅读、理解并接受本协议的全部内容，并与TanCloud达成一致。本协议自您通过网络页面点击确认或以其他方式选择接受本协议之日起成立。阅读本协议的过程中，如果您不同意本协议或其中任何条款约定，请勿进行签约动作。
+【Signing action】 When you read and click to agree to this agreement or choose to accept this agreement in other ways, it means that you have fully read, understood and accepted all the contents of this Agreement and reached an agreement with TanCloud. This Agreement shall be established from the date when you click confirm on the web page or choose to accept this agreement in other ways. In the process of reading this agreement, if you do not agree with this agreement or any of its terms, please do not sign. 
 
-通用服务条款
-1. 签约主体及协议范围
-   本服务协议是您与绵阳探云科技科技有限公司就您使用 TanCloud 服务所签署的服务协议。
+TanCloud Subscription Agreement
+1. Signing body and scope of agreement
+   This service agreement is a service agreement signed between you and MianYang TanCloud Technology Co., Ltd. for your use of TanCloud services.
 
-2. 服务内容
-   本条款中“服务”指：TanCloud 服务 tancloud.cn  网站和客户端（以下单独或统称“TanCloud”）所展示的、您申请订购且 TanCloud 同意向您提供的服务
+2. Service content 
+   "Service" in this clause refers to: TanCloud service. The services displayed on tancloud.cn website and client (hereinafter individually or collectively referred to as "TanCloud") that you have applied for and that TanCloud agrees to provide to you. 
 
-3. 服务费用
-3.1. 服务费用将在您订购页面予以列明公示，您可自行选择具体服务类型并按列明的价格予以支付。TanCloud 仅供选择先付费的服务。
+3. Service fee
+3.1. The service fee will be listed and publicized on your order page. You can choose the specific service type by yourself and pay at the listed price. Tancloud is only available for pre paid services.
 
-3.2. 先付费：
+3.2. Pay in advance：
 
-3.2.1. 在您付费之后，TanCloud 才开始为您提供服务。您未在下单后立即付费的，订单会失效，订单失效后 TanCloud 与您就服务所达成的合意失效。
+3.2.1. After you pay, TanCloud starts to provide services for you. If you do not pay immediately after placing an order, the order will expire. After the order expires, the agreement between TanCloud and you on the service will expire.
 
-3.2.2. 服务期满双方愿意继续合作的，您至少应在服务期满前7天内支付续费款项，以使服务得以继续进行。
+3.2.2. If both parties are willing to continue cooperation after the expiration of the service, you should pay the renewal payment at least 7 days before the expiration of the service, so that the service can continue.
 
-3.3. TanCloud 保留在您未按照约定支付全部费用之前不向您提供服务和/或技术支持，或者终止服务和/或技术支持的权利。同时，TanCloud 保留对您的欠费要求您按日承担万分之五的违约金以及追究其他法律责任的权利。
+3.3. Tancloud reserves the right not to provide services and / or technical support to you, or to terminate services and / or technical support until you have paid all the fees as agreed. At the same time, tancloud reserves the right to require you to bear 5 / 10000 of the liquidated damages and investigate other legal liabilities for your arrears. 
 
-3.4. 您完全理解 TanCloud 价格体系中所有的赠送服务项目或优惠活动均为 TanCloud 在正常服务价格之外的一次性特别优惠，赠送的服务项目或优惠活动不可折价、冲抵服务价格。
+3.4. You fully understand that all complimentary service items or preferential activities in the TanCloud price system are one-time special discounts beyond the normal service price of TanCloud, and the complimentary service items or preferential activities cannot be discounted or offset the service price.
 
-4. 您的权利和义务
-4.1. 成功订购服务后，您有权要求 TanCloud 按照本服务协议以及 TanCloud 网站相关页面所展示的服务说明、技术规范等内容向您提供服务。
+4. Your rights and obligations
+4.1. After successfully subscribing to the service, you have the right to require TanCloud to provide services to you in accordance with this service agreement and the service description, technical specifications and other contents displayed on the relevant pages of the TanCloud website.
 
-4.2. 您订购 TanCloud 的服务后，您可享受免费的售后服务。除此之外 TanCloud 并提供其他付费的技术服务。
+4.2. After you order the services of TanCloud, you can enjoy free after-sales service. In addition, TanCloud also provides other paid technical services.
 
-4.3. 您应按照 TanCloud 的网站页面提示及本服务协议的约定支付相应服务费用。
+4.3. You should pay the corresponding service fees according to the tips on the website of tancloud and the provisions of this service agreement.
 
-4.4. 就 TanCloud 服务的使用应符合 TanCloud 的《服务使用规则》以及本服务协议。
+4.4. The use of TanCloud services shall comply with the service use rules of TanCloud and this service agreement.
 
-4.5. 您对自己存放在 TanCloud 云平台上的数据以及进入和管理 TanCloud 云平台上各类产品与服务的口令、密码的完整性和保密性负责。因您维护不当或保密不当致使上述数据、口令、密码等丢失或泄漏所引起的损失和后果均由您承担。
+4.5. You are responsible for the integrity and confidentiality of your data stored on the tancloud cloud platform and passwords for entering and managing various products and services on the tancloud cloud platform. The losses and consequences caused by the loss or disclosure of the above data and passwords etc. due to your improper maintenance or confidentiality shall be borne by you.
 
-4.6. 您须依照《网络安全法》、《互联网信息服务管理办法》等法律法规的规定保留自己网站的访问日志记录，包括发布的信息内容及其发布时间、互联网地址（IP）、域名等，国家有关机关依法查询时应配合提供。您将承担未按规定保留相关记录而引起的相应法律责任。
+4.6. You must keep the access log records of your website in accordance with the provisions of 《Network security law》, 《Measures for the administration of Internet information services》 and other laws and regulations, including the published information content and its publishing time, Internet address (IP), domain name, etc., which should be provided by the relevant state organs when inquiring according to law. You will bear the corresponding legal liabilities caused by failing to keep relevant records as required.
 
-4.7. 为了数据的安全，您应负责您数据的备份工作。 TanCloud 的产品或服务可能会为您配置数据备份的功能或工具，您负责操作以完成备份。
+4.7. For the safety of data, you should be responsible for the backup of your data. Tancloud products or services may configure data backup functions or tools for you, and you are responsible for the operation to complete the backup.
 
-4.8. 您应对您的用户业务数据的来源及内容负责，TanCloud 提示您谨慎判断数据来源及内容的合法性。您将承担因您的用户业务数据内容违反法律法规、部门规章或国家政策而造成的相应结果及责任。
+4.8. You should be responsible for the source and content of your user business data. TanCloud reminds you to carefully judge the legitimacy of the data source and content. You will bear the corresponding results and responsibilities caused by your user's business data content violating laws and regulations, department rules or national policies.
 
-4.9. 您理解并同意，中华人民共和国的国家秘密受法律保护，您有保守中华人民共和国的国家秘密的义务；您使用 TanCloud 服务应遵守相关保密法律法规的要求，并不得危害中华人民共和国国家秘密的安全。
+4.9. You understand and agree that the state secrets of the people's Republic of China are protected by law, and you have the obligation to keep the state secrets of the people's Republic of China; Your use of TanCloud service should comply with the requirements of relevant confidentiality laws and regulations, and should not endanger the security of state secrets of the people's Republic of China.
 
-4.10. 您还应仔细阅读并遵守 TanCloud 在网站页面上展示的相应服务说明、技术规范、使用流程、操作文档等内容（以上简称“操作指引”），依照相关操作指引进行操作。您将承担违反相关操作指引所引起的后果；同时，TanCloud 郑重提示您，请把握风险谨慎操作。
+4.10. You should also carefully read and abide by the corresponding service instructions, technical specifications, use processes, operation documents and other contents displayed by TanCloud on the website page (hereinafter referred to as "operation guidelines") and operate in accordance with the relevant operation guidelines. You will bear the consequences of violating the relevant operating instructions; At the same time, TanCloud solemnly reminds you to grasp the risks and operate cautiously.
 
-5. TanCloud 的权利、义务
-5.1. TanCloud 应按照约定提供服务。
+5. Rights and obligations of TanCloud
+5.1. TanCloud shall provide services as agreed.
 
-5.2. 服务期限内，TanCloud 将为您提供如下售后服务：
+5.2. During the service period, TanCloud will provide you with the following after-sales services:
 
-5.2.1. TanCloud 将提供 7×24 企业微信服务群以及在线工单咨询服务，解答您在使用中的问题；
+5.2.1. TanCloud will provide 7×24 enterprise WeChat service group and online work order consulting service to answer your questions in use.
 
-5.2.2. TanCloud 将为您提供故障支持服务，您应通过在线工单申报故障； TanCloud 将及时就您非人为操作所出现的故障提供支持，但因您的人为原因和/或不可抗力、以及其他非 TanCloud 控制范围内的事项除外。
+5.2.2. TanCloud will provide you with fault support services, and you should declare faults through online work orders; TanCloud will timely provide support for the faults caused by your non-human operation, except for your human reasons and / or force majeure, as well as other matters beyond the control of TanCloud.
 
-5.3. 您还可通过 TanCloud 获得其他付费的售后服务，具体详见 TanCloud 的网站相关页面的收费售后服务内容。
+5.3. You can also get other paid after-sales services through TanCloud. For details, see the charged after-sales services on the relevant pages of the TanCloud website.
 
-5.4. TanCloud 仅负责 TanCloud 提供的软件的运营维护，TanCloud 软件之外部分（如您的身份源、数据源、应用程序）由您负责。
+5.4. TanCloud is only responsible for the operation and maintenance of the software provided by TanCloud, and you are responsible for the parts outside the TanCloud software (such as your identity source, data source, and application).
 
-5.5. 您了解 TanCloud 无法保证其所提供的服务毫无瑕疵（如 TanCloud 安全产品并不能保证您的硬件或软件的绝对安全），但 TanCloud 承诺不断提升服务质量及服务水平。所以您同意：即使 TanCloud 提供的服务存在瑕疵，但上述瑕疵是当时行业技术水平所无法避免的，其将不被视为 TanCloud 违约。您同意和 TanCloud 一同合作解决上述瑕疵问题。
+5.5. You know that TanCloud cannot guarantee that the services it provides are flawless (for example, TanCloud security products cannot guarantee the absolute safety of your hardware or software), but TanCloud promises to continuously improve the service quality and service level. So you agree: even if there are defects in the services provided by TanCloud, the above defects cannot be avoided by the technical level of the industry at that time, and it will not be regarded as a breach of contract by TanCloud. You agree to work with TanCloud to solve the above defects.
 
-5.6. TanCloud 的某些服务可能具备账户授权管理功能，即您可将您对服务的全部或部分操作权限授权给您指定的一个或多个被授权账户，此种情况下，任一被授权账户下进行的所有操作行为，均将被视为您通过本人账户所进行的行为，都将由您承担相应的责任和由此产生的服务费用
+5.6. Some services of TanCloud may have the function of account authorization management, that is, you can authorize all or part of your operation rights to the service to one or more authorized accounts you specify. In this case, all operations conducted under any authorized account will be regarded as your actions conducted through your own account, and you will bear the corresponding responsibilities and the resulting service fees.
 
-5.7. 您理解并认可，TanCloud 将为您提供基于某些服务的安全协议（如 LDAP、SAML、OIDC）以及管理与监控的相关功能及服务（如“用户概览”），尽管 TanCloud 对该等服务经过详细的测试，但并不能保证其与所有的软硬件系统完全兼容，亦不能保证其软件及服务的完全准确性。如果出现不兼容及软件错误的情况，您应立即关闭或停止使用相关功能，并及时联系 TanCloud ，获得技术支持。
+5.7. You understand and acknowledge that TanCloud will provide you with security protocols based on certain services (such as LDAP, SAML, oidc) and relevant functions and services for management and monitoring (such as "User Overview"). Although TanCloud has tested these services in detail, it cannot guarantee that they are fully compatible with all software and hardware systems, nor can it guarantee the complete accuracy of its software and services. In case of incompatibility and software errors, you should immediately turn off or stop using relevant functions, and contact TanCloud in time for technical support.
 
-5.8. 您应理解并同意，TanCloud 在对服务进行公测、邀测等您免费试（使）用服务期间或免费服务额度内，虽然 TanCloud 会对服务可用性和可靠性提供支撑，但将不对任何服务可用性、可靠性做出承诺，TanCloud 亦不对您使用或不能使用 TanCloud 服务的工作或结果承担任何责任。 TanCloud 保留日后对该等免费服务收取费用的可能性，收取服务费用之前，TanCloud 将另行通知您。
+5.8. You should understand and agree that during the free use of the service or the free service quota, such as the public test and invited test of the service, although TanCloud will provide support for the availability and reliability of the service, it will not make any commitment to the availability and reliability of any service, and TanCloud will not bear any responsibility for the work or results of your use or inability to use the TanCloud service. TanCloud reserves the possibility of charging for such free services in the future. Before charging the service fee, TanCloud will inform you otherwise.
 
-6. 用户业务数据
-6.1. TanCloud 理解并认可，您通过 TanCloud 提供的服务，加工、存储、上传、下载、分发以及通过其他方式处理的数据，均为您的用户业务数据，您完全拥有您的用户业务数据。
+6. User business data
+6.1. TanCloud understands and acknowledges that the data you process, store, upload, download, distribute and process through other means through the services provided by TanCloud are your user business data, and you fully own your user business data.
 
-6.2. 就用户业务数据，TanCloud 除执行您的服务要求外，不进行任何未获授权的使用及披露；但以下情形除外：
+6.2. In terms of user business data, apart from implementing your service requirements, TanCloud will not make any unauthorized use and disclosure. Except for the following circumstances:
 
-6.2.1. 在国家有关机关依法查询或调阅用户业务数据时，TanCloud 具有按照相关法律法规或政策文件要求提供配合，并向第三方或者行政、司法等机构披露的义务；
+6.2.1. When relevant state authorities inquire user business data according to law, TanCloud has the obligation to provide cooperation in accordance with relevant laws, regulations or policy documents, and disclose it to third parties or administrative, judicial and other institutions.
 
-6.2.2. 您和 TanCloud 另行协商一致。
+6.2.2. You and TanCloud agree otherwise.
 
-6.3. 您可自行对您的用户业务数据进行删除、更改等操作。如您释放服务或删除数据的，TanCloud 将删除您的数据，按照您的指令不再保留该等数据。就数据的删除、更改等操作，您应谨慎操作
+6.3. You can delete and change your user business data by yourself. If you release the service or delete data, tancloud will delete your data and will no longer retain such data according to your instructions. You should be cautious about data deletion, change and other operations.
 
-6.4. 当服务期届满、服务提前终止（包括双方协商一致提前终止，其他原因导致的提前终止等）或您发生欠费时，除法律法规明确规定、主管部门要求或双方另有约定外，TanCloud 仅在一定的缓冲期（以您所订购的服务适用的专有条款、产品文档、服务说明等所载明的时限为准）内继续存储您的用户业务数据（如有），缓冲期届满 TanCloud 将删除所有用户业务数据，包括所有缓存或者备份的副本，不再保留您的任何用户业务数据。
+6.4. When the service period expires, the service is terminated in advance (including the early termination agreed by both parties, the early termination caused by other reasons, etc.) or you owe money, unless expressly stipulated by laws and regulations, required by the competent department or otherwise agreed by both parties, Tancloud will only continue to store your user business data (if any) within a certain buffer period (subject to the time limit specified in the exclusive terms, product documents, service descriptions, etc. applicable to the service you ordered). When the buffer period expires, TanCloud will delete all user business data, including all cached or backup copies, and will no longer retain any user business data.
 
-6.5. 用户业务数据一经删除，即不可恢复；您应承担数据因此被删除所引发的后果和责任，您理解并同意，TanCloud 没有继续保留、导出或者返还用户业务数据的义务。
+6.5. Once the user business data is deleted, it cannot be recovered; You should bear the consequences and responsibilities caused by the deletion of data. You understand and agree that TanCloud has no obligation to continue to retain, export or return user business data.
 
-6.6. TanCloud 恪守对用户的安全承诺，根据适用的法律保护用户存储在 TanCloud 数据中心的数据。
+6.6. Tancloud abides by its security commitment to users and protects users' data stored in the TanCloud data center in accordance with applicable laws.
 
-7. 知识产权
-7.1. 在本协议项下一方向对方提供的任何资料、技术或技术支持、软件、服务等的知识产权均属于提供一方或其合法权利人所有； 除提供方或合法权利人明示同意外，另一方无权复制、传播、转让、许可或提供他人使用上述知识成果，否则应承担相应的责任。
+7. Intellectual property right
+7.1. The intellectual property rights of any information, technology or technical support, software, services, etc. provided by one party to the other party under this agreement belong to the providing party or its legal obligee.Unless expressly agreed by the provider or legal obligee, the other party has no right to copy, disseminate, transfer, license or provide others to use the above knowledge achievements, otherwise it shall bear corresponding responsibilities.
 
-7.2. 您应保证提交 TanCloud 的素材、对 TanCloud 服务的使用及使用 TanCloud 服务所产生的成果未侵犯任何第三方的合法权益。 TanCloud 应保证向您提供的服务未侵犯任何第三方的合法权益。
+7.2. You should ensure that the materials submitted to TanCloud, the use of TanCloud services and the results produced by the use of TanCloud services do not infringe the legitimate rights and interests of any third party. Tancloud shall ensure that the services provided to you do not infringe the legitimate rights and interests of any third party.
 
-7.3. 如果第三方机构或个人对您使用 TanCloud 服务所涉及的相关素材的知识产权归属提出质疑或投诉，或对您使用的 TanCloud 服务的知识产权的归属提出质疑或投诉，您和 TanCloud 均有责任出具相关知识产权证明材料，并配合对方的相关投诉处理工作。对于因此引起的索赔、诉讼或可能向其提起诉讼,违约方应负责解决，承担费用和损失，以及使另一方免责。
+7.3. If a third-party institution or individual questions or complains about the ownership of the intellectual property rights of the relevant materials involved in your use of TanCloud services, or questions or complains about the ownership of the intellectual property rights of the TanCloud services you use, you and TanCloud are both responsible for issuing relevant intellectual property certification materials and cooperating with each other in the handling of relevant complaints. For the claims, lawsuits or possible lawsuits caused thereby, the breaching party shall be responsible for solving them, bearing the costs and losses, and exempting the other party from liability.
 
-8. 保密条款
-8.1. 本服务条款所称保密信息，是指一方（以下简称“接受方”）从对方（以下简称“披露方”）取得的、获知的、或因双方履行本协议而产生的商业秘密（包括财务秘密）、技术秘密、经营诀窍和（或）其他应予保密的信息和资料（包括产品资料，产品计划，价格，财务及营销规划，业务战略，客户信息，客户数据，研发，软件，硬件，API应用数据接口，技术说明，设计，特殊公式，特殊算法等），无论上述信息和资料以何种形式或载于何种载体，无论披露方在披露时是否以口头、图像或书面等方式表明其具有保密性。
+8. Confidentiality clause
+8.1. The confidential information mentioned in these terms of service refers to the trade secrets (including financial secrets), technical secrets, and Business know-how and / or other confidential information and materials (including product information, product plan, price, financial and marketing planning, business strategy, customer information, customer data, research and development, software, hardware, API application data interface, technical description, design, special formula, special algorithm, etc.), regardless of the form or carrier of the above information and materials, regardless of whether the disclosing party uses oral Image or written means show that it is confidential.
 
-8.2. 双方应采取适当措施妥善保存对方提供的保密信息，措施的审慎程度不少于其保护自身的保密信息时的审慎程度。双方仅能将保密信息用于与本协议项下的有关用途或目的。
+8.2. Both parties shall take appropriate measures to properly preserve the confidential information provided by the other party, and the degree of prudence of the measures shall not be less than that of protecting their own confidential information. Both parties can only use the confidential information for relevant purposes or purposes under this agreement.
 
-8.3. 双方保证保密信息仅可在各自一方从事该业务的负责人和雇员范围内知悉，并严格限制接触上述保密信息的员工遵守本条之保密义务。
+8.3. Both parties guarantee that the confidential information can only be known within the scope of the principals and employees of each party engaged in this business, and strictly restrict the employees who have access to the above confidential information from observing the confidentiality obligations of this article.
 
-8.4. 本条上述限制条款不适用于以下情况：
+8.4. The above restrictions in this article do not apply to the following situations：
 
-8.4.1. 在签署本协议之时或之前，该保密信息已以合法方式属接受方所有；
+8.4.1. On or before the signing of this agreement, the confidential information has been legally owned by the recipient;
 
-8.4.2. 保密信息在通知给接受方时，已经公开或能从公开领域获得；
+8.4.2. When the confidential information is notified to the recipient, it has been made public or can be obtained from the public domain;
 
-8.4.3. 保密信息是接受方从与其没有保密或不透露义务的第三方获得的；
+8.4.3. Confidential information is obtained by the receiving party from a third party with which it has no confidentiality or non disclosure obligations;
 
-8.4.4. 在不违反本协议约定责任的前提下，该保密信息已经公开或能从公开领域获得；
+8.4.4. On the premise of not violating the responsibilities agreed in this agreement, the confidential information has been made public or can be obtained from the public domain;
 
-8.4.5. 该保密信息是接受方或其关联或附属公司独立开发，而且未从通知方或其关联或附属公司获得的信息中获益；
+8.4.5. The confidential information is independently developed by the receiving party or its affiliates or subsidiaries, and does not benefit from the information obtained by the notifying party or its affiliates or subsidiaries;
 
-8.4.6. 接受方应法院或其它法律、行政管理部门要求（通过口头提问、询问、要求资料或文件、传唤、民事或刑事调查或其他程序）因而透露保密信息；
+8.4.6. The receiving party discloses confidential information at the request of the court or other legal and administrative departments (through oral questions, inquiries, requests for information or documents, subpoenas, civil or criminal investigations or other procedures);
 
-8.4.7. 接受方为向行政管理部门、行业协会等机构申请某项业务资质、获得某项认定、或符合国家、行业标准/认证，需结合对方情况向前述机构提交材料或进行说明的而披露的信息，在该等情况下，接受方应秉持必要情况下最少披露原则及要求因此获知保密信息的机构按不低于本协议的标准予以保密。
+8.4.7. In order to apply for a business qualification, obtain a recognition, or comply with national and industrial standards / certifications from administrative departments, industry associations and other institutions, the receiving party needs to submit materials or explain the information to the above-mentioned institutions in combination with the situation of the other party. In such cases, the receiving party shall adhere to the principle and requirements of minimum disclosure when necessary. Therefore, the institutions that receive confidential information shall keep it confidential at a standard not lower than this agreement.
 
-8.5. 您和 TanCloud 都应尽最大的努力保护上述保密信息不被泄露。一旦发现有上述保密信息泄露事件，双方应合作采取一切合理措施避免或者减轻损害后果的产生。如因此给对方造成损失的，应赔偿因此给对方造成的直接经济损失。
+8.5. Both you and TanCloud should do their best to protect the above confidential information from disclosure. Once the disclosure of the above confidential information is found, both parties shall cooperate to take all reasonable measures to avoid or mitigate the consequences of damage. If losses are caused to the other party, the direct economic losses caused to the other party shall be compensated.
 
-9. 服务的开通、终止与变更
-9.1. 先付费的服务：
+9. Opening, termination and change of services
+9.1. Pre paid services：
 
-9.1.1. 您付费后服务即开通，开通后您获得 TanCloud 向您发送的登录、使用服务的密钥、口令即可使用服务，服务期限自开通之时起算（而非自您获得登录、使用服务的密钥、口令时起算）；
+9.1.1. After you pay for the service, you can open it. After you open it, you can use the service after you get the key and password of logging in and using the service sent by tancloud. The service period starts from the time of opening (not from the time you get the key and password of logging in and using the service);
 
-9.1.2. 以包年包月等固定期限形式售卖的服务，服务期限至订购的期限届满为止；以资源包（或套餐包）形式售卖的服务，服务期限则至您订购的资源包服务期限到期或资源包中的服务被使用完毕为止（以前述二者早发生为准）；
+9.1.2. For services sold in the form of fixed term such as monthly subscription, the service period is until the expiration of the subscription period; For services sold in the form of resource packs (or package packs), the service period is until the service period of the resource pack you ordered expires or the services in the resource pack are used up (whichever occurs earlier);
 
-9.1.3. 您应在服务期限内将资源包的服务数量使用完毕，如资源包的服务期限届满，您已订购但未使用完毕的服务将被作废且 TanCloud 将不提供其他替代或补充。
+9.1.3. You should use up the number of services in the resource pack within the service period. If the service period of the resource pack expires, the services you have ordered but not used up will be invalidated, and TanCloud will not provide other substitutes or supplements.
 
-9.1.4. 您对于服务的使用将优先消耗订购的资源包，除法定及双方另行约定外，如资源包中的各项服务使用完毕或者服务期限到期，且您未继续订购资源包服务但持续使用此项服务的，TanCloud 将视为您使用 TanCloud 以后付费形式售卖的该服务（如有），TanCloud 将持续计费并根据计费结果予以扣划服务费用。
+9.1.4. Your use of the service will give priority to the consumption of the subscribed resource package. Unless otherwise agreed by law and both parties, if the services in the resource package are used up or the service term expires, and you continue to use the service without continuing to subscribe to the resource package service, TanCloud will be deemed to use the service (if any) sold by TanCloud in the form of future payment, and TanCloud will continue to charge and deduct the service fee according to the charging results.
 
-9.2. 发生下列情形之一的，服务期限提前终止：
+9.2. In case of any of the following circumstances, the service period shall be terminated in advance:
 
-9.2.1. 双方协商一致提前终止的；
+9.2.1. Both parties agree to terminate in advance;
 
-9.2.2. 您严重违反本协议（包括，您严重违反相关法律法规规定，或您严重违反本协议项下之任一承诺内容等），TanCloud 有权提前终止服务直至清除您的全部数据；
+9.2.2. If you seriously violate this Agreement (including, you seriously violate relevant laws and regulations, or you seriously violate any commitment under this agreement, etc.), TanCloud has the right to terminate the service in advance until all your data is cleared；
 
-9.2.3. 您理解并充分认可，虽然 TanCloud 已经建立（并将根据技术的发展不断完善）必要的技术措施来防御包括计算机病毒、网络入侵和攻击破坏（包括DDoS）等危害网络安全事项或行为（以下统称该等行为），但鉴于网络安全技术的局限性、相对性以及该等行为的不可预见性，因此如因您网站遭遇该等行为而给 TanCloud 或者 TanCloud 的其他网络或服务器（包括本地及外地和国际的网络、服务器等）带来危害，或影响 TanCloud 与国际互联网或者 TanCloud 与特定网络、服务器及 TanCloud 内部的通畅联系，TanCloud 可决定暂停或终止服务。如果终止服务的，将按照实际提供服务月份计算（不足一个月的按天计）服务费用，将剩余款项（如有）返还。
+9.2.3. You understand and fully recognize that although tancloud has established (and will continue to improve according to the development of Technology) necessary technical measures to defend against matters or behaviors endangering network security, including computer viruses, network intrusion and attack damage (including DDoS) (hereinafter collectively referred to as these behaviors), in view of the limitations, relativity and unpredictability of network security technology, Therefore, if your website encounters such behavior, which brings harm to TanCloud or other networks or servers of TanCloud (including local, foreign and international networks, servers, etc.), or affects the smooth connection between TanCloud and the Internet, or between TanCloud and specific networks, servers and inside TanCloud, TanCloud may decide to suspend or terminate the service. If the service is terminated, the service fee will be calculated according to the actual service month (less than one month will be calculated by day), and the remaining amount (if any) will be refunded.
 
-9.2.4. TanCloud 可提前30天在 TanCloud 网站上通告或给您发网站内通知或书面通知的方式终止本服务服务协议；届时 TanCloud 应将您已预付但未消费的款项退还至您的 TanCloud 账户。
+9.2.4. TanCloud may terminate this service agreement by notifying you on the TanCloud website 30 days in advance or by notifying you on the website or in writing; At that time, TanCloud should return the money you have prepaid but not consumed to your TanCloud account.
 
-9.3. 您理解并认可，为技术升级、服务体系升级、或因经营策略调整或配合国家重大技术、法规政策等变化，TanCloud 不保证永久的提供某种服务，并有权变更所提供服务的形式、规格或其他方面（如服务的价格和计费模式），在终止该种服务或进行此种变更前，TanCloud 将尽最大努力且提前以网站公告、站内信、邮件或短信等一种或多种方式进行事先通知。
+9.3. You understand and acknowledge that for the purpose of technology upgrading, service system upgrading, or due to business strategy adjustment or in line with major changes in national technology, regulations and policies, TanCloud does not guarantee the permanent provision of a certain service, and has the right to change the form, specification or other aspects of the service provided (such as the price and billing mode of the service). Before terminating this service or making such changes, TanCloud will try its best and make an announcement on the website in advance One or more ways such as in station letter, email or SMS to give advance notice.
 
-10. 违约责任
-10.1. 您违反本协议中的承诺、保证条款、服务使用规则或义务的任一内容，或 TanCloud 根据其判断认为您的使用行为存在异常的，TanCloud 均有权就其情节，根据独立判断并单方采取以下措施中的一种或多种：（1）限制、中止使用服务；（2）终止提供服务，终止本协议；（3）追究您的法律责任；（4）其他 TanCloud 认为适合的处理措施。 TanCloud 依据前述约定采取中止服务、终止服务等措施而造成的用户损失将由您承担。
+10. Liability for breach of contract
+10.1. If you violate any of the commitments, warranty terms, service use rules or obligations in this agreement, or TanCloud believes that your use behavior is abnormal according to its judgment, TanCloud has the right to take one or more of the following measures unilaterally according to its independent judgment: (1) restrict and suspend the use of services; (2) Terminate the provision of services and terminate this Agreement; (3) Investigate your legal responsibility; (4) Other treatment measures deemed appropriate by TanCloud. You will bear the user losses caused by the suspension and termination of services taken by TanCloud in accordance with the foregoing agreement.
 
-10.2. 如因您违反有关法律法规或者本协议、相关规则之规定，使 TanCloud 遭受任何损失、受到其他用户、任何第三方的索赔或任何行政管理部门的处罚，您应对 TanCloud、其他用户或相关第三方的实际损失进行全额赔偿，包括合理的律师费用。
+10.2. If you violate relevant laws and regulations or the provisions of this Agreement and relevant rules, causing TanCloud to suffer any losses, claims from other users or any third party, or penalties from any administrative department, you shall make full compensation for the actual losses of TanCloud, other users or relevant third parties, including reasonable attorney fees.
 
-10.3. 您理解且同意，鉴于计算机、互联网的特殊性，下述情况不属于 TanCloud 违约：
+10.3. You understand and agree that in view of the particularity of computers and the Internet, the following situations do not belong to the breach of TanCloud：
 
-10.3.1. TanCloud 在进行系统及服务器配置、维护、升级时，需要短时间中断服务；
+10.3.1. When configuring, maintaining and upgrading the system and server, TanCloud needs to interrupt the service for a short time;
 
-10.3.2. 由于 Internet 上的通路阻塞造成您网站访问速度下降。
+10.3.2. The access speed of your website is reduced due to the blocking of access on the Internet.
 
-10.4. 如果因 TanCloud 原因造成您连续 72 小时不能正常使用服务的，您可终止接受服务，但非 TanCloud 控制之内的原因引起的除外。
+10.4. If you can't use the service normally for 72 hours because of TanCloud, you can terminate the service, except for the reasons not under the control of TanCloud.
 
-10.5. 在任何情况下，TanCloud 均不对任何间接性、后果性、惩戒性、偶然性、特殊性的损害，包括您使用 TanCloud 服务而遭受的利润损失承担责任（即使您已被告知该等损失的可能性）。
+10.5. Under no circumstances will TanCloud be liable for any indirect, consequential, punitive, accidental or special damages, including the loss of profits you suffer from using TanCloud services (even if you have been informed of the possibility of such losses).
 
-10.6. 在法律允许的情况下，TanCloud 在本协议项下所承担的损失赔偿责任不超过就该服务过往 12 个月所缴纳的服务费用的总和。
+10.6. To the extent permitted by law, tancloud's liability for damages under this Agreement shall not exceed the total service fees paid in the past 12 months for this service.
 
-11. 不可抗力
-11.1. 因不可抗力或者其他意外事件，使得本服务条款的履行不可能、不必要或者无意义的，遭受不可抗力、意外事件的一方不承担责任。
+11. Force majeure
+11.1. If the performance of these terms of service is impossible, unnecessary or meaningless due to force majeure or other accidents, the party suffering from force majeure or accidents shall not be liable.
 
-11.2. 不可抗力、意外事件是指不能预见、不能克服并不能避免且对一方或双方当事人造成重大影响的客观事件，包括自然灾害如洪水、地震、瘟疫流行等以及社会事件如战争、动乱、政府行为、电信主干线路中断、黑客、网路堵塞、电信部门技术调整和政府管制等。
+11.2. Force majeure and accidents refer to unforeseeable, insurmountable, unavoidable and objective events that have a significant impact on one or both parties, including natural disasters such as floods, earthquakes, epidemics, etc., as well as social events such as war, unrest, government behavior, interruption of telecommunications trunk lines, hackers, network congestion, technological adjustment of telecommunications departments, government regulation, etc.
 
-12. 法律适用及争议解决
-12.1. 本协议之订立、生效、解释、修订、补充、终止、执行与争议解决均适用中华人民共和国大陆法律。
+12. Application of law and dispute resolution
+12.1. The conclusion, effectiveness, interpretation, amendment, supplement, termination, implementation and dispute resolution of this Agreement shall be governed by the mainland laws of the people's Republic of China.
 
-12.2. 您因使用 TanCloud 服务所产生及与 TanCloud 服务有关的争议，由 TanCloud 与您协商解决。协商不成时，任何一方均可向北京市海淀区人民法院提起诉讼。
+12.2. Any dispute arising from your use of TanCloud service and related to tancloud service shall be settled by TanCloud through negotiation with you. If the negotiation fails, either party may bring a lawsuit to Beijing Haidian District People's court.
 
-13. 附则
-13.1. 本协议的附件，以及 TanCloud 在 TanCloud 网站相关页面上的服务说明、价格说明和您确认同意的订购页面（包括产品的专用条款、服务说明、操作文档等）均为本协议不可分割的一部分。如遇不一致之处，以（1）服务说明、价格说明、其他订购页面，（2）专用条款和附件，（3）本协议通用条款的顺序予以适用。
+13. Supplementary articles
+13.1. The annexes to this agreement, as well as the service description and price description of TanCloud on the relevant pages of the TanCloud website and the order page you confirmed and agreed (including the special terms of the product, service description, operation documents, etc.) are an integral part of this agreement. In case of any inconsistency, the order of (1) service description, price description, other order pages, (2) special terms and annexes, and (3) general terms and conditions of this Agreement shall apply.
 
-13.2. 如本协议内容发生变动，TanCloud 应通过提前30天在 TanCloud 网站的适当版面公告向您提示修改内容；如您继续使用 TanCloud 服务，则视为您接受 TanCloud 所做的相关修改。
+13.2. In case of any change in the content of this agreement, TanCloud shall prompt you for modified contents through an announcement on the appropriate page of the TanCloud website 30 days in advance. If you continue to use the TanCloud service, you will be deemed to have accepted the relevant modifications made by TanCloud.
 
-13.3. TanCloud 有权经提前通知将本协议的权利义务全部或者部分转移给 TanCloud 的关联公司。
+13.3. TanCloud has the right to transfer all or part of the rights and obligations of this agreement to its affiliates through advance notice.
 
-13.4. TanCloud 于您过失或违约时放弃本协议规定的权利，不应视为其对您的其他或以后同类之过失或违约行为弃权。
+13.4. TanCloud's waiver of rights under this agreement in case of your negligence or breach of contract shall not be deemed as a waiver of your other or similar negligence or breach of contract in the future.
 
-13.5. 本协议任一条款被视为废止、无效或不可执行，该条应视为可分的且并不影响本协议其余条款的有效性及可执行性。
+13.5. Any provision of this agreement is deemed to be repealed, invalid or unenforceable, which shall be deemed to be separable and shall not affect the validity and enforceability of the remaining provisions of this agreement.
 
-13.6. 本协议项下之保证条款、保密条款、知识产权条款、法律适用及争议解决条款等内容，不因本协议的终止而失效。
+13.6. The guarantee clauses, confidentiality clauses, intellectual property clauses, applicable laws and dispute resolution clauses under this Agreement shall not become invalid due to the termination of this agreement.

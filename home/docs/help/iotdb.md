@@ -1,120 +1,120 @@
 ---
 id: iotdb  
-title: 监控 Apache IoTDB 物联网时序数据库      
-sidebar_label: IoTDB数据库    
-keywords: [开源监控系统, 开源数据库监控, IoTDB数据库监控]
+title: Monitoring Apache IoTDB Database      
+sidebar_label: IoTDB Database    
+keywords: [open source monitoring system, open source database monitoring system, monitoring IotDB database metrics]
 ---
 
-> 对 Apache IoTDB 物联网时序数据库的运行状态（JVM相关），内存任务集群等相关指标进行监测。         
+> Monitor the running status of the Apache IoTDB Internet of Things time series database (JVM-related), memory task clusters and other related Metrics.
 
-## 监控前操作  
+## Operation before monitoring
 
-您需要在 IoTDB 开启`metrics`功能，他将提供 prometheus metrics 形式的接口数据。  
+You need to enable the `metrics` function in IoTDB, which will provide interface data in the form of prometheus metrics.
 
-开启`metrics`功能, 参考 [官方文档](https://iotdb.apache.org/zh/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html)  
+To enable the `metrics` function, refer to [Official Documentation](https://iotdb.apache.org/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html)
 
-主要如下步骤: 
+The main steps are as follows:
 
-1. metric 采集默认是关闭的，需要先到 `conf/iotdb-metric.yml` 中修改参数打开后重启 server
+1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
 
 ```
-# 是否启动监控模块，默认为false
+# Whether to start the monitoring module, the default is false
 enableMetric: true
 
-# 是否启用操作延迟统计
+# Whether to enable operation delay statistics
 enablePerformanceStat: false
 
-# 数据提供方式，对外部通过jmx和prometheus协议提供metrics的数据, 可选参数：[JMX, PROMETHEUS, IOTDB],IOTDB是默认关闭的。
+# Data provision method, externally provide metrics data through jmx and prometheus protocol, optional parameters: [JMX, PROMETHEUS, IOTDB], IOTDB is closed by default.
 metricReporterList:
-  - JMX
-  - PROMETHEUS
+   - JMX
+   - PROMETHEUS
 
-# 底层使用的metric架构，可选参数：[MICROMETER, DROPWIZARD]
+# The metric architecture used at the bottom layer, optional parameters: [MICROMETER, DROPWIZARD]
 monitorType: MICROMETER
 
-# 初始化metric的级别，可选参数: [CORE, IMPORTANT, NORMAL, ALL]
+# Initialize the level of the metric, optional parameters: [CORE, IMPORTANT, NORMAL, ALL]
 metricLevel: IMPORTANT
 
-# 预定义的指标集, 可选参数: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
+# Predefined metrics set, optional parameters: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
 predefinedMetrics:
-  - JVM
-  - FILE
+   - JVM
+   - FILE
 ```
 
-2. 重启 IoTDB, 打开浏览器或者用curl 访问 http://ip:9091/metrics, 就能看到metric数据了。 
+2. Restart IoTDB, open a browser or use curl to access http://servier_ip:9091/metrics, and you can see the metric data.
 
-3. 在 HertzBeat 添加对应 IoTDB 监控即可。
+3. Add the corresponding IoTDB monitoring in HertzBeat.
 
-### 配置参数   
+### Configuration parameters
 
-| 参数名称   | 参数帮助描述                                               |
-|--------|------------------------------------------------------|
-| 监控Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称   | 标识此监控的名称，名称需要保证唯一性。                                  |
-| 端口     | IoTDB指标接口对外提供的端口，默认为9091。                            |
-| 超时时间   | HTTP请求查询超时时间                                         |
-| 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |
-| 是否探测   | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
-| 描述备注   | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
+| Parameter name | Parameter help description |
+|--------|----------------------------------------- --------------|
+| Monitoring Host | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
+| Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
+| Port | The port provided by the IoTDB Metric interface, which is 9091 by default. |
+| Timeout | HTTP request query timeout |
+| Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
+| Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
+| Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 
-### 采集指标   
+### Collect metrics
 
-#### 指标集合：cluster_node_status  
+#### Metric collection: cluster_node_status
 
-| 指标名称    | 指标单位 | 指标帮助描述                  |
+| Metric Name | Metric Unit | Metric Help Description |
 | --------- |------|-------------------------|
-| name   | 无    | 节点名称IP                  |
-| status | 无    | 节点状态，1=online 2=offline |
+| name | None | Node name IP |
+| status | None | Node status, 1=online 2=offline |
 
-#### 指标集合：jvm_memory_committed_bytes
+#### Metric collection: jvm_memory_committed_bytes
 
-| 指标名称  | 指标单位 | 指标帮助描述           |
+| Metric Name | Metric Unit | Metric Help Description |
 |-------|------|------------------|
-| area  | 无    | heap内存或nonheap内存 |
-| id    | 无    | 内存区块             |
-| value | MB    | 当前向JVM申请的内存大小    |
+| area | none | heap memory or nonheap memory |
+| id | none | memory block |
+| value | MB | The memory size currently requested by the JVM |
 
-#### 指标集合：jvm_memory_used_bytes
+#### Metric collection: jvm_memory_used_bytes
 
-| 指标名称      | 指标单位 | 指标帮助描述           |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|------------------|
-| area  | 无    | heap内存或nonheap内存 |
-| id    | 无    | 内存区块             |
-| value | MB    | JVM已使用内存大小    |
+| area | none | heap memory or nonheap memory |
+| id | none | memory block |
+| value | MB | JVM used memory size |
 
-#### 指标集合：jvm_threads_states_threads
+#### Metric collection: jvm_threads_states_threads
 
-| 指标名称      | 指标单位 | 指标帮助描述     |
+| Metric Name | Metric Unit | Metric Help Description |
 | ----------- |------|------------|
-| state  | 无    | 线程状态       |
-| count    | 无    | 线程状态对应线程数量 |
+| state | none | thread state |
+| count | None | The number of threads corresponding to the thread state |
 
-#### 指标集合：quantity 业务数据
+#### Index collection: quantity business data
 
-| 指标名称 | 指标单位 | 指标帮助描述         |
+| Metric Name | Metric Unit | Metric Help Description |
 |--|------|----------------|
-| name  | 无    | 业务名称 timeSeries/storageGroup/device/deviceUsingTemplate  |
-| type  | 无    | 类型 total/normal/template/template  |
-| value | 无    | 当前时间timeSeries/storageGroup/device/激活了模板的device的数量  |
+| name | None | Business name timeSeries/storageGroup/device/deviceUsingTemplate |
+| type | none | type total/normal/template/template |
+| value | None | The current timeSeries/storageGroup/device/The number of devices that have activated the template |
 
-#### 指标集合：cache_hit 缓存
+#### Metric collection: cache_hit cache
 
-| 指标名称      | 指标单位 | 指标帮助描述                                             |
-| ----------- |------|----------------------------------------------------|
-| name  | 无    | 缓存名称 chunk/timeSeriesMeta/bloomFilter              |
-| value | %    | chunk/timeSeriesMeta缓存命中率,bloomFilter拦截率	 |
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|------------------------------ ----------------------|
+| name | None | Cache name chunk/timeSeriesMeta/bloomFilter |
+| value | % | chunk/timeSeriesMeta cache hit rate, bloomFilter interception rate |
 
-#### 指标集合：queue 任务队列
+#### Metric collection: queue task queue
 
-| 指标名称      | 指标单位 | 指标帮助描述                                            |
-| ----------- |------|---------------------------------------------------|
-| name  | 无    | 队列名称 compaction_inner/compaction_cross/flush      |
-| status  | 无    | 状态 running/waiting                                |
-| value | 无    | 当前时间任务数	 |
+| Metric Name | Metric Unit | Metric Help Description |
+| ----------- |------|------------------------------ ---------------------|
+| name | None | Queue name compaction_inner/compaction_cross/flush |
+| status | none | status running/waiting |
+| value | None | Number of tasks at current time |
 
-#### 指标集合：thrift_connections
+#### Metric collection: thrift_connections
 
-| 指标名称   | 指标单位 | 指标帮助描述      |
-|--------|------|-------------|
-| name   | 无    | 名称          | 
-| connection  | 无   | thrift当前连接数 |
+| Metric Name | Metric Unit | Metric Help Description |
+|-------|------|-------------|
+| name | None | name |
+| connection | none | thrift current connection number |

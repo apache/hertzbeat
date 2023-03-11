@@ -43,7 +43,7 @@ function Home() {
                 />
               </h1>
               <p className="hero__subtitle">
-                <Translate>易用友好的开源实时监控系统</Translate>
+                <Translate>slogan</Translate>
               </p>
               <div className={styles.social}>
                 <a href="https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge">
@@ -52,37 +52,37 @@ function Home() {
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/web-monitor.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/ping-connect.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/port-available.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/database-monitor.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/os-monitor.svg')} alt={''} />
                 </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
+                  <img src={cdnTransfer('/img/badge/network-monitor.svg')} alt={''} />
+                </a>
+                <a href="https://github.com/dromara/hertzbeat">
                   <img
                       src={cdnTransfer('/img/badge/custom-monitor.svg')}
                       alt={''}
                   />
                 </a>
-                <a href="https://console.tancloud.cn">
-                  <img src={cdnTransfer('/img/badge/threshold.svg')} alt={''} />
-                </a>
-                <a href="https://console.tancloud.cn">
+                <a href="https://github.com/dromara/hertzbeat">
                   <img src={cdnTransfer('/img/badge/alert.svg')} alt={''} />
                 </a>
               </div>
@@ -251,11 +251,11 @@ function loadGitter() {
 function autoRedirect() {
   let lang = global.navigator?.language || navigator?.userLanguage
   console.log('Current lang is ' + lang)
-  if (lang != null && lang.toLowerCase() !== 'zh-cn') {
+  if (lang != null && (lang.toLowerCase() === 'zh-cn' || lang.toLowerCase().indexOf('zh') > 0)) {
     if (sessionStorage.getItem('auto_detect_redirect') !== 'true') {
-      console.log('Not zh-cn, redirect to en')
+      console.log('current lang is zh-cn, redirect to zh-cn')
       sessionStorage.setItem('auto_detect_redirect', 'true')
-      window.location.href = '/en'
+      window.location.href = '/zh-cn'
     }
   }
 }

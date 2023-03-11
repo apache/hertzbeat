@@ -51,10 +51,6 @@
     "message": "Older Post",
     "description": "The blog post button label to navigate to the older/next post"
   },
-  "theme.tags.tagsPageTitle": {
-    "message": "Tags",
-    "description": "The title of the tag list page"
-  },
   "theme.blog.post.plurals": {
     "message": "One post|{count} posts",
     "description": "Pluralized label for \"{count} posts\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
@@ -106,14 +102,6 @@
   "theme.docs.sidebar.collapseButtonAriaLabel": {
     "message": "Collapse sidebar",
     "description": "The title attribute for collapse button of doc sidebar"
-  },
-  "theme.docs.sidebar.responsiveCloseButtonLabel": {
-    "message": "Close menu",
-    "description": "The ARIA label for close button of mobile doc sidebar"
-  },
-  "theme.docs.sidebar.responsiveOpenButtonLabel": {
-    "message": "Open menu",
-    "description": "The ARIA label for open button of mobile doc sidebar"
   },
   "theme.docs.versions.unreleasedVersionLabel": {
     "message": "This is unreleased documentation for {siteTitle} {versionLabel} version.",
@@ -191,9 +179,6 @@
     "message": "Search",
     "description": "The ARIA label and placeholder for search button"
   },
-  "Get Started": {
-    "message": "Get Started"
-  },
   "theme.PwaReloadPopup.info": {
     "message": "New version available",
     "description": "The text for PWA reload popup"
@@ -214,17 +199,14 @@
     "message": "Live Editor",
     "description": "The live editor label of the live codeblocks"
   },
-  "开箱即用": {
+  "convenient": {
     "message": "Convenient"
   },
-  "多支持与自定义": {
+  "custom-multi-support": {
     "message": "Custom Monitor"
   },
-  "拥抱开源": {
+  "opensource": {
     "message": "Opensource Friendly"
-  },
-  "即刻登录免费使用": {
-    "message": "Login Now"
   },
   "theme.ErrorPageContent.title": {
     "message": "This page crashed.",
@@ -274,17 +256,17 @@
     "message": "On this page",
     "description": "The label used by the button on the collapsible TOC component"
   },
-  "{docker} {br} 一条命令即可开始监控之旅。监控系统集指标采集，指标数据可视化，告警转发一体化。一站式全功能，无需为了加一个监控或告警而去编写繁琐的配置文件。{br}我们也提供 {TANCLOUD} {SAAS}云版本，{console}即可开始您的服务监控。安全是最重要的，我们对账户密钥和监控密钥全链路加密。": {
-    "message": "{docker} {br} Just one command to get started. The system integrates metrics collection, metrics data visualization, alarming and forwarding.All in One, No need to write cumbersome configuration files in order to add a monitoring or alarm. {br}We also provider {TANCLOUD} {SAAS}, {console}. Security is the most important, we encrypt the whole link of account and monitoring."
+  "convenient-content": {
+    "message": "{docker} {br} Just one command to get started. Monitor+Alerter+Notify all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more. No need to write cumbersome configuration files. {br}We also provider {TANCLOUD} sass, {console}. Security is the most important, we encrypt the whole data of account and monitoring."
   },
-  "我们支持对网站，JVM，MYSQL，Linux等应用服务，数据库，操作系统，中间件的监控，更多监控类型正在快速迭代中。更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}不同团队的监控需求千变万化，我们提供{custom}，通过不同的协议SSH，JDBC，JMX，SNMP，HTTP等，仅需配置YML就能自定义监控指标并快速接入监控系统。": {
-    "message": "We support monitoring of WEB, JVM, MYSQL, Linux, Kubernetes and other application, db, os, cloud-native and middleware, and more monitoring types are under rapid iteration. We provide a more liberalized threshold alarm configuration, support Email, SMS, Discord, Telegram, Slack, Webhook, DingTalk, WeChat, Feishu and more. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, through different protocols SSH, JDBC, JMX, SNMP, HTTP, etc. You only need to configure YML to customize monitoring and quickly access the monitoring system."
+  "custom-multi-support-content": {
+    "message": "Supported WEB, JVM, MYSQL, Linux, Kubernetes and other application, db, os, cloud-native, middleware, network and more. More liberal threshold alarm configuration, timely notification delivery by Discord, Slack, Telegram, Email, DingDing, WeChat, FeiShu, Webhook, SMS. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, you can quickly support custom metrics collect through protocols SSH, JDBC, JMX, SNMP, HTTP etc."
   },
-  "HertzBeat监控系统代码全开源，无限制，非常欢迎任何对此有兴趣的同学参与中来，贡献不分大小，我们尊重每一位同学，不限于文档代码或者错别字的贡献，我们一起学习进步，构建属于贡献者们的开源事业。{br}中二的我们相信开源改变世界！{br}{github} {br}{gitee}": {
+  "opensource-content": {
     "message": "HertzBeat is fully open source, unlimited, and anyone who are interested in it are very welcome to contribute. We respect everyone, not limited to the contribution of the document code or typos, we will learn and progress together, build an open source business for contributors.{br}We believe that open source can change the world！{br}{github} {br}{gitee}"
   },
-  "易用友好的开源实时监控系统": {
-    "message": "Real-time Monitoring System"
+  "slogan": {
+    "message": "Open Source Real-time Monitoring Tool"
   },
   "Who Use HertzBeat?": {
     "message": "Who Use HertzBeat?"
@@ -488,6 +470,6 @@
     "message": "We will grow better with your support and is our greatest motivation."
   },
   "quickstart": {
-    "message": "QuickStart"
+    "message": "Quick Start"
   }
 }

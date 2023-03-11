@@ -28,7 +28,12 @@ html[data-theme=dark] {
 }
 
 .navbar__link {
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.navbar__brand .navbar__title {
+    font-size: 24px;
 }
 
 @media (max-width: 996px) {

@@ -1,90 +1,92 @@
 ---
 id: guide  
-title: 帮助中心      
-sidebar_label: 帮助入门  
+title: Help center      
+sidebar_label: Help center
 ---
 
-> 易用友好的实时监控系统，无需Agent，强大自定义监控能力。
-> 使用过程中的帮助文档,辅助信息。  
+> Hertzbeat - An open-source, real-time monitoring system with custom-monitor and agentLess.  
+> Help documents and auxiliary information during use 
 
-## 🔬 监控服务
+## 🔬 Monitoring services
 
-> 定时采集监控对端服务暴露的性能指标，提供可视化界面，处理数据供告警等服务调度。      
-> 规划的监控类型：应用服务，数据库，操作系统，云原生，开源中间件
+> Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
+> Planned monitoring type：application service, database, operating system, cloud native, open source middleware.
 
-### 应用服务监控  
+### Application service monitoring 
 
-  &emsp;&#x1F449;&emsp;[网站监测](website) <br />
-  &emsp;&#x1F449;&emsp;[HTTP API](api) <br /> 
-  &emsp;&#x1F449;&emsp;[PING连通性](ping) <br />
-  &emsp;&#x1F449;&emsp;[端口可用性](port) <br />
-  &emsp;&#x1F449;&emsp;[全站监控](fullsite) <br />
-  &emsp;&#x1F449;&emsp;[SSL证书有效期](ssl_cert) <br />
-  &emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
-  &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+&emsp;&#x1F449;&emsp;[Website monitoring](website) <br /> 
+&emsp;&#x1F449;&emsp;[HTTP API](api) <br /> 
+&emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br /> 
+&emsp;&#x1F449;&emsp;[Port availability](port) <br /> 
+&emsp;&#x1F449;&emsp;[Full site monitoring](fullsite) <br />
+&emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
+&emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
+&emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 
-### 数据库监控  
+### Database monitoring  
 
-  &emsp;&#x1F449;&emsp;[MYSQL数据库监控](mysql) <br />
-  &emsp;&#x1F449;&emsp;[MariaDB数据库监控](mariadb) <br />
-  &emsp;&#x1F449;&emsp;[PostgreSQL数据库监控](postgresql) <br />
-  &emsp;&#x1F449;&emsp;[SqlServer数据库监控](sqlserver) <br />
-  &emsp;&#x1F449;&emsp;[Oracle数据库监控](oracle) <br />
-  &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />
-  &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
-  &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
+&emsp;&#x1F449;&emsp;[MYSQL database monitoring](mysql) <br />
+&emsp;&#x1F449;&emsp;[MariaDB database monitoring](mariadb) <br />
+&emsp;&#x1F449;&emsp;[PostgreSQL database monitoring](postgresql) <br />
+&emsp;&#x1F449;&emsp;[SqlServer database monitoring](sqlserver) <br />
+&emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />
+&emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />
+&emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
+&emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
 
-### 操作系统监控     
+### Operating system monitoring     
 
-  &emsp;&#x1F449;&emsp;[Linux操作系统监控](linux) <br />
-  &emsp;&#x1F449;&emsp;[Windows操作系统监控](windows) <br />
-  &emsp;&#x1F449;&emsp;[Ubuntu操作系统监控](ubuntu) <br /> 
-  &emsp;&#x1F449;&emsp;[Centos操作系统监控](centos) <br />
+&emsp;&#x1F449;&emsp;[Linux operating system monitoring](linux) <br />
+&emsp;&#x1F449;&emsp;[Windows operating system monitoring](windows) <br />
+&emsp;&#x1F449;&emsp;[Ubuntu operating system monitoring](ubuntu) <br />
+&emsp;&#x1F449;&emsp;[Centos operating system monitoring](centos) <br />
 
-### 中间件监控
+### Middleware monitoring
 
-  &emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
-  &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
-  &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
-  &emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
-  &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
-  &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
-  &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
-  &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
+&emsp;&#x1F449;&emsp;[Zookeeper](zookeeper) <br />
+&emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
+&emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
+&emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
+&emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
+&emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
+&emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
 
-### 云原生监控
+### CloudNative monitoring
 
-  &emsp;&#x1F449;&emsp;[Docker](docker) <br />
-  &emsp;&#x1F449;&emsp;[Kubernetes](kubernetes) <br />
+&emsp;&#x1F449;&emsp;[Docker](docker) <br />
+&emsp;&#x1F449;&emsp;[Kubernetes](kubernetes) <br />
 
-## 💡 告警服务  
+***
 
-> 更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。     
-> 告警服务的定位是阈值准确及时触发，告警通知及时可达。   
+## 💡 Alarm service  
 
-### 告警中心  
+> More liberal threshold alarm configuration (calculation expression), supports email, SMS, WebHook, DingDing, WeChat and FeiShu for alarm notification.
+> The positioning of alarm service is to trigger the threshold accurately and timely, and the alarm notification can be reached in time.
 
-> 已触发的告警信息中心，提供告警删除，告警处理，标记未处理，告警级别状态等查询过滤。   
+### Alarm center  
 
-### 告警配置  
+> The triggered alarm information center provides query and filtering of alarm deletion, alarm processing, mark unprocessed, alarm level status, etc.
 
-> 指标阈值配置，提供表达式形式的指标阈值配置，可设置告警级别，触发次数，告警通知模版和是否启用，关联监控等功能。
+### Alarm configuration 
 
-详见&emsp;&#x1F449;&emsp;[阈值告警](alert_threshold) <br />
-&emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert_threshold_expr)   
+> The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
-### 告警通知  
+More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br /> 
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)   
 
-> 触发告警信息后，除了显示在告警中心列表外，还可以用指定方式(邮件钉钉微信飞书等)通知给指定接收人。   
-> 告警通知提供设置不同类型的通知方式，如邮件接收人，企业微信机器人通知，钉钉机器人通知，飞书机器人通知。   
-> 接收人设置后需要设置关联的告警通知策略，来配置哪些告警信息发给哪些接收人。   
+### Alarm notification  
+
+> After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)   
+> Alarm notification provides different types of notification methods, such as email recipient, enterprise wechat robot notification, DingDing robot notification, and FeiShu robot notification.   
+> After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
 
 
-&emsp;&#x1F449;&emsp;[配置邮箱通知](alert_email) <br />
-&emsp;&#x1F449;&emsp;[配置 Webhook 通知](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[配置 Telegram 通知](alert_telegram) <br />
-&emsp;&#x1F449;&emsp;[配置 Discord 通知](alert_discord) <br />
-&emsp;&#x1F449;&emsp;[配置 Slack 通知](alert_slack) <br />
-&emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
-&emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
-&emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />  
+&emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
+&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br /> 
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />    
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br /> 
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />   
