@@ -6,7 +6,7 @@ sidebar_label: Use IoTDB Store Metrics
 
 HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
 
-Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring indicators collected. Support V0.13+ version.  
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring indicators collected. Support V0.13+ version and V1.0.+ version.  
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
 
@@ -53,9 +53,8 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # V_O_12 || V_0_13
+      # com.usthe.warehouse.config.IotDbVersion: V_0_13 || V_1_00
       version: V_0_13
-      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
       # default '7776000000'（90days,unit:ms,-1:no-expire）
       expire-time: '7776000000'
