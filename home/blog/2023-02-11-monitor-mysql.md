@@ -1,14 +1,14 @@
 ---
-title: Use the open source real-time monitoring system HertzBeat to monitor and alert Mysql database
+title: Use the open source real-time monitoring tool HertzBeat to monitor and alert Mysql database
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
-Keywords: [Open source monitoring system, open source database monitoring, Mysql database monitoring]
+Keywords: [Open source monitoring tool, open source database monitoring, Mysql database monitoring]
 ---
 
-## Use the open source real-time monitoring system HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes!
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes!
 
 ### Mysql database introduction
 
@@ -17,11 +17,11 @@ Keywords: [Open source monitoring system, open source database monitoring, Mysql
 
 ### Introduction to HertzBeat
 
-> HertzBeat is an open source, easy-to-use and friendly real-time monitoring system that does not require Agent and has powerful custom monitoring capabilities.
+> HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 
 - Integrate **monitoring-alarm-notification**, support monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, alarm notifications (email WeChat Dingding Feishu SMS Slack Discord Telegram).
 - It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, etc. You only need to configure YML to use these protocols to customize and collect any indicators you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
-- HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring systems.
+- HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
 ### Get the Mysql database monitoring in HertzBeat in 5 minutes
 
@@ -30,7 +30,7 @@ Keywords: [Open source monitoring system, open source database monitoring, Mysql
 - Mysql [Installation and deployment document](https://www.runoob.com/mysql/mysql-install.html)
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### Add monitoring of Mysql database on the open source monitoring system HertzBeat monitoring page
+#### Add monitoring of Mysql database on the open source monitoring tool HertzBeat monitoring page
 
 1. Click Add Mysql Monitoring
 
@@ -118,7 +118,7 @@ Content details: mysql db query_cache_hit_rate is too low, now is 20.
 ## Summary
 
 :::tip
-This practical article took us to experience how to use the open source real-time monitoring system HertzBeat to monitor Mysql database indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
  
 Mysql Github: https://github.com/mysql/mysql-server    

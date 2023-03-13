@@ -115,7 +115,7 @@ First of all, I am also a newcomer to Novice Village, but I can share some of my
 > We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to customize and collect any indicators you want to collect.  
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 
-> The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring systems.
+> The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
 **Github: https://github.com/dromara/hertzbeat**    
 **Gitee: https://gitee.com/dromara/hertzbeat**   

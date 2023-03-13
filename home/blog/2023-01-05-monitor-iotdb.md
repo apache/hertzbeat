@@ -16,9 +16,9 @@ tags: [opensource, practice]
 
 ### Introduction to HertzBeat
 
-> HertzBeat is an open source, easy-to-use and friendly real-time monitoring system that does not require Agent and has powerful custom monitoring capabilities.
+> HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 > Supports monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email WeChat Dingding Feishu).
-> HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling hope to help developers and small and medium teams quickly build their own monitoring systems.
+> HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling hope to help developers and small and medium teams quickly build their own monitoring tools.
 
 ### Get monitoring IoTDB in HertzBeat in 5 minutes
 
@@ -74,7 +74,7 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 - **Another step is to configure the IP port on the HertzBeat monitoring page to add monitoring**
 
 
-**In this way, we have completed the monitoring of IoTDB. We can view the monitoring details and indicators at any time to observe its service status, but people cannot always watch it. When there is always a time to rest, monitoring is often accompanied by alarms. When monitoring When the indicators are abnormal, the monitoring system needs to be able to notify the person in charge in time**
+**In this way, we have completed the monitoring of IoTDB. We can view the monitoring details and indicators at any time to observe its service status, but people cannot always watch it. When there is always a time to rest, monitoring is often accompanied by alarms. When monitoring When the indicators are abnormal, the monitoring tool needs to be able to notify the person in charge in time**
 
 **Next, we will teach you step by step to configure the threshold alarm notification in the HertzBeat system**
 

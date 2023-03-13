@@ -2,7 +2,7 @@
 id: sqlserver  
 title: Monitoring：SqlServer database monitoring      
 sidebar_label: SqlServer database   
-keywords: [open source monitoring system, open source database monitoring system, monitoring sqlserver database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring sqlserver database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of SqlServer database. Support SqlServer 2017+.
