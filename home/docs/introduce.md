@@ -5,7 +5,7 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> An open-source, real-time monitoring tool with custom-monitor and agentless.  
+> An open source, real-time monitoring tool with custom-monitor and agentless.  
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -25,7 +25,7 @@ slug: /
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring tool with custom-monitor and agentless. Support web service, database, os, middleware, network and more.          
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless. Support web service, database, os, middleware, network and more.          
 > We also provide **[Monitoring Cloud For Saas](https://console.tancloud.cn)**, people no longer need to deploy a cumbersome monitoring tool in order to monitor their website resources. **[Sign in to get started for free](https://console.tancloud.cn)**.   
 > HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS` and more.  
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.      
