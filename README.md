@@ -32,14 +32,13 @@
 
 > [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
-> Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
-> More liberal threshold alarm configuration (calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
+> More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to custom collect any metrics you want.     
-> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring YML?   
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?   
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
-> We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
+> We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ----   
 
@@ -74,6 +73,8 @@
   [ShenYu](manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app-dynamic_tp.yml),
   [Jetty](manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](manager/src/main/resources/define/app-hpe_switch.yml),
+  [HuaweiSwitch](manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](manager/src/main/resources/define/app-tplink_switch.yml)
 - And More Your Custom Define.
 - Notified Support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
