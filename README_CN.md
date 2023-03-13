@@ -8,7 +8,7 @@
 
 ## HertzBeat 赫兹跳动 | [English Documentation](README.md)           
 
-> 易用友好的实时监控告警工具，无需Agent，强大自定义监控能力。
+> 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力。
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
