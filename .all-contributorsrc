@@ -7,7 +7,7 @@
     "README.md",
     "README_CN.md",
     "home/docs/others/developer.md",
-    "home/i18n/en/docusaurus-plugin-content-docs/current/others/developer.md"
+    "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/others/developer.md"
   ],
   "imageSize": 100,
   "commit": true,

@@ -8,7 +8,7 @@
 
 ## HertzBeat 赫兹跳动 | [English Documentation](README.md)           
 
-> 易用友好的实时监控告警系统，无需Agent，强大自定义监控能力。
+> 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力。
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,15 +30,15 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的实时监控告警系统。     
-> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等指标监控，阈值告警，告警通知一步到位。   
+> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。     
+> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等监控，阈值告警通知一步到位。   
 > 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。             
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
-> 您相信只需配置YML就能立刻适配一款K8s或Docker等新的监控类型吗？   
+> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需在浏览器配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
+> 您相信只需配置下就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？   
 
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。    
-> 当然我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
+> 当然我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署学习一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
 ----   
 
@@ -73,7 +73,9 @@
   [ShenYu](manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app-dynamic_tp.yml),
   [Jetty](manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app-docker.yml)
-- 和更多您的自定义监控。
+- [CiscoSwitch](manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](manager/src/main/resources/define/app-hpe_switch.yml),
+  [HuaweiSwitch](manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](manager/src/main/resources/define/app-tplink_switch.yml)
+- 和更多自定义监控类型。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
 ## 🐕 快速开始  

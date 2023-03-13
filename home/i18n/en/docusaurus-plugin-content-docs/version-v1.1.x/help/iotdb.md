@@ -2,7 +2,7 @@
 id: iotdb  
 title: Monitoring Apache IoTDB Database      
 sidebar_label: IoTDB Database    
-keywords: [open source monitoring system, open source database monitoring system, monitoring IotDB database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring IotDB database metrics]
 ---
 
 > Monitor the running status of the Apache IoTDB Internet of Things time series database (JVM-related), memory task clusters and other related Metrics.

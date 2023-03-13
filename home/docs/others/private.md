@@ -3,7 +3,7 @@ id: private
 title: Privatization deployment    
 sidebar_label: Privatization deployment     
 ---
-If your team wants to privatize and deploy this monitoring system, we currently provide two solutions.   
+If your team wants to privatize and deploy this monitoring tool, we currently provide two solutions.   
 
 #### Community monitoring product HertzBeat (Free, copyright reserved)   
 

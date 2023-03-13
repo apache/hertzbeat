@@ -2,7 +2,7 @@
 id: jvm  
 title: Monitoring JVM      
 sidebar_label: JVM Monitor
-keywords: [open source monitoring system, open source java jvm monitoring system, monitoring jvm metrics]
+keywords: [open source monitoring tool, open source java jvm monitoring tool, monitoring jvm metrics]
 ---
 
 > Collect and monitor the general performance Metrics of JVM.

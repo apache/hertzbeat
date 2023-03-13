@@ -2,7 +2,7 @@
 id: centos  
 title: CentOS operating system monitoring      
 sidebar_label: CentOS operating system       
-keywords: [open source monitoring system, open source os monitoring system, monitoring CentOS operating system metrics]
+keywords: [open source monitoring tool, open source os monitoring tool, monitoring CentOS operating system metrics]
 ---
 
 > Collect and monitor the general performance Metrics of CentOS operating system.

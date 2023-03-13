@@ -6,11 +6,11 @@ sidebar_label: Practice Example
 
 Most websites now support HTTPS by default. The certificate we apply for is usually 3 months or 1 year. It is easy to expire the SSL certificate over time, but we did not find it the first time, or did not update the certificate in time before it expired.
 
-This article introduces how to use the hertzbeat monitoring system to detect the validity period of our website's SSL certificate, and send us a warning message when the certificate expires or a few days before the certificate expires.
+This article introduces how to use the hertzbeat monitoring tool to detect the validity period of our website's SSL certificate, and send us a warning message when the certificate expires or a few days before the certificate expires.
 
 #### What is HertzBeat
 
-HertzBeat is a real-time monitoring system with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
+HertzBeat is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
 **Official website: https://hertzbeat.com | https://tancloud.cn**
 
@@ -90,7 +90,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 6. Alarm notification (in time notification via Dingding WeChat Feishu, etc.)
 
-> Monitoring System -> Alarm Notification -> New Receiver
+> Monitoring Tool -> Alarm Notification -> New Receiver
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f36956060ef410a82bbecafcbb2957f~tplv-k3u1fbpfcp-zoom-1.image)

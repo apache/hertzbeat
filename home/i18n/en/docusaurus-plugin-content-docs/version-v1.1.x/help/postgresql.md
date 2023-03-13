@@ -2,7 +2,7 @@
 id: postgresql  
 title: Monitoring：PostgreSQL database monitoring      
 sidebar_label: PostgreSQL database   
-keywords: [open source monitoring system, open source database monitoring system, monitoring postgresql database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring postgresql database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of PostgreSQL database. Support PostgreSQL 10+.
