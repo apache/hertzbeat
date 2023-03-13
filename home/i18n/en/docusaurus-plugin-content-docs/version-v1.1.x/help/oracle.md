@@ -2,7 +2,7 @@
 id: oracle  
 title: Monitoring：ORACLE database monitoring      
 sidebar_label: ORACLE database   
-keywords: [open source monitoring system, open source database monitoring system, monitoring oracle database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring oracle database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of ORACLE database.

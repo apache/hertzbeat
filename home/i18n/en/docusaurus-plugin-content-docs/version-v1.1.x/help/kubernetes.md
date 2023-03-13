@@ -2,7 +2,7 @@
 id: kubernetes   
 Title: Monitoring Kubernetes
 sidebar_label: Kubernetes Monitor
-keywords: [open source monitoring system, open source kubernetes monitoring system, monitoring kubernetes metrics]
+keywords: [open source monitoring tool, open source kubernetes monitoring tool, monitoring kubernetes metrics]
 ---
 
 > Collect and monitor the general performance metrics of Kubernetes.

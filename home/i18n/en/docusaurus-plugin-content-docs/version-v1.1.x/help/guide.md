@@ -4,7 +4,7 @@ title: Help center
 sidebar_label: Help center
 ---
 
-> Hertzbeat - An open-source, real-time monitoring system with custom-monitor and agentLess.  
+> Hertzbeat - An open-source, real-time monitoring tool with custom-monitor and agentLess.  
 > Help documents and auxiliary information during use 
 
 ## 🔬 Monitoring services

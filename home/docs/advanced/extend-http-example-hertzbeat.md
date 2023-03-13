@@ -4,7 +4,7 @@ title: Tutorial 1 Adapting a monitoring type based on HTTP protocol
 sidebar_label: Tutorial 1 Adapting an HTTP protocol monitoring
 ---
 
-Through this tutorial, we describe step by step how to add a monitoring type based on the http protocol under the hertzbeat monitoring system.
+Through this tutorial, we describe step by step how to add a monitoring type based on the http protocol under the hertzbeat monitoring tool.
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http.md).
 
@@ -75,7 +75,7 @@ category: custom
 # Monitoring application type name (consistent with the file name) eg: linux windows tomcat mysql aws...
 app: hertzbeat
 name:
-   en-GB: HertzBeat Monitoring System
+   en-GB: HertzBeat Monitoring Tool
    en-US: Hertz Beat Monitor
 params:
    - field: host
@@ -190,7 +190,7 @@ metrics:
 
 ### The system page adds the monitoring of `hertzbeat` monitoring type
 
-> We click Add `HertzBeat Monitoring System`, configure monitoring IP, port, collection cycle, account password in advanced settings, etc., click OK to add monitoring.
+> We click Add `HertzBeat Monitoring Tool`, configure monitoring IP, port, collection cycle, account password in advanced settings, etc., click OK to add monitoring.
 
 
 ![](/img/docs/advanced/extend-http-example-2.png)

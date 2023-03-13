@@ -2,7 +2,7 @@
 id: linux  
 title: Monitoring：Linux operating system monitoring       
 sidebar_label: Linux operating system       
-keywords: [open source monitoring system, open source linux monitoring system, monitoring linux metrics]
+keywords: [open source monitoring tool, open source linux monitoring tool, monitoring linux metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Linux operating system.

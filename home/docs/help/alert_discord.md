@@ -2,7 +2,7 @@
 id: alert_discord
 title: Alert Discord Bot Notifications
 sidebar_label: Alert Discord bot notification
-keywords: [open source monitoring system, open source alerter, open source Discord bot notification]
+keywords: [open source monitoring tool, open source alerter, open source Discord bot notification]
 ---
 
 > Send an alarm message after the threshold is triggered, and notify the recipient through the Discord robot.

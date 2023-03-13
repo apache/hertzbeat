@@ -2,7 +2,7 @@
 id: mysql  
 title: Monitoring：MySQL database monitoring       
 sidebar_label: MySQL database   
-keywords: [open source monitoring system, open source database monitoring system, monitoring mysql database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring mysql database metrics]
 ---
 
 > Collect and monitor the general performance Metrics of MySQL database. Support MYSQL5+.

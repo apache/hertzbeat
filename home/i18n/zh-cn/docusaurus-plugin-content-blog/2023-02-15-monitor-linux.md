@@ -8,11 +8,11 @@ tags: [opensource, practice]
 keywords: [开源监控系统, 操作系统监控, Linux监控]
 ---
 
-## 使用开源实时监控系统 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定！
+## 使用开源实时监控工具 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定！
 
 ### HertzBeat 介绍  
 
-> HertzBeat 是一款开源，易用友好的实时监控系统，无需Agent，拥有强大自定义监控能力。    
+> HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。    
 
 - 集**监控-告警-通知为一体**，支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Slack Discord Telegram)。    
 - 其将Http,Jmx,Ssh,Snmp,Jdbc等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
@@ -180,7 +180,7 @@ Github: https://github.com/dromara/hertzbeat
 ## 小结   
 
 :::tip
-这篇实践文章带我们体验了如何使用开源实时监控系统 HertzBeat 来监控 Linux 指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 Linux 纳入监控并告警通知，再也不需要部署多个组件编写配置文件那些繁琐操作了。  
+这篇实践文章带我们体验了如何使用开源实时监控工具 HertzBeat 来监控 Linux 指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 Linux 纳入监控并告警通知，再也不需要部署多个组件编写配置文件那些繁琐操作了。  
 :::
 
 > 只需要一条docker命令即可安装体验heartbeat:   
@@ -189,7 +189,7 @@ Github: https://github.com/dromara/hertzbeat
 
 ## What is HertzBeat?
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需Agent的实时监控告警系统。应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Discord Slack Telegram)。
+> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需Agent的实时监控告警工具。应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Discord Slack Telegram)。
 
 > 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
 > 您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？

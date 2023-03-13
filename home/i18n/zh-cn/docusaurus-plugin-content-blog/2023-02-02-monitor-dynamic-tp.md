@@ -20,7 +20,7 @@ tags: [opensource, practice]
 
 ### HertzBeat 介绍  
 
-> HertzBeat 是一款开源，易用友好的实时监控系统，无需Agent，拥有强大自定义监控能力。    
+> HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。    
 
 - 支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Slack Discord Telegram)。    
 - 其将Http,Jmx,Ssh,Snmp,Jdbc等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
