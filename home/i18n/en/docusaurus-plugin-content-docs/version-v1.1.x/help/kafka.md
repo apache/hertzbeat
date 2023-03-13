@@ -2,7 +2,7 @@
 id: kafka  
 title: Monitor：Apache Kafka      
 sidebar_label: Apache Kafka
-keywords: [open source monitoring system, open source apache kafka monitoring system, monitoring apache kafka metrics]
+keywords: [open source monitoring tool, open source apache kafka monitoring tool, monitoring apache kafka metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Apache Kafka.

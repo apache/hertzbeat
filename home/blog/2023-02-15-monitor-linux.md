@@ -5,18 +5,18 @@ author_title: tom
 author_url: https://github.com/tomsun28
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
-keywords: [Open source monitoring system, operating system monitoring, Linux monitoring]
+keywords: [Open source monitoring tool, operating system monitoring, Linux monitoring]
 ---
 
-## Use the open source real-time monitoring system HertzBeat to monitor and alarm the Linux operating system, and it will be done in 5 minutes!
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Linux operating system, and it will be done in 5 minutes!
 
 ### Introduction to HertzBeat
 
-> HertzBeat is an open source, easy-to-use and friendly real-time monitoring system that does not require Agent and has powerful custom monitoring capabilities.
+> HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 
 - Integrate **monitoring-alarm-notification**, support monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, alarm notifications (email WeChat Dingding Feishu SMS Slack Discord Telegram).
 - It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, etc. You only need to configure YML to use these protocols to customize and collect any indicators you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
-- HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring systems.
+- HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
 Github: https://github.com/dromara/hertzbeat
 
@@ -26,7 +26,7 @@ Github: https://github.com/dromara/hertzbeat
 
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### Add monitoring of the Linux operating system to the monitoring page of the open source monitoring system HertzBeat
+#### Add monitoring of the Linux operating system to the monitoring page of the open source monitoring tool HertzBeat
 
 1. Click Add Linux Monitoring
 
@@ -119,7 +119,7 @@ Content details: The linux cpu usage is too high. now is 95.
 ## Summary
 
 :::tip
-This practical article took us to experience how to use the open source real-time monitoring system HertzBeat to monitor Linux indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use. Linux can be included in the monitoring and alarm notification, and there is no need to deploy multiple components and write configuration files.
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Linux indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use. Linux can be included in the monitoring and alarm notification, and there is no need to deploy multiple components and write configuration files.
 :::
 
 > Only one docker command is needed to install and experience heartbeat:
@@ -133,7 +133,7 @@ This practical article took us to experience how to use the open source real-tim
 > We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to customize and collect any indicators you want to collect.
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 
-> The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring systems.
+> The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
 **Github: https://github.com/dromara/hertzbeat**
 **Gitee: https://gitee.com/dromara/hertzbeat**

@@ -2,7 +2,7 @@
 id: dm  
 title: Monitoring DM database      
 sidebar_label: DM Database   
-keywords: [open source monitoring system, open source database monitoring system, monitoring DM database metrics]
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring DM database metrics]
 ---
 
 > Collect and monitor the general performance metrics of the DM database. DM8+ is supported.

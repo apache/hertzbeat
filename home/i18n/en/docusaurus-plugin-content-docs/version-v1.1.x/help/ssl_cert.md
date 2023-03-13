@@ -2,7 +2,7 @@
 id: ssl_cert  
 title: Monitoring SSL Certificate      
 sidebar_label: SSL Monitor  
-keywords: [open source monitoring system, open source ssl cert monitoring system, monitoring website ssl metrics]
+keywords: [open source monitoring tool, open source ssl cert monitoring tool, monitoring website ssl metrics]
 ---
 
 > Monitor the website's SSL certificate expiration time, response time and other Metrics

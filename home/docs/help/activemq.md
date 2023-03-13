@@ -2,7 +2,7 @@
 id: activemq  
 title: Monitoring Apache ActiveMQ      
 sidebar_label: Apache ActiveMQ   
-keywords: [open source monitoring system, monitoring Apache ActiveMQ metrics]
+keywords: [open source monitoring tool, monitoring Apache ActiveMQ metrics]
 ---
 
 > Monitoring the running status of Apache ActiveMQ message middleware, nodes, topics and other related metrics.

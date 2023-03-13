@@ -2,7 +2,7 @@
 id: api  
 title: Monitoring HTTP API      
 sidebar_label: HTTP API   
-keywords: [open source monitoring system, monitoring http api]
+keywords: [open source monitoring tool, monitoring http api]
 ---
 
 > Call HTTP API interface, check whether the interface is available, and monitor its response time and other Metrics.   
