@@ -245,7 +245,7 @@ public class WarehouseProperties {
             /**
              * save data expire time(ms)
              */
-            private String expireTime = "7D";
+            private String expireTime = "1h";
 
             public boolean isEnabled() {
                 return enabled;
