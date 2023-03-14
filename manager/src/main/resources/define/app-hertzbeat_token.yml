@@ -146,3 +146,28 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       parseType: jsonPath
       parseScript: '$.data.apps.*'
+
+  - name: inner_queue
+    priority: 1
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+      - field: alertDataQueue
+        type: 0
+      - field: metricsDataToAlertQueue
+        type: 0
+      - field: metricsDataToPersistentStorageQueue
+        type: 0
+      - field: metricsDataToMemoryStorageQueue
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/metrics
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.data'
