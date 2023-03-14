@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import com.mongodb.MongoServerUnavailableException;
+import com.mongodb.MongoTimeoutException;
 import com.usthe.collector.collect.common.cache.CacheIdentifier;
 import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.collector.collect.common.cache.MongodbConnect;
@@ -116,7 +117,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             }
             fillBuilder(metrics, valueRowBuilder, document);
             builder.addValues(valueRowBuilder.build());
-        } catch (MongoServerUnavailableException unavailableException) {
+        } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             String message = CommonUtil.getMessageFromThrowable(unavailableException);
             builder.setMsg(message);
