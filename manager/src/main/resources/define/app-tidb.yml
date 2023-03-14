@@ -1,40 +1,80 @@
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 category: db
-app: tidbti [ti]
+app: tidb
 name:
-  zh-CN: TiDB数据库
-  en-US: TiDB
-# 参数映射map. type是参数类型: 0-number数字, 1-string明文字符串, 2-secret加密字符串
-# 强制固定必须参数 - host
-configmap:
-  - key: host
-    type: 1
-  - key: port
-    type: 0
-  - key: username
-    type: 1
-  - key: password
-    type: 2
-  - key: database
-    type: 1
-  - key: timeout
-    type: 0
-  - key: url
-    type: 1
+  zh-CN: tidb数据库
+  en-US: tidb
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+
+  - field: port
+    name:
+      zh-CN: jdbc端口
+      en-US: jdbc Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 4000
+
+  - field: service-port
+    name:
+      zh-CN: service-端口
+      en-US: service-port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 10080
+
+  - field: pd-port
+    name:
+      zh-CN: pd-端口
+      en-US: pd-port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 2379
+
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    required: false
+
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
 # 指标组列表
 metrics:
   - name: basic
@@ -53,11 +93,9 @@ metrics:
         type: 1
       - field: max_connections
         type: 0
-# (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - version
-      - version_compile_os
-      - version_compile_machine
       - port
       - datadir
       - max_connections
@@ -84,3 +122,95 @@ metrics:
       # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port';
       url: ^_^url^_^
+
+  - name: stores
+    priority: 0
+    fields:
+      - field: address
+        type: 1
+      - field: version
+        type: 1
+      - field: status_address
+        type: 1
+      - field: deploy_path
+        type: 1
+      - field: state_name
+        type: 1
+
+      - field: capacity
+        type: 1
+      - field: available
+        type: 1
+      - field: used_size
+        type: 1
+      - field: start_ts
+        type: 1
+      - field: last_heartbeat_ts
+        type: 1
+      - field: uptime
+        type: 1
+    aliasFields:
+      - $.store.address
+      - $.store.version
+      - $.store.status_address
+      - $.store.deploy_path
+      - $.store.state_name
+      - $.status.capacity
+      - $.status.available
+      - $.status.used_size
+      - $.status.start_ts
+      - $.status.last_heartbeat_ts
+      - $.status.uptime
+    calculates:
+      - address=$.store.address
+      - version=$.store.version
+      - status_address=$.store.status_address
+      - deploy_path=$.store.deploy_path
+      - state_name=$.store.state_name
+      - capacity=$.status.capacity
+      - available=$.status.available
+      - used_size=$.status.used_size
+      - start_ts=$.status.start_ts
+      - last_heartbeat_ts=$.status.last_heartbeat_ts
+      - uptime=$.status.uptime
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^url^_^
+      # 端口
+      port: ^_^pd-port^_^
+      # url请求接口路径
+      url: '/pd/api/v1/stores'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$.stores.*'
+
+  - name: status
+    priority: 0
+    fields:
+      - field: connections
+        type: 0
+      - field: version
+        type: 1
+      - field: git_hash
+        type: 1
+    #    aliasFields:
+    #    calculates:
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^url^_^
+      # 端口
+      port: ^_^service-port^_^
+      # url请求接口路径
+      url: '/status'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'
+
