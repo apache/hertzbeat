@@ -77,7 +77,9 @@ public class JobSchedulerInit implements CommandLineRunner {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
                 // 下发采集任务
-                collectJobService.addAsyncCollectJob(appDefine);
+                long jobId = collectJobService.addAsyncCollectJob(appDefine);
+                monitor.setJobId(jobId);
+                monitorDao.save(monitor);
             } catch (Exception e) {
                 log.error("init monitor job: {} error,continue next monitor", monitor, e);
             }

@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Test case for {@link RedisClusterCollectImpl}
+ * Test case for {@link RedisCommonCollectImpl}
  *
- * @create: 2023/02/17
+ *
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {
@@ -25,7 +25,7 @@ public class RedisClusterCollectImplTest {
     private RedisProtocol redisProtocol;
 
     @InjectMocks
-    private RedisClusterCollectImpl redisClusterCollect;
+    private RedisCommonCollectImpl redisClusterCollect;
 
     @BeforeEach
     void setUp() {

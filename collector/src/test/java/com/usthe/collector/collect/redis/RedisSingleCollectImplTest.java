@@ -1,6 +1,5 @@
 package com.usthe.collector.collect.redis;
 
-import com.usthe.collector.collect.common.cache.CommonCache;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.job.protocol.RedisProtocol;
 import com.usthe.common.entity.message.CollectRep;
@@ -16,7 +15,7 @@ import java.util.List;
 
 
 /**
- * Test case for {@link RedisSingleCollectImpl}
+ * Test case for {@link RedisCommonCollectImpl}
  */
 @ExtendWith(MockitoExtension.class)
 class RedisSingleCollectImplTest {
@@ -26,7 +25,7 @@ class RedisSingleCollectImplTest {
     private RedisProtocol redisProtocol;
 
     @InjectMocks
-    private RedisSingleCollectImpl redisSingleCollect;
+    private RedisCommonCollectImpl redisSingleCollect;
 
     @BeforeEach
     void setUp() {

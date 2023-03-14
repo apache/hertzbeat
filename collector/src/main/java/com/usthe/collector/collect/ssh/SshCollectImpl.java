@@ -96,7 +96,7 @@ public class SshCollectImpl extends AbstractCollect {
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("采集数据失败");
+                builder.setMsg("collect response data is null");
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_NETCAT:

@@ -71,7 +71,6 @@ public class DataStorageDispatch {
             }
         };
         workerPool.executeJob(runnable);
-        workerPool.executeJob(runnable);
     }
 
 

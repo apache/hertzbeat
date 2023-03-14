@@ -50,6 +50,7 @@ public class History {
     private Byte metricType;
 
     @Schema(title = "字符值")
+    @Column(length = 1024)
     private String str;
 
     @Schema(title = "数值")
