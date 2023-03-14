@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * data storage by mysql/h2 - jpa
@@ -37,6 +38,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private HistoryDao historyDao;
     private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
+    private static final int STRING_MAX_LENGTH = 1024;
+
     public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
                                          HistoryDao historyDao) {
         this.jpaProperties = properties.getStore().getJpa();
@@ -44,7 +47,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         this.historyDao = historyDao;
     }
 
-    @Scheduled(cron = "0 0 23 * * ?")
+    @Scheduled( fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
     public void expiredDataCleaner() {
         String expireTimeStr = jpaProperties.getExpireTime();
         long expireTime = 0;
@@ -91,7 +94,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                 String instance = valueRow.getInstance();
                 if (!instance.isEmpty()) {
-                    instance = String.format("\"%s\"", instance);
+                    instance = formatStrValue(instance);
                     historyBuilder.instance(instance);
                 } else {
                     historyBuilder.instance(null);
@@ -105,7 +108,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                                             .dou(Double.parseDouble(valueRow.getColumns(i)));
                         } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
                             historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                    .str(valueRow.getColumns(i));
+                                    .str(formatStrValue(valueRow.getColumns(i)));
                         }
                     } else {
                         if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
@@ -185,6 +188,19 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
+    private String formatStrValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        value = value.replace("'", "\\'");
+        value = value.replace("\"", "\\\"");
+        value = value.replace("*", "-");
+        value = String.format("`%s`", value);
+        if (value.length() > STRING_MAX_LENGTH) {
+            value = value.substring(0, STRING_MAX_LENGTH - 1);
+        }
+        return value;
+    }
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
