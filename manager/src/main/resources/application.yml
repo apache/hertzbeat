@@ -43,8 +43,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: '*'
-    enabled-by-default: off
+        include: 'metrics'
+    enabled-by-default: on
 
 sureness:
   auths:
