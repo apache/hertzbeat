@@ -24,6 +24,7 @@ import com.usthe.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -65,6 +66,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
+
+    private static final String SINGLE_QUOTATION_MARKS
+            = "'";
+
+    private static final String CONVERT_SINGLE_QUOTATION_MARKS
+            = "\\\\'";
 
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
@@ -127,10 +134,11 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             StringBuilder sqlRowBuffer = new StringBuilder("(");
             sqlRowBuffer.append(metricsData.getTime() + i++).append(", ");
-            sqlRowBuffer.append("'").append(valueRow.getInstance()).append("', ");
+            String instance = convertStr(valueRow.getInstance());
+            sqlRowBuffer.append("'").append(instance).append("', ");
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);
-                String value = valueRow.getColumns(index);
+                String value = convertStr(valueRow.getColumns(index));
                 if (field.getType() == CommonConstants.TYPE_NUMBER) {
                     // number data
                     if (CommonConstants.NULL_VALUE.equals(value)) {
@@ -208,6 +216,18 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 log.error(e.getMessage());
             }
         }
+    }
+
+    /**
+     * 单引号转义
+     * @param source
+     * @return
+     */
+    private String convertStr(String source){
+        if (StringUtils.isNotEmpty(source) && source.contains(SINGLE_QUOTATION_MARKS)){
+            return source.replaceAll(SINGLE_QUOTATION_MARKS,CONVERT_SINGLE_QUOTATION_MARKS);
+        }
+        return source;
     }
 
     private String formatStringValue(String value){
