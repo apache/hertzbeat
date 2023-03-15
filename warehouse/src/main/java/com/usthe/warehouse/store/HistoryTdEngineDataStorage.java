@@ -127,7 +127,8 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             StringBuilder sqlRowBuffer = new StringBuilder("(");
             sqlRowBuffer.append(metricsData.getTime() + i++).append(", ");
-            sqlRowBuffer.append("'").append(valueRow.getInstance()).append("', ");
+            String instance = formatStringValue(valueRow.getInstance());
+            sqlRowBuffer.append("'").append(instance).append("', ");
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);
                 String value = valueRow.getColumns(index);
