@@ -25,6 +25,8 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +51,15 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
         metricsDataToMemoryStorageQueue = new LinkedBlockingQueue<>();
+    }
+
+    public Map<String, Integer> getQueueSizeMetricsInfo() {
+        Map<String, Integer> metrics = new HashMap<>(8);
+        metrics.put("alertDataQueue", alertDataQueue.size());
+        metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
+        metrics.put("metricsDataToPersistentStorageQueue", metricsDataToPersistentStorageQueue.size());
+        metrics.put("metricsDataToMemoryStorageQueue", metricsDataToMemoryStorageQueue.size());
+        return metrics;
     }
 
     @Override
