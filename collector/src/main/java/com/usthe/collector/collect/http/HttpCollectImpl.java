@@ -417,28 +417,15 @@ public class HttpCollectImpl extends AbstractCollect {
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
             for (JsonElement jsonElement : array) {
-                if (jsonElement.isJsonObject()) {
-                    JsonObject object = jsonElement.getAsJsonObject();
-                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                    for (String alias : aliasFields) {
-                        JsonElement valueElement = object.get(alias);
-                        if (valueElement != null) {
-                            String value = valueElement.getAsString();
-                            valueRowBuilder.addColumns(value);
-                        } else {
-                            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                                valueRowBuilder.addColumns(responseTime.toString());
-                            } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                                valueRowBuilder.addColumns(Integer.toString(keywordNum));
-                            } else {
-                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                            }
-                        }
-                    }
-                    builder.addValues(valueRowBuilder.build());
-                }
+                getValueFromJson(aliasFields, builder, responseTime, jsonElement, keywordNum);
             }
-        } else if (element.isJsonObject()) {
+        } else {
+            getValueFromJson(aliasFields, builder, responseTime, element, keywordNum);
+        }
+    }
+
+    private void getValueFromJson(List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime, JsonElement element, int keywordNum) {
+        if (element.isJsonObject()) {
             JsonObject object = element.getAsJsonObject();
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
@@ -447,7 +434,13 @@ public class HttpCollectImpl extends AbstractCollect {
                     String value = valueElement.getAsString();
                     valueRowBuilder.addColumns(value);
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumns(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumns(Integer.toString(keywordNum));
+                    } else {
+                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    }
                 }
             }
             builder.addValues(valueRowBuilder.build());
