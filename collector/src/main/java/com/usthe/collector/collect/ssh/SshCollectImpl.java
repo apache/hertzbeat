@@ -140,6 +140,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
+            return;
         }
         boolean contains = lines[0].contains("=");
         Map<String, String> mapValue = Arrays.stream(lines)
@@ -169,6 +170,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
+            return;
         }
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int aliasIndex = 0;
@@ -177,7 +179,11 @@ public class SshCollectImpl extends AbstractCollect {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
                 valueRowBuilder.addColumns(responseTime.toString());
             } else {
-                valueRowBuilder.addColumns(lines[lineIndex].trim());
+                if (lineIndex < lines.length) {
+                    valueRowBuilder.addColumns(lines[lineIndex].trim());
+                } else {
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                }
                 lineIndex++;
             }
             aliasIndex++;
@@ -190,6 +196,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length <= 1) {
             log.error("ssh response data only has header: {}", result);
+            return;
         }
         String[] fields = lines[0].split(" ");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);
@@ -249,11 +256,11 @@ public class SshCollectImpl extends AbstractCollect {
                 clientSession.addPublicKeyIdentity(keyPair);
             }
         } else {
-            throw new IllegalArgumentException("需填写账户登陆密码或公钥");
+            throw new IllegalArgumentException("please input password or secret.");
         }
         // 进行认证
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            throw new IllegalArgumentException("认证失败");
+            throw new IllegalArgumentException("Auth failed.");
         }
         CommonCache.getInstance().addCache(identifier, clientSession);
         return clientSession;
