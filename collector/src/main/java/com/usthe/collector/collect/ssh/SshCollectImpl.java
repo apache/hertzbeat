@@ -39,8 +39,12 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.security.KeyPair;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -243,13 +247,13 @@ public class SshCollectImpl extends AbstractCollect {
                 .verify(timeout, TimeUnit.MILLISECONDS).getSession();
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPublicKey())) {
-            KeyPair keyPair = KeyPairUtil.getKeyPairFromPublicKey(sshProtocol.getPublicKey());
+        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
+            var keyPair = KeyPairUtil.getKeyPairFromPrivateKey(sshProtocol.getPrivateKey());
             if (keyPair != null) {
                 clientSession.addPublicKeyIdentity(keyPair);
             }
         } else {
-            throw new IllegalArgumentException("需填写账户登陆密码或公钥");
+            throw new IllegalArgumentException("需填写账户登陆密码或私钥");
         }
         // 进行认证
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
