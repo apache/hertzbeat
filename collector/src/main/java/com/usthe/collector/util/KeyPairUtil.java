@@ -17,27 +17,30 @@
 
 package com.usthe.collector.util;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
-import java.security.KeyFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.security.KeyPair;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
+import java.security.KeyPairGenerator;
 
 /**
  * 密钥工具类
  *
  *
+ *
  */
 @Slf4j
+@UtilityClass
 public class KeyPairUtil {
 
-    private static KeyFactory keyFactory;
+    private static KeyPairGenerator keyPairGenerator;
 
     static {
         try {
-            keyFactory = KeyFactory.getInstance("RSA");
+            keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -46,16 +49,17 @@ public class KeyPairUtil {
     /**
      * 获取密钥对
      */
-    public static KeyPair getKeyPairFromPublicKey(String publicKeyStr) {
+    public static KeyPair getKeyPairFromPrivateKey(String privateKeyStr) {
+        if (!StringUtils.hasText(privateKeyStr)) {
+            return null;
+        }
         try {
-            if (publicKeyStr == null || "".equals(publicKeyStr)) {
-                return null;
-            }
-            // todo fix 公钥解析
-            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyStr);
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            PublicKey publicKey = keyFactory.generatePublic(keySpec);
-            return new KeyPair(publicKey, null);
+            var keyPair = keyPairGenerator.generateKeyPair();
+            var stream = new ByteArrayOutputStream();
+            stream.write(privateKeyStr.getBytes());
+            var oos = new ObjectOutputStream(stream);
+            oos.writeObject(keyPair);
+            return keyPair;
         } catch (Exception e) {
             log.info("[keyPair] parse failed, {}." + e.getMessage());
             return null;

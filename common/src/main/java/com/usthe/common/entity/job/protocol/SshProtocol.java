@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
  * ssh 协议参数配置
  *
  *
+ *
  */
 @Data
 @Builder
@@ -59,9 +60,9 @@ public class SshProtocol {
     private String password;
 
     /**
-     * 公钥(可选)
+     * 私钥(可选)
      */
-    private String publicKey;
+    private String privateKey;
 
     /**
      * SSH执行脚本
