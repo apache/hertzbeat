@@ -60,8 +60,9 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
-    type: text
+    type: textarea
     required: false
+    hide: true
 # 指标组列表
 metrics:
 # 第一个监控指标组 basic

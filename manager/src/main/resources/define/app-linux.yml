@@ -59,8 +59,9 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
-    type: text
+    type: textarea
     required: false
+    hide: true
 metrics:
   # 第一个监控指标组 basic
   # 注意：内置监控指标有 (responseTime - 响应时间)
