@@ -310,7 +310,8 @@ public class JdbcCommonCollect extends AbstractCollect {
                 break;
             case "sqlserver":
                 url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase());
+                        + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
+                        + ";trustServerCertificate=true;";
                 break;
             case "oracle":
                 url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
