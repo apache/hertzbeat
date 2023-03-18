@@ -187,7 +187,7 @@ public class SnmpCollectImpl extends AbstractCollect {
             }
         } catch (ExecutionException | InterruptedException ex) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ex);
-            log.warn("[snmp collect] error: {}", errorMsg, ex);
+            log.warn("[snmp collect] error: {}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
