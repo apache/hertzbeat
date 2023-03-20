@@ -42,7 +42,7 @@ class ExporterParserTest {
                         "# EOF";
         ExporterParser parser = new ExporterParser();
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
-        assertEquals(metricFamilyMap.size(), 6);
-        assertEquals(metricFamilyMap.get("go_gc_duration_seconds").getMetricList().get(0).getSummary().getQuantileList().size(), 5);
+        assertEquals(6, metricFamilyMap.size());
+        assertEquals(5, metricFamilyMap.get("go_gc_duration_seconds").getMetricList().get(0).getSummary().getQuantileList().size());
     }
 }
