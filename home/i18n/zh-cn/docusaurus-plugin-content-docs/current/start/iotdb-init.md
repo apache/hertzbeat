@@ -31,7 +31,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     apache/iotdb:0.13.3-node
 ```
 
-   `-v /opt/iotdb/data:/iotdb/data` 为tdengine数据目录本地持久化挂载，需将`/iotdb/data`替换为实际本地存在的目录
+   `-v /opt/iotdb/data:/iotdb/data` 为IoTDB数据目录本地持久化挂载，需将`/iotdb/data`替换为实际本地存在的目录
    使用```$ docker ps```查看数据库是否启动成功
 
 3. 在hertzbeat的`application.yml`配置文件配置IoTDB数据库连接   
