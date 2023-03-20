@@ -18,7 +18,6 @@
 package com.usthe.collector.collect.common.cache;
 
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.extern.slf4j.Slf4j;
 
 /**

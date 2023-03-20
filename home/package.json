@@ -6,6 +6,7 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "start-en": "docusaurus start --locale en",
+    "start-zh-cn": "docusaurus start --locale zh-cn",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",

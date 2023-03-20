@@ -1,68 +1,77 @@
 ---
 id: package-deploy  
-title: 通过安装包安装 HertzBeat    
-sidebar_label: 安装包方式部署    
+title: Install HertzBeat via Package 
+sidebar_label: Install via Package
 ---
-> HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。    
-> 由于安装包自身不包含JAVA运行环境，需您提前准备JAVA运行环境。   
+> You can install and run HertzBeat on Linux Windows Mac system, and CPU supports X86/ARM64. Due to the installation package itself does not include the JAVA runtime environment, you need to prepare JAVA runtime environment in advance.
 
-1. 安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   要求：JAVA11环境   
-   下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)   
-   安装后命令行检查是否成功安装   
+1. Install JAVA runtime environment-refer to[official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
+   requirement：JDK11 ENV     
+   download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)   
+   After installation use command line to check whether you install it successfully.   
    ```
    $ java -version
-   java version "11.0.12"
+   java version "11.0.12" 
    Java(TM) SE Runtime Environment 18.9 (build 11.0.12+8-LTS-237)
    Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
 
    ```
-2. 下载HertzBeat安装包
-   下载您系统环境对应的安装包
-   - 从[GITEE Release](https://gitee.com/dromara/hertzbeat/releases) 仓库下载
-   - 从[GITHUB Release](https://github.com/dromara/hertzbeat/releases) 仓库下载
+   
+2. Download HertzBeat installation package    
+   Download installation package corresponding to your system environment   
+   - download from [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) repository 
+   - download from [GITHUB Release](https://github.com/dromara/hertzbeat/releases) repository
 
-3. 配置HertzBeat的配置文件(可选)       
-   解压安装包到主机 eg: /opt/hertzbeat  
+3. Configure HertzBeat's configuration file(optional)        
+   Unzip the installation package to the host eg: /opt/hertzbeat    
    ``` 
-   $ tar zxvf hertzbeat-[版本号].tar.gz   
+   $ tar zxvf hertzbeat-[version number].tar.gz   
    ```
-   修改位于 `hertzbeat/config/application.yml` 的配置文件(可选)，您可以根据需求修改配置文件     
-   - 若需使用邮件发送告警，需替换`application.yml`里面的邮件服务器参数
-   - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）
-   - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)
-   - **推荐**若需使用时序数据库IotDB来存储指标数据库，需替换`application.yml`里面的`warehouse.storeiot-db`参数 具体步骤参见 [使用IotDB存储指标数据](iotdb-init)
+   Modify the configuration file `hertzbeat/config/application.yml` params according to your needs.      
+   - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
+   - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)  
+   - **Recommended** If you need to use the time series database TDengine to store indicator data, you need to replace the `warehouse.store.td-engine` parameter in `application.yml` for specific steps, see [Using TDengine to store metrics data](tdengine-init)   
+   - **Recommended** If you need to use the time series database IotDB to store the indicator database, you need to replace the `warehouse.storeiot-db` parameter in `application.yml` For specific steps, see [Use IotDB to store metrics data](iotdb-init)
 
-4. 配置用户配置文件(可选,自定义配置用户密码)     
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat     
-   若需要新增删除修改账户或密码，可以通过修改位于 `hertzbeat/config/sureness.yml` 的配置文件实现，若无此需求可忽略此步骤     
-   具体参考 [配置修改账户密码](account-modify)   
+4. Configure the account file(optional)     
+   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
+   If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.     
+   For detail steps, please refer to [Configure Account Password](account-modify)  
 
-5. 部署启动
-   执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh, windows环境下为 startup.bat    
+5. Start the service   
+   Execute the startup script `startup.sh` in the installation directory `hertzbeat/bin/`   
    ``` 
    $ ./startup.sh 
    ```
-6. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/ 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  
+   
+6. Begin to explore HertzBeat    
+
+   Access http://ip:1157/ using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!    
 
 **HAVE FUN**
 
-### 安装包部署常见问题
+### FAQ  
 
-**最多的问题就是网络问题，请先提前排查**
+1. **According to the process deploy，visit http://ip:1157/ no interface**   
+   Please refer to the following points to troubleshoot issues:
+> 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
+> 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
 
-1. **按照流程部署，访问 http://ip:1157/ 无界面**   
-   请参考下面几点排查问题：
-> 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
-> 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确    
-> 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
+2. **Log an error TDengine connection or insert SQL failed**
+> 1：Check whether database account and password configured is correct, the database is created.   
+> 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.    
 
-2. **日志报错TDengine连接或插入SQL失败**
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+3. **Historical monitoring charts have been missing data for a long time**
+> 1：Check whether you configure Tdengine or IoTDB. No configuration means no historical chart data.  
+> 2：Check whether Tdengine database `hertzbeat` is created.
+> 3: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 
-3. **监控历史图表长时间都一直无数据**
-> 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
-> 二：若使用了Tdengine，排查Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB 或 Tdengine IP账户密码等配置是否正确   
+4. **The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed**
+> Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.
+
+5. **The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]**
+> Please check if the configuration parameters are correct  
+> Is iot-db or td-engine enable set to true  
+> Note⚠️If both hertzbeat and IotDB, TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+> You can check the startup logs according to the logs directory  

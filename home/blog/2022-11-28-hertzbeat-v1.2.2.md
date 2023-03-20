@@ -1,5 +1,5 @@
 ---
-title: HertzBeat v1.2.2 发布！新增K8S监控等众多特性   
+title: HertzBeat v1.2.2！Support K8S Monitor And More.     
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  

@@ -36,6 +36,13 @@ spring:
     suffix: .html
     mode: HTML
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'metrics'
+    enabled-by-default: on
+
 sureness:
   auths:
     - digest
@@ -70,7 +77,7 @@ spring:
   mail:
     # Attention: this is mail server address.
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
-    host: smtp.exmail.qq.com
+    host: smtp.qq.com
     username: example@tancloud.cn
     # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码

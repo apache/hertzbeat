@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open-source, real-time monitoring system with custom-monitor and agentLess. | 易用友好的实时监控告警系统，无需Agent，强大自定义监控能力.   
+> An open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.   
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -20,8 +20,8 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
+![hertzbeat](https://img.shields.io/badge/monitor-network-red)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
 **Home: [hertzbeat.com](https://hertzbeat.com)**
@@ -30,16 +30,15 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open-source, real-time monitoring system with custom-monitor and agentless.       
-> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native and more.            
-> Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by editing YML file, we can customize monitor type and metrics what we want.        
-> More liberal threshold alarm configuration (calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
+> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
+> More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to custom collect any metrics you want.     
-> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring YML?   
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?   
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
-> We also provide **[Monitoring Saas Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
+> We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ----   
 
@@ -74,6 +73,8 @@
   [ShenYu](manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](manager/src/main/resources/define/app-dynamic_tp.yml),
   [Jetty](manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](manager/src/main/resources/define/app-hpe_switch.yml),
+  [HuaweiSwitch](manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](manager/src/main/resources/define/app-tplink_switch.yml)
 - And More Your Custom Define.
 - Notified Support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
@@ -239,6 +240,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaohe428"><img src="https://avatars.githubusercontent.com/u/99130317?v=4?s=100" width="100px;" alt="xiaohe428"/><br /><sub><b>xiaohe428</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/baiban114"><img src="https://avatars.githubusercontent.com/u/59152619?v=4?s=100" width="100px;" alt="TableRow"/><br /><sub><b>TableRow</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=baiban114" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ByteIDance"><img src="https://avatars.githubusercontent.com/u/100207562?v=4?s=100" width="100px;" alt="ByteIDance"/><br /><sub><b>ByteIDance</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ByteIDance" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mangel2002"><img src="https://avatars.githubusercontent.com/u/9348020?v=4?s=100" width="100px;" alt="Jangfe"/><br /><sub><b>Jangfe</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=mangel2002" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

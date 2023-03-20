@@ -7,7 +7,7 @@
     "README.md",
     "README_CN.md",
     "home/docs/others/developer.md",
-    "home/i18n/en/docusaurus-plugin-content-docs/current/others/developer.md"
+    "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/others/developer.md"
   ],
   "imageSize": 100,
   "commit": true,
@@ -776,6 +776,15 @@
       "name": "ByteIDance",
       "avatar_url": "https://avatars.githubusercontent.com/u/100207562?v=4",
       "profile": "https://github.com/ByteIDance",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "mangel2002",
+      "name": "Jangfe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9348020?v=4",
+      "profile": "https://github.com/mangel2002",
       "contributions": [
         "code"
       ]

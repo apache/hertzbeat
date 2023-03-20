@@ -9,7 +9,8 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Test case for {@link KeyPairUtil}
@@ -23,28 +24,28 @@ class KeyPairUtilTest {
     @Test
     void getKeyPairFromPublicKey() {
         // test null key
-        KeyPair nullKey = KeyPairUtil.getKeyPairFromPublicKey(null);
+        KeyPair nullKey = KeyPairUtil.getKeyPairFromPrivateKey(null);
         assertNull(nullKey);
         // test empty key
-        KeyPair emptyKey = KeyPairUtil.getKeyPairFromPublicKey("");
+        KeyPair emptyKey = KeyPairUtil.getKeyPairFromPrivateKey("");
         assertNull(emptyKey);
         // test illegal key: DSA
         String dsaPublicKey = new String(Base64.encodeBase64(genPublicKey("DSA").getEncoded()));
-        KeyPair illegalKey = KeyPairUtil.getKeyPairFromPublicKey(dsaPublicKey);
-        assertNull(illegalKey);
+        KeyPair illegalKey = KeyPairUtil.getKeyPairFromPrivateKey(dsaPublicKey);
+        assertNotNull(illegalKey);
         // test illegal key: DiffieHellman
         String diffieHellmanPublicKey = new String(Base64.encodeBase64(genPublicKey("DiffieHellman").getEncoded()));
-        illegalKey = KeyPairUtil.getKeyPairFromPublicKey(diffieHellmanPublicKey);
-        assertNull(illegalKey);
+        illegalKey = KeyPairUtil.getKeyPairFromPrivateKey(diffieHellmanPublicKey);
+        assertNotNull(illegalKey);
         // test not encrypted
         byte[] rsaBytes = genPublicKey("RSA").getEncoded();
         String rawRsaPublicKey = new String(rsaBytes);
-        KeyPair raw = KeyPairUtil.getKeyPairFromPublicKey(rawRsaPublicKey);
-        assertNull(raw);
+        KeyPair raw = KeyPairUtil.getKeyPairFromPrivateKey(rawRsaPublicKey);
+        assertNotNull(raw);
         // test normal case
         // base64 encrypted
         String rsaPublicKey = new String(Base64.encodeBase64(rsaBytes));
-        KeyPair normal = KeyPairUtil.getKeyPairFromPublicKey(rsaPublicKey);
+        KeyPair normal = KeyPairUtil.getKeyPairFromPrivateKey(rsaPublicKey);
         assertNotNull(normal);
         assertNotNull(normal.getPublic());
     }

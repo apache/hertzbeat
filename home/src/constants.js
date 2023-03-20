@@ -5,7 +5,7 @@ import Translate, { translate } from '@docusaurus/Translate'
 export const features = [
   {
     title: translate({
-      message: '开箱即用',
+      message: 'convenient',
     }),
     description: (
       <>
@@ -13,7 +13,6 @@ export const features = [
           values={{
             docker: <code>{'docker run -d -p 1157:1157 tancloud/hertzbeat'}</code>,
             TANCLOUD: <strong>TANCLOUD</strong>,
-            SAAS: <strong>SAAS</strong>,
             console: (
               <a href={'https://www.console.tancloud.cn'}>
                 <strong>Login Now</strong>
@@ -22,17 +21,14 @@ export const features = [
             br: <br />,
           }}
         >
-          {'{docker} {br} 一条命令即可开始监控之旅。监控系统集指标采集，指标数据可视化，告警转发一体化。' +
-            '一站式全功能，无需为了加一个监控或告警而去编写繁琐的配置文件。{br}' +
-            '我们也提供 {TANCLOUD} {SAAS}云版本，{console}即可开始您的服务监控。' +
-            '安全是最重要的，我们对账户密钥和监控密钥全链路加密。'}
+          {'convenient-content'}
         </Translate>
       </>
     ),
   },
   {
     title: translate({
-      message: '多支持与自定义',
+      message: 'custom-multi-support',
     }),
     description: (
       <>
@@ -46,16 +42,14 @@ export const features = [
             br: <br />,
           }}
         >
-          {'我们支持对网站，JVM，MYSQL，Linux等应用服务，数据库，操作系统，中间件的监控，更多监控类型正在快速迭代中。' +
-            '更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}' +
-            '不同团队的监控需求千变万化，我们提供{custom}，通过不同的协议SSH，JDBC，JMX，SNMP，HTTP等，仅需配置YML就能自定义监控指标并快速接入监控系统。'}
+          {'custom-multi-support-content'}
         </Translate>
       </>
     ),
   },
   {
     title: translate({
-      message: '拥抱开源',
+      message: 'opensource',
     }),
     description: (
       <>
@@ -74,10 +68,7 @@ export const features = [
             br: <br />,
           }}
         >
-          {'HertzBeat监控系统代码全开源，无限制，非常欢迎任何对此有兴趣的同学参与中来，贡献不分大小，我们尊重每一位同学，不限于文档代码或者错别字的贡献，我们一起学习进步，构建属于贡献者们的开源事业。{br}' +
-            '中二的我们相信开源改变世界！{br}' +
-            '{github} {br}' +
-            '{gitee}'}
+          {'opensource-content'}
         </Translate>
       </>
     ),
@@ -259,13 +250,3 @@ export const usersLink = [
     alt: 'hibobi',
   }
 ]
-
-export const SetupExample = `
-<dependency>
-    <groupId>com.usthe.sureness</groupId>
-    <artifactId>sureness-core</artifactId>
-    <version>1.0.6</version>
-</dependency>
-
-compile group: 'com.usthe.sureness', name: 'sureness-core', version: '1.0.6'
-`

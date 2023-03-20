@@ -1,6 +1,6 @@
 const path = require('path')
 
-const organizationName = 'dromara' // Usually your GitHub org/user name.
+const organizationName = 'dromara' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`
@@ -8,7 +8,7 @@ const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages'
 
 module.exports = {
   title: 'HertzBeat',
-  tagline: '易用友好的实时监控系统',
+  tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
   url: 'https://hertzbeat.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -21,7 +21,7 @@ module.exports = {
     cdnUrl,
   },
   i18n: {
-    defaultLocale: 'zh-cn',
+    defaultLocale: 'en',
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
@@ -62,32 +62,32 @@ module.exports = {
     navbar: {
       title: 'HertzBeat',
       logo: {
-        alt: '易用友好的高性能监控云',
+        alt: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
         src: '/img/tancloud-logo.svg',
       },
       items: [
         {
-          label: '首页',
+          label: 'main',
           position: 'left',
           to: '/',
         },
         {
-          label: '文档中心',
+          label: 'document',
           position: 'left',
           to: 'docs/',
         },
         {
-          label: '博客',
+          label: 'blog',
           position: 'left',
           to: 'blog/',
         },
         {
-          label: '讨论交流',
+          label: 'discuss',
           position: 'left',
           to: 'docs/others/contact',
         },
         {
-          label: '开发者们',
+          label: 'developer',
           position: 'left',
           to: 'docs/others/developer',
         },
@@ -97,27 +97,27 @@ module.exports = {
           to: 'docs/others/private',
         },
         {
-          label: '关于',
+          label: 'about',
           position: 'left',
           items: [
             {
-              label: '贡献者指南',
+              label: 'contributing',
               to: 'docs/others/contributing',
             },
             {
-              label: '项目看板',
+              label: 'kanban',
               href: 'https://github.com/dromara/hertzbeat/projects/1',
             },
             {
-              label: '设计文档',
+              label: 'design',
               to: 'docs/others/design',
             },
             {
-              label: '赞助我们',
+              label: 'sponsor',
               to: 'docs/others/sponsor',
             },
             {
-              label: '相关资源',
+              label: 'resource',
               to: 'docs/others/resource',
             },
           ],
@@ -133,7 +133,7 @@ module.exports = {
           position: 'right',
         },
         {
-          label: '登录/注册',
+          label: 'login',
           href: 'https://console.tancloud.cn',
           position: 'right',
           className: 'header-console-link',
@@ -144,60 +144,60 @@ module.exports = {
       style: 'light',
       links: [
         {
-          title: '产品介绍',
+          title: 'intro',
           items: [
             {
-              label: '使用介绍',
+              label: 'use',
               to: 'docs/',
             },
             {
-              label: '安装文档',
+              label: 'quickstart',
               to: 'docs/start/quickstart',
             },
             {
-              label: '自定义监控',
+              label: 'custom',
               to: 'docs/advanced/extend-point',
             },
             {
-              label: '帮助文档',
+              label: 'help',
               to: 'docs/help/guide',
             },
           ],
         },
         {
-          title: '社区交流',
+          title: 'contact',
           items: [
             {
-              label: 'Dromara开源社区',
+              label: 'dromara',
               href: 'https://dromara.org/',
             },
             {
-              label: '交流联系',
+              label: 'discuss',
               to: 'docs/others/contact',
             },
             {
-              label: '我们的故事',
+              label: 'team',
               href: 'https://support.qq.com/products/379369/team',
             },
             {
-              label: 'TanCloud探云',
+              label: 'tancloud',
               href: 'https://tancloud.cn',
             },
           ],
         },
         {
-          title: '相关资源',
+          title: 'resource',
           items: [
             {
-              label: 'Github仓库',
+              label: 'github',
               href: 'https://github.com/dromara/hertzbeat',
             },
             {
-              label: 'Gitee仓库',
+              label: 'gitee',
               href: 'https://gitee.com/dromara/hertzbeat',
             },
             {
-              label: '相关资源',
+              label: 'relate',
               to: 'docs/others/resource',
             },
           ],
@@ -228,7 +228,7 @@ module.exports = {
           lastVersion: 'current',
           versions: {
             current: {
-              label: 'v1.1.x',
+              label: 'current',
               path: '',
             },
           },

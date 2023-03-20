@@ -1,10 +1,10 @@
 ---
 id: developer  
-title: 开发者们    
-sidebar_label: 开发者们     
+title: Contributors    
+sidebar_label: Contributors     
 ---
 
-## ✨ HertzBeat的成员们   
+## ✨ HertzBeat Members  
 
 <table>
   <tbody>
@@ -19,9 +19,14 @@ sidebar_label: 开发者们
   </tbody>
 </table>
 
-## ✨ HertzBeat的开发者们
+<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
 
-Thanks these wonderful people, welcome to join us: [贡献者指南](contributing)   
+
+## ✨ HertzBeat Contributors
+
+Thanks these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
+
+<img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>  
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -131,6 +136,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaohe428"><img src="https://avatars.githubusercontent.com/u/99130317?v=4?s=100" width="100px;" alt="xiaohe428"/><br /><sub><b>xiaohe428</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=xiaohe428" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/baiban114"><img src="https://avatars.githubusercontent.com/u/59152619?v=4?s=100" width="100px;" alt="TableRow"/><br /><sub><b>TableRow</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=baiban114" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ByteIDance"><img src="https://avatars.githubusercontent.com/u/100207562?v=4?s=100" width="100px;" alt="ByteIDance"/><br /><sub><b>ByteIDance</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ByteIDance" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mangel2002"><img src="https://avatars.githubusercontent.com/u/9348020?v=4?s=100" width="100px;" alt="Jangfe"/><br /><sub><b>Jangfe</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=mangel2002" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -138,5 +144,4 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
-<!-- ALL-CONTRIBUTORS-LIST:END -->  
-
+<!-- ALL-CONTRIBUTORS-LIST:END -->

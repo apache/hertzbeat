@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.dto.Value;
@@ -22,6 +39,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * data storage by mysql/h2 - jpa
@@ -37,6 +55,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private HistoryDao historyDao;
     private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
+    private static final int STRING_MAX_LENGTH = 1024;
+
     public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
                                          HistoryDao historyDao) {
         this.jpaProperties = properties.getStore().getJpa();
@@ -44,7 +64,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         this.historyDao = historyDao;
     }
 
-    @Scheduled(cron = "0 0 23 * * ?")
+    @Scheduled( fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
     public void expiredDataCleaner() {
         String expireTimeStr = jpaProperties.getExpireTime();
         long expireTime = 0;
@@ -91,7 +111,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                 String instance = valueRow.getInstance();
                 if (!instance.isEmpty()) {
-                    instance = String.format("\"%s\"", instance);
+                    instance = formatStrValue(instance);
                     historyBuilder.instance(instance);
                 } else {
                     historyBuilder.instance(null);
@@ -105,7 +125,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                                             .dou(Double.parseDouble(valueRow.getColumns(i)));
                         } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
                             historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                    .str(valueRow.getColumns(i));
+                                    .str(formatStrValue(valueRow.getColumns(i)));
                         }
                     } else {
                         if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
@@ -185,6 +205,19 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
+    private String formatStrValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        value = value.replace("'", "\\'");
+        value = value.replace("\"", "\\\"");
+        value = value.replace("*", "-");
+        value = String.format("`%s`", value);
+        if (value.length() > STRING_MAX_LENGTH) {
+            value = value.substring(0, STRING_MAX_LENGTH - 1);
+        }
+        return value;
+    }
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {

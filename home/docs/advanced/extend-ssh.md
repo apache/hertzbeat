@@ -1,87 +1,84 @@
 ---
 id: extend-ssh  
-title: SSH协议自定义监控  
-sidebar_label: SSH协议自定义监控    
+title: SSH Protocol Custom Monitoring  
+sidebar_label: SSH Protocol Custom Monitoring     
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用SSH协议自定义指标监控。 
-> SSH协议自定义监控可以让我们很方便的通过写sh命令脚本就能监控采集到我们想监控的Linux指标     
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring. 
+> SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.     
 
-### SSH协议采集流程    
-【**系统直连Linux**】->【**运行SHELL命令脚本语句**】->【**响应数据解析:oneRow, multiRow**】->【**指标数据提取**】   
+### SSH protocol collection process   
+【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse reponse data: oneRow, multiRow**】->【**Metric data extraction**】   
 
-由流程可见，我们自定义一个SSH协议的监控类型，需要配置SSH请求参数，配置获取哪些指标，配置查询脚本语句。
+It can be seen from the process that we define a monitoring type of SSH protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query script statements.
 
-### 数据解析方式   
-SHELL脚本查询回来的数据字段和我们需要的指标映射，就能获取对应的指标数据，目前映射解析方式有两种：oneRow, multiRow，能满足绝大部分指标需求。
+### Data parsing method   
+We can obtain the corresponding Metric data through the data fields queried by the SHELL script and the Metric mapping we need. At present, there are two mapping parsing methods：oneRow and multiRow which can meet the needs of most Metrics.
 
 #### **oneRow**   
-> 查询出一列数据, 通过查询返回结果集的字段值(一行一个值)与字段映射    
+> Query out a column of data, return the field value (one value per row) of the result set through query and map them to the field.     
 
-例如：     
-需要查询Linux的指标 hostname-主机名称，uptime-启动时间     
-主机名称原始查询命令：`hostname`     
-启动时间原始查询命令：`uptime | awk -F "," '{print $1}'`   
-则在hertzbeat对应的这两个指标的查询脚本为(用`;`将其连接到一起)：       
+eg：     
+Metrics of Linux to be queried hostname-host name，uptime-start time     
+Host name original query command：`hostname`     
+Start time original query command：`uptime | awk -F "," '{print $1}'`   
+Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：       
 `hostname; uptime | awk -F "," '{print $1}'`     
-终端响应的数据为：    
+The data responded by the terminal is：    
 ```
 tombook
 14:00:15 up 72 days  
 ```  
-则最后采集到的指标数据一一映射为：   
-hostname值为 `tombook`   
-uptime值为 `14:00:15 up 72 days`      
+At last collected Metric data is mapped one by one as：   
+hostname is `tombook`   
+uptime is `14:00:15 up 72 days`      
 
-这里指标字段就能和响应数据一一映射为一行采集数据。     
+Here the Metric field and the response data can be mapped into a row of collected data one by one      
 
 #### **multiRow**
-> 查询多行数据, 通过查询返回结果集的列名称，和查询的指标字段映射  
+> Query multiple rows of data, return the column names of the result set through the query, and map them to the Metric field of the query.  
 
-例如：   
-查询的Linux内存相关指标字段：total-内存总量 used-已使用内存 free-空闲内存 buff-cache-缓存大小 available-可用内存    
-内存指标原始查询命令为：`free -m`, 控制台响应：  
+eg：   
+Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
+Memory indicaotr original query command：`free -m`, Console response：  
 ```shell
               total        used        free      shared  buff/cache   available
 Mem:           7962        4065         333           1        3562        3593
 Swap:          8191          33        8158
 ```
-在hertzbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：  
+In hertzbeat multiRow format parsing requires a one-to-one mapping between the column name of the response data  and the indicaotr value, so the corresponding query SHELL script is:
 `free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
-控制台响应为：  
+Console response is：  
 ```shell
 total  used  free  buff_cache  available
 7962   4066  331   3564        3592
 ```
 
-这里指标字段就能和响应数据一一映射为采集数据。
+Here the Metric field and the response data can be mapped into collected data one by one.
 
-### 自定义步骤  
+### Custom Steps  
 
-配置自定义监控类型需新增配置YML文件
-1. 用监控类型命名的监控配置定义文件 - 例如：example_linux.yml 需位于安装目录 /hertzbeat/define/ 下  
-2. 重启hertzbeat系统，我们就适配好了一个新的自定义监控类型。
+In order to configure a custom monitoring type, you need to add and configure YML file.
+1. Monitoring configuration definition file named after monitoring type - eg：example_linux.yml in the installation directory /hertzbeat/app/
+2. Restart hertzbeat system, we successfully fit a new custom monitoring type.
 
 ------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。   
+Configuration usages of the file are detailed below. Please pay attention to usage annotation.   
 
-### 监控配置定义文件   
+### Monitoring configuration definition file   
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
-> 即我们通过自定义这个YML文件，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
+> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
 
-样例：自定义一个名称为example_linux的自定义监控类型，其使用SSH协议采集指标数据。    
-文件名称: example_linux.yml 位于 /define/example_linux.yml   
+eg：Define a custom monitoring type named example_linux which use the SSH protocol to collect data.    
+The file name: example_linux.yml in /define/example_linux.yml   
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: os
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# Monitoring application type(consistent with the file name) eg: linux windows tomcat mysql aws...
 app: example_linux
 name:
   zh-CN: 模拟LINUX应用类型
   en-US: LINUX EXAMPLE APP
-# 监控参数定义. field 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# 强制固定必须参数 - host
 params:
   - field: host
     name:
@@ -97,7 +94,7 @@ params:
     range: '[0,65535]'
     required: true
     defaultValue: 22
-    placeholder: '请输入端口'
+    placeholder: 'Please enter the port'
   - field: username
     name:
       zh-CN: 用户名
@@ -111,17 +108,17 @@ params:
       en-US: Password
     type: password
     required: true
-# 指标组列表
+# Metric group list
 metrics:
-  # 第一个监控指标组 basic
-  # 注意：内置监控指标有 (responseTime - 响应时间)
+  # The first monitoring Metric group basic
+  # Note：: the built-in monitoring Metrics have (responseTime - response time)
   - name: basic
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
+    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
     priority: 0
-    # 指标组中的具体监控指标
+    # Specific monitoring Metrics in the Metric group
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
         instance: true
@@ -129,44 +126,44 @@ metrics:
         type: 1
       - field: uptime
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # protocol for monitoring and collection  eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when the protocol is SSH protocol
     ssh:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
       script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
-      # 响应数据解析方式：oneRow, multiRow
+      # parsing method for reponse data：oneRow, multiRow
       parseType: multiRow
 
   - name: cpu
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: info
         type: 1
       - field: cores
         type: 0
-        unit: 核数
+        unit: the number of cores
       - field: interrupt
         type: 0
-        unit: 个数
+        unit: number
       - field: load
         type: 1
       - field: context_switch
         type: 0
-        unit: 个数
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+        unit: number
+    # protocol for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when the protocol is SSH protocol
     ssh:
-      # 主机host: ipv4 ipv6 域名
+      # 主机host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -176,7 +173,7 @@ metrics:
   - name: memory
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: total
         type: 0
         unit: Mb
@@ -192,13 +189,13 @@ metrics:
       - field: available
         type: 0
         unit: Mb
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # protocol for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when the protocol is SSH protocol
     ssh:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^

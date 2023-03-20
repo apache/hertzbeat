@@ -39,8 +39,12 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.security.KeyPair;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -96,7 +100,7 @@ public class SshCollectImpl extends AbstractCollect {
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("采集数据失败");
+                builder.setMsg("collect response data is null");
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_NETCAT:
@@ -140,6 +144,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
+            return;
         }
         boolean contains = lines[0].contains("=");
         Map<String, String> mapValue = Arrays.stream(lines)
@@ -169,6 +174,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
+            return;
         }
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int aliasIndex = 0;
@@ -177,7 +183,11 @@ public class SshCollectImpl extends AbstractCollect {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
                 valueRowBuilder.addColumns(responseTime.toString());
             } else {
-                valueRowBuilder.addColumns(lines[lineIndex].trim());
+                if (lineIndex < lines.length) {
+                    valueRowBuilder.addColumns(lines[lineIndex].trim());
+                } else {
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                }
                 lineIndex++;
             }
             aliasIndex++;
@@ -190,6 +200,7 @@ public class SshCollectImpl extends AbstractCollect {
         String[] lines = result.split("\n");
         if (lines.length <= 1) {
             log.error("ssh response data only has header: {}", result);
+            return;
         }
         String[] fields = lines[0].split(" ");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);
@@ -243,17 +254,17 @@ public class SshCollectImpl extends AbstractCollect {
                 .verify(timeout, TimeUnit.MILLISECONDS).getSession();
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPublicKey())) {
-            KeyPair keyPair = KeyPairUtil.getKeyPairFromPublicKey(sshProtocol.getPublicKey());
+        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
+            var keyPair = KeyPairUtil.getKeyPairFromPrivateKey(sshProtocol.getPrivateKey());
             if (keyPair != null) {
                 clientSession.addPublicKeyIdentity(keyPair);
             }
         } else {
-            throw new IllegalArgumentException("需填写账户登陆密码或公钥");
+            throw new IllegalArgumentException("please input password or secret.");
         }
         // 进行认证
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            throw new IllegalArgumentException("认证失败");
+            throw new IllegalArgumentException("Auth failed.");
         }
         CommonCache.getInstance().addCache(identifier, clientSession);
         return clientSession;

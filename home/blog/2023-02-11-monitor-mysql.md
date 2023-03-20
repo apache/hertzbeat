@@ -1,131 +1,131 @@
 ---
-title: 使用开源实时监控系统 HertzBeat 对 Mysql 数据库监控告警实践    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
+title: Use the open source real-time monitoring tool HertzBeat to monitor and alert Mysql database
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
+author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
-keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
+Keywords: [Open source monitoring tool, open source database monitoring, Mysql database monitoring]
 ---
 
-## 使用开源实时监控系统 HertzBeat 对 Mysql 数据库监控告警实践，5分钟搞定！
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes!
 
-### Mysql 数据库介绍    
+### Mysql database introduction
 
-> MySQL是一个开源关系型数据库管理系统，由瑞典MySQL AB 公司开发，属于 Oracle 旗下产品。MySQL 是最流行的开源关系型数据库管理系统之一，在 WEB 应用方面，MySQL是最好的 RDBMS (Relational Database Management System，关系数据库管理系统) 应用软件之一。
+> MySQL is an open source relational database management system developed by the Swedish company MySQL AB and a product of Oracle. MySQL is one of the most popular open source relational database management systems. In terms of WEB applications, MySQL is one of the best RDBMS (Relational Database Management System, relational database management system) application software.
 
 
-### HertzBeat 介绍  
+### Introduction to HertzBeat
 
-> HertzBeat 是一款开源，易用友好的实时监控系统，无需Agent，拥有强大自定义监控能力。    
+> HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 
-- 集**监控-告警-通知为一体**，支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Slack Discord Telegram)。    
-- 其将Http,Jmx,Ssh,Snmp,Jdbc等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
-- HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。  
+- Integrate **monitoring-alarm-notification**, support monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, alarm notifications (email WeChat Dingding Feishu SMS Slack Discord Telegram).
+- It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, etc. You only need to configure YML to use these protocols to customize and collect any indicators you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
+- HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
-### 在 HertzBeat 5分钟搞定对 Mysql 数据库监控   
+### Get the Mysql database monitoring in HertzBeat in 5 minutes
 
-#### 操作前提，您已拥有 Mysql 环境和 HertzBeat 环境。  
+#### The premise of the operation is that you already have the Mysql environment and the HertzBeat environment.
 
-- Mysql [安装部署文档](https://www.runoob.com/mysql/mysql-install.html)     
-- HertzBeat [安装部署文档](https://hertzbeat.com/docs/start/docker-deploy)
+- Mysql [Installation and deployment document](https://www.runoob.com/mysql/mysql-install.html)
+- HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 在开源监控系统 HertzBeat 监控页面添加对 Mysql 数据库监控   
+#### Add monitoring of Mysql database on the open source monitoring tool HertzBeat monitoring page
 
-1. 点击新增 Mysql 监控  
+1. Click Add Mysql Monitoring
 
-路径：菜单 -> 数据库监控 -> Mysql数据库 -> 新增Mysql数据库监控  
+Path: Menu -> Database Monitoring -> Mysql Database -> Add Mysql Database Monitoring
 
 ![hertzbeat](/img/blog/monitor-mysql-1.png)
 
-2. 配置新增监控 Mysql 数据库所需参数   
+2. Configure the parameters required for the new monitoring Mysql database
 
-在监控页面填写 Mysql **服务IP**，**监控端口**(默认3306)，**账户密码等**，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/mysql/) https://hertzbeat.com/docs/help/mysql/   
+On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
+For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) https://hertzbeat.com/docs/help /mysql/
 
-![hertzbeat](/img/blog/monitor-mysql-2.png)    
+![hertzbeat](/img/blog/monitor-mysql-2.png)
 
-3. 完成✅,现在我们已经添加好对 Mysql数据库 的监控了，查看监控列表即可看到我们的添加项。  
+3. Complete ✅, now we have added the monitoring of the Mysql database, check the monitoring list to see our added items.
 
-![hertzbeat](/img/blog/monitor-mysql-1.png)  
+![hertzbeat](/img/blog/monitor-mysql-1.png)
 
-4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 Mysql数据库 的实时监控指标数据。  
+4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring indicator data of the Mysql database.
 
-![hertzbeat](/img/blog/monitor-mysql-3.png)  
+![hertzbeat](/img/blog/monitor-mysql-3.png)
 
-5. 点击**监控历史详情TAB** 即可浏览 Mysql数据库 的历史监控指标数据图表📈。  
+5. Click **Monitoring History Details TAB** to browse the historical monitoring indicator data chart of Mysql database📈.
 
 ![hertzbeat](/img/blog/monitor-mysql-4.png)
 
-**DONE！完成啦！通过上面几步，总结起来其实也就只用一步即可**
-- **在 HertzBeat 监控页面配置IP端口账户密码添加 Mysql 监控即可**         
+**DONE! Done! Through the above steps, in fact, it only takes one step to sum up**
+- **On the HertzBeat monitoring page, configure the IP port account password and add Mysql monitoring**
 
 :::tip
-通过上面的两步我们就完成了对 Mysql数据库 的监控，我们可以在 HertzBeat 随时查看监控详情指标信息来观测其服务状态。  
-当然只是看肯定是不完美的，监控往往伴随着告警阈值，当 Mysql 数据库的指标超出我们的期望值或异常时，能及时的通知到我们对应的负责人，负责人收到通知处理问题，这样才是一个完整的监控告警流程。
+Through the above two steps, we have completed the monitoring of the Mysql database. We can view the monitoring details and indicators in HertzBeat at any time to observe its service status.
+Of course, just looking at it is definitely not perfect. Monitoring is often accompanied by alarm thresholds. When the indicators of the Mysql database exceed our expectations or are abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles the problem. It is a complete monitoring and alarm process.
 :::
 
-**接下来我们就来一步一步演示如何配置 HertzBeat 系统里的阈值告警通知，让及时发现 Mysql 数据库的指标异常时，及时通知给我们**     
+**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system, so that when the indicators of the Mysql database are found to be abnormal, they will be notified to us in time**
 
-#### 三. 在 HertzBeat 系统添加 Mysql 数据库指标阈值告警   
+#### 3. Add Mysql database index threshold alarm in HertzBeat system
 
-1. 对某个重要指标配置告警阈值     
+1. Configure an alarm threshold for an important indicator
 
-路径：菜单 -> 阈值规则 -> 新增阈值  
+Path: Menu -> Threshold Rules -> Add Threshold
 
-- 选择配置的指标对象，Mysql 数据库监控主要是数据库性能等相关指标，我们举例对 `查询缓存命中率` `cache` -> `query_cache_hit_rate` 这个指标进行阈值设置， 当Mysql的查询缓存命中率很低小于30%时发出告警。       
-- 这里我们就配置当此指标`cache` 的 `query_cache_hit_rate<30` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。  
+- Select the configured indicator object. Mysql database monitoring is mainly about database performance and other related indicators. For example, we set the threshold for the indicator `query cache hit rate` `cache` -> `query_cache_hit_rate`. When the query cache hit rate of Mysql is very low An alarm is issued when it is less than 30%.
+- Here we configure to send an alarm when the `query_cache_hit_rate<30` of this indicator `cache`, the alarm level is **serious alarm**, and it will be triggered after three times, as shown in the figure below.
 
-![hertzbeat](/img/blog/monitor-mysql-5.png)     
+![hertzbeat](/img/blog/monitor-mysql-5.png)
 
 ![hertzbeat](/img/blog/monitor-mysql-6.png)
 
 
-2. 新增消息通知接收人
+2. Add message notification recipients
 
-> 配置接收人，让告警消息知道要发给谁，用什么方式发。  
+> Configure the receiver to let the alarm message know who to send and how to send it.
 
-路径：菜单 -> 告警通知 -> 告警接收人 -> 新增接收人  
+Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
-消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。  
+Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。 
-- 在 HertzBeat 配置接收人参数如下。  
+- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.   
+- Configure the receiver parameters in HertzBeat as follows.
 
-【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
+【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-![hertzbeat](/img/blog/alert-notice-1.png)    
+![hertzbeat](/img/blog/alert-notice-1.png)
 
-3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】 
+3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
-> 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
+> Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
-![hertzbeat](/img/blog/alert-notice-2.png)    
+![hertzbeat](/img/blog/alert-notice-2.png)
 
 
-### 完毕，现在坐等告警消息过来啦。叮叮叮叮 
+### Finished, now wait for the warning message to come. ding ding ding ding
 
 ```
-[HertzBeat告警通知]
-告警目标对象 : mysql.cahce.query_cache_hit_rate
-所属监控ID : 205540620394932
-所属监控名称 : Mysql_localhost
-告警级别 : 严重告警
-告警触发时间 : 2023-02-11 21:13:44
-内容详情 : mysql db query_cache_hit_rate is too low, now is 20.
+[HertzBeat warning notification]
+Alarm target object: mysql.cahce.query_cache_hit_rate
+Affiliated monitoring ID: 205540620394932
+Belonging monitoring name: Mysql_localhost
+Alarm level: major alarm
+Alarm trigger time: 2023-02-11 21:13:44
+Content details: mysql db query_cache_hit_rate is too low, now is 20.
 ```
 
-## 小结   
+## Summary
 
 :::tip
-这篇实践文章带我们体验了如何使用开源实时监控系统 HertzBeat 来监控 Mysql 数据库指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 Mysql 数据库纳入监控并告警通知，再也不需要部署多个组件编写配置文件那些繁琐操作了。  
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
+ 
+Mysql Github: https://github.com/mysql/mysql-server    
+HertzBeat Github: https://github.com/dromara/hertzbeat
 
-Mysql Github: https://github.com/mysql/mysql-server                 
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+**Welcome to learn, use and star! **  
 
-**欢迎了解使用支持Star哦！**
-
-> 只需要一条docker命令即可安装体验heartbeat:   
+> Only one docker command is needed to install and experience heartbeat:
 
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
