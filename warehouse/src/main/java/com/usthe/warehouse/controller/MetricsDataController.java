@@ -27,6 +27,8 @@ import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.store.AbstractHistoryDataStorage;
 import com.usthe.warehouse.store.AbstractRealTimeDataStorage;
+import com.usthe.warehouse.store.HistoryJpaDatabaseDataStorage;
+import com.usthe.warehouse.store.RealTimeMemoryDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -64,7 +66,14 @@ public class MetricsDataController {
     public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
                                  List<AbstractHistoryDataStorage> historyDataStorages) {
         this.realTimeDataStorages = realTimeDataStorages;
-        this.historyDataStorages = historyDataStorages;
+        this.historyDataStorages = historyDataStorages.stream()
+                .filter(AbstractHistoryDataStorage::isServerAvailable).collect(Collectors.toList());
+        if (this.historyDataStorages.size() > 1) {
+            this.historyDataStorages.removeIf(item -> item instanceof HistoryJpaDatabaseDataStorage);
+        }
+        if (this.realTimeDataStorages.size() > 1) {
+            this.realTimeDataStorages.removeIf(item -> item instanceof RealTimeMemoryDataStorage);
+        }
     }
 
     @GetMapping("/api/warehouse/storage/status")
@@ -130,8 +139,7 @@ public class MetricsDataController {
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
-        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).findFirst().orElse(null);
+        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream().findFirst().orElse(null);
         if (historyDataStorage == null) {
             return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "time series database not available"));
         }
