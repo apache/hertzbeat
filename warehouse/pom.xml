@@ -29,6 +29,7 @@
         <kafka-clients.version>3.4.0</kafka-clients.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
+        <greptimedb.version>0.1.0</greptimedb.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -78,6 +79,12 @@
             <groupId>org.apache.iotdb</groupId>
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
+        </dependency>
+        <!-- GrepTimeDB-->
+        <dependency>
+            <groupId>io.greptime</groupId>
+            <artifactId>greptimedb-all</artifactId>
+            <version>${greptimedb.version}</version>
         </dependency>
         <!-- kafka -->
         <dependency>
