@@ -56,7 +56,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
     private static final int STRING_MAX_LENGTH = 1024;
-    private static final int MAX_HISTORY_TABLE_RECORD = 200_000;
+    private static final int MAX_HISTORY_TABLE_RECORD = 60_000;
 
     public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
                                          HistoryDao historyDao) {
