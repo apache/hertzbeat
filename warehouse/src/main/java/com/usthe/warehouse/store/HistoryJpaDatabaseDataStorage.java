@@ -64,8 +64,10 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         this.historyDao = historyDao;
     }
 
-    @Scheduled( fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
+    @Scheduled( fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void expiredDataCleaner() {
+        log.warn("[jpa-metrics-store]-start running expired data cleaner." +
+                "Please use time series db instead of jpa for better performance");
         String expireTimeStr = jpaProperties.getExpireTime();
         long expireTime = 0;
         try {

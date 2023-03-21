@@ -30,6 +30,15 @@ import org.springframework.lang.NonNull;
 @Slf4j
 public abstract class AbstractRealTimeDataStorage implements DisposableBean {
 
+    protected boolean serverAvailable;
+
+    /**
+     * @return data storage是否可用
+     */
+    public boolean isServerAvailable() {
+        return serverAvailable;
+    }
+
     /**
      * save collect metrics data
      * @param metricsData metrics data
