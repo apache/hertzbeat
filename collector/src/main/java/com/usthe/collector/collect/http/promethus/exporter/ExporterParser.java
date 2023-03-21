@@ -123,7 +123,7 @@ public class ExporterParser {
 
     private void parseMetric(StrBuffer buffer) {
         String metricName = this.readTokenAsMetricName(buffer);
-        if (StringUtils.isEmpty(metricName)) {
+        if (metricName.isEmpty()) {
             log.error("error parse metric, metric name is null, line: {}", buffer.toStr());
             return;
         }
@@ -311,6 +311,7 @@ public class ExporterParser {
      * @return token name
      */
     private String readTokenAsMetricName(StrBuffer buffer) {
+        buffer.skipBlankTabs();
         StringBuilder builder = new StringBuilder();
         if (this.isValidMetricNameStart(buffer.charAt(0))) {
             while (!buffer.isEmpty()) {
@@ -333,6 +334,7 @@ public class ExporterParser {
      * @return label name
      */
     private String readTokenAsLabelName(StrBuffer buffer) {
+        buffer.skipBlankTabs();
         StringBuilder builder = new StringBuilder();
         char c = buffer.read();
         if (this.isValidLabelNameStart(c)) {
