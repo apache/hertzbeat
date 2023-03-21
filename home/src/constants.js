@@ -222,6 +222,11 @@ export const friendsLink = [
     alt: 'hippo4j',
     url: 'https://hippo4j.cn/',
   },
+  {
+    img: 'bugstack_logo.png',
+    alt: 'bugStack',
+    url: 'https://bugstack.cn/',
+  }
 ]
 
 export const usersLink = [

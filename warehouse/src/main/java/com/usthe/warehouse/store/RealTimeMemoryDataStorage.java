@@ -18,6 +18,7 @@
 package com.usthe.warehouse.store;
 
 import com.usthe.common.entity.message.CollectRep;
+import com.usthe.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.NonNull;
@@ -38,9 +39,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
 
     private final Map<String, CollectRep.MetricsData> metricsDataMap;
+    private static final Integer DEFAULT_INIT_SIZE = 1024;
 
-    public RealTimeMemoryDataStorage() {
-        metricsDataMap = new ConcurrentHashMap<>(1024);
+    public RealTimeMemoryDataStorage(WarehouseProperties properties) {
+        int initSize = DEFAULT_INIT_SIZE;
+        if (properties != null && properties.getStore() != null && properties.getStore().getMemory() != null
+                && properties.getStore().getMemory().getInitSize() != null) {
+            initSize = properties.getStore().getMemory().getInitSize();
+        }
+        metricsDataMap = new ConcurrentHashMap<>(initSize);
+        this.serverAvailable = true;
     }
 
     @Override

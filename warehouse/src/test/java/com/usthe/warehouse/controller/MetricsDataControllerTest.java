@@ -83,6 +83,7 @@ class MetricsDataControllerTest {
         final String getUrl = "/api/monitor/" + monitorId + "/metrics/" + metric;
 
         when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(null);
+        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -97,6 +98,7 @@ class MetricsDataControllerTest {
                 .setTime(time)
                 .build();
         when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(metricsData);
+        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

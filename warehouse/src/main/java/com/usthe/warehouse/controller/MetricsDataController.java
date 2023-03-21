@@ -27,6 +27,8 @@ import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.store.AbstractHistoryDataStorage;
 import com.usthe.warehouse.store.AbstractRealTimeDataStorage;
+import com.usthe.warehouse.store.HistoryJpaDatabaseDataStorage;
+import com.usthe.warehouse.store.RealTimeMemoryDataStorage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -88,7 +90,17 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream().findFirst().orElse(null);
+        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
+                .filter(AbstractRealTimeDataStorage::isServerAvailable)
+                .max((o1, o2) -> {
+                    if (o1 instanceof RealTimeMemoryDataStorage) {
+                        return -1;
+                    } else if (o2 instanceof RealTimeMemoryDataStorage) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).orElse(null);
         if (realTimeDataStorage == null) {
             return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "real time store not available"));
         }
@@ -131,7 +143,15 @@ public class MetricsDataController {
             @RequestParam(required = false) Boolean interval
     ) {
         AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).findFirst().orElse(null);
+                .filter(AbstractHistoryDataStorage::isServerAvailable).max((o1, o2) -> {
+                    if (o1 instanceof HistoryJpaDatabaseDataStorage) {
+                        return -1;
+                    } else if (o2 instanceof HistoryJpaDatabaseDataStorage) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).orElse(null);
         if (historyDataStorage == null) {
             return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "time series database not available"));
         }

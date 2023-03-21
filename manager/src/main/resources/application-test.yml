@@ -41,6 +41,9 @@ spring:
 
 warehouse:
   store:
+    jpa:
+      enabled: true
+      expire-time: 1h
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver

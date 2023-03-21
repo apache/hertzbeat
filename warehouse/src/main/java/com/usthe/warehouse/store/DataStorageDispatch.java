@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * dispatch storage metrics data
@@ -46,8 +47,10 @@ public class DataStorageDispatch {
                                List<AbstractRealTimeDataStorage> realTimeDataStorages) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.historyDataStorages = historyDataStorages;
-        this.realTimeDataStorages = realTimeDataStorages;
+        this.historyDataStorages = historyDataStorages.stream()
+                .filter(AbstractHistoryDataStorage::isServerAvailable).collect(Collectors.toList());
+        this.realTimeDataStorages = realTimeDataStorages.stream()
+                .filter(AbstractRealTimeDataStorage::isServerAvailable).collect(Collectors.toList());
         startStoragePersistentData();
         startStorageRealTimeData();
     }
@@ -55,6 +58,9 @@ public class DataStorageDispatch {
     private void startStorageRealTimeData() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-realtime-data-storage");
+            if (realTimeDataStorages != null && realTimeDataStorages.size() > 1) {
+                realTimeDataStorages.removeIf(item -> item instanceof RealTimeMemoryDataStorage);
+            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
@@ -74,6 +80,9 @@ public class DataStorageDispatch {
     protected void startStoragePersistentData() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
+            if (historyDataStorages != null && historyDataStorages.size() > 1) {
+                historyDataStorages.removeIf(item -> item instanceof HistoryJpaDatabaseDataStorage);
+            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
