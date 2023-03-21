@@ -1,4 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService, StartupService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
@@ -20,10 +21,13 @@ export class DefineComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
     private startUpSvc: StartupService,
+    private route: ActivatedRoute,
+    private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   appMenus: Record<string, any[]> = {};
+  appLabel: Record<string, string> = {};
   loading = false;
   code: string = '';
   originalCode: string = '';
@@ -33,9 +37,13 @@ export class DefineComponent implements OnInit {
   deleteLoading = false;
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe((paramMap: ParamMap) => {
+      this.currentApp = paramMap.get('app') || undefined;
+      this.loadAppDefineContent(this.currentApp);
+    });
+    this.loadMenus();
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');
-    this.loadMenus();
   }
 
   loadMenus() {
@@ -51,6 +59,12 @@ export class DefineComponent implements OnInit {
           if (message.code === 0) {
             this.appMenus = {};
             message.data.forEach((app: any) => {
+              if (this.currentApp != null && this.currentApp === app.value) {
+                app.selected = true;
+              } else {
+                app.selected = false;
+              }
+              this.appLabel[app.value] = app.label;
               let menus = this.appMenus[app.category];
               if (menus == undefined) {
                 menus = [app];
@@ -73,7 +87,7 @@ export class DefineComponent implements OnInit {
     this.loading = true;
     this.currentApp = app;
     const getAppYml$ = this.appDefineSvc
-      .getAppDefineYmlContent(app.value)
+      .getAppDefineYmlContent(app)
       .pipe(
         finalize(() => {
           getAppYml$.unsubscribe();
@@ -127,7 +141,7 @@ export class DefineComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('define.delete.confirm', { app: this.currentApp.label }),
+      nzTitle: this.i18nSvc.fanyi('define.delete.confirm', { app: this.appLabel[this.currentApp] }),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
@@ -174,7 +188,7 @@ export class DefineComponent implements OnInit {
   deleteYml() {
     this.deleteLoading = true;
     const saveDefine$ = this.appDefineSvc
-      .deleteAppDefine(this.currentApp.value)
+      .deleteAppDefine(this.currentApp)
       .pipe(
         finalize(() => {
           saveDefine$.unsubscribe();
