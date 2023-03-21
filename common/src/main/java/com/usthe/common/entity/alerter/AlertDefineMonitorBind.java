@@ -42,7 +42,10 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "hzb_alert_define_monitor_bind")
+@Table(name = "hzb_alert_define_monitor_bind", indexes = {
+        @Index(name = "index_alert_define_monitor", columnList = "alertDefineId"),
+        @Index(name = "index_alert_define_monitor", columnList = "monitor_id")
+})
 @Data
 @Builder
 @AllArgsConstructor

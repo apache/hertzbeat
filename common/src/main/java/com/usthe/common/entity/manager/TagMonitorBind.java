@@ -38,7 +38,10 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "hzb_tag_monitor_bind")
+@Table(name = "hzb_tag_monitor_bind", indexes = {
+        @Index(name = "index_tag_monitor", columnList = "tag_id"),
+        @Index(name = "index_tag_monitor", columnList = "monitor_id")
+})
 @Data
 @Builder
 @AllArgsConstructor

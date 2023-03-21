@@ -18,7 +18,12 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  *
  */
 @Entity
-@Table(name = "hzb_history")
+@Table(name = "hzb_history", indexes = {
+        @Index(name = "history_query_index", columnList = "monitorId"),
+        @Index(name = "history_query_index", columnList = "app"),
+        @Index(name = "history_query_index", columnList = "metrics"),
+        @Index(name = "history_query_index", columnList = "metric")
+})
 @Data
 @Builder
 @AllArgsConstructor
