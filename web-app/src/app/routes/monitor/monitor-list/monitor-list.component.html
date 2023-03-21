@@ -9,9 +9,11 @@
   <nz-breadcrumb-item>
     <i nz-icon nzType="reconciliation"></i>
     <span>{{ 'monitors.list' | i18n }}</span>
-    <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5">
-      <span>{{ 'monitor.app.' + app | i18n }}</span>
-    </nz-tag>
+    <a routerLink="/setting/define" [queryParams]="{ app: app }">
+      <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
+        <span>{{ 'monitor.app.' + app | i18n }}</span>
+      </nz-tag>
+    </a>
     <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
       <button nz-button nzType="primary">
         <span>{{ 'common.button.help' | i18n }} </span>
@@ -143,10 +145,12 @@
         </button>
       </td>
       <td nzAlign="center">
-        <nz-tag nzColor="processing">
-          <i nz-icon nzType="cloud"></i>
-          <span>{{ 'monitor.app.' + data.app | i18n }}</span>
-        </nz-tag>
+        <a routerLink="/setting/define" [queryParams]="{ app: data.app }">
+          <nz-tag nzColor="processing" class="hoverClass">
+            <i nz-icon nzType="cloud"></i>
+            <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+          </nz-tag>
+        </a>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
