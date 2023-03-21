@@ -31,7 +31,7 @@
         <caffeine.version>2.9.3</caffeine.version>
         <collector.version>1.0</collector.version>
         <common.version>1.0</common.version>
-        <h2.version>2.1.212</h2.version>
+        <h2.version>2.1.214</h2.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <mysql.version>8.0.28</mysql.version>
