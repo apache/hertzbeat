@@ -45,7 +45,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * @date 2021/11/13 22:19
  */
 @Entity
-@Table(name = "hzb_param")
+@Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
+        uniqueConstraints = @UniqueConstraint(columnNames = {"monitorId", "field"}))
 @Data
 @Builder
 @AllArgsConstructor
