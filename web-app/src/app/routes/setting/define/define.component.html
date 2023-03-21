@@ -9,6 +9,14 @@
   <nz-breadcrumb-item>
     <i nz-icon nzType="code"></i>
     <span>{{ 'menu.extras.define' | i18n }}</span>
+    <nz-tag
+      *ngIf="currentApp !== undefined"
+      style="font-size: 14px; border-radius: 4px; margin-left: 4px"
+      nzColor="#3f51b5"
+      class="hoverClass"
+    >
+      <span>{{ 'monitor.app.' + currentApp | i18n }}</span>
+    </nz-tag>
     <a href="https://hertzbeat.com/docs/advanced/extend-point" target="_blank" style="float: right; margin-right: 5%">
       <button nz-button nzType="primary">
         <span>{{ 'common.button.help' | i18n }} </span>
@@ -24,37 +32,86 @@
     <ul nz-menu nzTheme="light" nzMode="inline" nzInlineCollapsed="false">
       <li nz-submenu [nzTitle]="'menu.monitor.service' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['service']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['service']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.db' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['db']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['db']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.os' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['os']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['os']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.mid' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['mid']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['mid']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.cn' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['cn']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['cn']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.network' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['network']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['network']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
       <li nz-submenu [nzTitle]="'menu.monitor.custom' | i18n">
         <ul>
-          <li nz-menu-item *ngFor="let app of appMenus['custom']; let i = index" (click)="loadAppDefineContent(app)">{{ app.label }}</li>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['custom']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
         </ul>
       </li>
     </ul>
@@ -64,7 +121,7 @@
       <div style="margin: 10px 10px 4px 10px">
         <button nzGhost *ngIf="currentApp != null" nz-button nzType="primary">
           <i nz-icon nzType="file-text" nzTheme="outline"></i>
-          {{ 'app-' + currentApp?.value + '.yml' }}
+          {{ 'app-' + currentApp + '.yml' }}
         </button>
         <button *ngIf="code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
           <i nz-icon nzType="save" nzTheme="outline"></i>

@@ -15,9 +15,11 @@
   <nz-breadcrumb-item>
     <i nz-icon nzType="edit"></i>
     <span>{{ 'monitors.edit' | i18n }} </span>
-    <nz-tag style="font-size: 14px; border-radius: 4px" nzColor="#3f51b5">
-      <span>{{ 'monitor.app.' + monitor.app | i18n }}</span>
-    </nz-tag>
+    <a routerLink="/setting/define" [queryParams]="{ app: monitor.app }">
+      <nz-tag style="font-size: 14px; border-radius: 4px" nzColor="#3f51b5" class="hoverClass">
+        <span>{{ 'monitor.app.' + monitor.app | i18n }}</span>
+      </nz-tag>
+    </a>
     <span>{{ 'monitor' | i18n }}</span>
     <a [href]="'https://hertzbeat.com/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
       <button nz-button nzType="primary">

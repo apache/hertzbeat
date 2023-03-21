@@ -6,7 +6,7 @@ import { SettingTagsComponent } from './tags/tags.component';
 
 const routes: Routes = [
   { path: 'tags', component: SettingTagsComponent },
-  { path: 'define', component: DefineComponent }
+  { path: 'define', component: DefineComponent, data: { titleI18n: 'menu.extras.define' } }
 ];
 
 @NgModule({
