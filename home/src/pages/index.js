@@ -252,7 +252,8 @@ function autoRedirect() {
   let lang = global.navigator?.language || navigator?.userLanguage
   console.log('Current lang is ' + lang)
   if (lang != null && (lang.toLowerCase() === 'zh-cn' || lang.toLowerCase().indexOf('zh') > 0)) {
-    if (sessionStorage.getItem('auto_detect_redirect') !== 'true') {
+    console.log(window.location.pathname);
+    if (sessionStorage.getItem('auto_detect_redirect') !== 'true' && !window.location.pathname.startsWith('/zh-cn', false)) {
       console.log('current lang is zh-cn, redirect to zh-cn')
       sessionStorage.setItem('auto_detect_redirect', 'true')
       window.location.href = '/zh-cn'

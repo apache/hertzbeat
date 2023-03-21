@@ -49,7 +49,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
     public RealTimeRedisDataStorage(WarehouseProperties properties) {
-        initRedisClient(properties);
+        this.serverAvailable = initRedisClient(properties);
     }
 
     @Override
@@ -79,10 +79,10 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         });
     }
 
-    private void initRedisClient(WarehouseProperties properties) {
+    private boolean initRedisClient(WarehouseProperties properties) {
         if (properties == null || properties.getStore() == null || properties.getStore().getRedis() == null) {
             log.error("init error, please config Warehouse redis props in application.yml");
-            throw new IllegalArgumentException("please config Warehouse redis props");
+            return false;
         }
         WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.getStore().getRedis();
         RedisURI.Builder uriBuilder = RedisURI.builder()
@@ -92,8 +92,14 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         if (redisProp.getPassword() != null && !"".equals(redisProp.getPassword())) {
             uriBuilder.withPassword(redisProp.getPassword().toCharArray());
         }
-        redisClient = RedisClient.create(uriBuilder.build());
-        connection = redisClient.connect(new MetricsDataRedisCodec());
+        try {
+            redisClient = RedisClient.create(uriBuilder.build());
+            connection = redisClient.connect(new MetricsDataRedisCodec());
+            return true;
+        } catch (Exception e) {
+            log.error("init redis error {}", e.getMessage(), e);
+        }
+        return false;
     }
 
     @Override
