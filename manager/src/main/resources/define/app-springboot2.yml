@@ -131,7 +131,7 @@ metrics:
 
   - name: thread_state
     visible: false
-    priority: 1
+    priority: 2
     fields:
       - field: state
         type: 1
@@ -152,17 +152,18 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
-    priority: 2
+    priority: 3
     fields:
       - field: state
         type: 1
-      - field: number
+        instance: true
+      - field: size
         type: 0
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - number=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - size=#`$.measurements[?(@.statistic == "VALUE")].value`
     protocol: http
     http:
       # 主机host: ipv4 ipv6 域名
@@ -181,7 +182,7 @@ metrics:
 
   - name: space_name
     visible: false
-    priority: 3
+    priority: 4
     fields:
       - field: id
         type: 1
@@ -202,10 +203,11 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
-    priority: 4
+    priority: 5
     fields:
       - field: space
         type: 1
+        instance: true
       - field: mem_used
         type: 0
         unit: MB
@@ -235,7 +237,7 @@ metrics:
   - name: health
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
-    priority: 4
+    priority: 6
     # 指标组中的具体监控指标
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
