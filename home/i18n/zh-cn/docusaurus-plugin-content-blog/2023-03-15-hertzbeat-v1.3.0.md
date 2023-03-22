@@ -61,60 +61,60 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 
 Feature：
 
-1. [[webapp,doc] monitor detail support basic panel hide #619]() @tomsun28
-2. [add alarm notification period #624]() @Ceilzcx
-3. [[manager] support more mysql monitoring metrics #631]()
-4. [[unit test] Add unit test cases for KeyPairUtil #635]() @Daydreamer-ia
-5. [[test]feature:add AlertDefineService test #638]() @hudongdong129
-6. [[unit test] Add unit test cases for AlertTemplateUtil #639]() @Daydreamer-ia
-7. [[test] add junit WarehouseWorkerPoolTest #642]() @TherChenYang
-8. [task #614 [Add monitoring parameters for Redis Cluster and Sentinel] #647]() @hudongdong129
-9. [A minor refactoring of the class WarehouseWorkerPoolTest #648]() @HattoriHenzo
-10. [[task]feature:Optimize Redis info [section] and Add Redis command statistics #665]() @hudongdong129
-11. [[document]add redis help document #672]() @hudongdong129
-12. [Jupiter dependency is explicitly declared in the main pom file #674]() @HattoriHenzo
-13. [refactor monitor define yml, update doc #675]()
-14. [[task]support more window metrics #676]() @hudongdong129
-15. [support config monitoring define yml in web ui #678]()
-16. [support delete monitoring define yml in web ui #679]()
-17. [[manager] add mysql, oracle, pg db more metrics #683]()
-18. [[warehouse] support jpa store metrics history data #684]()
-19. [[collect]Add redis cluster auto-discovery display metrics information #685]() @hudongdong129
-20. [Convert version into properties #686]() @HattoriHenzo
-21. [[webapp] change default monitor intervals 120s to 60s #708]() @xiaohe428
-22. [[warehouse] support jpa expired metrics data auto cleaner #691]()
-23. [snmp collect protocol support walk operation #699]()
-24. [support v1.0.+ iotdb #702]() @Ceilzcx
-25. [feature support monitor switch network metrics #705]()
-26. [[webapp] change alert define trigger times from max 10 to max 999 #706]() @Grass-Life
-27. [[doc] change default locale i18n from zh-cn to en #725]()
+1. [[webapp,doc] monitor detail support basic panel hide #619](https://github.com/dromara/hertzbeat/pull/619) @tomsun28
+2. [add alarm notification period #624](https://github.com/dromara/hertzbeat/pull/624) @Ceilzcx
+3. [[manager] support more mysql monitoring metrics #631](https://github.com/dromara/hertzbeat/pull/631)
+4. [[unit test] Add unit test cases for KeyPairUtil #635](https://github.com/dromara/hertzbeat/pull/635) @Daydreamer-ia
+5. [[test]feature:add AlertDefineService test #638](https://github.com/dromara/hertzbeat/pull/638) @hudongdong129
+6. [[unit test] Add unit test cases for AlertTemplateUtil #639](https://github.com/dromara/hertzbeat/pull/639) @Daydreamer-ia
+7. [[test] add junit WarehouseWorkerPoolTest #642](https://github.com/dromara/hertzbeat/pull/642) @TherChenYang
+8. [task #614 [Add monitoring parameters for Redis Cluster and Sentinel] #647](https://github.com/dromara/hertzbeat/pull/647) @hudongdong129
+9. [A minor refactoring of the class WarehouseWorkerPoolTest #648](https://github.com/dromara/hertzbeat/pull/648) @HattoriHenzo
+10. [[task]feature:Optimize Redis info [section] and Add Redis command statistics #665](https://github.com/dromara/hertzbeat/pull/665) @hudongdong129
+11. [[document]add redis help document #672](https://github.com/dromara/hertzbeat/pull/672) @hudongdong129
+12. [Jupiter dependency is explicitly declared in the main pom file #674](https://github.com/dromara/hertzbeat/pull/674) @HattoriHenzo
+13. [refactor monitor define yml, update doc #675](https://github.com/dromara/hertzbeat/pull/675)
+14. [[task]support more window metrics #676](https://github.com/dromara/hertzbeat/pull/676) @hudongdong129
+15. [support config monitoring define yml in web ui #678](https://github.com/dromara/hertzbeat/pull/678)
+16. [support delete monitoring define yml in web ui #679](https://github.com/dromara/hertzbeat/pull/679)
+17. [[manager] add mysql, oracle, pg db more metrics #683](https://github.com/dromara/hertzbeat/pull/683)
+18. [[warehouse] support jpa store metrics history data #684](https://github.com/dromara/hertzbeat/pull/684)
+19. [[collect]Add redis cluster auto-discovery display metrics information #685](https://github.com/dromara/hertzbeat/pull/685) @hudongdong129
+20. [Convert version into properties #686](https://github.com/dromara/hertzbeat/pull/686) @HattoriHenzo
+21. [[webapp] change default monitor intervals 120s to 60s #708](https://github.com/dromara/hertzbeat/pull/708) @xiaohe428
+22. [[warehouse] support jpa expired metrics data auto cleaner #691](https://github.com/dromara/hertzbeat/pull/691)
+23. [snmp collect protocol support walk operation #699](https://github.com/dromara/hertzbeat/pull/699)
+24. [support v1.0.+ iotdb #702](https://github.com/dromara/hertzbeat/pull/702) @Ceilzcx
+25. [feature support monitor switch network metrics #705](https://github.com/dromara/hertzbeat/pull/705)
+26. [[webapp] change alert define trigger times from max 10 to max 999 #706](https://github.com/dromara/hertzbeat/pull/706) @Grass-Life
+27. [[doc] change default locale i18n from zh-cn to en #725](https://github.com/dromara/hertzbeat/pull/725)
 
 
 Bugfix.
 
-1. [[collector] bugfix oracle query error: ORA-01000 happen #618]()
-2. [[manager]bugfix:update flink fields name, use _ replace - avoid alert_threshold_expr problem. #622]() @cuipiheqiuqiu
-3. [[webapp] fix rule days not change when edit old notice rule item #628]()
-4. [[webapp] update alert notice modal item span #630]()
-5. [Update issue.md #654]() @ycilry
-6. [The version of Spring Boot should be put in properties #657]() @HattoriHenzo
-7. [Bugfix: EdDSA provider not supported #659]() @caibenxiang
-8. [[script] auto heap dump when oom error #662]()
-9. [bugfix recurring tasks caused by priority processing exception #663]()
-10. [bugfix repetitive collect tasks, reduce init mem size #664]()
-11. [[manager] bugfix define yml file name and the app name are inconsistent #680]()
-12. [[collector] bugfix metrics has a lot of repetition fields #682]()
-13. [fix(sec): upgrade org.apache.kafka:kafka-clients to 3.4.0 #687]() @lifefloating
-14. [optimized code and add iotdb compose config #690]() @Ceilzcx
-15. [[script] modified the linux memory metrics specified script code #719]() @ByteIDance
-16. [Update kubernetes.md #715]() @xiaohe428
-17. [[home,i18n] Update kubernetes.md #716]() @baiban114
-18. [[webapp] fix applist delete button display #693]()
-19. [[warehouse] bugfix metrics data not consume oom #697]()
-20. [[manager] bugfix npe when load old define yml in windows env #701]()
-21. [bugfix job metrics set concurrent modification exception #723]()
-22. [[script] modified the linux memory metrics specified script code #719]()
-23. [[webapp] bugfix the cover of the big screen is too small #724]()
+1. [[collector] bugfix oracle query error: ORA-01000 happen #618](https://github.com/dromara/hertzbeat/pull/618)
+2. [[manager]bugfix:update flink fields name, use _ replace - avoid alert_threshold_expr problem. #622](https://github.com/dromara/hertzbeat/pull/622) @cuipiheqiuqiu
+3. [[webapp] fix rule days not change when edit old notice rule item #628](https://github.com/dromara/hertzbeat/pull/628)
+4. [[webapp] update alert notice modal item span #630](https://github.com/dromara/hertzbeat/pull/630)
+5. [Update issue.md #654](https://github.com/dromara/hertzbeat/pull/654) @ycilry
+6. [The version of Spring Boot should be put in properties #657](https://github.com/dromara/hertzbeat/pull/657) @HattoriHenzo
+7. [Bugfix: EdDSA provider not supported #659](https://github.com/dromara/hertzbeat/pull/659) @caibenxiang
+8. [[script] auto heap dump when oom error #662](https://github.com/dromara/hertzbeat/pull/662)
+9. [bugfix recurring tasks caused by priority processing exception #663](https://github.com/dromara/hertzbeat/pull/663)
+10. [bugfix repetitive collect tasks, reduce init mem size #664](https://github.com/dromara/hertzbeat/pull/664)
+11. [[manager] bugfix define yml file name and the app name are inconsistent #680](https://github.com/dromara/hertzbeat/pull/680)
+12. [[collector] bugfix metrics has a lot of repetition fields #682](https://github.com/dromara/hertzbeat/pull/682)
+13. [fix(sec): upgrade org.apache.kafka:kafka-clients to 3.4.0 #687](https://github.com/dromara/hertzbeat/pull/687) @lifefloating
+14. [optimized code and add iotdb compose config #690](https://github.com/dromara/hertzbeat/pull/690) @Ceilzcx
+15. [[script] modified the linux memory metrics specified script code #719](https://github.com/dromara/hertzbeat/pull/719) @ByteIDance
+16. [Update kubernetes.md #715](https://github.com/dromara/hertzbeat/pull/715) @xiaohe428
+17. [[home,i18n] Update kubernetes.md #716](https://github.com/dromara/hertzbeat/pull/716) @baiban114
+18. [[webapp] fix applist delete button display #693](https://github.com/dromara/hertzbeat/pull/693)
+19. [[warehouse] bugfix metrics data not consume oom #697](https://github.com/dromara/hertzbeat/pull/697)
+20. [[manager] bugfix npe when load old define yml in windows env #701](https://github.com/dromara/hertzbeat/pull/701)
+21. [bugfix job metrics set concurrent modification exception #723](https://github.com/dromara/hertzbeat/pull/723)
+22. [[script] modified the linux memory metrics specified script code #719](https://github.com/dromara/hertzbeat/pull/719)
+23. [[webapp] bugfix the cover of the big screen is too small #724](https://github.com/dromara/hertzbeat/pull/724)
 ----     
 
 升级注意⚠️.
