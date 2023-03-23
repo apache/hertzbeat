@@ -75,6 +75,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
             return;
         }
         RedisAsyncCommands<String, CollectRep.MetricsData> commands = connection.async();
+        commands.select(db);
         commands.hset(key, hashKey, metricsData).thenAccept(response -> {
             if (response) {
                 log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
