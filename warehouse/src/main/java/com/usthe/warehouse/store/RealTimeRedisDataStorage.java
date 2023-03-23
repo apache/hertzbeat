@@ -46,15 +46,20 @@ import java.time.temporal.ChronoUnit;
 public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
 
     private RedisClient redisClient;
+    private final Integer db;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
     public RealTimeRedisDataStorage(WarehouseProperties properties) {
         this.serverAvailable = initRedisClient(properties);
+        this.db = getRedisSelectDb(properties);
     }
-
+    private Integer getRedisSelectDb(WarehouseProperties properties){
+        return properties.getStore().getRedis().getDb();
+    }
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
         RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
+        commands.select(db);
         return commands.hget(String.valueOf(monitorId), metric);
     }
 

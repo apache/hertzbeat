@@ -130,6 +130,8 @@ warehouse:
       host: 127.0.0.1
       port: 6379
       password: 123456
+      #redis使用数据库，默认为DB0
+      db: 0
 
 alerter:
   # custom console url
