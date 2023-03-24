@@ -431,6 +431,18 @@ public class WarehouseProperties {
              * redis 访问密码
              */
             private String password;
+            /**
+             * redis 使用数据库，默认为DB0
+             */
+            private Integer db = 0;
+
+            public Integer getDb() {
+                return db;
+            }
+
+            public void setDb(Integer db) {
+                this.db = db;
+            }
 
             public boolean isEnabled() {
                 return enabled;

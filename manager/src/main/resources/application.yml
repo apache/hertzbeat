@@ -43,7 +43,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: 'metrics'
+        include:
+          - 'metrics'
+          - 'health'
+          - 'env'
     enabled-by-default: on
 
 sureness:
@@ -114,7 +117,7 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # com.usthe.warehouse.config.IotDbVersion: V_0_13 || V_1_00
+      # com.usthe.warehouse.config.IotDbVersion: V_0_13 || V_1_0
       version: V_0_13
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
@@ -130,6 +133,8 @@ warehouse:
       host: 127.0.0.1
       port: 6379
       password: 123456
+      #redis使用数据库，默认为DB0
+      db: 0
 
 alerter:
   # custom console url

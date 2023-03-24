@@ -66,14 +66,7 @@ public class MetricsDataController {
     public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
                                  List<AbstractHistoryDataStorage> historyDataStorages) {
         this.realTimeDataStorages = realTimeDataStorages;
-        this.historyDataStorages = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).collect(Collectors.toList());
-        if (this.historyDataStorages.size() > 1) {
-            this.historyDataStorages.removeIf(item -> item instanceof HistoryJpaDatabaseDataStorage);
-        }
-        if (this.realTimeDataStorages.size() > 1) {
-            this.realTimeDataStorages.removeIf(item -> item instanceof RealTimeMemoryDataStorage);
-        }
+        this.historyDataStorages = historyDataStorages;
     }
 
     @GetMapping("/api/warehouse/storage/status")
@@ -97,7 +90,17 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream().findFirst().orElse(null);
+        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
+                .filter(AbstractRealTimeDataStorage::isServerAvailable)
+                .max((o1, o2) -> {
+                    if (o1 instanceof RealTimeMemoryDataStorage) {
+                        return -1;
+                    } else if (o2 instanceof RealTimeMemoryDataStorage) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).orElse(null);
         if (realTimeDataStorage == null) {
             return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "real time store not available"));
         }
@@ -139,7 +142,16 @@ public class MetricsDataController {
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
-        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream().findFirst().orElse(null);
+        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
+                .filter(AbstractHistoryDataStorage::isServerAvailable).max((o1, o2) -> {
+                    if (o1 instanceof HistoryJpaDatabaseDataStorage) {
+                        return -1;
+                    } else if (o2 instanceof HistoryJpaDatabaseDataStorage) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }).orElse(null);
         if (historyDataStorage == null) {
             return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "time series database not available"));
         }
