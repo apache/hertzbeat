@@ -61,6 +61,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
+    private static final String SHOW_DATABASE = "show databases %s";
+
     /**
      * create database (version 1.0.*)
      */
@@ -115,11 +117,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         boolean available = checkConnection();
         if (available) {
             available = this.createDatabase();
-            if (!available) {
-                return false;
+            if (available) {
+                this.initTtl(properties.getExpireTime());
+                log.info("IotDB session pool init success");
             }
-            this.initTtl(properties.getExpireTime());
-            log.info("IotDB session pool init success");
         }
         return available;
     }
@@ -135,19 +136,26 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     private boolean createDatabase() {
+        SessionDataSetWrapper dataSet = null;
         try {
+            // v1.0.* create database
             if (IotDbVersion.V_1_0.equals(this.version)) {
-                // show databases, 如果已经存在就不执行添加操作
-                // String sql = "show databases";
-                String createDatabaseSql = String.format(CREATE_DATABASE, STORAGE_GROUP);
-                this.sessionPool.executeNonQueryStatement(createDatabaseSql);
+                String showDatabaseSql = String.format(SHOW_DATABASE, STORAGE_GROUP);
+                dataSet = this.sessionPool.executeQueryStatement(showDatabaseSql);
+                // root.hertzbeat database not exist
+                if (!dataSet.hasNext()) {
+                    String createDatabaseSql = String.format(CREATE_DATABASE, STORAGE_GROUP);
+                    this.sessionPool.executeNonQueryStatement(createDatabaseSql);
+                }
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
-            // 已经存在database, 插入报错
             log.error("create database error, error: {}", e.getMessage());
-            return true;
+            return false;
+        } finally {
+            if (dataSet != null) {
+                this.sessionPool.closeResultSet(dataSet);
+            }
         }
-        // 0.13不执行操作
         return true;
     }
 
