@@ -19,51 +19,90 @@ params:
     required: true
     defaultValue: 8848
 metrics:
-  - name: cpu
+  - name: system
     priority: 0
     fields:
       - field: system_cpu_usage
         type: 0
         unit: '%'
+      - field: system_average_load
+        type: 0
+      - field: system_memory_usage
+        type: 0
+        unit: '%'
     aliasFields:
-      - value
+      - cpu
+      - load
+      - mem
     calculates:
-      - system_cpu_usage=value * 100
+      - system_cpu_usage=cpu * 100
+      - system_average_load=load
+      - system_memory_usage=mem * 100
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      # url请求接口路径
-      url: /nacos/actuator/metrics/system.cpu.usage
-      # 请求方式 GET POST PUT DELETE PATCH
-      method: GET
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      parseType: jsonPath
-      parseScript: $.measurements[*]
-  - name: memory
+        host: ^_^host^_^
+        port: ^_^port^_^
+        url: /nacos/v2/ns/operator/metrics?onlyStatus=false
+        method: GET
+        parseType: jsonPath
+        parseScript: $.data
+
+  - name: jvm_gc_count
     priority: 1
     fields:
-      - field: jvm_memory_used
+      - field: total_gc_count
         type: 0
-        unit: 'MB'
     aliasFields:
       - value
     calculates:
-      - jvm_memory_used=value
-    units:
-      - jvm_memory_used=B->MB
+      - total_gc_count=value
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
+        host: ^_^host^_^
+        port: ^_^port^_^
+        url: /nacos/actuator/metrics/jvm.gc.pause
+        method: GET
+        parseType: jsonPath
+        parseScript: $.measurements[0]
+
+  - name: jvm_gc_time
+    priority: 1
+    fields:
+      - field: total_gc_time
+        type: 0
+        unit: 's'
+    aliasFields:
+      - value
+    calculates:
+      - total_gc_time=value
+    protocol: http
+    http:
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
-      url: /nacos/actuator/metrics/jvm.memory.used
-      # 请求方式 GET POST PUT DELETE PATCH
+      url: /nacos/actuator/metrics/jvm.gc.pause
       method: GET
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
-      parseScript: $.measurements[*]
+      parseScript: $.measurements[1]
+
+  - name: nacos
+    priority: 1
+    fields:
+      - field: service_count
+        type: 0
+      - field: client_count
+        type: 0
+    aliasFields:
+      - serviceCount
+      - clientCount
+    calculates:
+      - service_count=serviceCount
+      - client_count=clientCount
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /nacos/v2/ns/operator/metrics?onlyStatus=false
+      method: GET
+      parseType: jsonPath
+      parseScript: $.data
+
