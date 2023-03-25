@@ -798,6 +798,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "vinci-897",
+      "name": "vinci",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55838224?v=4",
+      "profile": "https://github.com/vinci-897",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
