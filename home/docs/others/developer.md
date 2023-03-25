@@ -139,6 +139,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mangel2002"><img src="https://avatars.githubusercontent.com/u/9348020?v=4?s=100" width="100px;" alt="Jangfe"/><br /><sub><b>Jangfe</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=mangel2002" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zqr10159"><img src="https://avatars.githubusercontent.com/u/30048352?v=4?s=100" width="100px;" alt="zqr10159"/><br /><sub><b>zqr10159</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vinci-897"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="vinci"/><br /><sub><b>vinci</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=vinci-897" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/js110"><img src="https://avatars.githubusercontent.com/u/51191863?v=4?s=100" width="100px;" alt="js110"/><br /><sub><b>js110</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=js110" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
