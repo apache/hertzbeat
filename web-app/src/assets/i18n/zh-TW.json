@@ -324,7 +324,7 @@
   "app.theme.dark": "深色主題",
   "app.theme.compact": "緊湊主題",
   "app.role.admin": "管理員",
-  "app.lock": "鎖屏",
+  "app.lock": "解除鎖定",
   "app.lock.placeholder": "輸入任意解鎖",
   "app.passport.desc": "易用友好的開源實時監控系統",
   "app.passport.welcome": "歡迎使用TanCloud監控雲服務",
