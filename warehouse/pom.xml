@@ -29,7 +29,7 @@
         <kafka-clients.version>3.4.0</kafka-clients.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.1.0</greptimedb.version>
+        <greptimedb.version>0.1.1</greptimedb.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 

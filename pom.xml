@@ -29,6 +29,7 @@
         <slf4j.version>1.7.21</slf4j.version>
         <springdoc.version>1.6.11</springdoc.version>
         <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
+        <kafka-clients.version>3.4.0</kafka-clients.version>
         <xml.bind.version>2.3.0</xml.bind.version>
     </properties>
 
@@ -51,6 +52,12 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-ui</artifactId>
                 <version>${springdoc.version}</version>
+            </dependency>
+            <!-- kafka -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka-clients.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
