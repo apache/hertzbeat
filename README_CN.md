@@ -243,6 +243,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vinci-897"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="vinci"/><br /><sub><b>vinci</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=vinci-897" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/js110"><img src="https://avatars.githubusercontent.com/u/51191863?v=4?s=100" width="100px;" alt="js110"/><br /><sub><b>js110</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=js110" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/JavaLionLi"><img src="https://avatars.githubusercontent.com/u/31852897?v=4?s=100" width="100px;" alt="CrazyLionLi"/><br /><sub><b>CrazyLionLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=JavaLionLi" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
