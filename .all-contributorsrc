@@ -816,6 +816,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "JavaLionLi",
+      "name": "CrazyLionLi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31852897?v=4",
+      "profile": "https://github.com/JavaLionLi",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
