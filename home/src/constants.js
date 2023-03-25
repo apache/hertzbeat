@@ -213,6 +213,12 @@ export const dromaraFriends = [
     remoteImg: 'https://neutrino-proxy.oss-cn-hangzhou.aliyuncs.com/logo-text-cross-0.5x.png',
     alt: 'neutrino-proxy',
     url: 'https://gitee.com/dromara/neutrino-proxy',
+  },
+  {
+    img: 'ruoyi_vue_plus_logo.png',
+    remoteImg: 'https://foruda.gitee.com/images/1679673773341074847/178e8451_1766278.png',
+    alt: 'RuoYi-Vue-Plus',
+    url: 'https://javalionli.gitee.io/plus-doc',
   }
 ]
 
