@@ -47,7 +47,6 @@
             <groupId>com.usthe.tancloud</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
-<!--            <scope>provided</scope>-->
         </dependency>
         <!-- validation -->
         <dependency>
@@ -93,12 +92,10 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.0.1-jre</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.9</version>
         </dependency>
         <!--collect-->
         <!-- mysql -->
@@ -162,7 +159,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>4.8.1</version>
+            <version>4.6.1</version>
         </dependency>
         <!--snmp-->
         <dependency>
