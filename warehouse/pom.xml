@@ -26,7 +26,6 @@
     <properties>
         <common.version>1.0</common.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
-        <kafka-clients.version>3.4.0</kafka-clients.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <greptimedb.version>0.1.1</greptimedb.version>
@@ -131,7 +130,6 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>${kafka-clients.version}</version>
         </dependency>
         <!--redis-->
         <dependency>
