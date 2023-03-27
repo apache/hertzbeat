@@ -4,14 +4,18 @@ name:
   zh-CN: Kafka消息系统
   en-US: Kafka Message
 params:
-  # field-字段名称标识符
+  # field-param field key
+  # field-字段名称标识符   
   - field: host
+    # name-param field display i18n name
     # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
     # 是否是必输项 true-必填 false-可选
     required: true
   - field: port
@@ -19,6 +23,7 @@ params:
       zh-CN: 端口
       en-US: Port
     type: number
+    # when type is number, range is required
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
@@ -64,6 +69,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=app-info,id=0
       url: ^_^url^_^
 
@@ -86,6 +92,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: java.lang:type=Runtime
       url: ^_^url^_^
 
@@ -131,6 +138,7 @@ metrics:
         type: 0
     protocol: jmx
     jmx:
+      # host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # 端口
@@ -138,6 +146,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.controller:type=KafkaController,name=ActiveControllerCount
       url: ^_^url^_^
 
@@ -153,6 +162,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=ReplicaManager,name=PartitionCount
       url: ^_^url^_^
 
@@ -168,6 +178,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=ReplicaManager,name=LeaderCount
       url: ^_^url^_^
 
@@ -195,6 +206,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
       url: ^_^url^_^
 
@@ -222,6 +234,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec
       url: ^_^url^_^
 
@@ -249,6 +262,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec
       url: ^_^url^_^
 
@@ -276,6 +290,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=BrokerTopicMetrics,name=ProduceMessageConversionsPerSec
       url: ^_^url^_^
 
@@ -303,5 +318,6 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
+      # jmx mbean 对象名
       objectName: kafka.server:type=BrokerTopicMetrics,name=TotalProduceRequestsPerSec
       url: ^_^url^_^
