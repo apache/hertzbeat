@@ -328,7 +328,7 @@
   "app.theme.dark": "Dark Theme",
   "app.theme.compact": "Compact Theme",
   "app.role.admin": "administrator",
-  "app.lock": "Lock",
+  "app.lock": "Unlock",
   "app.lock.placeholder": "Enter Any To Unlock",
   "app.passport.desc": "An Open Source Real-Time Monitoring Tool",
   "app.passport.welcome": "Welcome To Use TanCloud - Monitoring Cloud Service",

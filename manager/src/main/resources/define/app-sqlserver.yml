@@ -13,60 +13,138 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: sqlserver
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: SqlServer数据库
   en-US: SqlServer DB
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
 params:
+  # field-param field key
+  # field-变量字段标识符
   - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 1433
+  # field-param field key
+  # field-变量字段标识符
   - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # default value
+    # 默认值
     defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
   - field: database
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 用户名
       en-US: Username
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
     limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 密码
       en-US: Password
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: url
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     name:
       zh-CN: URL
       en-US: URL
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
   - name: basic
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
@@ -86,10 +164,14 @@ metrics:
         type: 1
       - field: start_time
         type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jdbc
+    # the config content when protocol is jdbc
     jdbc:
+      # host
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # port
       # 端口
       port: ^_^port^_^
       platform: sqlserver
