@@ -219,6 +219,12 @@ export const dromaraFriends = [
     remoteImg: 'https://foruda.gitee.com/images/1679673773341074847/178e8451_1766278.png',
     alt: 'RuoYi-Vue-Plus',
     url: 'https://javalionli.gitee.io/plus-doc',
+  },
+  {
+    img: 'stream-query_logo.png',
+    remoteImg: 'https://waibi.oss-cn-chengdu.aliyuncs.com/picGo/logo.png',
+    alt: 'stream-query',
+    url: 'https://dromara.gitee.io/stream-query',
   }
 ]
 
