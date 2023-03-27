@@ -142,6 +142,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/JavaLionLi"><img src="https://avatars.githubusercontent.com/u/31852897?v=4?s=100" width="100px;" alt="CrazyLionLi"/><br /><sub><b>CrazyLionLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=JavaLionLi" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.banmajio.com"><img src="https://avatars.githubusercontent.com/u/53471385?v=4?s=100" width="100px;" alt="banmajio"/><br /><sub><b>banmajio</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=banmajio" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
