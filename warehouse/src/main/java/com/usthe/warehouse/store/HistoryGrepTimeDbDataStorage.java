@@ -158,8 +158,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
             writeFuture.whenComplete((result, throwable) -> {
                 if (throwable != null) {
                     log.error("[warehouse greptime]-write data error:{}", result, throwable);
-                } else {
-                    log.error("[warehouse greptime]-write data error:{}", result);
                 }
             });
         } catch (Exception e) {
