@@ -36,7 +36,6 @@
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <mysql.version>8.0.28</mysql.version>
         <nekohtml.version>1.9.22</nekohtml.version>
-        <snake.yaml.version>1.32</snake.yaml.version>
         <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
         <warehouse.version>1.0</warehouse.version>
     </properties>
@@ -104,7 +103,6 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
-            <!--<scope>runtime</scope>-->
         </dependency>
         <!-- email -->
         <dependency>
@@ -120,7 +118,6 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>${snake.yaml.version}</version>
         </dependency>
         <!-- validation -->
         <dependency>
@@ -140,7 +137,6 @@
             <version>${h2.version}</version>
             <scope>runtime</scope>
         </dependency>
-
         <!-- caffeine-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
