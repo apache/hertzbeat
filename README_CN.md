@@ -247,6 +247,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/JavaLionLi"><img src="https://avatars.githubusercontent.com/u/31852897?v=4?s=100" width="100px;" alt="CrazyLionLi"/><br /><sub><b>CrazyLionLi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=JavaLionLi" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.banmajio.com"><img src="https://avatars.githubusercontent.com/u/53471385?v=4?s=100" width="100px;" alt="banmajio"/><br /><sub><b>banmajio</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=banmajio" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://suder.fun"><img src="https://avatars.githubusercontent.com/u/69955165?v=4?s=100" width="100px;" alt="topsuder"/><br /><sub><b>topsuder</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=topsuder" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/richar2022"><img src="https://avatars.githubusercontent.com/u/129016397?v=4?s=100" width="100px;" alt="richar2022"/><br /><sub><b>richar2022</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=richar2022" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
