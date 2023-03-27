@@ -103,7 +103,7 @@ params:
 # 采集指标组配置列表
 metrics:
   # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
-  - # metrics - buildInfo
+  # metrics - buildInfo
   # 监控指标组 - buildInfo
   - name: buildInfo
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
