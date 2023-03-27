@@ -136,7 +136,7 @@ metrics:
     mongodb:
       #mongodb host:
       host: ^_^host^_^
-      #mongodb prot
+      #mongodb port
       port: ^_^port^_^
       #user's username
       username: ^_^username^_^
