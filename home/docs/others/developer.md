@@ -148,6 +148,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/richar2022"><img src="https://avatars.githubusercontent.com/u/129016397?v=4?s=100" width="100px;" alt="richar2022"/><br /><sub><b>richar2022</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=richar2022" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fcb-xiaobo"><img src="https://avatars.githubusercontent.com/u/60566194?v=4?s=100" width="100px;" alt="fcb-xiaobo"/><br /><sub><b>fcb-xiaobo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=fcb-xiaobo" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wenkyzhang"><img src="https://avatars.githubusercontent.com/u/13983669?v=4?s=100" width="100px;" alt="wenkyzhang"/><br /><sub><b>wenkyzhang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wenkyzhang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZangJuxy"><img src="https://avatars.githubusercontent.com/u/71380295?v=4?s=100" width="100px;" alt="ZangJuxy"/><br /><sub><b>ZangJuxy</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ZangJuxy" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
