@@ -17,7 +17,7 @@
 # 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: db
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws..
 app: mysql
 # The monitoring i18n name
 # 监控类型国际化名称
@@ -105,6 +105,7 @@ params:
     # type-param field type(most mapping the html input tag)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # when type is text, use limit to limit string length
     # 当type为text时,用limit表示字符串限制大小
     limit: 20
     # required-true or false
@@ -173,7 +174,7 @@ metrics:
         type: 0
         unit: KB
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
-    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - version
       - version_compile_os
@@ -185,7 +186,7 @@ metrics:
       - table_open_cache
       - innodb_buffer_pool_size
     # mapping and conversion expressions, use these and aliasField above to calculate metrics value
-    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - port=port
@@ -202,10 +203,10 @@ metrics:
     # the config content when protocol is jdbc
     # 协议为jdbc时的配置内容
     jdbc:
-      # jdbc host
-      # jdbc host
+      # mysql host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # port
+      # mysql port
       # 端口
       port: ^_^port^_^
       # platform name
@@ -229,6 +230,7 @@ metrics:
       # sql
       # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
+      #JDBC url
       url: ^_^url^_^
 
   - name: cache
