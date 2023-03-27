@@ -371,7 +371,7 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
-      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
+      # todo xmlPath-xmlPath script,PromQL-PromQL data rule
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
       parseType: PromQL
