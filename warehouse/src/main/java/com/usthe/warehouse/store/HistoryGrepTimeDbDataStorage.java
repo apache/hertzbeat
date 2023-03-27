@@ -108,9 +108,9 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         String table = metricsData.getApp() + "_" + metricsData.getMetrics();
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
-        List<SemanticType> semanticTypes = Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp);
-        List<ColumnDataType> dataTypes = Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64);
-        List<String> columnNames = Arrays.asList("monitor_id", "instance", "ts");
+        List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
+        List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
+        List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
 
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
