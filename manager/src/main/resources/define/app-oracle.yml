@@ -323,7 +323,8 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: multiRow
-      sql: SELECT a.tablespace_name AS tablespace_name, a.bytes AS total, b.bytes AS used, c.bytes AS free , b.bytes * 100 / a.bytes AS used_percentage , c.bytes * 100 / a.bytes AS free_percentage FROM sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c WHERE a.tablespace_name = b.tablespace_name AND a.tablespace_name = c.tablespace_name
+      # DBA_TABLESPACE_USAGE_METRICS可以查出表空间used_max值，它的大小计算单位是block，1kb=8block，把block*8/1024转化为MB单位
+      sql: "SELECT tablespace_name,ROUND ( (TABLESPACE_SIZE * 8 / 1024), 0) AS total,ROUND ( (USED_SPACE * 8 / 1024), 0) AS used,ROUND ( ( (TABLESPACE_SIZE * 8 / 1024) - (USED_SPACE * 8 / 1024)), 0) AS free,ROUND ( (USED_PERCENT), 0) AS used_percentage,100 - ROUND ( (USED_PERCENT), 0) AS free_percentage FROM sys.dba_tablespace_usage_metrics ORDER BY used_percent DESC"
       url: ^_^url^_^
 
   - name: process

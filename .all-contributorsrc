@@ -722,7 +722,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/10580997?v=4",
       "profile": "https://github.com/aoshiguchen",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -824,6 +825,78 @@
       "profile": "https://github.com/JavaLionLi",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "banmajio",
+      "name": "banmajio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53471385?v=4",
+      "profile": "http://www.banmajio.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "topsuder",
+      "name": "topsuder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69955165?v=4",
+      "profile": "https://suder.fun",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "richar2022",
+      "name": "richar2022",
+      "avatar_url": "https://avatars.githubusercontent.com/u/129016397?v=4",
+      "profile": "https://github.com/richar2022",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "fcb-xiaobo",
+      "name": "fcb-xiaobo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60566194?v=4",
+      "profile": "https://github.com/fcb-xiaobo",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "wenkyzhang",
+      "name": "wenkyzhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13983669?v=4",
+      "profile": "https://github.com/wenkyzhang",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ZangJuxy",
+      "name": "ZangJuxy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71380295?v=4",
+      "profile": "https://github.com/ZangJuxy",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "l646505418",
+      "name": "l646505418",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50475131?v=4",
+      "profile": "https://github.com/l646505418",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Carpe-Wang",
+      "name": "Carpe-Wang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78642589?v=4",
+      "profile": "http://www.carpewang.com",
+      "contributions": [
+        "code"
       ]
     }
   ],

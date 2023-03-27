@@ -67,7 +67,7 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver -->
+        <!-- taos-jdbc driver -->
         <dependency>
             <groupId>com.taosdata.jdbc</groupId>
             <artifactId>taos-jdbcdriver</artifactId>
@@ -141,13 +141,6 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!-- feign -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>${spring-cloud-starter-openfeign.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
