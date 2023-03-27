@@ -77,13 +77,6 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- etcd -->
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-            <version>${jetcd-core.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- 表达式计算 -->
         <dependency>
             <groupId>com.googlecode.aviator</groupId>
@@ -94,17 +87,14 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>${protobuf-java-util.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
