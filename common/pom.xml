@@ -77,13 +77,6 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- etcd -->
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-            <version>${jetcd-core.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- 表达式计算 -->
         <dependency>
             <groupId>com.googlecode.aviator</groupId>

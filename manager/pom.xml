@@ -103,7 +103,6 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
-            <!--<scope>runtime</scope>-->
         </dependency>
         <!-- email -->
         <dependency>
@@ -138,7 +137,6 @@
             <version>${h2.version}</version>
             <scope>runtime</scope>
         </dependency>
-
         <!-- caffeine-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
