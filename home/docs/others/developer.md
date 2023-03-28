@@ -157,6 +157,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/huangcanda"><img src="https://avatars.githubusercontent.com/u/4470566?v=4?s=100" width="100px;" alt="huangcanda"/><br /><sub><b>huangcanda</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=huangcanda" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.zrkizzy.com"><img src="https://avatars.githubusercontent.com/u/85340613?v=4?s=100" width="100px;" alt="世纪末的架构师"/><br /><sub><b>世纪末的架构师</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Architect-Java" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShuningWan"><img src="https://avatars.githubusercontent.com/u/31086770?v=4?s=100" width="100px;" alt="ShuningWan"/><br /><sub><b>ShuningWan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ShuningWan" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrYZhou"><img src="https://avatars.githubusercontent.com/u/44339602?v=4?s=100" width="100px;" alt="MrYZhou"/><br /><sub><b>MrYZhou</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=MrYZhou" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
