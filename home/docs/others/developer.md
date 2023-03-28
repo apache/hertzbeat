@@ -155,6 +155,7 @@ Thanks these wonderful people, welcome to join us:  [Contributor Guide](contribu
       <td align="center" valign="top" width="14.28%"><a href="http://www.carpewang.com"><img src="https://avatars.githubusercontent.com/u/78642589?v=4?s=100" width="100px;" alt="Carpe-Wang"/><br /><sub><b>Carpe-Wang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Carpe-Wang" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/moshu023"><img src="https://avatars.githubusercontent.com/u/48593205?v=4?s=100" width="100px;" alt="莫枢"/><br /><sub><b>莫枢</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=moshu023" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/huangcanda"><img src="https://avatars.githubusercontent.com/u/4470566?v=4?s=100" width="100px;" alt="huangcanda"/><br /><sub><b>huangcanda</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=huangcanda" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.zrkizzy.com"><img src="https://avatars.githubusercontent.com/u/85340613?v=4?s=100" width="100px;" alt="世纪末的架构师"/><br /><sub><b>世纪末的架构师</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Architect-Java" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
