@@ -28,7 +28,7 @@
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.1.1</greptimedb.version>
+        <greptimedb.version>0.1.2</greptimedb.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -80,6 +80,11 @@
             <version>${iotdb-session.version}</version>
         </dependency>
         <!-- GrepTimeDB-->
+<!--        <dependency>-->
+<!--            <groupId>io.greptime</groupId>-->
+<!--            <artifactId>greptimedb-all</artifactId>-->
+<!--            <version>0.1.1</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.greptime</groupId>
             <artifactId>greptimedb-protocol</artifactId>
