@@ -13,34 +13,76 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws..
 app: redis
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: Redis数据库
   en-US: Redis
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by
 params:
+  # field-param field key
+  # field-变量字段标识符
   - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 6379
+  # field-param field key
+  # field-变量字段标识符
   - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 超时时间
       en-US: Timeout
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,100000]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 3000
+  # field-param field key
+  # field-变量字段标识符
   - field: username
     name:
       zh-CN: 用户名
@@ -48,16 +90,31 @@ params:
     type: text
     limit: 20
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: password
     name:
       zh-CN: 密码
       en-US: Password
     type: password
     required: false
+
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
+  # metrics - server
+  # 监控指标组 - server
   - name: server
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: redis_version
         type: 1
       - field: redis_git_sha1
@@ -104,16 +161,37 @@ metrics:
         type: 1
       - field: io_threads_active
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
-
+  # metrics - clients
+  # 监控指标组 - clients
   - name: clients
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
+    # collect metrics content
+    # 具体监控指标列表
     fields:
       - field: connected_clients
         type: 0
@@ -138,10 +216,19 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       timeout: ^_^timeout^_^
-
+  # metrics - memory
+  # 监控指标组 - memory
   - name: memory
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 2
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: used_memory
         type: 0
       - field: used_memory_human
@@ -233,17 +320,41 @@ metrics:
         type: 0
       - field: lazyfreed_objects
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - persistence
+  # 监控指标组 - persistence
   - name: persistence
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 3
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: loading
         type: 0
       - field: current_cow_size
@@ -290,17 +401,41 @@ metrics:
         type: 0
       - field: module_fork_last_cow_size
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - stats
+  # 监控指标组 - stats
   - name: stats
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 4
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: total_connections_received
         type: 0
       - field: total_commands_processed
@@ -377,17 +512,41 @@ metrics:
         type: 0
       - field: io_threaded_writes_processed
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - replication
+  # 监控指标组 - replication
   - name: replication
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 5
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: role
         type: 1
       - field: connected_slaves
@@ -410,17 +569,41 @@ metrics:
         type: 0
       - field: repl_backlog_histlen
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - cpu
+  # 监控指标组 - cpu
   - name: cpu
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 6
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: used_cpu_sys
         type: 0
       - field: used_cpu_user
@@ -433,45 +616,113 @@ metrics:
         type: 0
       - field: used_cpu_user_main_thread
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - errorstats
+  # 监控指标组 - errorstats
   - name: errorstats
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 8
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: errorstat_ERR
         type: 1
       - field: errorstat_MISCONF
         type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - cluster
+  # 监控指标组 - cluster
   - name: cluster
+    # collect metrics content
+    # 具体监控指标列表
     priority: 9
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: cluster_enabled
         type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
+  # metrics - commandstats
+  # 监控指标组 - commandstats
   - name: commandstats
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 9
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: cmdstat_set
         type: 1
       - field: cmdstat_get
@@ -492,18 +743,41 @@ metrics:
         type: 1
       - field: cmdstat_llen
         type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
-
+  # metrics - keyspace
+  # 监控指标组 - keyspace
   - name: keyspace
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 9
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: db0
         type: 1
       - field: db1
@@ -536,10 +810,24 @@ metrics:
         type: 1
       - field: db15
         type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
+    # the config content when protocol is redis
+    # 协议为redis时的配置内容
     redis:
+      # redis host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # redis port
+      # 端口
       port: ^_^port^_^
+      # username
+      # 用户名
       username: ^_^username^_^
+      # password
+      # 密码
       password: ^_^password^_^
+      # timeout unit：ms
+      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
