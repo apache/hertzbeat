@@ -12,6 +12,11 @@
 name: "CodeQL"
 
 on:
+  pull_request:
+    branches: [ master, dev ]
+    paths:
+      - '**/*.java'
+      - '**/*.ts'
   schedule:
     - cron: '21 13 * * 4'
 
@@ -21,9 +26,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        language: [ 'java' ]
+        language: [ 'java', 'typescript' ]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
