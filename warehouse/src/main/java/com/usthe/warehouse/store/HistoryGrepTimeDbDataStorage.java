@@ -21,22 +21,20 @@ import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
 import com.usthe.warehouse.config.WarehouseProperties;
+import io.greptime.models.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.iotdb.rpc.IoTDBConnectionException;
+import org.apache.iotdb.rpc.StatementExecutionException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
-import io.greptime.models.ColumnDataType;
-import io.greptime.models.Err;
-import io.greptime.models.Result;
-import io.greptime.models.SemanticType;
-import io.greptime.models.TableName;
-import io.greptime.models.TableSchema;
-import io.greptime.models.WriteOk;
-import io.greptime.models.WriteRows;
 import io.greptime.options.GreptimeOptions;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * IoTDB data storage
@@ -65,7 +63,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String SHOW_STORAGE_GROUP = "show storage group";
 
     private static final String QUERY_HISTORY_SQL
-            = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
+            = "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= now() - INTERVAL %s order by ts desc;";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
             = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h) WITHOUT NULL ANY";
 
@@ -105,7 +103,8 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         String monitorId = String.valueOf(metricsData.getId());
-        String table = metricsData.getApp() + "_" + metricsData.getMetrics();
+        //表名添加monitorId区分
+        String table = metricsData.getApp() + "_" + metricsData.getMetrics()+ "_" +monitorId;
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
         List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
@@ -114,6 +113,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
+            log.info("Field " + field.getName());
             semanticTypes.add(SemanticType.Field);
             columnNames.add(field.getName());
             // handle field type
@@ -171,12 +171,53 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
+                    "\t--------------Please Config GrepTime--------------\n" +
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
+
+        String[] numberAndTime = history.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+        if (Objects.equals(numberAndTime[1], "h")){
+            history = "'"+numberAndTime[0]+"'" +" HOUR";
+        }
+        String table = app + "_" + metrics + "_" + monitorId;
+        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
+        log.info("selectSql: {}", selectSql);
+        QueryRequest request = QueryRequest.newBuilder() //
+                .exprType(SelectExprType.Sql) //
+                .ql(selectSql) //
+                .build();
+        Result<QueryOk, Err> result = null;
+        try {
+            CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
+            result = future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error(e.getMessage());
+        }
+
+        if (result.isOk()) {
+            QueryOk queryOk = result.getOk();
+            SelectRows rows = queryOk.getRows();
+            List<Map<String, Object>> maps = rows.collectToMaps();
+            List<Value> valueList;
+            for (Map<String, Object> map : maps) {
+                log.info("Query row: {}", map);
+                String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+                valueList.add(new Value(strValue, (long)map.get("ts")));
+
+
+            }
+        } else {
+            log.error("Failed to query: {}", result.getErr());
+        }
+
         return instanceValuesMap;
     }
+
+
+
+
 
 
     @Override
