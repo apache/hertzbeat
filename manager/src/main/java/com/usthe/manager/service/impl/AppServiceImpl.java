@@ -182,11 +182,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public String getMonitorDefineFileContent(String app) {
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
-        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+        String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (!defineAppFile.exists() || !defineAppFile.isFile()) {
             classpath = this.getClass().getResource(File.separator).getPath();
-            defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+            defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
             defineAppFile = new File(defineAppPath);
             if (!defineAppFile.exists() || !defineAppFile.isFile()) {
                 try {
@@ -225,7 +225,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         // app params verify
         verifyDefineAppContent(app);
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
-        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app.getApp() + ".yml";
+        String defineAppPath = classpath + "define" + File.separator + "app-" + app.getApp() + ".yml";
         File defineAppFile = new File(defineAppPath);
         try {
             FileUtils.writeStringToFile(defineAppFile, ymlContent, StandardCharsets.UTF_8, false);
@@ -253,7 +253,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
         String classpath = this.getClass().getClassLoader().getResource("").getPath();
-        String defineAppPath = classpath + File.separator + "define" + File.separator + "app-" + app + ".yml";
+        String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (defineAppFile.exists() && defineAppFile.isFile()) {
             defineAppFile.delete();
@@ -273,7 +273,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             loadFromFile = false;
         } else {
             String classpath = rootUrl.getPath();
-            defineAppPath = classpath + File.separator + "define";
+            defineAppPath = classpath + "define";
             directory = new File(defineAppPath);
             if (!directory.exists() || directory.listFiles() == null) {
                 rootUrl = this.getClass().getResource(File.separator);
@@ -281,7 +281,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     loadFromFile = false;
                 } else {
                     classpath = rootUrl.getPath();
-                    defineAppPath = classpath + File.separator + "define";
+                    defineAppPath = classpath + "define";
                     directory = new File(defineAppPath);
                     if (!directory.exists() || directory.listFiles() == null) {
                         loadFromFile = false;
