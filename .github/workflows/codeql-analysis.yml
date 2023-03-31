@@ -17,8 +17,6 @@ on:
     paths:
       - '**/*.java'
       - '**/*.ts'
-  schedule:
-    - cron: '21 13 * * 4'
 
 jobs:
   analyze:
