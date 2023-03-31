@@ -106,7 +106,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('1d');
+              this.loadData('1D');
             }
           },
           myPeriod1w: {
@@ -119,7 +119,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('1w', true);
+              this.loadData('1W', true);
             }
           },
           myPeriod4w: {
@@ -132,7 +132,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('4w', true);
+              this.loadData('1M', true);
             }
           },
           myPeriod3m: {
@@ -145,7 +145,7 @@ export class MonitorDataChartComponent implements OnInit {
               }
             },
             onclick: () => {
-              this.loadData('12w', true);
+              this.loadData('3M', true);
             }
           },
           myRefresh: {
