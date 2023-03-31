@@ -40,10 +40,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * IoTDB data storage
+ * greptimeDB data storage
  *
- * @author ceilzcx
- * @since 2022/10/12
+ * @author zqr10159 tomsun28
+ * @since 2023/03/25
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.greptime",
@@ -55,16 +55,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
      * storage database
      */
     private static final String STORAGE_DATABASE = "hertzbeat";
-    private static final String INSTANCE ="instance";
-
-    private static final String SET_TTL = "set ttl to %s %s";
-
-    private static final String CANCEL_TTL = "unset ttl to %s";
-
-    private static final String SHOW_DEVICES = "SHOW DEVICES %s";
-
-    private static final String SHOW_STORAGE_GROUP = "show storage group";
-
     private static final String QUERY_HISTORY_SQL
             = "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s order by ts desc;";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
@@ -91,7 +81,11 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         }
         return createDatabase();
     }
-    // 检查数据库是否存在；如果不存在，则创建该数据库
+
+    /**
+     * Check if the database exists; If it does not exist, the database is created
+     * 检查数据库是否存在；如果不存在，则创建该数据库
+     */
     private boolean createDatabase() {
         // 查询现有数据库
         QueryRequest showDatabases = QueryRequest.newBuilder()
@@ -110,6 +104,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
+        // Check if the database exists;
         // 检查现有数据库是否包括“hertzbeat”
         boolean isDatabaseExist = false;
         if (result != null && result.isOk()) {
@@ -126,6 +121,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
         }
+        // If it does not exist, create database
         // 如果“hertzbeat”数据库不存在，则创建该数据库
         if (!isDatabaseExist) {
             QueryRequest createDatabase = QueryRequest.newBuilder()
