@@ -24,7 +24,7 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**官网: [hertzbeat.com](https://hertzbeat.com)**
+**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
 **云服务: [tancloud.cn](https://tancloud.cn)**
 

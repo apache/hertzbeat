@@ -24,7 +24,7 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**Home: [hertzbeat.com](https://hertzbeat.com)**
+**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
 **Cloud: [tancloud.cn](https://tancloud.cn)**
 
