@@ -265,6 +265,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/suncqujsj"><img src="https://avatars.githubusercontent.com/u/8012932?v=4?s=100" width="100px;" alt="suncqujsj"/><br /><sub><b>suncqujsj</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=suncqujsj" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sunqinbo"><img src="https://avatars.githubusercontent.com/u/1428540?v=4?s=100" width="100px;" alt="sunqinbo"/><br /><sub><b>sunqinbo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=sunqinbo" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
