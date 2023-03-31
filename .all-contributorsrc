@@ -952,6 +952,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "sunqinbo",
+      "name": "sunqinbo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1428540?v=4",
+      "profile": "https://github.com/sunqinbo",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
