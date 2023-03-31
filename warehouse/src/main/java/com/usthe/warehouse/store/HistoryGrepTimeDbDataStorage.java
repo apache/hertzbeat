@@ -20,13 +20,11 @@ package com.usthe.warehouse.store;
 import com.usthe.common.entity.dto.Value;
 import com.usthe.common.entity.message.CollectRep;
 import com.usthe.common.util.CommonConstants;
+import com.usthe.common.util.TimePeriodUtil;
 import com.usthe.warehouse.config.WarehouseProperties;
 import io.greptime.models.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.flight.FlightRuntimeException;
-import org.apache.iotdb.rpc.IoTDBConnectionException;
-import org.apache.iotdb.rpc.StatementExecutionException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
@@ -34,7 +32,9 @@ import io.greptime.options.GreptimeOptions;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -66,7 +66,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String SHOW_STORAGE_GROUP = "show storage group";
 
     private static final String QUERY_HISTORY_SQL
-            = "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= now() - INTERVAL %s order by ts desc;";
+            = "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s order by ts desc;";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
             = "SELECT first(%s), avg(%s), min(%s), max(%s) FROM %s WHERE instance = %s AND ts >= now - %s INTERVAL '4' HOUR";
     private static final String TABLE_NOT_EXIST = "not exist";
@@ -225,9 +225,18 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
-        history = getHistory(history);
+        long expireTime = 0;
+        try {
+            TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+            ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+            expireTime = dateTime.toEpochSecond() * 1000;
+        } catch (Exception e) {
+            log.error("parse history time error: {}. use default: 6h", e.getMessage());
+            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
+            expireTime = dateTime.toEpochSecond() * 1000;
+        }
         String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
+        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, expireTime);
         log.debug("selectSql: {}", selectSql);
         QueryRequest request = QueryRequest.newBuilder()
                 .exprType(SelectExprType.Sql)
@@ -264,33 +273,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String instance, String history) {
         return null;
-    }
-    private static String getHistory(String history) {
-        String[] parts = history.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
-        String number = parts[0];
-        String time = parts[1];
-        switch (time) {
-            case "h":
-                time = "HOUR";
-                break;
-            case "d":
-                time = "DAY";
-                break;
-            case "w":
-                time = "WEEK";
-                break;
-            case "s":
-                time = "SECOND";
-                break;
-            case "m":
-                time = "MINUTE";
-                break;
-            default:
-                number = "6";
-                time = "HOUR";
-                break;
-        }
-        return String.format("'%s' %s", number, time);
     }
 
     @Override
