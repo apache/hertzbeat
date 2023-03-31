@@ -19,6 +19,8 @@ package org.dromara.hertzbeat.alert.calculate;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import com.googlecode.aviator.exception.CompileExpressionErrorException;
+import com.googlecode.aviator.exception.ExpressionRuntimeException;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
@@ -212,8 +214,16 @@ public class CalculateAlarm {
                     for (AlertDefine define : defines) {
                         String expr = define.getExpr();
                         try {
-                            Expression expression = AviatorEvaluator.compile(expr, true);
-                            Boolean match = (Boolean) expression.execute(fieldValueMap);
+                            Boolean match = false;
+                            try {
+                                Expression expression = AviatorEvaluator.compile(expr, true);
+                                match = (Boolean) expression.execute(fieldValueMap);
+                            } catch (CompileExpressionErrorException compileException) {
+                                log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
+                            } catch (ExpressionRuntimeException expressionRuntimeException) {
+                                log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
+                            }
+
                             if (match != null && match) {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                                 // 阈值规则匹配，判断已触发阈值次数，触发告警
@@ -261,7 +271,7 @@ public class CalculateAlarm {
                                 break;
                             }
                         } catch (Exception e) {
-                            log.warn(e.getMessage());
+                            log.warn(e.getMessage(), e);
                         }
                     }
                 }
