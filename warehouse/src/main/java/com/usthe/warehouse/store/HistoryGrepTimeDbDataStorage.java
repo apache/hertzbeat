@@ -228,84 +228,42 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         history = getHistory(history);
         String table = app + "_" + metrics + "_" + monitorId;
         String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
-        log.info("selectSql: {}", selectSql);
+        log.debug("selectSql: {}", selectSql);
         QueryRequest request = QueryRequest.newBuilder()
                 .exprType(SelectExprType.Sql)
                 .ql(selectSql)
                 .build();
-        Result<QueryOk, Err> result = null;
         try {
             CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
-            result = future.get();
+            Result<QueryOk, Err> result = future.get();
+            if (result != null && result.isOk()) {
+                QueryOk queryOk = result.getOk();
+                SelectRows rows = queryOk.getRows();
+                List<Map<String, Object>> maps = rows.collectToMaps();
+                List<Value> valueList;
+                for (Map<String, Object> map : maps) {
+                    String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                    valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+                    valueList.add(new Value(strValue, (long) map.get("ts")));
+                }
+            }
         } catch (FlightRuntimeException e) {
             String msg = e.getMessage();
-            if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
+            if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
                 valueList.add(new Value(null, System.currentTimeMillis()));
-                log.info("TABLE_NOT_EXIST: {}",valueList);
-                log.warn(msg);
+                log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-
-        if (result != null && result.isOk()) {
-            QueryOk queryOk = result.getOk();
-            SelectRows rows = queryOk.getRows();
-            List<Map<String, Object>> maps = rows.collectToMaps();
-            List<Value> valueList;
-            for (Map<String, Object> map : maps) {
-                String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
-                valueList.add(new Value(strValue, (long) map.get("ts")));
-            }
-        }
-        log.info("instanceValuesMap: {}",instanceValuesMap);
         return instanceValuesMap;
     }
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String instance, String history) {
-        Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
-        if (!isServerAvailable()) {
-            log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-                    "\t--------------Please Config GrepTime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
-            return instanceValuesMap;
-        }
-        history = getHistory(history);
-        String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
-        log.info("selectSql: {}", selectSql);
-        QueryRequest request = QueryRequest.newBuilder()
-                .exprType(SelectExprType.Sql)
-                .ql(selectSql)
-                .build();
-        Result<QueryOk, Err> result = null;
-        try {
-            CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
-            result = future.get();
-        } catch (FlightRuntimeException e) {
-            String msg = e.getMessage();
-            if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
-                log.warn(msg);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        List<Value> valueList;
-        if (result != null && result.isOk()) {
-            QueryOk queryOk = result.getOk();
-            SelectRows rows = queryOk.getRows();
-            List<Map<String, Object>> maps = rows.collectToMaps();
-            for (Map<String, Object> map : maps) {
-                String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
-                valueList.add(new Value(strValue, (long) map.get("ts")));
-            }
-        }
-        return instanceValuesMap;
+        return null;
     }
     private static String getHistory(String history) {
         String[] parts = history.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
