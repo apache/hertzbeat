@@ -16,7 +16,7 @@
  */
 
 syntax = "proto3";
-package com.usthe.common.entity.message;
+package org.dromara.hertzbeat.common.entity.message;
 
 message MetricsData
 {
