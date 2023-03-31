@@ -37,7 +37,7 @@ sidebar_label: 贡献者指南
 
 1. 需要`maven3+`, `java11+`和`lombok`环境
 2. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
-3. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`
+3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
 
 - 前端启动
 
@@ -115,7 +115,7 @@ git pull upstream master
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [HertzBeat答疑网站](https://support.qq.com/products/379369)
 

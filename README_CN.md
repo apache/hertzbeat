@@ -292,7 +292,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目�
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)   
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)    
 

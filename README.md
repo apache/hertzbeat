@@ -287,7 +287,7 @@ HertzBeat is a project under the [Dromara Open Source Community](https://dromara
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)   
 
