@@ -19,7 +19,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>com.usthe.tancloud</groupId>
+        <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -43,25 +43,25 @@
     <dependencies>
         <!-- common -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>common</artifactId>
             <version>${common.version}</version>
         </dependency>
         <!-- data warehouse -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>warehouse</artifactId>
             <version>${warehouse.version}</version>
         </dependency>
         <!-- alerter -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>alerter</artifactId>
             <version>${alerter.version}</version>
         </dependency>
         <!-- collector -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>collector</artifactId>
             <version>${collector.version}</version>
         </dependency>
