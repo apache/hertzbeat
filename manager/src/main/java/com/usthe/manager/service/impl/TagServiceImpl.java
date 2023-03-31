@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author tom
@@ -68,4 +69,11 @@ public class TagServiceImpl implements TagService {
     public void deleteTags(HashSet<Long> ids) {
         tagDao.deleteTagsByIdIn(ids);
     }
+
+    @Override
+    public List<Tag> listTag(Set<Long> ids) {
+        return tagDao.findByIdIn(ids);
+    }
+
+
 }

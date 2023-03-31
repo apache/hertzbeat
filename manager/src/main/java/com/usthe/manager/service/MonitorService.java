@@ -17,15 +17,18 @@
 
 package com.usthe.manager.service;
 
-import com.usthe.manager.pojo.dto.AppCount;
-import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.common.entity.manager.Monitor;
 import com.usthe.common.entity.manager.Param;
+import com.usthe.manager.pojo.dto.AppCount;
+import com.usthe.manager.pojo.dto.MonitorDto;
 import com.usthe.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -169,17 +172,37 @@ public interface MonitorService {
 
     /**
      * 新增一个可选指标的监控
-     * @param metrics   用户指标
-     * @param monitor   监控提示
-     * @param params    配置参数
+     *
+     * @param metrics 用户指标
+     * @param monitor 监控提示
+     * @param params  配置参数
      */
     void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params);
 
     /**
      * 根据App名称获取可监控指标，不传为获取全部指标
+     *
      * @param app app name
      * @return metrics
      */
     List<String> getMonitorMetrics(String app);
+
+    /**
+     * Export Monitoring Configuration
+     * 导出监控配置
+     *
+     * @param configList 监控配置ID列表
+     * @param type       文件类型
+     * @param res        response
+     */
+    void export(List<Long> configList, String type, HttpServletResponse res) throws IOException;
+
+    /**
+     * Import Monitoring Configuration
+     * 导入监控配置
+     *
+     * @param file 配置文件
+     */
+    void importConfig(MultipartFile file) throws IOException;
 
 }

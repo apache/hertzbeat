@@ -17,59 +17,50 @@
 
 package com.usthe.manager.service;
 
-import com.usthe.common.entity.manager.Tag;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
-
-import java.util.HashSet;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
-import java.util.Set;
 
 /**
- * 标签服务
+ * Configuration Import Export
+ * 配置导入导出
  *
- * @author tom
- * @date 2022/5/1 11:22
+ * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
+ * Created by gcdd1993 on 2023/3/31
  */
-public interface TagService {
+public interface ImExportService {
 
     /**
-     * new tags
+     * Import Configuration
+     * 导入配置
      *
-     * @param tags tag
+     * @param is 输入流
      */
-    void addTags(List<Tag> tags);
+    void importConfig(InputStream is);
 
     /**
-     * update tag
+     * Export Configuration
+     * 导出配置
      *
-     * @param tag Tag
+     * @param os         输出流
+     * @param configList 配置列表
      */
-    void modifyTag(Tag tag);
+    void exportConfig(OutputStream os, List<Long> configList);
 
     /**
-     * get tag page list
+     * Export file type
+     * 导出文件类型
      *
-     * @param specification 查询条件
-     * @param pageRequest   分页条件
-     * @return Tags
+     * @return 文件类型
      */
-    Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);
+    String type();
 
     /**
-     * delete tags
+     * Get Export File Name
+     * 获取导出文件名
      *
-     * @param ids tag id list
+     * @return 文件名
      */
-    void deleteTags(HashSet<Long> ids);
-
-    /**
-     * list tags
-     *
-     * @param ids tag id list
-     * @return tag list
-     */
-    List<Tag> listTag(Set<Long> ids);
+    String getFileName();
 
 }

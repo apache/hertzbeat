@@ -23,34 +23,38 @@ import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
 import com.usthe.common.entity.job.Configmap;
 import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
+import com.usthe.common.entity.manager.Monitor;
+import com.usthe.common.entity.manager.Param;
+import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.common.entity.manager.Tag;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.util.AesUtil;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.IntervalExpressionUtil;
-import com.usthe.common.util.IpDomainUtil;
-import com.usthe.common.util.SnowFlakeIdGenerator;
+import com.usthe.common.util.*;
 import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.dao.ParamDao;
 import com.usthe.manager.pojo.dto.AppCount;
 import com.usthe.manager.pojo.dto.MonitorDto;
-import com.usthe.common.entity.manager.Monitor;
-import com.usthe.common.entity.manager.Param;
-import com.usthe.common.entity.manager.ParamDefine;
 import com.usthe.manager.service.AppService;
+import com.usthe.manager.service.ImExportService;
 import com.usthe.manager.service.MonitorService;
 import com.usthe.manager.support.exception.MonitorDatabaseException;
 import com.usthe.manager.support.exception.MonitorDetectException;
 import com.usthe.manager.support.exception.MonitorMetricsException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,6 +89,12 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private CalculateAlarm calculateAlarm;
+
+    private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
+
+    public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
+        imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -174,7 +184,7 @@ public class MonitorServiceImpl implements MonitorService {
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
         List<String> metricsDefineNames = metricsDefine.stream().map(Metrics::getName).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)){
+        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)) {
             throw new MonitorMetricsException("no select metrics or select illegal metrics");
         }
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
@@ -211,6 +221,29 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public List<String> getMonitorMetrics(String app) {
         return appService.getAppDefineMetricNames(app);
+    }
+
+    @Override
+    public void export(List<Long> configList, String type, HttpServletResponse res) throws IOException {
+        var imExportService = imExportServiceMap.get(type);
+        var fileName = imExportService.getFileName();
+        res.setContentType(ContentType.APPLICATION_OCTET_STREAM.getMimeType());
+        res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+        imExportService.exportConfig(res.getOutputStream(), configList);
+    }
+
+    @Override
+    public void importConfig(MultipartFile file) throws IOException {
+        String type = null;
+        var fileName = file.getOriginalFilename();
+        if (fileName.endsWith("json")) {
+            type = JsonImExportServiceImpl.TYPE;
+        }
+        if (Objects.isNull(type)) {
+            throw new RuntimeException("file " + fileName + " is not supported.");
+        }
+        var imExportService = imExportServiceMap.get(type);
+        imExportService.importConfig(file.getInputStream());
     }
 
 
@@ -572,4 +605,5 @@ public class MonitorServiceImpl implements MonitorService {
     public List<Monitor> getAppMonitors(String app) {
         return monitorDao.findMonitorsByAppEquals(app);
     }
+
 }
