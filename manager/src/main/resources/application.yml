@@ -43,10 +43,7 @@ management:
   endpoints:
     web:
       exposure:
-        include:
-          - 'metrics'
-          - 'health'
-          - 'env'
+        include: 'metrics'
     enabled-by-default: on
 
 sureness:

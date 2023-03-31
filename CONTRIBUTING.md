@@ -119,7 +119,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.     
 
-QQ group number `718618151`, verify code: `tancloud`      
+QQ group number `236915833`, verify code: `tancloud`      
 
 Public WeChat: `tancloudtech`  
 
@@ -264,7 +264,7 @@ git pull upstream master
 
 加微信号 `tan-cloud` 拉您进微信交流群   
 
-加QQ群号 `718618151` 进QQ交流群, 验证信息: `tancloud`     
+加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`     
 
 微信公众号: `tancloudtech`  
 
