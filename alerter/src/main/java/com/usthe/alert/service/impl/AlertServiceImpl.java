@@ -109,6 +109,7 @@ public class AlertServiceImpl implements AlertService {
             }
         }
         long total = alertDao.count();
+        alertSummary.setTotal(total);
         long dealNum = total - alertSummary.getPriorityCriticalNum()
                 - alertSummary.getPriorityEmergencyNum() - alertSummary.getPriorityWarningNum();
         alertSummary.setDealNum(dealNum);
