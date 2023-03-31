@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
 category: custom
+# The monitoring type eg: linux windows tomcat mysql aws...
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat
 name:
@@ -76,14 +78,20 @@ params:
     required: false
     hide: true
 metrics:
+  # the first metrics summary
+  # attention: Built-in monitoring metrics contains (responseTime - Response time)
   # 第一个监控指标组 summary
   # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: summary
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
+    # collect metrics content
     # 指标组中的具体监控指标
     fields:
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: app
         type: 1
@@ -96,29 +104,39 @@ metrics:
         type: 0
       - field: availableSize
         type: 0
+    #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
     protocol: http
+    # the config content when protocol is http
     # 当protocol为http协议时具体的采集配置
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
       # url请求接口路径，我们这里不需要输入传参，写死为 /api/summary
       url: /api/summary
       timeout: ^_^timeout^_^
-      # 请求方式 GET POST PUT DELETE PATCH，写死为
+      # http method: GET POST PUT DELETE PATCH, default fixed value is GET
+      # 请求方式 GET POST PUT DELETE PATCH，写死为 GET
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http auth
       # 认证
       authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
       parseType: jsonPath
       parseScript: '$.data.apps.*'
@@ -156,16 +174,22 @@ metrics:
         type: 1
     protocol: http
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url
       # url请求接口路径
       url: /actuator/metrics/jvm.threads.states
+      # http method: GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
@@ -184,16 +208,22 @@ metrics:
       - number=#`$.measurements[?(@.statistic == "VALUE")].value`
     protocol: http
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url
       # url请求接口路径
       url: /actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
+      # http method: GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$'
@@ -206,16 +236,22 @@ metrics:
         type: 1
     protocol: http
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url
       # url请求接口路径
       url: /actuator/metrics/jvm.memory.used
+      # http method: GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
@@ -237,16 +273,22 @@ metrics:
       - mem_used=B->MB
     protocol: http
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url
       # url请求接口路径
       url: /actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
+      # http method: GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$'
