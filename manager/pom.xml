@@ -175,7 +175,7 @@
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifest>
                             <!--项目启动类-->
-                            <mainClass>com.usthe.manager.Manager</mainClass>
+                            <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                             <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
                             <addClasspath>true</addClasspath>
