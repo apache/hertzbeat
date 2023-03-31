@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-a
+
 version: "3.8"
 
 networks:
-  heartzbeat:
+  hertzbeat:
     driver: bridge
 
 services:
@@ -28,8 +28,7 @@ services:
     ports:
       - "6667:6667"
     environment:
-      TZ: Asia/Shanghai
-    environment:
+      - TZ=Asia/Shanghai
       - cn_internal_address=iotdb
       - cn_internal_port=10710
       - cn_consensus_port=10720
@@ -44,7 +43,7 @@ services:
       - ./dbdata/iotdbdata:/iotdb/data
       - ./dbdata/iotdblogs:/iotdb/logs
     networks:
-      - heartzbeat
+      - hertzbeat
   hertzbeat:
     image: tancloud/hertzbeat
     container_name: hertzbeat
@@ -61,6 +60,6 @@ services:
     ports:
       - "1157:1157"
     networks:
-      - heartzbeat
+      - hertzbeat
 
 
