@@ -57,7 +57,7 @@ spring:
       driver-class-name: org.postgresql.Driver
       username: root
       password: 123456
-      url: jdbc:postgresql://postgresql:5432/hertzbeat
+      url: jdbc:postgresql://127.0.0.1:5432/hertzbeat
       hikari:
          max-lifetime: 120000
 
