@@ -42,7 +42,7 @@ params:
     # 端口默认值
     defaultValue: 21
     # 参数输入框提示信息
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: username
     name:
       zh-CN: 用户名
