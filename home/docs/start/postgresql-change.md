@@ -47,7 +47,7 @@ spring:
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
 ```
-Specific replacement parameters is as follows and you need to configure account according to the mysql environment:
+Specific replacement parameters is as follows and you need to configure account, ip, port according to the postgresql environment:
 ```yaml
 spring:
    config:
