@@ -148,7 +148,7 @@ params:
     # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选   
+    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
     # 默认值
@@ -312,7 +312,7 @@ params:
       zh-CN: 认证Token
       en-US: Access Token
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性) 
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
@@ -340,17 +340,11 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
-# 指标组列表
+
 metrics:
-  # 第一个监控指标组 cpu
-  # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: status
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
@@ -364,26 +358,19 @@ metrics:
       - responseTime=responseTime
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^uri^_^
       timeout: ^_^timeout^_^
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
       params:
         ^_^params^_^: ^_^params^_^
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^

@@ -339,9 +339,7 @@ metrics:
     # the config content when protocol is http
     # 协议为jmx时的配置内容
     jmx:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^

@@ -170,10 +170,10 @@ metrics:
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       parseType: website
+
   - name: system
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: metric
         type: 1
         instance: true
@@ -183,24 +183,19 @@ metrics:
 #        type: 1
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: clickhouse
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: multiRow
-      # sql
       sql: SELECT * FROM system.metrics LIMIT 10;
 
   - name: events
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: event
         type: 1
         instance: true
@@ -210,24 +205,19 @@ metrics:
 #        type: 1
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: clickhouse
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: multiRow
-      # sql
       sql: SELECT * FROM system.events LIMIT 5;
 
   - name: asynchronous
     priority: 3
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: metric
         type: 1
         instance: true
@@ -237,16 +227,12 @@ metrics:
 #        type: 1
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: clickhouse
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: multiRow
-      # sql
       sql: SELECT * FROM system.asynchronous_metrics LIMIT 10;
