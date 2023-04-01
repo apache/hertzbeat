@@ -240,16 +240,10 @@ metrics:
       - queue_remaining_capacity=B->MB
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/dynamic-tp
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.*'
