@@ -58,11 +58,11 @@ public class CalculateAlarm {
      */
     public Map<String, Alert> triggeredAlertMap;
 
-    private AlerterWorkerPool workerPool;
-    private CommonDataQueue dataQueue;
-    private AlertDefineService alertDefineService;
-    private AlerterProperties alerterProperties;
-    private ResourceBundle bundle;
+    private final AlerterWorkerPool workerPool;
+    private final CommonDataQueue dataQueue;
+    private final AlertDefineService alertDefineService;
+    private final AlerterProperties alerterProperties;
+    private final ResourceBundle bundle;
 
     public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                            AlertDefineService alertDefineService, AlertMonitorDao monitorDao,

@@ -72,7 +72,6 @@ public class AlertDefine {
 
     @Schema(title = "配置告警的指标", example = "usage", accessMode = READ_WRITE)
     @Length(max = 100)
-    @NotNull
     private String field;
 
     @Schema(title = "是否是全局默认告警", example = "false", accessMode = READ_WRITE)
