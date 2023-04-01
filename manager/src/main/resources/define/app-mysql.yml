@@ -317,35 +317,27 @@ metrics:
         type: 0
       - field: qps
         type: 0
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - uptime
       - questions
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - qps=uptime / questions
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name = 'questions' or Variable_name = 'uptime';
       url: ^_^url^_^
 
   - name: innodb
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: innodb_data_reads
         type: 0
         unit: Times
@@ -369,8 +361,6 @@ metrics:
       - Innodb_buffer_pool_read_requests
       - Innodb_buffer_pool_read_ahead
       - Innodb_buffer_pool_reads
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - innodb_buffer_hit_rate= (Innodb_buffer_pool_read_requests + 1) / (Innodb_buffer_pool_read_requests + Innodb_buffer_pool_read_ahead + Innodb_buffer_pool_reads + 1) * 100
       - innodb_data_reads=Innodb_data_reads
@@ -382,25 +372,20 @@ metrics:
       - innodb_data_written=B->KB
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
 
   - name: status
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: uptime
         type: 0
         unit: s
@@ -426,7 +411,6 @@ metrics:
         type: 0
       - field: qps
         type: 0
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - uptime
       - com_select
@@ -440,31 +424,24 @@ metrics:
       - threads_cached
       - threads_running
       - questions
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - qps=uptime / questions
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like 'thread%' or Variable_name = 'com_select' or Variable_name = 'com_insert' or Variable_name = 'com_update' or Variable_name = 'com_delete' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';
       url: ^_^url^_^
 
   - name: handler
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: handler_commit
         type: 0
       - field: handler_delete
@@ -491,18 +468,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status like 'Handler%';
       url: ^_^url^_^
 
@@ -519,18 +492,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status;
       url: ^_^url^_^
 
@@ -547,18 +516,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status like 'thread%';
       url: ^_^url^_^
 
@@ -573,18 +538,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like '%tmp%';
       url: ^_^url^_^
 
@@ -603,18 +564,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like 'select%';
       url: ^_^url^_^
 
@@ -631,18 +588,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like 'sort%';
       url: ^_^url^_^
 
@@ -655,18 +608,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       sql: show global status where Variable_name like 'table_lock%';
       url: ^_^url^_^
 
@@ -680,18 +629,14 @@ metrics:
         type: 0
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: multiRow
-      # sql
       sql: select state, count(*) as num from information_schema.PROCESSLIST where state != '' group by state;
       url: ^_^url^_^
 
@@ -714,23 +659,17 @@ metrics:
       - start_time
       - db
       - query_time
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - id= start_time + sql_text
     protocol: jdbc
     jdbc:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       platform: mysql
       username: ^_^username^_^
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      # SQL查询方式： oneRow, multiRow, columns
       queryType: multiRow
-      # sql
       sql: select sql_text, start_time, db, query_time from mysql.slow_log;
       url: ^_^url^_^

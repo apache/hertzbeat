@@ -40,10 +40,16 @@ spring:
     template-resolver-order: 1
 
 management:
+  health:
+    mail:
+      enabled: off
   endpoints:
     web:
       exposure:
-        include: 'metrics'
+        include:
+          - 'metrics'
+          - 'health'
+          - 'env'
     enabled-by-default: on
 
 sureness:

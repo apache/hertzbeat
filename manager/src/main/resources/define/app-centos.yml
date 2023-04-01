@@ -13,67 +13,136 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: os
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: centos
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: Centos Linux
   en-US: Centos Linux
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
 params:
+  # field-param field key
+  # field-变量字段标识符
   - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 22
+  # field-param field key
+  # field-变量字段标识符
   - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # default value
+    # 默认值
     defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
   - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 用户名
       en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
     limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 密码
       en-US: Password
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: privateKey
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: textarea
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
-# 指标组列表
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
-# 第一个监控指标组 basic
-# 注意：内置监控指标有 (responseTime - 响应时间)
+  # metrics - basic, inner monitoring metrics (responseTime - response time)
+  # 监控指标组 - basic, 内置监控指标有 (responseTime - 响应时间)
   - name: basic
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # 指标组中的具体监控指标
+    # collect metrics content
+    # 具体监控指标列表
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: hostname
         type: 1
         instance: true
@@ -81,43 +150,44 @@ metrics:
         type: 1
       - field: uptime
         type: 1
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-# 当protocol为http协议时具体的采集配置
+    # the config content when protocol is ssh
     ssh:
-      # 主机host: ipv4 ipv6 域名
+      # ssh host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # ssh port
       port: ^_^port^_^
+      # ssh username
       username: ^_^username^_^
+      # ssh password
       password: ^_^password^_^
+      # ssh private key
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      # ssh run collect script
       script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
-      # 响应数据解析方式：oneRow, multiRow
+      # ssh response data parse type: oneRow, multiRow
       parseType: multiRow
 
   - name: cpu
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: info
         type: 1
       - field: cores
         type: 0
-        unit: 核数
       - field: interrupt
         type: 0
-        unit: 个数
       - field: load
         type: 1
       - field: context_switch
         type: 0
-        unit: 个数
       - field: usage
         type: 0
         unit: '%'
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
       - info
       - cores
@@ -125,7 +195,8 @@ metrics:
       - interrupt
       - context_switch
       - idle
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - info=info
@@ -134,13 +205,9 @@ metrics:
       - interrupt=interrupt
       - context_switch=context_switch
       - usage=100-idle
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -152,7 +219,6 @@ metrics:
   - name: memory
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: total
         type: 0
         unit: Mb
@@ -171,15 +237,12 @@ metrics:
       - field: usage
         type: 0
         unit: '%'
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - total
       - used
       - free
       - buff_cache
       - available
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - total=total
       - used=used
@@ -187,13 +250,9 @@ metrics:
       - buff_cache=buff_cache
       - available=available
       - usage=(used / total) * 100
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -205,29 +264,23 @@ metrics:
   - name: disk
     priority: 3
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: disk_num
         type: 0
-        unit: 块数
+        unit: 'block'
       - field: partition_num
         type: 0
-        unit: 分区数
       - field: block_write
         type: 0
-        unit: 块数
+        unit: 'block'
       - field: block_read
         type: 0
-        unit: 块数
+        unit: 'block'
       - field: write_rate
         type: 0
         unit: iops
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -239,7 +292,6 @@ metrics:
   - name: interface
     priority: 4
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: interface_name
         type: 1
         instance: true
@@ -249,13 +301,9 @@ metrics:
       - field: transmit_bytes
         type: 0
         unit: byte
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -267,7 +315,6 @@ metrics:
   - name: disk_free
     priority: 5
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: filesystem
         type: 1
       - field: used
@@ -282,13 +329,9 @@ metrics:
       - field: mounted
         type: 1
         instance: true
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -300,7 +343,6 @@ metrics:
   - name: top_cpu_process
     priority: 6
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: pid
         type: 1
         instance: true
@@ -312,13 +354,9 @@ metrics:
         unit: '%'
       - field: command
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -330,7 +368,6 @@ metrics:
   - name: top_mem_process
     priority: 7
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: pid
         type: 1
         instance: true
@@ -342,13 +379,9 @@ metrics:
         unit: '%'
       - field: command
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
-    # 当protocol为http协议时具体的采集配置
     ssh:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
