@@ -144,6 +144,24 @@
             <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
             <version>${caffeine.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>collector</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.usthe.tancloud</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.usthe.tancloud</groupId>
+            <artifactId>alerter</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
