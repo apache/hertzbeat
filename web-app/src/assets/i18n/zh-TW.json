@@ -43,6 +43,7 @@
   },
   "monitor": {
     "": "監控",
+    "availability": "監控可用性",
     "name": "監控名稱",
     "name.tip": "標識監控的名稱,名稱需要保證唯一性",
     "host": "監控Host",

@@ -16,6 +16,8 @@ import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
 
+const AVAILABILITY = 'availability';
+
 @Component({
   selector: 'app-alert-setting',
   templateUrl: './alert-setting.component.html',
@@ -55,6 +57,13 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.appHierarchies = message.data;
+            this.appHierarchies.forEach(item => {
+              item.children.unshift({
+                value: AVAILABILITY,
+                label: this.i18nSvc.fanyi('monitor.availability'),
+                isLeaf: true
+              });
+            });
           } else {
             console.warn(message.msg);
           }

@@ -43,6 +43,7 @@
   },
   "monitor": {
     "": "监控",
+    "availability": "监控可用性",
     "name": "监控名称",
     "name.tip": "标识监控的名称,名称需要保证唯一性",
     "host": "监控Host",
