@@ -118,7 +118,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 			List<Row> rowsList = rows.collect();
 			for (Row row : rowsList) {
 				for (io.greptime.models.Value value : row.values()) {
-					if (value.value().toString().equals(STORAGE_DATABASE)) {
+					if (STORAGE_DATABASE.equals(value.value().toString())) {
 						log.info("Exist Database {}", STORAGE_DATABASE);
 						isDatabaseExist = true;
 						break;
@@ -277,7 +277,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	}
 
 	@Override
-	//TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
 	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
 	                                                             String metric, String instance, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -331,6 +330,9 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				log.error(e.getMessage(), e);
 			}
 		}
+		/*
+		TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
+		 */
 		long endTime;
 		long startTime = getExpireTimeFromToken(history);
 
