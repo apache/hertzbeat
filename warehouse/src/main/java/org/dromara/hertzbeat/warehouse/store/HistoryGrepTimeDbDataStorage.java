@@ -277,6 +277,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	}
 
 	@Override
+	//TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
 	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
 	                                                             String metric, String instance, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
