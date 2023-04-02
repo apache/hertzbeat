@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
 import io.greptime.options.GreptimeOptions;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -47,358 +48,357 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.greptime",
-        name = "enabled", havingValue = "true")
+		name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 
-    /**
-     * storage database
-     */
-    private static final String STORAGE_DATABASE = "hertzbeat";
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
-    private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first, avg ,max, min FROM (SELECT %s as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(%s) as avg, min(%s) as min, max(%s) as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
-    private static final String TABLE_NOT_EXIST = "not exist";
-    private static final String DATABASE_NOT_EXIST = "not exist";
-    private GreptimeDB greptimeDb;
+	/**
+	 * storage database
+	 */
+	private static final String STORAGE_DATABASE = "hertzbeat";
+	private static final String QUERY_HISTORY_SQL
+			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+	private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
+			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+	private static final String QUERY_INSTANCE_SQL
+			= "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
+	private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
+			= "SELECT first, avg ,max, min FROM (SELECT %s as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(%s) as avg, min(%s) as min, max(%s) as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+	private static final String TABLE_NOT_EXIST = "not exist";
+	private static final String DATABASE_NOT_EXIST = "not exist";
+	private GreptimeDB greptimeDb;
 
-    public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
-    }
+	public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
+		this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
+	}
 
-    private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
-        String endpoint = properties.getEndpoint();
-        GreptimeOptions opts = GreptimeOptions.newBuilder(endpoint)
-                .writeMaxRetries(1)
-                .readMaxRetries(2)
-                .routeTableRefreshPeriodSeconds(-1)
-                .build();
-        greptimeDb = new GreptimeDB();
-        if (!greptimeDb.init(opts)) {
-            log.error("Fail to start GreptimeDB client");
-            return false;
-        }
-        return createDatabase();
-    }
+	private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
+		String endpoint = properties.getEndpoint();
+		GreptimeOptions opts = GreptimeOptions.newBuilder(endpoint)
+				.writeMaxRetries(1)
+				.readMaxRetries(2)
+				.routeTableRefreshPeriodSeconds(-1)
+				.build();
+		greptimeDb = new GreptimeDB();
+		if (!greptimeDb.init(opts)) {
+			log.error("Fail to start GreptimeDB client");
+			return false;
+		}
+		return createDatabase();
+	}
 
-    /**
-     *
-     * Checks if the database exists; if not, creates the Database.
-     * 检查数据库是否存在；如果不存在，则创建该数据库
-     */
-    private boolean createDatabase() {
-        // 查询现有数据库
-        QueryRequest showDatabases = QueryRequest.newBuilder()
-                .exprType(SelectExprType.Sql)
-                .ql("SHOW DATABASES;")
-                .build();
-        Result<QueryOk, Err> result = null;
-        try {
-            CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(showDatabases);
-            result = future.get();
-        } catch (Exception e) {
-            log.info("TABLE_NOT_EXIST: {}",e.getMessage());
-            String msg = e.getMessage();
-            if (msg != null && !msg.contains(DATABASE_NOT_EXIST)) {
-                log.warn(msg);
-            }
+	/**
+	 * Checks if the database exists; if not, creates the Database.
+	 * 检查数据库是否存在；如果不存在，则创建该数据库
+	 */
+	private boolean createDatabase() {
+		// 查询现有数据库
+		QueryRequest showDatabases = QueryRequest.newBuilder()
+				.exprType(SelectExprType.Sql)
+				.ql("SHOW DATABASES;")
+				.build();
+		Result<QueryOk, Err> result = null;
+		try {
+			CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(showDatabases);
+			result = future.get();
+		} catch (Exception e) {
+			log.info("TABLE_NOT_EXIST: {}", e.getMessage());
+			String msg = e.getMessage();
+			if (msg != null && !msg.contains(DATABASE_NOT_EXIST)) {
+				log.warn(msg);
+			}
 
-        }
-        // Check if the database exists;
-        // 检查现有数据库是否包括“hertzbeat”
-        boolean isDatabaseExist = false;
-        if (result != null && result.isOk()) {
-            QueryOk queryOk = result.getOk();
-            SelectRows rows = queryOk.getRows();
-            List<Row> rowsList = rows.collect();
-            for (Row row : rowsList) {
-                for (io.greptime.models.Value value : row.values()) {
-                    if (value.value().toString().equals(STORAGE_DATABASE)) {
-                        log.info("Exist Database {}",STORAGE_DATABASE);
-                        isDatabaseExist = true;
-                        break;
-                    }
-                }
-            }
-        }
-        // If it does not exist, create database
-        // 如果“hertzbeat”数据库不存在，则创建该数据库
-        if (!isDatabaseExist) {
-            QueryRequest createDatabase = QueryRequest.newBuilder()
-                    .exprType(SelectExprType.Sql)
-                    .ql("CREATE DATABASE " + STORAGE_DATABASE + ";")
-                    .build();
-            try {
-                CompletableFuture<Result<QueryOk, Err>> createFuture = greptimeDb.query(createDatabase);
-                isDatabaseExist = createFuture.get().isOk();
-                log.info("Database {} does not exist,and has been created",STORAGE_DATABASE);
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Error creating database");
-            }
-        }
-        return isDatabaseExist;
-    }
+		}
+		// Check if the database exists;
+		// 检查现有数据库是否包括“hertzbeat”
+		boolean isDatabaseExist = false;
+		if (result != null && result.isOk()) {
+			QueryOk queryOk = result.getOk();
+			SelectRows rows = queryOk.getRows();
+			List<Row> rowsList = rows.collect();
+			for (Row row : rowsList) {
+				for (io.greptime.models.Value value : row.values()) {
+					if (value.value().toString().equals(STORAGE_DATABASE)) {
+						log.info("Exist Database {}", STORAGE_DATABASE);
+						isDatabaseExist = true;
+						break;
+					}
+				}
+			}
+		}
+		// If it does not exist, create database
+		// 如果“hertzbeat”数据库不存在，则创建该数据库
+		if (!isDatabaseExist) {
+			QueryRequest createDatabase = QueryRequest.newBuilder()
+					.exprType(SelectExprType.Sql)
+					.ql("CREATE DATABASE " + STORAGE_DATABASE + ";")
+					.build();
+			try {
+				CompletableFuture<Result<QueryOk, Err>> createFuture = greptimeDb.query(createDatabase);
+				isDatabaseExist = createFuture.get().isOk();
+				log.info("Database {} does not exist,and has been created", STORAGE_DATABASE);
+			} catch (InterruptedException | ExecutionException e) {
+				log.error("Error creating database");
+			}
+		}
+		return isDatabaseExist;
+	}
 
-    @Override
-    void saveData(CollectRep.MetricsData metricsData) {
-        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
-            return;
-        }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse greptime] flush metrics data {} is null, ignore.", metricsData.getId());
-            return;
-        }
-        String monitorId = String.valueOf(metricsData.getId());
-        String table = metricsData.getApp() + "_" + metricsData.getMetrics();
-        //TODO bug：选择STORAGE_DATABASE不起作用，还是默认存在public里
-        TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
+	@Override
+	void saveData(CollectRep.MetricsData metricsData) {
+		if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
+			return;
+		}
+		if (metricsData.getValuesList().isEmpty()) {
+			log.info("[warehouse greptime] flush metrics data {} is null, ignore.", metricsData.getId());
+			return;
+		}
+		String monitorId = String.valueOf(metricsData.getId());
+		String table = metricsData.getApp() + "_" + metricsData.getMetrics();
+		//TODO bug：选择STORAGE_DATABASE不起作用，还是默认存在public里
+		TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
-        List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
-        List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
-        List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
+		List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
+		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
+		List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
 
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
-        for (CollectRep.Field field : fieldsList) {
-            semanticTypes.add(SemanticType.Field);
-            columnNames.add(field.getName());
-            // handle field type
-            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                dataTypes.add(ColumnDataType.Float64);
-            } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                dataTypes.add(ColumnDataType.String);
-            }
-        }
-        tableSchemaBuilder.semanticTypes(semanticTypes.toArray(new SemanticType[0]));
-        tableSchemaBuilder.dataTypes(dataTypes.toArray(new ColumnDataType[0]));
-        tableSchemaBuilder.columnNames(columnNames.toArray(new String[0]));
-        WriteRows rows = WriteRows.newBuilder(tableSchemaBuilder.build()).build();
-        try {
-            long now = System.currentTimeMillis();
-            Object[] values = new Object[3 + fieldsList.size()];
-            values[0] = monitorId;
-            values[2] = now;
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                String instance = valueRow.getInstance();
-                if (!instance.isEmpty()) {
-                    instance = String.format("\"%s\"", instance);
-                    values[1] = instance;
-                } else {
-                    values[1] = null;
-                }
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
-                            values[3 + i] = Double.parseDouble(valueRow.getColumns(i));
-                        } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
-                            values[3 + i] = valueRow.getColumns(i);
-                        }
-                    } else {
-                        values[3 + i] = null;
-                    }
-                }
-                rows.insert(values);
-            }
-            rows.finish();
-            CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(rows);
-            writeFuture.whenComplete((result, throwable) -> {
-                if (throwable != null) {
-                    log.error("[warehouse greptime]-write data error:{}", result, throwable);
-                }
-            });
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
+		List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
+		for (CollectRep.Field field : fieldsList) {
+			semanticTypes.add(SemanticType.Field);
+			columnNames.add(field.getName());
+			// handle field type
+			if (field.getType() == CommonConstants.TYPE_NUMBER) {
+				dataTypes.add(ColumnDataType.Float64);
+			} else if (field.getType() == CommonConstants.TYPE_STRING) {
+				dataTypes.add(ColumnDataType.String);
+			}
+		}
+		tableSchemaBuilder.semanticTypes(semanticTypes.toArray(new SemanticType[0]));
+		tableSchemaBuilder.dataTypes(dataTypes.toArray(new ColumnDataType[0]));
+		tableSchemaBuilder.columnNames(columnNames.toArray(new String[0]));
+		WriteRows rows = WriteRows.newBuilder(tableSchemaBuilder.build()).build();
+		try {
+			long now = System.currentTimeMillis();
+			Object[] values = new Object[3 + fieldsList.size()];
+			values[0] = monitorId;
+			values[2] = now;
+			for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+				String instance = valueRow.getInstance();
+				if (!instance.isEmpty()) {
+					instance = String.format("\"%s\"", instance);
+					values[1] = instance;
+				} else {
+					values[1] = null;
+				}
+				for (int i = 0; i < fieldsList.size(); i++) {
+					if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
+						if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
+							values[3 + i] = Double.parseDouble(valueRow.getColumns(i));
+						} else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
+							values[3 + i] = valueRow.getColumns(i);
+						}
+					} else {
+						values[3 + i] = null;
+					}
+				}
+				rows.insert(values);
+			}
+			rows.finish();
+			CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(rows);
+			writeFuture.whenComplete((result, throwable) -> {
+				if (throwable != null) {
+					log.error("[warehouse greptime]-write data error:{}", result, throwable);
+				}
+			});
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-                                                         String instance, String history) {
-        Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
-        if (!isServerAvailable()) {
-            log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-                    "\t--------------Please Config GrepTime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
-            return instanceValuesMap;
-        }
-        long expireTime = 0;
-        try {
-            TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-            expireTime = dateTime.toEpochSecond() * 1000;
-        } catch (Exception e) {
-            log.error("parse history time error: {}. use default: 6h", e.getMessage());
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            expireTime = dateTime.toEpochSecond() * 1000;
-        }
-        String table = app + "_" + metrics;
-        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, expireTime,monitorId);
-        log.debug("selectSql: {}", selectSql);
-        QueryRequest request = QueryRequest.newBuilder()
-                .exprType(SelectExprType.Sql)
-                .ql(selectSql)
-                .build();
-        try {
-            CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
-            Result<QueryOk, Err> result = future.get();
-            if (result != null && result.isOk()) {
-                QueryOk queryOk = result.getOk();
-                SelectRows rows = queryOk.getRows();
-                List<Map<String, Object>> maps = rows.collectToMaps();
-                List<Value> valueList;
-                for (Map<String, Object> map : maps) {
-                    String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                    valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
-                    valueList.add(new Value(strValue, (long) map.get("ts")));
-                }
-            }
-        } catch (FlightRuntimeException e) {
-            String msg = e.getMessage();
-            if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
-                List<Value> valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
-                valueList.add(new Value(null, System.currentTimeMillis()));
-                log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return instanceValuesMap;
-    }
+	@Override
+	public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
+	                                                     String instance, String history) {
+		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
+		if (!isServerAvailable()) {
+			log.error("\n\t---------------GrepTime Init Failed---------------\n" +
+					"\t--------------Please Config GrepTime--------------\n" +
+					"\t----------Can Not Use Metric History Now----------\n");
+			return instanceValuesMap;
+		}
+		long expireTime = getExpireTimeFromToken(history);
+		String table = app + "_" + metrics;
+		String selectSql = instance == null ?
+				String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
+				: String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, expireTime, monitorId, instance);
+		log.debug("selectSql: {}", selectSql);
+		QueryRequest request = QueryRequest.newBuilder()
+				.exprType(SelectExprType.Sql)
+				.ql(selectSql)
+				.build();
+		try {
+			CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
+			Result<QueryOk, Err> result = future.get();
+			if (result != null && result.isOk()) {
+				QueryOk queryOk = result.getOk();
+				SelectRows rows = queryOk.getRows();
+				List<Map<String, Object>> maps = rows.collectToMaps();
+				List<Value> valueList;
+				for (Map<String, Object> map : maps) {
+					String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+					valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+					valueList.add(new Value(strValue, (long) map.get("ts")));
+				}
+			}
+		} catch (FlightRuntimeException e) {
+			String msg = e.getMessage();
+			if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
+				List<Value> valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+				valueList.add(new Value(null, System.currentTimeMillis()));
+				log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+		return instanceValuesMap;
+	}
 
-    @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
-        Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
-        if (!isServerAvailable()) {
-            log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-                    "\t--------------Please Config GrepTime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
-            return instanceValuesMap;
-        }
-        String table = app + "_" + metrics;
-        List<String> instances = new LinkedList<>();
-        if (instance != null) {
-            instances.add(instance);
-        }
-        if (instances.isEmpty()){
-            String selectSql = String.format(QUERY_INSTANCE_SQL, table);
-            log.debug("selectSql: {}", selectSql);
-            QueryRequest request = QueryRequest.newBuilder()
-                    .exprType(SelectExprType.Sql)
-                    .ql(selectSql)
-                    .build();
-            try {
-                CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
-                Result<QueryOk, Err> result = future.get();
-                if (result != null && result.isOk()) {
-                    QueryOk queryOk = result.getOk();
-                    SelectRows rows = queryOk.getRows();
-                    while (rows.hasNext()){
-                        Row row = rows.next();
-                        if (row !=null){
-                            List<io.greptime.models.Value> values = row.values();
-                            for (io.greptime.models.Value value : values){
-                                log.info("value:{}", value.value());
-                                Object instanceValue = value.value();
-                                if (instanceValue == null || "".equals(instanceValue)) {
-                                    instances.add("''");
-                                } else {
-                                    instances.add(instanceValue.toString());
-                                }
-                            }
-                        }
+	private long getExpireTimeFromToken(String history) {
+		long expireTime;
+		try {
+			TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+			ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+			expireTime = dateTime.toEpochSecond() * 1000;
+		} catch (Exception e) {
+			log.error("parse history time error: {}. use default: 6h", e.getMessage());
+			ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
+			expireTime = dateTime.toEpochSecond() * 1000;
+		}
+		return expireTime;
+	}
 
-                    }
-                }
-            } catch (FlightRuntimeException e) {
-                String msg = e.getMessage();
-                if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
-                    log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
-                }
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-        long startTime;
-        long endTime;
-        try {
-            TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-            startTime = dateTime.toEpochSecond() * 1000;
-        } catch (Exception e) {
-            log.error("parse history time error: {}. use default: 6h", e.getMessage());
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            startTime = dateTime.toEpochSecond() * 1000;
-        }
+	@Override
+	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
+	                                                             String metric, String instance, String history) {
+		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
+		if (!isServerAvailable()) {
+			log.error("\n\t---------------GrepTime Init Failed---------------\n" +
+					"\t--------------Please Config GrepTime--------------\n" +
+					"\t----------Can Not Use Metric History Now----------\n");
+			return instanceValuesMap;
+		}
+		String table = app + "_" + metrics;
+		List<String> instances = new LinkedList<>();
+		if (instance != null) {
+			instances.add(instance);
+		}
+		if (instances.isEmpty()) {
+			String selectSql = String.format(QUERY_INSTANCE_SQL, table);
+			log.debug("selectSql: {}", selectSql);
+			QueryRequest request = QueryRequest.newBuilder()
+					.exprType(SelectExprType.Sql)
+					.ql(selectSql)
+					.build();
+			try {
+				CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
+				Result<QueryOk, Err> result = future.get();
+				if (result != null && result.isOk()) {
+					QueryOk queryOk = result.getOk();
+					SelectRows rows = queryOk.getRows();
+					while (rows.hasNext()) {
+						Row row = rows.next();
+						if (row != null) {
+							List<io.greptime.models.Value> values = row.values();
+							for (io.greptime.models.Value value : values) {
+								log.debug("value:{}", value.value());
+								Object instanceValue = value.value();
+								if (instanceValue == null || "".equals(instanceValue)) {
+									instances.add("''");
+								} else {
+									instances.add(instanceValue.toString());
+								}
+							}
+						}
 
-        Calendar cal = Calendar.getInstance();
+					}
+				}
+			} catch (FlightRuntimeException e) {
+				String msg = e.getMessage();
+				if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
+					log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
+				}
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+		long endTime;
+		long startTime = getExpireTimeFromToken(history);
 
-        long interval = System.currentTimeMillis() - startTime;
-        long fourHourCount = TimeUnit.MILLISECONDS.toHours(interval) / 4;
-        for (int i = 0; i < fourHourCount; i++){
-            cal.clear();
-            cal.setTimeInMillis(startTime);
-            cal.add(Calendar.HOUR_OF_DAY, 4);
-            endTime = cal.getTimeInMillis();
+		Calendar cal = Calendar.getInstance();
 
-            for (String instanceValue:instances){
-                String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, table, monitorId, startTime, endTime, metric, metric, metric, table, startTime, endTime);
+		long interval = System.currentTimeMillis() - startTime;
+		long fourHourCount = TimeUnit.MILLISECONDS.toHours(interval) / 4;
+		for (int i = 0; i < fourHourCount; i++) {
+			cal.clear();
+			cal.setTimeInMillis(startTime);
+			cal.add(Calendar.HOUR_OF_DAY, 4);
+			endTime = cal.getTimeInMillis();
 
-                log.info("selectSql: {}", selectSql);
-                QueryRequest request = QueryRequest.newBuilder()
-                        .exprType(SelectExprType.Sql)
-                        .ql(selectSql)
-                        .build();
-                List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                try {
-                    CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
-                    Result<QueryOk, Err> result = future.get();
-                    log.info("result:{}", result);
-                    if (result != null && result.isOk()) {
-                        QueryOk queryOk = result.getOk();
-                        SelectRows rows = queryOk.getRows();
-                        String[] col = new String[4];
-                        while (rows.hasNext()){
-                            Row row = rows.next();
-                            if (!row.values().isEmpty()){
-                                for (int j = 0; j < row.values().size(); j++){
-                                    log.info("value:{}", row.values().get(j));
-                                    String colStr = new BigDecimal(row.values().get(j).value().toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                    col[j] = colStr;
-                                }
-                                Value valueBuild = Value.builder()
-                                        .origin(col[0]).mean(col[1])
-                                        .min(col[2]).max(col[3])
-                                        .time(System.currentTimeMillis())
-                                        .build();
-                                values.add(valueBuild);
-                            }
-                        }
-                        log.info("values:{}", values);
-                    }
-                } catch (FlightRuntimeException e) {
-                    String msg = e.getMessage();
-                    if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
-                        List<Value> valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
-                        valueList.add(new Value(null, System.currentTimeMillis()));
-                        log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
-                    }
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-            startTime = endTime;
-        }
+			for (String instanceValue : instances) {
+				String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, table, monitorId, startTime, endTime, metric, metric, metric, table, startTime, endTime);
 
-        return instanceValuesMap;
-    }
+				log.debug("selectSql: {}", selectSql);
+				QueryRequest request = QueryRequest.newBuilder()
+						.exprType(SelectExprType.Sql)
+						.ql(selectSql)
+						.build();
+				List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
+				try {
+					CompletableFuture<Result<QueryOk, Err>> future = greptimeDb.query(request);
+					Result<QueryOk, Err> result = future.get();
+					log.debug("result:{}", result);
+					if (result != null && result.isOk()) {
+						QueryOk queryOk = result.getOk();
+						SelectRows rows = queryOk.getRows();
+						String[] col = new String[4];
+						while (rows.hasNext()) {
+							Row row = rows.next();
+							if (!row.values().isEmpty()) {
+								for (int j = 0; j < row.values().size(); j++) {
+									log.debug("value:{}", row.values().get(j));
+									String colStr = new BigDecimal(row.values().get(j).value().toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+									col[j] = colStr;
+								}
+								Value valueBuild = Value.builder()
+										.origin(col[0]).mean(col[1])
+										.min(col[2]).max(col[3])
+										.time(System.currentTimeMillis())
+										.build();
+								values.add(valueBuild);
+							}
+						}
+						log.debug("values:{}", values);
+					}
+				} catch (FlightRuntimeException e) {
+					String msg = e.getMessage();
+					if (msg != null && msg.contains(TABLE_NOT_EXIST)) {
+						List<Value> valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+						valueList.add(new Value(null, System.currentTimeMillis()));
+						log.info("[warehouse greptime]-TABLE_NOT_EXIST: {}", table);
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+				}
+			}
+			startTime = endTime;
+		}
 
-    @Override
-    public void destroy() {
-        if (this.greptimeDb != null) {
-            this.greptimeDb.shutdownGracefully();
-        }
-    }
+		return instanceValuesMap;
+	}
+
+	@Override
+	public void destroy() {
+		if (this.greptimeDb != null) {
+			this.greptimeDb.shutdownGracefully();
+		}
+	}
 }
