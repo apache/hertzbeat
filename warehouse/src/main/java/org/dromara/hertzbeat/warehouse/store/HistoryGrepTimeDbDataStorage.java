@@ -15,33 +15,29 @@
  * limitations under the License.
  */
 
-package com.usthe.warehouse.store;
+package org.dromara.hertzbeat.warehouse.store;
 
-import com.usthe.common.entity.dto.Value;
-import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.TimePeriodUtil;
-import com.usthe.warehouse.config.WarehouseProperties;
 import io.greptime.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.flight.FlightRuntimeException;
+import org.dromara.hertzbeat.common.entity.dto.Value;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.util.TimePeriodUtil;
+import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
 import io.greptime.options.GreptimeOptions;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * greptimeDB data storage
