@@ -24,7 +24,7 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**官网: [hertzbeat.com](https://hertzbeat.com)**
+**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
 **云服务: [tancloud.cn](https://tancloud.cn)**
 
@@ -292,7 +292,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目�
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)   
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)    
 

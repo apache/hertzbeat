@@ -53,7 +53,7 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # com.usthe.warehouse.config.IotDbVersion: V_0_13 || V_1_00
+      # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
       version: V_0_13
       query-timeout-in-ms: -1
       # default '7776000000'（90days,unit:ms,-1:no-expire）
