@@ -69,7 +69,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        if (app == null) {
+        if (app == null || app.chars().allMatch(Character::isSpaceChar)) {
             return Collections.emptyList();
         }
         Job appDefine = appDefines.get(app.toLowerCase());
@@ -82,7 +82,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
-        if (app == null) {
+        if (app == null || app.chars().allMatch(Character::isSpaceChar)) {
             throw new IllegalArgumentException("The app can not null.");
         }
         Job appDefine = appDefines.get(app.toLowerCase());
