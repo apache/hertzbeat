@@ -19,7 +19,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>com.usthe.tancloud</groupId>
+        <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -43,25 +43,25 @@
     <dependencies>
         <!-- common -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>common</artifactId>
             <version>${common.version}</version>
         </dependency>
         <!-- data warehouse -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>warehouse</artifactId>
             <version>${warehouse.version}</version>
         </dependency>
         <!-- alerter -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>alerter</artifactId>
             <version>${alerter.version}</version>
         </dependency>
         <!-- collector -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>collector</artifactId>
             <version>${collector.version}</version>
         </dependency>
@@ -175,7 +175,7 @@
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifest>
                             <!--项目启动类-->
-                            <mainClass>com.usthe.manager.Manager</mainClass>
+                            <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                             <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
                             <addClasspath>true</addClasspath>

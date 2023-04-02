@@ -43,7 +43,7 @@ params:
     # 端口默认值
     defaultValue: 1157
     # 参数输入框提示信息
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: ssl
     name:
       zh-CN: 启动SSL

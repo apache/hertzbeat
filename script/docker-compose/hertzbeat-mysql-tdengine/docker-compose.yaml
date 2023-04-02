@@ -16,7 +16,7 @@
 version: "3.7"
 
 networks:
-  heartzbeat:
+  hertzbeat:
     driver: bridge
 
 services:
@@ -34,7 +34,7 @@ services:
       - ./dbdata/mysqldata:/var/lib/mysql/
       - ./conf/sql:/docker-entrypoint-initdb.d/
     networks:
-      - heartzbeat
+      - hertzbeat
 
   tdengine:
     image: tdengine/tdengine:2.4.0.12
@@ -49,7 +49,7 @@ services:
     volumes:
       - ./dbdata/taosdata:/var/lib/taos/
     networks:
-      - heartzbeat
+      - hertzbeat
 
   hertzbeat:
     image: tancloud/hertzbeat
@@ -68,4 +68,4 @@ services:
     ports:
       - "1157:1157"
     networks:
-      - heartzbeat
+      - hertzbeat
