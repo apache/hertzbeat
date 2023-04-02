@@ -17,6 +17,7 @@
 
 package com.usthe.manager.service.impl;
 
+import com.google.gson.Gson;
 import com.usthe.alert.calculate.CalculateAlarm;
 import com.usthe.alert.dao.AlertDefineBindDao;
 import com.usthe.collector.dispatch.entrance.internal.CollectJobService;
@@ -25,11 +26,7 @@ import com.usthe.common.entity.job.Job;
 import com.usthe.common.entity.job.Metrics;
 import com.usthe.common.entity.manager.Tag;
 import com.usthe.common.entity.message.CollectRep;
-import com.usthe.common.util.AesUtil;
-import com.usthe.common.util.CommonConstants;
-import com.usthe.common.util.IntervalExpressionUtil;
-import com.usthe.common.util.IpDomainUtil;
-import com.usthe.common.util.SnowFlakeIdGenerator;
+import com.usthe.common.util.*;
 import com.usthe.manager.dao.MonitorDao;
 import com.usthe.manager.dao.ParamDao;
 import com.usthe.manager.pojo.dto.AppCount;
@@ -50,6 +47,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.InvalidMimeTypeException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -332,10 +330,28 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "checkbox":
-                            // todo checkbox校验
+                            List<ParamDefine.Option> checkboxOptions = paramDefine.getOptions();
+                            boolean checkboxInvalid = true;
+                            if (checkboxOptions != null) {
+                                for (ParamDefine.Option option : checkboxOptions) {
+                                    if (param.getValue().equalsIgnoreCase(option.getValue())) {
+                                        checkboxInvalid = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (checkboxInvalid){
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + param.getValue() +  " is invalid checkbox value");
+                            }
                             break;
                         case "key-value":
-                            // todo key-value校验
+                            try{
+                                GsonUtil.toJson(param.getValue());
+                            } catch (Exception e){
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + param.getValue() + " is invalid key-value value");
+                            }
                             break;
                         // todo More parameter definitions and actual value format verification
                         //  更多参数定义与实际值格式校验
