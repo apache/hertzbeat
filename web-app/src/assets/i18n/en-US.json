@@ -103,6 +103,7 @@
   "alert.setting.delete": "Delete Threshold",
   "alert.setting.target": "Metric Target",
   "alert.setting.expr": "Threshold Trigger Expr",
+  "alert.setting.trigger": "Trigger Threshold Alerts",
   "alert.setting.times": "Trigger Times",
   "alert.setting.times.tip": "Set how many times the threshold is triggered before sending an alert",
   "alert.setting.template": "Notice Template",
