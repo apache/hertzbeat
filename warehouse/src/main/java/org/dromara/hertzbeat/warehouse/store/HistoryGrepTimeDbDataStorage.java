@@ -131,7 +131,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		if (!isDatabaseExist) {
 			QueryRequest createDatabase = QueryRequest.newBuilder()
 					.exprType(SelectExprType.Sql)
-					.ql("CREATE DATABASE " + STORAGE_DATABASE + ";")
+					.ql("CREATE DATABASE %s;", STORAGE_DATABASE)
 					.build();
 			try {
 				CompletableFuture<Result<QueryOk, Err>> createFuture = greptimeDb.query(createDatabase);
