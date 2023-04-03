@@ -81,7 +81,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				.build();
 		greptimeDb = new GreptimeDB();
 		if (!greptimeDb.init(opts)) {
-			log.error("Fail to start GreptimeDB client");
+			log.error("Fail to start Greptime client");
 			return false;
 		}
 		return createDatabase();
@@ -155,7 +155,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		}
 		String monitorId = String.valueOf(metricsData.getId());
 		String table = metricsData.getApp() + "_" + metricsData.getMetrics();
-		//TODO bug：选择STORAGE_DATABASE不起作用，还是默认存在public里
 		TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
 		List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
@@ -203,13 +202,19 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				}
 				rows.insert(values);
 			}
+
 			rows.finish();
 			CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(rows);
-			writeFuture.whenComplete((result, throwable) -> {
-				if (throwable != null) {
-					log.error("[warehouse greptime]-write data error:{}", result, throwable);
+			try {
+				Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+				if (result.isOk()) {
+					System.out.println("[warehouse greptime]-Write successful");
+				} else {
+					System.out.println("[warehouse greptime]-Write failed: " + result.getErr().getFailedQl());
 				}
-			});
+			} catch (Throwable throwable) {
+				System.err.println("[warehouse greptime]-Error occurred: " + throwable.getMessage());
+			}
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -220,8 +225,8 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	                                                     String instance, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
 		if (!isServerAvailable()) {
-			log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-					"\t--------------Please Config GrepTime--------------\n" +
+			log.error("\n\t---------------Greptime Init Failed---------------\n" +
+					"\t--------------Please Config Greptime--------------\n" +
 					"\t----------Can Not Use Metric History Now----------\n");
 			return instanceValuesMap;
 		}
