@@ -282,7 +282,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
 		if (!isServerAvailable()) {
 			log.error("\n\t---------------GrepTime Init Failed---------------\n" +
-					"\t--------------Please Config GrepTime--------------\n" +
+					"\t--------------Please Config Greptime--------------\n" +
 					"\t----------Can Not Use Metric History Now----------\n");
 			return instanceValuesMap;
 		}
