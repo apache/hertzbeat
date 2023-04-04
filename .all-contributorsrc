@@ -961,6 +961,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "haoww",
+      "name": "haoww",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32739294?v=4",
+      "profile": "https://github.com/haoww",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
