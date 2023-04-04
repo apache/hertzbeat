@@ -79,12 +79,6 @@
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
         </dependency>
-        <!-- GrepTimeDB-->
-<!--        <dependency>-->
-<!--            <groupId>io.greptime</groupId>-->
-<!--            <artifactId>greptimedb-all</artifactId>-->
-<!--            <version>0.1.1</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>io.greptime</groupId>
             <artifactId>greptimedb-protocol</artifactId>
