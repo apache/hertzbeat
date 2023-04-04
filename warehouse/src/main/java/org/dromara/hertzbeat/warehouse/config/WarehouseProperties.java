@@ -160,6 +160,10 @@ public class WarehouseProperties {
          * IoTDB配置信息
          */
         private IotDbProperties iotDb;
+        /**
+         * GrepTimeDB Config
+         */
+        private GreptimeProperties greptime;
 
         public JpaProperties getJpa() {
             return jpa;
@@ -207,6 +211,14 @@ public class WarehouseProperties {
 
         public void setIotDb(IotDbProperties iotDb) {
             this.iotDb = iotDb;
+        }
+
+        public GreptimeProperties getGreptime() {
+            return greptime;
+        }
+
+        public void setGreptime(GreptimeProperties greptime) {
+            this.greptime = greptime;
         }
 
         public static class MemoryProperties {
@@ -594,6 +606,60 @@ public class WarehouseProperties {
 
             public void setExpireTime(String expireTime) {
                 this.expireTime = expireTime;
+            }
+        }
+
+        public static class GreptimeProperties {
+            /**
+             * Whether the GrepTimeDB data store is enabled
+             */
+            private boolean enabled = false;
+
+            /**
+             * GrepTimeDB endpoint
+             */
+            private String endpoint = "127.0.0.1:4001";
+
+            /**
+             * GrepTimeDB username
+             */
+            private String username;
+
+            /**
+             * GrepTimeDB password
+             */
+            private String password;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getEndpoint() {
+                return endpoint;
+            }
+
+            public void setEndpoint(String endpoint) {
+                this.endpoint = endpoint;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
             }
         }
     }
