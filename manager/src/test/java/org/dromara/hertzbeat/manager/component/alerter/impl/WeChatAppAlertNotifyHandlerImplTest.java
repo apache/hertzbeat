@@ -5,15 +5,7 @@ import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.dromara.hertzbeat.manager.AbstractSpringIntegrationTest;
-import org.dromara.hertzbeat.manager.dao.MonitorDao;
-import org.dromara.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -28,12 +20,8 @@ import java.util.Map;
 public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
 
-//    @InjectMocks
     @Resource
     private WeChatAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
-
-//    @Mock
-//    private RestTemplate restTemplate;
 
     @Test
     void send() {

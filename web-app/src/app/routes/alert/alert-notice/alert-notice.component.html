@@ -345,16 +345,16 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
         <nz-form-label [nzSpan]="7" nzFor="agentId" [nzRequired]="receiver.type === 10">{{
-          'alert.notice.type.weChatApp-agentId' | i18n
-          }}</nz-form-label>
+          'alert.notice.type.weChatApp-agentId' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.agentId" nz-input [required]="receiver.type === 10" name="agentId" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
         <nz-form-label [nzSpan]="7" nzFor="appSecret" [nzRequired]="receiver.type === 10">{{
-          'alert.notice.type.weChatApp-appSecret' | i18n
-          }}</nz-form-label>
+          'alert.notice.type.weChatApp-appSecret' | i18n}}
+        </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.appSecret" nz-input [required]="receiver.type === 10" name="appSecret" type="text" />
         </nz-form-control>
