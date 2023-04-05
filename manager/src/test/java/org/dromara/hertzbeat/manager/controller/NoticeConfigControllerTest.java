@@ -3,7 +3,7 @@ package org.dromara.hertzbeat.manager.controller;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,7 +81,7 @@ class NoticeConfigControllerTest {
         System.out.println(noticeReceiver);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(noticeReceiver)))
+                .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
@@ -94,7 +94,7 @@ class NoticeConfigControllerTest {
         System.out.println(noticeReceiver);
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/notice/receiver")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(noticeReceiver)))
+                        .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Edit success"))
@@ -141,7 +141,7 @@ class NoticeConfigControllerTest {
         NoticeRule noticeRule = getNoticeRule();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/rule")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(noticeRule)))
+                        .content(JsonUtil.toJson(noticeRule)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
@@ -153,7 +153,7 @@ class NoticeConfigControllerTest {
         NoticeRule noticeRule = getNoticeRule();
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/notice/rule")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(noticeRule)))
+                        .content(JsonUtil.toJson(noticeRule)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Edit success"))
@@ -205,7 +205,7 @@ class NoticeConfigControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver/send-test-msg")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(noticeReceiver)))
+                        .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
@@ -217,7 +217,7 @@ class NoticeConfigControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver/send-test-msg")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(noticeReceiver)))
+                        .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
 //                .andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))

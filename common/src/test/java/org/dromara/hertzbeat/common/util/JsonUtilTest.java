@@ -4,9 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link GsonUtil}
+ * Test case for {@link JsonUtil}
  */
-class GsonUtilTest {
+class JsonUtilTest {
 
     @BeforeEach
     void setUp() {

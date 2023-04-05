@@ -22,7 +22,7 @@ import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +66,7 @@ public class JobSchedulerInit implements CommandLineRunner {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 // todo 这里暂时是深拷贝处理
-                appDefine = GsonUtil.fromJson(GsonUtil.toJson(appDefine), Job.class);
+                appDefine = JsonUtil.fromJson(JsonUtil.toJson(appDefine), Job.class);
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());

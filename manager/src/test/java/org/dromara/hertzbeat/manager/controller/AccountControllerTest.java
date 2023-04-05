@@ -1,7 +1,7 @@
 package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ class AccountControllerTest {
                 .build();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(loginDto)))
+                        .content(JsonUtil.toJson(loginDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.token").exists())
@@ -53,7 +53,7 @@ class AccountControllerTest {
         loginDto.setCredential("wrong_credential");
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(loginDto)))
+                        .content(JsonUtil.toJson(loginDto)))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
                 .andReturn();
     }
