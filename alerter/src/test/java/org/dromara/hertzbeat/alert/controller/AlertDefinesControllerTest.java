@@ -3,7 +3,7 @@ package org.dromara.hertzbeat.alert.controller;
 import org.dromara.hertzbeat.alert.service.AlertDefineService;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -126,7 +126,7 @@ class AlertDefinesControllerTest {
     void deleteAlertDefines() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/defines")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(ids)))
+                .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

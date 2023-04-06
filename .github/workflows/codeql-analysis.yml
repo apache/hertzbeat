@@ -12,11 +12,8 @@
 name: "CodeQL"
 
 on:
-  pull_request:
-    branches: [ master, dev ]
-    paths:
-      - '**/*.java'
-      - '**/*.ts'
+  schedule:
+    - cron: '21 13 * * 4'
 
 jobs:
   analyze:
