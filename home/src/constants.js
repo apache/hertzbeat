@@ -225,6 +225,12 @@ export const dromaraFriends = [
     remoteImg: 'https://waibi.oss-cn-chengdu.aliyuncs.com/picGo/logo.png',
     alt: 'stream-query',
     url: 'https://dromara.gitee.io/stream-query',
+  },
+  {
+    img: 'sms_aggregator_logo.png',
+    remoteImg: 'https://wind.kim/logo1.png',
+    alt: 'SMS-Aggregator',
+    url: 'https://wind.kim',
   }
 ]
 
