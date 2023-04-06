@@ -67,8 +67,8 @@ public class NoticeReceiver {
     @NotNull
     private String name;
 
-    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot",
-            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人 8-SlackWebHook 9-Discord机器人",
+    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
+            description = "通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人 6-飞书机器人 7-Telegram机器人 8-SlackWebHook 9-Discord机器人 10-企业微信-应用消息",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull
@@ -119,6 +119,21 @@ public class NoticeReceiver {
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
     @Length(max = 300)
     private String slackWebHookUrl;
+
+    @Schema(title = "Enterprise weChat message: The notification method is valid for Enterprise WeChat app message",
+            description = "企业信息 : 通知方式为Enterprise WeChat app message有效",
+            example = "ww1a603432123d0dc1", accessMode = READ_WRITE)
+    private String corpId;
+
+    @Schema(title = "Enterprise weChat appId: The notification method is valid for Enterprise WeChat app message",
+            description = "企业微信应用id : 通知方式为Enterprise WeChat app message有效",
+            example = "1000001", accessMode = READ_WRITE)
+    private Integer agentId;
+
+    @Schema(title = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
+            description = "企业微信应用secret : 通知方式为Enterprise WeChat app message有效",
+            example = "oUydwn92ey0lnuY02MixNa57eNK-20dJn5NEOG-u2uE", accessMode = READ_WRITE)
+    private String appSecret;
 
     @Schema(title = "Discord channel id: The notification method is valid for Discord",
             description = "Discord 频道id: 通知方式为Discord有效",
