@@ -80,7 +80,7 @@ public class MonitorsController {
                 }
                 andList.add(inPredicate);
             }
-            if (app != null && !"".equals(app)) {
+            if (app != null && !app.chars().allMatch(Character::isSpaceChar)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 andList.add(predicateApp);
             }
@@ -92,11 +92,11 @@ public class MonitorsController {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (host != null && !"".equals(host)) {
+            if (host != null && !host.chars().allMatch(Character::isSpaceChar)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
                 orList.add(predicateHost);
             }
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.chars().allMatch(Character::isSpaceChar)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
