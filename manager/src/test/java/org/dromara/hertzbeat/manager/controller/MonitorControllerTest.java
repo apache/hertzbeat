@@ -3,7 +3,7 @@ package org.dromara.hertzbeat.manager.controller;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,7 +78,7 @@ class MonitorControllerTest {
         MonitorDto monitorDto = DataTest();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(monitorDto)))
+                .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -91,7 +91,7 @@ class MonitorControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(monitorDto)))
+                .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -155,7 +155,7 @@ class MonitorControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/detect")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Detect success."))
@@ -169,7 +169,7 @@ class MonitorControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/optional")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))

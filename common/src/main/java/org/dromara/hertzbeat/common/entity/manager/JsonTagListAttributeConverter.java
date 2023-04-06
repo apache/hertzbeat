@@ -17,11 +17,10 @@
 
 package org.dromara.hertzbeat.common.entity.manager;
 
-import com.google.gson.reflect.TypeToken;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import javax.persistence.AttributeConverter;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,19 +34,21 @@ public class JsonTagListAttributeConverter implements AttributeConverter<List<No
 
     @Override
     public String convertToDatabaseColumn(List<NoticeRule.TagItem> attribute) {
-        return GsonUtil.toJson(attribute);
+        return JsonUtil.toJson(attribute);
     }
 
     @Override
     public List<NoticeRule.TagItem> convertToEntityAttribute(String dbData) {
         try {
-            Type type = new TypeToken<List<NoticeRule.TagItem>>(){}.getType();
-            return GsonUtil.fromJson(dbData, type);
+            return JsonUtil.fromJson(dbData, new TypeReference<>() {});
         } catch (Exception e) {
             // history data handler
-            Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> map = GsonUtil.fromJson(dbData, type);
-            return map.entrySet().stream().map(entry -> new NoticeRule.TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+            Map<String, String> map = JsonUtil.fromJson(dbData, new TypeReference<>() {});
+            if (map != null) {
+                return map.entrySet().stream().map(entry -> new NoticeRule.TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+            } else {
+                return null;
+            }
         }
     }
 }
