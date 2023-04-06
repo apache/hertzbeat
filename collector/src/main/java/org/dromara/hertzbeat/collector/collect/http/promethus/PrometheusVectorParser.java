@@ -7,7 +7,7 @@ import org.dromara.hertzbeat.common.entity.dto.PromVectorOrMatrix;
 import org.dromara.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -23,7 +23,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
     @Override
     public Boolean checkType(String responseStr) {
         try {
-            PromVectorOrMatrix promVectorOrMatrix = GsonUtil.fromJson(responseStr, PromVectorOrMatrix.class);
+            PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(responseStr, PromVectorOrMatrix.class);
             if (DispatchConstants.PARSE_PROM_QL_VECTOR.equals(promVectorOrMatrix.getData().getResultType())) {
                 return true;
             }
@@ -37,7 +37,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
     public void parse(String resp, List<String> aliasFields, HttpProtocol http, CollectRep.MetricsData.Builder builder) {
         boolean setTimeFlag = false;
         boolean setValueFlag = false;
-        PromVectorOrMatrix promVectorOrMatrix = GsonUtil.fromJson(resp, PromVectorOrMatrix.class);
+        PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(resp, PromVectorOrMatrix.class);
         List<PromVectorOrMatrix.Result> result = promVectorOrMatrix.getData().getResult();
         for (PromVectorOrMatrix.Result r : result) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

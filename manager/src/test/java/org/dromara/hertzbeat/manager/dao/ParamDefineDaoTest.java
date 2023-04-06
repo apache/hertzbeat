@@ -43,8 +43,6 @@ class ParamDefineDaoTest extends AbstractSpringIntegrationTest {
                 .placeholder("mock placeholder")
                 .creator("mock creator")
                 .modifier("mock modifier")
-                .gmtCreate(LocalDateTime.now())
-                .gmtUpdate(LocalDateTime.now())
                 .build();
 
         paramDefine = paramDefineDao.saveAndFlush(paramDefine);

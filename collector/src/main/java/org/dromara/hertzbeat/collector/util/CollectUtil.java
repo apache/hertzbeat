@@ -17,14 +17,13 @@
 
 package org.dromara.hertzbeat.collector.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -291,8 +290,7 @@ public class CollectUtil {
                     Configmap param = configmap.get(key);
                     if (param != null && param.getType() == (byte) 3) {
                         String jsonValue = (String) param.getValue();
-                        Type type = new TypeToken<Map<String, String>>(){}.getType();
-                        Map<String, String> map = GsonUtil.fromJson(jsonValue, type);
+                        Map<String, String> map = JsonUtil.fromJson(jsonValue, new TypeReference<>() {});
                         if (map != null) {
                             map.forEach((name, value) -> {
                                 if (name != null && !"".equals(name.trim())) {

@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.impl.TagServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +57,7 @@ class TagControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/tag")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(tags)))
+                .content(JsonUtil.toJson(tags)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
@@ -79,7 +79,7 @@ class TagControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/tag")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(tag)))
+                        .content(JsonUtil.toJson(tag)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Modify success"))
@@ -102,7 +102,7 @@ class TagControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/tag")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(ids)))
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Delete success"))

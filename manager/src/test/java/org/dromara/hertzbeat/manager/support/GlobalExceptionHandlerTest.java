@@ -1,7 +1,7 @@
 package org.dromara.hertzbeat.manager.support;
 
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.controller.MonitorController;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
@@ -68,7 +68,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value((int) DETECT_FAILED_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -97,7 +97,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -126,7 +126,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) PARAM_INVALID_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -155,7 +155,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) FAIL_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -184,7 +184,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value((int) PARAM_INVALID_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -212,7 +212,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value((int) PARAM_INVALID_CODE))
                 .andExpect(jsonPath("$.msg").value("Min.monitorDto.monitor.intervals:must be greater than or equal to 10"));
@@ -241,7 +241,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -281,7 +281,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));
@@ -310,7 +310,7 @@ class GlobalExceptionHandlerTest {
                 .build()
                 .perform(MockMvcRequestBuilders.post("/api/monitor")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(monitorDto)))
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) PARAM_INVALID_CODE))
                 .andExpect(jsonPath("$.msg").value("mock exception"));

@@ -1,7 +1,7 @@
 package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,7 @@ class MonitorsControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(ids)))
+                .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -82,7 +82,7 @@ class MonitorsControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors/manage")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(ids)))
+                .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -95,7 +95,7 @@ class MonitorsControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/manage")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(GsonUtil.toJson(ids)))
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

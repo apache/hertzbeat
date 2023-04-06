@@ -5,7 +5,7 @@ import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,7 +85,7 @@ class AlertDefineControllerTest {
         // 模拟客户端往服务端发送请求
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(this.alertDefine)))
+                .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -95,7 +95,7 @@ class AlertDefineControllerTest {
     void modifyAlertDefine() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/api/alert/define")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(this.alertDefine)))
+                .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -126,7 +126,7 @@ class AlertDefineControllerTest {
     void deleteAlertDefine() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/define/" + this.alertDefine.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(this.alertDefine)))
+                .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -136,7 +136,7 @@ class AlertDefineControllerTest {
     void applyAlertDefineMonitorsBind() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define/" + this.alertDefine.getId() + "/monitors")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(GsonUtil.toJson(this.alertDefineMonitorBinds)))
+                .content(JsonUtil.toJson(this.alertDefineMonitorBinds)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

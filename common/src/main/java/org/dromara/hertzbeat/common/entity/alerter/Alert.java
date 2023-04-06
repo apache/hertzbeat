@@ -17,7 +17,7 @@
 
 package org.dromara.hertzbeat.common.entity.alerter;
 
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -142,6 +142,6 @@ public class Alert {
     @Override
     public Alert clone() {
         // deep clone
-        return GsonUtil.fromJson(GsonUtil.toJson(this), Alert.class);
+        return JsonUtil.fromJson(JsonUtil.toJson(this), Alert.class);
     }
 }

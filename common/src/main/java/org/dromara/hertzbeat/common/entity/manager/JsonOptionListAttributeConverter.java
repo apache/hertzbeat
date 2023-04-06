@@ -17,11 +17,10 @@
 
 package org.dromara.hertzbeat.common.entity.manager;
 
-import com.google.gson.reflect.TypeToken;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import javax.persistence.AttributeConverter;
-import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -33,12 +32,11 @@ public class JsonOptionListAttributeConverter implements AttributeConverter<List
 
     @Override
     public String convertToDatabaseColumn(List<ParamDefine.Option> attribute) {
-        return GsonUtil.toJson(attribute);
+        return JsonUtil.toJson(attribute);
     }
 
     @Override
     public List<ParamDefine.Option> convertToEntityAttribute(String dbData) {
-        Type type = new TypeToken<List<ParamDefine.Option>>(){}.getType();
-        return GsonUtil.fromJson(dbData, type);
+        return JsonUtil.fromJson(dbData, new TypeReference<>() {});
     }
 }

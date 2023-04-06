@@ -46,7 +46,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.InvalidMimeTypeException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -346,7 +345,7 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "key-value":
                             try{
-                                GsonUtil.toJson(param.getValue());
+                                JsonUtil.toJson(param.getValue());
                             } catch (Exception e){
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
