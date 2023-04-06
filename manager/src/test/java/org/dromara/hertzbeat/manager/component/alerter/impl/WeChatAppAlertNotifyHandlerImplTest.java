@@ -5,9 +5,9 @@ import org.mockito.Mock;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @description:
- * @author: hdd
- * @create: 2023/04/05
+ * unit test case for WeChatAppAlertNotifyHandlerImpl
+ * @author hdd
+ * @create 2023/04/05
  */
 public class WeChatAppAlertNotifyHandlerImplTest {
 

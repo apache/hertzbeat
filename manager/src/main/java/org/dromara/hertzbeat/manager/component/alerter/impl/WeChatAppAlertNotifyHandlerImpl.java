@@ -16,9 +16,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Objects;
 
 /**
- * @description:
- * @author: hdd
- * @create: 2023/04/04
+ * WeChat app alert notify impl
+ * @author hdd
+ * @create 2023/04/04
  */
 @Component
 @RequiredArgsConstructor
