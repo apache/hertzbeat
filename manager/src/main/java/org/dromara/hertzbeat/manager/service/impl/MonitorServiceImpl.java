@@ -240,7 +240,6 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        // todo 校验标签
         if (monitor.getTags() != null) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
@@ -274,10 +273,15 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
+                            if (param.getValue().chars().allMatch(Character::isSpaceChar)){
+                            throw new IllegalArgumentException("Params field " + field + " type "
+                                    + paramDefine.getType() + " over limit " + param.getValue());
+                        }
+                            break;
                         case "text":
                             Short limit = paramDefine.getLimit();
                             if (limit != null) {
-                                if (param.getValue() != null && param.getValue().length() > limit) {
+                                if (param.getValue().length() > limit) {
                                     throw new IllegalArgumentException("Params field " + field + " type "
                                             + paramDefine.getType() + " over limit " + limit);
                                 }
@@ -378,6 +382,7 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // Auto Update Default Tags: monitorName
+        // 自动更新默认的Tag： 监控名字
         List<Tag> tags = monitor.getTags();
         if (tags == null) {
             tags = new LinkedList<>();
@@ -396,9 +401,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            List<Configmap> configmaps = params.stream().map(param ->
-                    new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
-            appDefine.setConfigmap(configmaps);
+            if (params != null) {
+                List<Configmap> configmaps = params.stream().map(param ->
+                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+            }
             long newJobId = collectJobService.updateAsyncCollectJob(appDefine);
             monitor.setJobId(newJobId);
         }
@@ -409,7 +416,9 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
-            paramDao.saveAll(params);
+            if (params != null) {
+                paramDao.saveAll(params);
+            }
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
