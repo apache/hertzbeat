@@ -25,11 +25,7 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.AesUtil;
-import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.IntervalExpressionUtil;
-import org.dromara.hertzbeat.common.util.IpDomainUtil;
-import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
@@ -244,7 +240,6 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        // todo 校验标签
         if (monitor.getTags() != null) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
@@ -278,10 +273,15 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
+                            if (param.getValue().chars().allMatch(Character::isSpaceChar)){
+                            throw new IllegalArgumentException("Params field " + field + " type "
+                                    + paramDefine.getType() + " over limit " + param.getValue());
+                        }
+                            break;
                         case "text":
                             Short limit = paramDefine.getLimit();
                             if (limit != null) {
-                                if (param.getValue() != null && param.getValue().length() > limit) {
+                                if (param.getValue().length() > limit) {
                                     throw new IllegalArgumentException("Params field " + field + " type "
                                             + paramDefine.getType() + " over limit " + limit);
                                 }
@@ -332,10 +332,28 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "checkbox":
-                            // todo checkbox校验
+                            List<ParamDefine.Option> checkboxOptions = paramDefine.getOptions();
+                            boolean checkboxInvalid = true;
+                            if (checkboxOptions != null) {
+                                for (ParamDefine.Option option : checkboxOptions) {
+                                    if (param.getValue().equalsIgnoreCase(option.getValue())) {
+                                        checkboxInvalid = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (checkboxInvalid){
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + param.getValue() +  " is invalid checkbox value");
+                            }
                             break;
                         case "key-value":
-                            // todo key-value校验
+                            try{
+                                JsonUtil.toJson(param.getValue());
+                            } catch (Exception e){
+                                throw new IllegalArgumentException("Params field " + field + " value "
+                                        + param.getValue() + " is invalid key-value value");
+                            }
                             break;
                         // todo More parameter definitions and actual value format verification
                         //  更多参数定义与实际值格式校验
@@ -364,6 +382,7 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // Auto Update Default Tags: monitorName
+        // 自动更新默认的Tag： 监控名字
         List<Tag> tags = monitor.getTags();
         if (tags == null) {
             tags = new LinkedList<>();
@@ -382,9 +401,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            List<Configmap> configmaps = params.stream().map(param ->
-                    new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
-            appDefine.setConfigmap(configmaps);
+            if (params != null) {
+                List<Configmap> configmaps = params.stream().map(param ->
+                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+            }
             long newJobId = collectJobService.updateAsyncCollectJob(appDefine);
             monitor.setJobId(newJobId);
         }
@@ -395,7 +416,9 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
-            paramDao.saveAll(params);
+            if (params != null) {
+                paramDao.saveAll(params);
+            }
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -21,7 +21,7 @@ package org.dromara.hertzbeat.common.entity.job;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -235,6 +235,6 @@ public class Job {
     @Override
     public Job clone() {
         // deep clone   深度克隆
-        return GsonUtil.fromJson(GsonUtil.toJson(this), Job.class);
+        return JsonUtil.fromJson(JsonUtil.toJson(this), Job.class);
     }
 }

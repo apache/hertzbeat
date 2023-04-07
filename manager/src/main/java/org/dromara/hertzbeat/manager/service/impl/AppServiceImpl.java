@@ -69,7 +69,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        if (app == null) {
+        if (app == null || app.chars().allMatch(Character::isSpaceChar)) {
             return Collections.emptyList();
         }
         Job appDefine = appDefines.get(app.toLowerCase());
@@ -82,7 +82,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
-        if (app == null) {
+        if (app == null || app.chars().allMatch(Character::isSpaceChar)) {
             throw new IllegalArgumentException("The app can not null.");
         }
         Job appDefine = appDefines.get(app.toLowerCase());
@@ -118,20 +118,18 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             // 后面需要支持指标名称
             Map<String, String> name = job.getName();
             if (name != null && !name.isEmpty()) {
-                String i18nName = name.get(lang);
-                if (i18nName == null) {
-                    i18nName = name.values().stream().findFirst().get();
+                String i18nName = Optional.ofNullable(name.get(lang)).orElse(name.values().stream().findFirst().orElse(null));
+                if (i18nName != null) {
+                    i18nMap.put("monitor.app." + job.getApp(), i18nName);
                 }
-                i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
             for (ParamDefine paramDefine : job.getParams()) {
                 Map<String, String> paramDefineName = paramDefine.getName();
                 if (paramDefineName != null && !paramDefineName.isEmpty()) {
-                    String i18nName = paramDefineName.get(lang);
-                    if (i18nName == null) {
-                        i18nName = paramDefineName.values().stream().findFirst().get();
+                    String i18nName = Optional.ofNullable(paramDefineName.get(lang)).orElse(paramDefineName.values().stream().findFirst().orElse(null));
+                    if (i18nName != null) {
+                        i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nName);
                     }
-                    i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nName);
                 }
             }
         }
@@ -146,12 +144,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             hierarchyApp.setCategory(job.getCategory());
             hierarchyApp.setValue(job.getApp());
             Map<String, String> nameMap = job.getName();
-            if (nameMap != null) {
-                String i18nName = nameMap.get(lang);
-                if (i18nName == null) {
-                    i18nName = nameMap.values().stream().findFirst().get();
+            if (nameMap != null && !nameMap.isEmpty()) {
+                String i18nName = Optional.ofNullable(nameMap.get(lang)).orElse(nameMap.values().stream().findFirst().orElse(null));
+                if (i18nName != null) {
+                    hierarchyApp.setLabel(i18nName);
                 }
-                hierarchyApp.setLabel(i18nName);
             }
             List<Hierarchy> hierarchyMetricList = new LinkedList<>();
             if (job.getMetrics() != null) {
@@ -181,11 +178,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public String getMonitorDefineFileContent(String app) {
-        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
         String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-            classpath = this.getClass().getResource(File.separator).getPath();
+            classpath = Objects.requireNonNull(this.getClass().getResource(File.separator)).getPath();
             defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
             defineAppFile = new File(defineAppPath);
             if (!defineAppFile.exists() || !defineAppFile.isFile()) {
@@ -224,7 +221,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
         // app params verify
         verifyDefineAppContent(app);
-        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
         String defineAppPath = classpath + "define" + File.separator + "app-" + app.getApp() + ".yml";
         File defineAppFile = new File(defineAppPath);
         try {
@@ -252,7 +249,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
-        String classpath = this.getClass().getClassLoader().getResource("").getPath();
+        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
         String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (defineAppFile.exists() && defineAppFile.isFile()) {
