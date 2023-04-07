@@ -138,15 +138,15 @@ public class CalculateAlarm {
                 } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
                     // UN_REACHABLE Peer unreachable (Network layer icmp)
                     // UN_REACHABLE 对端不可达(网络层icmp)
-                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
+                    handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
                 } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
                     // UN_CONNECTABLE Peer connection failure (transport layer tcp,udp)
                     // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
-                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
+                    handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
                 } else {
                     // Other exceptions
                     // 其他异常
-                    handlerMonitorStatusAlert(String.valueOf(monitorId), app, metricsData.getCode());
+                    handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
                 }
                 return;
             } else {
@@ -183,7 +183,7 @@ public class CalculateAlarm {
         // 查出此监控类型下的此指标集合下关联配置的告警定义信息
         // field - define[]
         Map<String, List<AlertDefine>> defineMap = alertDefineService.getMonitorBindAlertDefines(monitorId, app, metrics);
-        if (defineMap == null || defineMap.isEmpty()) {
+        if (defineMap.isEmpty()) {
             return;
         }
         List<CollectRep.Field> fields = metricsData.getFieldsList();
@@ -259,7 +259,7 @@ public class CalculateAlarm {
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                             .build();
-                                    int defineTimes = define.getTimes() == null ? 0 : define.getTimes();
+                                    int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (times >= defineTimes) {
                                         dataQueue.addAlertData(alert);
                                     } else {
@@ -280,12 +280,17 @@ public class CalculateAlarm {
         }
     }
 
-    private void handlerMonitorStatusAlert(String monitorId, String app, CollectRep.Code code) {
-        Alert preAlert = triggeredAlertMap.get(monitorId);
+    private void handlerMonitorAvailableAlert(long monitorId, String app, CollectRep.Code code) {
+        AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
+        if (avaAlertDefine == null) {
+            return;
+        }
+        String monitorKey = String.valueOf(monitorId);
+        Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
         long currentTimeMill = System.currentTimeMillis();
         if (preAlert == null) {
             Map<String, String> tags = new HashMap<>(6);
-            tags.put(CommonConstants.TAG_MONITOR_ID, monitorId);
+            tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
             Alert.AlertBuilder alertBuilder = Alert.builder()
                     .tags(tags)
@@ -302,38 +307,25 @@ public class CalculateAlarm {
                         .target(CommonConstants.REACHABLE)
                         .content(this.bundle.getString("alerter.reachability.emergency") + ": " + code.name());
             }
-            if (alerterProperties.getSystemAlertTriggerTimes() > 1) {
-                alertBuilder.nextEvalInterval(0L);
+            if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
+                dataQueue.addAlertData(alertBuilder.build().clone());
+            } else {
                 alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
-                Alert alert = alertBuilder.build();
-                triggeredAlertMap.put(monitorId, alert);
-            } else {
-                Alert alert = alertBuilder.build();
-                dataQueue.addAlertData(alert.clone());
-                triggeredAlertMap.put(monitorId, alert);
             }
-            return;
-        }
-        if (preAlert.getLastTriggerTime() + preAlert.getNextEvalInterval() >= currentTimeMill) {
-            // Still in the silent period of the alarm evaluation interval
-            // 还在告警评估时间间隔静默期
-            preAlert.setTimes(preAlert.getTimes() + 1);
-            triggeredAlertMap.put(monitorId, preAlert);
+            triggeredAlertMap.put(monitorKey, alertBuilder.build());
         } else {
-            preAlert.setTimes(preAlert.getTimes() + 1);
-            if (preAlert.getTimes() >= alerterProperties.getSystemAlertTriggerTimes()) {
-                preAlert.setLastTriggerTime(currentTimeMill);
-                long nextEvalInterval  = preAlert.getNextEvalInterval() * 2;
-                if (preAlert.getNextEvalInterval() == 0L) {
-                    nextEvalInterval = alerterProperties.getAlertEvalIntervalBase();
-                }
-                nextEvalInterval = Math.min(nextEvalInterval, alerterProperties.getMaxAlertEvalInterval());
-                preAlert.setNextEvalInterval(nextEvalInterval);
+            int times = preAlert.getTimes() + 1;
+            if (preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
+                times = 1;
+            }
+            preAlert.setTimes(times);
+            preAlert.setLastTriggerTime(currentTimeMill);
+            int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
+            if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
-                triggeredAlertMap.put(monitorId, preAlert);
-                dataQueue.addAlertData(preAlert.clone());
+                dataQueue.addAlertData(preAlert);
             } else {
-                triggeredAlertMap.put(monitorId, preAlert);
+                preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }
         }
     }

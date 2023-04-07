@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.common.entity.alerter;
 
+import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -116,4 +117,22 @@ public class AlertDefine {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AlertDefine)) {
+            return false;
+        }
+        AlertDefine that = (AlertDefine) o;
+        return priority == that.priority && Objects.equal(app, that.app) && Objects.equal(metric, that.metric)
+                && Objects.equal(field, that.field) && Objects.equal(expr, that.expr)
+                && Objects.equal(times, that.times) && Objects.equal(template, that.template);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(app, metric, field, expr, priority, times, template);
+    }
 }
