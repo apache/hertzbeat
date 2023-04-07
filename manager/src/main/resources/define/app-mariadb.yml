@@ -172,7 +172,7 @@ metrics:
         type: 0
       - field: qps
         type: 0
-        unit: '次/s'
+        unit: 't/s'
     # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
     aliasFields:
       - uptime

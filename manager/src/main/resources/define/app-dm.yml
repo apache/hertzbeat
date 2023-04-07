@@ -41,7 +41,7 @@ params:
     defaultValue: 5236
     # 参数输入框提示信息
     #    这个是什么参数？
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: username
     name:
       zh-CN: 用户名

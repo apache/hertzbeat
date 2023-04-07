@@ -194,42 +194,48 @@ params:
     # 是否隐藏字段 true or false
     hide: true
 metrics:
-  # 第一个监控指标组 cpu
-  # 注意：内置监控指标有 (responseTime - 响应时间, keyword - 关键字数量)
+  # metrics - summary, inner monitoring metrics (responseTime - response time, keyword - number of keywords)
+  # 监控指标组 - summary, 内置监控指标有 (responseTime - 响应时间, keyword - 关键字数量)
   - name: summary
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # 指标组中的具体监控指标
+    # collect metrics content
+    # 具体监控指标列表
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: responseTime
         type: 0
         unit: ms
       - field: keyword
         type: 0
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-# 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # http port
       port: ^_^port^_^
-      # url请求接口路径
+      # http url
       url: ^_^uri^_^
       timeout: ^_^timeout^_^
-      # 请求方式 GET POST PUT DELETE PATCH
+      # http method: GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # if enabled https
       ssl: ^_^ssl^_^
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
       parseType: website
       keyword: ^_^keyword^_^
