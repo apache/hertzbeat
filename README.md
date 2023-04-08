@@ -269,6 +269,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/haoww"><img src="https://avatars.githubusercontent.com/u/32739294?v=4?s=100" width="100px;" alt="haoww"/><br /><sub><b>haoww</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=haoww" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/i-mayuan"><img src="https://avatars.githubusercontent.com/u/101498477?v=4?s=100" width="100px;" alt="i-mayuan"/><br /><sub><b>i-mayuan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=i-mayuan" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fengruge"><img src="https://avatars.githubusercontent.com/u/85803831?v=4?s=100" width="100px;" alt="fengruge"/><br /><sub><b>fengruge</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=fengruge" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aystzh"><img src="https://avatars.githubusercontent.com/u/38125392?v=4?s=100" width="100px;" alt="zhanghuan"/><br /><sub><b>zhanghuan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=aystzh" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
