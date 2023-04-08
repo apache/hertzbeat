@@ -134,19 +134,4 @@ public class MonitorController {
         return ResponseEntity.ok(new Message<>(metricNames));
     }
 
-    @GetMapping("/export")
-    @Operation(summary = "export monitor config", description = "导出监控配置")
-    public ResponseEntity<Message<Void>> export(@RequestParam List<Long> configList, @RequestParam(defaultValue = "JSON") String type,
-                                                HttpServletResponse res) throws IOException {
-        monitorService.export(configList, type, res);
-        return ResponseEntity.ok(new Message<>("Export success"));
-    }
-
-    @GetMapping("/import")
-    @Operation(summary = "import monitor config", description = "导入监控配置")
-    public ResponseEntity<Message<Void>> export(MultipartFile file) throws IOException {
-        monitorService.importConfig(file);
-        return ResponseEntity.ok(new Message<>("Import success"));
-    }
-
 }

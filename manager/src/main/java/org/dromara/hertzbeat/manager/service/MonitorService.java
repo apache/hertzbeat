@@ -191,11 +191,11 @@ public interface MonitorService {
      * Export Monitoring Configuration
      * 导出监控配置
      *
-     * @param configList 监控配置ID列表
-     * @param type       文件类型
-     * @param res        response
+     * @param ids  监控配置ID列表
+     * @param type 文件类型
+     * @param res  response
      */
-    void export(List<Long> configList, String type, HttpServletResponse res) throws IOException;
+    void export(List<Long> ids, String type, HttpServletResponse res) throws IOException;
 
     /**
      * Import Monitoring Configuration

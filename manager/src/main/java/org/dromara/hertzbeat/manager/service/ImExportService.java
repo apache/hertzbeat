@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.usthe.manager.service;
+package org.dromara.hertzbeat.manager.service;
 
 import java.io.InputStream;
 import java.io.OutputStream;

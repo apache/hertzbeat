@@ -17,12 +17,16 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
@@ -30,16 +34,12 @@ import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.entity.manager.Param;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
+import org.dromara.hertzbeat.manager.service.ImExportService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -223,12 +223,13 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public void export(List<Long> configList, String type, HttpServletResponse res) throws IOException {
+    public void export(List<Long> ids, String type, HttpServletResponse res) throws IOException {
         var imExportService = imExportServiceMap.get(type);
         var fileName = imExportService.getFileName();
-        res.setContentType(ContentType.APPLICATION_OCTET_STREAM.getMimeType());
+        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
+        res.setContentType("application/octet-stream;charset=UTF-8");
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        imExportService.exportConfig(res.getOutputStream(), configList);
+        imExportService.exportConfig(res.getOutputStream(), ids);
     }
 
     @Override

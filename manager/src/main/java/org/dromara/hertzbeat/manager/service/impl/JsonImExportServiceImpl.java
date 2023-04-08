@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.usthe.manager.service.impl;
+package org.dromara.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
