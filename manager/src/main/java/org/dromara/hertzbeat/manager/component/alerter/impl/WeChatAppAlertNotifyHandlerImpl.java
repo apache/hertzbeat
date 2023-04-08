@@ -72,7 +72,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 }
             }
         } catch (Exception e) {
-            throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
+            throw new AlertNoticeException("[Enterprise WeChat Notify Error] " + e.getMessage());
         }
     }
 
