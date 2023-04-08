@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,7 +81,7 @@ public class MonitorsController {
                 }
                 andList.add(inPredicate);
             }
-            if (app != null && !app.chars().allMatch(Character::isSpaceChar)) {
+            if (StringUtils.hasText(app)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 andList.add(predicateApp);
             }
@@ -92,11 +93,11 @@ public class MonitorsController {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (host != null && !host.chars().allMatch(Character::isSpaceChar)) {
+            if (StringUtils.hasText(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
                 orList.add(predicateHost);
             }
-            if (name != null && !name.chars().allMatch(Character::isSpaceChar)) {
+            if (StringUtils.hasText(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
