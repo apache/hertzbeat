@@ -46,6 +46,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -273,7 +274,7 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
-                            if (param.getValue().chars().allMatch(Character::isSpaceChar)){
+                            if (StringUtils.hasText(param.getValue())){
                             throw new IllegalArgumentException("Params field " + field + " type "
                                     + paramDefine.getType() + " over limit " + param.getValue());
                         }
