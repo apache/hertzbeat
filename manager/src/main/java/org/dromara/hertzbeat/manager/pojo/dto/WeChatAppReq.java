@@ -6,9 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @description:
- * @author: hdd
- * @create: 2023/04/05
+ * WeChatAppReq
+ * @author hdd
+ * @create 2023/04/05
  */
 @Data
 @AllArgsConstructor
