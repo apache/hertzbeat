@@ -7,9 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @description:
+ * WeChatAppDTO
  *
- * @create: 2023/04/05
+ * @create 2023/04/05
  */
 @Data
 @Builder
