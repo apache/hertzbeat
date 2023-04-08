@@ -80,6 +80,10 @@ public class AlertsController {
                 }
                 andList.add(inPredicate);
             }
+            if (monitorId != null) {
+                Predicate predicate = criteriaBuilder.like(root.get("tags").as(String.class), "%" + monitorId + "%");
+                andList.add(predicate);
+            }
             if (priority != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
                 andList.add(predicate);
