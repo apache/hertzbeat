@@ -173,10 +173,9 @@ public class MonitorsController {
 
     @GetMapping("/export")
     @Operation(summary = "export monitor config", description = "导出监控配置")
-    public ResponseEntity<Message<Void>> export(@RequestParam List<Long> ids, @RequestParam(defaultValue = "JSON") String type,
-                                                HttpServletResponse res) throws IOException {
+    public void export(@RequestParam List<Long> ids, @RequestParam(defaultValue = "JSON") String type,
+                       HttpServletResponse res) throws IOException {
         monitorService.export(ids, type, res);
-        return ResponseEntity.ok(new Message<>("Export success"));
     }
 
     @PostMapping("/import")
