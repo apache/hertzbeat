@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -43,7 +43,7 @@ export class MonitorService {
     return this.http.delete<Message<any>>(monitors_uri, options);
   }
 
-  public exportMonitors(monitorIds: Set<number>): Observable<Message<any>> {
+  public exportMonitors(monitorIds: Set<number>): Observable<Blob> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
       // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
@@ -53,7 +53,7 @@ export class MonitorService {
     const options = {
       params: httpParams
     };
-    return this.http.get<Message<any>>(export_monitors_uri, options);
+    return this.http.get(export_monitors_uri, options);
   }
 
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {

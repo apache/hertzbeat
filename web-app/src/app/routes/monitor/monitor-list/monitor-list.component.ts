@@ -8,6 +8,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 
+import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
 
@@ -164,11 +165,7 @@ export class MonitorListComponent implements OnInit {
   }
 
   onExportMonitors() {
-    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
-      return;
-    }
-    this.exportMonitors(this.checkedMonitorIds);
+    this.exportMonitors(this.checkedMonitorIds, '.json');
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
@@ -212,7 +209,7 @@ export class MonitorListComponent implements OnInit {
     );
   }
 
-  exportMonitors(monitors: Set<number>) {
+  exportMonitors(monitors: Set<number>, fileSuffix: string) {
     if (monitors == null || monitors.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
       return;
@@ -220,10 +217,17 @@ export class MonitorListComponent implements OnInit {
     const exportMonitors$ = this.monitorSvc.exportMonitors(monitors).subscribe(
       message => {
         exportMonitors$.unsubscribe();
-        if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.export-success'), '');
+        if (message.type == 'application/json') {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), message.msg);
+          console.log(message);
+          const blob = new Blob([message], { type: 'application/octet-stream;charset=UTF-8' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.download = `hertzbeat_monitor_${new Date().toString()}${fileSuffix}`;
+          a.href = url;
+          a.click();
+          window.URL.revokeObjectURL(url);
         }
       },
       error => {
