@@ -331,6 +331,7 @@
   "common.button.help": "幫助",
   "common.button.edit": "編輯",
   "common.button.delete": "刪除",
+  "common.button.operation.more": "更多操作",
   "app.theme.default": "淺色主題",
   "app.theme.dark": "深色主題",
   "app.theme.compact": "緊湊主題",
