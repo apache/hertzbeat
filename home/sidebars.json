@@ -12,6 +12,7 @@
         "start/iotdb-init",
         "start/tdengine-init",
         "start/mysql-change",
+        "start/postgresql-change",
         "start/account-modify",
         "start/custom-config",
         "start/ssl-cert-practice"

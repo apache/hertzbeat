@@ -58,7 +58,7 @@ public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationEx
      * Query the number of unhandled alarms of each alarm severity
      * 查询各个告警级别的未处理告警数量
      *
-     * @return Number of alerts 告警数量
+     * @return List of alerts num 告警数量
      */
     @Query("select new org.dromara.hertzbeat.alert.dto.AlertPriorityNum(mo.priority, count(mo.id)) from Alert mo where mo.status = 0 group by mo.priority")
     List<AlertPriorityNum> findAlertPriorityNum();
