@@ -50,10 +50,11 @@ export class MonitorService {
       // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
       httpParams = httpParams.append('ids', monitorId);
     });
-    const options = {
-      params: httpParams
-    };
-    return this.http.get(export_monitors_uri, options);
+    return this.http.get(export_monitors_uri, {
+      params: httpParams,
+      observe: 'body',
+      responseType: 'blob'
+    });
   }
 
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {
