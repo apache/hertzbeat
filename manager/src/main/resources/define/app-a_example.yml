@@ -63,7 +63,7 @@ params:
     defaultValue: 80
     # 参数输入框提示信息
     # param field input placeholder
-    placeholder: '请输入端口'
+    placeholder: 'Please Input Port'
   # field-param field key
   # field-变量字段标识符
   - field: username

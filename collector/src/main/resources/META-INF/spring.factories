@@ -14,5 +14,5 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.usthe.collector.config.CollectorAutoConfiguration
+org.dromara.hertzbeat.collector.config.CollectorAutoConfiguration
 

@@ -24,7 +24,7 @@
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
 
-**官网: [hertzbeat.com](https://hertzbeat.com)**
+**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
 **云服务: [tancloud.cn](https://tancloud.cn)**
 
@@ -264,6 +264,9 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/suncqujsj"><img src="https://avatars.githubusercontent.com/u/8012932?v=4?s=100" width="100px;" alt="suncqujsj"/><br /><sub><b>suncqujsj</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=suncqujsj" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sunqinbo"><img src="https://avatars.githubusercontent.com/u/1428540?v=4?s=100" width="100px;" alt="sunqinbo"/><br /><sub><b>sunqinbo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=sunqinbo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/haoww"><img src="https://avatars.githubusercontent.com/u/32739294?v=4?s=100" width="100px;" alt="haoww"/><br /><sub><b>haoww</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=haoww" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/i-mayuan"><img src="https://avatars.githubusercontent.com/u/101498477?v=4?s=100" width="100px;" alt="i-mayuan"/><br /><sub><b>i-mayuan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=i-mayuan" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fengruge"><img src="https://avatars.githubusercontent.com/u/85803831?v=4?s=100" width="100px;" alt="fengruge"/><br /><sub><b>fengruge</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=fengruge" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
@@ -292,7 +295,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目�
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)   
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)    
 

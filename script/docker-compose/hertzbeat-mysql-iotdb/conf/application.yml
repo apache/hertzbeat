@@ -37,10 +37,16 @@ spring:
     mode: HTML
 
 management:
+  health:
+    mail:
+      enabled: off
   endpoints:
     web:
       exposure:
-        include: 'metrics'
+        include:
+          - 'metrics'
+          - 'health'
+          - 'env'
     enabled-by-default: on
 
 sureness:
@@ -103,10 +109,9 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # org.apache.iotdb.session.util.Version: V_O_13 || V_1_0
+      # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
       # 如果你使用docker-compose-1.0.yaml, 不要忘记修i该version为V_1_0
       version: V_0_13
-      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)

@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>com.usthe.tancloud</groupId>
+        <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
     <properties>
@@ -28,6 +28,7 @@
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
+        <greptimedb.version>0.1.3</greptimedb.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -36,7 +37,7 @@
     <dependencies>
         <!-- common -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>common</artifactId>
             <version>${common.version}</version>
             <scope>provided</scope>
@@ -77,6 +78,52 @@
             <groupId>org.apache.iotdb</groupId>
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.greptime</groupId>
+            <artifactId>greptimedb-protocol</artifactId>
+            <version>${greptimedb.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.greptime</groupId>
+            <artifactId>greptimedb-grpc</artifactId>
+            <version>${greptimedb.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- kafka -->
         <dependency>

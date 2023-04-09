@@ -35,7 +35,7 @@ Even small corrections to typos are very welcome :)
 1. Deploy and start dependent services `MYSQL` and `TDengine` database   
 2. Requires `maven3+`, `java8+` and `lombok` environments    
 3. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
-4. Start `springboot manager` service `manager/src/main/java/com/usthe/manager/Manager.java`   
+4. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
 
 - Front-web start   
 
@@ -113,13 +113,13 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)  
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.     
 
-QQ group number `718618151`, verify code: `tancloud`      
+QQ group number `236915833`, verify code: `tancloud`      
 
 Public WeChat: `tancloudtech`  
 
@@ -180,7 +180,7 @@ Public WeChat: `tancloudtech`
 1. 部署启动依赖服务`MYSQL`和`TDengine`数据库  
 2. 需要`maven3+`, `java8+`和`lombok`环境  
 3. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
-4. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`  
+4. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
 
 - 前端启动
 
@@ -258,13 +258,13 @@ git pull upstream master
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [HertzBeat答疑网站](https://support.qq.com/products/379369)
 
 加微信号 `tan-cloud` 拉您进微信交流群   
 
-加QQ群号 `718618151` 进QQ交流群, 验证信息: `tancloud`     
+加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`     
 
 微信公众号: `tancloudtech`  
 
