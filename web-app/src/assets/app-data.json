@@ -84,16 +84,16 @@
       "hideInBreadcrumb": true,
       "children": [
         {
-          "text": "告警中心",
-          "i18n": "menu.alert.center",
-          "icon": "anticon-alert",
-          "link": "/alert/center"
-        },
-        {
           "text": "告警配置",
           "i18n": "menu.alert.setting",
           "icon": "anticon-bulb",
           "link": "/alert/setting"
+        },
+        {
+          "text": "告警中心",
+          "i18n": "menu.alert.center",
+          "icon": "anticon-alert",
+          "link": "/alert/center"
         },
         {
           "text": "告警通知",
