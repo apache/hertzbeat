@@ -6,7 +6,9 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
+import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 
+import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
 
@@ -162,6 +164,24 @@ export class MonitorListComponent implements OnInit {
     });
   }
 
+  onExportMonitors() {
+    this.exportMonitors(this.checkedMonitorIds);
+  }
+
+  onImportMonitors(info: NzUploadChangeParam): void {
+    if (info.file.response) {
+      this.tableLoading = true;
+      const message = info.file.response;
+      if (message.code === 0) {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
+        this.loadMonitorTable();
+      } else {
+        this.tableLoading = false;
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
+      }
+    }
+  }
+
   deleteMonitors(monitors: Set<number>) {
     if (monitors == null || monitors.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
@@ -183,6 +203,35 @@ export class MonitorListComponent implements OnInit {
         this.tableLoading = false;
         deleteMonitors$.unsubscribe();
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
+      }
+    );
+  }
+
+  exportMonitors(monitors: Set<number>) {
+    if (monitors == null || monitors.size == 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
+      return;
+    }
+    const exportMonitors$ = this.monitorSvc.exportMonitors(monitors).subscribe(
+      response => {
+        exportMonitors$.unsubscribe();
+        const message = response.body!;
+        if (message.type == 'application/json') {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
+        } else {
+          console.log(response);
+          const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
+          a.href = url;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+      },
+      error => {
+        exportMonitors$.unsubscribe();
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
       }
     );
   }
@@ -291,6 +340,7 @@ export class MonitorListComponent implements OnInit {
 
   // begin: 列表多选逻辑
   checkedAll: boolean = false;
+
   onAllChecked(checked: boolean) {
     if (checked) {
       this.monitors.forEach(monitor => this.checkedMonitorIds.add(monitor.id));
@@ -298,6 +348,7 @@ export class MonitorListComponent implements OnInit {
       this.checkedMonitorIds.clear();
     }
   }
+
   onItemChecked(monitorId: number, checked: boolean) {
     if (checked) {
       this.checkedMonitorIds.add(monitorId);
@@ -305,6 +356,7 @@ export class MonitorListComponent implements OnInit {
       this.checkedMonitorIds.delete(monitorId);
     }
   }
+
   // end: 列表多选逻辑
 
   notifyCopySuccess() {
