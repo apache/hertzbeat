@@ -43,7 +43,7 @@ export class MonitorService {
     return this.http.delete<Message<any>>(monitors_uri, options);
   }
 
-  public exportMonitors(monitorIds: Set<number>): Observable<Blob> {
+  public exportMonitors(monitorIds: Set<number>): Observable<HttpResponse<Blob>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
       // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
@@ -52,7 +52,7 @@ export class MonitorService {
     });
     return this.http.get(export_monitors_uri, {
       params: httpParams,
-      observe: 'body',
+      observe: 'response',
       responseType: 'blob'
     });
   }

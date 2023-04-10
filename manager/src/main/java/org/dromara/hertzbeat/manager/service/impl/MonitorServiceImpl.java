@@ -229,6 +229,7 @@ public class MonitorServiceImpl implements MonitorService {
         res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
         res.setContentType("application/octet-stream;charset=UTF-8");
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
 

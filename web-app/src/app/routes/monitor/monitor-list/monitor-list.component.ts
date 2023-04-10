@@ -165,22 +165,20 @@ export class MonitorListComponent implements OnInit {
   }
 
   onExportMonitors() {
-    this.exportMonitors(this.checkedMonitorIds, '.json');
+    this.exportMonitors(this.checkedMonitorIds);
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
-    if (info.file.status !== 'uploading') {
-      console.log(info.file, info.fileList);
-    }
-    this.tableLoading = true;
-    console.log(info);
-    const message = info.file.response;
-    if (message.code === 0) {
-      this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
-      this.loadMonitorTable();
-    } else {
-      this.tableLoading = false;
-      this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
+    if (info.file.response) {
+      this.tableLoading = true;
+      const message = info.file.response;
+      if (message.code === 0) {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
+        this.loadMonitorTable();
+      } else {
+        this.tableLoading = false;
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
+      }
     }
   }
 
@@ -209,22 +207,23 @@ export class MonitorListComponent implements OnInit {
     );
   }
 
-  exportMonitors(monitors: Set<number>, fileSuffix: string) {
+  exportMonitors(monitors: Set<number>) {
     if (monitors == null || monitors.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
       return;
     }
     const exportMonitors$ = this.monitorSvc.exportMonitors(monitors).subscribe(
-      message => {
+      response => {
         exportMonitors$.unsubscribe();
+        const message = response.body!;
         if (message.type == 'application/json') {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
         } else {
-          console.log(message);
-          const blob = new Blob([message], { type: 'application/octet-stream;charset=UTF-8' });
+          console.log(response);
+          const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.download = `hertzbeat_monitor_${new Date().toString()}${fileSuffix}`;
+          a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
           a.href = url;
           a.click();
           window.URL.revokeObjectURL(url);
