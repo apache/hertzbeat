@@ -16,9 +16,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Objects;
 
 /**
- * @description:
- * @author: hdd
- * @create: 2023/04/04
+ * WeChat app alert notify impl
+ * @author hdd
+ * @create 2023/04/04
  */
 @Component
 @RequiredArgsConstructor
@@ -72,7 +72,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 }
             }
         } catch (Exception e) {
-            throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
+            throw new AlertNoticeException("[Enterprise WeChat Notify Error] " + e.getMessage());
         }
     }
 

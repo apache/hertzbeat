@@ -48,6 +48,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -311,7 +312,7 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
-                            if (param.getValue().chars().allMatch(Character::isSpaceChar)) {
+                            if (StringUtils.hasText(param.getValue())) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
                                         + paramDefine.getType() + " over limit " + param.getValue());
                             }
