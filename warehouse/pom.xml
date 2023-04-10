@@ -26,6 +26,7 @@
     <properties>
         <common.version>1.0</common.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
+        <influxdb.version>2.22</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <greptimedb.version>0.1.3</greptimedb.version>
@@ -79,6 +80,13 @@
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
         </dependency>
+        <!-- influxdb 这里支持1.7版本因此使用influxdb-java, 完全支持2.x版本需要使用influxdb-client-java -->
+        <dependency>
+            <groupId>org.influxdb</groupId>
+            <artifactId>influxdb-java</artifactId>
+            <version>${influxdb.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>io.greptime</groupId>
             <artifactId>greptimedb-protocol</artifactId>
