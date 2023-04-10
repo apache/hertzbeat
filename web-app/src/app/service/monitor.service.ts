@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -10,6 +10,7 @@ const monitor_uri = '/monitor';
 const monitors_uri = '/monitors';
 const detect_monitor_uri = '/monitor/detect';
 const manage_monitors_uri = '/monitors/manage';
+const export_monitors_uri = '/monitors/export';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
 
@@ -42,12 +43,27 @@ export class MonitorService {
     return this.http.delete<Message<any>>(monitors_uri, options);
   }
 
+  public exportMonitors(monitorIds: Set<number>): Observable<HttpResponse<Blob>> {
+    let httpParams = new HttpParams();
+    monitorIds.forEach(monitorId => {
+      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
+      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      httpParams = httpParams.append('ids', monitorId);
+    });
+    return this.http.get(export_monitors_uri, {
+      params: httpParams,
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
       // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
       // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
       httpParams = httpParams.append('ids', monitorId);
+      httpParams = httpParams.append('type', 'JSON');
     });
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(manage_monitors_uri, options);

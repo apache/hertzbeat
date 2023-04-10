@@ -46,8 +46,30 @@
     </button>
     <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
       <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'monitors.delete' | i18n }}
+      {{ 'monitors.delete-monitor' | i18n }}
     </button>
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      {{ 'common.button.operation.more' | i18n }}
+      <span nz-icon nzType="down"></span>
+    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button nzType="primary" (click)="onExportMonitors()">
+            <i nz-icon nzType="export" nzTheme="outline"></i>
+            {{ 'monitors.export' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
+            <button nz-button nzType="primary">
+              <i nz-icon nzType="import" nzTheme="outline"></i>
+              {{ 'monitors.import' | i18n }}
+            </button>
+          </nz-upload>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </div>
   <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 2 }" class="mobile-hide">
     <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()">

@@ -15,36 +15,52 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.dao;
+package org.dromara.hertzbeat.manager.service;
 
-import org.dromara.hertzbeat.common.entity.manager.Tag;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
-import java.util.Set;
 
 /**
- * tag repository
+ * Configuration Import Export
+ * 配置导入导出
  *
- * @author tom
- * @date 2022/5/1 13:55
+ * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
+ * Created by gcdd1993 on 2023/3/31
  */
-public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
+public interface ImExportService {
 
     /**
-     * delete tags by tag id
+     * Import Configuration
+     * 导入配置
      *
-     * @param ids id list
+     * @param is 输入流
      */
-    void deleteTagsByIdIn(Set<Long> ids);
+    void importConfig(InputStream is);
 
     /**
-     * find tags by tag id
+     * Export Configuration
+     * 导出配置
      *
-     * @param ids id list
-     * @return tag list
+     * @param os         输出流
+     * @param configList 配置列表
      */
-    List<Tag> findByIdIn(Set<Long> ids);
+    void exportConfig(OutputStream os, List<Long> configList);
+
+    /**
+     * Export file type
+     * 导出文件类型
+     *
+     * @return 文件类型
+     */
+    String type();
+
+    /**
+     * Get Export File Name
+     * 获取导出文件名
+     *
+     * @return 文件名
+     */
+    String getFileName();
 
 }
