@@ -31,18 +31,10 @@ common:
 
 2. 配置告警自定义参数  
 
-> 如果您收到频繁的内置可用性告警，或在您所在网络抖动厉害，建议调整以下参数 
-
 ```yaml
 alerter:
   # 自定义控制台地址
   console-url: https://console.tancloud.cn
-  # 告警触发评估间隔基础时间，相同重复告警在2倍此时间内不会被重复连续触发 单位毫秒
-  alert-eval-interval-base: 600000
-  # 告警触发评估间隔最大时间，相同重复告警最多在此时间段被抑制 单位毫秒
-  max-alert-eval-interval: 86400000
-  # 内置可用性告警连续触发几次才会真正发送告警 默认1次，当网络环境不好，不想频繁收到可用性告警时，可将此值调大(3)  
-  system-alert-trigger-times: 1
 ```
 
 3. 使用外置redis代替内存存储实时指标数据  
