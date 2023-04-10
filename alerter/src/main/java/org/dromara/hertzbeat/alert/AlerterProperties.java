@@ -69,18 +69,21 @@ public class AlerterProperties {
      * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
      * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
      */
+    @Deprecated
     private long alertEvalIntervalBase = 1000 * 60 * 10L;
 
     /**
      * 最大告警评估时间间隔 单位毫秒
      * max of alert eval interval time, unit:ms
      */
+    @Deprecated
     private long maxAlertEvalInterval = 1000 * 60 * 60 * 24L;
 
     /**
      * 系统内置告警(available alert, reachable alert...)触发次数
      * system alert(available alert, reachable alert...) trigger times
      */
+    @Deprecated
     private int systemAlertTriggerTimes = 1;
 
     /**

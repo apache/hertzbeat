@@ -80,6 +80,12 @@ public interface AppService {
     List<Hierarchy> getAllAppHierarchy(String lang);
 
     /**
+     * Get all app define
+     * @return defines
+     */
+    Map<String, Job> getAllAppDefines();
+
+    /**
      * app define file content str
      * @param app app
      * @return file content

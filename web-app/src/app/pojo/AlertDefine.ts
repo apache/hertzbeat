@@ -1,6 +1,7 @@
 export class AlertDefine {
   id!: number;
   app!: string;
+  // when metrics is availability (monitoring avail default), field is undefined
   metric!: string;
   field!: string;
   preset: boolean = true;

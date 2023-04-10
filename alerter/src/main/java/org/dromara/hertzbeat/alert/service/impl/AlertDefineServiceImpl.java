@@ -30,11 +30,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,13 +104,19 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, app, metrics);
         List<AlertDefine> defaultDefines = alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(app, metrics);
         defines.addAll(defaultDefines);
-        if (defines.isEmpty()) {
-            return null;
-        }
+        Set<AlertDefine> defineSet = defines.stream().filter(item -> item.getField() != null).collect(Collectors.toSet());
         // The alarm thresholds are defined in ascending order of the alarm severity from 0 to 3. The lower the number, the higher the alarm is. That is, the alarm is calculated from the highest alarm threshold
         // 将告警阈值定义从告警级别0-3数字升序排序，数字越小告警基本越高，即从最高的告警阈值开始匹配计算
-        return defines.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
+        return defineSet.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
                 .collect(Collectors.groupingBy(AlertDefine::getField));
+    }
+
+    @Override
+    public AlertDefine getMonitorBindAlertAvaDefine(long monitorId, String app, String metrics) {
+        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, app, metrics);
+        List<AlertDefine> defaultDefines = alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(app, metrics);
+        defines.addAll(defaultDefines);
+        return defines.stream().findFirst().orElse(null);
     }
 
     @Override
