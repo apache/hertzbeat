@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
@@ -67,6 +68,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
+@RequiredArgsConstructor
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 
@@ -236,12 +238,15 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void importConfig(MultipartFile file) throws IOException {
-        String type = null;
         var fileName = file.getOriginalFilename();
-        if (fileName.endsWith("json")) {
+        if (!StringUtils.hasText(fileName)) {
+            return;
+        }
+        var type = "";
+        if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
             type = JsonImExportServiceImpl.TYPE;
         }
-        if (Objects.isNull(type)) {
+        if (!imExportServiceMap.containsKey(type)) {
             throw new RuntimeException("file " + fileName + " is not supported.");
         }
         var imExportService = imExportServiceMap.get(type);

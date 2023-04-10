@@ -38,6 +38,7 @@ import java.util.List;
 @Service
 public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
     public static final String TYPE = "JSON";
+    public static final String FILE_SUFFIX = ".json";
 
     private final ObjectMapper objectMapper;
 
@@ -71,4 +72,5 @@ public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
     public String getFileName() {
         return fileNamePrefix() + ".json";
     }
+
 }

@@ -194,6 +194,7 @@ public interface MonitorService {
      * @param ids  监控配置ID列表
      * @param type 文件类型
      * @param res  response
+     * @throws IOException This exception will be thrown if the export fails
      */
     void export(List<Long> ids, String type, HttpServletResponse res) throws IOException;
 
@@ -202,6 +203,7 @@ public interface MonitorService {
      * 导入监控配置
      *
      * @param file 配置文件
+     * @throws IOException This exception will be thrown if the export fails
      */
     void importConfig(MultipartFile file) throws IOException;
 

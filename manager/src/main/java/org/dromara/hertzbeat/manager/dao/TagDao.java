@@ -39,6 +39,12 @@ public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecut
      */
     void deleteTagsByIdIn(Set<Long> ids);
 
+    /**
+     * find tags by tag id
+     *
+     * @param ids id list
+     * @return tag list
+     */
     List<Tag> findByIdIn(Set<Long> ids);
 
 }
