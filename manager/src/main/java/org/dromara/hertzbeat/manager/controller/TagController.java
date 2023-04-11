@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
@@ -65,7 +66,7 @@ public class TagController {
     @Operation(summary = "Modify an existing tag", description = "修改一个已存在标签")
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody Tag tag) {
         // Verify request data  校验请求数据
-        if (tag.getId() == null || tag.getName() == null) {
+        if (tag.getId() == null || StringUtils.hasText(tag.getName())) {
             throw new IllegalArgumentException("The Tag not exist.");
         }
         tagService.modifyTag(tag);
@@ -90,7 +91,7 @@ public class TagController {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (search != null && !"".equals(search)) {
+            if (StringUtils.hasText(search)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
                 Predicate predicateValue = criteriaBuilder.like(root.get("value"), "%" + search + "%");
