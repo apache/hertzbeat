@@ -90,6 +90,12 @@
           "link": "/alert/setting"
         },
         {
+          "text": "告警静默",
+          "i18n": "menu.alert.silence",
+          "icon": "anticon-audio-muted",
+          "link": "/alert/silence"
+        },
+        {
           "text": "告警中心",
           "i18n": "menu.alert.center",
           "icon": "anticon-alert",
