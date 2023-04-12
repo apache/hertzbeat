@@ -42,27 +42,28 @@ import static org.mockito.Mockito.*;
  * newBranch feature-clickhouse#179
  * 配置带密码的clickhouse
  * https://www.cnblogs.com/it1042290135/p/16202478.html
-
- 9363是promethus的http端口(在config.xml里面打开), http://clickhouse:9363/metrics
- docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
-
- *
+ * <p>
+ * 9363是promethus的http端口(在config.xml里面打开), http://clickhouse:9363/metrics
+ * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
+ * <p>
+ * <p>
  * https://hub.docker.com/r/clickhouse/clickhouse-server/
  * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server
  * curl 'http://localhost:18123/'
  * web UI
  * http://localhost:18123/play
- *
+ * <p>
  * 明文密码linux可以登录了,但是navicat还是无法登录
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
+ *
  * @see TagServiceTest
  */
 @ExtendWith(MockitoExtension.class)
 class MonitorServiceTest {
 
     @InjectMocks
-    private MonitorServiceImpl monitorService;
+    private MonitorServiceImpl monitorService = new MonitorServiceImpl(List.of());
 
     //    @Mock(lenient = true)
     @Mock
@@ -109,7 +110,7 @@ class MonitorServiceTest {
         when(collectJobService.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class,() -> monitorService.detectMonitor(monitor,params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
     }
 
     /**
@@ -135,7 +136,7 @@ class MonitorServiceTest {
         when(collectJobService.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class,() -> monitorService.detectMonitor(monitor,params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
     }
 
     @Test
@@ -151,8 +152,9 @@ class MonitorServiceTest {
         when(monitorDao.save(monitor)).thenReturn(monitor);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
-        assertDoesNotThrow(() -> monitorService.addMonitor(monitor,params));
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params));
     }
+
     @Test
     void addMonitorException() {
         Monitor monitor = Monitor.builder()
@@ -165,7 +167,7 @@ class MonitorServiceTest {
         when(collectJobService.addAsyncCollectJob(job)).thenReturn(1L);
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        assertThrows(MonitorDatabaseException.class,() -> monitorService.addMonitor(monitor,params));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params));
     }
 
     /**
@@ -182,11 +184,12 @@ class MonitorServiceTest {
         Monitor existMonitor = Monitor.builder().name("memory").host("host").id(2L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            assertEquals("监控名称不能重复!",e.getMessage());
+            assertEquals("监控名称不能重复!", e.getMessage());
         }
     }
+
     /**
      * 参数校验-为必填的参数没有填
      */
@@ -214,11 +217,12 @@ class MonitorServiceTest {
         paramDefines.add(pd);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            assertEquals("Params field " + field + " is required.",e.getMessage());
+            assertEquals("Params field " + field + " is required.", e.getMessage());
         }
     }
+
     /**
      * 参数校验-为必填的参数类型错误
      */
@@ -248,12 +252,13 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
             assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " is invalid.",e.getMessage());
+                    + paramDefine.getType() + " is invalid.", e.getMessage());
         }
     }
+
     /**
      * 参数校验-为必填的-整形参数范围
      */
@@ -283,12 +288,13 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
             assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " over range " + paramDefine.getRange(),e.getMessage());
+                    + paramDefine.getType() + " over range " + paramDefine.getRange(), e.getMessage());
         }
     }
+
     /**
      * 参数校验-为必填的-文本参数长度
      */
@@ -319,12 +325,13 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
             assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " over limit " + limit,e.getMessage());
+                    + paramDefine.getType() + " over limit " + limit, e.getMessage());
         }
     }
+
     /**
      * 参数校验-主机IP参数格式
      */
@@ -362,13 +369,14 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            if (checkException){
-                assertEquals("Params field " + field + " value " + value + " is invalid host value.",e.getMessage());
+            if (checkException) {
+                assertEquals("Params field " + field + " value " + value + " is invalid host value.", e.getMessage());
             }
         }
     }
+
     /**
      * 参数校验-布尔类型
      */
@@ -407,14 +415,15 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            if (checkException){
+            if (checkException) {
                 assertEquals("Params field " + field + " value "
-                        + value + " is invalid boolean value.",e.getMessage());
+                        + value + " is invalid boolean value.", e.getMessage());
             }
         }
     }
+
     /**
      * 参数校验-布尔类型
      */
@@ -446,7 +455,7 @@ class MonitorServiceTest {
         String type = "radio";
 
         List<ParamDefine.Option> options = new ArrayList<>();
-        options.add(new ParamDefine.Option("language","zh"));
+        options.add(new ParamDefine.Option("language", "zh"));
         ParamDefine paramDefine = ParamDefine.builder()
                 .required(true)
                 .type(type)
@@ -457,14 +466,15 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            if (checkException){
+            if (checkException) {
                 assertEquals("Params field " + field + " value "
-                        + param.getValue() + " is invalid option value",e.getMessage());
+                        + param.getValue() + " is invalid option value", e.getMessage());
             }
         }
     }
+
     /**
      * 参数校验-没有定义的类型
      */
@@ -496,7 +506,7 @@ class MonitorServiceTest {
         String type = "none";
 
         List<ParamDefine.Option> options = new ArrayList<>();
-        options.add(new ParamDefine.Option("language","zh"));
+        options.add(new ParamDefine.Option("language", "zh"));
         ParamDefine paramDefine = ParamDefine.builder()
                 .required(true)
                 .type(type)
@@ -507,10 +517,10 @@ class MonitorServiceTest {
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
-            monitorService.validate(dto,isModify);
+            monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            if (checkException){
-                assertEquals("ParamDefine type " + paramDefine.getType() + " is invalid.",e.getMessage());
+            if (checkException) {
+                assertEquals("ParamDefine type " + paramDefine.getType() + " is invalid.", e.getMessage());
             }
         }
     }
@@ -536,7 +546,7 @@ class MonitorServiceTest {
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
-            monitorService.modifyMonitor(dto.getMonitor(),dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
         } catch (IllegalArgumentException e) {
             assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
@@ -547,7 +557,7 @@ class MonitorServiceTest {
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
         try {
-            monitorService.modifyMonitor(dto.getMonitor(),dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
@@ -556,7 +566,7 @@ class MonitorServiceTest {
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
-        assertThrows(MonitorDatabaseException.class,()->monitorService.modifyMonitor(dto.getMonitor(),dto.getParams()));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams()));
     }
 
     @Test
@@ -565,7 +575,7 @@ class MonitorServiceTest {
         Monitor existOKMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(existOKMonitor));
         doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
-        assertDoesNotThrow(()-> monitorService.deleteMonitor(id));
+        assertDoesNotThrow(() -> monitorService.deleteMonitor(id));
     }
 
     @Test
@@ -575,12 +585,12 @@ class MonitorServiceTest {
         ids.add(2L);
 
         List<Monitor> monitors = new ArrayList<>();
-        for(Long id : ids){
+        for (Long id : ids) {
             Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
-        assertDoesNotThrow(()-> monitorService.deleteMonitors(ids));
+        assertDoesNotThrow(() -> monitorService.deleteMonitors(ids));
     }
 
     @Test
@@ -611,12 +621,12 @@ class MonitorServiceTest {
         ids.add(2L);
 
         List<Monitor> monitors = new ArrayList<>();
-        for(Long id : ids){
+        for (Long id : ids) {
             Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
-        assertDoesNotThrow(()-> monitorService.cancelManageMonitors(ids));
+        assertDoesNotThrow(() -> monitorService.cancelManageMonitors(ids));
     }
 
     @Test
@@ -626,7 +636,7 @@ class MonitorServiceTest {
         ids.add(2L);
 
         List<Monitor> monitors = new ArrayList<>();
-        for(Long id : ids){
+        for (Long id : ids) {
             Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitor.setStatus(CommonConstants.UN_MANAGE_CODE);
             monitors.add(monitor);
@@ -637,7 +647,7 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitors.get(0).getApp())).thenReturn(job);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(monitors.get(0).getId())).thenReturn(params);
-        assertDoesNotThrow(()-> monitorService.enableManageMonitors(ids));
+        assertDoesNotThrow(() -> monitorService.enableManageMonitors(ids));
     }
 
     @Test
@@ -655,24 +665,24 @@ class MonitorServiceTest {
         job.setMetrics(new ArrayList<>());
         when(appService.getAppDefine(appCounts.get(0).getApp())).thenReturn(job);
 
-        assertDoesNotThrow(()-> monitorService.getAllAppMonitorsCount());
+        assertDoesNotThrow(() -> monitorService.getAllAppMonitorsCount());
     }
 
     @Test
     void getMonitor() {
         long monitorId = 1L;
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
-        assertDoesNotThrow(()-> monitorService.getMonitor(monitorId));
+        assertDoesNotThrow(() -> monitorService.getMonitor(monitorId));
     }
 
     @Test
     void updateMonitorStatus() {
-        assertDoesNotThrow(()-> monitorService.updateMonitorStatus(1L,CommonConstants.AVAILABLE_CODE));
+        assertDoesNotThrow(() -> monitorService.updateMonitorStatus(1L, CommonConstants.AVAILABLE_CODE));
     }
 
     @Test
     void getAppMonitors() {
-        assertDoesNotThrow(()-> monitorDao.findMonitorsByAppEquals("test"));
+        assertDoesNotThrow(() -> monitorDao.findMonitorsByAppEquals("test"));
     }
 
     @Test
@@ -690,9 +700,9 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         List<String> metrics = Arrays.asList();
         try {
-            monitorService.addNewMonitorOptionalMetrics(metrics,monitor,params);
-        }catch (MonitorMetricsException e){
-            assertEquals("no select metrics or select illegal metrics",e.getMessage());
+            monitorService.addNewMonitorOptionalMetrics(metrics, monitor, params);
+        } catch (MonitorMetricsException e) {
+            assertEquals("no select metrics or select illegal metrics", e.getMessage());
         }
         reset();
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
@@ -703,12 +713,12 @@ class MonitorServiceTest {
         metricsDefine.add(e);
         job.setMetrics(metricsDefine);
         List<String> finalMetrics = metrics;
-        assertThrows(MonitorDatabaseException.class,() -> monitorService.addNewMonitorOptionalMetrics(finalMetrics,monitor,params));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.addNewMonitorOptionalMetrics(finalMetrics, monitor, params));
 
     }
 
     @Test
     void getMonitorMetrics() {
-        Assertions.assertDoesNotThrow(()-> appService.getAppDefineMetricNames("test"));
+        Assertions.assertDoesNotThrow(() -> appService.getAppDefineMetricNames("test"));
     }
 }
