@@ -10,7 +10,6 @@ import { AlertSilence } from '../../../pojo/AlertSilence';
 import { TagItem } from '../../../pojo/NoticeRule';
 import { AlertSilenceService } from '../../../service/alert-silence.service';
 import { TagService } from '../../../service/tag.service';
-import {Tag} from "../../../pojo/Tag";
 
 @Component({
   selector: 'app-alert-silence',
@@ -109,9 +108,9 @@ export class AlertSilenceComponent implements OnInit {
     });
   }
 
-  onDeleteOneAlertSilence(alertDefineId: number) {
-    let defineIds = new Set<number>();
-    defineIds.add(alertDefineId);
+  onDeleteOneAlertSilence(id: number) {
+    let ids = new Set<number>();
+    ids.add(id);
     this.modal.confirm({
       nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
@@ -119,7 +118,7 @@ export class AlertSilenceComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteAlertSilences(defineIds)
+      nzOnOk: () => this.deleteAlertSilences(ids)
     });
   }
 
@@ -181,7 +180,7 @@ export class AlertSilenceComponent implements OnInit {
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  silence!: AlertSilence;
+  silence: AlertSilence = new AlertSilence();
   searchTag!: string;
   tagsOption: any[] = [];
   filterTags: string[] = [];
@@ -232,7 +231,9 @@ export class AlertSilenceComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.silence = message.data;
-            this.silenceDates = [this.silence.periodStart, this.silence.periodEnd];
+            if (this.silence.type === 0) {
+              this.silenceDates = [this.silence.periodStart, this.silence.periodEnd];
+            }
             this.isManageModalVisible = true;
             this.isManageModalAdd = false;
             this.filterTags = [];
@@ -250,11 +251,11 @@ export class AlertSilenceComponent implements OnInit {
               });
             }
           } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
         }
       );
   }
@@ -274,6 +275,10 @@ export class AlertSilenceComponent implements OnInit {
     });
     if (this.silence.priorities != undefined) {
       this.silence.priorities = this.silence.priorities.filter(item => item != null && item != 9);
+    }
+    if (this.silence.type === 0) {
+      this.silence.periodStart = this.silenceDates[0];
+      this.silence.periodEnd = this.silenceDates[1];
     }
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {

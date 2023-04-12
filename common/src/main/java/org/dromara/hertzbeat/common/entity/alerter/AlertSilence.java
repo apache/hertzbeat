@@ -78,6 +78,7 @@ public class AlertSilence {
 
     @Schema(title = "Silence type 0: once, 1:cyc",
             description = "静默类型 0:一次性静默 1:周期性静默", accessMode = READ_WRITE)
+    @NotNull
     private Byte type;
 
     @Schema(title = "Silenced alerts num",
