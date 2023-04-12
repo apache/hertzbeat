@@ -17,16 +17,16 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
-import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
+import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -49,15 +49,13 @@ import java.util.Map;
  * @date 2021/12/10 15:39
  */
 @Service
+@RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertServiceImpl implements AlertService {
 
-    @Autowired
-    private AlertDao alertDao;
-
-    @Autowired
-    private CommonDataQueue commonDataQueue;
+    private final AlertDao alertDao;
+    private final CommonDataQueue commonDataQueue;
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
@@ -135,18 +133,18 @@ public class AlertServiceImpl implements AlertService {
 
     /**
      * The external alarm information is converted to Alert  对外告警信息 转换为Alert
+     *
      * @param alertReport 对外告警信息
      * @return Alert entity ｜ Alert实体
      */
-    private Alert buildAlertData(AlertReport alertReport){
+    private Alert buildAlertData(AlertReport alertReport) {
         Map<String, String> annotations = alertReport.getAnnotations();
         StringBuilder sb = new StringBuilder();
-        if(alertReport.getContent() == null || alertReport.getContent().length() <= 0){
+        if (alertReport.getContent() == null || alertReport.getContent().length() == 0) {
             StringBuilder finalSb = sb;
-            annotations.forEach((k, v) -> {
-                finalSb.append(k).append(":").append(v).append("\n");
-            });
-        }else{
+            annotations.forEach((k, v) ->
+                    finalSb.append(k).append(":").append(v).append("\n"));
+        } else {
             sb = new StringBuilder(alertReport.getContent());
         }
 

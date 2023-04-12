@@ -17,33 +17,36 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.manager.service.AppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.Map;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Internationalization I 18 N
  * 国际化I18N
+ *
  * @author tom
  * @date 2021/12/4 21:40
  */
 @Tag(name = "I18N API | I18N国际化资源API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/i18n", produces = {APPLICATION_JSON_VALUE})
 public class I18nController {
 
-    @Autowired
-    private AppService appService;
+    private final AppService appService;
 
     @GetMapping("/{lang}")
     @Operation(summary = "Query total i 18 n internationalized text resources", description = "查询总的i18n国际化文本资源")

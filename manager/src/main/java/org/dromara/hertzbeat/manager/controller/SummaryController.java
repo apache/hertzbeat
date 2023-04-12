@@ -17,33 +17,36 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.Dashboard;
 import org.dromara.hertzbeat.manager.service.MonitorService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * System Summary Statistics API
  * 系统摘要统计API
+ *
  * @author tom
  * @date 2021/12/7 15:57
  */
 @Tag(name = "Summary Statistics API | 系统摘要统计API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/summary", produces = {APPLICATION_JSON_VALUE})
 public class SummaryController {
 
-    @Autowired
-    private MonitorService monitorService;
+    private final MonitorService monitorService;
 
     @GetMapping
     @Operation(summary = "Query all application category monitoring statistics", description = "查询所有应用类别监控统计信息")

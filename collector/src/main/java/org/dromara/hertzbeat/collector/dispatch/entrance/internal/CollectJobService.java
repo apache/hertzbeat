@@ -17,12 +17,12 @@
 
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -33,15 +33,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection job management provides api interface
  * 采集job管理提供api接口
+ *
  * @author tomsun28
  * @date 2021/11/6 13:58
  */
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CollectJobService {
 
-    @Autowired
-    private TimerDispatch timerDispatch;
+    private final TimerDispatch timerDispatch;
 
     /**
      * Execute a one-time collection task and get the collected data response

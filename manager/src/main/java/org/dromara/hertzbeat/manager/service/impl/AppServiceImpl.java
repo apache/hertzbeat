@@ -17,16 +17,16 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
@@ -57,13 +57,13 @@ import java.util.stream.Collectors;
  * @author tomsun28
  * @date 2021/11/14 17:17
  */
+@RequiredArgsConstructor
 @Service
 @Order(value = 1)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
-    @Autowired
-    private MonitorDao monitorDao;
+    private final MonitorDao monitorDao;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
@@ -102,9 +102,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             }
             metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
         } else {
-            appDefines.forEach((k,v)->{
-                metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
-            });
+            appDefines.forEach((k, v) ->
+                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()))
+            );
         }
         return metricNames;
     }

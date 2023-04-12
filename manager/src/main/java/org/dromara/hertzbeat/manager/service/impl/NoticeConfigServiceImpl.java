@@ -17,17 +17,18 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.dromara.hertzbeat.manager.cache.CacheFactory;
 import org.dromara.hertzbeat.manager.cache.ICacheService;
 import org.dromara.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.dromara.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  * @author tom
  * @date 2021/12/16 16:16
  */
+@RequiredArgsConstructor
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
@@ -56,11 +58,8 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     private static final String ALERT_TEST_CONTENT = "test send msg! \n This is the test data. It is proved that it can be received successfully";
 
-    @Autowired
-    private NoticeReceiverDao noticeReceiverDao;
-
-    @Autowired
-    private NoticeRuleDao noticeRuleDao;
+    private final NoticeReceiverDao noticeReceiverDao;
+    private final NoticeRuleDao noticeRuleDao;
 
     @Autowired
     @Lazy

@@ -1,5 +1,7 @@
 package org.dromara.hertzbeat.collector.collect.ftp;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -7,13 +9,12 @@ import org.dromara.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * ftp protocol collection implementation
@@ -25,8 +26,8 @@ import java.util.Map;
 @Slf4j
 public class FtpCollectImpl extends AbstractCollect {
 
-    private final String ANONYMOUS = "anonymous";
-    private final String PASSWORD = "password";
+    private static final String ANONYMOUS = "anonymous";
+    private static final String PASSWORD = "password";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
@@ -51,11 +52,7 @@ public class FtpCollectImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(it -> {
                 if (valueMap.containsKey(it)) {
                     String fieldValue = valueMap.get(it);
-                    if (fieldValue == null) {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    } else {
-                        valueRowBuilder.addColumns(fieldValue);
-                    }
+                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 } else {
                     valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                 }
@@ -73,7 +70,7 @@ public class FtpCollectImpl extends AbstractCollect {
      * Please modify this, if you want to add some indicators.
      */
     private Map<String, String> collectValue(FTPClient ftpClient, FtpProtocol ftpProtocol) {
-        Boolean isActive;
+        boolean isActive;
         String responseTime;
         try {
             long startTime = System.currentTimeMillis();
@@ -82,14 +79,14 @@ public class FtpCollectImpl extends AbstractCollect {
             // In here, we can do some extended operation without changing the architecture
             isActive = ftpClient.changeWorkingDirectory(ftpProtocol.getDirection());
             long endTime = System.currentTimeMillis();
-            responseTime = (endTime - startTime) + "";
+            responseTime = String.valueOf(endTime - startTime);
             ftpClient.disconnect();
         } catch (Exception e) {
             log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
         }
         return new HashMap<>(8) {{
-            put("isActive", isActive.toString());
+            put("isActive", Boolean.toString(isActive));
             put("responseTime", responseTime);
         }};
     }
@@ -100,14 +97,14 @@ public class FtpCollectImpl extends AbstractCollect {
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         try {
             // username: not empty, password: not empty
-            if(StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
-                if(!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
+            if (StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
+                if (!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
                     throw new IllegalArgumentException("The username or password may be wrong.");
                 }
                 return;
             }
             // anonymous access
-            if(!ftpClient.login(ANONYMOUS, PASSWORD)) {
+            if (!ftpClient.login(ANONYMOUS, PASSWORD)) {
                 throw new IllegalArgumentException("The server may not allow anonymous access, we need to username and password.");
             }
         } catch (Exception e) {

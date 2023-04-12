@@ -17,42 +17,37 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.alert.dao.AlertDefineDao;
+import org.dromara.hertzbeat.alert.service.AlertDefineService;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import org.dromara.hertzbeat.alert.service.AlertDefineService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
  * 告警定义管理接口实现
+ *
  * @author tom
  * @date 2021/12/9 10:17
  */
+@RequiredArgsConstructor
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertDefineServiceImpl implements AlertDefineService {
 
-    @Autowired
-    private AlertDefineDao alertDefineDao;
-
-    @Autowired
-    private AlertDefineBindDao alertDefineBindDao;
+    private final AlertDefineDao alertDefineDao;
+    private final AlertDefineBindDao alertDefineBindDao;
 
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {

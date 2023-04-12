@@ -17,12 +17,12 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,16 +35,17 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * hertzbeat metrics exporter
+ *
  * @author tom
  * @date 2022/03/14 21:40
  */
 @Tag(name = "Inner Metrics Exporter API | 内部监控指标API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/metrics", produces = {APPLICATION_JSON_VALUE})
 public class MetricsController {
 
-    @Autowired
-    private CommonDataQueue commonDataQueue;
+    private final CommonDataQueue commonDataQueue;
 
     @GetMapping()
     @Operation(summary = "Get Hertzbeat Metrics Data")

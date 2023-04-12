@@ -17,23 +17,19 @@
 
 package org.dromara.hertzbeat.alert.controller;
 
-import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
-import org.dromara.hertzbeat.alert.service.AlertDefineService;
-import org.dromara.hertzbeat.common.entity.dto.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.dromara.hertzbeat.alert.service.AlertDefineService;
+import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
+import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
@@ -46,16 +42,17 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Define the batch API for alarms
  * 告警定义批量API
+ *
  * @author tom
  * @date 2021/12/9 10:32
  */
 @Tag(name = "Alert Define Batch API | 告警定义管理API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/alert/defines", produces = {APPLICATION_JSON_VALUE})
 public class AlertDefinesController {
 
-    @Autowired
-    private AlertDefineService alertDefineService;
+    private final AlertDefineService alertDefineService;
 
     @GetMapping
     @Operation(summary = "Example Query the alarm definition list ｜ 查询告警定义列表",
@@ -71,7 +68,7 @@ public class AlertDefinesController {
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
@@ -87,7 +84,7 @@ public class AlertDefinesController {
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification,pageRequest);
+        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
         Message<Page<AlertDefine>> message = new Message<>(alertDefinePage);
         return ResponseEntity.ok(message);
     }

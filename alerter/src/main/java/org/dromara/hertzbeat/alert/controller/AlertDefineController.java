@@ -17,26 +17,18 @@
 
 package org.dromara.hertzbeat.alert.controller;
 
-import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
-import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import org.dromara.hertzbeat.alert.service.AlertDefineService;
-import org.dromara.hertzbeat.common.entity.dto.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.dromara.hertzbeat.alert.service.AlertDefineService;
+import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
+import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
+import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,16 +38,17 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm definition management API
  * 告警定义管理API
+ *
  * @author tom
  * @date 2021/12/9 10:32
  */
 @Tag(name = "Alert Define API | 告警定义管理API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/alert/define", produces = {APPLICATION_JSON_VALUE})
 public class AlertDefineController {
 
-    @Autowired
-    private AlertDefineService alertDefineService;
+    private final AlertDefineService alertDefineService;
 
     @PostMapping
     @Operation(summary = "New Alarm Definition | 新增告警定义", description = "Added an alarm definition | 新增一个告警定义")

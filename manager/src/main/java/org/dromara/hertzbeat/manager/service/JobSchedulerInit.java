@@ -17,6 +17,8 @@
 
 package org.dromara.hertzbeat.manager.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -25,8 +27,6 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -37,30 +37,25 @@ import java.util.stream.Collectors;
 
 /**
  * 采集任务调度初始化
+ *
  * @author tom
  * @date 2022/2/1 16:24
  */
+@RequiredArgsConstructor
 @Service
 @Order(value = 2)
 @Slf4j
 public class JobSchedulerInit implements CommandLineRunner {
 
-    @Autowired
-    private AppService appService;
-
-    @Autowired
-    private CollectJobService collectJobService;
-
-    @Autowired
-    private MonitorDao monitorDao;
-
-    @Autowired
-    private ParamDao paramDao;
+    private final AppService appService;
+    private final CollectJobService collectJobService;
+    private final MonitorDao monitorDao;
+    private final ParamDao paramDao;
 
     @Override
     public void run(String... args) throws Exception {
         // 读取数据库已经添加应用 构造采集任务
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte)0, (byte)4));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte) 0, (byte) 4));
         for (Monitor monitor : monitors) {
             try {
                 // 构造采集任务Job实体

@@ -20,10 +20,10 @@ package org.dromara.hertzbeat.manager.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.manager.service.MonitorService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -32,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletResponse;
@@ -50,14 +51,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @date 2021/12/1 20:43
  */
 @Tag(name = "Monitor Manage Batch API | 监控列表API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
 
     private static final byte ALL_MONITOR_STATUS = 9;
 
-    @Autowired
-    private MonitorService monitorService;
+    private final MonitorService monitorService;
 
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",

@@ -17,22 +17,19 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
-import org.dromara.hertzbeat.manager.service.MonitorService;
-import org.dromara.hertzbeat.common.util.CommonConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -45,12 +42,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @date 2021/11/14 10:57
  */
 @Tag(name = "Monitor Manage API | 监控管理API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/monitor", produces = {APPLICATION_JSON_VALUE})
 public class MonitorController {
 
-    @Autowired
-    private MonitorService monitorService;
+    private final MonitorService monitorService;
 
     @PostMapping
     @Operation(summary = "Add a monitoring application", description = "新增一个监控应用")

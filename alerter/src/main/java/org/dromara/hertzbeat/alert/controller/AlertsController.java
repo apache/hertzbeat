@@ -17,15 +17,15 @@
 
 package org.dromara.hertzbeat.alert.controller;
 
-import org.dromara.hertzbeat.alert.dto.AlertSummary;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.common.entity.dto.AlertReport;
-import org.dromara.hertzbeat.common.entity.dto.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.dromara.hertzbeat.alert.dto.AlertSummary;
+import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.dto.AlertReport;
+import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -50,12 +50,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * @date 2021/12/9 10:32
  */
 @Tag(name = "Alarm Manage Batch API | 告警批量管理API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/alerts", produces = {APPLICATION_JSON_VALUE})
 public class AlertsController {
 
-    @Autowired
-    private AlertService alertService;
+    private final AlertService alertService;
 
     @GetMapping
     @Operation(summary = "Get a list of alarm information based on query filter items", description = "根据查询过滤项获取告警信息列表")

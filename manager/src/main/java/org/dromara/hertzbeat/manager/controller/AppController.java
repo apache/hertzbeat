@@ -17,6 +17,10 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
@@ -24,30 +28,28 @@ import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDefineDto;
 import org.dromara.hertzbeat.manager.service.AppService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Locale;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitoring Type Management API
  * 监控类型管理API
+ *
  * @author tomsun28
  * @date 2021/11/14 16:47
  */
 @Tag(name = "Monitor Type Manage API | 监控类型管理API")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
-    @Autowired
-    private AppService appService;
+    private final AppService appService;
 
     @GetMapping(path = "/{app}/params")
     @Operation(summary = "The structure of the input parameters required to specify the monitoring type according to the app query", description = "根据app查询指定监控类型的需要输入参数的结构")
@@ -94,8 +96,8 @@ public class AppController {
             appService.applyMonitorDefineYml(defineDto.getDefine());
         } catch (Exception e) {
             return ResponseEntity.ok(Message.<Void>builder()
-                            .code(CommonConstants.FAIL_CODE)
-                            .msg(e.getMessage()).build());
+                    .code(CommonConstants.FAIL_CODE)
+                    .msg(e.getMessage()).build());
         }
         return ResponseEntity.ok(Message.<Void>builder().build());
     }
