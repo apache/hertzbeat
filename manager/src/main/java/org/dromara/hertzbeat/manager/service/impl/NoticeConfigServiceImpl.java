@@ -113,11 +113,11 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @SuppressWarnings("unchecked")
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
         // use cache
-        ICacheService commonCache = CacheFactory.getCache();
-        List<NoticeRule> rules = (List<NoticeRule>) commonCache.get(CommonConstants.CACHE_NOTICE_RULE);
+        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
+        List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
         if (rules == null) {
             rules = noticeRuleDao.findNoticeRulesByEnableTrue();
-            commonCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
+            noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
         }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
@@ -193,7 +193,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     private void clearNoticeRulesCache() {
-        ICacheService cache = CacheFactory.getCache();
-        cache.remove(CommonConstants.CACHE_NOTICE_RULE);
+        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
+        noticeCache.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
 }

@@ -17,6 +17,8 @@
 
 package org.dromara.hertzbeat.manager.cache;
 
+import java.time.Duration;
+
 /**
  * @author ceilzcx
  * @since 4/2/2023
@@ -25,11 +27,10 @@ public class CacheFactory {
     private CacheFactory() {}
 
     /**
-     * 获取默认的cache
-     * todo 后续优化
+     * 获取notice模块的cache
      * @return caffeine cache
      */
-    public static ICacheService getCache() {
-        return new CaffeineCacheServiceImpl();
+    public static ICacheService<String, Object> getNoticeCache() {
+        return new CaffeineCacheServiceImpl<>(100, 1000, Duration.ofDays(1), false);
     }
 }

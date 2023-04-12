@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.manager.cache;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -27,45 +26,48 @@ import java.time.Duration;
  * @author ceilzcx
  * @since 4/2/2023
  */
-public class CaffeineCacheServiceImpl implements ICacheService {
-    private static final Cache<Object, Object> DEFAULT_CACHE;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+public class CaffeineCacheServiceImpl<K, V> implements ICacheService<K, V> {
+    private final Cache<K, V> cache;
 
-    static {
-        // 默认使用一天后过期
-        DEFAULT_CACHE = Caffeine
-                .newBuilder()
-                .maximumSize(10_000)
-                .expireAfterWrite(Duration.ofDays(1))
-                .build();
-    }
-
-    @Override
-    public Object get(Object key) {
-        return DEFAULT_CACHE.getIfPresent(key);
-    }
-
-    @Override
-    public <T> T get(Object key, Class<T> clazz) {
-        Object value = this.get(key);
-        if (value != null) {
-            return OBJECT_MAPPER.convertValue(value, clazz);
+    public CaffeineCacheServiceImpl(final int initialCapacity, final long maximumSize, final Duration expireAfterWrite, final boolean useWeakKey) {
+        if (useWeakKey) {
+            this.cache = Caffeine.newBuilder()
+                    .weakKeys()
+                    .initialCapacity(initialCapacity)
+                    .maximumSize(maximumSize)
+                    .expireAfterWrite(expireAfterWrite)
+                    .build();
+        } else {
+            this.cache = Caffeine.newBuilder()
+                    .initialCapacity(initialCapacity)
+                    .maximumSize(maximumSize)
+                    .expireAfterWrite(expireAfterWrite)
+                    .build();
         }
-        return null;
     }
 
     @Override
-    public void put(Object key, Object value) {
-        DEFAULT_CACHE.put(key, value);
+    public V get(K key) {
+        return cache.getIfPresent(key);
     }
 
     @Override
-    public boolean containsKey(Object key) {
-        return DEFAULT_CACHE.asMap().containsKey(key);
+    public V put(K key, V value) {
+        V oldValue = cache.getIfPresent(key);
+        cache.put(key, value);
+        return oldValue;
     }
 
     @Override
-    public void remove(Object key) {
-        DEFAULT_CACHE.invalidate(key);
+    public boolean containsKey(K key) {
+        return cache.asMap().containsKey(key);
+    }
+
+    @Override
+    public V remove(K key) {
+        V value = cache.getIfPresent(key);
+        this.cache.invalidate(key);
+        this.cache.cleanUp();
+        return value;
     }
 }
