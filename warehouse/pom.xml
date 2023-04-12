@@ -26,7 +26,7 @@
     <properties>
         <common.version>1.0</common.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
-        <influxdb.version>2.22</influxdb.version>
+        <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <greptimedb.version>0.1.3</greptimedb.version>
