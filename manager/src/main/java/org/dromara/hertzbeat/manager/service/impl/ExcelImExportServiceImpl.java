@@ -1,0 +1,186 @@
+package org.dromara.hertzbeat.manager.service.impl;
+
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.RegionUtil;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Configure the import and export EXCEL format
+ * 配置导入导出 EXCEL格式
+ *
+ * @author <a href="mailto:zqr10159@126.com">zqr10159</a>
+ * Created by zqr10159 on 2023/4/11
+ */
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
+    public static final String TYPE = "EXCEL";
+    public static final String FILE_SUFFIX = ".xlsx";
+
+    private final ObjectMapper objectMapper;
+
+    List<Map<String, Object>> dataList = new ArrayList<>();
+    /**
+     * Export file type
+     * 导出文件类型
+     *
+     * @return 文件类型
+     */
+    @Override
+    public String type() {
+        return TYPE;
+    }
+
+    /**
+     * Get Export File Name
+     * 获取导出文件名
+     *
+     * @return 文件名
+     */
+    @Override
+    public String getFileName() {
+        return fileNamePrefix() + FILE_SUFFIX;
+    }
+
+    /**
+     * Parsing an input stream into a form
+     * 将输入流解析为表单
+     *
+     * @param is 输入流
+     * @return 表单
+     */
+    @Override
+    List<ExportMonitorDTO> parseImport(InputStream is) {
+        try {
+            return objectMapper.readValue(is, new TypeReference<>() {
+            });
+        } catch (IOException ex) {
+            log.error("import monitor failed.", ex);
+            throw new RuntimeException("import monitor failed");
+        }
+    }
+
+    /**
+     * Export Configuration to Output Stream
+     * 导出配置到输出流
+     *
+     * @param monitorList 配置列表
+     * @param os          输出流
+     */
+    @Override
+    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+        try {
+            Workbook workbook = new SXSSFWorkbook();
+            // 定义Excel的Sheet名称
+            String sheetName = "Export Monitor";
+            // 在Excel对象中创建一个Sheet
+            Sheet sheet = workbook.createSheet(sheetName);
+            // 设置表头样式
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerCellStyle.setFont(headerFont);
+            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            // 设置表格内容样式
+            CellStyle cellStyle = workbook.createCellStyle();
+            cellStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // 设置表头
+            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "field", "value", "type", "metrics" };
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerCellStyle);
+            }
+
+            // 遍历监控列表，每个监控对象对应一行数据
+            int rowIndex = 1;
+            for (ExportMonitorDTO monitor : monitorList) {
+                // 获取监控信息
+                MonitorDTO monitorDTO = monitor.getMonitor();
+                // 获取监控参数
+                List<ParamDTO> paramList = monitor.getParams();
+                // 获取监控指标
+                List<String> metricList = monitor.getMetrics();
+
+                // 将监控信息和参数信息合并到一行中
+                for (int i = 0; i < Math.max(paramList.size(), 1); i++) {
+                    Row row = sheet.createRow(rowIndex++);
+                    if (i == 0) {
+                        // 监控信息只需要填写一次
+                        Cell nameCell = row.createCell(0);
+                        nameCell.setCellValue(monitorDTO.getName());
+                        nameCell.setCellStyle(cellStyle);
+                        Cell appCell = row.createCell(1);
+                        appCell.setCellValue(monitorDTO.getApp());
+                        appCell.setCellStyle(cellStyle);
+                        Cell hostCell = row.createCell(2);
+                        hostCell.setCellValue(monitorDTO.getHost());
+                        hostCell.setCellStyle(cellStyle);
+                        Cell intervalsCell = row.createCell(3);
+                        intervalsCell.setCellValue(monitorDTO.getIntervals());
+                        intervalsCell.setCellStyle(cellStyle);
+                        Cell statusCell = row.createCell(4);
+                        statusCell.setCellValue(monitorDTO.getStatus());
+                        statusCell.setCellStyle(cellStyle);
+                        Cell descriptionCell = row.createCell(5);
+                        descriptionCell.setCellValue(monitorDTO.getDescription());
+                        descriptionCell.setCellStyle(cellStyle);
+                        Cell tagsCell = row.createCell(6);
+                        tagsCell.setCellValue(String.join(",", monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.toList())));
+                        tagsCell.setCellStyle(cellStyle);
+                    }
+
+                    // 填写参数信息
+                    if (i < paramList.size()) {
+                        ParamDTO paramDTO = paramList.get(i);
+                        Cell fieldCell = row.createCell(7);
+                        fieldCell.setCellValue(paramDTO.getField());
+                        fieldCell.setCellStyle(cellStyle);
+                        Cell valueCell = row.createCell(8);
+                        valueCell.setCellValue(paramDTO.getValue());
+                        valueCell.setCellStyle(cellStyle);
+                        Cell typeCell = row.createCell(9);
+                        typeCell.setCellValue(paramDTO.getType());
+                        typeCell.setCellStyle(cellStyle);
+                    }
+                    if (metricList != null && i < metricList.size()) {
+                        Cell metricCell = row.createCell(10);
+                        metricCell.setCellValue(metricList.get(i));
+                        metricCell.setCellStyle(cellStyle);
+                    }
+                }
+
+                if (paramList.size() > 0) {
+                    RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
+                    RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
+                    RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
+                    RegionUtil.setBorderRight(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
+                }
+            }
+            workbook.write(os);
+            os.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+}

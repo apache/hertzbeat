@@ -38,6 +38,7 @@
         <nekohtml.version>1.9.22</nekohtml.version>
         <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
         <warehouse.version>1.0</warehouse.version>
+        <easy-poi.version>4.3.0</easy-poi.version>
     </properties>
 
     <dependencies>
@@ -143,6 +144,11 @@
             <artifactId>caffeine</artifactId>
             <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
             <version>${caffeine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.afterturn</groupId>
+            <artifactId>easypoi-spring-boot-starter</artifactId>
+            <version>${easy-poi.version}</version>
         </dependency>
     </dependencies>
 

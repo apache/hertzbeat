@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-@RequiredArgsConstructor
+
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 

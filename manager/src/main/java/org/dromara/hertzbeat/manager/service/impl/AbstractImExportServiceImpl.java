@@ -15,6 +15,7 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import cn.afterturn.easypoi.excel.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -139,32 +140,57 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @ExcelTarget(value = "ExportMonitorDTO")
     protected static class ExportMonitorDTO {
+        @ExcelEntity(name = "Monitor")
         private MonitorDTO monitor;
+        @ExcelCollection(name = "Params")
         private List<ParamDTO> params;
+        @ExcelCollection(name = "Metrics")
         private List<String> metrics;
+
+        // getters and setters omitted for brevity
     }
+
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @ExcelTarget(value = "MonitorDTO")
     protected static class MonitorDTO {
+        @Excel(name = "Name")
         private String name;
+        @Excel(name = "App")
         private String app;
+        @Excel(name = "Host")
         private String host;
+        @Excel(name = "Intervals")
         private Integer intervals;
+        @Excel(name = "Status")
         private Byte status;
+        @Excel(name = "Description")
         private String description;
+        @Excel(name = "Tags")
         private List<Long> tags;
+
+        // getters and setters omitted for brevity
     }
+
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @ExcelTarget(value = "ParamDTO")
     protected static class ParamDTO {
+        @Excel(name = "Field")
         private String field;
+        @Excel(name = "Value")
         private String value;
+        @Excel(name = "Type")
         private Byte type;
+
+        // getters and setters omitted for brevity
     }
+
 
 }
