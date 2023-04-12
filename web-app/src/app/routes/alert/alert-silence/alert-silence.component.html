@@ -152,9 +152,15 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="silence.type == 0">
-        <nz-form-label nzSpan="7" nzFor="time">{{ 'alert.silence.time' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="date">{{ 'alert.silence.time' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-range-picker [nzShowTime]="{ nzFormat: 'HH:mm' }" nzFormat="yyyy-MM-dd HH:mm" [(ngModel)]="silenceDates"></nz-range-picker>
+          <nz-range-picker
+            [nzShowTime]="{ nzFormat: 'HH:mm' }"
+            nzFormat="yyyy-MM-dd HH:mm"
+            [(ngModel)]="silenceDates"
+            id="date"
+            name="date"
+          ></nz-range-picker>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="silence.type == 1">
