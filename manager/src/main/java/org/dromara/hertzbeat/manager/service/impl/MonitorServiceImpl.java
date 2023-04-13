@@ -17,12 +17,17 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
@@ -30,24 +35,27 @@ import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.entity.manager.Param;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
+import org.dromara.hertzbeat.manager.service.ImExportService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.InvalidMimeTypeException;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -60,6 +68,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
+@RequiredArgsConstructor
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 
@@ -82,6 +91,12 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private CalculateAlarm calculateAlarm;
+
+    private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
+
+    public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
+        imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -171,7 +186,7 @@ public class MonitorServiceImpl implements MonitorService {
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
         List<String> metricsDefineNames = metricsDefine.stream().map(Metrics::getName).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)){
+        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)) {
             throw new MonitorMetricsException("no select metrics or select illegal metrics");
         }
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
@@ -210,6 +225,34 @@ public class MonitorServiceImpl implements MonitorService {
         return appService.getAppDefineMetricNames(app);
     }
 
+    @Override
+    public void export(List<Long> ids, String type, HttpServletResponse res) throws IOException {
+        var imExportService = imExportServiceMap.get(type);
+        var fileName = imExportService.getFileName();
+        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
+        res.setContentType("application/octet-stream;charset=UTF-8");
+        res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        imExportService.exportConfig(res.getOutputStream(), ids);
+    }
+
+    @Override
+    public void importConfig(MultipartFile file) throws IOException {
+        var fileName = file.getOriginalFilename();
+        if (!StringUtils.hasText(fileName)) {
+            return;
+        }
+        var type = "";
+        if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
+            type = JsonImExportServiceImpl.TYPE;
+        }
+        if (!imExportServiceMap.containsKey(type)) {
+            throw new RuntimeException("file " + fileName + " is not supported.");
+        }
+        var imExportService = imExportServiceMap.get(type);
+        imExportService.importConfig(file.getInputStream());
+    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -241,7 +284,6 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        // todo 校验标签
         if (monitor.getTags() != null) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
@@ -275,10 +317,15 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
+                            if (StringUtils.hasText(param.getValue())) {
+                                throw new IllegalArgumentException("Params field " + field + " type "
+                                        + paramDefine.getType() + " over limit " + param.getValue());
+                            }
+                            break;
                         case "text":
                             Short limit = paramDefine.getLimit();
                             if (limit != null) {
-                                if (param.getValue() != null && param.getValue().length() > limit) {
+                                if (param.getValue().length() > limit) {
                                     throw new IllegalArgumentException("Params field " + field + " type "
                                             + paramDefine.getType() + " over limit " + limit);
                                 }
@@ -339,15 +386,15 @@ public class MonitorServiceImpl implements MonitorService {
                                     }
                                 }
                             }
-                            if (checkboxInvalid){
+                            if (checkboxInvalid) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() +  " is invalid checkbox value");
+                                        + param.getValue() + " is invalid checkbox value");
                             }
                             break;
                         case "key-value":
-                            try{
-                                GsonUtil.toJson(param.getValue());
-                            } catch (Exception e){
+                            try {
+                                JsonUtil.toJson(param.getValue());
+                            } catch (Exception e) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
                             }
@@ -379,6 +426,7 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // Auto Update Default Tags: monitorName
+        // 自动更新默认的Tag： 监控名字
         List<Tag> tags = monitor.getTags();
         if (tags == null) {
             tags = new LinkedList<>();
@@ -397,9 +445,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            List<Configmap> configmaps = params.stream().map(param ->
-                    new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
-            appDefine.setConfigmap(configmaps);
+            if (params != null) {
+                List<Configmap> configmaps = params.stream().map(param ->
+                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+            }
             long newJobId = collectJobService.updateAsyncCollectJob(appDefine);
             monitor.setJobId(newJobId);
         }
@@ -410,7 +460,9 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
-            paramDao.saveAll(params);
+            if (params != null) {
+                paramDao.saveAll(params);
+            }
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -587,4 +639,5 @@ public class MonitorServiceImpl implements MonitorService {
     public List<Monitor> getAppMonitors(String app) {
         return monitorDao.findMonitorsByAppEquals(app);
     }
+
 }

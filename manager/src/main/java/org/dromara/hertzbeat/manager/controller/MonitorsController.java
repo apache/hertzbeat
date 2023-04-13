@@ -17,34 +17,35 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.manager.service.MonitorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitor and manage batch API
  * 监控管理批量API
+ *
  * @author tom
  * @date 2021/12/1 20:43
  */
@@ -80,7 +81,7 @@ public class MonitorsController {
                 }
                 andList.add(inPredicate);
             }
-            if (app != null && !"".equals(app)) {
+            if (StringUtils.hasText(app)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 andList.add(predicateApp);
             }
@@ -92,11 +93,11 @@ public class MonitorsController {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (host != null && !"".equals(host)) {
+            if (StringUtils.hasText(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
                 orList.add(predicateHost);
             }
-            if (name != null && !"".equals(name)) {
+            if (StringUtils.hasText(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
@@ -169,4 +170,19 @@ public class MonitorsController {
         Message<Void> message = new Message<>();
         return ResponseEntity.ok(message);
     }
+
+    @GetMapping("/export")
+    @Operation(summary = "export monitor config", description = "导出监控配置")
+    public void export(@RequestParam List<Long> ids, @RequestParam(defaultValue = "JSON") String type,
+                       HttpServletResponse res) throws IOException {
+        monitorService.export(ids, type, res);
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "import monitor config", description = "导入监控配置")
+    public ResponseEntity<Message<Void>> export(MultipartFile file) throws IOException {
+        monitorService.importConfig(file);
+        return ResponseEntity.ok(new Message<>("Import success"));
+    }
+
 }

@@ -1,6 +1,6 @@
 const path = require('path')
 
-const organizationName = 'dromara' // Usually your GitHub name.
+const organizationName = 'tomsun28' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`

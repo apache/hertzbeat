@@ -12,6 +12,7 @@
         "start/iotdb-init",
         "start/tdengine-init",
         "start/mysql-change",
+        "start/postgresql-change",
         "start/account-modify",
         "start/custom-config",
         "start/ssl-cert-practice"
@@ -137,7 +138,8 @@
             "help/alert_wework",
             "help/alert_dingtalk",
             "help/alert_feishu",
-            "help/alert_console"
+            "help/alert_console",
+            "help/alert_enterprise_wechat_app"
           ]
         },
         "help/issue"

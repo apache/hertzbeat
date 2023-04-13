@@ -5,7 +5,7 @@ import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.util.CommonConstants;
-import org.dromara.hertzbeat.common.util.GsonUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -158,7 +158,7 @@ class AlertsControllerTest {
                         MockMvcRequestBuilders
                                 .post("/api/alerts/report")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(GsonUtil.toJson(AlertReport.builder().build()))
+                                .content(JsonUtil.toJson(AlertReport.builder().build()))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

@@ -183,6 +183,10 @@ public interface CommonConstants {
      */
     String PROM_VALUE = "value";
 
+    /**
+     * Availability 监控总可用性指标
+     */
+    String AVAILABILITY = "availability";
 
     /**
      * Availability Object

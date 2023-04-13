@@ -24,6 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 标签服务
@@ -35,27 +36,40 @@ public interface TagService {
 
     /**
      * new tags
+     *
      * @param tags tag
      */
     void addTags(List<Tag> tags);
 
     /**
      * update tag
+     *
      * @param tag Tag
      */
     void modifyTag(Tag tag);
 
     /**
      * get tag page list
+     *
      * @param specification 查询条件
-     * @param pageRequest 分页条件
+     * @param pageRequest   分页条件
      * @return Tags
      */
     Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);
 
     /**
      * delete tags
+     *
      * @param ids tag id list
      */
     void deleteTags(HashSet<Long> ids);
+
+    /**
+     * list tags
+     *
+     * @param ids tag id list
+     * @return tag list
+     */
+    List<Tag> listTag(Set<Long> ids);
+
 }

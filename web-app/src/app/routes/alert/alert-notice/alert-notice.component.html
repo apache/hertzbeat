@@ -94,6 +94,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>{{ 'alert.notice.type.discord' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 10" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>{{ 'alert.notice.type.weChatApp' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -106,6 +110,7 @@
             <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br />{{ data.tgUserId }}</span>
             <span *ngIf="data.type == 8">{{ data.slackWebHookUrl }}</span>
             <span *ngIf="data.type == 9">{{ data.discordChannelId }}<br />{{ data.discordBotToken }}</span>
+            <span *ngIf="data.type == 10">{{ data.corpId }}<br />{{ data.agentId }}<br />{{ data.appSecret }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -236,6 +241,7 @@
             <nz-option [nzValue]="5" [nzLabel]="'alert.notice.type.ding' | i18n"></nz-option>
             <nz-option [nzValue]="6" [nzLabel]="'alert.notice.type.fei-shu' | i18n"></nz-option>
             <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
+            <nz-option [nzValue]="10" [nzLabel]="'alert.notice.type.weChatApp' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -327,6 +333,30 @@
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.discordChannelId" nz-input [required]="receiver.type === 9" name="discordChannelId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="corpId" [nzRequired]="receiver.type === 10">
+          {{ 'alert.notice.type.weChatApp-corpId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 10" name="corpId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="agentId" [nzRequired]="receiver.type === 10">
+          {{ 'alert.notice.type.weChatApp-agentId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.agentId" nz-input [required]="receiver.type === 10" name="agentId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="appSecret" [nzRequired]="receiver.type === 10">
+          {{ 'alert.notice.type.weChatApp-appSecret' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.appSecret" nz-input [required]="receiver.type === 10" name="appSecret" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
