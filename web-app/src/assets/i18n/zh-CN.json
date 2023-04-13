@@ -136,6 +136,8 @@
   "alert.silence.edit": "编辑静默策略",
   "alert.silence.delete": "删除静默策略",
   "alert.silence.name": "策略名称",
+  "alert.silence.match-all": "应用所有",
+  "alert.silence.priority": "匹配级别",
   "alert.silence.type.once": "一次性静默",
   "alert.silence.type.cyc": "周期性静默",
   "alert.silence.type": "静默类型",

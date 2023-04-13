@@ -183,7 +183,7 @@ export class AlertSilenceComponent implements OnInit {
   silence: AlertSilence = new AlertSilence();
   searchTag!: string;
   tagsOption: any[] = [];
-  filterTags: string[] = [];
+  matchTags: string[] = [];
   silenceDates!: Date[];
   dayCheckOptions = [
     { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
@@ -236,14 +236,14 @@ export class AlertSilenceComponent implements OnInit {
             }
             this.isManageModalVisible = true;
             this.isManageModalAdd = false;
-            this.filterTags = [];
+            this.matchTags = [];
             if (this.silence.tags != undefined) {
               this.silence.tags.forEach(item => {
                 let tag = `${item.name}`;
                 if (item.value != undefined) {
                   tag = `${tag}:${item.value}`;
                 }
-                this.filterTags.push(tag);
+                this.matchTags.push(tag);
                 this.tagsOption.push({
                   value: tag,
                   label: tag
@@ -261,7 +261,7 @@ export class AlertSilenceComponent implements OnInit {
   }
   onManageModalOk() {
     this.silence.tags = [];
-    this.filterTags.forEach(tag => {
+    this.matchTags.forEach(tag => {
       let tmp: string[] = tag.split(':');
       let tagItem = new TagItem();
       if (tmp.length == 1) {
@@ -334,6 +334,20 @@ export class AlertSilenceComponent implements OnInit {
       .filter(item => item.checked == true)
       .map(item => item.value)
       .concat();
+  }
+
+  onPrioritiesChange() {
+    if (this.silence.priorities != undefined) {
+      let isAll = false;
+      this.silence.priorities.forEach(item => {
+        if (item == 9) {
+          isAll = true;
+        }
+      });
+      if (isAll) {
+        this.silence.priorities = [9, 0, 1, 2];
+      }
+    }
   }
 
   loadTagsOption() {
