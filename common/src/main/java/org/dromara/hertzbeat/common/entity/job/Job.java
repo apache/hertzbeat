@@ -52,8 +52,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Job {
 
-    private static final String AVAILABILITY = "availability";
-
     /**
      * Task id      任务ID
      */

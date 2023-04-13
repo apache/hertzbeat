@@ -177,6 +177,12 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
+    public Map<String, Job> getAllAppDefines() {
+        return appDefines;
+    }
+
+
+    @Override
     public String getMonitorDefineFileContent(String app) {
         String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
         String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
