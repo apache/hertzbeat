@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.common.cache;
+
+import java.time.Duration;
 
 /**
  *
@@ -24,12 +26,14 @@ package org.dromara.hertzbeat.manager.cache;
 public class CacheFactory {
     private CacheFactory() {}
 
+    private static final ICacheService<String, Object> NOTICE_CACHE =
+            new CaffeineCacheServiceImpl<>(200, 1000, Duration.ofDays(1), false);
+
     /**
-     * 获取默认的cache
-     * todo 后续优化
+     * 获取notice模块的cache
      * @return caffeine cache
      */
-    public static ICacheService getCache() {
-        return new CaffeineCacheServiceImpl();
+    public static ICacheService<String, Object> getNoticeCache() {
+        return NOTICE_CACHE;
     }
 }

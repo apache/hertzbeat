@@ -15,48 +15,47 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.common.cache;
 
 /**
  * common cache
  *
  * @since 4/2/2023
  */
-public interface ICacheService {
-
-    /**
-     * get cache by key
-     * @param key key
-     * @return cache object
-     */
-    Object get(Object key);
+public interface ICacheService<K, V> {
 
     /**
      * get cache by key use clazz
      * @param key key
-     * @param clazz clazz
      * @return object
-     * @param <T> t
      */
-    <T> T get(Object key, Class<T> clazz);
+    V get(K key);
 
     /**
      * set cache
      * @param key key
      * @param value value
+     * @return old value
      */
-    void put(Object key, Object value);
+    V put(K key, V value);
 
     /**
      * if contain cache by key
      * @param key key
      * @return true is contain
      */
-    boolean containsKey(Object key);
+    boolean containsKey(K key);
 
     /**
      * remove cache
      * @param key key
+     * @return old value
      */
-    void remove(Object key);
+    V remove(K key);
+
+    /**
+     * clear cache
+     * @return is clear success
+     */
+    boolean clear();
 }
