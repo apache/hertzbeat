@@ -15,22 +15,45 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
-
-import java.time.Duration;
+package org.dromara.hertzbeat.common.cache;
 
 /**
+ * common cache
  * @author ceilzcx
  * @since 4/2/2023
  */
-public class CacheFactory {
-    private CacheFactory() {}
+public interface ICacheService<K, V> {
 
     /**
-     * 获取notice模块的cache
-     * @return caffeine cache
+     * get cache by key use clazz
+     * @param key key
+     * @return object
      */
-    public static ICacheService<String, Object> getNoticeCache() {
-        return new CaffeineCacheServiceImpl<>(100, 1000, Duration.ofDays(1), false);
-    }
+    V get(K key);
+
+    /**
+     * set cache
+     * @param key key
+     * @param value value
+     */
+    V put(K key, V value);
+
+    /**
+     * if contain cache by key
+     * @param key key
+     * @return true is contain
+     */
+    boolean containsKey(K key);
+
+    /**
+     * remove cache
+     * @param key key
+     */
+    V remove(K key);
+
+    /**
+     * clear cache
+     * @return is clear success
+     */
+    boolean clear();
 }

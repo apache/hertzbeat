@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.common.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -69,5 +69,11 @@ public class CaffeineCacheServiceImpl<K, V> implements ICacheService<K, V> {
         this.cache.invalidate(key);
         this.cache.cleanUp();
         return value;
+    }
+
+    @Override
+    public boolean clear() {
+        this.cache.cleanUp();
+        return true;
     }
 }
