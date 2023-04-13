@@ -17,25 +17,27 @@ import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
 import {NzDatePickerModule} from "ng-zorro-antd/date-picker";
+import {NzBadgeModule} from "ng-zorro-antd/badge";
 
 const COMPONENTS: Array<Type<void>> = [AlertCenterComponent, AlertSettingComponent, AlertNoticeComponent, AlertSilenceComponent];
 
 @NgModule({
-    imports: [
-        SharedModule,
-        AlertRoutingModule,
-        NzDividerModule,
-        NzBreadCrumbModule,
-        NzTagModule,
-        NzRadioModule,
-        NzSwitchModule,
-        NzCascaderModule,
-        NzTransferModule,
-        NzCollapseModule,
-        NzListModule,
-        NzTimePickerModule,
-        NzDatePickerModule
-    ],
+  imports: [
+    SharedModule,
+    AlertRoutingModule,
+    NzDividerModule,
+    NzBreadCrumbModule,
+    NzTagModule,
+    NzRadioModule,
+    NzSwitchModule,
+    NzCascaderModule,
+    NzTransferModule,
+    NzCollapseModule,
+    NzListModule,
+    NzTimePickerModule,
+    NzDatePickerModule,
+    NzBadgeModule
+  ],
   declarations: COMPONENTS
 })
 export class AlertModule {}
