@@ -17,7 +17,7 @@ sidebar_label: 交流联系
 
 ## QQ交流群   
 
-加QQ群号 718618151 或 扫描下面的群二维码进群, 验证信息: tancloud        
+加QQ群号 236915833 或 扫描下面的群二维码进群, 验证信息: tancloud        
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="400"/>          
 

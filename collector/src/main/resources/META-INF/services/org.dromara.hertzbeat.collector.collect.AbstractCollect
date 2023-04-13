@@ -1,0 +1,11 @@
+org.dromara.hertzbeat.collector.collect.http.HttpCollectImpl
+org.dromara.hertzbeat.collector.collect.http.SslCertificateCollectImpl
+org.dromara.hertzbeat.collector.collect.database.JdbcCommonCollect
+org.dromara.hertzbeat.collector.collect.icmp.IcmpCollectImpl
+org.dromara.hertzbeat.collector.collect.jmx.JmxCollectImpl
+org.dromara.hertzbeat.collector.collect.redis.RedisCommonCollectImpl
+org.dromara.hertzbeat.collector.collect.mongodb.MongodbSingleCollectImpl
+org.dromara.hertzbeat.collector.collect.snmp.SnmpCollectImpl
+org.dromara.hertzbeat.collector.collect.ssh.SshCollectImpl
+org.dromara.hertzbeat.collector.collect.telnet.TelnetCollectImpl
+org.dromara.hertzbeat.collector.collect.ftp.FtpCollectImpl

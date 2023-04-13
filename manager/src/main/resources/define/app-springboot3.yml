@@ -13,72 +13,133 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: service
+# The monitoring type eg: springboot2 linux windows tomcat mysql aws...
+# 监控类型 eg: springboot2 linux windows tomcat mysql aws...
 app: springboot3
+
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: SpringBoot3.0
   en-US: SpringBoot3.0
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
 params:
+  # field-param field key
   # field-字段名称标识符
   - field: host
+    # name-param field display i18n name
     # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
     # 是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
     # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 8080
+  # field-param field key
+  # field-变量字段标识符
   - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 启动SSL
       en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
     # 当type为boolean时,前端用switch展示开关
     type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+  # field-param field key
+  # field-变量字段标识符
   - field: base_path
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: Base Path
       en-US: Base Path
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    # type-字段类型,样式(大部分映射input标签type属性) text类型属于文本输入框
     type: text
+    # default value
+    # 默认值
     defaultValue: /actuator
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # hide-true or false
+    # hide-是否隐藏 true-隐藏 false-不隐藏
     hide: true
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
+  # metrics - available
+  # 监控指标组 - available
   - name: available
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
+    # collect metrics content
     # 指标组中的具体监控指标
     fields:
+      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
     protocol: http
+    # Specific collection configuration when protocol is http protocol
     # 当protocol为http协议时具体的采集配置
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url
       # url请求接口路径
       url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
+
 
   - name: thread_state
     visible: false
@@ -88,17 +149,11 @@ metrics:
         type: 1
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/metrics/jvm.threads.states
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
@@ -117,17 +172,11 @@ metrics:
       - size=#`$.measurements[?(@.statistic == "VALUE")].value`
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$'
 
@@ -139,17 +188,11 @@ metrics:
         type: 1
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/metrics/jvm.memory.used
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
@@ -171,41 +214,24 @@ metrics:
       - mem_used=B->MB
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$'
 
   - name: health
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 5
-    # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: status
         type: 1
     protocol: http
-    # 当protocol为http协议时具体的采集配置
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^base_path^_^/health
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default

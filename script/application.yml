@@ -37,10 +37,16 @@ spring:
     mode: HTML
 
 management:
+  health:
+    mail:
+      enabled: off
   endpoints:
     web:
       exposure:
-        include: 'metrics'
+        include:
+          - 'metrics'
+          - 'health'
+          - 'env'
     enabled-by-default: on
 
 sureness:
@@ -111,9 +117,8 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # org.apache.iotdb.session.util.Version: V_O_12 || V_0_13
+      # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
       version: V_0_13
-      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
@@ -132,9 +137,3 @@ warehouse:
 alerter:
   # custom console url
   console-url: https://console.tancloud.cn
-  # base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
-  alert-eval-interval-base: 600000
-  # max of alert eval interval time, unit:ms
-  max-alert-eval-interval: 86400000
-  # system alert(available alert, reachable alert...) trigger times
-  system-alert-trigger-times: 1

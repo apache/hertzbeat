@@ -13,35 +13,68 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
 category: service
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: api
+# The app api i18n name
+# app api国际化名称
 name:
   zh-CN: HTTP API
   en-US: HTTP API
+# app api所需输入参数定义(根据定义渲染页面UI)
+# Input params define for app api(render web ui by the definition)
 params:
+  # field-param field key
+  # field-变量字段标识符
   - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
     required: true
+    # field-param field key
+    # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 默认值
     defaultValue: 80
+    # field-param field key
+    # field-变量字段标识
   - field: method
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 请求方式
       en-US: Method
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: GET
         value: GET
@@ -51,142 +84,247 @@ params:
         value: PUT
       - label: DELETE
         value: DELETE
+    # field-param field key
+    # field-变量字段标识
   - field: uri
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 相对路径
       en-US: URI
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
     limit: 200
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # 参数输入框提示信息
+    # param field input placeholder
     placeholder: 'Website uri path(no ip port) EG:/v2/book/bar'
+    # field-param field key
+  # field-变量字段标识
   - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # field-param field key
+  # field-变量字段标识
   - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # field-param field key
+    # field-变量字段标识
   - field: headers
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 请求Headers
       en-US: Headers
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: key-value
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # when type is key-value, use keyAlias to config key alias name
+    # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
     keyAlias: Header Name
+    # when type is key-value, use valueAlias to config value alias name
+    # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
     valueAlias: Header Value
+    # field-param field key
+  # field-变量字段标识
   - field: params
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 查询Params
       en-US: Params
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: key-value
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # when type is key-value, use keyAlias to config key alias name
+    # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
     keyAlias: Param Key
+    # when type is key-value, use valueAlias to config value alias name
+    # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
     valueAlias: Param Value
+    # field-param field key
+  # field-变量字段标识
   - field: contentType
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: Content-Type
       en-US: Content-Type
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # 参数输入框提示信息
+    # param field input placeholder
     placeholder: 'Request Body Type'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # field-param field key
+  # field-变量字段标识
   - field: payload
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 请求BODY
       en-US: BODY
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: textarea
+    # 参数输入框提示信息
+    # param field input placeholder
     placeholder: 'Available When POST PUT'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # field-param field key
+  # field-变量字段标识
   - field: authType
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: Basic Auth
         value: Basic Auth
       - label: Digest Auth
         value: Digest Auth
+    # field-param field key
+  # field-变量字段标识
   - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 用户名
       en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
     limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # field-param field key
+  # field-变量字段标识
   - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 密码
       en-US: Password
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
+    # field-param field key
+  # field-变量字段标识
   - field: keyword
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 关键字计数
       en-US: Keyword Num
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
+    # 参数输入框提示信息
+    # param field input placeholder
     placeholder: 'Input Keyword'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
     hide: true
 
-# 指标组列表
 metrics:
-  # 第一个监控指标组 cpu
-  # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: summary
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
       - field: keyword
         type: 0
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-# 当protocol为http协议时具体的采集配置
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: ^_^uri^_^
       timeout: ^_^timeout^_^
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
-      # 请求参数内容
       params:
         ^_^params^_^: ^_^params^_^
-      # 认证
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       parseType: website
       keyword: ^_^keyword^_^

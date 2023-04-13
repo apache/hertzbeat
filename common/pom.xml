@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>com.usthe.tancloud</groupId>
+        <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
 
@@ -77,13 +77,6 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- etcd -->
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-            <version>${jetcd-core.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- 表达式计算 -->
         <dependency>
             <groupId>com.googlecode.aviator</groupId>
@@ -94,17 +87,14 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>${protobuf-java-util.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>

@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>com.usthe.tancloud</groupId>
+        <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -29,15 +29,12 @@
 
     <properties>
         <common.version>1.0</common.version>
-        <influxdb-client-java.version>3.4.0</influxdb-client-java.version>
-        <kafka-clients.version>3.4.0</kafka-clients.version>
-        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
     </properties>
 
     <dependencies>
         <!-- common -->
         <dependency>
-            <groupId>com.usthe.tancloud</groupId>
+            <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>common</artifactId>
             <version>${common.version}</version>
             <scope>provided</scope>
@@ -74,17 +71,10 @@
             <artifactId>spring-boot-starter-validation</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- influxdb -->
-        <dependency>
-            <groupId>com.influxdb</groupId>
-            <artifactId>influxdb-client-java</artifactId>
-            <version>${influxdb-client-java.version}</version>
-        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>${kafka-clients.version}</version>
         </dependency>
         <!--redis-->
         <dependency>
@@ -96,13 +86,6 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!-- feign -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>${spring-cloud-starter-openfeign.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

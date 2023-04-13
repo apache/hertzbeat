@@ -1,0 +1,82 @@
+package org.dromara.hertzbeat.collector.collect.http.promethus;
+
+import com.google.gson.JsonElement;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.entity.dto.PromVectorOrMatrix;
+import org.dromara.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * @author myth
+ * @date 2022-07-06-18:26
+ * 处理prometheus返回类型为“matrix”的响应格式
+ */
+@NoArgsConstructor
+public class PrometheusMatrixParser extends AbstractPrometheusParse {
+    @Override
+    public Boolean checkType(String responseStr) {
+        try {
+            PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(responseStr, PromVectorOrMatrix.class);
+            if (DispatchConstants.PARSE_PROM_QL_MATRIX.equals(promVectorOrMatrix.getData().getResultType())) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void parse(String resp, List<String> aliasFields, HttpProtocol http, CollectRep.MetricsData.Builder builder) {
+        PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(resp, PromVectorOrMatrix.class);
+        List<PromVectorOrMatrix.Result> result = promVectorOrMatrix.getData().getResult();
+        for (PromVectorOrMatrix.Result r : result) {
+            for (List<Object> value : r.getValues()) {
+                boolean setTimeFlag = false;
+                boolean setValueFlag = false;
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String aliasField : aliasFields) {
+                    if (!CollectUtil.assertPromRequireField(aliasField)) {
+                        JsonElement jsonElement = r.getMetric().get(aliasField);
+                        if (jsonElement != null) {
+                            valueRowBuilder.addColumns(jsonElement.getAsString());
+                        } else {
+                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        }
+                    } else {
+                        if (CommonConstants.PROM_TIME.equals(aliasField)) {
+                            for (Object o : value) {
+                                if (o instanceof Double) {
+                                    valueRowBuilder.addColumns(String.valueOf(new BigDecimal((Double) o * 1000)));
+                                    setTimeFlag = true;
+                                }
+                            }
+                            if (!setTimeFlag) {
+                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            }
+                        } else {
+                            for (Object o : value) {
+                                if (o instanceof String) {
+                                    valueRowBuilder.addColumns((String) o);
+                                    setValueFlag = true;
+                                }
+                            }
+                            if (!setValueFlag) {
+                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            }
+                        }
+                    }
+                }
+                builder.addValues(valueRowBuilder);
+            }
+
+        }
+    }
+}
