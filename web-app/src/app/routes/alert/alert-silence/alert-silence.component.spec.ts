@@ -8,9 +8,8 @@ describe('AlertSilenceComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ AlertSilenceComponent ]
-    })
-    .compileComponents();
+      declarations: [AlertSilenceComponent]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AlertSilenceComponent);
     component = fixture.componentInstance;
