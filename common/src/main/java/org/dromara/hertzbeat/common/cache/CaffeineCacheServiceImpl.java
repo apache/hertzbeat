@@ -74,6 +74,7 @@ public class CaffeineCacheServiceImpl<K, V> implements ICacheService<K, V> {
     @Override
     public boolean clear() {
         this.cache.invalidateAll();
+        this.cache.cleanUp();
         return true;
     }
 }
