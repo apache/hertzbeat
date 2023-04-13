@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.alert.calculate;
 
+import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
@@ -18,16 +19,12 @@ import java.util.Map;
  * @date 2023/4/12 20:00
  */
 @Service
+@RequiredArgsConstructor
 public class SilenceAlarm {
 	
 	private final AlertSilenceDao alertSilenceDao;
 	
 	private final CommonDataQueue dataQueue;
-	
-	public SilenceAlarm(AlertSilenceDao alertSilenceDao, CommonDataQueue dataQueue) {
-		this.alertSilenceDao = alertSilenceDao;
-		this.dataQueue = dataQueue;
-	}
 	
 	public void filterSilenceAndSendData(Alert alert) {
 		List<AlertSilence> alertSilenceList = alertSilenceDao.findAll();
