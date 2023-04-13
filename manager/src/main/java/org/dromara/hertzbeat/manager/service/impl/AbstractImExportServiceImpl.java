@@ -19,6 +19,7 @@ import cn.afterturn.easypoi.excel.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
  * Created by gcdd1993 on 2023/3/31
  */
+@Slf4j
 abstract class AbstractImExportServiceImpl implements ImExportService {
 
     @Resource
@@ -119,6 +121,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitorDto = new MonitorDto();
         monitorDto.setDetected(true);
         var monitor = new Monitor();
+        log.info("exportMonitor.monitor{}",exportMonitor.monitor);
         BeanUtils.copyProperties(exportMonitor.monitor, monitor);
         monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags)));
         monitorDto.setMonitor(monitor);
@@ -148,8 +151,6 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private List<ParamDTO> params;
         @ExcelCollection(name = "Metrics")
         private List<String> metrics;
-
-        // getters and setters omitted for brevity
     }
 
 
@@ -172,8 +173,6 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private String description;
         @Excel(name = "Tags")
         private List<Long> tags;
-
-        // getters and setters omitted for brevity
     }
 
 
@@ -188,8 +187,6 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private String value;
         @Excel(name = "Type")
         private Byte type;
-
-        // getters and setters omitted for brevity
     }
 
 

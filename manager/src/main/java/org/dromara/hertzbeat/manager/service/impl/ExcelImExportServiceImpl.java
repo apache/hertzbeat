@@ -6,12 +6,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,12 +29,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "EXCEL";
+    public static final String TYPE = "Excel";
     public static final String FILE_SUFFIX = ".xlsx";
 
-    private final ObjectMapper objectMapper;
-
-    List<Map<String, Object>> dataList = new ArrayList<>();
     /**
      * Export file type
      * 导出文件类型
@@ -65,16 +61,136 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
      * @param is 输入流
      * @return 表单
      */
+
     @Override
-    List<ExportMonitorDTO> parseImport(InputStream is) {
-        try {
-            return objectMapper.readValue(is, new TypeReference<>() {
-            });
-        } catch (IOException ex) {
-            log.error("import monitor failed.", ex);
-            throw new RuntimeException("import monitor failed");
+    public List<ExportMonitorDTO> parseImport(InputStream is) {
+        try (Workbook workbook = WorkbookFactory.create(is)) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            List<ExportMonitorDTO> monitors = new ArrayList<>();
+            List<Integer> startRowList = new ArrayList<>();
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) {
+                    continue;
+                }
+                String name = getCellValueAsString(row.getCell(0));
+                if (StringUtils.hasText(name)) {
+                    startRowList.add(row.getRowNum());
+                    MonitorDTO monitor = extractMonitorDataFromRow(row);
+                    ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
+                    exportMonitor.setMonitor(monitor);
+                    monitors.add(exportMonitor);
+                }
+            }
+
+            List<List<ParamDTO>> paramsList = new ArrayList<>();
+            List<List<String>> metricsList = new ArrayList<>();
+
+            for (int i = 0; i < startRowList.size(); i++) {
+                int startRowIndex = startRowList.get(i);
+                int endRowIndex = (i + 1 < startRowList.size()) ? startRowList.get(i + 1) : sheet.getLastRowNum() + 1;
+                List<ParamDTO> params = new ArrayList<>();
+                List<String> metrics = new ArrayList<>();
+
+                for (int j = startRowIndex; j < endRowIndex; j++) {
+                    Row row = sheet.getRow(j);
+                    if (row == null) {
+                        continue;
+                    }
+                    ParamDTO param = extractParamDataFromRow(row);
+                    if (param != null) {
+                        params.add(param);
+                    }
+                    String metricValue = getCellValueAsString(row.getCell(10));
+                    if (StringUtils.hasText(metricValue)) {
+                        metrics.add(metricValue);
+                    }
+                }
+
+                paramsList.add(params);
+                metricsList.add(metrics);
+            }
+
+            for (int i = 0; i < monitors.size(); i++) {
+                monitors.get(i).setParams(paramsList.get(i));
+                monitors.get(i).setMetrics(metricsList.get(i));
+            }
+
+            return monitors;
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse monitor data", e);
         }
     }
+
+    private MonitorDTO extractMonitorDataFromRow(Row row) {
+        MonitorDTO monitor = new MonitorDTO();
+
+        monitor.setName(getCellValueAsString(row.getCell(0)));
+        monitor.setApp(getCellValueAsString(row.getCell(1)));
+        monitor.setHost(getCellValueAsString(row.getCell(2)));
+        monitor.setIntervals(getCellValueAsInteger(row.getCell(3)));
+        monitor.setStatus(getCellValueAsByte(row.getCell(4)));
+        monitor.setDescription(getCellValueAsString(row.getCell(5)));
+
+        String tagsString = getCellValueAsString(row.getCell(6));
+        if (StringUtils.hasText(tagsString)) {
+            List<Long> tags = Arrays.stream(tagsString.split(","))
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+            monitor.setTags(tags);
+        }
+
+        return monitor;
+    }
+
+    private ParamDTO extractParamDataFromRow(Row row) {
+        String fieldName = getCellValueAsString(row.getCell(7));
+        if (StringUtils.hasText(fieldName)) {
+            ParamDTO param = new ParamDTO();
+            param.setField(fieldName);
+            param.setValue(getCellValueAsString(row.getCell(8)));
+            param.setType(getCellValueAsByte(row.getCell(9)));
+            return param;
+        }
+        return null;
+    }
+
+    private static String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                return String.valueOf(cell.getNumericCellValue());
+            default:
+                return null;
+        }
+    }
+
+    private static Integer getCellValueAsInteger(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        }
+        return null;
+    }
+
+    private static Byte getCellValueAsByte(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
+            return (byte) cell.getNumericCellValue();
+        }
+        return null;
+    }
+
 
     /**
      * Export Configuration to Output Stream
@@ -86,10 +202,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
-            Workbook workbook = new SXSSFWorkbook();
-            // 定义Excel的Sheet名称
+            Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
-            // 在Excel对象中创建一个Sheet
             Sheet sheet = workbook.createSheet(sheetName);
             // 设置表头样式
             CellStyle headerCellStyle = workbook.createCellStyle();
@@ -100,7 +214,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             // 设置表格内容样式
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
-
             // 设置表头
             String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "field", "value", "type", "metrics" };
             Row headerRow = sheet.createRow(0);
@@ -119,7 +232,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                 List<ParamDTO> paramList = monitor.getParams();
                 // 获取监控指标
                 List<String> metricList = monitor.getMetrics();
-
                 // 将监控信息和参数信息合并到一行中
                 for (int i = 0; i < Math.max(paramList.size(), 1); i++) {
                     Row row = sheet.createRow(rowIndex++);
@@ -147,7 +259,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         tagsCell.setCellValue(String.join(",", monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.toList())));
                         tagsCell.setCellStyle(cellStyle);
                     }
-
                     // 填写参数信息
                     if (i < paramList.size()) {
                         ParamDTO paramDTO = paramList.get(i);
@@ -167,7 +278,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         metricCell.setCellStyle(cellStyle);
                     }
                 }
-
                 if (paramList.size() > 0) {
                     RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
