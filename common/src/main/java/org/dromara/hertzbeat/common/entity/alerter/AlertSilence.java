@@ -75,6 +75,11 @@ public class AlertSilence {
             description = "是否启用此策略",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
+    
+    @Schema(title = "Whether to match all",
+            description = "是否应用匹配所有",
+            example = "true", accessMode = READ_WRITE)
+    private boolean matchAll = true;
 
     @Schema(title = "Silence type 0: once, 1:cyc",
             description = "静默类型 0:一次性静默 1:周期性静默", accessMode = READ_WRITE)
