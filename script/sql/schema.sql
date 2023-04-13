@@ -166,6 +166,7 @@ CREATE TABLE  hzb_alert_silence
     id             bigint           not null auto_increment comment '告警静默主键索引ID',
     name           varchar(100)     not null comment '静默策略名称',
     enable         boolean          not null default true comment '是否启用此策略',
+    match_all      boolean          not null default true comment '是否应用匹配所有',
     priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
     tags           varchar(4000)    comment '匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
     times          int              not null default 0 comment '已静默告警次数',

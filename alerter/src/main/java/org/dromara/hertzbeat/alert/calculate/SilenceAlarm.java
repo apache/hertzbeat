@@ -33,16 +33,21 @@ public class SilenceAlarm {
 		List<AlertSilence> alertSilenceList = alertSilenceDao.findAll();
 		for (AlertSilence alertSilence : alertSilenceList) {
 			// if match the silence rule, return
-			List<TagItem> tags = alertSilence.getTags();
-			boolean matchTag = false;
-			if (alert.getTags() != null && !alert.getTags().isEmpty()) {
-				Map<String, String> alertTagMap = alert.getTags();
-				matchTag = tags.stream().anyMatch(item -> {
-					String tagValue = alertTagMap.get(item.getName());
-					return tagValue != null && tagValue.equals(item.getValue());
-				});
+			boolean match = alertSilence.isMatchAll();
+			if (!match) {
+				List<TagItem> tags = alertSilence.getTags();
+				if (alert.getTags() != null && !alert.getTags().isEmpty()) {
+					Map<String, String> alertTagMap = alert.getTags();
+					match = tags.stream().anyMatch(item -> {
+						String tagValue = alertTagMap.get(item.getName());
+						return tagValue != null && tagValue.equals(item.getValue());
+					});
+				}
+				if (match && alertSilence.getPriorities() != null && !alertSilence.getPriorities().isEmpty()) {
+					match = alertSilence.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
+				}
 			}
-			if (matchTag) {
+			if (match) {
 				LocalDateTime nowDate = LocalDateTime.now();
 				if (alertSilence.getType() == 0) {
 					// once time
