@@ -35,6 +35,7 @@ public interface ICacheService<K, V> {
      * set cache
      * @param key key
      * @param value value
+     * @return old value
      */
     V put(K key, V value);
 
@@ -48,6 +49,7 @@ public interface ICacheService<K, V> {
     /**
      * remove cache
      * @param key key
+     * @return old value
      */
     V remove(K key);
 
