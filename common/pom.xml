@@ -35,6 +35,7 @@
         <jetcd-core.version>0.5.11</jetcd-core.version>
         <protobuf-java-util.version>3.19.1</protobuf-java-util.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
+        <caffeine.version>2.9.3</caffeine.version>
     </properties>
 
     <dependencies>
@@ -112,6 +113,13 @@
             <groupId>com.tencentcloudapi</groupId>
             <artifactId>tencentcloud-sdk-java-sms</artifactId>
             <version>${tencentcloud-sdk-java-sms.version}</version>
+        </dependency>
+        <!-- caffeine-->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
+            <version>${caffeine.version}</version>
         </dependency>
     </dependencies>
 </project>
