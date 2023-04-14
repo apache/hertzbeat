@@ -369,9 +369,11 @@ public class ExporterParser {
                     case QUOTES:
                     case '\\':
                         builder.append(c);
+                        escaped = false;
                         break;
                     case 'n':
                         builder.append('\n');
+                        escaped = false;
                         break;
                     default:
                         throw new ParseException("parse label value error");

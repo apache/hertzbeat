@@ -65,118 +65,81 @@ params:
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
-  # metrics - system
-  # 监控指标组 - system
-  - name: system
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+  - name: system_cpu_usage
     priority: 0
-    # collect metrics content
-    # 具体监控指标列表
     fields:
-      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
-      - field: system_cpu_usage
+      - field: usage
         type: 0
         unit: '%'
-      - field: system_average_load
-        type: 0
-      - field: system_memory_usage
-        type: 0
-        unit: '%'
-    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
-    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
-      - cpu
-      - load
-      - mem
-    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
-    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
-    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+      - value
     calculates:
-      - system_cpu_usage=cpu * 100
-      - system_average_load=load
-      - system_memory_usage=mem * 100
-    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 监控使用协议, 例如: sql, ssh, http, telnet, wmi, snmp, sdk
+      - usage=value
     protocol: http
     # the config content when protocol is http
     # 当使用http协议时的配置内容
     http:
-        # http host: ipv4 ipv6 domain
-        # http 主机：ipv4 ipv6域名
-        host: ^_^host^_^
-        # http port
-        # http 端口
-        port: ^_^port^_^
-        # http url
-        url: /nacos/v2/ns/operator/metrics?onlyStatus=false
-        # http method: GET POST PUT DELETE PATCH
-        # http 请求方法: GET POST PUT DELETE PATCH
-        method: GET
-        # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
-        # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
-        parseType: jsonPath
-        parseScript: $.data
-
-  - name: jvm_gc_count
-    priority: 1
-    fields:
-      - field: total_gc_count
-        type: 0
-    aliasFields:
-      - value
-    calculates:
-      - total_gc_count=value
-    protocol: http
-    http:
-        host: ^_^host^_^
-        port: ^_^port^_^
-        url: /nacos/actuator/metrics/jvm.gc.pause
-        method: GET
-        parseType: jsonPath
-        parseScript: $.measurements[0]
-
-  - name: jvm_gc_time
-    priority: 1
-    fields:
-      - field: total_gc_time
-        type: 0
-        unit: 's'
-    aliasFields:
-      - value
-    calculates:
-      - total_gc_time=value
-    protocol: http
-    http:
+      # http host: ipv4 ipv6 domain
+      # http 主机：ipv4 ipv6域名
       host: ^_^host^_^
+      # http port
+      # http 端口
       port: ^_^port^_^
-      url: /nacos/actuator/metrics/jvm.gc.pause
+      # http url
+      url: /nacos/actuator/prometheus
+      # http method: GET POST PUT DELETE PATCH
+      # http 请求方法: GET POST PUT DELETE PATCH
       method: GET
-      parseType: jsonPath
-      parseScript: $.measurements[1]
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
 
-  - name: nacos
-    priority: 1
+  - name: jvm_memory_used_bytes
+    priority: 0
     fields:
-      - field: service_count
+      - field: area
+        type: 1
+      - field: id
+        type: 1
+        instance: true
+      - field: value
         type: 0
-      - field: client_count
-        type: 0
-    aliasFields:
-      - serviceCount
-      - clientCount
-    calculates:
-      - service_count=serviceCount
-      - client_count=clientCount
+        unit: MB
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
+    # 当protocol为http协议时具体的采集配置
     http:
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # 端口
       port: ^_^port^_^
-      url: /nacos/v2/ns/operator/metrics?onlyStatus=false
+      # url请求接口路径
+      url: /nacos/actuator/prometheus
+      timeout: ^_^timeout^_^
       method: GET
-      parseType: jsonPath
-      parseScript: $.data
+      parseType: prometheus
 
+  - name: nacos_monitor
+    priority: 0
+    fields:
+      - field: module
+        type: 1
+      - field: name
+        type: 1
+      - field: value
+        type: 0
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /nacos/actuator/prometheus
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
