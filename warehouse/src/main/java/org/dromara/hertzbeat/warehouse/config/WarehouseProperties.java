@@ -284,7 +284,15 @@ public class WarehouseProperties {
             /**
              * influxdb的连接服务器url
              */
-            private String servers = "http://127.0.0.1:8086";
+            private String serverUrl = "http://127.0.0.1:8086";
+            /**
+             * 用户名
+             */
+            private String username;
+            /**
+             * 密码
+             */
+            private String password;
             /**
              * 认证token
              */
@@ -306,12 +314,28 @@ public class WarehouseProperties {
                 this.enabled = enabled;
             }
 
-            public String getServers() {
-                return servers;
+            public String getServerUrl() {
+                return serverUrl;
             }
 
-            public void setServers(String servers) {
-                this.servers = servers;
+            public void setServerUrl(String serverUrl) {
+                this.serverUrl = serverUrl;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
             }
 
             public String getToken() {
