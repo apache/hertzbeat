@@ -92,6 +92,11 @@ module.exports = {
           to: 'docs/others/developer',
         },
         {
+          label: '华为云活动',
+          position: 'left',
+          to: 'docs/others/huaweicloud',
+        },
+        {
           label: 'enterprise',
           position: 'left',
           to: 'docs/others/private',
