@@ -32,18 +32,11 @@ common:
 
 2. Configure alarm custom parameters
 
-> If you receive frequent built-in availability alarms, or the network jitter is severe in your area, it is recommended to adjust the following parameters
 
 ```yaml
 alerter:
    # Custom console address
    console-url: https://console.tancloud.cn
-   # Alarm trigger evaluation interval basic time, the same repeated alarm will not be repeatedly triggered continuously within 2 times this time, unit milliseconds
-   alert-eval-interval-base: 600000
-   # The maximum time between alarm trigger evaluation intervals, the same repeated alarms can be suppressed at most during this time period, in milliseconds
-   max-alert-eval-interval: 86400000
-   # The built-in availability alarm will be triggered several times in a row before the actual alarm is sent. The default is 1 time. When the network environment is not good and you don't want to receive availability alarms frequently, you can increase this value (3)
-   system-alert-trigger-times: 1
 ```
 
 3. Use external redis instead of memory to store real-time indicator data

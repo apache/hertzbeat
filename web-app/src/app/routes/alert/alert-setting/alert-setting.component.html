@@ -65,7 +65,8 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span>{{ data.app + '.' + data.metric + '.' + data.field }}</span>
+        <span *ngIf="data.field">{{ data.app + '.' + data.metric + '.' + data.field }}</span>
+        <span *ngIf="!data.field">{{ data.app + '.' + data.metric }}</span>
       </td>
       <td nzAlign="center">
         <span>{{ data.expr }}</span>
@@ -154,7 +155,7 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2">
         <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10, offset: 7 }">
           <nz-collapse>
             <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
@@ -176,7 +177,7 @@
           </nz-collapse>
         </nz-col>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2">
         <nz-form-label [nzSpan]="7" nzFor="expr" nzRequired="true" [nzTooltipTitle]="'alert.setting.expr.label' | i18n">
           {{ 'alert.setting.expr' | i18n }}
         </nz-form-label>
@@ -193,6 +194,18 @@
             >
             </textarea>
           </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length == 2">
+        <nz-form-label [nzSpan]="7" nzFor="available">
+          {{ 'monitor.availability' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="10">
+          <span style="color: red">
+            <nz-tag nzColor="error">{{ 'monitor.status.unavailable' | i18n }}</nz-tag>
+            <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
+            {{ 'alert.setting.trigger' | i18n }}
+          </span>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -236,7 +249,7 @@
                 <nz-list-item *ngFor="let item of otherMetrics">
                   <code>&#36;{{ '{' + item + '}' }} : {{ 'alert.setting.template.other-value' | i18n }}</code>
                 </nz-list-item>
-                <nz-list-item>
+                <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>&#36;&#123;instance&#125; : {{ 'alert.setting.template.instance-value' | i18n }}</code>
                 </nz-list-item>
               </nz-list>

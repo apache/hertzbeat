@@ -63,6 +63,7 @@
     <logger name="com.zaxxer" level="info"/>
     <logger name="springfox" level="info"/>
     <logger name="org.mongodb" level="warn"/>
+    <logger name="io.greptime" level="warn"/>
 
     <!-- 生产环境配置 -->
     <springProfile name="prod">

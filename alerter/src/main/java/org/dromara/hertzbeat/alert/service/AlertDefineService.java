@@ -109,6 +109,16 @@ public interface AlertDefineService {
     Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics);
 
     /**
+     * Query the alarm definitions that match the specified indicator group associated with the monitoring ID
+     * 查询与此监控ID关联的可用性告警定义
+     * @param monitorId Monitor the ID ｜ 监控ID
+     * @param app Monitoring type ｜ 监控类型
+     * @param metrics Index group ｜ 指标组
+     * @return field - define[]
+     */
+    AlertDefine getMonitorBindAlertAvaDefine(long monitorId, String app, String metrics);
+
+    /**
      * Dynamic conditional query
      * 动态条件查询
      * @param specification Query conditions ｜ 查询条件

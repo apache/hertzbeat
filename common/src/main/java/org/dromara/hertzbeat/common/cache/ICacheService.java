@@ -15,21 +15,47 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.common.cache;
 
 /**
+ * common cache
  * @author ceilzcx
  * @since 4/2/2023
  */
-public class CacheFactory {
-    private CacheFactory() {}
+public interface ICacheService<K, V> {
 
     /**
-     * 获取默认的cache
-     * todo 后续优化
-     * @return caffeine cache
+     * get cache by key use clazz
+     * @param key key
+     * @return object
      */
-    public static ICacheService getCache() {
-        return new CaffeineCacheServiceImpl();
-    }
+    V get(K key);
+
+    /**
+     * set cache
+     * @param key key
+     * @param value value
+     * @return old value
+     */
+    V put(K key, V value);
+
+    /**
+     * if contain cache by key
+     * @param key key
+     * @return true is contain
+     */
+    boolean containsKey(K key);
+
+    /**
+     * remove cache
+     * @param key key
+     * @return old value
+     */
+    V remove(K key);
+
+    /**
+     * clear cache
+     * @return is clear success
+     */
+    boolean clear();
 }
