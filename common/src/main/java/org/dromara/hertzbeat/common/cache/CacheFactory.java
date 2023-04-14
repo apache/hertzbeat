@@ -27,13 +27,24 @@ public class CacheFactory {
     private CacheFactory() {}
 
     private static final ICacheService<String, Object> NOTICE_CACHE =
-            new CaffeineCacheServiceImpl<>(200, 1000, Duration.ofDays(1), false);
-
+            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
+    
+    private static final ICacheService<String, Object> ALERT_SILENCE_CACHE =
+            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
+    
     /**
      * 获取notice模块的cache
      * @return caffeine cache
      */
     public static ICacheService<String, Object> getNoticeCache() {
         return NOTICE_CACHE;
+    }
+    
+    /**
+     * get alert silence cache
+     * @return caffeine cache
+     */
+    public static ICacheService<String, Object> getAlertSilenceCache() {
+        return ALERT_SILENCE_CACHE;
     }
 }

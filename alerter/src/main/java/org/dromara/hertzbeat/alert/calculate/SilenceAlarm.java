@@ -2,10 +2,13 @@ package org.dromara.hertzbeat.alert.calculate;
 
 import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
+import org.dromara.hertzbeat.common.cache.CacheFactory;
+import org.dromara.hertzbeat.common.cache.ICacheService;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,8 +29,14 @@ public class SilenceAlarm {
 	
 	private final CommonDataQueue dataQueue;
 	
+	@SuppressWarnings("unchecked")
 	public void filterSilenceAndSendData(Alert alert) {
-		List<AlertSilence> alertSilenceList = alertSilenceDao.findAll();
+		ICacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
+		List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
+		if (alertSilenceList == null) {
+			alertSilenceList = alertSilenceDao.findAll();
+			silenceCache.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilenceList);
+		}
 		for (AlertSilence alertSilence : alertSilenceList) {
 			// if match the silence rule, return
 			boolean match = alertSilence.isMatchAll();
@@ -36,8 +45,16 @@ public class SilenceAlarm {
 				if (alert.getTags() != null && !alert.getTags().isEmpty()) {
 					Map<String, String> alertTagMap = alert.getTags();
 					match = tags.stream().anyMatch(item -> {
-						String tagValue = alertTagMap.get(item.getName());
-						return tagValue != null && tagValue.equals(item.getValue());
+						if (alertTagMap.containsKey(item.getName())) {
+							String tagValue = alertTagMap.get(item.getName());
+							if (tagValue == null && item.getValue() == null) {
+								return true;
+							} else {
+								return tagValue != null && tagValue.equals(item.getValue());
+							}
+						} else {
+							return false;
+						}
 					});
 				}
 				if (match && alertSilence.getPriorities() != null && !alertSilence.getPriorities().isEmpty()) {

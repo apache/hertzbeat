@@ -3,7 +3,10 @@ package org.dromara.hertzbeat.alert.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
 import org.dromara.hertzbeat.alert.service.AlertSilenceService;
+import org.dromara.hertzbeat.common.cache.CacheFactory;
+import org.dromara.hertzbeat.common.cache.ICacheService;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
+import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,11 +37,13 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
 	@Override
 	public void addAlertSilence(AlertSilence alertSilence) throws RuntimeException {
 		alertSilenceDao.save(alertSilence);
+		clearAlertSilencesCache();
 	}
 
 	@Override
 	public void modifyAlertSilence(AlertSilence alertSilence) throws RuntimeException {
 		alertSilenceDao.save(alertSilence);
+		clearAlertSilencesCache();
 	}
 
 	@Override
@@ -49,10 +54,16 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
 	@Override
 	public void deleteAlertSilences(Set<Long> silenceIds) throws RuntimeException {
 		alertSilenceDao.deleteAlertSilencesByIdIn(silenceIds);
+		clearAlertSilencesCache();
 	}
 
 	@Override
 	public Page<AlertSilence> getAlertSilences(Specification<AlertSilence> specification, PageRequest pageRequest) {
 		return alertSilenceDao.findAll(specification, pageRequest);
+	}
+	
+	private void clearAlertSilencesCache() {
+		ICacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
+		silenceCache.remove(CommonConstants.CACHE_ALERT_SILENCE);
 	}
 }
