@@ -78,6 +78,7 @@ public class ParamDefine {
     @Schema(description = "参数字段显示国际化名称", example = "{zh-CN: '端口'}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
+    @Column(length = 2048)
     private Map<String, String> name;
 
     /**
@@ -142,7 +143,7 @@ public class ParamDefine {
      * value-真正值
      */
     @Schema(description = "当type为radio单选框,checkbox复选框时,option表示可选项值列表", example = "{key1,value1}", accessMode = READ_WRITE)
-    @Column(name = "param_options")
+    @Column(name = "param_options", length = 2048)
     @Convert(converter = JsonOptionListAttributeConverter.class)
     private List<Option> options;
 

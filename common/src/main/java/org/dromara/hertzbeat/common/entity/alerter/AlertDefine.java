@@ -79,7 +79,8 @@ public class AlertDefine {
     private boolean preset;
 
     @Schema(title = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE)
-    @Length(max = 1024)
+    @Length(max = 2048)
+    @Column(length = 2048)
     private String expr;
 
     @Schema(title = "告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
@@ -98,7 +99,8 @@ public class AlertDefine {
 
     @Schema(title = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
-    @Length(max = 1024)
+    @Length(max = 2048)
+    @Column(length = 2048)
     private String template;
 
     @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
