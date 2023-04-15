@@ -63,7 +63,7 @@ public class Tag {
     private String name;
 
     @Schema(title = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE)
-    @Column(name = "`value`")
+    @Column(name = "`value`", length = 2048)
     private String value;
 
     @Schema(title = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE)

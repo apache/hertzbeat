@@ -90,18 +90,21 @@ public class NoticeReceiver {
             description = "URL地址 : 通知方式为webhook有效",
             example = "https://www.tancloud.cn", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String hookUrl;
 
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             description = "openId : 通知方式为微信公众号，企业微信机器人或飞书机器人有效",
             example = "343432", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String wechatId;
 
     @Schema(title = "Access token : The notification method is valid for DingTalk robot",
             description = "访问token : 通知方式为钉钉机器人有效",
             example = "34823984635647", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String accessToken;
 
     @Schema(title = "Telegram bot token : The notification method is valid for Telegram Bot",
@@ -118,6 +121,7 @@ public class NoticeReceiver {
             description = "URL地址 : 通知方式为Slack有效",
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String slackWebHookUrl;
 
     @Schema(title = "Enterprise weChat message: The notification method is valid for Enterprise WeChat app message",
@@ -139,12 +143,14 @@ public class NoticeReceiver {
             description = "Discord 频道id: 通知方式为Discord有效",
             example = "1065303416030642266", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String discordChannelId;
 
     @Schema(title = "Discord bot token: The notification method is valid for Discord",
             description = "Discord 机器人Token: 通知方式为Discord有效",
             example = "MTA2NTMwMzU0ODY4Mzg4MjUzNw.xxxxx.xxxxxxx", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String discordBotToken;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
