@@ -258,4 +258,23 @@ CREATE TABLE  hzb_notice_receiver
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------
+-- Table structure for hzb_history
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_history ;
+CREATE TABLE  hzb_history
+(
+    id             bigint           not null auto_increment comment '通知策略主键索引ID',
+    monitor_id     bigint           not null comment '监控ID',
+    app            varchar(100)     not null comment '监控类型 mysql oracle db2',
+    metrics        varchar(100)     not null comment '指标集合名称 innodb disk cpu',
+    metric         varchar(100)     not null comment '指标名称 usage speed count',
+    instance       varchar(1024)    comment '实例',
+    metric_type    tinyint          not null comment '字段类型 0: 数值 1：字符串',
+    str            varchar(1024)    comment '字符值',
+    dou            float            comment '数值',
+    time           bigint           comment '采集时间戳',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
