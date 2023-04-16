@@ -127,7 +127,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private boolean checkConnection() {
         try {
-            this.sessionPool.executeNonQueryStatement(SHOW_STORAGE_GROUP);
+            this.sessionPool.executeQueryStatement(SHOW_STORAGE_GROUP);
             return true;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
