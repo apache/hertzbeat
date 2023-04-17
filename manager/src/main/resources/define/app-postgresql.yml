@@ -176,9 +176,6 @@ metrics:
     priority: 1
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: shared_buffers
-        type: 0
-        unit: MB
       - field: work_mem
         type: 0
         unit: MB
