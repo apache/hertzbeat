@@ -16,6 +16,8 @@ import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
 
+const AVAILABILITY = 'availability';
+
 @Component({
   selector: 'app-alert-setting',
   templateUrl: './alert-setting.component.html',
@@ -55,6 +57,13 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.appHierarchies = message.data;
+            this.appHierarchies.forEach(item => {
+              item.children.unshift({
+                value: AVAILABILITY,
+                label: this.i18nSvc.fanyi('monitor.availability'),
+                isLeaf: true
+              });
+            });
           } else {
             console.warn(message.msg);
           }
@@ -166,7 +175,11 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
-            this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
+            if (this.define.field) {
+              this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
+            } else {
+              this.cascadeValues = [this.define.app, this.define.metric];
+            }
             this.cascadeOnChange(this.cascadeValues);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
@@ -278,11 +291,13 @@ export class AlertSettingComponent implements OnInit {
         hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
           if (metrics.value == values[1]) {
             this.otherMetrics = [];
-            metrics.children.forEach(item => {
-              if (item.value != values[2]) {
-                this.otherMetrics.push(item.value);
-              }
-            });
+            if (metrics.children) {
+              metrics.children.forEach(item => {
+                if (item.value != values[2]) {
+                  this.otherMetrics.push(item.value);
+                }
+              });
+            }
           }
         });
       }
@@ -295,7 +310,11 @@ export class AlertSettingComponent implements OnInit {
     this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
     this.define.metric = this.cascadeValues[1];
-    this.define.field = this.cascadeValues[2];
+    if (this.cascadeValues.length == 3) {
+      this.define.field = this.cascadeValues[2];
+    } else {
+      this.define.expr = '';
+    }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
         .newAlertDefine(this.define)

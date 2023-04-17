@@ -28,7 +28,6 @@
 
     <properties>
         <alerter.version>1.0</alerter.version>
-        <caffeine.version>2.9.3</caffeine.version>
         <collector.version>1.0</collector.version>
         <common.version>1.0</common.version>
         <h2.version>2.1.214</h2.version>
@@ -137,13 +136,6 @@
             <artifactId>h2</artifactId>
             <version>${h2.version}</version>
             <scope>runtime</scope>
-        </dependency>
-        <!-- caffeine-->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-            <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
-            <version>${caffeine.version}</version>
         </dependency>
         <dependency>
             <groupId>cn.afterturn</groupId>
