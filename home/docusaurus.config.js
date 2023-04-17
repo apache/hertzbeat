@@ -92,6 +92,16 @@ module.exports = {
           to: 'docs/others/developer',
         },
         {
+          label: '开源之夏',
+          position: 'left',
+          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
+        },
+        {
+          label: '华为云开源活动',
+          position: 'left',
+          to: 'docs/others/huaweicloud',
+        },
+        {
           label: 'enterprise',
           position: 'left',
           to: 'docs/others/private',
