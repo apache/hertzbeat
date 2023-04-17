@@ -23,47 +23,36 @@
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>manager</artifactId>
+    <artifactId>hertzbeat-manager</artifactId>
+    <name>${project.artifactId}</name>
     <packaging>jar</packaging>
 
     <properties>
-        <alerter.version>1.0</alerter.version>
-        <collector.version>1.0</collector.version>
-        <common.version>1.0</common.version>
-        <h2.version>2.1.214</h2.version>
+        <maven.install.skip>true</maven.install.skip>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
-        <mysql.version>8.0.28</mysql.version>
-        <nekohtml.version>1.9.22</nekohtml.version>
-        <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
-        <warehouse.version>1.0</warehouse.version>
-        <easy-poi.version>4.3.0</easy-poi.version>
     </properties>
 
     <dependencies>
         <!-- common -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>common</artifactId>
-            <version>${common.version}</version>
+            <artifactId>hertzbeat-common</artifactId>
         </dependency>
         <!-- data warehouse -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>warehouse</artifactId>
-            <version>${warehouse.version}</version>
+            <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
         <!-- alerter -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>alerter</artifactId>
-            <version>${alerter.version}</version>
+            <artifactId>hertzbeat-alerter</artifactId>
         </dependency>
         <!-- collector -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>collector</artifactId>
-            <version>${collector.version}</version>
+            <artifactId>hertzbeat-collector</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -102,7 +91,6 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql.version}</version>
         </dependency>
         <!-- email -->
         <dependency>
@@ -128,13 +116,11 @@
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot-starter-sureness</artifactId>
-            <version>${spring-boot-starter-sureness.version}</version>
         </dependency>
         <!-- h2 database-->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>

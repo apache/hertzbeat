@@ -25,18 +25,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>alerter</artifactId>
+    <artifactId>hertzbeat-alerter</artifactId>
+    <name>${project.artifactId}</name>
 
     <properties>
-        <common.version>1.0</common.version>
     </properties>
 
     <dependencies>
         <!-- common -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>common</artifactId>
-            <version>${common.version}</version>
+            <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
         </dependency>
         <!-- spring -->

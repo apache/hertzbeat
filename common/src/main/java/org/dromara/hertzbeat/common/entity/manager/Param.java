@@ -85,7 +85,7 @@ public class Param {
      */
     @Schema(title = "参数值", example = "8080", accessMode = READ_WRITE)
     @Length(max = 8126)
-    @Column(name = "`value`")
+    @Column(name = "`value`", length = 8126)
     private String value;
 
     /**

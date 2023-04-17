@@ -122,6 +122,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                 Map<String, String> oidsMap = snmpProtocol.getOids();
                 Map<String, String> oidsValueMap = new HashMap<>(oidsMap.size());
                 for (VariableBinding binding : vbs) {
+                    if (binding == null) {
+                        continue;
+                    }
                     Variable variable = binding.getVariable();
                     if (variable instanceof TimeTicks) {
                         String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
@@ -160,6 +163,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                     VariableBinding[] varBindings = tableEvent.getColumns();
                     Map<String, String> oidsValueMap = new HashMap<>(varBindings.length);
                     for (VariableBinding binding : varBindings) {
+                        if (binding == null) {
+                            continue;
+                        }
                         Variable variable = binding.getVariable();
                         if (variable instanceof TimeTicks) {
                             String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
@@ -167,6 +173,10 @@ public class SnmpCollectImpl extends AbstractCollect {
                         } else {
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), bingdingHexValueToString(binding));
                         }
+                    }
+                    // when too many empty value field, ignore
+                    if (oidsValueMap.size() < metrics.getAliasFields().size() / 2) {
+                        continue;
                     }
                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String alias : metrics.getAliasFields()) {

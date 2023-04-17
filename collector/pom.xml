@@ -36,7 +36,8 @@
     </build>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>collector</artifactId>
+    <artifactId>hertzbeat-collector</artifactId>
+    <name>${project.artifactId}</name>
 
     <dependencies>
         <!-- spring -->
@@ -57,8 +58,7 @@
         <!-- common -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0</version>
+            <artifactId>hertzbeat-common</artifactId>
         </dependency>
         <!-- validation -->
         <dependency>
@@ -86,7 +86,6 @@
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <version>2.6.0</version>
         </dependency>
         <!-- lru hashmap -->
         <dependency>
@@ -107,25 +106,21 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.28</version>
         </dependency>
         <!-- clickhouse -->
         <dependency>
             <groupId>cc.blynk.clickhouse</groupId>
             <artifactId>clickhouse4j</artifactId>
-            <version>1.4.4</version>
         </dependency>
         <!-- dm -->
         <dependency>
             <groupId>com.dameng</groupId>
             <artifactId>DmJdbcDriver18</artifactId>
-            <version>8.1.2.141</version>
         </dependency>
         <!-- postgresql -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.5.1</version>
         </dependency>
         <!-- linux ssh -->
         <dependency>
@@ -142,18 +137,15 @@
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>10.2.0.jre8</version>
         </dependency>
         <!-- oracle -->
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc8</artifactId>
-            <version>21.5.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.oracle.database.nls</groupId>
             <artifactId>orai18n</artifactId>
-            <version>21.5.0.0</version>
         </dependency>
         <!--redis-->
         <dependency>
@@ -164,7 +156,6 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>4.6.1</version>
         </dependency>
         <!--snmp-->
         <dependency>
