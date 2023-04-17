@@ -121,7 +121,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitorDto = new MonitorDto();
         monitorDto.setDetected(true);
         var monitor = new Monitor();
-        log.info("exportMonitor.monitor{}",exportMonitor.monitor);
+        log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         BeanUtils.copyProperties(exportMonitor.monitor, monitor);
         monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags)));
         monitorDto.setMonitor(monitor);
@@ -136,7 +136,8 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         return monitorDto;
     }
 
-    protected String fileNamePrefix() {
+    protected String
+    fileNamePrefix() {
         return "hertzbeat_monitor_" + LocalDate.now();
     }
 

@@ -157,7 +157,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         return null;
     }
 
-    private static String getCellValueAsString(Cell cell) {
+    private String getCellValueAsString(Cell cell) {
         if (cell == null) {
             return null;
         }
@@ -171,7 +171,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         }
     }
 
-    private static Integer getCellValueAsInteger(Cell cell) {
+    private Integer getCellValueAsInteger(Cell cell) {
         if (cell == null) {
             return null;
         }
@@ -181,7 +181,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         return null;
     }
 
-    private static Byte getCellValueAsByte(Cell cell) {
+    private Byte getCellValueAsByte(Cell cell) {
         if (cell == null) {
             return null;
         }
