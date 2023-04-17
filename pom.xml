@@ -9,18 +9,18 @@
     <packaging>pom</packaging>
     <version>1.0</version>
     <modules>
-        <module>hertzbeat-manager</module>
-        <module>hertzbeat-alerter</module>
-        <module>hertzbeat-common</module>
-        <module>hertzbeat-collector</module>
-        <module>hertzbeat-warehouse</module>
+        <module>manager</module>
+        <module>alerter</module>
+        <module>common</module>
+        <module>collector</module>
+        <module>warehouse</module>
     </modules>
 
     <properties>
 
         <java.version>11</java.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
