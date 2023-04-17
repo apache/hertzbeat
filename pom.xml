@@ -29,7 +29,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--hertzbeat 相关模块-->
         <hertzbeat.version>1.0</hertzbeat.version>
-        <!--<hertzbeat.version>1.0-SNAPSHOT</hertzbeat.version>-->
 
         <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
