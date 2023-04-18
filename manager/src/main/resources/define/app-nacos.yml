@@ -95,7 +95,7 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_used_bytes
-    priority: 0
+    priority: 1
     fields:
       - field: area
         type: 1
