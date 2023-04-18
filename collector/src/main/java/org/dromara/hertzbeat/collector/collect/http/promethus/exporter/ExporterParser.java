@@ -376,6 +376,7 @@ public class ExporterParser {
                     default:
                         throw new ParseException("parse label value error");
                 }
+                escaped = false;
             } else {
                 switch (c) {
                     case QUOTES:
