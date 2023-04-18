@@ -64,18 +64,24 @@ spring:
     url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
 ```
 
-2. 缺少hibernate的mysq方言，导致启动异常
-    如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，需要在`application.yml`文件中增加以下配置：
-```yaml
-spring:
-  jpa:
-    properties:
-      hibernate:
-        ddl-auto: update
-        dialect: org.hibernate.dialect.MySQL5InnoDBDialect 
-```
-
-3. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
+2. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
 
 
 **启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
+
+### 常见问题   
+
+1. 缺少hibernate的mysq方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
+
+如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，   
+需要在`application.yml`文件中增加以下配置：
+
+```yaml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update 
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect 
+```
