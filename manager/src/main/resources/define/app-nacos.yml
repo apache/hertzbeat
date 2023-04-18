@@ -122,7 +122,7 @@ metrics:
       parseType: prometheus
 
   - name: nacos_monitor
-    priority: 0
+    priority: 1
     fields:
       - field: module
         type: 1
