@@ -2,8 +2,8 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * 特殊字符常量
- * @author: hdd
- * @create: 2023/03/04
+ * @author hdd
+ * @date 2023/03/04
  */
 public interface SignConstants {
 
