@@ -170,6 +170,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dhruva1995"><img src="https://avatars.githubusercontent.com/u/12976351?v=4?s=100" width="100px;" alt="Dhruva Chandra"/><br /><sub><b>Dhruva Chandra</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dhruva1995" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/weiwang988"><img src="https://avatars.githubusercontent.com/u/58241726?v=4?s=100" width="100px;" alt="miss_z"/><br /><sub><b>miss_z</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=weiwang988" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wyt990"><img src="https://avatars.githubusercontent.com/u/86013697?v=4?s=100" width="100px;" alt="wyt990"/><br /><sub><b>wyt990</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wyt990" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
