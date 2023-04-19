@@ -14,7 +14,7 @@
 # limitations under the License.
 
 category: network
-app: H3C_switch
+app: h3c_switch
 name:
   zh-CN: 华三通用交换机
   en-US: H3C Switch
