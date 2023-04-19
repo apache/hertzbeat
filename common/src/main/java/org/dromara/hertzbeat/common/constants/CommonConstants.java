@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.common.util;
+package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant

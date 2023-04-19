@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.collector.util;
+package org.dromara.hertzbeat.common.constants;
 
 /**
  * collector 常量

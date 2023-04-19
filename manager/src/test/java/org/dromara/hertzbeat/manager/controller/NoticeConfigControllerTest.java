@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
