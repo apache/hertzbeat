@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.warehouse.store;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.entity.warehouse.History;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.TimePeriodUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.dromara.hertzbeat.warehouse.dao.HistoryDao;

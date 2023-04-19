@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.service.TencentSmsClient;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;

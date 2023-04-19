@@ -17,11 +17,11 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;

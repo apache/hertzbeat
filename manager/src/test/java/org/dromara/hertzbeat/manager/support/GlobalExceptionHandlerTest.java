@@ -21,11 +21,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Collections;
 
-import static org.dromara.hertzbeat.common.util.CommonConstants.DETECT_FAILED_CODE;
-import static org.dromara.hertzbeat.common.util.CommonConstants.FAIL_CODE;
-import static org.dromara.hertzbeat.common.util.CommonConstants.MONITOR_CONFLICT_CODE;
-import static org.dromara.hertzbeat.common.util.CommonConstants.PARAM_INVALID_CODE;
-import static org.dromara.hertzbeat.common.util.CommonConstants.SUCCESS_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.DETECT_FAILED_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.SUCCESS_CODE;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

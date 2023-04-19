@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.service.MailService;
 import lombok.extern.slf4j.Slf4j;

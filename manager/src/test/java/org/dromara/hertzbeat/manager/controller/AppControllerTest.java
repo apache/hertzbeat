@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.junit.jupiter.api.BeforeEach;

@@ -19,11 +19,11 @@ package org.dromara.hertzbeat.collector.collect.icmp;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
-import org.dromara.hertzbeat.collector.util.CollectorConstants;
+import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 

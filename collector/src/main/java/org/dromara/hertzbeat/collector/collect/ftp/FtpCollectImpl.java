@@ -5,7 +5,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;

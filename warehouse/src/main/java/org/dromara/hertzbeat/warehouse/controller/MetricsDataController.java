@@ -24,7 +24,7 @@ import org.dromara.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.dto.ValueRow;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.warehouse.store.AbstractHistoryDataStorage;
 import org.dromara.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
 import org.dromara.hertzbeat.warehouse.store.HistoryJpaDatabaseDataStorage;
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.dromara.hertzbeat.common.util.CommonConstants.FAIL_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

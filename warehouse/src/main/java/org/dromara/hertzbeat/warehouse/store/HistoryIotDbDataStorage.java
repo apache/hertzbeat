@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.warehouse.store;
 
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.warehouse.config.IotDbVersion;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;

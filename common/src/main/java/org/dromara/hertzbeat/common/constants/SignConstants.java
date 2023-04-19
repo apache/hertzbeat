@@ -1,9 +1,9 @@
-package org.dromara.hertzbeat.common.util;
+package org.dromara.hertzbeat.common.constants;
 
 /**
- * 特殊服务常量
+ * 特殊字符常量
  *
- * @create: 2023/03/04
+ *
  */
 public interface SignConstants {
 
@@ -15,4 +15,7 @@ public interface SignConstants {
     String LINE_FEED = "\n";
 
     String CARRIAGE_RETURN = "\r";
+
+    String RIGHT_DASH = "/";
+
 }

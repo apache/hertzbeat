@@ -32,7 +32,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.bson.Document;
 import org.springframework.util.Assert;
 
