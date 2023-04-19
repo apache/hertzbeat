@@ -30,22 +30,22 @@ import java.util.stream.Collectors;
  *
  *
  */
-public class JsonTagListAttributeConverter implements AttributeConverter<List<NoticeRule.TagItem>, String> {
+public class JsonTagListAttributeConverter implements AttributeConverter<List<TagItem>, String> {
 
     @Override
-    public String convertToDatabaseColumn(List<NoticeRule.TagItem> attribute) {
+    public String convertToDatabaseColumn(List<TagItem> attribute) {
         return JsonUtil.toJson(attribute);
     }
 
     @Override
-    public List<NoticeRule.TagItem> convertToEntityAttribute(String dbData) {
+    public List<TagItem> convertToEntityAttribute(String dbData) {
         try {
             return JsonUtil.fromJson(dbData, new TypeReference<>() {});
         } catch (Exception e) {
             // history data handler
             Map<String, String> map = JsonUtil.fromJson(dbData, new TypeReference<>() {});
             if (map != null) {
-                return map.entrySet().stream().map(entry -> new NoticeRule.TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+                return map.entrySet().stream().map(entry -> new TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());
             } else {
                 return null;
             }
