@@ -31,7 +31,7 @@ import org.dromara.hertzbeat.alert.service.AlertDefineService;
 import org.dromara.hertzbeat.alert.util.AlertTemplateUtil;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import lombok.extern.slf4j.Slf4j;

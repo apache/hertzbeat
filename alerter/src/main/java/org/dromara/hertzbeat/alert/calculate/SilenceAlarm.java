@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
-import org.dromara.hertzbeat.common.util.CommonConstants;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

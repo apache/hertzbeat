@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.collector.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 

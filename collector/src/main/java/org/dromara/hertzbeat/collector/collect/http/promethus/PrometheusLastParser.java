@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.collector.collect.http.promethus;
 
 import org.dromara.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
