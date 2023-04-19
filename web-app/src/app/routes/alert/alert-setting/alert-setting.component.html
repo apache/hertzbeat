@@ -65,8 +65,10 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span *ngIf="data.field">{{ data.app + '.' + data.metric + '.' + data.field }}</span>
-        <span *ngIf="!data.field">{{ data.app + '.' + data.metric }}</span>
+        <span *ngIf="data.field"> {{ 'monitor.app.' + data.app | i18n }} / {{ data.metric + ' / ' + data.field }} </span>
+        <span *ngIf="!data.field && data.metric === 'availability'">
+          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.availability' | i18n }}
+        </span>
       </td>
       <td nzAlign="center">
         <span>{{ data.expr }}</span>

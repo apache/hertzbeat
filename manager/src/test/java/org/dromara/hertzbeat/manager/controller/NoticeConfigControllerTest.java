@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
@@ -39,8 +40,8 @@ class NoticeConfigControllerTest {
 
 
     public NoticeRule getNoticeRule(){
-        List<NoticeRule.TagItem> tags = new ArrayList<>();
-        NoticeRule.TagItem tagItem = new NoticeRule.TagItem();
+        List<TagItem> tags = new ArrayList<>();
+        TagItem tagItem = new TagItem();
         tagItem.setName("key1");
         tagItem.setValue("value1");
         tags.add(tagItem);

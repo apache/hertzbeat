@@ -111,7 +111,7 @@
           <span nz-icon nzType="area-chart"></span>
         </button>
       </td>
-      <td nzAlign="center">{{ data.target }}</td>
+      <td nzAlign="center">{{ renderAlertTarget(data.target) }}</td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
           <i nz-icon nzType="bell" nzTheme="outline"></i>
