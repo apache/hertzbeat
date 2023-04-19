@@ -81,6 +81,20 @@ export class AlertCenterComponent implements OnInit {
       );
   }
 
+  renderAlertTarget(target: string): string {
+    if (target == undefined || target === '') {
+      return target;
+    }
+    const targets = target.split('.');
+    if (targets.length === 3) {
+      return `${this.i18nSvc.fanyi(`monitor.app.${targets[0]}`)} / ${targets[1]} / ${targets[2]}`;
+    }
+    if (target === 'availability') {
+      return this.i18nSvc.fanyi('monitor.availability');
+    }
+    return target;
+  }
+
   onDeleteAlerts() {
     if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('alert.center.notify.no-delete'), '');
