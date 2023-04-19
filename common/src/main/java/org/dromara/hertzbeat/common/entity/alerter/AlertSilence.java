@@ -15,19 +15,23 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.common.entity.manager;
+package org.dromara.hertzbeat.common.entity.alerter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.dromara.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
+import org.dromara.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -38,70 +42,65 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * Notification strategy entity
- * 通知策略
+ * Alert Silence strategy entity
+ * 告警静默策略
  * @author tomsun28
- * @date 2021/11/13 22:19
+ * @date 2023/04/12 22:19
  */
 @Entity
-@Table(name = "hzb_notice_rule")
+@Table(name = "hzb_alert_silence")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Notify Policy Entity | 通知策略实体")
+@Schema(description = "Alert Silence Policy Entity | 告警静默策略实体")
 @EntityListeners(AuditingEntityListener.class)
-public class NoticeRule {
+public class AlertSilence {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "Notification Policy Entity Primary Key Index ID",
-            description = "通知策略实体主键索引ID",
+    @Schema(title = "Alert Silence Policy Entity Primary Key Index ID",
+            description = "告警静默策略实体主键索引ID",
             example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(title = "Policy name",
             description = "策略名称",
-            example = "dispatch-1", accessMode = READ_WRITE)
+            example = "silence-1", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String name;
-
-    @Schema(title = "Recipient ID",
-            description = "接收人ID",
-            example = "4324324", accessMode = READ_WRITE)
-    @NotNull
-    private Long receiverId;
-
-    @Schema(title = "Recipient identification",
-            description = "接收人标识",
-            example = "tom", accessMode = READ_WRITE)
-    @Length(max = 100)
-    @NotNull
-    private String receiverName;
 
     @Schema(title = "Whether to enable this policy",
             description = "是否启用此策略",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
+    
+    @Schema(title = "Whether to match all",
+            description = "是否应用匹配所有",
+            example = "true", accessMode = READ_WRITE)
+    private boolean matchAll = true;
 
-    @Schema(title = "Whether to forward all",
-            description = "是否转发所有",
-            example = "false", accessMode = READ_WRITE)
-    private boolean filterAll = true;
+    @Schema(title = "Silence type 0: once, 1:cyc",
+            description = "静默类型 0:一次性静默 1:周期性静默", accessMode = READ_WRITE)
+    @NotNull
+    private Byte type;
 
-    @Schema(title = "过滤匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+    @Schema(title = "Silenced alerts num",
+            description = "已静默告警次数", accessMode = READ_WRITE)
+    private Integer times;
+
+    @Schema(title = "匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
+    @Schema(description = "匹配告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
-    @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)
+    @Schema(title = "周期性静默时有效 星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;
 

@@ -270,4 +270,9 @@ public interface CommonConstants {
      * cache key notice_rule
      */
     String CACHE_NOTICE_RULE = "notice_rule";
+    
+    /**
+     * cache key alert silence
+     */
+    String CACHE_ALERT_SILENCE = "alert_silence";
 }
