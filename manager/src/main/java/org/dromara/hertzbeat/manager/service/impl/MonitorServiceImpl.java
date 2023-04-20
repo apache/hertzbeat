@@ -249,6 +249,9 @@ public class MonitorServiceImpl implements MonitorService {
         if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
             type = ExcelImExportServiceImpl.TYPE;
         }
+        if (fileName.toLowerCase().endsWith(YamlImExportServiceImpl.FILE_SUFFIX)) {
+            type = YamlImExportServiceImpl.TYPE;
+        }
         if (!imExportServiceMap.containsKey(type)) {
             throw new RuntimeException("file " + fileName + " is not supported.");
         }
