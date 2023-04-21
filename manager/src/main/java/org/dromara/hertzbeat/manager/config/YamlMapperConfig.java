@@ -16,13 +16,14 @@ public class YamlMapperConfig {
     @Bean
     public YAMLMapper yamlMapper() {
         YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory());
-        yamlMapper.registerModule(new JavaTimeModule());
+        yamlMapper.registerModule((new JavaTimeModule()));
         return yamlMapper;
     }
 
     @Bean
     @Primary
-    public ObjectMapper objectMapperr() {
+    public ObjectMapper objectMapper() {
         return new ObjectMapper().registerModule(new JavaTimeModule());
     }
+
 }

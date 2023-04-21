@@ -27,10 +27,10 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     public static final String FILE_SUFFIX = ".yaml";
     @Resource
     @Qualifier("yamlMapper")
-    private ObjectMapper objectMapper;
+    private YAMLMapper yamlMapper;
 
-    private YamlImExportServiceImpl(ObjectMapper yamlMapper) {
-        this.objectMapper = yamlMapper;
+    private YamlImExportServiceImpl(YAMLMapper yamlMapper) {
+        this.yamlMapper = yamlMapper;
     }
     /**
      * Export file type
@@ -64,8 +64,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     List<ExportMonitorDTO> parseImport(InputStream is) {
         try {
-            YAMLMapper yamlMapper = new YAMLMapper();
-            return objectMapper.readValue(is, new TypeReference<>() {
+            return yamlMapper.readValue(is, new TypeReference<>() {
             });
         } catch (IOException ex) {
             log.error("import monitor failed.", ex);
@@ -83,8 +82,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
-            YAMLMapper yamlMapper = new YAMLMapper();
-            objectMapper.writeValue(os, monitorList);
+            yamlMapper.writeValue(os, monitorList);
         } catch (IOException ex) {
             log.error("export monitor failed.", ex);
             throw new RuntimeException("export monitor failed");
