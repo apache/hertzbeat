@@ -17,11 +17,11 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-@RequiredArgsConstructor
+
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
 
@@ -245,6 +245,9 @@ public class MonitorServiceImpl implements MonitorService {
         var type = "";
         if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
             type = JsonImExportServiceImpl.TYPE;
+        }
+        if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
+            type = ExcelImExportServiceImpl.TYPE;
         }
         if (!imExportServiceMap.containsKey(type)) {
             throw new RuntimeException("file " + fileName + " is not supported.");

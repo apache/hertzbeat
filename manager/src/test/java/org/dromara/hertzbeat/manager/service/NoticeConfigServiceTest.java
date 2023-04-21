@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.dromara.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
@@ -118,8 +119,8 @@ class NoticeConfigServiceTest {
         final String tagValue = "tagValue";
         final List<Byte> priorities = Lists.newArrayList(priority);
         final List<Byte> prioritiesFail = Lists.newArrayList(priorityFail);
-        final List<NoticeRule.TagItem> tags = Lists.newArrayList(new NoticeRule.TagItem(tagName, tagValue));
-        final List<NoticeRule.TagItem> tagsFail = Lists.newArrayList(new NoticeRule.TagItem(tagNameFail, tagValue));
+        final List<TagItem> tags = Lists.newArrayList(new TagItem(tagName, tagValue));
+        final List<TagItem> tagsFail = Lists.newArrayList(new TagItem(tagNameFail, tagValue));
         final Map<String, String> tagsMap = Maps.newHashMap(tagName, tagValue);
         final NoticeRule rule1 = NoticeRule.builder()
                 .id(1L)

@@ -49,13 +49,14 @@ public class History {
     private String metric;
 
     @Schema(title = "实例")
+    @Column(length = 2048)
     private String instance;
 
     @Schema(title = "字段类型 0: 数值 1：字符串")
     private Byte metricType;
 
     @Schema(title = "字符值")
-    @Column(length = 1024)
+    @Column(length = 2048)
     private String str;
 
     @Schema(title = "数值")

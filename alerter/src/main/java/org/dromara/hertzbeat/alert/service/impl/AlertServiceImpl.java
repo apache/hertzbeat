@@ -24,7 +24,7 @@ import org.dromara.hertzbeat.alert.dto.AlertSummary;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

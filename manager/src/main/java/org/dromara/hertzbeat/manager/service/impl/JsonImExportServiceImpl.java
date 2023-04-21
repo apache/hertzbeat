@@ -70,7 +70,7 @@ public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
 
     @Override
     public String getFileName() {
-        return fileNamePrefix() + ".json";
+        return fileNamePrefix() + FILE_SUFFIX;
     }
 
 }

@@ -23,7 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static org.dromara.hertzbeat.common.util.CommonConstants.SUCCESS_CODE;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.SUCCESS_CODE;
 
 /**
  * Unified message structure definition for front and back ends

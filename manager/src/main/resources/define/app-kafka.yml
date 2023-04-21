@@ -1,11 +1,34 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: mid
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: kafka
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: Kafka消息系统
   en-US: Kafka Message
+# Input params define for monitoring(render web ui by the definition)
+# 监控所需输入参数定义(根据定义渲染页面UI)
 params:
   # field-param field key
-  # field-字段名称标识符   
+  # field-字段名称标识符
   - field: host
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -27,7 +50,6 @@ params:
     # 当type为number时,用range表示范围
     range: '[0,65535]'
     required: true
-    # 端口默认值
     defaultValue: 9999
   - field: url
     name:
@@ -52,17 +74,32 @@ params:
     type: password
     required: false
     hide: true
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
+  # metrics - server_info
+  # 监控指标组 - server_info
   - name: server_info
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: Version
         type: 1
       - field: StartTimeMs
         type: 1
       - field: CommitId
         type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议，例: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
+    # the config content when protocol is jmx
     jmx:
       host: ^_^host^_^
       port: ^_^port^_^
@@ -71,6 +108,7 @@ metrics:
       # jmx mbean object name
       # jmx mbean 对象名
       objectName: kafka.server:type=app-info,id=0
+      # jmx url
       url: ^_^url^_^
 
   - name: jvm_basic
@@ -138,10 +176,7 @@ metrics:
         type: 0
     protocol: jmx
     jmx:
-      # host: ipv4 ipv6 domain
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
