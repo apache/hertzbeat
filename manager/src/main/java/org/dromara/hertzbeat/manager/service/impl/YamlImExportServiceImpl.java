@@ -29,9 +29,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     @Qualifier("yamlMapper")
     private YAMLMapper yamlMapper;
 
-    private YamlImExportServiceImpl(YAMLMapper yamlMapper) {
-        this.yamlMapper = yamlMapper;
-    }
+
     /**
      * Export file type
      * 导出文件类型
