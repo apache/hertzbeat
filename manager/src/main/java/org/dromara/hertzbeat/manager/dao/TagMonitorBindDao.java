@@ -17,34 +17,31 @@
 
 package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.manager.Tag;
+import org.dromara.hertzbeat.common.entity.manager.TagMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
 import java.util.Set;
 
 /**
- * tag repository
+ * TagMonitorBindDao repository
  *
  * @author tom
- * @date 2022/5/1 13:55
+ * @date 2023/4/22 11:55
  */
-public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
+public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, JpaSpecificationExecutor<TagMonitorBind> {
 
     /**
-     * delete tags by tag id
+     * delete tags bind by monitor id
      *
-     * @param ids id list
+     * @param monitorId monitorId
      */
-    void deleteTagsByIdIn(Set<Long> ids);
-
+    void deleteTagMonitorBindsByMonitorId(Long monitorId);
+    
     /**
-     * find tags by tag id
-     *
-     * @param ids id list
-     * @return tag list
+     * delete tags bind by monitor id
+     * @param monitorIds monitor list
      */
-    List<Tag> findByIdIn(Set<Long> ids);
+    void deleteTagMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
     
 }
