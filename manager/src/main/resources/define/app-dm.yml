@@ -113,7 +113,7 @@ params:
     type: number
     # when type is number, range is required
     # 当type为number时,用range表示范围
-    range: '[0, 100000]'
+    range: '[400,200000]'
     # required-true or false
     # 是否是必输项 true-必填 false-可选
     required: true

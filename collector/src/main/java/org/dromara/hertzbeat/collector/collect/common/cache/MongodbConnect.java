@@ -27,13 +27,6 @@ public class MongodbConnect implements CacheCloseable {
             log.error(e.getMessage(), e);
         }
     }
-
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
     public MongoClient getMongoClient() {
         return mongoClient;
     }
