@@ -78,7 +78,7 @@ public class WheelTimerTask implements TimerTask {
                         item.setValue(((String) item.getValue()).trim());
                     }
                 })
-                .collect(Collectors.toMap(Configmap::getKey, item -> item));
+                .collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
         List<Metrics> metrics = job.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>(metrics.size());
         for (Metrics metric : metrics) {

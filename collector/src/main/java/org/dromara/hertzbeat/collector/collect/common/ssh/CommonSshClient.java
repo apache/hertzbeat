@@ -22,11 +22,11 @@ public class CommonSshClient {
         // 接受所有服务端公钥校验，会打印warn日志 Server at {} presented unverified {} key: {}
         AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
         sshClient.setServerKeyVerifier(verifier);
-        // 设置链接保活心跳10000毫秒一次, 客户端等待保活心跳超时响应时间3000毫秒
+        // 设置链接保活心跳2000毫秒一次, 客户端等待保活心跳响应超时时间300_0000毫秒
         PropertyResolverUtils.updateProperty(
-                sshClient, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 10000);
+                sshClient, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
         PropertyResolverUtils.updateProperty(
-                sshClient, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 3000);
+                sshClient, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 300_000);
         sshClient.start();
     }
 
