@@ -33,6 +33,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
+import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.service.AppService;
@@ -88,6 +89,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+    
+    @Autowired
+    private TagMonitorBindDao tagMonitorBindDao;
 
     @Autowired
     private CalculateAlarm calculateAlarm;
@@ -484,6 +488,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
             paramDao.deleteParamsByMonitorId(id);
+            tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
@@ -497,8 +502,9 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitors != null) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
-            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitors.stream()
-                    .map(Monitor::getId).collect(Collectors.toList()));
+            Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
+            tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
+            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
                 collectJobService.cancelAsyncCollectJob(monitor.getJobId());
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
