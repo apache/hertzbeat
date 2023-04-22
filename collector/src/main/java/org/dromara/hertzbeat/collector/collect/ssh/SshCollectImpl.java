@@ -20,8 +20,10 @@ package org.dromara.hertzbeat.collector.collect.ssh;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.dromara.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import org.dromara.hertzbeat.collector.util.KeyPairUtil;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -61,6 +63,8 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
+    
+    private static final int DEFAULT_TIMEOUT = 10_000;
 
     public SshCollectImpl() {
     }
@@ -77,20 +81,18 @@ public class SshCollectImpl extends AbstractCollect {
             return;
         }
         SshProtocol sshProtocol = metrics.getSsh();
-        // 超时时间默认6000毫秒
-        int timeout = 6000;
-        try {
-            timeout = Integer.parseInt(sshProtocol.getTimeout());
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
+        int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
+        ClientChannel channel = null;
         try {
             ClientSession clientSession = getConnectSession(sshProtocol, timeout);
-            ClientChannel channel = clientSession.createExecChannel(sshProtocol.getScript());
+            channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
             if (!channel.open().verify(timeout).isOpened()) {
-                throw new Exception("open failed");
+                removeConnectSessionCache(sshProtocol);
+                channel.close();
+                clientSession.close();
+                throw new Exception("ssh channel open failed");
             }
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
@@ -100,7 +102,8 @@ public class SshCollectImpl extends AbstractCollect {
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("collect response data is null");
+                builder.setMsg("ssh shell response data is null");
+                return;
             }
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_NETCAT:
@@ -131,6 +134,14 @@ public class SshCollectImpl extends AbstractCollect {
             log.warn(errorMsg, exception);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            if (channel != null && channel.isOpen()) {
+                try {
+                    channel.close();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
         }
     }
 
@@ -225,6 +236,14 @@ public class SshCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         }
     }
+    
+    private void removeConnectSessionCache(SshProtocol sshProtocol) {
+        CacheIdentifier identifier = CacheIdentifier.builder()
+                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
+                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
+                .build();
+        CommonCache.getInstance().removeCache(identifier);
+    }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
         CacheIdentifier identifier = CacheIdentifier.builder()
@@ -234,9 +253,9 @@ public class SshCollectImpl extends AbstractCollect {
         Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
         ClientSession clientSession = null;
         if (cacheOption.isPresent()) {
-            clientSession = (ClientSession) cacheOption.get();
+            clientSession = ((SshConnect) cacheOption.get()).getConnection();
             try {
-                if (clientSession.isClosed() || clientSession.isClosing()) {
+                if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                     clientSession = null;
                     CommonCache.getInstance().removeCache(identifier);
                 }
@@ -260,19 +279,22 @@ public class SshCollectImpl extends AbstractCollect {
                 clientSession.addPublicKeyIdentity(keyPair);
             }
         } else {
+            clientSession.close();
             throw new IllegalArgumentException("please input password or secret.");
         }
-        // 进行认证
+        // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            throw new IllegalArgumentException("Auth failed.");
+            clientSession.close();
+            throw new IllegalArgumentException("ssh auth failed.");
         }
-        CommonCache.getInstance().addCache(identifier, clientSession);
+        SshConnect sshConnect = new SshConnect(clientSession);
+        CommonCache.getInstance().addCache(identifier, sshConnect);
         return clientSession;
     }
 
     private void validateParams(Metrics metrics) throws Exception {
         if (metrics == null || metrics.getSsh() == null) {
-            throw new Exception("Ssh collect must has ssh params");
+            throw new Exception("ssh collect must has ssh params");
         }
     }
 }

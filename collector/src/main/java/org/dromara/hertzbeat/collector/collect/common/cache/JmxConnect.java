@@ -31,12 +31,6 @@ public class JmxConnect implements CacheCloseable {
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
     public JMXConnector getConnection() {
         return connection;
     }

@@ -208,7 +208,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // 若是异步的周期性循环任务,直接发送指标组的采集数据到消息中间件
             commonDataQueue.sendMetricsData(metricsData);
             if (log.isDebugEnabled()) {
-                log.debug("Cyclic Job: {}",metricsData.getMetrics());
+                log.debug("Cyclic Job: {} - {} - {}", job.getMonitorId(), job.getApp(), metricsData.getMetrics());
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
                     for (CollectRep.Field field : metricsData.getFieldsList()) {
                         log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));

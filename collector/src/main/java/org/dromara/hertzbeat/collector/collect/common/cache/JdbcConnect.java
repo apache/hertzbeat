@@ -46,12 +46,6 @@ public class JdbcConnect implements CacheCloseable {
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
     public Connection getConnection() {
         return connection;
     }

@@ -65,6 +65,7 @@ params:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
     type: number
+    range: '[400,200000]'
     required: false
     hide: true
     defaultValue: 6000

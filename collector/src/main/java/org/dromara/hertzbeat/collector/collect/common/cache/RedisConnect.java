@@ -46,12 +46,6 @@ public class RedisConnect implements CacheCloseable {
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
     public StatefulConnection<String, String> getConnection() {
         return connection;
     }
