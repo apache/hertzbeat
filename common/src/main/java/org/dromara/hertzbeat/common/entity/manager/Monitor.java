@@ -163,7 +163,7 @@ public class Monitor {
      *           JoinColumn  name 中间表的关联字段名称
      *                       referencedColumnName 关联表的映射字段名称
      */
-    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(name = "hzb_tag_monitor_bind",
         foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
         inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
