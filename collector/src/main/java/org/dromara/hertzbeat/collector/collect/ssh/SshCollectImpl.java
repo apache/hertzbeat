@@ -92,7 +92,7 @@ public class SshCollectImpl extends AbstractCollect {
                 removeConnectSessionCache(sshProtocol);
                 channel.close();
                 clientSession.close();
-                throw new Exception("channel open failed");
+                throw new Exception("ssh channel open failed");
             }
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
@@ -102,7 +102,7 @@ public class SshCollectImpl extends AbstractCollect {
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("collect response data is null");
+                builder.setMsg("ssh shell response data is null");
                 return;
             }
             switch (sshProtocol.getParseType()) {
@@ -255,7 +255,7 @@ public class SshCollectImpl extends AbstractCollect {
         if (cacheOption.isPresent()) {
             clientSession = ((SshConnect) cacheOption.get()).getConnection();
             try {
-                if (clientSession.isClosed() || clientSession.isClosing()) {
+                if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                     clientSession = null;
                     CommonCache.getInstance().removeCache(identifier);
                 }
@@ -285,7 +285,7 @@ public class SshCollectImpl extends AbstractCollect {
         // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             clientSession.close();
-            throw new IllegalArgumentException("auth failed.");
+            throw new IllegalArgumentException("ssh auth failed.");
         }
         SshConnect sshConnect = new SshConnect(clientSession);
         CommonCache.getInstance().addCache(identifier, sshConnect);
@@ -294,7 +294,7 @@ public class SshCollectImpl extends AbstractCollect {
 
     private void validateParams(Metrics metrics) throws Exception {
         if (metrics == null || metrics.getSsh() == null) {
-            throw new Exception("Ssh collect must has ssh params");
+            throw new Exception("ssh collect must has ssh params");
         }
     }
 }

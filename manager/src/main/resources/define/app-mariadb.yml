@@ -65,6 +65,9 @@ params:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
     required: false
     defaultValue: 6000
     hide: true

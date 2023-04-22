@@ -72,6 +72,9 @@ params:
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
