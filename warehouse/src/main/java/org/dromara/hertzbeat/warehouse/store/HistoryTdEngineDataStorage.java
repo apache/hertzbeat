@@ -55,11 +55,11 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT ts, instance, %s FROM %s WHERE instance = %s AND ts >= now - %s order by ts desc";
+            = "SELECT ts, instance, `%s` FROM %s WHERE instance = %s AND ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_SQL
-            = "SELECT ts, instance, %s FROM %s WHERE ts >= now - %s order by ts desc";
+            = "SELECT ts, instance, `%s` FROM %s WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(%s), avg(%s), min(%s), max(%s) FROM %s WHERE instance = %s AND ts >= now - %s interval(4h)";
+            = "SELECT first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM %s WHERE instance = %s AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM %s WHERE ts >= now - 1w";
 
