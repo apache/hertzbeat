@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.manager.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -20,10 +21,17 @@ public class YamlMapperConfig {
         return yamlMapper;
     }
 
+
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        return new ObjectMapper().registerModule(new JavaTimeModule());
-    }
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        //防止jackson序列化时，将LocalDateTime转换为时间戳
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        objectMapper.registerModule(javaTimeModule);
+        return objectMapper;
+
+    }
 }
