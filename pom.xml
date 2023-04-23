@@ -47,7 +47,7 @@
         <protobuf.version>3.19.4</protobuf.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
-        <okio.version>1.12.0</okio.version>
+        <okio.version>2.8.0</okio.version>
 
         <lombok.version>1.18.20</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
