@@ -1,17 +1,14 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Resource;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 /**
  * Configure the import and export Yaml format
@@ -22,12 +19,12 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     public static final String TYPE = "YAML";
     public static final String FILE_SUFFIX = ".yaml";
-    @Resource
-    @Qualifier("yamlMapper")
-    private YAMLMapper yamlMapper;
+
+    private final Yaml yaml;
 
 
     /**
@@ -61,13 +58,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     List<ExportMonitorDTO> parseImport(InputStream is) {
-        try {
-            return yamlMapper.readValue(is, new TypeReference<>() {
-            });
-        } catch (IOException ex) {
-            log.error("import monitor failed.", ex);
-            throw new RuntimeException("import monitor failed");
-        }
+        return yaml.load(is);
     }
 
     /**
@@ -79,11 +70,6 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
-        try {
-            yamlMapper.writeValue(os, monitorList);
-        } catch (IOException ex) {
-            log.error("export monitor failed.", ex);
-            throw new RuntimeException("export monitor failed");
-        }
+        yaml.dump(monitorList, new OutputStreamWriter(os, StandardCharsets.UTF_8));
     }
 }
