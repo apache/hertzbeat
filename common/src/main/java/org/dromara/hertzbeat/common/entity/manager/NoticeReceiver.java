@@ -153,6 +153,41 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String discordBotToken;
 
+    @Schema(title = "huawei cloud SMN ak: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN ak: 通知方式为华为云SMN有效",
+            example = "NCVBODJOEYHSW3VNXXXX", accessMode = READ_WRITE)
+    @Length(max = 22)
+    @Column(length = 22)
+    private String smnAk;
+
+    @Schema(title = "huawei cloud SMN sk: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN sk: 通知方式为华为云SMN有效",
+            example = "nmSNhUJN9MlpPl8lfCsgdA0KvHCL9JXXXX", accessMode = READ_WRITE)
+    @Length(max = 42)
+    @Column(length = 42)
+    private String smnSk;
+
+    @Schema(title = "huawei cloud SMN projectId: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN projectId: 通知方式为华为云SMN有效",
+            example = "320c2fb11edb47a481c299c1XXXXXX", accessMode = READ_WRITE)
+    @Length(max = 32)
+    @Column(length = 32)
+    private String smnProjectId;
+
+    @Schema(title = "huawei cloud SMN region: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN region: 通知方式为华为云SMN有效",
+            example = "cn-east-3", accessMode = READ_WRITE)
+    @Length(max = 32)
+    @Column(length = 32)
+    private String smnRegion;
+
+    @Schema(title = "huawei cloud SMN TopicUrn: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN TopicUrn: 通知方式为华为云SMN有效",
+            example = "urn:smn:cn-east-3:xxx:hertzbeat_test", accessMode = READ_WRITE)
+    @Length(max = 300)
+    @Column(length = 300)
+    private String smnTopicUrn;
+
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy
