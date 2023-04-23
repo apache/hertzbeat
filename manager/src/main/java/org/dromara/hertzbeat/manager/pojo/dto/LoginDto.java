@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
 import javax.validation.constraints.NotBlank;
@@ -62,6 +63,7 @@ public class LoginDto {
      */
     @Schema(description = "密钥", example = "1", accessMode = READ_ONLY)
     @NotBlank(message = "Credential can not null")
+    @Length(max = 512, message = "credential max length 512")
     private String credential;
 
 }
