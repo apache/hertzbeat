@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.collector.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,7 +47,7 @@ public class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REX = "\\^o\\^";
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
-    private static final List<String> UNIT_SYMBOLS = Arrays.asList("G", "g", "M", "m", "K", "k", "B", "b", "%");
+    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%","G", "g", "M", "m", "K", "k", "B", "b");
 
     /**
      * 关键字匹配计数
@@ -89,16 +89,16 @@ public class CollectUtil {
             // B KB MB GB % ....
             for (String unitSymbol : UNIT_SYMBOLS) {
                 int index = str.indexOf(unitSymbol);
-                if (index > 0) {
-                    Double doubleValue = Double.parseDouble(str.substring(0, index));
-                    String unit = str.substring(index).trim();
+                if (index == 0) {
+                    Double doubleValue = 0d;
+                    String unit = str.trim();
                     doubleAndUnit.setValue(doubleValue);
                     doubleAndUnit.setUnit(unit);
                     return doubleAndUnit;
                 }
-                if (index == 0) {
-                    Double doubleValue = 0d;
-                    String unit = str.trim();
+                if (index > 0) {
+                    Double doubleValue = Double.parseDouble(str.substring(0, index));
+                    String unit = str.substring(index).trim();
                     doubleAndUnit.setValue(doubleValue);
                     doubleAndUnit.setUnit(unit);
                     return doubleAndUnit;

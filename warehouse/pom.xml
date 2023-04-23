@@ -33,14 +33,14 @@
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>warehouse</artifactId>
+    <artifactId>hertzbeat-warehouse</artifactId>
+    <name>${project.artifactId}</name>
 
     <dependencies>
         <!-- common -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
-            <artifactId>common</artifactId>
-            <version>${common.version}</version>
+            <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
         </dependency>
         <!-- spring -->

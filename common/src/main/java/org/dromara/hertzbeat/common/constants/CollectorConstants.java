@@ -15,21 +15,31 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.common.constants;
 
 /**
- * @author ceilzcx
- * @since 4/2/2023
+ * collector 常量
+ * @author tom
+ * @date 2021/12/3 12:15
  */
-public class CacheFactory {
-    private CacheFactory() {}
+public interface CollectorConstants {
+
+    String RESPONSE_TIME = "responseTime";
+
+    String KEYWORD = "keyword";
+
+    String STATUS_CODE = "statusCode";
+
+    String ERROR_MSG = "errorMsg";
+
+    String URL = "url";
+
+    String HTTP_HEADER = "http://";
+
+    String HTTPS_HEADER = "https://";
 
     /**
-     * 获取默认的cache
-     * todo 后续优化
-     * @return caffeine cache
+     * POSTGRESQL状态码 不可达
      */
-    public static ICacheService getCache() {
-        return new CaffeineCacheServiceImpl();
-    }
+    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
 }

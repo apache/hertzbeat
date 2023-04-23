@@ -15,31 +15,47 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.collector.util;
+package org.dromara.hertzbeat.common.cache;
 
 /**
- * collector 常量
- * @author tom
- * @date 2021/12/3 12:15
+ * common cache
+ * @author ceilzcx
+ * @since 4/2/2023
  */
-public interface CollectorConstants {
-
-    String RESPONSE_TIME = "responseTime";
-
-    String KEYWORD = "keyword";
-
-    String STATUS_CODE = "statusCode";
-
-    String ERROR_MSG = "errorMsg";
-
-    String URL = "url";
-
-    String HTTP_HEADER = "http://";
-
-    String HTTPS_HEADER = "https://";
+public interface ICacheService<K, V> {
 
     /**
-     * POSTGRESQL状态码 不可达
+     * get cache by key use clazz
+     * @param key key
+     * @return object
      */
-    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
+    V get(K key);
+
+    /**
+     * set cache
+     * @param key key
+     * @param value value
+     * @return old value
+     */
+    V put(K key, V value);
+
+    /**
+     * if contain cache by key
+     * @param key key
+     * @return true is contain
+     */
+    boolean containsKey(K key);
+
+    /**
+     * remove cache
+     * @param key key
+     * @return old value
+     */
+    V remove(K key);
+
+    /**
+     * clear cache
+     * @return is clear success
+     */
+    boolean clear();
 }

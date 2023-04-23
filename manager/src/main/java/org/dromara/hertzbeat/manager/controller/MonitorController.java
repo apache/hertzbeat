@@ -21,20 +21,14 @@ import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.service.MonitorService;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
 import java.util.List;
 
@@ -43,6 +37,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Monitoring management API
  * 监控管理API
+ *
  * @author tomsun28
  * @date 2021/11/14 10:57
  */
@@ -118,21 +113,22 @@ public class MonitorController {
     }
 
     @PostMapping("/optional")
-    @Operation(summary = "Add a monitor that can select metrics",description = "新增一个可选指标的监控器")
-    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto){
+    @Operation(summary = "Add a monitor that can select metrics", description = "新增一个可选指标的监控器")
+    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, false);
         if (monitorDto.isDetected()) {
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
         }
-        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(),monitorDto.getMonitor(),monitorDto.getParams());
+        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(new Message<>("Add success"));
     }
 
-    @GetMapping(value = {"/metric/{app}","/metric"})
+    @GetMapping(value = {"/metric/{app}", "/metric"})
     @Operation(summary = "get app metric", description = "根据app名称获取该app可监控指标，不传为获取全部指标")
     public ResponseEntity<Message<List<String>>> getMonitorMetrics(
-            @PathVariable(value = "app",required = false) String app) {
+            @PathVariable(value = "app", required = false) String app) {
         List<String> metricNames = monitorService.getMonitorMetrics(app);
         return ResponseEntity.ok(new Message<>(metricNames));
     }
+
 }

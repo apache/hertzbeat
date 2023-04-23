@@ -29,7 +29,6 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -99,6 +98,7 @@ public class NoticeRule {
     @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
+    @Column(length = 2048)
     private List<TagItem> tags;
 
     @Schema(title = "星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)
@@ -130,18 +130,4 @@ public class NoticeRule {
             description = "记录最新修改时间", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Data
-    public static class TagItem {
-
-        @Schema(title = "Tag Name")
-        @NotBlank
-        private String name;
-
-        @Schema(title = "Tag Value")
-        private String value;
-    }
 }

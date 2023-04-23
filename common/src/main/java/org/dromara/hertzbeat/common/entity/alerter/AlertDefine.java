@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.common.entity.alerter;
 
+import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -72,14 +73,14 @@ public class AlertDefine {
 
     @Schema(title = "配置告警的指标", example = "usage", accessMode = READ_WRITE)
     @Length(max = 100)
-    @NotNull
     private String field;
 
     @Schema(title = "是否是全局默认告警", example = "false", accessMode = READ_WRITE)
     private boolean preset;
 
     @Schema(title = "告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE)
-    @Length(max = 1024)
+    @Length(max = 2048)
+    @Column(length = 2048)
     private String expr;
 
     @Schema(title = "告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
@@ -98,7 +99,8 @@ public class AlertDefine {
 
     @Schema(title = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
-    @Length(max = 1024)
+    @Length(max = 2048)
+    @Column(length = 2048)
     private String template;
 
     @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
@@ -117,4 +119,22 @@ public class AlertDefine {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AlertDefine)) {
+            return false;
+        }
+        AlertDefine that = (AlertDefine) o;
+        return priority == that.priority && Objects.equal(app, that.app) && Objects.equal(metric, that.metric)
+                && Objects.equal(field, that.field) && Objects.equal(expr, that.expr)
+                && Objects.equal(times, that.times) && Objects.equal(template, that.template);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(app, metric, field, expr, priority, times, template);
+    }
 }

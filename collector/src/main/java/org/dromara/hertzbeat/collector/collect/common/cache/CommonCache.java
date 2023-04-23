@@ -219,7 +219,10 @@ public class CommonCache {
      */
     public void removeCache(Object key) {
         timeoutMap.remove(key);
-        cacheMap.remove(key);
+        Object value = cacheMap.remove(key);
+        if (value instanceof CacheCloseable) {
+            ((CacheCloseable)value).close();
+        }
     }
 
     /**

@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * AlertDefineBind database operations  数据库操作
@@ -53,7 +54,7 @@ public interface AlertDefineBindDao extends JpaRepository<AlertDefineMonitorBind
      *
      * @param monitorIds Monitoring ID List     监控ID列表
      */
-    void deleteAlertDefineMonitorBindsByMonitorIdIn(List<Long> monitorIds);
+    void deleteAlertDefineMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
 
     /**
      * Query monitoring related information based on alarm definition ID

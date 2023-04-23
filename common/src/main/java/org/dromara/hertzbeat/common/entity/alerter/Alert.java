@@ -86,6 +86,7 @@ public class Alert {
             example = "linux_192.134.32.1: 534543534 cpu usage high",
             accessMode = READ_WRITE)
     @Length(max = 2048)
+    @Column(length = 2048)
     private String content;
 
     @Schema(title = "Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed",
@@ -119,6 +120,7 @@ public class Alert {
     @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
+    @Column(length = 2048)
     private Map<String, String> tags;
 
     @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)

@@ -20,11 +20,11 @@ package org.dromara.hertzbeat.collector.collect.snmp;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
-import org.dromara.hertzbeat.collector.util.CollectorConstants;
+import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
@@ -122,6 +122,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                 Map<String, String> oidsMap = snmpProtocol.getOids();
                 Map<String, String> oidsValueMap = new HashMap<>(oidsMap.size());
                 for (VariableBinding binding : vbs) {
+                    if (binding == null) {
+                        continue;
+                    }
                     Variable variable = binding.getVariable();
                     if (variable instanceof TimeTicks) {
                         String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
@@ -160,6 +163,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                     VariableBinding[] varBindings = tableEvent.getColumns();
                     Map<String, String> oidsValueMap = new HashMap<>(varBindings.length);
                     for (VariableBinding binding : varBindings) {
+                        if (binding == null) {
+                            continue;
+                        }
                         Variable variable = binding.getVariable();
                         if (variable instanceof TimeTicks) {
                             String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
@@ -167,6 +173,10 @@ public class SnmpCollectImpl extends AbstractCollect {
                         } else {
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), bingdingHexValueToString(binding));
                         }
+                    }
+                    // when too many empty value field, ignore
+                    if (oidsValueMap.size() < metrics.getAliasFields().size() / 2) {
+                        continue;
                     }
                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String alias : metrics.getAliasFields()) {

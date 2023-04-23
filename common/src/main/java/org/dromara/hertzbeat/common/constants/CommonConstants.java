@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.common.util;
+package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant
@@ -183,6 +183,10 @@ public interface CommonConstants {
      */
     String PROM_VALUE = "value";
 
+    /**
+     * Availability 监控总可用性指标
+     */
+    String AVAILABILITY = "availability";
 
     /**
      * Availability Object
@@ -266,4 +270,9 @@ public interface CommonConstants {
      * cache key notice_rule
      */
     String CACHE_NOTICE_RULE = "notice_rule";
+    
+    /**
+     * cache key alert silence
+     */
+    String CACHE_ALERT_SILENCE = "alert_silence";
 }

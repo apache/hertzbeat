@@ -128,9 +128,9 @@ CREATE TABLE  hzb_alert_define
     id           bigint           not null auto_increment comment '告警定义ID',
     app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
     metric       varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
-    field        varchar(100)     not null comment '配置告警的指标:usage,cores...',
+    field        varchar(100)     comment '配置告警的指标:usage,cores...',
     preset       boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
-    expr         varchar(255)     not null comment '告警触发条件表达式',
+    expr         varchar(255)     comment '告警触发条件表达式',
     priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     times        int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
     enable       boolean          not null default true comment '告警阈值开关',
@@ -155,6 +155,30 @@ CREATE TABLE  hzb_alert_define_monitor_bind
     gmt_update       datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
     index index_bind (alert_define_id, monitor_id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_alert_silence
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_alert_silence ;
+CREATE TABLE  hzb_alert_silence
+(
+    id             bigint           not null auto_increment comment '告警静默主键索引ID',
+    name           varchar(100)     not null comment '静默策略名称',
+    enable         boolean          not null default true comment '是否启用此策略',
+    match_all      boolean          not null default true comment '是否应用匹配所有',
+    priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
+    tags           varchar(4000)    comment '匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
+    times          int              not null default 0 comment '已静默告警次数',
+    type           tinyint          not null default 0 comment '静默类型 0:一次性静默 1:周期性静默',
+    days           varchar(100)     comment '周期性静默时有效 星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六',
+    period_start   timestamp        comment '静默时间段起始:00:00:00',
+    period_end     timestamp        comment '静默时间段截止:23:59:59',
+    creator        varchar(100)     comment '创建者',
+    modifier       varchar(100)     comment '最新修改者',
+    gmt_create     timestamp        default current_timestamp comment 'create time',
+    gmt_update     datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
@@ -193,8 +217,8 @@ CREATE TABLE  hzb_notice_rule
     receiver_name  varchar(100)     not null comment '消息接收人标识',
     enable         boolean          not null default true comment '是否启用此策略',
     filter_all     boolean          not null default true comment '是否转发所有',
-    priorities     varchar(100)     comment '过滤匹配告警级别，空为全部告警级别',
-    tags           varchar(4000)    comment '过滤匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
+    priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
+    tags           varchar(4000)    comment '匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
     days           varchar(100)     comment '星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六',
     period_start   timestamp        comment '限制时间段起始:00:00:00',
     period_end     timestamp        comment '限制时间段截止:23:59:59',
@@ -219,10 +243,37 @@ CREATE TABLE  hzb_notice_receiver
     hook_url     varchar(255)     comment 'URL地址, 通知方式为webhook有效',
     wechat_id    varchar(255)     comment 'openId, 通知方式为微信公众号或企业微信机器人有效',
     access_token varchar(255)     comment '访问token, 通知方式为钉钉机器人有效',
+    tg_bot_token varchar(255)     comment 'Telegram bot token, 通知方式为Telegram机器人有效',
+    tg_user_id   varchar(255)     comment 'Telegram user id, 通知方式为Telegram机器人有效',
+    slack_web_hook_url varchar(255)     comment 'URL地址 : 通知方式为Slack有效',
+    corp_id      varchar(255)     comment '企业信息 : 通知方式为Enterprise WeChat app message有效',
+    agent_id     varchar(255)     comment '企业微信应用id : 通知方式为Enterprise WeChat app message有效',
+    app_secret   varchar(255)     comment '企业微信应用secret : 通知方式为Enterprise WeChat app message有效',
+    discord_channel_id  varchar(255)     comment 'Discord 频道id: 通知方式为Discord有效',
+    discord_bot_token   varchar(255)     comment 'Discord 机器人Token: 通知方式为Discord有效',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_history
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_history ;
+CREATE TABLE  hzb_history
+(
+    id             bigint           not null auto_increment comment '通知策略主键索引ID',
+    monitor_id     bigint           not null comment '监控ID',
+    app            varchar(100)     not null comment '监控类型 mysql oracle db2',
+    metrics        varchar(100)     not null comment '指标集合名称 innodb disk cpu',
+    metric         varchar(100)     not null comment '指标名称 usage speed count',
+    instance       varchar(1024)    comment '实例',
+    metric_type    tinyint          not null comment '字段类型 0: 数值 1：字符串',
+    str            varchar(1024)    comment '字符值',
+    dou            float            comment '数值',
+    time           bigint           comment '采集时间戳',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.flight.FlightRuntimeException;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.TimePeriodUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -208,12 +208,12 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 			try {
 				Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
 				if (result.isOk()) {
-					System.out.println("[warehouse greptime]-Write successful");
+					log.debug("[warehouse greptime]-Write successful");
 				} else {
-					System.out.println("[warehouse greptime]-Write failed: " + result.getErr().getFailedQl());
+					log.warn("[warehouse greptime]--Write failed: {}", result.getErr().getFailedQl());
 				}
 			} catch (Throwable throwable) {
-				System.err.println("[warehouse greptime]-Error occurred: " + throwable.getMessage());
+				log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -384,7 +384,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 								values.add(valueBuild);
 							}
 						}
-						log.debug("values:{}", values);
+						log.debug("[warehouse greptime] values:{}", values);
 					}
 				} catch (FlightRuntimeException e) {
 					String msg = e.getMessage();

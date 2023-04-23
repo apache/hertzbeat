@@ -13,11 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 mid-中间件 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: cn
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: docker
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: Docker
   en-US: Docker
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
 params:
   # field - field name identifier
   # field-字段名称标识符

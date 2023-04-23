@@ -17,7 +17,7 @@
 # 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: db
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws..
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: mysql
 # The monitoring i18n name
 # 监控类型国际化名称
@@ -72,6 +72,9 @@ params:
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
@@ -185,7 +188,7 @@ metrics:
       - thread_cache_size
       - table_open_cache
       - innodb_buffer_pool_size
-    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (optional)mapping and conversion expressions, use these and aliasField above to calculate metrics value
     # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
@@ -193,7 +196,7 @@ metrics:
       - datadir=datadir
       - max_connections=max_connections
       - version=version+"_"+version_compile_os+"_"+version_compile_machine
-    # Convert the initial unit of the indicator to the final unit
+    # Convert the initial unit of the metric to the final unit
     # 将指标的初始单位转化为最终的单位
     units:
       - innodb_buffer_pool_size=B->KB
@@ -209,8 +212,8 @@ metrics:
       # mysql port
       # 端口
       port: ^_^port^_^
-      # platform name
-      # 平台名称
+      # database platform name
+      # 数据库平台名称
       platform: mysql
       # username
       # 用户名
@@ -230,7 +233,7 @@ metrics:
       # sql
       # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
-      #JDBC url
+      # JDBC url
       url: ^_^url^_^
 
   - name: cache

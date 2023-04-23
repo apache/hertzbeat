@@ -90,18 +90,21 @@ public class NoticeReceiver {
             description = "URL地址 : 通知方式为webhook有效",
             example = "https://www.tancloud.cn", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String hookUrl;
 
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             description = "openId : 通知方式为微信公众号，企业微信机器人或飞书机器人有效",
             example = "343432", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String wechatId;
 
     @Schema(title = "Access token : The notification method is valid for DingTalk robot",
             description = "访问token : 通知方式为钉钉机器人有效",
             example = "34823984635647", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String accessToken;
 
     @Schema(title = "Telegram bot token : The notification method is valid for Telegram Bot",
@@ -118,6 +121,7 @@ public class NoticeReceiver {
             description = "URL地址 : 通知方式为Slack有效",
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String slackWebHookUrl;
 
     @Schema(title = "Enterprise weChat message: The notification method is valid for Enterprise WeChat app message",
@@ -139,13 +143,50 @@ public class NoticeReceiver {
             description = "Discord 频道id: 通知方式为Discord有效",
             example = "1065303416030642266", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String discordChannelId;
 
     @Schema(title = "Discord bot token: The notification method is valid for Discord",
             description = "Discord 机器人Token: 通知方式为Discord有效",
             example = "MTA2NTMwMzU0ODY4Mzg4MjUzNw.xxxxx.xxxxxxx", accessMode = READ_WRITE)
     @Length(max = 300)
+    @Column(length = 300)
     private String discordBotToken;
+
+    @Schema(title = "huawei cloud SMN ak: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN ak: 通知方式为华为云SMN有效",
+            example = "NCVBODJOEYHSW3VNXXXX", accessMode = READ_WRITE)
+    @Length(max = 22)
+    @Column(length = 22)
+    private String smnAk;
+
+    @Schema(title = "huawei cloud SMN sk: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN sk: 通知方式为华为云SMN有效",
+            example = "nmSNhUJN9MlpPl8lfCsgdA0KvHCL9JXXXX", accessMode = READ_WRITE)
+    @Length(max = 42)
+    @Column(length = 42)
+    private String smnSk;
+
+    @Schema(title = "huawei cloud SMN projectId: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN projectId: 通知方式为华为云SMN有效",
+            example = "320c2fb11edb47a481c299c1XXXXXX", accessMode = READ_WRITE)
+    @Length(max = 32)
+    @Column(length = 32)
+    private String smnProjectId;
+
+    @Schema(title = "huawei cloud SMN region: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN region: 通知方式为华为云SMN有效",
+            example = "cn-east-3", accessMode = READ_WRITE)
+    @Length(max = 32)
+    @Column(length = 32)
+    private String smnRegion;
+
+    @Schema(title = "huawei cloud SMN TopicUrn: If the notification method is valid for huawei cloud SMN",
+            description = "华为云SMN TopicUrn: 通知方式为华为云SMN有效",
+            example = "urn:smn:cn-east-3:xxx:hertzbeat_test", accessMode = READ_WRITE)
+    @Length(max = 300)
+    @Column(length = 300)
+    private String smnTopicUrn;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)

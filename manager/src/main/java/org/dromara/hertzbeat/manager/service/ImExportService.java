@@ -15,48 +15,52 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.cache;
+package org.dromara.hertzbeat.manager.service;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
 
 /**
- * common cache
- * @author ceilzcx
- * @since 4/2/2023
+ * Configuration Import Export
+ * 配置导入导出
+ *
+ * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
+ * Created by gcdd1993 on 2023/3/31
  */
-public interface ICacheService {
+public interface ImExportService {
 
     /**
-     * get cache by key
-     * @param key key
-     * @return cache object
+     * Import Configuration
+     * 导入配置
+     *
+     * @param is 输入流
      */
-    Object get(Object key);
+    void importConfig(InputStream is);
 
     /**
-     * get cache by key use clazz
-     * @param key key
-     * @param clazz clazz
-     * @return object
-     * @param <T> t
+     * Export Configuration
+     * 导出配置
+     *
+     * @param os         输出流
+     * @param configList 配置列表
      */
-    <T> T get(Object key, Class<T> clazz);
+    void exportConfig(OutputStream os, List<Long> configList);
 
     /**
-     * set cache
-     * @param key key
-     * @param value value
+     * Export file type
+     * 导出文件类型
+     *
+     * @return 文件类型
      */
-    void put(Object key, Object value);
+    String type();
 
     /**
-     * if contain cache by key
-     * @param key key
-     * @return true is contain
+     * Get Export File Name
+     * 获取导出文件名
+     *
+     * @return 文件名
      */
-    boolean containsKey(Object key);
+    String getFileName();
 
-    /**
-     * remove cache
-     * @param key key
-     */
-    void remove(Object key);
 }

@@ -98,6 +98,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>{{ 'alert.notice.type.weChatApp' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 11" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>{{ 'alert.notice.type.smn' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -111,6 +115,7 @@
             <span *ngIf="data.type == 8">{{ data.slackWebHookUrl }}</span>
             <span *ngIf="data.type == 9">{{ data.discordChannelId }}<br />{{ data.discordBotToken }}</span>
             <span *ngIf="data.type == 10">{{ data.corpId }}<br />{{ data.agentId }}<br />{{ data.appSecret }}</span>
+            <span *ngIf="data.type == 11">{{ data.smnAk }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -242,6 +247,7 @@
             <nz-option [nzValue]="6" [nzLabel]="'alert.notice.type.fei-shu' | i18n"></nz-option>
             <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
             <nz-option [nzValue]="10" [nzLabel]="'alert.notice.type.weChatApp' | i18n"></nz-option>
+            <nz-option [nzValue]="11" [nzLabel]="'alert.notice.type.smn' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -357,6 +363,46 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.appSecret" nz-input [required]="receiver.type === 10" name="appSecret" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzSpan]="7" nzFor="smnAk" [nzRequired]="receiver.type === 11">
+          {{ 'alert.notice.type.smn-ak' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.smnAk" nz-input [required]="receiver.type === 11" name="smnAk" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzSpan]="7" nzFor="smnSk" [nzRequired]="receiver.type === 11">
+          {{ 'alert.notice.type.smn-sk' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.smnSk" nz-input [required]="receiver.type === 11" name="smnSk" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzSpan]="7" nzFor="smnProjectId" [nzRequired]="receiver.type === 11">
+          {{ 'alert.notice.type.smn-projectId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.smnProjectId" nz-input [required]="receiver.type === 11" name="smnProjectId" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzSpan]="7" nzFor="smnRegion" [nzRequired]="receiver.type === 11">
+          {{ 'alert.notice.type.smn-region' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.smnRegion" nz-input [required]="receiver.type === 11" name="smnRegion" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzSpan]="7" nzFor="smnTopicUrn" [nzRequired]="receiver.type === 11">
+          {{ 'alert.notice.type.smn-topicUrn' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.smnTopicUrn" nz-input [required]="receiver.type === 11" name="smnTopicUrn" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

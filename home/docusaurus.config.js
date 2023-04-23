@@ -1,6 +1,6 @@
 const path = require('path')
 
-const organizationName = 'dromara' // Usually your GitHub name.
+const organizationName = 'tomsun28' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`
@@ -90,6 +90,16 @@ module.exports = {
           label: 'developer',
           position: 'left',
           to: 'docs/others/developer',
+        },
+        {
+          label: '开源之夏',
+          position: 'left',
+          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
+        },
+        {
+          label: '华为云开源活动',
+          position: 'left',
+          to: 'docs/others/huaweicloud',
         },
         {
           label: 'enterprise',

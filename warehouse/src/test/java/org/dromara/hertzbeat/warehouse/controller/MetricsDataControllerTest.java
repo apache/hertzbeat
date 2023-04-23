@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.warehouse.controller;
 
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.warehouse.store.AbstractHistoryDataStorage;
 import org.dromara.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
 import org.junit.jupiter.api.BeforeEach;
