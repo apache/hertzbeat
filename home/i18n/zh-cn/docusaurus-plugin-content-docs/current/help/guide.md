@@ -88,3 +88,4 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
 &emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />  
+&emsp;&#x1F449;&emsp;[配置华为云SMN通知](alert_smn) <br />
