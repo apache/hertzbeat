@@ -38,7 +38,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   countDownTime: number = 0;
   interval$!: any;
   whichTabIndex = 0;
-  showBasic = false;
+  showBasic = true;
 
   ngOnInit(): void {
     this.loadRealTimeMetric();
@@ -48,6 +48,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
 
   loadMetricChart() {
     this.isSpinning = true;
+    this.showBasic = false;
     this.whichTabIndex = 1;
     // 检测历史数据服务是否可用
     const detectStatus$ = this.monitorSvc
