@@ -17,26 +17,23 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +44,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Authentication registration TOKEN management API
  * 认证注册TOKEN管理API
+ *
  *
  *
  */
@@ -64,9 +62,10 @@ public class AccountController {
      * account data provider
      */
     private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
+
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "账户密码登录获取关联用户信息")
-    public ResponseEntity<Message<Map<String, String>>> authGetToken(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")

@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Locale;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -89,7 +90,7 @@ public class AppController {
 
     @PostMapping(path = "/define/yml")
     @Operation(summary = "Save and apply monitoring type define yml", description = "保存并应用监控类型的定义YML")
-    public ResponseEntity<Message<Void>> applyAppDefineYml(@RequestBody MonitorDefineDto defineDto) {
+    public ResponseEntity<Message<Void>> applyAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
             appService.applyMonitorDefineYml(defineDto.getDefine());
         } catch (Exception e) {
