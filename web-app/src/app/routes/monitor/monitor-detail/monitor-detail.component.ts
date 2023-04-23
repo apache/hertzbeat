@@ -38,7 +38,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   countDownTime: number = 0;
   interval$!: any;
   whichTabIndex = 0;
-  showBasic = true;
+  showBasic = false;
 
   ngOnInit(): void {
     this.loadRealTimeMetric();

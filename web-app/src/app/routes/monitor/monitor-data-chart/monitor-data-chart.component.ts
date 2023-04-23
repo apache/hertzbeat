@@ -250,8 +250,13 @@ export class MonitorDataChartComponent implements OnInit {
                 this.lineHistoryTheme.series.push({
                   name: key,
                   type: 'line',
+                  stack: 'Total',
                   smooth: true,
                   showSymbol: false,
+                  areaStyle: {},
+                  emphasis: {
+                    focus: 'series'
+                  },
                   data: seriesData
                 });
               }
@@ -284,6 +289,11 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
+                stack: 'Total',
+                areaStyle: {},
+                emphasis: {
+                  focus: 'series'
+                },
                 data: maxSeriesData
               });
               this.lineHistoryTheme.series.push({
@@ -291,6 +301,11 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
+                stack: 'Total',
+                areaStyle: {},
+                emphasis: {
+                  focus: 'series'
+                },
                 data: minSeriesData
               });
               this.lineHistoryTheme.series.push({
@@ -298,6 +313,11 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
+                stack: 'Total',
+                areaStyle: {},
+                emphasis: {
+                  focus: 'series'
+                },
                 data: meanSeriesData
               });
             }
