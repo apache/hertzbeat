@@ -137,13 +137,9 @@ metrics:
         type: 1
       - field: process_id
         type: 0
-      - field: process_supervised
-        type: 1
       - field: run_id
         type: 1
       - field: tcp_port
-        type: 0
-      - field: server_time_usec
         type: 0
       - field: uptime_in_seconds
         type: 0
@@ -159,8 +155,6 @@ metrics:
         type: 1
       - field: config_file
         type: 1
-      - field: io_threads_active
-        type: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
