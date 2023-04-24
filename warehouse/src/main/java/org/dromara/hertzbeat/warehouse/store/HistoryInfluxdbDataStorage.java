@@ -50,7 +50,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-    private InfluxDB influxDB;
+    private InfluxDB influxdb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
         this.initInfluxDB(properties);
@@ -64,16 +64,16 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 .retryOnConnectionFailure(true);
 
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
-        this.influxDB = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
+        this.influxdb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
 
-        // Close it if your application is terminating or you are not using it anymore.
-        Runtime.getRuntime().addShutdownHook(new Thread(influxDB::close));
+        // Close it if your application is terminating, or you are not using it anymore.
+        Runtime.getRuntime().addShutdownHook(new Thread(influxdb::close));
 
         this.serverAvailable = this.createDatabase();
     }
 
     private boolean createDatabase() {
-        QueryResult queryResult = this.influxDB.query(new Query(SHOW_DATABASE));
+        QueryResult queryResult = this.influxdb.query(new Query(SHOW_DATABASE));
         boolean isDatabaseExist = false;
 
         if (queryResult.hasError()) {
@@ -95,7 +95,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         if (!isDatabaseExist) {
             // todo 设置过期时间
             String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
-            QueryResult createDatabaseResult = this.influxDB.query(new Query(createDatabaseSql));
+            QueryResult createDatabaseResult = this.influxdb.query(new Query(createDatabaseSql));
             if (createDatabaseResult.hasError()) {
                 log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
                 return false;
@@ -136,7 +136,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         }
         BatchPoints.Builder builder = BatchPoints.database(DATABASE);
         builder.points(points);
-        this.influxDB.write(builder.build());
+        this.influxdb.write(builder.build());
     }
 
     @Override
@@ -148,7 +148,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         String key = instance == null ? "" : instance;
 
         try {
-            QueryResult selectResult = this.influxDB.query(new Query(selectSql, DATABASE));
+            QueryResult selectResult = this.influxdb.query(new Query(selectSql, DATABASE));
 
             for (QueryResult.Result result : selectResult.getResults()) {
                 if (result.getSeries() == null) {
@@ -178,7 +178,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         String key = instance == null ? "" : instance;
 
         try {
-            QueryResult selectResult = this.influxDB.query(new Query(selectSql, DATABASE));
+            QueryResult selectResult = this.influxdb.query(new Query(selectSql, DATABASE));
 
             for (QueryResult.Result result : selectResult.getResults()) {
                 if (result.getSeries() == null) {
@@ -229,8 +229,8 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void destroy() throws Exception {
-        if (this.influxDB != null) {
-            this.influxDB.close();
+        if (this.influxdb != null) {
+            this.influxdb.close();
         }
     }
 }
