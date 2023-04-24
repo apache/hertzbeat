@@ -71,7 +71,7 @@ spring:
 
 ### 常见问题   
 
-1. 缺少hibernate的mysq方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
+1. 缺少hibernate的mysql方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
 
 如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，   
 需要在`application.yml`文件中增加以下配置：
