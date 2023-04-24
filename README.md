@@ -101,7 +101,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. Need `Java11` Environment
 3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
-4. Run shell `$ ./startup.sh ` or `startup.bat`
+4. Run shell `$ ./startup.sh ` or `startup.bat`(If there are multiple Java environments configured in the system environment variables and `java11` is not included, modify `$ ./startup.sh` or `startup.bat` to specify the Java path manually. In `startup.sh`, add `JAVA_HOME=${JAVA_DIR}` at the first line. In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`)
 5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
