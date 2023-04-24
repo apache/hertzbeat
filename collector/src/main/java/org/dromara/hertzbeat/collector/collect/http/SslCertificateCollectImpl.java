@@ -19,11 +19,11 @@ package org.dromara.hertzbeat.collector.collect.http;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
-import org.dromara.hertzbeat.collector.util.CollectorConstants;
+import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +39,8 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+
+import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 
 /**
@@ -166,8 +168,8 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         HttpProtocol httpProtocol = metrics.getHttp();
         if (httpProtocol.getUrl() == null
                 || "".equals(httpProtocol.getUrl())
-                || !httpProtocol.getUrl().startsWith("/")) {
-            httpProtocol.setUrl(httpProtocol.getUrl() == null ? "/" : "/" + httpProtocol.getUrl().trim());
+                || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
         }
     }
 }

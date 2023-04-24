@@ -100,7 +100,7 @@
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. 需要已安装`java11`环境   
 3. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
-4. 部署启动 `$ ./startup.sh ` 或 `startup.bat`
+4. 部署启动 `$ ./startup.sh ` 或 `startup.bat`(如果在多java环境中，环境变量中配置了其他java环境如`java8`，没有`java11`，需编辑`$ ./startup.sh ` 或 `startup.bat`手动指定java路径，`startup.sh`在第一行添加`JAVA_HOME=${JAVA_DIR}`，`startup.bat`修改`start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME% >logs\startup.log 2>&1 &`中的`javaw`为`java11`的路径，如`C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`)
 5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)
@@ -273,6 +273,9 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dhruva1995"><img src="https://avatars.githubusercontent.com/u/12976351?v=4?s=100" width="100px;" alt="Dhruva Chandra"/><br /><sub><b>Dhruva Chandra</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dhruva1995" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/weiwang988"><img src="https://avatars.githubusercontent.com/u/58241726?v=4?s=100" width="100px;" alt="miss_z"/><br /><sub><b>miss_z</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=weiwang988" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wyt990"><img src="https://avatars.githubusercontent.com/u/86013697?v=4?s=100" width="100px;" alt="wyt990"/><br /><sub><b>wyt990</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wyt990" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/licocon"><img src="https://avatars.githubusercontent.com/u/36863277?v=4?s=100" width="100px;" alt="licocon"/><br /><sub><b>licocon</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=licocon" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/2406450951"><img src="https://avatars.githubusercontent.com/u/48074721?v=4?s=100" width="100px;" alt="Mi Na"/><br /><sub><b>Mi Na</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=2406450951" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

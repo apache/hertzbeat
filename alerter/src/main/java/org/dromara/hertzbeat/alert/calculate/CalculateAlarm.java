@@ -31,7 +31,7 @@ import org.dromara.hertzbeat.alert.service.AlertDefineService;
 import org.dromara.hertzbeat.alert.util.AlertTemplateUtil;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -63,13 +63,15 @@ public class CalculateAlarm {
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
     private final AlerterProperties alerterProperties;
+    private final SilenceAlarm silenceAlarm;
     private final ResourceBundle bundle;
 
-    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue, SilenceAlarm silenceAlarm,
                            AlertDefineService alertDefineService, AlertMonitorDao monitorDao,
                            AlerterProperties alerterProperties) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
+        this.silenceAlarm = silenceAlarm;
         this.alertDefineService = alertDefineService;
         this.alerterProperties = alerterProperties;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
@@ -179,7 +181,7 @@ public class CalculateAlarm {
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (times >= defineTimes) {
                                         triggeredAlertMap.remove(monitorAlertKey);
-                                        dataQueue.addAlertData(triggeredAlert);
+                                        silenceAlarm.filterSilenceAndSendData(triggeredAlert);
                                     }
                                 } else {
                                     fieldValueMap.put("app", app);
@@ -203,7 +205,7 @@ public class CalculateAlarm {
                                             .build();
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (1 >= defineTimes) {
-                                        dataQueue.addAlertData(alert);
+                                        silenceAlarm.filterSilenceAndSendData(alert);
                                     } else {
                                         triggeredAlertMap.put(monitorAlertKey, alert);
                                     }
@@ -269,7 +271,7 @@ public class CalculateAlarm {
                         .lastTriggerTime(currentTimeMilli)
                         .times(1)
                         .build();
-                dataQueue.addAlertData(resumeAlert);
+                silenceAlarm.filterSilenceAndSendData(resumeAlert);
             }
         }
     }
@@ -301,7 +303,7 @@ public class CalculateAlarm {
                     .nextEvalInterval(alerterProperties.getAlertEvalIntervalBase())
                     .times(1);
             if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
-                dataQueue.addAlertData(alertBuilder.build().clone());
+                silenceAlarm.filterSilenceAndSendData(alertBuilder.build().clone());
             } else {
                 alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }
@@ -318,7 +320,7 @@ public class CalculateAlarm {
             int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
             if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
-                dataQueue.addAlertData(preAlert);
+                silenceAlarm.filterSilenceAndSendData(preAlert);
             } else {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }

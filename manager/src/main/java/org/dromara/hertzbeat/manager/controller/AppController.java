@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.manager.controller;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDefineDto;
 import org.dromara.hertzbeat.manager.service.AppService;
@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Locale;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -89,7 +90,7 @@ public class AppController {
 
     @PostMapping(path = "/define/yml")
     @Operation(summary = "Save and apply monitoring type define yml", description = "保存并应用监控类型的定义YML")
-    public ResponseEntity<Message<Void>> applyAppDefineYml(@RequestBody MonitorDefineDto defineDto) {
+    public ResponseEntity<Message<Void>> applyAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
             appService.applyMonitorDefineYml(defineDto.getDefine());
         } catch (Exception e) {

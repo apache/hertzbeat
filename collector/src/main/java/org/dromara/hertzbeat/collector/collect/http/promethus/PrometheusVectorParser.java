@@ -6,7 +6,7 @@ import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.entity.dto.PromVectorOrMatrix;
 import org.dromara.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.NoArgsConstructor;
 

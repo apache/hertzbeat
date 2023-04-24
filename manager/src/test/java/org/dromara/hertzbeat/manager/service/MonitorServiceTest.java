@@ -10,9 +10,10 @@ import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
+import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.service.impl.MonitorServiceImpl;
@@ -64,8 +65,7 @@ class MonitorServiceTest {
 
     @InjectMocks
     private MonitorServiceImpl monitorService = new MonitorServiceImpl(List.of());
-
-    //    @Mock(lenient = true)
+    
     @Mock
     private MonitorDao monitorDao;
 
@@ -80,6 +80,9 @@ class MonitorServiceTest {
 
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
+    
+    @Mock
+    private TagMonitorBindDao tagMonitorBindDao;
     @Mock
     private CalculateAlarm calculateAlarm;
 
@@ -575,6 +578,7 @@ class MonitorServiceTest {
         Monitor existOKMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(existOKMonitor));
         doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
+        doNothing().when(tagMonitorBindDao).deleteTagMonitorBindsByMonitorId(id);
         assertDoesNotThrow(() -> monitorService.deleteMonitor(id));
     }
 

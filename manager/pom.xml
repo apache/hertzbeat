@@ -36,6 +36,7 @@
         <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
         <warehouse.version>1.0</warehouse.version>
         <easy-poi.version>4.3.0</easy-poi.version>
+        <huawei.sdk.version>3.1.37</huawei.sdk.version>
     </properties>
 
     <dependencies>
@@ -132,6 +133,11 @@
             <groupId>cn.afterturn</groupId>
             <artifactId>easypoi-spring-boot-starter</artifactId>
             <version>${easy-poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.huaweicloud.sdk</groupId>
+            <artifactId>huaweicloud-sdk-smn</artifactId>
+            <version>${huawei.sdk.version}</version>
         </dependency>
     </dependencies>
 

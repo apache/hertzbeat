@@ -17,11 +17,11 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -33,6 +33,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
+import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.dromara.hertzbeat.manager.service.AppService;
@@ -88,6 +89,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+    
+    @Autowired
+    private TagMonitorBindDao tagMonitorBindDao;
 
     @Autowired
     private CalculateAlarm calculateAlarm;
@@ -248,6 +252,9 @@ public class MonitorServiceImpl implements MonitorService {
         }
         if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
             type = ExcelImExportServiceImpl.TYPE;
+        }
+        if (fileName.toLowerCase().endsWith(YamlImExportServiceImpl.FILE_SUFFIX)) {
+            type = YamlImExportServiceImpl.TYPE;
         }
         if (!imExportServiceMap.containsKey(type)) {
             throw new RuntimeException("file " + fileName + " is not supported.");
@@ -484,6 +491,7 @@ public class MonitorServiceImpl implements MonitorService {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
             paramDao.deleteParamsByMonitorId(id);
+            tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobService.cancelAsyncCollectJob(monitor.getJobId());
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
@@ -497,8 +505,9 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitors != null) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
-            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitors.stream()
-                    .map(Monitor::getId).collect(Collectors.toList()));
+            Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
+            tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
+            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
                 collectJobService.cancelAsyncCollectJob(monitor.getJobId());
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));

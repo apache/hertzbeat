@@ -29,7 +29,6 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -131,18 +130,4 @@ public class NoticeRule {
             description = "记录最新修改时间", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Data
-    public static class TagItem {
-
-        @Schema(title = "Tag Name")
-        @NotBlank
-        private String name;
-
-        @Schema(title = "Tag Value")
-        private String value;
-    }
 }

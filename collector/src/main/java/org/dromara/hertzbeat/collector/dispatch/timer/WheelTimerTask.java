@@ -26,7 +26,7 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.AesUtil;
-import org.dromara.hertzbeat.common.util.CommonConstants;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class WheelTimerTask implements TimerTask {
                         item.setValue(((String) item.getValue()).trim());
                     }
                 })
-                .collect(Collectors.toMap(Configmap::getKey, item -> item));
+                .collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
         List<Metrics> metrics = job.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>(metrics.size());
         for (Metrics metric : metrics) {

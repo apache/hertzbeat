@@ -101,7 +101,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. Need `Java11` Environment
 3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
-4. Run shell `$ ./startup.sh ` or `startup.bat`
+4. Run shell `$ ./startup.sh ` or `startup.bat`(If there are multiple Java environments configured in the system environment variables and `java11` is not included, modify `$ ./startup.sh` or `startup.bat` to specify the Java path manually. In `startup.sh`, add `JAVA_HOME=${JAVA_DIR}` at the first line. In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`)
 5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
@@ -275,6 +275,9 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dhruva1995"><img src="https://avatars.githubusercontent.com/u/12976351?v=4?s=100" width="100px;" alt="Dhruva Chandra"/><br /><sub><b>Dhruva Chandra</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dhruva1995" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/weiwang988"><img src="https://avatars.githubusercontent.com/u/58241726?v=4?s=100" width="100px;" alt="miss_z"/><br /><sub><b>miss_z</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=weiwang988" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wyt990"><img src="https://avatars.githubusercontent.com/u/86013697?v=4?s=100" width="100px;" alt="wyt990"/><br /><sub><b>wyt990</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wyt990" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/licocon"><img src="https://avatars.githubusercontent.com/u/36863277?v=4?s=100" width="100px;" alt="licocon"/><br /><sub><b>licocon</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=licocon" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/2406450951"><img src="https://avatars.githubusercontent.com/u/48074721?v=4?s=100" width="100px;" alt="Mi Na"/><br /><sub><b>Mi Na</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=2406450951" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
