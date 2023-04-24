@@ -363,7 +363,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 if (appFile.exists() && appFile.isFile()) {
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         Job app = yaml.loadAs(fileInputStream, Job.class);
-                        appDefines.put(app.getApp().toLowerCase(), app);
+                        if (app != null) {
+                            appDefines.put(app.getApp().toLowerCase(), app);
+                        }
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
                         throw e;
