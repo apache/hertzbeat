@@ -17,8 +17,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -41,22 +39,19 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private static final String SHOW_DATABASE = "SHOW DATABASES";
 
     private static final String CREATE_DATABASE = "CREATE DATABASE %s";
-
-    // 时区可以通过添加: tz('Asia/Shanghai')处理, windows环境好像存在问题
+    
     private static final String QUERY_HISTORY_SQL = "SELECT %s FROM %s WHERE time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE time >= now() - %s GROUP BY time(4h)";
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
-    private InfluxDB influxdb;
+    private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
-        this.initInfluxDB(properties);
+        this.initInfluxDb(properties);
     }
 
-    public void initInfluxDB(WarehouseProperties properties) {
+    public void initInfluxDb(WarehouseProperties properties) {
         OkHttpClient.Builder client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
@@ -64,16 +59,15 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 .retryOnConnectionFailure(true);
 
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
-        this.influxdb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
-
+        this.influxDb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
         // Close it if your application is terminating, or you are not using it anymore.
-        Runtime.getRuntime().addShutdownHook(new Thread(influxdb::close));
+        Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
         this.serverAvailable = this.createDatabase();
     }
 
     private boolean createDatabase() {
-        QueryResult queryResult = this.influxdb.query(new Query(SHOW_DATABASE));
+        QueryResult queryResult = this.influxDb.query(new Query(SHOW_DATABASE));
         boolean isDatabaseExist = false;
 
         if (queryResult.hasError()) {
@@ -95,7 +89,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         if (!isDatabaseExist) {
             // todo 设置过期时间
             String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
-            QueryResult createDatabaseResult = this.influxdb.query(new Query(createDatabaseSql));
+            QueryResult createDatabaseResult = this.influxDb.query(new Query(createDatabaseSql));
             if (createDatabaseResult.hasError()) {
                 log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
                 return false;
@@ -136,7 +130,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         }
         BatchPoints.Builder builder = BatchPoints.database(DATABASE);
         builder.points(points);
-        this.influxdb.write(builder.build());
+        this.influxDb.write(builder.build());
     }
 
     @Override
@@ -148,7 +142,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         String key = instance == null ? "" : instance;
 
         try {
-            QueryResult selectResult = this.influxdb.query(new Query(selectSql, DATABASE));
+            QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
 
             for (QueryResult.Result result : selectResult.getResults()) {
                 if (result.getSeries() == null) {
@@ -156,10 +150,10 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 }
                 for (QueryResult.Series series : result.getSeries()) {
                     for (List<Object> value : series.getValues()) {
-                        String time = value.get(0).toString();
+                        long time = this.parseTimeToMillis(value.get(0));
                         String strValue = this.parseDoubleValue(value.get(1).toString());
                         List<Value> valueList = instanceValueMap.computeIfAbsent(key, k -> new LinkedList<>());
-                        valueList.add(new Value(strValue, this.parseTimeToMillis(time)));
+                        valueList.add(new Value(strValue, time));
                     }
                 }
             }
@@ -178,7 +172,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         String key = instance == null ? "" : instance;
 
         try {
-            QueryResult selectResult = this.influxdb.query(new Query(selectSql, DATABASE));
+            QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
 
             for (QueryResult.Result result : selectResult.getResults()) {
                 if (result.getSeries() == null) {
@@ -187,9 +181,8 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 for (QueryResult.Series series : result.getSeries()) {
                     for (List<Object> value : series.getValues()) {
                         Value.ValueBuilder valueBuilder = Value.builder();
-
-                        String time = value.get(0).toString();
-                        valueBuilder.time(this.parseTimeToMillis(time));
+                        long time = this.parseTimeToMillis(value.get(0));
+                        valueBuilder.time(time);
 
                         if (value.get(1) != null) {
                             valueBuilder.origin(this.parseDoubleValue(value.get(1).toString()));
@@ -218,9 +211,12 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         return app + "_" + metrics + "_" + monitorId;
     }
 
-    private long parseTimeToMillis(String time) throws ParseException {
-        // todo 存在时区的问题, 方法处理还是查询时能够处理?
-        return dateFormat.parse(time).getTime();
+    private long parseTimeToMillis(Object time) {
+        if (time == null) {
+            return 0;
+        }
+        Double doubleTime = (Double) time;
+        return doubleTime.longValue();
     }
 
     private String parseDoubleValue(String value) {
@@ -229,8 +225,8 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void destroy() throws Exception {
-        if (this.influxdb != null) {
-            this.influxdb.close();
+        if (this.influxDb != null) {
+            this.influxDb.close();
         }
     }
 }
