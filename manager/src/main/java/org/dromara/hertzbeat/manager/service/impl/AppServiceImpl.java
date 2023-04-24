@@ -17,10 +17,17 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
+import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
+import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
@@ -65,6 +72,14 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Autowired
     private MonitorDao monitorDao;
 
+    @Autowired
+    private CollectJobService collectJobService;
+
+    @Autowired
+    private ParamDao paramDao;
+
+    @Autowired
+    private CalculateAlarm calculateAlarm;
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
     @Override
@@ -237,6 +252,36 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
         }
         appDefines.put(app.getApp().toLowerCase(), app);
+        // bug  当模板 app-redis.yml被修改，比如 增加指标组，删除指标，当前的job中，持有的缓存 metrics实例，
+        // 解决 ：模板修改后，同类型模板的所有监控实例 ，在监控状态中，需要重新下发任务
+        updateCollectJob(app);
+    }
+
+    private void updateCollectJob(Job app) {
+        List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(app.getApp()).
+                stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+                .collect(Collectors.toList());
+        if (!availableMonitors.isEmpty()) {
+            for (Monitor monitor : availableMonitors) {
+                // 构造采集任务Job实体
+                Job appDefine = getAppDefine(monitor.getApp());
+                // 这里暂时是深拷贝处理
+                appDefine = JsonUtil.fromJson(JsonUtil.toJson(appDefine), Job.class);
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setCyclic(true);
+                appDefine.setTimestamp(System.currentTimeMillis());
+
+                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+                // 下发采集任务
+                long newJobId = collectJobService.addAsyncCollectJob(appDefine);
+                monitor.setJobId(newJobId);
+                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                monitorDao.save(monitor);
+            }
+        }
     }
 
     private void verifyDefineAppContent(Job app) {
