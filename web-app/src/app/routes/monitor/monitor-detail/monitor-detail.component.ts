@@ -48,6 +48,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
 
   loadMetricChart() {
     this.isSpinning = true;
+    this.showBasic = false;
     this.whichTabIndex = 1;
     // 检测历史数据服务是否可用
     const detectStatus$ = this.monitorSvc
