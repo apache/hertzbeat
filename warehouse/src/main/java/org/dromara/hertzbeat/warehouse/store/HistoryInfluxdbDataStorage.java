@@ -49,7 +49,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE time >= now() - %s GROUP BY time(4h)";
 
-    private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %s DEFAULT";
+    private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
 
     private InfluxDB influxDb;
 
@@ -73,43 +73,6 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
         this.serverAvailable = this.createDatabase(influxdbProperties);
-    }
-    
-    private static X509TrustManager defaultTrustManager() {
-        return new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-            }
-            
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-            }
-            
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-            }
-        };
-    }
-    
-    private static SSLSocketFactory defaultSslSocketFactory() {
-        try {
-            SSLContext sslContext = SSLContexts.createDefault();
-            
-            sslContext.init(null, new TrustManager[] {
-                    defaultTrustManager()
-            }, new SecureRandom());
-            return sslContext.getSocketFactory();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        
-    }
-    
-    private static HostnameVerifier noopHostnameVerifier() {
-        return new HostnameVerifier() {
-            @Override
-            public boolean verify(final String s, final SSLSession sslSession) {
-                return true;//true 表示使用ssl方式，但是不校验ssl证书，建议使用这种方式
-            }
-        };
     }
 
     private boolean createDatabase(WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties) {
@@ -275,6 +238,32 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private String parseDoubleValue(String value) {
         return (new BigDecimal(value)).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+    
+    private static X509TrustManager defaultTrustManager() {
+        return new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+        };
+    }
+    
+    private static SSLSocketFactory defaultSslSocketFactory() {
+        try {
+            SSLContext sslContext = SSLContexts.createDefault();
+            sslContext.init(null, new TrustManager[] {
+                    defaultTrustManager()
+            }, new SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private static HostnameVerifier noopHostnameVerifier() {
+        return (s, sslSession) -> true;
     }
 
     @Override

@@ -296,9 +296,11 @@ public class WarehouseProperties {
             /**
              * 过期时间
              */
-            private String expireTime;
-
-            private String replication;
+            private String expireTime = "30d";
+            /**
+             * 副本数
+             */
+            private int replication = 1;
 
             public boolean isEnabled() {
                 return enabled;
@@ -339,12 +341,12 @@ public class WarehouseProperties {
             public void setExpireTime(String expireTime) {
                 this.expireTime = expireTime;
             }
-
-            public String getReplication() {
+            
+            public int getReplication() {
                 return replication;
             }
-
-            public void setReplication(String replication) {
+            
+            public void setReplication(int replication) {
                 this.replication = replication;
             }
         }
