@@ -45,6 +45,8 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE time >= now() - %s GROUP BY time(4h)";
 
+    private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %s DEFAULT";
+
     private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
@@ -63,10 +65,10 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
-        this.serverAvailable = this.createDatabase();
+        this.serverAvailable = this.createDatabase(influxdbProperties);
     }
 
-    private boolean createDatabase() {
+    private boolean createDatabase(WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties) {
         QueryResult queryResult = this.influxDb.query(new Query(SHOW_DATABASE));
         boolean isDatabaseExist = false;
 
@@ -87,11 +89,19 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         }
 
         if (!isDatabaseExist) {
-            // todo 设置过期时间
+            // 创建数据库
             String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
             QueryResult createDatabaseResult = this.influxDb.query(new Query(createDatabaseSql));
             if (createDatabaseResult.hasError()) {
                 log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
+                return false;
+            }
+            // 设置过期时间
+            String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
+                    influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
+            QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));
+            if (createRetentionPolicySqlResult.hasError()) {
+                log.error("create retention policy in influxdb error, msg: {}", createDatabaseResult.getError());
                 return false;
             }
         }

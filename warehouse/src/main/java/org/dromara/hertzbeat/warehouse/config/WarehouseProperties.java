@@ -284,7 +284,7 @@ public class WarehouseProperties {
             /**
              * influxdb的连接服务器url
              */
-            private String serverUrl = "http://127.0.0.1:8086";
+            private String serverUrl;
             /**
              * 用户名
              */
@@ -294,17 +294,11 @@ public class WarehouseProperties {
              */
             private String password;
             /**
-             * 认证token
+             * 过期时间
              */
-            private String token;
-            /**
-             * 仓库名称
-             */
-            private String bucket;
-            /**
-             * 组织名称
-             */
-            private String org;
+            private String expireTime;
+
+            private String replication;
 
             public boolean isEnabled() {
                 return enabled;
@@ -338,28 +332,20 @@ public class WarehouseProperties {
                 this.password = password;
             }
 
-            public String getToken() {
-                return token;
+            public String getExpireTime() {
+                return expireTime;
             }
 
-            public void setToken(String token) {
-                this.token = token;
+            public void setExpireTime(String expireTime) {
+                this.expireTime = expireTime;
             }
 
-            public String getBucket() {
-                return bucket;
+            public String getReplication() {
+                return replication;
             }
 
-            public void setBucket(String bucket) {
-                this.bucket = bucket;
-            }
-
-            public String getOrg() {
-                return org;
-            }
-
-            public void setOrg(String org) {
-                this.org = org;
+            public void setReplication(String replication) {
+                this.replication = replication;
             }
         }
 
