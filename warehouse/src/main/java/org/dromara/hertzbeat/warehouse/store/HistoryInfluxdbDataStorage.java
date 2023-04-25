@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.warehouse.store;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
+import org.apache.http.ssl.SSLContexts;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -15,8 +16,11 @@ import org.influxdb.dto.QueryResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -59,13 +63,53 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true);
-
+        
+        client.sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager());
+        client.hostnameVerifier(noopHostnameVerifier());
+        
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
         this.influxDb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
         this.serverAvailable = this.createDatabase(influxdbProperties);
+    }
+    
+    private static X509TrustManager defaultTrustManager() {
+        return new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+            
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            }
+            
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            }
+        };
+    }
+    
+    private static SSLSocketFactory defaultSslSocketFactory() {
+        try {
+            SSLContext sslContext = SSLContexts.createDefault();
+            
+            sslContext.init(null, new TrustManager[] {
+                    defaultTrustManager()
+            }, new SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        
+    }
+    
+    private static HostnameVerifier noopHostnameVerifier() {
+        return new HostnameVerifier() {
+            @Override
+            public boolean verify(final String s, final SSLSession sslSession) {
+                return true;//true 表示使用ssl方式，但是不校验ssl证书，建议使用这种方式
+            }
+        };
     }
 
     private boolean createDatabase(WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties) {
