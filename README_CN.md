@@ -100,7 +100,7 @@
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
 2. 需要已安装`java11`环境   
 3. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
-4. 部署启动 `$ ./startup.sh ` 或 `startup.bat`
+4. 部署启动 `$ ./startup.sh ` 或 `startup.bat`(如果在多java环境中，环境变量中配置了其他java环境如`java8`，没有`java11`，需编辑`$ ./startup.sh ` 或 `startup.bat`手动指定java路径，`startup.sh`在第一行添加`JAVA_HOME=${JAVA_DIR}`，`startup.bat`修改`start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME% >logs\startup.log 2>&1 &`中的`javaw`为`java11`的路径，如`C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`)
 5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.com/docs/start/package-deploy)
