@@ -44,7 +44,9 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String CREATE_DATABASE = "CREATE DATABASE %s";
     
-    private static final String QUERY_HISTORY_SQL = "SELECT %s FROM %s WHERE time >= now() - %s order by time desc";
+    private static final String QUERY_HISTORY_SQL = "SELECT instance, %s FROM %s WHERE time >= now() - %s order by time desc";
+    
+    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT instance, %s FROM %s WHERE instance = '%s' and time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE time >= now() - %s GROUP BY time(4h)";
@@ -132,6 +134,8 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             Point.Builder builder = Point.measurement(table);
             builder.time(metricsData.getTime(), TimeUnit.MILLISECONDS);
+            String instance = valueRow.getInstance();
+            builder.tag("instance", instance);
             for (int i = 0; i < fieldsList.size(); i++) {
                 if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
                     if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
@@ -153,14 +157,11 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = this.generateTable(app, metrics, monitorId);
-        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
-
-        Map<String, List<Value>> instanceValueMap = new HashMap<>();
-        String key = instance == null ? "" : instance;
-
+        String selectSql = instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history)
+                : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, instance, history);
+        Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         try {
             QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
-
             for (QueryResult.Result result : selectResult.getResults()) {
                 if (result.getSeries() == null) {
                     continue;
@@ -168,8 +169,12 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 for (QueryResult.Series series : result.getSeries()) {
                     for (List<Object> value : series.getValues()) {
                         long time = this.parseTimeToMillis(value.get(0));
-                        String strValue = this.parseDoubleValue(value.get(1).toString());
-                        List<Value> valueList = instanceValueMap.computeIfAbsent(key, k -> new LinkedList<>());
+                        String instanceValue = value.get(1) == null ? "" : String.valueOf(value.get(1));
+                        String strValue = value.get(2) == null ? null : this.parseDoubleValue(value.get(2).toString());
+                        if (strValue == null) {
+                            continue;
+                        }
+                        List<Value> valueList = instanceValueMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
                         valueList.add(new Value(strValue, time));
                     }
                 }
@@ -185,7 +190,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         String table = this.generateTable(app, metrics, monitorId);
         String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric, table, history);
 
-        Map<String, List<Value>> instanceValueMap = new HashMap<>();
+        Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         String key = instance == null ? "" : instance;
 
         try {
