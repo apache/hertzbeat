@@ -92,7 +92,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private Map<String, String> getSingleRedisInfo(Metrics metrics) {
         StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
         String info = connection.sync().info(metrics.getName());
-        Map<String, String> valueMap = parseInfo(info);
+        Map<String, String> valueMap = parseInfo(info ,metrics);
         if (log.isDebugEnabled()) {
             log.debug("[RedisSingleCollectImpl] fetch redis info");
             valueMap.forEach((k, v) -> log.debug("{} : {}", k, v));
@@ -110,11 +110,11 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         List<Map<String, String>> list = new ArrayList<>(connectionMap.size());
         connectionMap.forEach((identity, connection) ->{
             String info = connection.sync().info(metrics.getName());
-            Map<String, String> valueMap = parseInfo(info);
+            Map<String, String> valueMap = parseInfo(info, metrics);
             valueMap.put(UNIQUE_IDENTITY, identity);
             if (Objects.equals(metrics.getName(), CLUSTER_INFO)) {
                 String clusterNodes = connection.sync().clusterInfo();
-                valueMap.putAll(parseInfo(clusterNodes));
+                valueMap.putAll(parseInfo(clusterNodes, metrics));
             }
             if (log.isDebugEnabled()) {
                 log.debug("[RedisSingleCollectImpl] fetch redis info");
@@ -284,18 +284,31 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .build();
     }
 
-    private Map<String, String> parseInfo(String info) {
+    private Map<String, String> parseInfo(String info, Metrics metrics) {
+        // yml配置的指标总和
+        int fieldTotalSize = metrics.getFields().size();
         String[] lines = info.split(SignConstants.LINE_FEED);
-        Map<String, String> result = new HashMap<>(MapCapUtil.calInitMap(lines.length));
+        Map<String, String> result = new HashMap<>(MapCapUtil.calInitMap(fieldTotalSize));
+
         Arrays.stream(lines)
                 .filter(it -> StringUtils.hasText(it) && !it.startsWith(SignConstants.WELL_NO) && it.contains(SignConstants.DOUBLE_MARK))
                 .map(this::removeCr)
                 .map(r -> r.split(SignConstants.DOUBLE_MARK))
                 .forEach(it -> {
-                    if (it.length > 1) {
-                        result.put(it[0], it[1]);
-                    }
+                    result.put(it[0], it[1]);
                 });
+        // https://github.com/dromara/hertzbeat/pull/913
+        // fix 数组越界
+        // 如果返回的指标数量小于yml配置的指标总和，按yml配置指标类型填充默认值： 0 number 1 String
+        for (Metrics.Field field : metrics.getFields()) {
+            if (!result.containsKey(field.getField())) {
+                if (field.getType() == 0) {
+                    result.put(field.getField(), Double.valueOf(0).toString());
+                } else {
+                    result.put(field.getField(), CommonConstants.NULL_VALUE);
+                }
+            }
+        }
         return result;
     }
 
