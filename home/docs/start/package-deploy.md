@@ -43,7 +43,11 @@ sidebar_label: Install via Package
    ``` 
    $ ./startup.sh 
    ```
-   
+
+⚠️Note, If there are multiple Java environments configured in the system environment variables and `java11` is not included, modify `$ ./startup.sh` or `startup.bat` to specify the Java path manually.  
+In `startup.sh`, add `JAVA_HOME=${JAVA_DIR}` at the first line.    
+In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`
+
 6. Begin to explore HertzBeat    
 
    Access http://ip:1157/ using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!    
