@@ -61,8 +61,8 @@ warehouse:
       server-url: http://127.0.0.1:8086
       username: root
       password: root
-      expire-time: '90d'
-      replication: '1'
+      expire-time: '30d'
+      replication: 1
 
     # store real-time metrics data, enable only one below
     # 存储实时数据方式, 下方只能enabled启用一种方式
