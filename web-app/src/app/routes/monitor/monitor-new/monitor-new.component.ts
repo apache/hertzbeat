@@ -21,6 +21,7 @@ import { TagService } from '../../../service/tag.service';
 })
 export class MonitorNewComponent implements OnInit {
   paramDefines!: ParamDefine[];
+  hostName!: string;
   params!: Param[];
   advancedParamDefines!: ParamDefine[];
   advancedParams!: Param[];
@@ -96,6 +97,9 @@ export class MonitorNewComponent implements OnInit {
             } else {
               this.params.push(param);
               this.paramDefines.push(define);
+            }
+            if (define.field == 'host' && define.type == 'host' && define.name != `monitor.app.${this.monitor.app}.param.${define.field}`) {
+              this.hostName = define.name;
             }
           });
         } else {
