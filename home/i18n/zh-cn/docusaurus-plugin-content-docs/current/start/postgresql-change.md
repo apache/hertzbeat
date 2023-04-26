@@ -1,7 +1,7 @@
 ---
 id: postgresql-change
-title: 依赖的关系型数据库 H2 切换 为 PostgreSQL
-sidebar_label: 使用PostgreSQL替换内置H2数据库(可选)
+title: 关系型数据库使用 PostgreSQL 替换依赖的 H2 存储系统元数据
+sidebar_label: 元数据使用PostgreSQL存储(可选)
 ---
 PostgreSQL是一个功能强大，开源的关系型数据库管理系统（RDBMS）。HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用PostgreSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 

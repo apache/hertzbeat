@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
-title: 依赖的关系型数据库 H2 切换 为MYSQL           
-sidebar_label: 使用Mysql替换内置H2数据库(可选)      
+title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
+sidebar_label: 元数据使用Mysql存储(可选)      
 ---
 MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
