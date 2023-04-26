@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
-title: 依赖的关系型数据库 H2 切换 为MYSQL           
-sidebar_label: 使用Mysql替换内置H2数据库(可选)      
+title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
+sidebar_label: 元数据使用Mysql存储(可选)      
 ---
 MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
@@ -64,18 +64,24 @@ spring:
     url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
 ```
 
-2. 缺少hibernate的mysq方言，导致启动异常
-    如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，需要在`application.yml`文件中增加以下配置：
-```yaml
-spring:
-  jpa:
-    properties:
-      hibernate:
-        ddl-auto: update
-        dialect: org.hibernate.dialect.MySQL5InnoDBDialect 
-```
-
-3. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
+2. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
 
 
 **启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
+
+### 常见问题   
+
+1. 缺少hibernate的mysql方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
+
+如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，   
+需要在`application.yml`文件中增加以下配置：
+
+```yaml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update 
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect 
+```

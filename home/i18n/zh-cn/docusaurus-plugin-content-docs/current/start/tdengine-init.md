@@ -6,7 +6,7 @@ sidebar_label: 使用TDengine存储指标数据(可选)
 
 HertzBeat的历史数据存储依赖时序数据库 TDengine 或 IoTDB，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
-TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意支持⚠️ 2.4.x版本。   
+TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意支持⚠️ 3.x版本。   
 
 **注意⚠️ 时序数据库安装配置为可选项，但强烈建议生产环境配置，以提供更完善的历史图表功能，高性能和稳定性**
 
@@ -14,7 +14,7 @@ TDengine是一款开源物联网时序型数据库，我们用其存储采集到
 
 
 ### 通过Docker方式安装TDengine 
-> 可参考官方网站[安装教程](https://www.taosdata.com/docs/cn/v2.0/getting-started/docker)  
+> 可参考官方网站[安装教程](https://docs.taosdata.com/get-started/docker/)  
 1. 下载安装Docker环境   
    Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
       安装完毕后终端查看Docker版本是否正常输出。
@@ -28,7 +28,7 @@ TDengine是一款开源物联网时序型数据库，我们用其存储采集到
 $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
     -v /opt/taosdata:/var/lib/taos \ 
     --name tdengine -e TZ=Asia/Shanghai \
-    tdengine/tdengine:2.4.0.12
+    tdengine/tdengine:3.0.4.0
 ```
 
    `-v /opt/taosdata:/var/lib/taos` 为tdengine数据目录本地持久化挂载，需将`/opt/taosdata`替换为实际本地存在的目录  
@@ -37,7 +37,7 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
 
 ### 创建数据库实例    
 
->  [TDengine CLI 小技巧](https://docs.taosdata.com/2.4/reference/taos-shell/#tdengine-cli-%E5%B0%8F%E6%8A%80%E5%B7%A7)
+>  [TDengine CLI 小技巧](https://docs.taosdata.com/develop/model/)
 
 1. 进入数据库Docker容器  
    ```
@@ -46,12 +46,12 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
 
 2. 修改账户密码
 
-   > 我们强烈建议您修改密码。TDengine默认的账户密码是 root/taosdata
+   > 建议您修改密码。TDengine默认的账户密码是 root/taosdata
    > 进入容器后，执行 `taos` 命令进入TDengine CLI , 如下: 
 
    ```
-   root@tdengine-server:~/TDengine-server-2.4.0.4# taos
-   Welcome to the TDengine shell from Linux, Client Version:2.4.0.4
+   root@tdengine-server:~/TDengine-server# taos
+   Welcome to the TDengine shell from Linux, Client Version
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
    taos>
    ```
@@ -63,10 +63,10 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
 
    ```
    taos> show databases;
-   taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;
+   taos> CREATE DATABASE hertzbeat KEEP 90 DURATION 10 BUFFER 16;
    ```
 
-   上述语句将创建一个名为 hertzbeat 的库，这个库的数据将保留90天（超过90天将被自动删除），每 10 天一个数据文件，内存块数为 6，允许更新数据
+   上述语句将创建一个名为 hertzbeat 的库，这个库的数据将保留90天（超过90天将被自动删除），每 10 天一个数据文件，每个 VNode 的写入内存池的大小为 16 MB
 
 4. 查看hertzbeat数据库是否成功创建
 
@@ -81,7 +81,7 @@ $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
    输入 q 或 quit 或 exit 回车
    ```
 
-**注意⚠️若是安装包安装的TDengine2.3+版本**       
+**注意⚠️若是安装包安装的TDengine**       
 
 > 除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter
 
@@ -118,7 +118,7 @@ warehouse:
 > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 - IotDB数据库或TDengine数据库
 
 3. 监控详情历史图片不展示或无数据，已经配置了TDengine   
-> 请确认是否安装的TDengine版本为2.4.0.12附近，版本3.0和2.2不支持兼容
+> 请确认是否安装的TDengine版本为3.0以上，版本2.x不支持兼容
 
 4. 安装配置了TDengine数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 > 请检查配置参数是否正确  
