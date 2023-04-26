@@ -29,7 +29,7 @@ sidebar_label: 快速开始
 ##### 安装TDengine(可选) 
 
 1. docker安装TDengine   
-   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
+   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:3.0.4.0`
 2. 创建名称为hertzbeat的数据库
 3. 在hertzbeat的配置文件`application.yml`配置tdengine连接   
 
