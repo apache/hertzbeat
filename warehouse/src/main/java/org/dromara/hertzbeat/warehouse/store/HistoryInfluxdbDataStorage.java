@@ -21,11 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,10 +45,12 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT instance, %s FROM %s WHERE instance = '%s' and time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE time >= now() - %s GROUP BY time(4h)";
+            "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE instance = '%s' and time >= now() - %s GROUP BY time(4h)";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
-
+    
+    private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"instance\"";
+    
     private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
@@ -188,39 +186,75 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = this.generateTable(app, metrics, monitorId);
-        String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric, table, history);
-
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
-        String key = instance == null ? "" : instance;
-
-        try {
-            QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
-
-            for (QueryResult.Result result : selectResult.getResults()) {
+        Set<String> instances = new HashSet<>(8);
+        if (instance != null) {
+            instances.add(instance);
+        }
+        if (instances.isEmpty()) {
+            // query the instance near 1week
+            String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
+            QueryResult instanceQueryResult = this.influxDb.query(new Query(queryInstanceSql, DATABASE), TimeUnit.MILLISECONDS);
+            for (QueryResult.Result result : instanceQueryResult.getResults()) {
                 if (result.getSeries() == null) {
                     continue;
                 }
                 for (QueryResult.Series series : result.getSeries()) {
                     for (List<Object> value : series.getValues()) {
-                        Value.ValueBuilder valueBuilder = Value.builder();
-                        long time = this.parseTimeToMillis(value.get(0));
-                        valueBuilder.time(time);
-
-                        if (value.get(1) != null) {
-                            valueBuilder.origin(this.parseDoubleValue(value.get(1).toString()));
+                        if (value != null && value.get(1) != null) {
+                            instances.add(value.get(1).toString());
                         }
-                        if (value.get(2) != null) {
-                            valueBuilder.mean(this.parseDoubleValue(value.get(2).toString()));
-                        }
-                        if (value.get(3) != null) {
-                            valueBuilder.min(this.parseDoubleValue(value.get(3).toString()));
-                        }
-                        if (value.get(4) != null) {
-                            valueBuilder.max(this.parseDoubleValue(value.get(4).toString()));
-                        }
-                        List<Value> valueList = instanceValueMap.computeIfAbsent(key, k -> new LinkedList<>());
-                        valueList.add(valueBuilder.build());
                     }
+                }
+            }
+        }
+
+        try {
+            history = history.toLowerCase();
+            if (instances.isEmpty()) {
+                instances.add("");
+            }
+            for (String instanceValue : instances) {
+                String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric, table, instanceValue, history);
+                QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
+                for (QueryResult.Result result : selectResult.getResults()) {
+                    if (result.getSeries() == null) {
+                        continue;
+                    }
+                    for (QueryResult.Series series : result.getSeries()) {
+                        for (List<Object> value : series.getValues()) {
+                            Value.ValueBuilder valueBuilder = Value.builder();
+                            long time = this.parseTimeToMillis(value.get(0));
+                            valueBuilder.time(time);
+                            
+                            if (value.get(1) != null) {
+                                valueBuilder.origin(this.parseDoubleValue(value.get(1).toString()));
+                            } else {
+                                continue;
+                            }
+                            if (value.get(2) != null) {
+                                valueBuilder.mean(this.parseDoubleValue(value.get(2).toString()));
+                            } else {
+                                continue;
+                            }
+                            if (value.get(3) != null) {
+                                valueBuilder.min(this.parseDoubleValue(value.get(3).toString()));
+                            } else {
+                                continue;
+                            }
+                            if (value.get(4) != null) {
+                                valueBuilder.max(this.parseDoubleValue(value.get(4).toString()));
+                            } else {
+                                continue;
+                            }
+                            List<Value> valueList = instanceValueMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
+                            valueList.add(valueBuilder.build());
+                        }
+                    }
+                }
+                List<Value> instanceValueList = instanceValueMap.get(instanceValue);
+                if (instanceValueList == null || instanceValueList.isEmpty()) {
+                    instanceValueMap.remove(instanceValue);
                 }
             }
         } catch (Exception e) {
