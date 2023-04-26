@@ -245,7 +245,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         Assert.notNull(app.getCategory(), "define yml require attributes category");
         Assert.notEmpty(app.getName(), "define yml require attributes name");
         Assert.notEmpty(app.getParams(), "define yml require attributes params");
+        boolean hasParamHost = app.getParams().stream().anyMatch(item -> "host".equals(item.getField()));
+        Assert.isTrue(hasParamHost, "define yml attributes params must have param host");
         Assert.notEmpty(app.getMetrics(), "define yml require attributes metrics");
+        boolean hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
+        Assert.isTrue(hasAvailableMetrics, "define yml metrics list must have one priority 0 metrics");
     }
 
     @Override

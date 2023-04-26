@@ -265,7 +265,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 double value = resultSet.getDouble(3);
                 String strValue = new BigDecimal(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                valueList.add(new Value(strValue, ts.getTime()));
+                valueList.add(new Value(strValue, ts.getTime() / 100 * 100));
             }
             resultSet.close();
             return instanceValuesMap;
@@ -355,7 +355,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                     Value value = Value.builder()
                             .origin(originStr).mean(avgStr)
                             .min(minStr).max(maxStr)
-                            .time(ts.getTime())
+                            .time(ts.getTime() / 100 * 100)
                             .build();
                     values.add(value);
                 }
