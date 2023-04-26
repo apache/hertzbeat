@@ -11,6 +11,7 @@
         "start/rainbond-deploy",
         "start/iotdb-init",
         "start/tdengine-init",
+        "start/greptime-init",
         "start/influxdb-init",
         "start/mysql-change",
         "start/postgresql-change",

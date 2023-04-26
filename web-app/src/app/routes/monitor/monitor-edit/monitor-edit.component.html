@@ -36,7 +36,7 @@
     <form nz-form #editForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="host" nzRequired="true" [nzTooltipTitle]="'monitor.host.tip' | i18n">
-          {{ 'monitor.host' | i18n }}
+          {{ hostName ? hostName : ('monitor.host' | i18n) }}
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host" required [placeholder]="'monitor.host.tip' | i18n" />
