@@ -17,6 +17,7 @@ sidebar_label: 安装包方式部署
    Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
 
    ```
+   
 2. 下载HertzBeat安装包
    下载您系统环境对应的安装包
    - 从[GITEE Release](https://gitee.com/dromara/hertzbeat/releases) 仓库下载
@@ -43,6 +44,10 @@ sidebar_label: 安装包方式部署
    ``` 
    $ ./startup.sh 
    ```
+   
+⚠️注意，如果在多java环境中，环境变量中JAVA已经配置了其他java环境如`java8`，没有`java11`，需编辑`$ ./startup.sh ` 或 `startup.bat`手动指定java路径。   
+`startup.sh`在第一行添加`JAVA_HOME=${JAVA_DIR}`，`startup.bat`修改`start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME% >logs\startup.log 2>&1 &`中的`javaw`为`java11`的路径，如`C:\Users\user\.jdks\corretto-11.0.18\bin\javaw`
+
 6. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  
 

@@ -6,17 +6,17 @@ sidebar_label: Use TDengine Store Metrics
 
 HertzBeat's historical data storage depends on the time series database TDengine or IoTDB, choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
 
-TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring indicators. Pay attention to support ⚠️ 2.4.x version.  
+TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring indicators. Pay attention to support ⚠️ 3.x version.  
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
 
-Note⚠️ Need TDengine 2.4.x Version.   
+Note⚠️ Need TDengine 3.x Version.   
 
 > If you have TDengine environment, can directly skip to create a database instance.  
 
 
 ### Install TDengine via Docker 
-> Refer to the official website [installation tutorial](https://www.taosdata.com/docs/cn/v2.0/getting-started/docker)  
+> Refer to the official website [installation tutorial](https://docs.taosdata.com/get-started/docker/)  
 1. Download and install Docker environment     
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
    After the installation you can check if the Docker version normally output at the terminal.    
@@ -25,8 +25,11 @@ Note⚠️ Need TDengine 2.4.x Version.
    Docker version 20.10.12, build e91ed57
    ```
 2. Install TDengine with Docker     
-   ```
-   $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp -v /opt/taosdata:/var/lib/taos --name tdengine -e TZ=Asia/Shanghai tdengine/tdengine:2.4.0.12
+   ```shell
+   $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
+    -v /opt/taosdata:/var/lib/taos \ 
+    --name tdengine -e TZ=Asia/Shanghai \
+    tdengine/tdengine:3.0.4.0
    ```
    `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory. `/opt/taosdata` should be replaced with the actual local directory.    
    `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.    
@@ -42,8 +45,8 @@ Note⚠️ Need TDengine 2.4.x Version.
    After entering the container，execute `taos` command as follows:     
    
    ```
-   root@tdengine-server:~/TDengine-server-2.4.0.4# taos
-   Welcome to the TDengine shell from Linux, Client Version:2.4.0.4
+   root@tdengine-server:~/TDengine-server# taos
+   Welcome to the TDengine shell from Linux, Client Version
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
    taos>
    ```
@@ -52,11 +55,11 @@ Note⚠️ Need TDengine 2.4.x Version.
    
    ```
    taos> show databases;
-   taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;
+   taos> CREATE DATABASE hertzbeat KEEP 90 DURATION 10 BUFFER 16;
    ```
    
    The above statements will create a database named hertzbeat. The data will be saved for 90 days (more than 90 days data will be automatically deleted).   
-   A data file every 10 days, memory blocks is 6, allow you to update the data.   
+   A data file every 10 days, memory blocks buffer is 16MB.
 
 3. Check if hertzbeat database has been created success      
    
@@ -65,7 +68,7 @@ Note⚠️ Need TDengine 2.4.x Version.
    taos> use hertzbeat;
    ```
 
-**Note⚠️If you install TDengine2.3+ version**       
+**Note⚠️If you install TDengine using package**       
 
 > In addition to start the server，you must execute `systemctl start taosadapter` to start adapter
 
@@ -102,7 +105,7 @@ warehouse:
 > As shown in the pop-up window, the premise of displaying the history chart is to install and configure the dependent services of hertzbeat - IotDB database or TDengine database
 
 3. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed     
-> Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  
+> Please confirm whether the installed TDengine version is 3.x, version 2.x are not compatible.  
 
 4. The TDengine database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure the dependent time series database]
 > Please check if the configuration parameters are correct  
