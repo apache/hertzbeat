@@ -52,21 +52,26 @@
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
 
-## ⛄ Supported
+## ⛄ 已支持模版 
 
-- [网站监控](manager/src/main/resources/define/app-website.yml), [端口可用性](manager/src/main/resources/define/app-port.yml),
-  [Http Api](manager/src/main/resources/define/app-api.yml), [Ping连通性](manager/src/main/resources/define/app-ping.yml),
-  [Jvm](manager/src/main/resources/define/app-jvm.yml), [SiteMap全站](manager/src/main/resources/define/app-fullsite.yml),
-  [Ssl证书](manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot](manager/src/main/resources/define/app-springboot2.yml),
-  [FTP服务器](manager/src/main/resources/define/app-ftp.yml)
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml模版，用户可以导入这些模版来支持对应类型的监控!    
+> 欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模版。
+
+- [Website](manager/src/main/resources/define/app-website.yml), [Port Telnet](manager/src/main/resources/define/app-port.yml),
+  [Http Api](manager/src/main/resources/define/app-api.yml), [Ping Connect](manager/src/main/resources/define/app-ping.yml),
+  [Jvm](manager/src/main/resources/define/app-jvm.yml), [SiteMap](manager/src/main/resources/define/app-fullsite.yml),
+  [Ssl Certificate](manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](manager/src/main/resources/define/app-springboot2.yml),
+  [FTP Server](manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](manager/src/main/resources/define/app-springboot3.yml)
 - [Mysql](manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](manager/src/main/resources/define/app-postgresql.yml),
   [MariaDB](manager/src/main/resources/define/app-mariadb.yml), [Redis](manager/src/main/resources/define/app-redis.yml),
   [ElasticSearch](manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](manager/src/main/resources/define/app-sqlserver.yml),
   [Oracle](manager/src/main/resources/define/app-oracle.yml), [MongoDB](manager/src/main/resources/define/app-mongodb.yml),
-  [达梦](manager/src/main/resources/define/app-dm.yml), [OpenGauss](manager/src/main/resources/define/app-opengauss.yml),
-  [ClickHouse](manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](manager/src/main/resources/define/app-iotdb.yml)
+  [DM](manager/src/main/resources/define/app-dm.yml), [OpenGauss](manager/src/main/resources/define/app-opengauss.yml),
+  [ClickHouse](manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](manager/src/main/resources/define/app-iotdb.yml),
+  [Redis Cluster](manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](manager/src/main/resources/define/app-redis_sentinel.yml)
 - [Linux](manager/src/main/resources/define/app-linux.yml), [Ubuntu](manager/src/main/resources/define/app-ubuntu.yml),
-  [CentOS](manager/src/main/resources/define/app-centos.yml), [Windows](manager/src/main/resources/define/app-windows.yml)
+  [CentOS](manager/src/main/resources/define/app-centos.yml), [Windows](manager/src/main/resources/define/app-windows.yml),
+  [EulerOS](manager/src/main/resources/define/app-euleros.yml)
 - [Tomcat](manager/src/main/resources/define/app-tomcat.yml), [Nacos](manager/src/main/resources/define/app-nacos.yml),
   [Zookeeper](manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](manager/src/main/resources/define/app-flink.yml), [Kafka](manager/src/main/resources/define/app-kafka.yml),
@@ -74,8 +79,9 @@
   [Jetty](manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](manager/src/main/resources/define/app-activemq.yml)
 - [Kubernetes](manager/src/main/resources/define/app-kubernetes.yml), [Docker](manager/src/main/resources/define/app-docker.yml)
 - [CiscoSwitch](manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](manager/src/main/resources/define/app-hpe_switch.yml),
-  [HuaweiSwitch](manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](manager/src/main/resources/define/app-tplink_switch.yml)
-- 和更多自定义监控类型。
+  [HuaweiSwitch](manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](manager/src/main/resources/define/app-tplink_switch.yml),
+  [H3cSwitch](manager/src/main/resources/define/app-h3c_switch.yml)
+- 和更多自定义监控模版。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
 ## 🐕 快速开始  

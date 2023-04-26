@@ -54,6 +54,10 @@
       ]
     },
     {
+      "type": "doc",
+      "id": "template"
+    },
+    {
       "type": "category",
       "label": "help",
       "items": [
