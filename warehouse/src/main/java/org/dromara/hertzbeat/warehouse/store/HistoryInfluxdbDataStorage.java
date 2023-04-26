@@ -39,9 +39,9 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private static final String SHOW_DATABASE = "SHOW DATABASES";
 
     private static final String CREATE_DATABASE = "CREATE DATABASE %s";
-    
+
     private static final String QUERY_HISTORY_SQL = "SELECT instance, %s FROM %s WHERE time >= now() - %s order by time desc";
-    
+
     private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT instance, %s FROM %s WHERE instance = '%s' and time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
@@ -63,10 +63,10 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true);
-        
+
         client.sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager());
         client.hostnameVerifier(noopHostnameVerifier());
-        
+
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
         this.influxDb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
         // Close it if your application is terminating, or you are not using it anymore.
@@ -77,7 +77,6 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private boolean createDatabase(WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties) {
         QueryResult queryResult = this.influxDb.query(new Query(SHOW_DATABASE));
-        boolean isDatabaseExist = false;
 
         if (queryResult.hasError()) {
             log.error("show databases in influxdb error, msg: {}", queryResult.getError());
@@ -88,30 +87,29 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             for (QueryResult.Series series : result.getSeries()) {
                 for (List<Object> values : series.getValues()) {
                     if (values.contains(DATABASE)) {
-                        isDatabaseExist = true;
-                        break;
+                        // database exists
+                        return true;
                     }
                 }
             }
         }
 
-        if (!isDatabaseExist) {
-            // 创建数据库
-            String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
-            QueryResult createDatabaseResult = this.influxDb.query(new Query(createDatabaseSql));
-            if (createDatabaseResult.hasError()) {
-                log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
-                return false;
-            }
-            // 设置过期时间
-            String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
-                    influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
-            QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));
-            if (createRetentionPolicySqlResult.hasError()) {
-                log.error("create retention policy in influxdb error, msg: {}", createDatabaseResult.getError());
-                return false;
-            }
+        // 创建数据库
+        String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
+        QueryResult createDatabaseResult = this.influxDb.query(new Query(createDatabaseSql));
+        if (createDatabaseResult.hasError()) {
+            log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
+            return false;
         }
+        // 设置过期时间
+        String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
+                influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
+        QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));
+        if (createRetentionPolicySqlResult.hasError()) {
+            log.error("create retention policy in influxdb error, msg: {}", createDatabaseResult.getError());
+            return false;
+        }
+
         return true;
     }
 
@@ -278,21 +276,25 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     private String parseDoubleValue(String value) {
         return (new BigDecimal(value)).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
-    
+
     private static X509TrustManager defaultTrustManager() {
         return new X509TrustManager() {
             public X509Certificate[] getAcceptedIssuers() {
                 return new X509Certificate[0];
             }
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            }
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            }
         };
     }
-    
+
     private static SSLSocketFactory defaultSslSocketFactory() {
         try {
             SSLContext sslContext = SSLContexts.createDefault();
-            sslContext.init(null, new TrustManager[] {
+            sslContext.init(null, new TrustManager[]{
                     defaultTrustManager()
             }, new SecureRandom());
             return sslContext.getSocketFactory();
@@ -300,7 +302,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             throw new RuntimeException(e);
         }
     }
-    
+
     private static HostnameVerifier noopHostnameVerifier() {
         return (s, sslSession) -> true;
     }
