@@ -284,19 +284,23 @@ public class WarehouseProperties {
             /**
              * influxdb的连接服务器url
              */
-            private String servers = "http://127.0.0.1:8086";
+            private String serverUrl;
             /**
-             * 认证token
+             * 用户名
              */
-            private String token;
+            private String username;
             /**
-             * 仓库名称
+             * 密码
              */
-            private String bucket;
+            private String password;
             /**
-             * 组织名称
+             * 过期时间
              */
-            private String org;
+            private String expireTime = "30d";
+            /**
+             * 副本数
+             */
+            private int replication = 1;
 
             public boolean isEnabled() {
                 return enabled;
@@ -306,36 +310,44 @@ public class WarehouseProperties {
                 this.enabled = enabled;
             }
 
-            public String getServers() {
-                return servers;
+            public String getServerUrl() {
+                return serverUrl;
             }
 
-            public void setServers(String servers) {
-                this.servers = servers;
+            public void setServerUrl(String serverUrl) {
+                this.serverUrl = serverUrl;
             }
 
-            public String getToken() {
-                return token;
+            public String getUsername() {
+                return username;
             }
 
-            public void setToken(String token) {
-                this.token = token;
+            public void setUsername(String username) {
+                this.username = username;
             }
 
-            public String getBucket() {
-                return bucket;
+            public String getPassword() {
+                return password;
             }
 
-            public void setBucket(String bucket) {
-                this.bucket = bucket;
+            public void setPassword(String password) {
+                this.password = password;
             }
 
-            public String getOrg() {
-                return org;
+            public String getExpireTime() {
+                return expireTime;
             }
 
-            public void setOrg(String org) {
-                this.org = org;
+            public void setExpireTime(String expireTime) {
+                this.expireTime = expireTime;
+            }
+            
+            public int getReplication() {
+                return replication;
+            }
+            
+            public void setReplication(int replication) {
+                this.replication = replication;
             }
         }
 
