@@ -35,7 +35,7 @@ $ docker run -p 8086:8086 \
       influxdb:1.8
 ```
 
-   `-v /opt/influxdb:/var/lib/influxdb` 为influxdb数据目录本地持久化挂载，需将`/opt/influxdb`替换为实际本地存在的目录
+   `-v /opt/influxdb:/var/lib/influxdb` 为influxdb数据目录本地持久化挂载，需将`/opt/influxdb`替换为实际本地存在的目录     
    使用```$ docker ps```查看数据库是否启动成功
 
 
