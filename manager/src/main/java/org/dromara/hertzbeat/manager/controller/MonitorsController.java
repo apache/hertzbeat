@@ -47,7 +47,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 监控管理批量API
  *
  * @author tom
- * @date 2021/12/1 20:43
+ *
  */
 @Tag(name = "Monitor Manage Batch API | 监控列表API")
 @RestController

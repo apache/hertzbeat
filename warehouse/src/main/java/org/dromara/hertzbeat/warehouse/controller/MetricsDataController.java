@@ -50,7 +50,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 指标数据查询接口
  *
  * @author tom
- * @date 2021/12/5 15:52
+ *
  */
 @RestController
 @RequestMapping(produces = {APPLICATION_JSON_VALUE})

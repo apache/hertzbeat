@@ -26,7 +26,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
  * 具体的指标组采集实现抽象类
  *
  * @author tomsun28
- * @date 2021/11/4 9:35
+ *
  */
 public abstract class AbstractCollect {
 

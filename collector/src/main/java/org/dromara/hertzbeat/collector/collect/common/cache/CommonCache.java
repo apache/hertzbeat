@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * lru cache 对连接对象进行缓存
  * @author tomsun28
- * @date 2021-12-10 23:17
+ *
  */
 @Slf4j
 public class CommonCache {

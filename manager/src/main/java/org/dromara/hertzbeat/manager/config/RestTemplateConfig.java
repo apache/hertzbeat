@@ -29,7 +29,7 @@ import java.util.Collections;
  * restTemplate config
  * todo 连接池
  * @author tom
- * @date 2021/12/18 08:46
+ *
  */
 @Configuration
 public class RestTemplateConfig {

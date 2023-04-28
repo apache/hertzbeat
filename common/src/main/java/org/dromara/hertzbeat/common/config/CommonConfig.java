@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * @author tom
- * @date 2022/6/30 09:23
+ *
  */
 @ComponentScan(basePackages = "org.dromara.hertzbeat.common")
 @EnableConfigurationProperties(CommonProperties.class)

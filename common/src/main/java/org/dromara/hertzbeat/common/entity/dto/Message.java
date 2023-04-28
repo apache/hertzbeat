@@ -34,7 +34,7 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.SUCCESS_COD
  *   code: 3432
  * }
  * @author tomsun28
- * @date 23:48 2019/08/01
+ *
  */
 @Data
 @Builder

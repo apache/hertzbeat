@@ -40,7 +40,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Tags management API
  * 标签管理API
  * @author tomsun28
- * @date 2022/5/1 10:57
+ *
  */
 @io.swagger.v3.oas.annotations.tags.Tag(name = "Tag Manage API | 标签管理API")
 @RestController

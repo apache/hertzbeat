@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 /**
  * 采集器工具类
  * @author tom
- * @date 2022/4/6 09:35
+ *
  */
 @Slf4j
 public class CollectUtil {

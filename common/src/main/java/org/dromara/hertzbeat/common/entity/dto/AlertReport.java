@@ -31,7 +31,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * 告警 对外上报实体类
  * @author yuye
- * @date 2022/04/30
+ *
  */
 @Data
 @Builder

@@ -44,7 +44,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * Alarm record entity 告警记录实体
  *
  * @author tom
- * @date 2021/12/9 15:37
+ *
  */
 @Entity
 @Table(name = "hzb_alert")

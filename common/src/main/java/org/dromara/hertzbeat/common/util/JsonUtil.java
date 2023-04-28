@@ -29,7 +29,7 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * gson 工具类
  * @author tomsun28
- * @date 2021/10/16 20:49
+ *
  */
 @ThreadSafe
 @Slf4j

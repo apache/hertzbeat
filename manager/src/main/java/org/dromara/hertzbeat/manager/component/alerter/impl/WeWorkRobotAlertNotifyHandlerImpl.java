@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * 通过企业微信发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor

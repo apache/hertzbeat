@@ -29,7 +29,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
  * Alarm Statistics Information  告警统计信息
  *
  * @author tom
- * @date 2022/3/6 19:25
+ *
  */
 @Data
 @AllArgsConstructor

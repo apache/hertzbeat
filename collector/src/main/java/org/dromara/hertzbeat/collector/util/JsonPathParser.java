@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * json path parser
  * @author tomsun28
- * @date 2021/11/20 10:16
+ *
  */
 public class JsonPathParser {
 

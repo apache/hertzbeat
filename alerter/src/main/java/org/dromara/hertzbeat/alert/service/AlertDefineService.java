@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * 告警定义管理接口
  * @author tom
- * @date 2021/12/9 10:06
+ *
  */
 public interface AlertDefineService {
 

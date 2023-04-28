@@ -50,7 +50,7 @@ import java.util.concurrent.ExecutionException;
  * snmp 协议采集实现
  *
  * @author wangtao
- * @date 2022/6/3
+ *
  */
 @Slf4j
 public class SnmpCollectImpl extends AbstractCollect {

@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor

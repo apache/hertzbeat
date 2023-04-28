@@ -47,7 +47,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Message Notification Configuration API
  * 消息通知配置API
  * @author tom
- * @date 2021/12/16 16:18
+ *
  */
 @Tag(name = "Notification Config API | 消息通知配置API")
 @RestController()

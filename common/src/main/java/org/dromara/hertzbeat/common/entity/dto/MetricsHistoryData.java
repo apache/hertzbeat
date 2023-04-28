@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * 历史单指标数据
  * @author tom
- * @date 2022/1/21 09:58
+ *
  */
 @Data
 @Builder

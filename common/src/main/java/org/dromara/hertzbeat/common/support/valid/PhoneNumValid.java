@@ -30,7 +30,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * phoneNum注解数据自定义校验器注解
  * @author tomsun28
- * @date 2021/11/17 19:42
+ *
  */
 @Target({ FIELD, PARAMETER })
 @Retention(RUNTIME)

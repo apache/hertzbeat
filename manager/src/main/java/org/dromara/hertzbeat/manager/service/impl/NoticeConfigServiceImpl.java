@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * 消息通知配置实现
  *
  * @author tom
- * @date 2021/12/16 16:16
+ *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)

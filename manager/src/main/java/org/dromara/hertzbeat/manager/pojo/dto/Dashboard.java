@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * 大屏仪表盘统计信息
  * @author tom
- * @date 2021/12/7 16:01
+ *
  */
 @Data
 @AllArgsConstructor

@@ -30,7 +30,7 @@ import java.util.Base64;
 /**
  * AES 对称加密解密工具
  * @author tomsun28
- * @date 20:04 2018/2/11
+ *
  */
 @Slf4j
 public class AesUtil {

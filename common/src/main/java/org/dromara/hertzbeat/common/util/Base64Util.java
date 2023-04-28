@@ -22,7 +22,7 @@ import java.util.Base64;
 /**
  * base64工具类
  * @author tom
- * @date 2022/1/12 12:12
+ *
  */
 public class Base64Util {
 

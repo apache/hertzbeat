@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * http 协议配置
  * @author tomsun28
- * @date 2021/10/31 12:41
+ *
  */
 @Data
 @Builder

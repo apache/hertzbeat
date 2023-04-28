@@ -25,7 +25,7 @@ import org.springframework.lang.NonNull;
 /**
  * 实时数据存储抽象类
  * @author tom
- * @date 2021/11/25 10:26
+ *
  */
 @Slf4j
 public abstract class AbstractRealTimeDataStorage implements DisposableBean {

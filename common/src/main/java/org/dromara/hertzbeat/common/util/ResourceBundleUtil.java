@@ -27,7 +27,7 @@ import java.util.ResourceBundle;
 /**
  * i18n ResourceBundle util
  * @author tom
- * @date 2022/5/18 08:30
+ *
  */
 @Slf4j
 public class ResourceBundleUtil {
