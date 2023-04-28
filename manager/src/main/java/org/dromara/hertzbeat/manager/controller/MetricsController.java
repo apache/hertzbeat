@@ -36,7 +36,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * hertzbeat metrics exporter
  * @author tom
- * @date 2022/03/14 21:40
+ *
  */
 @Tag(name = "Inner Metrics Exporter API | 内部监控指标API")
 @RestController

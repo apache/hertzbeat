@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * warehouse 工作线程池
  * @author tom
- * @date 2021/11/24 18:09
+ *
  */
 @Component
 @Slf4j

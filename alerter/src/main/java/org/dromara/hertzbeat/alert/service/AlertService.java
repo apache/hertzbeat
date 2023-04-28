@@ -32,7 +32,7 @@ import java.util.List;
  * 告警信息管理接口
  *
  * @author tom
- * @date 2021/12/9 10:06
+ *
  */
 public interface AlertService {
 

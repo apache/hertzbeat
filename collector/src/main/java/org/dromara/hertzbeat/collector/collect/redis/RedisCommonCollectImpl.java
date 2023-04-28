@@ -36,7 +36,7 @@ import java.util.*;
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a> , hdd
  * @version 1.0
- * @date 2022/5/17
+ *
  */
 @Slf4j
 public class RedisCommonCollectImpl extends AbstractCollect {

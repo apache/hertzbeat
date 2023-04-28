@@ -42,7 +42,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * Monitor Entity
  * 监控实体
  * @author tomsun28
- * @date 2021/11/14 9:53
+ *
  */
 @Entity
 @Table(name = "hzb_monitor", indexes = {

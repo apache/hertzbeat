@@ -27,7 +27,7 @@ import java.util.Optional;
 /**
  * generate auditor for jpa auditing
  * @author tom
- * @date 2022/6/14 23:47
+ *
  */
 @Configuration
 public class JpaAuditorConfig implements AuditorAware<String> {

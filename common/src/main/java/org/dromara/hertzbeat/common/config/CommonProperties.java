@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * common properties
  *
  * @author tom
- * @date 2021/11/24 10:38
+ *
  */
 @ConfigurationProperties(prefix = "common")
 public class CommonProperties {

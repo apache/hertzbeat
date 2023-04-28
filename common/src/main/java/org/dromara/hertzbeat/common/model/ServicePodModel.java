@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * msa 微服务指标模型
  * @author myth
- * @date 2022/7/15 15:20
+ *
  */
 @Setter
 @Getter

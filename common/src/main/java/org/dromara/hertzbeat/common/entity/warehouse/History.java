@@ -15,7 +15,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * metrics history
  *
  * @author tom
- * @date 2023/2/3 14:13
+ *
  */
 @Entity
 @Table(name = "hzb_history", indexes = {

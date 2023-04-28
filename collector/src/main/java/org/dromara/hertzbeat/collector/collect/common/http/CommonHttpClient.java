@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 统一的http客户端连接池
  * @author tomsun28
- * @date 2021/12/30 21:23
+ *
  */
 @Slf4j
 public class CommonHttpClient {

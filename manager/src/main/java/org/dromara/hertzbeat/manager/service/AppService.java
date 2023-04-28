@@ -29,7 +29,7 @@ import java.util.Map;
  * 监控类型管理接口
  *
  * @author tomsun28
- * @date 2021/11/14 17:12
+ *
  */
 public interface AppService {
 

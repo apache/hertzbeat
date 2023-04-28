@@ -39,7 +39,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 监控管理API
  *
  * @author tomsun28
- * @date 2021/11/14 10:57
+ *
  */
 @Tag(name = "Monitor Manage API | 监控管理API")
 @RestController

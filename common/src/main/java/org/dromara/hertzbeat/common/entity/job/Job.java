@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * 采集任务详情
  *
  * @author tomsun28
- * @date 2021/10/17 21:19
+ *
  */
 @Data
 @AllArgsConstructor

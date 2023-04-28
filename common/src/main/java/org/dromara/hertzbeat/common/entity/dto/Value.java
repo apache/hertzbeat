@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 /**
  * 监控指标组指标值
  * @author tom
- * @date 2021/12/5 17:43
+ *
  */
 @Data
 @Builder

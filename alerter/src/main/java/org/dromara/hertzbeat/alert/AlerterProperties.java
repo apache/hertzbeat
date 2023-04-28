@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * alerter config
  *
  * @author tom
- * @date 2021/11/24 10:38
+ *
  */
 @Component
 @ConfigurationProperties(prefix = "alerter")

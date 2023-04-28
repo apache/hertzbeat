@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 /**
  * ipv4 ipv6 domain 工具类
  * @author tomsun28
- * @date 2021/11/17 19:56
+ *
  */
 @Slf4j
 public class IpDomainUtil {

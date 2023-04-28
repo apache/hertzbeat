@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * 通过钉钉机器人发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor
@@ -82,7 +82,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
      *
      * @author 花城
      * @version 1.0
-     * @date 2022/2/21 6:55 下午
+     *
      */
     @Data
     private static class DingTalkWebHookDto {

@@ -36,7 +36,7 @@ import java.util.List;
  * 通过飞书发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor

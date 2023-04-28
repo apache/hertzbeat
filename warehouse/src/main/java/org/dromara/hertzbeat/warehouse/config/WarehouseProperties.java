@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 数据仓储配置属性
  * @author tom
- * @date 2021/11/24 10:38
+ *
  */
 @ConfigurationProperties(prefix = "warehouse")
 public class WarehouseProperties {

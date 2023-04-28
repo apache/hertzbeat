@@ -41,7 +41,7 @@ import java.util.Map;
  * Solve the front-end routing problem of angular static website resources with DefaultErrorViewResolver and route the 404 website request to the angular front-end
  * 同DefaultErrorViewResolver 解决angular静态网站资源前端路由问题 把404的网站请求给angular前端进行路由
  * @author tom
- * @date 2021/12/24 21:07
+ *
  */
 @Configuration
 public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {

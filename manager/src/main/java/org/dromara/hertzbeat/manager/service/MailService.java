@@ -24,7 +24,7 @@ import org.dromara.hertzbeat.common.entity.alerter.Alert;
  *
  * @author 花城
  * @version 1.0
- * @date 2022/2/19 6:11 下午
+ *
  */
 public interface MailService {
 

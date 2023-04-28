@@ -34,7 +34,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
  * 登录注册账户信息传输体 username phone email
  *
  * @author tomsun28
- * @date 20:36 2019-08-01
+ *
  */
 @Data
 @Builder

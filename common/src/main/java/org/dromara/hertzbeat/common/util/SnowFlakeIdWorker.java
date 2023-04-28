@@ -28,7 +28,7 @@ import java.util.Random;
  * Note that because the front-end JS TS parses large numbers in json, the precision will be lost.
  * UUID cannot exceed hexadecimal 0x1FFFFFFFFFFFFFF (less than 53bit)
  * @author from https://www.cnblogs.com/vchar/p/14857677.html
- * @date 2021/11/10 10:58
+ *
  */
 @Slf4j
 public class SnowFlakeIdWorker {

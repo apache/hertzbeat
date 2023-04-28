@@ -22,7 +22,7 @@ package org.dromara.hertzbeat.common.constants;
  * 公共常量
  *
  * @author tomsun28
- * @date 2021/11/14 12:06
+ *
  */
 public interface CommonConstants {
 

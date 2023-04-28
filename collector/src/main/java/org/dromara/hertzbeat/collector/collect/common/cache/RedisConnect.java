@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * redis connection
  *
  * @author tom
- * @date 2022/5/25 08:12
+ *
  */
 @Slf4j
 public class RedisConnect implements CacheCloseable {

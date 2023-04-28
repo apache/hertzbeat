@@ -88,7 +88,7 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 /**
  * http https collect
  * @author tomsun28
- * @date 2021/11/4 15:37
+ *
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {

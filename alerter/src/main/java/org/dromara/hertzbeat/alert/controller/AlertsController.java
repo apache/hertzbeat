@@ -47,7 +47,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  * @author tom
  * @author <a href="mailto:1252532896@qq.com">Hua.Cheng</a>
- * @date 2021/12/9 10:32
+ *
  */
 @Tag(name = "Alarm Manage Batch API | 告警批量管理API")
 @RestController

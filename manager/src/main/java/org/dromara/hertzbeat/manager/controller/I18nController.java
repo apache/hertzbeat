@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Internationalization I 18 N
  * 国际化I18N
  * @author tom
- * @date 2021/12/4 21:40
+ *
  */
 @Tag(name = "I18N API | I18N国际化资源API")
 @RestController

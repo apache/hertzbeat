@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
  * 调度分发任务配置属性
  *
  * @author tomsun28
- * @date 2021/10/16 14:54
+ *
  */
 @Component
 @ConfigurationProperties(prefix = "collector.dispatch")

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author tomsun28
- * @date 2021/10/17 23:06
+ *
  */
 @Component
 public class TimerDispatcher implements TimerDispatch {

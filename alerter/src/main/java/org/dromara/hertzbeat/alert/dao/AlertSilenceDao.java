@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * AlertSilence 数据库操作
  * @author tom
- * @date 2023/04/12 22:03
+ *
  */
 public interface AlertSilenceDao extends JpaRepository<AlertSilence, Long>, JpaSpecificationExecutor<AlertSilence> {
 

@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 内存采集数据队列实现
  * @author tom
- * @date 2021/11/24 17:58
+ *
  */
 @Configuration
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "Memory",

@@ -45,7 +45,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * Alert Silence strategy entity
  * 告警静默策略
  * @author tomsun28
- * @date 2023/04/12 22:19
+ *
  */
 @Entity
 @Table(name = "hzb_alert_silence")

@@ -24,7 +24,7 @@ import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
  * 指标组采集任务调度器接口
  *
  * @author tomsun28
- * @date 2021/11/2 11:19
+ *
  */
 public interface MetricsTaskDispatch {
 

@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * management interface service for alert silence
  * @author tom
- * @date 2023/4/12 13:15
+ *
  */
 public interface AlertSilenceService {
 	/**

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author ceilzcx
- * @since 7/4/2023
+ *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.influxdb",
