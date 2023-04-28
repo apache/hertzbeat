@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  * data storage by mysql/h2 - jpa
  *
  *
- * @since 2023/02/03
+ *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.jpa",

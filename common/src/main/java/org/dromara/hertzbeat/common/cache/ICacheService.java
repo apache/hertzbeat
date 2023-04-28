@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.common.cache;
 /**
  * common cache
  *
- * @since 4/2/2023
+ *
  */
 public interface ICacheService<K, V> {
 

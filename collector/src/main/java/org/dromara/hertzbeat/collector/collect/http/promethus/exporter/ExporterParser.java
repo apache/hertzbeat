@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
- * @since 7/11/2022
+ *
  * 解析prometheus的exporter接口传递的数据 http:xxx/metrics
  * 参考: prometheus的text_parse.go的代码, 入口: TextToMetricFamilies
  */

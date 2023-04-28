@@ -23,7 +23,7 @@ import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 
 /**
  *
- * @since 2022/4/24
+ *
  */
 public interface AlertNotifyHandler {
 

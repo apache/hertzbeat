@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * greptimeDB data storage
  *
  *
- * @since 2023/03/25
+ *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.greptime",

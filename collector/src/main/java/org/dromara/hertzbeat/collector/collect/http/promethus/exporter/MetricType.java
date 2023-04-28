@@ -3,7 +3,7 @@ package org.dromara.hertzbeat.collector.collect.http.promethus.exporter;
 /**
  * prometheus metrics type
  *
- * @since 7/11/2022
+ *
  */
 public enum MetricType {
     // for string metric info

@@ -42,7 +42,7 @@ import java.util.*;
  * IoTDB data storage
  *
  *
- * @since 2022/10/12
+ *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.iot-db",

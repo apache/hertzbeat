@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  *
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor

@@ -4,7 +4,7 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
  * the enum of data size
  * 数据空间大小的枚举类
  *
- * @since 2022/10/03
+ *
  */
 public enum DataUnit {
     /**

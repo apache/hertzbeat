@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * 通过企业微信发送告警信息
  *
  *
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor

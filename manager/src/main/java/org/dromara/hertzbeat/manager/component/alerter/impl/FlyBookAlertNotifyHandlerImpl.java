@@ -36,7 +36,7 @@ import java.util.List;
  * 通过飞书发送告警信息
  *
  *
- * @since 2022/4/24
+ *
  */
 @Component
 @RequiredArgsConstructor
