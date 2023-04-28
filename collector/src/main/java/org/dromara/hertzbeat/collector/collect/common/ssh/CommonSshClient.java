@@ -9,7 +9,7 @@ import org.apache.sshd.core.CoreModuleProperties;
 /**
  * ssh公共client
  * @author tom
- * @date 2022/3/11 15:58
+ *
  */
 @Slf4j
 public class CommonSshClient {

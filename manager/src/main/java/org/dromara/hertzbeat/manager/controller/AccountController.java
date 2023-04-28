@@ -46,7 +46,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 认证注册TOKEN管理API
  *
  * @author tomsun28
- * @date 13:11 2019-05-26
+ *
  */
 @Tag(name = "Auth Manage API | 认证注册TOKEN管理API")
 @RestController()

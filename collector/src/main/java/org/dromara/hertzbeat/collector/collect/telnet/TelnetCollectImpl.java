@@ -34,7 +34,7 @@ import java.net.ConnectException;
 /**
  * telnet协议采集实现
  * @author tom
- * @date 2021/12/4 12:32
+ *
  */
 @Slf4j
 public class TelnetCollectImpl extends AbstractCollect {

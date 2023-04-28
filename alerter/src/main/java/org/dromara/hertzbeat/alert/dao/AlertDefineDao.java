@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * AlertDefine 数据库操作
  * @author tom
- * @date 2021/12/9 10:03
+ *
  */
 public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpecificationExecutor<AlertDefine> {
 

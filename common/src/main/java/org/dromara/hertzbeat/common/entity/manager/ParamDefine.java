@@ -42,7 +42,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * 监控参数定义
  *
  * @author tomsun28
- * @date 2021/11/13 21:49
+ *
  */
 @Entity
 @Table(name = "hzb_param_define")

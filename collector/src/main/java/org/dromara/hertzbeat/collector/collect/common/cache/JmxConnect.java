@@ -8,7 +8,7 @@ import javax.management.remote.JMXConnector;
  * jmx链接销毁管理
  *
  * @author huacheng
- * @date 2022/7/3 14:58
+ *
  **/
 @Slf4j
 public class JmxConnect implements CacheCloseable {

@@ -34,7 +34,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * 监控信息对外交互实体
  *
  * @author tomsun28
- * @date 2021/11/14 10:13
+ *
  */
 @Data
 @Schema(description = "Monitoring information entities | 监控信息实体")

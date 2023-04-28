@@ -4,7 +4,7 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
  * the interface of unit convert
  * 单位转换的接口类，处理com.usthe.common.entity.job.Metrics#units
  * @author ceilzcx
- * @since 2022/10/03
+ *
  */
 public interface UnitConvert {
 

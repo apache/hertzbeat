@@ -43,7 +43,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Silence the batch API for alarms
  * 静默告警批量API
  * @author tom
- * @date 2023/04/12 22:03
+ *
  */
 @Tag(name = "Alert Silence Batch API | 告警静默管理API")
 @RestController

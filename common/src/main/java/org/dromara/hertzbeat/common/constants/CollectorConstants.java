@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.common.constants;
 /**
  * collector 常量
  * @author tom
- * @date 2021/12/3 12:15
+ *
  */
 public interface CollectorConstants {
 

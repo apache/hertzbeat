@@ -37,7 +37,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Alarm Silence management API
  * 告警静默管理API
  * @author tom
- * @date 2023/04/12 22:32
+ *
  */
 @Tag(name = "Alert Silence API | 告警静默管理API")
 @RestController

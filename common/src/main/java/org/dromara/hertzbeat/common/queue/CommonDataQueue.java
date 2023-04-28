@@ -23,7 +23,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 /**
  * common data queue
  * @author tom
- * @date 2021/11/24 17:58
+ *
  */
 public interface CommonDataQueue {
 

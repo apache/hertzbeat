@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * protobuf json相互转换工具类
  * @author tomsun28
- * @date 2021/11/16 12:16
+ *
  */
 @Slf4j
 public class ProtoJsonUtil {

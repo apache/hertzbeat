@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * (-∞,b] = {x <= b}
  * (-∞,a]||[b,+∞) = {x <= a || x >= b}
  * @author tomsun28
- * @date 2021/11/18 10:22
+ *
  */
 @Slf4j
 public class IntervalExpressionUtil {

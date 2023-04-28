@@ -47,7 +47,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Define the batch API for alarms
  * 告警定义批量API
  * @author tom
- * @date 2021/12/9 10:32
+ *
  */
 @Tag(name = "Alert Define Batch API | 告警定义管理API")
 @RestController

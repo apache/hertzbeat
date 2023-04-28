@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 存储采集实时数据 - memory
  * @author tom
- * @date 2021/11/25 10:26
+ *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.memory",

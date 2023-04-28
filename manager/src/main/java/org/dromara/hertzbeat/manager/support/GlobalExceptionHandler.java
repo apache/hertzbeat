@@ -40,7 +40,7 @@ import java.util.Objects;
 /**
  * controller exception handler
  * @author tomsun28
- * @date 22:45 2019-08-01
+ *
  */
 @RestControllerAdvice
 @Slf4j

@@ -20,7 +20,7 @@ import java.util.Map;
  * ftp协议采集实现
  *
  * @author 落阳
- * @date 2023/1/18
+ *
  */
 @Slf4j
 public class FtpCollectImpl extends AbstractCollect {

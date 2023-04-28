@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 监控采集的指标集合详情 eg: cpu | memory | health
  *
  * @author tomsun28
- * @date 2021/10/17 21:24
+ *
  */
 @Data
 @AllArgsConstructor

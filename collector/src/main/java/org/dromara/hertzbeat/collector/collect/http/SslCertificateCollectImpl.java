@@ -46,7 +46,7 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 /**
  * ssl Certificate
  * @author tomsun28
- * @date 2022/8/28 15:37
+ *
  */
 @Slf4j
 public class SslCertificateCollectImpl extends AbstractCollect {

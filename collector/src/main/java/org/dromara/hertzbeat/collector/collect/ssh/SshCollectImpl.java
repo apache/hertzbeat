@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  * ssh协议采集实现
  *
  * @author tom
- * @date 2022/03/11 15:10
+ *
  */
 @Slf4j
 public class SshCollectImpl extends AbstractCollect {

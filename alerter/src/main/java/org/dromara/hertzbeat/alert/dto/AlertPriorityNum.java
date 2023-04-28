@@ -24,7 +24,7 @@ import lombok.Data;
  * Number of monitoring level alarms 监控级别告警数量
  *
  * @author tom
- * @date 2022/3/6 19:52
+ *
  */
 @Data
 @AllArgsConstructor

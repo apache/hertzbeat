@@ -26,7 +26,7 @@ import java.util.List;
  * One-time collection task response result listener
  * 一次性采集任务响应结果监听器
  * @author tomsun28
- * @date 2021/11/16 10:09
+ *
  */
 public interface CollectResponseEventListener extends EventListener {
 

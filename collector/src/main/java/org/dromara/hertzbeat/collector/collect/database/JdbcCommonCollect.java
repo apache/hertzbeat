@@ -46,7 +46,7 @@ import java.util.Optional;
 /**
  * 数据库JDBC通用查询
  * @author tomsun28
- * @date 2021/12/1 21:37
+ *
  */
 @Slf4j
 public class JdbcCommonCollect extends AbstractCollect {

@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * Collection job management provides api interface
  * 采集job管理提供api接口
  * @author tomsun28
- * @date 2021/11/6 13:58
+ *
  */
 @Service
 @Slf4j

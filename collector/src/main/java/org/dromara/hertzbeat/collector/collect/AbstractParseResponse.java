@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 不同数据格式解析抽象类
  * @author myth
- * @date 2022/7/15 15:20
+ *
  */
 
 public interface AbstractParseResponse extends InitializingBean {

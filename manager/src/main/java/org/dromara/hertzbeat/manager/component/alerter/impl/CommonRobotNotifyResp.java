@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 /**
  * common robot http response entity
  * @author tom
- * @date 2022/9/23 22:11
+ *
  */
 @Data
 @AllArgsConstructor

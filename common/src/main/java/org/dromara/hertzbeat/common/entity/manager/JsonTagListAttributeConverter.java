@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * json 互转 tag list 对象字段为数据String字段
  * @author tom
- * @date 2021/12/4 07:54
+ *
  */
 public class JsonTagListAttributeConverter implements AttributeConverter<List<TagItem>, String> {
 

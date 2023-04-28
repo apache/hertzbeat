@@ -40,7 +40,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * Monitoring Type Management API
  * 监控类型管理API
  * @author tomsun28
- * @date 2021/11/14 16:47
+ *
  */
 @Tag(name = "Monitor Type Manage API | 监控类型管理API")
 @RestController

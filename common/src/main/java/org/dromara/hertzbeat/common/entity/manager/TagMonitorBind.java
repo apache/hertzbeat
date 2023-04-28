@@ -35,7 +35,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * Tag Bind Monitor
  * 标签与监控关联实体
  * @author tomsun28
- * @date 2021/11/13 22:19
+ *
  */
 @Entity
 @Table(name = "hzb_tag_monitor_bind", indexes = {

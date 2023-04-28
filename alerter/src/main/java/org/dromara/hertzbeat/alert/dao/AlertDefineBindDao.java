@@ -28,7 +28,7 @@ import java.util.Set;
  * AlertDefineBind database operations  数据库操作
  *
  * @author tom
- * @date 2021/12/9 10:03
+ *
  */
 public interface AlertDefineBindDao extends JpaRepository<AlertDefineMonitorBind, Long>, JpaSpecificationExecutor<AlertDefineMonitorBind> {
 

@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
  * 过程中需要将协议配置参数里面的标识符为^_^key^_^的内容替换为配置参数里的真实值
  *
  * @author tomsun28
- * @date 2021/10/29 22:04
+ *
  */
 @Data
 @AllArgsConstructor

@@ -21,7 +21,7 @@ package org.dromara.hertzbeat.collector.dispatch;
  * dispatch  constant 常量
  *
  * @author tomsun28
- * @date 2021/11/3 16:50
+ *
  */
 public interface DispatchConstants {
 

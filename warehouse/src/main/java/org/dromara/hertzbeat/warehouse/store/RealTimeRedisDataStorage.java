@@ -36,7 +36,7 @@ import java.time.temporal.ChronoUnit;
 /**
  * redis存储采集实时数据
  * @author tom
- * @date 2021/11/25 10:26
+ *
  */
 @Primary
 @Component

@@ -34,7 +34,7 @@ import java.net.UnknownHostException;
 /**
  * icmp协议采集实现 - ping
  * @author tom
- * @date 2021/12/4 12:32
+ *
  */
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {

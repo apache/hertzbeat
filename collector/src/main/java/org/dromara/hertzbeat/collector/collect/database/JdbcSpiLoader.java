@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 /**
  * 预加载jdbc驱动包 避免spi并发加载造成死锁
  * @author tom
- * @date 2022/3/19 15:39
+ *
  */
 @Service
 @Slf4j

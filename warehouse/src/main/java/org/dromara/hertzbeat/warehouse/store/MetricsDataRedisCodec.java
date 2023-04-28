@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * MetricsData redis 序列化
  * @author tom
- * @date 2021/11/25 10:42
+ *
  */
 @Slf4j
 public class MetricsDataRedisCodec implements RedisCodec<String, CollectRep.MetricsData> {

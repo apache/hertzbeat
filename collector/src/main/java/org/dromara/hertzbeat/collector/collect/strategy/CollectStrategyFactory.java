@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Specific metrics collection factory
  * 数据收集策略工厂
  * @author myth
- * @date 2022/7/20 16:19
+ *
  */
 @Configuration
 public class CollectStrategyFactory implements CommandLineRunner {

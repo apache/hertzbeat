@@ -28,7 +28,7 @@ import java.util.Collections;
 
 /**
  * @author tom
- * @date 2021/11/29 21:31
+ *
  */
 @Configuration
 public class SecurityCorsConfiguration {

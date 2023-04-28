@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * 时间轮调度接口
  *
  * @author tomsun28
- * @date 2021/10/17 22:14
+ *
  */
 public interface TimerDispatch {
 

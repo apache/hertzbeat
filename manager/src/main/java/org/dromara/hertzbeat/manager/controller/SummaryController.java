@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * System Summary Statistics API
  * 系统摘要统计API
  * @author tom
- * @date 2021/12/7 15:57
+ *
  */
 @Tag(name = "Summary Statistics API | 系统摘要统计API")
 @RestController

@@ -25,7 +25,7 @@ import javax.validation.ConstraintValidatorContext;
 /**
  * PhoneNum注解数据自定义校验器
  * @author tomsun28
- * @date 2021/11/17 19:44
+ *
  */
 public class PhoneNumParamValidator implements ConstraintValidator<PhoneNumValid, String> {
 

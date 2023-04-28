@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * jmx protocol acquisition implementation
  *
  * @author huacheng
- * @date 2022/6/21 15:09
+ *
  */
 @Slf4j
 public class JmxCollectImpl extends AbstractCollect {
