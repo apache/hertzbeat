@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
 
 /**
  * the interface of unit convert
- * 单位转换的接口类，处理com.usthe.common.entity.job.Metrics#units
+ * 单位转换的接口类，处理 org.dromara.hertzbeat.common.entity.job.Metrics#units
  *
  * @since 2022/10/03
  */
