@@ -299,12 +299,10 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 });
         // https://github.com/dromara/hertzbeat/pull/913
         // fix 数组越界
-        // 如果返回的指标数量小于yml配置的指标总和，按yml配置指标类型填充默认值： 0 number 1 String
-        for (Metrics.Field field : metrics.getFields()) {
-            if (!result.containsKey(field.getField())) {
-                if (field.getType() == 0) {
-                    result.put(field.getField(), Double.valueOf(0).toString());
-                } else {
+        // 如果返回的指标数量小于yml配置的指标总和，不区分指标类型 赋值 &nbsp;
+        if (result.size() < fieldTotalSize) {
+            for (Metrics.Field field : metrics.getFields()) {
+                if (!result.containsKey(field.getField())) {
                     result.put(field.getField(), CommonConstants.NULL_VALUE);
                 }
             }
