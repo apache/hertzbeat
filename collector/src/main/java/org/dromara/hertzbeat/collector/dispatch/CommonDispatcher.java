@@ -69,22 +69,22 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * Priority queue of index group collection tasks
      * 指标组采集任务优先级队列
      */
-    private MetricsCollectorQueue jobRequestQueue;
+    private final MetricsCollectorQueue jobRequestQueue;
     /**
      * Time round task scheduler
      * 时间轮任务调度器
      */
-    private TimerDispatch timerDispatch;
+    private final TimerDispatch timerDispatch;
     /**
      * collection data exporter
      * 采集数据导出器
      */
-    private CommonDataQueue commonDataQueue;
+    private final CommonDataQueue commonDataQueue;
     /**
      * Metric group task and start time mapping map
      * 指标组任务与开始时间映射map
      */
-    private Map<String, MetricsTime> metricsTimeoutMonitorMap;
+    private final Map<String, MetricsTime> metricsTimeoutMonitorMap;
 
     private final List<UnitConvert> unitConvertList;
 
@@ -125,8 +125,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
                             jobRequestQueue.addJob(metricsCollect);
                         }
-                    } catch (InterruptedException interruptedException) {
-                    }
+                    } catch (InterruptedException ignored) {}
                 } catch (Exception e) {
                     log.error("[Dispatcher]-{}.", e.getMessage(), e);
                 }
