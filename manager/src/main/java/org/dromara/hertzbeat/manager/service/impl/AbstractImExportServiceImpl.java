@@ -119,7 +119,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
 
     private MonitorDto convert(ExportMonitorDTO exportMonitor) {
         var monitorDto = new MonitorDto();
-        monitorDto.setDetected(exportMonitor.isDetected());
+        monitorDto.setDetected(exportMonitor.getDetected());
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         BeanUtils.copyProperties(exportMonitor.monitor, monitor);
@@ -153,7 +153,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         @ExcelCollection(name = "Metrics")
         private List<String> metrics;
         @ExcelCollection(name = "detected")
-        private boolean detected = false;
+        private Boolean detected;
     }
 
 

@@ -269,7 +269,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                             metricCell.setCellStyle(cellStyle);
                         }
                         Cell detectedCell = row.createCell(11);
-                        detectedCell.setCellValue(monitor.isDetected());
+                        detectedCell.setCellValue(monitor.getDetected() != null && monitor.getDetected());
                         detectedCell.setCellStyle(cellStyle);
                     }
                     // 填写参数信息
