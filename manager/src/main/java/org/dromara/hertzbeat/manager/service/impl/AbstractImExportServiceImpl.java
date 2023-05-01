@@ -114,6 +114,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
                 })
                 .collect(Collectors.toUnmodifiableList()));
         exportMonitor.setMetrics(dto.getMetrics());
+        exportMonitor.setDetected(false);
         return exportMonitor;
     }
 
