@@ -4,9 +4,11 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
+import { finalize } from 'rxjs/operators';
 
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
@@ -36,9 +38,17 @@ export class MonitorListComponent implements OnInit {
   monitors!: Monitor[];
   tableLoading: boolean = true;
   checkedMonitorIds = new Set<number>();
+  isSwitchExportTypeModalVisible = false;
+  exportJsonButtonLoading = false;
+  exportYamlButtonLoading = false;
+  exportExcelButtonLoading = false;
   // 过滤搜索
   filterContent!: string;
   filterStatus: number = 9;
+
+  switchExportTypeModalFooter: ModalButtonOptions[] = [
+    { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
+  ];
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(paramMap => {
@@ -165,7 +175,11 @@ export class MonitorListComponent implements OnInit {
   }
 
   onExportMonitors() {
-    this.exportMonitors(this.checkedMonitorIds);
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size == 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
+      return;
+    }
+    this.isSwitchExportTypeModalVisible = true;
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
@@ -207,33 +221,52 @@ export class MonitorListComponent implements OnInit {
     );
   }
 
-  exportMonitors(monitors: Set<number>) {
-    if (monitors == null || monitors.size == 0) {
+  exportMonitors(type: string) {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
       return;
     }
-    const exportMonitors$ = this.monitorSvc.exportMonitors(monitors).subscribe(
-      response => {
-        exportMonitors$.unsubscribe();
-        const message = response.body!;
-        if (message.type == 'application/json') {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
-        } else {
-          console.log(response);
-          const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
-          a.href = url;
-          a.click();
-          window.URL.revokeObjectURL(url);
+    switch (type) {
+      case 'JSON':
+        this.exportJsonButtonLoading = true;
+        break;
+      case 'EXCEL':
+        this.exportExcelButtonLoading = true;
+        break;
+      case 'YAML':
+        this.exportYamlButtonLoading = true;
+        break;
+    }
+    const exportMonitors$ = this.monitorSvc
+      .exportMonitors(this.checkedMonitorIds, type)
+      .pipe(
+        finalize(() => {
+          this.exportYamlButtonLoading = false;
+          this.exportExcelButtonLoading = false;
+          this.exportJsonButtonLoading = false;
+          exportMonitors$.unsubscribe();
+        })
+      )
+      .subscribe(
+        response => {
+          const message = response.body!;
+          if (message.type == 'application/json') {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
+          } else {
+            const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
+            a.href = url;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            this.isSwitchExportTypeModalVisible = false;
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
         }
-      },
-      error => {
-        exportMonitors$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
-      }
-    );
+      );
   }
 
   onCancelManageMonitors() {

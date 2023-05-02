@@ -59,9 +59,9 @@ public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
 
-    private List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
 
-    private List<AbstractHistoryDataStorage> historyDataStorages;
+    private final List<AbstractHistoryDataStorage> historyDataStorages;
 
     public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
                                  List<AbstractHistoryDataStorage> historyDataStorages) {
