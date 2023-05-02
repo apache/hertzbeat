@@ -111,6 +111,9 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
+    greptime:
+      enabled: false
+      endpoint: localhost:4001
     iot-db:
       enabled: false
       host: 127.0.0.1
@@ -123,6 +126,14 @@ warehouse:
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'
+    influxdb:
+      enabled: false
+      server-url: http://127.0.0.1:8086
+      username: root
+      password: root
+      expire-time: '30d'
+      replication: 1
+      
 # store real-time metrics data, enable only one below
 # 存储实时数据方式, 下方只能enabled启用一种方式
     memory:

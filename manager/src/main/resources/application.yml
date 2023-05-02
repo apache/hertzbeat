@@ -114,6 +114,9 @@ warehouse:
       url: jdbc:TAOS-RS://localhost:6041/hertzbeat
       username: root
       password: taosdata
+    greptime:
+      enabled: false
+      endpoint: localhost:4001
     iot-db:
       enabled: false
       host: 127.0.0.1
