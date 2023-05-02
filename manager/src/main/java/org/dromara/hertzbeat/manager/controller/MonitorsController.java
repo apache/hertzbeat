@@ -162,7 +162,7 @@ public class MonitorsController {
     @Operation(summary = "Start the managed monitoring items in batches according to the monitoring ID list",
             description = "根据监控ID列表批量启动纳管监控项")
     public ResponseEntity<Message<Void>> enableManageMonitors(
-            @Parameter(description = "en: Monitor ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.enableManageMonitors(new HashSet<>(ids));
@@ -173,14 +173,16 @@ public class MonitorsController {
 
     @GetMapping("/export")
     @Operation(summary = "export monitor config", description = "导出监控配置")
-    public void export(@RequestParam List<Long> ids, @RequestParam(defaultValue = "JSON") String type,
-                       HttpServletResponse res) throws IOException {
+    public void export(
+            @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids,
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type, 
+            HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }
 
     @PostMapping("/import")
     @Operation(summary = "import monitor config", description = "导入监控配置")
-    public ResponseEntity<Message<Void>> export(MultipartFile file) throws IOException {
+    public ResponseEntity<Message<Void>> export(MultipartFile file) throws Exception {
         monitorService.importConfig(file);
         return ResponseEntity.ok(new Message<>("Import success"));
     }

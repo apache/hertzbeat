@@ -230,8 +230,11 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public void export(List<Long> ids, String type, HttpServletResponse res) throws IOException {
+    public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
         var imExportService = imExportServiceMap.get(type);
+        if (imExportService == null) {
+            throw new IllegalArgumentException("not support export type: " + type);
+        }
         var fileName = imExportService.getFileName();
         res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
         res.setContentType("application/octet-stream;charset=UTF-8");
@@ -241,7 +244,7 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public void importConfig(MultipartFile file) throws IOException {
+    public void importConfig(MultipartFile file) throws Exception {
         var fileName = file.getOriginalFilename();
         if (!StringUtils.hasText(fileName)) {
             return;

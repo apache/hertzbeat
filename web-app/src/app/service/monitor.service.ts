@@ -43,13 +43,14 @@ export class MonitorService {
     return this.http.delete<Message<any>>(monitors_uri, options);
   }
 
-  public exportMonitors(monitorIds: Set<number>): Observable<HttpResponse<Blob>> {
+  public exportMonitors(monitorIds: Set<number>, type: string): Observable<HttpResponse<Blob>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
       // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
       // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
       httpParams = httpParams.append('ids', monitorId);
     });
+    httpParams = httpParams.append('type', type);
     return this.http.get(export_monitors_uri, {
       params: httpParams,
       observe: 'response',

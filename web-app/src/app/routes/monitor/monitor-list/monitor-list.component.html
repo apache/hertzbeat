@@ -226,3 +226,31 @@
 </nz-table>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<nz-modal
+  [(nzVisible)]="isSwitchExportTypeModalVisible"
+  [nzTitle]="'monitors.export.switch-type' | i18n"
+  nzOkDisabled="true"
+  [nzFooter]="switchExportTypeModalFooter"
+>
+  <ng-container *nzModalContent>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('YAML')" [nzLoading]="exportYamlButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('JSON')" [nzLoading]="exportJsonButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('EXCEL')" [nzLoading]="exportExcelButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}
+      </button>
+    </p>
+  </ng-container>
+</nz-modal>
