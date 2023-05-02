@@ -52,11 +52,11 @@ import java.util.concurrent.TimeUnit;
 		name = "enabled", havingValue = "true")
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
-	private HistoryDao historyDao;
-	private WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
+	private final HistoryDao historyDao;
+	private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
 	private static final int STRING_MAX_LENGTH = 1024;
-	private static final int MAX_HISTORY_TABLE_RECORD = 60_000;
+	private static final int MAX_HISTORY_TABLE_RECORD = 20_000;
 
 	public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
 	                                     HistoryDao historyDao) {
@@ -65,7 +65,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 		this.historyDao = historyDao;
 	}
 
-	@Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+	@Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
 	public void expiredDataCleaner() {
 		log.warn("[jpa-metrics-store]-start running expired data cleaner." +
 				"Please use time series db instead of jpa for better performance");
