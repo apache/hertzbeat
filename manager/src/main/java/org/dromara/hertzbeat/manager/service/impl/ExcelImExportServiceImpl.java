@@ -1,9 +1,5 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
-import cn.afterturn.easypoi.excel.ExcelExportUtil;
-import cn.afterturn.easypoi.excel.entity.ExportParams;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -29,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "Excel";
+    public static final String TYPE = "EXCEL";
     public static final String FILE_SUFFIX = ".xlsx";
 
     /**
@@ -81,17 +77,22 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
                     exportMonitor.setMonitor(monitor);
                     monitors.add(exportMonitor);
+                    String metrics = getCellValueAsString(row.getCell(10));
+                    if (StringUtils.hasText(metrics)) {
+                        List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
+                        exportMonitor.setMetrics(metricList);
+                    }
+                    boolean detected = getCellValueAsBoolean(row.getCell(11));
+                    exportMonitor.setDetected(detected);
                 }
             }
 
             List<List<ParamDTO>> paramsList = new ArrayList<>();
-            List<List<String>> metricsList = new ArrayList<>();
 
             for (int i = 0; i < startRowList.size(); i++) {
                 int startRowIndex = startRowList.get(i);
                 int endRowIndex = (i + 1 < startRowList.size()) ? startRowList.get(i + 1) : sheet.getLastRowNum() + 1;
                 List<ParamDTO> params = new ArrayList<>();
-                List<String> metrics = new ArrayList<>();
 
                 for (int j = startRowIndex; j < endRowIndex; j++) {
                     Row row = sheet.getRow(j);
@@ -102,23 +103,14 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     if (param != null) {
                         params.add(param);
                     }
-                    String metricValue = getCellValueAsString(row.getCell(10));
-                    if (StringUtils.hasText(metricValue)) {
-                        metrics.add(metricValue);
-                    }
                 }
 
                 paramsList.add(params);
-                metricsList.add(metrics);
             }
-
             for (int i = 0; i < monitors.size(); i++) {
                 monitors.get(i).setParams(paramsList.get(i));
-                monitors.get(i).setMetrics(metricsList.get(i));
             }
-
             return monitors;
-
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse monitor data", e);
         }
@@ -150,8 +142,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         if (StringUtils.hasText(fieldName)) {
             ParamDTO param = new ParamDTO();
             param.setField(fieldName);
-            param.setValue(getCellValueAsString(row.getCell(8)));
-            param.setType(getCellValueAsByte(row.getCell(9)));
+            param.setType(getCellValueAsByte(row.getCell(8)));
+            param.setValue(getCellValueAsString(row.getCell(9)));
             return param;
         }
         return null;
@@ -169,6 +161,16 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             default:
                 return null;
         }
+    }
+    
+    private boolean getCellValueAsBoolean(Cell cell) {
+        if (cell == null) {
+            return false;
+        }
+        if (Objects.requireNonNull(cell.getCellType()) == CellType.BOOLEAN) {
+            return cell.getBooleanCellValue();
+        }
+        return false;
     }
 
     private Integer getCellValueAsInteger(Cell cell) {
@@ -205,6 +207,9 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
             Sheet sheet = workbook.createSheet(sheetName);
+            sheet.setDefaultColumnWidth(20);
+            sheet.setColumnWidth(9, 40 * 256);
+            sheet.setColumnWidth(10, 40 * 256);
             // 设置表头样式
             CellStyle headerCellStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
@@ -215,7 +220,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // 设置表头
-            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "field", "value", "type", "metrics" };
+            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "field", "type", "value", "metrics", "detected" };
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -256,8 +261,16 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         descriptionCell.setCellValue(monitorDTO.getDescription());
                         descriptionCell.setCellStyle(cellStyle);
                         Cell tagsCell = row.createCell(6);
-                        tagsCell.setCellValue(String.join(",", monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.toList())));
+                        tagsCell.setCellValue(monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.joining(",")));
                         tagsCell.setCellStyle(cellStyle);
+                        if (metricList != null && i < metricList.size()) {
+                            Cell metricCell = row.createCell(10);
+                            metricCell.setCellValue(String.join(",", metricList));
+                            metricCell.setCellStyle(cellStyle);
+                        }
+                        Cell detectedCell = row.createCell(11);
+                        detectedCell.setCellValue(monitor.getDetected() != null && monitor.getDetected());
+                        detectedCell.setCellStyle(cellStyle);
                     }
                     // 填写参数信息
                     if (i < paramList.size()) {
@@ -265,17 +278,12 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         Cell fieldCell = row.createCell(7);
                         fieldCell.setCellValue(paramDTO.getField());
                         fieldCell.setCellStyle(cellStyle);
-                        Cell valueCell = row.createCell(8);
-                        valueCell.setCellValue(paramDTO.getValue());
-                        valueCell.setCellStyle(cellStyle);
-                        Cell typeCell = row.createCell(9);
+                        Cell typeCell = row.createCell(8);
                         typeCell.setCellValue(paramDTO.getType());
                         typeCell.setCellStyle(cellStyle);
-                    }
-                    if (metricList != null && i < metricList.size()) {
-                        Cell metricCell = row.createCell(10);
-                        metricCell.setCellValue(metricList.get(i));
-                        metricCell.setCellStyle(cellStyle);
+                        Cell valueCell = row.createCell(9);
+                        valueCell.setCellValue(paramDTO.getValue());
+                        valueCell.setCellStyle(cellStyle);
                     }
                 }
                 if (paramList.size() > 0) {

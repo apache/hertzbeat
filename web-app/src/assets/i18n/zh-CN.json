@@ -254,6 +254,8 @@
   "monitors.enable": "启用监控",
   "monitors.cancel": "取消监控",
   "monitors.export": "导出监控",
+  "monitors.export.switch-type": "请选择导出文件格式!",
+  "monitors.export.use-type": "以 {{type}} 文件格式导出监控",
   "monitors.import": "导入监控",
   "monitors.search.placeholder": "搜索监控",
   "monitors.search.filter": "监控状态过滤",

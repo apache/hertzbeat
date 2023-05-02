@@ -1,8 +1,8 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -19,12 +19,9 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     public static final String TYPE = "YAML";
     public static final String FILE_SUFFIX = ".yaml";
-
-    private final Yaml yaml;
 
 
     /**
@@ -58,6 +55,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     List<ExportMonitorDTO> parseImport(InputStream is) {
+        Yaml yaml = new Yaml();
         return yaml.load(is);
     }
 
@@ -70,6 +68,11 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setIndent(2);
+        options.setPrettyFlow(true);
+        Yaml yaml = new Yaml(options);
         yaml.dump(monitorList, new OutputStreamWriter(os, StandardCharsets.UTF_8));
     }
 }
