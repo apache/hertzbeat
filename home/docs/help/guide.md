@@ -32,7 +32,7 @@ sidebar_label: Help center
 &emsp;&#x1F449;&emsp;[Oracle database monitoring](oracle) <br />
 &emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
-&emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
+&emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
 
 ### Operating system monitoring     
 
