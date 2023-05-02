@@ -23,8 +23,7 @@ import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,20 +46,23 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
             markdownDTO.setText(renderContent(alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<DingTalkWebHookDto> httpEntity = new HttpEntity<>(dingTalkWebHookDto, headers);
             String webHookUrl = alerterProperties.getDingTalkWebHookUrl() + receiver.getAccessToken();
-            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
-                    dingTalkWebHookDto, CommonRobotNotifyResp.class);
-            if (entity.getStatusCode() == HttpStatus.OK) {
-                assert entity.getBody() != null;
-                if (entity.getBody().getErrCode() == 0) {
+            ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
+                    httpEntity, CommonRobotNotifyResp.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                assert responseEntity.getBody() != null;
+                if (responseEntity.getBody().getErrCode() == 0) {
                     log.debug("Send dingTalk webHook: {} Success", webHookUrl);
                 } else {
-                    log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
-                    throw new AlertNoticeException(entity.getBody().getErrMsg());
+                    log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, responseEntity.getBody().getErrMsg());
+                    throw new AlertNoticeException(responseEntity.getBody().getErrMsg());
                 }
             } else {
-                log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, entity.getBody());
-                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
+                log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, responseEntity.getBody());
+                throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
             }
         } catch (Exception e) {
             throw new AlertNoticeException("[DingTalk Notify Error] " + e.getMessage());
