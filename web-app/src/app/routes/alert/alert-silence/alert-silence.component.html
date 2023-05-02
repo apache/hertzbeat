@@ -214,7 +214,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="silence.type == 1">
-        <nz-form-label nzSpan="7" nzFor="time">{{ 'alert.notice.rule.time' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="time">{{ 'alert.silence.time' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-time-picker [(ngModel)]="silence.periodStart" nzFormat="HH:mm" name="periodStart" id="periodStart"></nz-time-picker>
           <span nz-icon nzType="right-circle" nzTheme="outline" style="margin-right: 6px; margin-left: 6px"></span>
