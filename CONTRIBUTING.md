@@ -32,19 +32,18 @@ Even small corrections to typos are very welcome :)
 
 - Backend start   
 
-1. Deploy and start dependent services `MYSQL` and `TDengine` database   
-2. Requires `maven3+`, `java8+` and `lombok` environments    
-3. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
-4. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
+1. Requires `maven3+`, `java11` and `lombok` environments    
+2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
+3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
 
 - Front-web start   
 
 1. Need `nodejs npm angular-cli` environment
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
-5. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
-6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-7. Browser access to localhost:4200 to start   
+4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
+5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
+6. Browser access to localhost:4200 to start   
 
 ### Find tasks   
 
@@ -177,10 +176,9 @@ Public WeChat: `tancloudtech`
 
 - 后端启动
 
-1. 部署启动依赖服务`MYSQL`和`TDengine`数据库  
-2. 需要`maven3+`, `java8+`和`lombok`环境  
-3. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
-4. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
+1. 需要`maven3+`, `java11`和`lombok`环境  
+2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
+3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
 
 - 前端启动
 

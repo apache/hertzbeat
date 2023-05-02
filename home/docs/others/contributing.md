@@ -36,8 +36,8 @@ Even small corrections to typos are very welcome :)
 
 - Backend start
 
-1. Requires `maven3+`, `java8+` and `lombok` environments
-2. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
+1. Requires `maven3+`, `java11` and `lombok` environments
+2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
 3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
 
 - Front-web start
@@ -45,9 +45,9 @@ Even small corrections to typos are very welcome :)
 1. Need `nodejs npm angular-cli` environment
 2. Install yarn: `npm install -g yarn`
 3. Execute under the front-end project directory web-app: `yarn install`
-5. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
-6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-7. Browser access to localhost:4200 to start, default account/passwd admin/hertzbeat
+4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
+5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
+6. Browser access to localhost:4200 to start, default account/passwd admin/hertzbeat
 
 ### Find tasks
 
