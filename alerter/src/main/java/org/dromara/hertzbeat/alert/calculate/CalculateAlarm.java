@@ -21,6 +21,7 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.googlecode.aviator.exception.CompileExpressionErrorException;
 import com.googlecode.aviator.exception.ExpressionRuntimeException;
+import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
@@ -163,10 +164,12 @@ public class CalculateAlarm {
                             try {
                                 Expression expression = AviatorEvaluator.compile(expr, true);
                                 match = (Boolean) expression.execute(fieldValueMap);
-                            } catch (CompileExpressionErrorException compileException) {
+                            } catch (CompileExpressionErrorException | ExpressionSyntaxErrorException compileException) {
                                 log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
                             } catch (ExpressionRuntimeException expressionRuntimeException) {
                                 log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
+                            } catch (Exception e) {
+                                log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
                             }
 
                             if (match != null && match) {

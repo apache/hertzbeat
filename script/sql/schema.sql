@@ -169,7 +169,7 @@ CREATE TABLE  hzb_alert_silence
     match_all      boolean          not null default true comment '是否应用匹配所有',
     priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
     tags           varchar(4000)    comment '匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
-    times          int              not null default 0 comment '已静默告警次数',
+    times          int              default 0 comment '已静默告警次数',
     type           tinyint          not null default 0 comment '静默类型 0:一次性静默 1:周期性静默',
     days           varchar(100)     comment '周期性静默时有效 星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六',
     period_start   timestamp        comment '静默时间段起始:00:00:00',
