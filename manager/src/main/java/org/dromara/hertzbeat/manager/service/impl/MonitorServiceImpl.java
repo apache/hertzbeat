@@ -330,7 +330,7 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
-                            if (StringUtils.hasText(param.getValue())) {
+                            if (!StringUtils.hasText(param.getValue())) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
                                         + paramDefine.getType() + " over limit " + param.getValue());
                             }
@@ -338,7 +338,7 @@ public class MonitorServiceImpl implements MonitorService {
                         case "text":
                             Short limit = paramDefine.getLimit();
                             if (limit != null) {
-                                if (param.getValue().length() > limit) {
+                                if (!StringUtils.hasText(param.getValue())) {
                                     throw new IllegalArgumentException("Params field " + field + " type "
                                             + paramDefine.getType() + " over limit " + limit);
                                 }
