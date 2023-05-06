@@ -31,10 +31,10 @@ import java.util.Map;
  * Created by gcdd1993 on 2023/4/22
  */
 @Slf4j
-class HuaweiyunSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
+class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
     @Resource
-    private HuaweiyunSmnAlertNotifyHandlerImpl huaweiyunSmnAlertNotifyHandler;
+    private HuaweiCloudSmnAlertNotifyHandlerImpl huaweiyunSmnAlertNotifyHandler;
 
     @Test
     void send() throws InterruptedException {

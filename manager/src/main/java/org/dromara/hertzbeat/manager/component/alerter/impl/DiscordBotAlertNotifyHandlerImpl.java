@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,10 +34,10 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                             .description(renderContent(alert))
                             .build()))
                     .build();
-
             var url = String.format(alerterProperties.getDiscordNotifyUrl(), receiver.getDiscordChannelId());
             var headers = new HttpHeaders();
             headers.add("Authorization", "Bot " + receiver.getDiscordBotToken());
+            headers.setContentType(MediaType.APPLICATION_JSON);
             var request = new HttpEntity<>(notifyBody, headers);
             var entity = restTemplate.postForEntity(url, request, DiscordResponseDTO.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
