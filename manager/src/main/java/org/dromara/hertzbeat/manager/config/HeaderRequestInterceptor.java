@@ -26,8 +26,6 @@ import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
 
-import static java.net.Proxy.Type.HTTP;
-
 /**
  * Rest Template interceptor adds request header information
  * restTemplate拦截器添加请求头信息
@@ -35,7 +33,7 @@ import static java.net.Proxy.Type.HTTP;
  *
  */
 public class HeaderRequestInterceptor implements ClientHttpRequestInterceptor {
-
+    
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
             throws IOException {

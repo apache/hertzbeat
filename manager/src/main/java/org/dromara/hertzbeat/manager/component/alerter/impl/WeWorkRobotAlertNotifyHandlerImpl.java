@@ -23,8 +23,7 @@ import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,8 +45,11 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
             markdownDTO.setContent(renderContent(alert));
             weWorkWebHookDTO.setMarkdown(markdownDTO);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<WeWorkWebHookDto> httpEntity = new HttpEntity<>(weWorkWebHookDTO, headers);
             String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
-            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, weWorkWebHookDTO, CommonRobotNotifyResp.class);
+            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, httpEntity, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {

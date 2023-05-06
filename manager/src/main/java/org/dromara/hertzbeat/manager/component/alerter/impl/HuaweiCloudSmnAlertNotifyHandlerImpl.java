@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class HuaweiyunSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     private final Map<String, SmnClient> smnClientMap = new ConcurrentHashMap<>();
@@ -57,7 +57,7 @@ final class HuaweiyunSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandle
                     .withMessage(renderContent(alert));
             request.withBody(body);
             var response = smnClient.publishMessage(request);
-            log.debug("huaweiyun smn alert response: {}", response);
+            log.debug("huaweiCloud smn alert response: {}", response);
         } catch (Exception e) {
             throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
         }

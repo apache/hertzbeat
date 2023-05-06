@@ -24,7 +24,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -51,8 +54,10 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             var slackNotify = SlackNotifyDTO.builder()
                     .text(renderContent(alert))
                     .build();
-
-            var entity = restTemplate.postForEntity(receiver.getSlackWebHookUrl(), slackNotify, String.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<SlackNotifyDTO> slackNotifyEntity = new HttpEntity<>(slackNotify, headers);
+            var entity = restTemplate.postForEntity(receiver.getSlackWebHookUrl(), slackNotifyEntity, String.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 var body = entity.getBody();
                 if (Objects.equals(SUCCESS, body)) {
