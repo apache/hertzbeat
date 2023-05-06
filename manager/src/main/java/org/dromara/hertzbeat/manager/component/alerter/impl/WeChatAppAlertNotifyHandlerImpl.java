@@ -70,8 +70,8 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
                         .build();
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<WeChatAppDTO> weChatAppDTOHttpEntity = new HttpEntity<>(weChatAppDTO, headers);
-                ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppDTOHttpEntity, WeChatAppReq.class);
+                HttpEntity<WeChatAppDTO> weChatAppEntity = new HttpEntity<>(weChatAppDTO, headers);
+                ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppEntity, WeChatAppReq.class);
                 if (Objects.nonNull(response.getBody()) && !Objects.equals(response.getBody().getErrCode(), 0)) {
                     log.warn("Send Enterprise WeChat App Error: {} Failed: {}", receiver.getHookUrl(), response.getBody().getErrMsg());
                     throw new AlertNoticeException("Http StatusCode " + response.getStatusCode());

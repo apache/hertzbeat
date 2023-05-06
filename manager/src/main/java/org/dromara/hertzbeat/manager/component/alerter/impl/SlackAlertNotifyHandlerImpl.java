@@ -56,8 +56,8 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
                     .build();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<SlackNotifyDTO> slackNotifyDTOHttpEntity = new HttpEntity<>(slackNotify, headers);
-            var entity = restTemplate.postForEntity(receiver.getSlackWebHookUrl(), slackNotifyDTOHttpEntity, String.class);
+            HttpEntity<SlackNotifyDTO> slackNotifyEntity = new HttpEntity<>(slackNotify, headers);
+            var entity = restTemplate.postForEntity(receiver.getSlackWebHookUrl(), slackNotifyEntity, String.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 var body = entity.getBody();
                 if (Objects.equals(SUCCESS, body)) {
