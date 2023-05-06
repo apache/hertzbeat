@@ -330,18 +330,17 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
                             break;
                         case "textarea":
-                            if (StringUtils.hasText(param.getValue())) {
+                            Short textareaLimit = paramDefine.getLimit();
+                            if (textareaLimit != null && param.getValue().length() > textareaLimit) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
                                         + paramDefine.getType() + " over limit " + param.getValue());
                             }
                             break;
                         case "text":
-                            Short limit = paramDefine.getLimit();
-                            if (limit != null) {
-                                if (param.getValue().length() > limit) {
-                                    throw new IllegalArgumentException("Params field " + field + " type "
-                                            + paramDefine.getType() + " over limit " + limit);
-                                }
+                            Short textLimit = paramDefine.getLimit();
+                            if (textLimit != null && param.getValue().length() > textLimit) {
+                                throw new IllegalArgumentException("Params field " + field + " type "
+                                        + paramDefine.getType() + " over limit " + textLimit);
                             }
                             break;
                         case "host":
@@ -364,9 +363,7 @@ public class MonitorServiceImpl implements MonitorService {
                         case "boolean":
                             // boolean check
                             String booleanValue = param.getValue();
-                            try {
-                                Boolean.parseBoolean(booleanValue);
-                            } catch (Exception e) {
+                            if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + booleanValue + " is invalid boolean value.");
                             }
@@ -405,9 +402,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "key-value":
-                            try {
-                                JsonUtil.toJson(param.getValue());
-                            } catch (Exception e) {
+                            if (JsonUtil.fromJson(param.getValue()) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
                             }
