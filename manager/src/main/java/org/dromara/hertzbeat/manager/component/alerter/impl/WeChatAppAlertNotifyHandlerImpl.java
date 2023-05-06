@@ -9,6 +9,9 @@ import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -65,7 +68,10 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
                         .agentId(agentId)
                         .text(textDTO)
                         .build();
-                ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppDTO, WeChatAppReq.class);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<WeChatAppDTO> weChatAppDTOHttpEntity = new HttpEntity<>(weChatAppDTO, headers);
+                ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppDTOHttpEntity, WeChatAppReq.class);
                 if (Objects.nonNull(response.getBody()) && !Objects.equals(response.getBody().getErrCode(), 0)) {
                     log.warn("Send Enterprise WeChat App Error: {} Failed: {}", receiver.getHookUrl(), response.getBody().getErrMsg());
                     throw new AlertNoticeException("Http StatusCode " + response.getStatusCode());
