@@ -169,9 +169,9 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       # ssh run collect script
-      script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
+      script: uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g"
       # ssh response data parse type: oneRow, multiRow
-      parseType: multiRow
+      parseType: oneRow
 
   - name: cpu
     priority: 1
@@ -216,43 +216,43 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
-      script: "LANG=C lscpu | awk -F: '$1==\"Model name\" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
+      script: "dmesg | grep -i cpu | awk 'NR==1';sysctl hw.ncpu | awk '{print $2}';uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
       parseType: oneRow
 
   - name: memory
     priority: 2
     fields:
-      - field: total
+      - field: physmem
         type: 0
         unit: Mb
-      - field: used
+      - field: usermem
         type: 0
         unit: Mb
-      - field: free
+      - field: realmem
         type: 0
         unit: Mb
-      - field: buff_cache
-        type: 0
-        unit: Mb
-      - field: available
+      - field: availmem
         type: 0
         unit: Mb
       - field: usage
         type: 0
         unit: '%'
     aliasFields:
-      - total
-      - used
-      - free
-      - buff_cache
-      - available
+      - physmem
+      - usermem
+      - realmem
+      - availmem
     calculates:
-      - total=total
-      - used=used
-      - free=free
-      - buff_cache=buff_cache
-      - available=available
-      - usage=(used / total) * 100
+      - physmem=physmem
+      - usermem=usermem
+      - realmem=realmem
+      - availmem=availmem
+      - usage=((realmem - availmem) / realmem) * 100
+    units:
+      - physmem=B->MB
+      - usermem=B->MB
+      - realmem=B->MB
+      - availmem=B->MB
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -261,62 +261,11 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
-      script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
-      parseType: multiRow
-
-  - name: disk
-    priority: 3
-    fields:
-      - field: disk_num
-        type: 0
-        unit: 'block'
-      - field: partition_num
-        type: 0
-      - field: block_write
-        type: 0
-        unit: 'block'
-      - field: block_read
-        type: 0
-        unit: 'block'
-      - field: write_rate
-        type: 0
-        unit: iops
-    protocol: ssh
-    ssh:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      privateKey: ^_^privateKey^_^
-      timeout: ^_^timeout^_^
-      script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
+      script: sysctl hw | egrep 'hw.(phys|user|real)' | awk '{print $2}';dmesg | grep memory | grep avail | awk '{print $4}';
       parseType: oneRow
 
-  - name: interface
-    priority: 4
-    fields:
-      - field: interface_name
-        type: 1
-        instance: true
-      - field: receive_bytes
-        type: 0
-        unit: byte
-      - field: transmit_bytes
-        type: 0
-        unit: byte
-    protocol: ssh
-    ssh:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      privateKey: ^_^privateKey^_^
-      timeout: ^_^timeout^_^
-      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
-      parseType: multiRow
-
   - name: disk_free
-    priority: 5
+    priority: 3
     fields:
       - field: filesystem
         type: 1
@@ -344,7 +293,7 @@ metrics:
       parseType: multiRow
 
   - name: top_cpu_process
-    priority: 6
+    priority: 3
     fields:
       - field: pid
         type: 1
@@ -369,7 +318,7 @@ metrics:
       parseType: multiRow
 
   - name: top_mem_process
-    priority: 7
+    priority: 3
     fields:
       - field: pid
         type: 1
