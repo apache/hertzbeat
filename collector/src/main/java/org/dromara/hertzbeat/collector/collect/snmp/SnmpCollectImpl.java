@@ -185,6 +185,12 @@ public class SnmpCollectImpl extends AbstractCollect {
                         } else {
                             String oid = oidMap.get(alias);
                             String value = oidsValueMap.get(oid);
+                            for (String key : oidsValueMap.keySet()) { // 获取leaf
+                                if (key.startsWith(oid)){
+                                    value = oidsValueMap.get(key);
+                                    break;
+                                }
+                            }
                             if (value != null) {
                                 valueRowBuilder.addColumns(value);
                             } else {
