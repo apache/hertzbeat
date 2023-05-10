@@ -27,8 +27,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -55,7 +54,10 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
                     .text(renderContent(alert))
                     .disableWebPagePreview(true)
                     .build();
-            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, notifyBody, TelegramBotNotifyResponse.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<TelegramBotNotifyDTO> telegramEntity = new HttpEntity<>(notifyBody, headers);
+            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity, TelegramBotNotifyResponse.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 TelegramBotNotifyResponse body = entity.getBody();
                 if (body.ok) {
