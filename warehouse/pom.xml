@@ -25,7 +25,7 @@
     </parent>
     <properties>
         <common.version>1.0</common.version>
-        <iotdb-session.version>1.0.0</iotdb-session.version>
+        <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
