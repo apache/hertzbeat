@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
@@ -402,7 +403,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "key-value":
-                            if (JsonUtil.fromJson(param.getValue()) == null) {
+                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {}) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
                             }

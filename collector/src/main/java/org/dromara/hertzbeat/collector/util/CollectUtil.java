@@ -290,7 +290,8 @@ public class CollectUtil {
                     Configmap param = configmap.get(key);
                     if (param != null && param.getType() == (byte) 3) {
                         String jsonValue = (String) param.getValue();
-                        Map<String, String> map = JsonUtil.fromJson(jsonValue, new TypeReference<>() {});
+                        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+                        Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
                                 if (name != null && !"".equals(name.trim())) {

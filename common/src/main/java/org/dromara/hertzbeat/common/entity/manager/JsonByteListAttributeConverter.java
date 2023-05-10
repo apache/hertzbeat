@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import javax.persistence.AttributeConverter;
 import java.util.List;
+import java.util.Map;
 
 /**
  * json 互转list Byte 对象字段为数据String字段
@@ -37,6 +38,7 @@ public class JsonByteListAttributeConverter implements AttributeConverter<List<B
 
     @Override
     public List<Byte> convertToEntityAttribute(String dbData) {
-        return JsonUtil.fromJson(dbData, new TypeReference<>() {});
+        TypeReference<List<Byte>> typeReference = new TypeReference<>() {};
+        return JsonUtil.fromJson(dbData, typeReference);
     }
 }

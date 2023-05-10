@@ -80,9 +80,4 @@ public class JsonUtil {
         }
     }
     
-    public static <T> T fromJson(String jsonStr) {
-        return fromJson(jsonStr, new TypeReference<>() {});
-    }
-
-
 }
