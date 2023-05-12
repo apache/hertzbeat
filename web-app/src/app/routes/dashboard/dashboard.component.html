@@ -2,14 +2,14 @@
   <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
     <a [routerLink]="['/monitors']" [queryParams]="{ app: 'website' }">
       <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-        <div nz-col nzSpan="10" class="p-md text-white">
+        <div nz-col nzSpan="9" class="p-md text-white">
           <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
           <p class="h5 text-nowrap mb0">
             <i nz-icon nzType="cloud" nzTheme="outline"></i>
             {{ 'monitor.category.service' | i18n }}
           </p>
         </div>
-        <div nz-col nzSpan="14">
+        <div nz-col nzSpan="15">
           <nz-tag class="mb-xs">
             <span>{{ 'monitor.status.available' | i18n }} </span
             ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
@@ -28,14 +28,14 @@
   <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
     <a [routerLink]="['/monitors']" [queryParams]="{ app: 'mysql' }">
       <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-        <div nz-col nzSpan="10" class="p-md text-white">
+        <div nz-col nzSpan="9" class="p-md text-white">
           <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
           <p class="h5 text-nowrap mb0">
             <i nz-icon nzType="database" nzTheme="outline"></i>
             {{ 'monitor.category.db' | i18n }}
           </p>
         </div>
-        <div nz-col nzSpan="14">
+        <div nz-col nzSpan="15">
           <nz-tag class="mb-xs">
             <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
           </nz-tag>
@@ -52,14 +52,14 @@
   <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
     <a [routerLink]="['/monitors']" [queryParams]="{ app: 'linux' }">
       <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-        <div nz-col nzSpan="10" class="p-md text-white">
+        <div nz-col nzSpan="9" class="p-md text-white">
           <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
           <p class="h5 text-nowrap mb0">
             <i nz-icon nzType="windows" nzTheme="outline"></i>
             {{ 'monitor.category.os' | i18n }}
           </p>
         </div>
-        <div nz-col nzSpan="14">
+        <div nz-col nzSpan="15">
           <nz-tag class="mb-xs">
             <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
           </nz-tag>
@@ -76,14 +76,14 @@
   <div nz-col nzXs="24" nzSm="12" nzMd="6" class="mb-md hoverCard">
     <a [routerLink]="['/monitors']" [queryParams]="{ app: 'kafka' }">
       <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-        <div nz-col nzSpan="10" class="p-md text-white">
+        <div nz-col nzSpan="9" class="p-md text-white">
           <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
           <p class="h5 text-nowrap mb0">
             <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
             {{ 'monitor.category.mid' | i18n }}
           </p>
         </div>
-        <div nz-col nzSpan="14">
+        <div nz-col nzSpan="15">
           <nz-tag class="mb-xs">
             <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
           </nz-tag>
