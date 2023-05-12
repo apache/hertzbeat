@@ -1,4 +1,3 @@
-// 请参考：https://ng-alain.com/docs/i18n
 import { Platform } from '@angular/cdk/platform';
 import { registerLocaleData } from '@angular/common';
 import ngEn from '@angular/common/locales/en';
@@ -107,8 +106,6 @@ export class I18NService extends AlainI18nBaseService {
   }
 
   use(lang: string, data: Record<string, unknown>): void {
-    if (this._currentLang === lang) return;
-
     this._data = this.flatData(data, []);
 
     const item = LANGS[lang];
