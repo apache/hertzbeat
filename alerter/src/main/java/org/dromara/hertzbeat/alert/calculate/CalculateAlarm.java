@@ -59,6 +59,8 @@ public class CalculateAlarm {
      * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
     public Map<String, Alert> triggeredAlertMap;
+    
+    public Set<Long> unAvailableMonitors;
 
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
@@ -77,21 +79,13 @@ public class CalculateAlarm {
         this.alerterProperties = alerterProperties;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
+        this.unAvailableMonitors = Collections.synchronizedSet(new HashSet<>(16));
         // Initialize stateAlertMap
         // 初始化stateAlertMap
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
-                CommonConstants.UN_REACHABLE_CODE));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
-                Alert.AlertBuilder alertBuilder = Alert.builder()
-                        .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
-                        .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
-                        .target(CommonConstants.AVAILABILITY)
-                        .firstTriggerTime(System.currentTimeMillis())
-                        .lastTriggerTime(System.currentTimeMillis())
-                        .nextEvalInterval(0L)
-                        .times(0);
-                this.triggeredAlertMap.put(String.valueOf(monitor.getId()), alertBuilder.build());
+                this.unAvailableMonitors.add(monitor.getId());
             }
         }
         startCalculate();
@@ -252,17 +246,14 @@ public class CalculateAlarm {
         } else {
             // Check whether an availability or unreachable alarm is generated before the association monitoring, and send a clear alarm to clear the monitoring status
             // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
-            Alert preAlert = triggeredAlertMap.remove(String.valueOf(monitorId));
-            if (preAlert != null && preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
-                // Sending an alarm cleared
-                // 发送告警恢复
+            triggeredAlertMap.remove(String.valueOf(monitorId));
+            boolean isRestartUnavailable = unAvailableMonitors.remove(monitorId);
+            if (isRestartUnavailable) {
+                // Sending an alarm Restore
                 Map<String, String> tags = new HashMap<>(6);
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
                 String content = this.bundle.getString("alerter.availability.resolved");
-                if (CommonConstants.REACHABLE.equals(preAlert.getTarget())) {
-                    content = this.bundle.getString("alerter.reachability.resolved");
-                }
                 long currentTimeMilli = System.currentTimeMillis();
                 Alert resumeAlert = Alert.builder()
                         .tags(tags)
@@ -284,7 +275,6 @@ public class CalculateAlarm {
         if (avaAlertDefine == null) {
             return;
         }
-        String monitorKey = String.valueOf(monitorId);
         Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
         long currentTimeMill = System.currentTimeMillis();
         Map<String, String> tags = new HashMap<>(6);
@@ -307,10 +297,11 @@ public class CalculateAlarm {
                     .times(1);
             if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
                 silenceAlarm.filterSilenceAndSendData(alertBuilder.build().clone());
+                unAvailableMonitors.add(monitorId);
             } else {
                 alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }
-            triggeredAlertMap.put(monitorKey, alertBuilder.build());
+            triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
         } else {
             int times = preAlert.getTimes() + 1;
             if (preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
@@ -324,6 +315,7 @@ public class CalculateAlarm {
             if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
                 silenceAlarm.filterSilenceAndSendData(preAlert);
+                unAvailableMonitors.add(monitorId);
             } else {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }

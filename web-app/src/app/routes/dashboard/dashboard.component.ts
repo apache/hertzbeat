@@ -292,35 +292,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 this.appCountService.availableSize += app.availableSize;
                 this.appCountService.unAvailableSize += app.unAvailableSize;
                 this.appCountService.unManageSize += app.unManageSize;
-                this.appCountService.unReachableSize += app.unReachableSize;
                 break;
               case 'db':
                 this.appCountDb.size += app.size;
                 this.appCountDb.availableSize += app.availableSize;
                 this.appCountDb.unAvailableSize += app.unAvailableSize;
                 this.appCountDb.unManageSize += app.unManageSize;
-                this.appCountDb.unReachableSize += app.unReachableSize;
                 break;
               case 'os':
                 this.appCountOs.size += app.size;
                 this.appCountOs.availableSize += app.availableSize;
                 this.appCountOs.unAvailableSize += app.unAvailableSize;
                 this.appCountOs.unManageSize += app.unManageSize;
-                this.appCountOs.unReachableSize += app.unReachableSize;
                 break;
               case 'mid':
                 this.appCountMid.size += app.size;
                 this.appCountMid.availableSize += app.availableSize;
                 this.appCountMid.unAvailableSize += app.unAvailableSize;
                 this.appCountMid.unManageSize += app.unManageSize;
-                this.appCountMid.unReachableSize += app.unReachableSize;
                 break;
               case 'custom':
                 this.appCountCustom.size += app.size;
                 this.appCountCustom.availableSize += app.availableSize;
                 this.appCountCustom.unAvailableSize += app.unAvailableSize;
                 this.appCountCustom.unManageSize += app.unManageSize;
-                this.appCountCustom.unReachableSize += app.unReachableSize;
                 break;
             }
           });

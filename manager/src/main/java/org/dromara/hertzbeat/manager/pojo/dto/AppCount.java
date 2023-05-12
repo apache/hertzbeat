@@ -64,8 +64,4 @@ public class AppCount {
      * 监控状态不可用的数量
      */
     private long unAvailableSize;
-    /**
-     * 监控状态不可达的数量
-     */
-    private long unReachableSize;
 }
