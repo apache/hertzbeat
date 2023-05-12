@@ -5,5 +5,4 @@ export class AppCount {
   availableSize: number = 0;
   unManageSize: number = 0;
   unAvailableSize: number = 0;
-  unReachableSize: number = 0;
 }
