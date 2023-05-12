@@ -79,8 +79,7 @@ public class CalculateAlarm {
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         // Initialize stateAlertMap
         // 初始化stateAlertMap
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusIn(Arrays.asList(CommonConstants.UN_AVAILABLE_CODE,
-                CommonConstants.UN_REACHABLE_CODE));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
                 Alert.AlertBuilder alertBuilder = Alert.builder()
@@ -260,9 +259,6 @@ public class CalculateAlarm {
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
                 String content = this.bundle.getString("alerter.availability.resolved");
-                if (CommonConstants.REACHABLE.equals(preAlert.getTarget())) {
-                    content = this.bundle.getString("alerter.reachability.resolved");
-                }
                 long currentTimeMilli = System.currentTimeMillis();
                 Alert resumeAlert = Alert.builder()
                         .tags(tags)
