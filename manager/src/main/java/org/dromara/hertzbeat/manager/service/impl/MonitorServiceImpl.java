@@ -449,6 +449,7 @@ public class MonitorServiceImpl implements MonitorService {
             // Construct the collection task Job entity
             // 构造采集任务Job实体
             Job appDefine = appService.getAppDefine(monitor.getApp());
+            appDefine.setId(preMonitor.getJobId());
             appDefine.setMonitorId(monitorId);
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
