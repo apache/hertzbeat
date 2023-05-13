@@ -282,6 +282,8 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wyt990"><img src="https://avatars.githubusercontent.com/u/86013697?v=4?s=100" width="100px;" alt="wyt990"/><br /><sub><b>wyt990</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wyt990" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/licocon"><img src="https://avatars.githubusercontent.com/u/36863277?v=4?s=100" width="100px;" alt="licocon"/><br /><sub><b>licocon</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=licocon" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/2406450951"><img src="https://avatars.githubusercontent.com/u/48074721?v=4?s=100" width="100px;" alt="Mi Na"/><br /><sub><b>Mi Na</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=2406450951" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kylin-Guo"><img src="https://avatars.githubusercontent.com/u/131239856?v=4?s=100" width="100px;" alt="Kylin-Guo"/><br /><sub><b>Kylin-Guo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Kylin-Guo" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/1797899698"><img src="https://avatars.githubusercontent.com/u/40411650?v=4?s=100" width="100px;" alt="Mr灬Dong先生"/><br /><sub><b>Mr灬Dong先生</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1797899698" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

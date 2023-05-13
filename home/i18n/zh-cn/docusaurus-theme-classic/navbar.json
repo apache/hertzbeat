@@ -54,5 +54,13 @@
   "item.label.enterprise": {
     "message": "企业版",
     "description": "Navbar item with label enterprise"
+  },
+  "item.label.开源之夏": {
+    "message": "开源之夏",
+    "description": "Navbar item with label 开源之夏"
+  },
+  "item.label.华为云开源活动": {
+    "message": "华为云开源活动",
+    "description": "Navbar item with label 华为云开源活动"
   }
 }

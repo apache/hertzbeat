@@ -189,17 +189,6 @@ public interface CommonConstants {
     String AVAILABILITY = "availability";
 
     /**
-     * Availability Object
-     * 可用性对象
-     */
-    String AVAILABLE = "available";
-
-    /**
-     * Reachability Object可达性对象
-     */
-    String REACHABLE = "reachable";
-
-    /**
      * Parameter Type Number
      * 参数类型 数字
      */

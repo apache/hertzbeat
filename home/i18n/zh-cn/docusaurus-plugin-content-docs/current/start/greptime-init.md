@@ -27,7 +27,7 @@ $ docker run -p 4000-4004:4000-4004 \
     --name greptime \
     greptime/greptimedb standalone start \
     --http-addr 0.0.0.0:4000 \
-    --rpc-addr 0.0.0.0:4001 \
+    --rpc-addr 0.0.0.0:4001 
 ```
 
    `-v /opt/greptimedb:/tmp/greptimedb` 为greptimedb数据目录本地持久化挂载，需将`/opt/greptimedb`替换为实际本地存在的目录

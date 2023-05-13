@@ -58,5 +58,13 @@
   "sidebar.docs.category.cloud-native": {
     "message": "CloudNative",
     "description": "The label for category cloud-native in sidebar docs"
+  },
+  "sidebar.docs.link.Cloud Service": {
+    "message": "Cloud Service",
+    "description": "The label for link Cloud Service in sidebar docs, linking to https://console.tancloud.cn"
+  },
+  "sidebar.docs.link.Install via HuaweiCloud": {
+    "message": "Install via HuaweiCloud",
+    "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
   }
 }

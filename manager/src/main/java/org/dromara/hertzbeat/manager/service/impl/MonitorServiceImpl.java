@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
@@ -54,7 +55,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -402,7 +402,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "key-value":
-                            if (JsonUtil.fromJson(param.getValue()) == null) {
+                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {}) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
                             }
@@ -449,6 +449,7 @@ public class MonitorServiceImpl implements MonitorService {
             // Construct the collection task Job entity
             // 构造采集任务Job实体
             Job appDefine = appService.getAppDefine(monitor.getApp());
+            appDefine.setId(preMonitor.getJobId());
             appDefine.setMonitorId(monitorId);
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
@@ -612,9 +613,6 @@ public class MonitorServiceImpl implements MonitorService {
                 case CommonConstants.UN_MANAGE_CODE:
                     appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
                     break;
-                case CommonConstants.UN_REACHABLE_CODE:
-                    appCount.setUnReachableSize(appCount.getUnReachableSize() + item.getSize());
-                    break;
                 default:
                     break;
             }
@@ -623,8 +621,7 @@ public class MonitorServiceImpl implements MonitorService {
         //Traverse the map obtained by statistics and convert it into a List<App Count> result set
         //遍历统计得到的map，转换成List<App Count>结果集
         return appCountMap.values().stream().map(item -> {
-            item.setSize(item.getAvailableSize() + item.getUnManageSize()
-                    + item.getUnReachableSize() + item.getUnAvailableSize());
+            item.setSize(item.getAvailableSize() + item.getUnManageSize() + item.getUnAvailableSize());
             try {
                 Job job = appService.getAppDefine(item.getApp());
                 item.setCategory(job.getCategory());

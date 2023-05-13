@@ -37,6 +37,7 @@ public class JsonMapAttributeConverter implements AttributeConverter<Map<String,
 
     @Override
     public Map<String, String> convertToEntityAttribute(String dbData) {
-        return JsonUtil.fromJson(dbData, new TypeReference<>() {});
+        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+        return JsonUtil.fromJson(dbData, typeReference);
     }
 }
