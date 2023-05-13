@@ -17,17 +17,23 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.dromara.hertzbeat.manager.config.MailConfigProperties;
+import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
+import org.dromara.hertzbeat.manager.pojo.dto.MailConfig;
 import org.dromara.hertzbeat.manager.service.MailService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
@@ -42,19 +48,56 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("spring.mail.username")
 final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final JavaMailSender javaMailSender;
+
+    private final MailConfigProperties mailConfigProperties;
+
     private final MailService mailService;
 
     @Value("${spring.mail.username}")
     private String emailFromUser;
+
+    private final GeneralConfigDao generalConfigDao;
+
+    private final ObjectMapper objectMapper;
+
+    private static final Byte TYPE = 2;
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
         try {
+            //获取sender
+            JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
+
+
+            try {
+                GeneralConfig generalConfigFoundByType = generalConfigDao.findByType(TYPE);
+                boolean enabled = generalConfigFoundByType.isEnabled();
+                //若启用数据库配置
+                if (enabled == true) {
+                    String content = generalConfigFoundByType.getContent();
+                    MailConfig mailConfigByfind = objectMapper.readValue(content, MailConfig.class);
+                    sender.setHost(mailConfigByfind.getHost());
+                    sender.setPort(mailConfigByfind.getPort());
+                    sender.setUsername(mailConfigByfind.getUsername());
+                    sender.setPassword(mailConfigByfind.getPassword());
+                    emailFromUser = mailConfigByfind.getUsername();
+                }
+                //若启用yml配置
+                else {
+                    sender.setHost(mailConfigProperties.getHost());
+                    sender.setPort(mailConfigProperties.getPort());
+                    sender.setUsername(mailConfigProperties.getUsername());
+                    sender.setPassword(mailConfigProperties.getPassword());
+                    emailFromUser = mailConfigProperties.getUsername();
+                }
+            } catch (Exception e) {
+                log.error("Type not found {}",e.getMessage());
+            }
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject(bundle.getString("alerter.notify.title"));
