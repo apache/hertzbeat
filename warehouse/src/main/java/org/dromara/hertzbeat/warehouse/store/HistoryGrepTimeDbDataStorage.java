@@ -238,6 +238,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		log.debug("selectSql: {}", selectSql);
 		QueryRequest request = QueryRequest.newBuilder()
 				.exprType(SelectExprType.Sql)
+				.databaseName(STORAGE_DATABASE)
 				.ql(selectSql)
 				.build();
 		try {
@@ -249,8 +250,13 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				List<Map<String, Object>> maps = rows.collectToMaps();
 				List<Value> valueList;
 				for (Map<String, Object> map : maps) {
-					String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-					valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+					String instanceValue = map.get("instance") == null ? "" : map.get("instance").toString();
+					Object valueObj = map.get(metric);
+					if (valueObj == null) {
+						continue;
+					}
+					String strValue = new BigDecimal(valueObj.toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+					valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
 					valueList.add(new Value(strValue, (long) map.get("ts")));
 				}
 			}
@@ -301,6 +307,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 			log.debug("selectSql: {}", selectSql);
 			QueryRequest request = QueryRequest.newBuilder()
 					.exprType(SelectExprType.Sql)
+					.databaseName(STORAGE_DATABASE)
 					.ql(selectSql)
 					.build();
 			try {
@@ -357,6 +364,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				log.debug("selectSql: {}", selectSql);
 				QueryRequest request = QueryRequest.newBuilder()
 						.exprType(SelectExprType.Sql)
+						.databaseName(STORAGE_DATABASE)
 						.ql(selectSql)
 						.build();
 				List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
