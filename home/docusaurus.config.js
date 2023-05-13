@@ -82,11 +82,6 @@ module.exports = {
           to: 'blog/',
         },
         {
-          label: 'discuss',
-          position: 'left',
-          to: 'docs/others/contact',
-        },
-        {
           label: 'developer',
           position: 'left',
           to: 'docs/others/developer',
@@ -110,6 +105,10 @@ module.exports = {
           label: 'about',
           position: 'left',
           items: [
+            {
+              label: 'discuss',
+              to: 'docs/others/contact',
+            },
             {
               label: 'contributing',
               to: 'docs/others/contributing',

@@ -5,9 +5,19 @@
       "label": "quickstart",
       "items": [
         "introduce",
+        {
+          "type": "link",
+          "label": "Cloud Service",
+          "href": "https://console.tancloud.cn"
+        },
         "start/quickstart",
         "start/docker-deploy",
         "start/package-deploy",
+        {
+          "type": "link",
+          "label": "Install via HuaweiCloud",
+          "href": "https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+        },
         "start/rainbond-deploy",
         "start/iotdb-init",
         "start/tdengine-init",
