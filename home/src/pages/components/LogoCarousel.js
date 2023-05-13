@@ -47,6 +47,7 @@ export default class LogoCarousel extends React.Component {
             <>
                 <div className={styles.companyUsage} ref={this.containerRef}>
                     <h3>{this.props.headerTitle}</h3>
+                    <br/>
                     <div className={clsx(styles.logos)}>
                         {this.list()}
                     </div>

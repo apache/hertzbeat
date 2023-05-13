@@ -47,7 +47,7 @@ Even small corrections to typos are very welcome :)
 3. Execute under the front-end project directory web-app: `yarn install`
 4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
 5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-6. Browser access to localhost:4200 to start, default account/passwd admin/hertzbeat
+6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 ### Find tasks
 
@@ -68,7 +68,7 @@ git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended
 ```shell
 git checkout -b a-feature-branch #Recommended  
 ```
-5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
+5. Submit the coed as a commit, the commit message format specification required: [module name or type name] feature or bugfix or doc: custom message.
 ```shell
 git add <modified file/path> 
 git commit -m '[docs]feature: necessary instructions' #Recommended 
@@ -83,7 +83,7 @@ Please note that the title of the PR needs to conform to our spec, and write the
 
 ### Wait for the code to be merged
 
-After submitting the PR, the Committer or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.
+After submitting the PR, the Committee or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.
 
 If subsequent changes are required, there is no need to initiate a new PR. After submitting a commit on the original branch and pushing it to the remote repository, the PR will be automatically updated.
 

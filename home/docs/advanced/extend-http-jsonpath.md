@@ -80,7 +80,7 @@ The raw data returned by the interface is as follows：
 }
 ```
 
-We use the jsonpath script to parse, and the corresponding script is: `$.number[*]` ，The parsed data structure is as follows：  
+We use the jsonpath script to parse, and the corresponding script is: `$.number[*]`，The parsed data structure is as follows：  
 ```json
 [
   {
