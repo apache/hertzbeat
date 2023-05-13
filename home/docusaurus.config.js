@@ -93,12 +93,6 @@ module.exports = {
               label: 'contributors',
               href: 'docs/others/developer',
             },
-          ],
-        },
-        {
-          label: 'about',
-          position: 'left',
-          items: [
             {
               label: 'contributing',
               to: 'docs/others/contributing',
@@ -118,7 +112,7 @@ module.exports = {
             {
               label: 'resource',
               to: 'docs/others/resource',
-            },
+            }
           ],
         },
         {
