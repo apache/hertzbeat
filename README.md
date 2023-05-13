@@ -288,6 +288,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kylin-Guo"><img src="https://avatars.githubusercontent.com/u/131239856?v=4?s=100" width="100px;" alt="Kylin-Guo"/><br /><sub><b>Kylin-Guo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Kylin-Guo" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1797899698"><img src="https://avatars.githubusercontent.com/u/40411650?v=4?s=100" width="100px;" alt="Mr灬Dong先生"/><br /><sub><b>Mr灬Dong先生</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1797899698" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://neilblaze.live"><img src="https://avatars.githubusercontent.com/u/48355572?v=4?s=100" width="100px;" alt="Pratyay Banerjee"/><br /><sub><b>Pratyay Banerjee</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Neilblaze" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Neilblaze" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
