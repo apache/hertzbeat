@@ -3,7 +3,7 @@ id: postgresql-change
 title: Use PostgreSQL Replace H2 Database to Store Metadata(Optional)     
 sidebar_label: Use PostgreSQL Instead of H2
 ---
-PostgreSQL is a RDBMS emphasiing extensibility and SQL compliance.. In addition to default built-in H2 database, HertzBeat allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
+PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, HertzBeat allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
 
 > If you have the PostgreSQL environment, can be directly to database creation step.
 
@@ -37,7 +37,7 @@ PostgreSQL is a RDBMS emphasiing extensibility and SQL compliance.. In addition 
 
 1. Configure HertzBeat's configuration file
    Modify `hertzbeat/config/application.yml` configuration file
-   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`  
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`  
    Replace `spring.database` data source parameters, URL account and password.
 ```yaml
 spring:
@@ -47,7 +47,7 @@ spring:
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
 ```
-Specific replacement parameters is as follows and you need to configure account, ip, port according to the postgresql environment:
+Specific replacement parameters are as follows and you need to configure account, ip, port according to the postgresql environment:
 ```yaml
 spring:
    config:

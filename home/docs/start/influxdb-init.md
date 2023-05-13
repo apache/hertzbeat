@@ -43,7 +43,7 @@ Note⚠️ Need InfluxDB 1.x Version.
 
 1. Configure HertzBeat's configuration file   
    Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)        
-   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
    Replace `warehouse.store.influxdb` data source parameters, URL account and password.       
 
 ```yaml

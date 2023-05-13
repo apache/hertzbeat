@@ -5,7 +5,7 @@ sidebar_label: Install via Package
 ---
 > You can install and run HertzBeat on Linux Windows Mac system, and CPU supports X86/ARM64. Due to the installation package itself does not include the JAVA runtime environment, you need to prepare JAVA runtime environment in advance.
 
-1. Install JAVA runtime environment-refer to[official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
+1. Install JAVA runtime environment-refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
    requirement：JDK11 ENV     
    download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)   
    After installation use command line to check whether you install it successfully.   

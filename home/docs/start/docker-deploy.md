@@ -73,7 +73,7 @@ $ docker run -d -p 1157:1157 \
 **The most common problem is network problems, please check in advance**
 
 1. **MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
-The problems lies in Docker container failed to visit and connect localhost port. Beacuse the docker default network mode is Bridge mode which can't access loacl machine through localhost.
+The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
 > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
