@@ -24,7 +24,7 @@ sidebar_label: Contributors
 
 ## ✨ HertzBeat Contributors
 
-Thanks these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
+Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
 
 <img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>  
 

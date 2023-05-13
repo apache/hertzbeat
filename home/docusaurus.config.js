@@ -67,12 +67,7 @@ module.exports = {
       },
       items: [
         {
-          label: 'main',
-          position: 'left',
-          to: '/',
-        },
-        {
-          label: 'document',
+          label: 'Docs',
           position: 'left',
           to: 'docs/',
         },
@@ -82,29 +77,23 @@ module.exports = {
           to: 'blog/',
         },
         {
-          label: 'discuss',
-          position: 'left',
-          to: 'docs/others/contact',
-        },
-        {
-          label: 'developer',
-          position: 'left',
-          to: 'docs/others/developer',
-        },
-        {
-          label: '开源之夏',
-          position: 'left',
-          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
-        },
-        {
-          label: '华为云开源活动',
-          position: 'left',
-          to: 'docs/others/huaweicloud',
-        },
-        {
           label: 'enterprise',
           position: 'left',
           to: 'docs/others/private',
+        },
+        {
+          label: 'Others',
+          position: 'left',
+          items: [
+            {
+              label: 'discuss',
+              to: 'docs/others/contact',
+            },
+            {
+              label: 'contributors',
+              href: 'docs/others/developer',
+            },
+          ],
         },
         {
           label: 'about',
@@ -131,6 +120,16 @@ module.exports = {
               to: 'docs/others/resource',
             },
           ],
+        },
+        {
+          label: '开源之夏',
+          position: 'left',
+          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
+        },
+        {
+          label: '华为云开源活动',
+          position: 'left',
+          to: 'docs/others/huaweicloud',
         },
         {
           type: 'docsVersionDropdown',

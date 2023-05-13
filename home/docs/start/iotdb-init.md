@@ -37,7 +37,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 3. Configure the database connection in hertzbeat `application.yml`configuration file 
 
    Modify `hertzbeat/config/application.yml` configuration file     
-   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
    Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
 
 ```
