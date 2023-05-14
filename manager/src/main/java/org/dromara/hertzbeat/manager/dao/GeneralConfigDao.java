@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
  *
  * @version 1.0
  * @since 2023/5/9 22:39
+ * @author zqr10159
  */
 @Component
 public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
