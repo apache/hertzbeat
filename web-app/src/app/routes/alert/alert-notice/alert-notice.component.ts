@@ -27,7 +27,7 @@ export class AlertNoticeComponent implements OnInit {
     private noticeRuleSvc: NoticeRuleService,
     private tagService: TagService,
 
-  @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   receivers!: NoticeReceiver[];
@@ -37,11 +37,10 @@ export class AlertNoticeComponent implements OnInit {
   senders!: NoticeSender[];
   senderTableLoading: boolean = true;
 
-
   ngOnInit(): void {
     this.loadReceiversTable();
     this.loadRulesTable();
-    this.loadSendersTable()
+    this.loadSendersTable();
   }
   syncReceiver() {
     this.loadReceiversTable();
