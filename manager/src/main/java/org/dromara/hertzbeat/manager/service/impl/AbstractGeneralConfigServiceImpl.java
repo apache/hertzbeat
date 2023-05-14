@@ -9,6 +9,9 @@ import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
 import org.dromara.hertzbeat.manager.service.GeneralConfigService;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigService<T> {
     protected final GeneralConfigDao generalConfigDao;
@@ -62,9 +65,25 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
         try {
             return objectMapper.readValue(generalConfig.getContent(), getTypeReference());
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("获取设备失败|Get configuration failed");
+            throw new RuntimeException("获取配置失败|Get configuration failed");
         }
     }
+
+    @Override
+    public List<T> getConfigs() {
+        List<GeneralConfig> configs = generalConfigDao.findAll();
+        List<T> result = new ArrayList<>();
+        for (GeneralConfig config : configs) {
+            try {
+                T t = objectMapper.readValue(config.getContent(), getTypeReference());
+                result.add(t);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("获取配置失败|Get configuration failed");
+            }
+        }
+        return result;
+    }
+
     protected abstract TypeReference<T> getTypeReference();
 
 }

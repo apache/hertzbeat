@@ -27,10 +27,9 @@ import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.config.MailConfigProperties;
 import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
-import org.dromara.hertzbeat.manager.pojo.dto.MailConfig;
+import org.dromara.hertzbeat.manager.pojo.dto.NoticeSender;
 import org.dromara.hertzbeat.manager.service.MailService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -80,12 +79,12 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 //若启用数据库配置
                 if (enabled == true) {
                     String content = generalConfigFoundByType.getContent();
-                    MailConfig mailConfigByfind = objectMapper.readValue(content, MailConfig.class);
-                    sender.setHost(mailConfigByfind.getHost());
-                    sender.setPort(mailConfigByfind.getPort());
-                    sender.setUsername(mailConfigByfind.getUsername());
-                    sender.setPassword(mailConfigByfind.getPassword());
-                    emailFromUser = mailConfigByfind.getUsername();
+                    NoticeSender noticeSenderByfind = objectMapper.readValue(content, NoticeSender.class);
+                    sender.setHost(noticeSenderByfind.getEmailHost());
+                    sender.setPort(noticeSenderByfind.getEmailPort());
+                    sender.setUsername(noticeSenderByfind.getEmailUsername());
+                    sender.setPassword(noticeSenderByfind.getEmailPassword());
+                    emailFromUser = noticeSenderByfind.getEmailUsername();
                 }
                 //若启用yml配置
                 else {
