@@ -27,7 +27,6 @@ public class MailConfigProperties {
     private String username;
     private String password;
     private Integer port;
-    private String defaultEncoding;
 
     @Bean
     public JavaMailSender javaMailSender() {
@@ -42,7 +41,7 @@ public class MailConfigProperties {
         props.put("spring.mail.smtp.socketFactory.port", port);
         props.put("spring.mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         props.put("spring.mail.debug", "false");
-        props.put("spring.mail.default-encoding", defaultEncoding);
+        props.put("spring.mail.default-encoding", "UTF-8");
 
         return mailSender;
     }

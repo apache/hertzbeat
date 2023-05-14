@@ -87,19 +87,14 @@ spring:
     # Attention: this is mail server address.
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.qq.com
-    username: example@tancloud.cn
+    username: tancloud@qq.com
     # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
-    password: example
-    port: 465
-    default-encoding: UTF-8
-    properties:
-      mail:
-        smtp:
-          socketFactoryClass: javax.net.ssl.SSLSocketFactory
-          ssl:
-            enable: true
-        debug: false
+    password: yourpassword
+    #Attention: Tencent mail smtps 465,smtp 587
+    #请注意腾讯邮箱465为smtps,587为smtp
+    port: 587
+
 
 warehouse:
   store:
