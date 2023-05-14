@@ -12,6 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 提供通用配置Service的抽象实现，实现了增删查改等操作。
+ *
+ * <p>Abstract implementation of GeneralConfigService, providing CRUD operations for configurations.</p>
+ * @author zqr10159
+ * @param <T> 配置类型
+ * @version 1.0
+ */
 @Slf4j
 abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigService<T> {
     protected final GeneralConfigDao generalConfigDao;
@@ -19,12 +27,29 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     protected Byte type;
     protected boolean enabled;
 
+    /**
+     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
+     *
+     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
+     *
+     * @param generalConfigDao 配置Dao对象
+     * @param objectMapper JSON工具类对象
+     * @param type 配置类型
+     */
     protected AbstractGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper, Byte type) {
         this.generalConfigDao = generalConfigDao;
         this.objectMapper = objectMapper;
         this.type = type;
     }
 
+    /**
+     * 保存配置。
+     *
+     * <p>Save a configuration.</p>
+     *
+     * @param config 需要保存的配置对象
+     * @param enabled 是否启用
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveConfig(T config, boolean enabled) {
@@ -43,6 +68,11 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
         }
     }
 
+    /**
+     * 删除配置。
+     *
+     * <p>Delete a configuration.</p>
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void deleteConfig() {
@@ -56,6 +86,13 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
         log.info("配置项删除成功|Configuration deleted successfully");
     }
 
+    /**
+     * 获取配置。
+     *
+     * <p>Get a configuration.</p>
+     *
+     * @return 查询到的配置对象
+     */
     @Override
     public T getConfig() {
         GeneralConfig generalConfig = generalConfigDao.findByType(type);
@@ -69,6 +106,13 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
         }
     }
 
+    /**
+     * 获取所有配置。
+     *
+     * <p>Get all configurations.</p>
+     *
+     * @return 查询到的所有配置对象集合
+     */
     @Override
     public List<T> getConfigs() {
         List<GeneralConfig> configs = generalConfigDao.findAll();
@@ -84,6 +128,13 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
         return result;
     }
 
+    /**
+     * 获取配置类型的TypeReference对象。
+     *
+     * <p>Get TypeReference object of configuration type.</p>
+     *
+     * @return 配置类型的TypeReference对象
+     */
     protected abstract TypeReference<T> getTypeReference();
 
 }
