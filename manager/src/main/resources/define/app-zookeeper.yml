@@ -81,37 +81,6 @@ params:
     # default value
     # 默认值
     defaultValue: 6000
-  # field-param field key
-  # field-变量字段标识符
-  - field: username
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 用户名
-      en-US: Username
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # when type is text, use limit to limit string length
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 20
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: true
-  # field-param field key
-  # field-变量字段标识符
-  - field: password
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 密码
-      en-US: Password
-    # type-param field type(most mapping the html input tag)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: password
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
@@ -154,23 +123,16 @@ metrics:
       - field: serverId
         type: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: ssh
-    ssh:
-      # ssh host: ipv4 ipv6 domain
+    protocol: telnet
+    telnet:
+      # telnet host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # ssh port: 22
+      # telnet port: 22
       port: ^_^port^_^
-      # ssh account username
-      username: ^_^username^_^
-      # ssh account password
-      password: ^_^password^_^
-      # ssh connect timeout
+      # telnet connect timeout
       timeout: ^_^timeout^_^
-      # ssh collect script
-      script: echo conf | nc 121.40.113.44 2181
-      # ssh parse response data type
-      parseType: netcat
-
+      # telnet collect cmd
+      cmd: conf
   - name: stats
     priority: 1
     fields:
@@ -217,12 +179,9 @@ metrics:
       - field: zk_min_latency
         type: 0
         unit: ms
-    protocol: ssh
-    ssh:
+    protocol: telnet
+    telnet:
       host: ^_^host^_^
       port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
       timeout: ^_^timeout^_^
-      script: echo mntr | nc 121.40.113.44 2181
-      parseType: netcat
+      cmd: mntr
