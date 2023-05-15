@@ -217,7 +217,11 @@ public class Job {
             if (priorMetrics.isEmpty()) {
                 return null;
             }
-            return priorMetrics.peek();
+            //return priorMetrics.peek();
+            Set<Metrics> source = priorMetrics.peek();
+            Set<Metrics> target = new HashSet<>();
+            target.addAll(source);
+            return target;
         } else {
             return Collections.emptySet();
         }
