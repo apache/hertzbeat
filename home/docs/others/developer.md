@@ -180,6 +180,7 @@ Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contr
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://neilblaze.live"><img src="https://avatars.githubusercontent.com/u/48355572?v=4?s=100" width="100px;" alt="Pratyay Banerjee"/><br /><sub><b>Pratyay Banerjee</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Neilblaze" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Neilblaze" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yujianzhong520"><img src="https://avatars.githubusercontent.com/u/63705063?v=4?s=100" width="100px;" alt="yujianzhong520"/><br /><sub><b>yujianzhong520</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=yujianzhong520" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
