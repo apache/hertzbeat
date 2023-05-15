@@ -124,7 +124,7 @@ public class TelnetCollectImpl extends AbstractCollect {
 
     private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd) throws IOException {
         if (cmd == null || cmd.trim().length() == 0) {
-            return new HashMap<>();
+            return new HashMap<>(16);
         }
         OutputStream outputStream = telnetClient.getOutputStream();
         outputStream.write(cmd.getBytes());
