@@ -76,7 +76,7 @@ public class TelnetCollectImpl extends AbstractCollect {
                 if (resultMap.size() < aliasFields.size()) {
                     log.error("telnet response data not enough: {}", resultMap);
                     builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("执行cmd结果和需要采集的指标数量不一致");
+                    builder.setMsg("The cmd execution results do not match the expected number of metrics.");
                     return;
                 }
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
