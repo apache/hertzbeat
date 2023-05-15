@@ -29,7 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.telnet.TelnetClient;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ConnectException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * telnet协议采集实现
@@ -64,16 +67,22 @@ public class TelnetCollectImpl extends AbstractCollect {
             //指明Telnet终端类型，否则会返回来的数据中文会乱码
             telnetClient = new TelnetClient("vt200");
             telnetClient.setConnectTimeout(timeout);
-            telnetClient.connect(telnet.getHost(),Integer.parseInt(telnet.getPort()));
-            long responseTime = System.currentTimeMillis() - startTime;
+            telnetClient.connect(telnet.getHost(), Integer.parseInt(telnet.getPort()));
             if (telnetClient.isConnected()) {
+                long responseTime = System.currentTimeMillis() - startTime;
+                List<String> aliasFields = metrics.getAliasFields();
+                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd());
+                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+                if (resultMap.size() < aliasFields.size()) {
+                    log.error("telnet response data not enough: {}", resultMap);
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("The cmd execution results do not match the expected number of metrics.");
+                    return;
+                }
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String alias : metrics.getAliasFields()) {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
+                for (String field : aliasFields) {
+                    String fieldValue = resultMap.get(field);
+                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 }
                 builder.addValues(valueRowBuilder.build());
             } else {
@@ -111,5 +120,28 @@ public class TelnetCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_TELNET;
+    }
+
+    private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd) throws IOException {
+        if (cmd == null || cmd.trim().length() == 0) {
+            return new HashMap<>(16);
+        }
+        OutputStream outputStream = telnetClient.getOutputStream();
+        outputStream.write(cmd.getBytes());
+        outputStream.flush();
+        String result = new String(telnetClient.getInputStream().readAllBytes());
+        String[] lines = result.split("\n");
+        boolean contains = lines[0].contains("=");
+        Map<String, String> mapValue = Arrays.stream(lines)
+                .map(item -> {
+                    if (contains) {
+                        return item.split("=");
+                    } else {
+                        return item.split("\t");
+                    }
+                })
+                .filter(item -> item.length == 2)
+                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+        return mapValue;
     }
 }
