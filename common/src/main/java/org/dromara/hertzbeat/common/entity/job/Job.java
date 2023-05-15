@@ -217,11 +217,8 @@ public class Job {
             if (priorMetrics.isEmpty()) {
                 return null;
             }
-            //return priorMetrics.peek();
             Set<Metrics> source = priorMetrics.peek();
-            Set<Metrics> target = new HashSet<>();
-            target.addAll(source);
-            return target;
+            return new HashSet<>(source);
         } else {
             return Collections.emptySet();
         }
