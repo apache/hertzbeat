@@ -38,7 +38,8 @@
       "tags": "標簽管理",
       "define": "監控模版",
       "help": "幫助中心",
-      "setting": "設置"
+      "setting": "設置",
+      "settings": "系統設置"
     },
     "more": "更多"
   },
@@ -366,6 +367,7 @@
   "common.button.cancel": "取消",
   "common.button.help": "幫助",
   "common.button.edit": "編輯",
+  "common.button.setting": "配置",
   "common.button.delete": "刪除",
   "common.button.operation.more": "更多操作",
   "app.theme.default": "淺色主題",
@@ -404,6 +406,11 @@
   "define.new.code": "# 請在此通過編寫YML內容來定義新的監控類型, 參考文檔: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "監控類型定義內容不能為空。",
   "define.save-apply.confirm": "請確認是否保存修改並應用此監控類型定義? 這會影響到您的監控內容。",
+  "settings.server": "消息服務器配置",
+  "settings.server.email": "郵件服務器",
+  "settings.server.email.setting": "配置郵件服務器",
+  "settings.server.sms": "短信服務器",
+  "settings.server.sms.setting": "配置短信服務器",
   "validation.email.required": "請輸入郵箱地址！",
   "validation.email.wrong-format": "郵箱地址格式錯誤！",
   "validation.email.invalid": "無效的郵箱地址！",

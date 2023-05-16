@@ -1,0 +1,45 @@
+<nz-spin [nzSpinning]="loading">
+  <nz-list nzItemLayout="horizontal">
+    <nz-list-item [nzActions]="[emailOp]">
+      <ng-template #emailOp>
+        <a (click)="onConfigEmailServer()">{{ 'common.button.setting' | i18n }}</a>
+      </ng-template>
+      <nz-list-item-meta [nzTitle]="'settings.server.email' | i18n" [nzDescription]="emailDesc">
+        <ng-template #emailDesc>
+          {{ 'settings.security.password.advice' | i18n }}：<span class="text-green">{{
+            'settings.security.password.level.2' | i18n
+          }}</span>
+        </ng-template>
+      </nz-list-item-meta>
+    </nz-list-item>
+    <nz-list-item [nzActions]="[phoneOp]">
+      <ng-template #phoneOp>
+        <a disabled>
+          {{ 'common.button.setting' | i18n }}
+        </a>
+      </ng-template>
+      <nz-list-item-meta [nzTitle]="'settings.server.sms' | i18n" [nzDescription]="phoneDesc">
+        <ng-template #phoneDesc>
+          {{ 'settings.security.phone.bind' | i18n }}
+          <span class="text-green">{{ 'settings.security.phone.yes-verify' | i18n }}</span>
+        </ng-template>
+      </nz-list-item-meta>
+    </nz-list-item>
+  </nz-list>
+</nz-spin>
+
+<!-- email server modal -->
+<nz-modal
+  [(nzVisible)]="isEmailServerModalVisible"
+  [nzTitle]="'settings.server.email.setting' | i18n"
+  (nzOnCancel)="onCancelEmailServer()"
+  (nzOnOk)="onSaveEmailServer()"
+  nzMaskClosable="false"
+  nzWidth="40%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #emailForm="ngForm">
+
+    </form>
+  </div>
+</nz-modal>

@@ -38,7 +38,8 @@
       "tags": "标签管理",
       "define": "监控模版",
       "help": "帮助中心",
-      "setting": "设置"
+      "setting": "设置",
+      "settings": "系统设置"
     },
     "more": "更多"
   },
@@ -361,6 +362,7 @@
   "common.button.cancel": "取消",
   "common.button.help": "帮助",
   "common.button.edit": "编辑",
+  "common.button.setting": "配置",
   "common.button.delete": "删除",
   "common.button.operation.more": "更多操作",
   "common.week.7": "星期日",
@@ -406,6 +408,11 @@
   "define.new.code": "# 请在此通过编写YML内容来定义新的监控类型, 参考文档: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "监控类型定义内容不能为空。",
   "define.save-apply.confirm": "请确认是否保存修改并应用此监控类型定义? 这会影响到您的监控内容。",
+  "settings.server": "消息服务器配置",
+  "settings.server.email": "邮件服务器",
+  "settings.server.email.setting": "配置邮件服务器",
+  "settings.server.sms": "短信服务器",
+  "settings.server.sms.setting": "配置短信服务器",
   "validation.email.required": "请输入邮箱地址！",
   "validation.email.wrong-format": "邮箱地址格式错误！",
   "validation.email.invalid": "无效的邮箱地址！",

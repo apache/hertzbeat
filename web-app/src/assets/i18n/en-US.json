@@ -38,7 +38,8 @@
       "tags": "Tags Manage",
       "define": "Monitor Template",
       "help": "Help Center",
-      "setting": "Setting"
+      "setting": "Setting",
+      "settings": "Settings"
     },
     "more": "More"
   },
@@ -358,6 +359,7 @@
   "common.button.cancel": "Cancel",
   "common.button.help": "Help",
   "common.button.edit": "Edit",
+  "common.button.setting": "Setting",
   "common.button.delete": "Delete",
   "common.button.detect": "Detect",
   "common.button.operation.more": "More",
@@ -408,6 +410,11 @@
   "define.new.code": "# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "The monitoring type definition content cannot be empty.",
   "define.save-apply.confirm": "Please confirm whether to update and apply the monitor define? This will affect what you monitor.",
+  "settings.server": "Message Server Setting",
+  "settings.server.email": "Email Server",
+  "settings.server.email.setting": "Configure Email Server",
+  "settings.server.sms": "SMS Server",
+  "settings.server.sms.setting": "Configure SMS Server",
   "validation.email.required": "Please enter your email!",
   "validation.email.wrong-format": "The email address is in the wrong format!",
   "validation.password.required": "Please enter your password!",
