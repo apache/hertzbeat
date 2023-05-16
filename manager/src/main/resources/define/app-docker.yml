@@ -200,7 +200,7 @@ metrics:
       port: ^_^port^_^
       # url request interface path
       # url请求接口路径
-      url: /containers/json
+      url: /containers/json?all=true
       # # request method GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
