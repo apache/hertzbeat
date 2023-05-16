@@ -71,23 +71,19 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
         try {
             //获取sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
-
-
             try {
-                GeneralConfig generalConfigFoundByType = generalConfigDao.findByType(TYPE);
-                boolean enabled = generalConfigFoundByType.isEnabled();
-                //若启用数据库配置
-                if (enabled == true) {
-                    String content = generalConfigFoundByType.getContent();
-                    NoticeSender noticeSenderByfind = objectMapper.readValue(content, NoticeSender.class);
-                    sender.setHost(noticeSenderByfind.getEmailHost());
-                    sender.setPort(noticeSenderByfind.getEmailPort());
-                    sender.setUsername(noticeSenderByfind.getEmailUsername());
-                    sender.setPassword(noticeSenderByfind.getEmailPassword());
-                    emailFromUser = noticeSenderByfind.getEmailUsername();
-                }
-                //若启用yml配置
-                else {
+                GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
+                if (emailConfig != null && emailConfig.isEnable() && emailConfig.getContent() != null) {
+                    // 若启用数据库配置
+                    String content = emailConfig.getContent();
+                    NoticeSender noticeSenderConfig = objectMapper.readValue(content, NoticeSender.class);
+                    sender.setHost(noticeSenderConfig.getEmailHost());
+                    sender.setPort(noticeSenderConfig.getEmailPort());
+                    sender.setUsername(noticeSenderConfig.getEmailUsername());
+                    sender.setPassword(noticeSenderConfig.getEmailPassword());
+                    emailFromUser = noticeSenderConfig.getEmailUsername();
+                } else {
+                    // 若数据库未配置则启用yml配置
                     sender.setHost(mailConfigProperties.getHost());
                     sender.setPort(mailConfigProperties.getPort());
                     sender.setUsername(mailConfigProperties.getUsername());
