@@ -39,12 +39,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 public class GeneralConfig {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Schema(title = "GeneralConfig Primary Key Index ID",
-			description = "通用配置主键索引ID",
-			example = "87584674384", accessMode = READ_ONLY)
-	private Long id;
-	
 	@Schema(title = "Config type: 1-SMS 2-Email, primary key ", description = "配置类型: 1-短信 2-邮件, 主键",
 			accessMode = READ_WRITE)
 	@Min(1)

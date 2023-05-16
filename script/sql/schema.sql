@@ -283,7 +283,6 @@ CREATE TABLE  hzb_history
 DROP TABLE IF EXISTS  hzb_config ;
 CREATE TABLE  hzb_config
 (
-    id           bigint           not null auto_increment comment '公共配置主键索引ID',
     type         tinyint          not null comment '配置类型：1-短信，2-邮件',
     content      varchar(4096)    not null comment '配置内容JSON',
     enable       boolean          not null default true comment '告警阈值开关',
@@ -291,7 +290,7 @@ CREATE TABLE  hzb_config
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
-    primary key (id)
+    primary key (type)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 COMMIT;
