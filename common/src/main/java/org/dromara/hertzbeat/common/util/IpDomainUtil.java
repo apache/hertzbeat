@@ -37,7 +37,7 @@ public class IpDomainUtil {
      * 域名校验正则
      */
     private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$");
+            Pattern.compile("^(?=^.{3,255}$)[_a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+$");
 
     private static final String LOCALHOST = "localhost";
 
