@@ -38,6 +38,8 @@ class IpDomainUtilTest {
         assertTrue(IpDomainUtil.validateIpDomain("www.student.dev.com.cn"));
         assertTrue(IpDomainUtil.validateIpDomain("www.baidu.com"));
         assertTrue(IpDomainUtil.validateIpDomain("good.didi"));
+        assertTrue(IpDomainUtil.validateIpDomain("spider_rds.sogou"));
+        assertTrue(IpDomainUtil.validateIpDomain("_redis.hn.sogou"));
         assertFalse(IpDomainUtil.validateIpDomain("tmp"));
         assertFalse(IpDomainUtil.validateIpDomain("good"));
         assertFalse(IpDomainUtil.validateIpDomain("www.baidu.com."));
