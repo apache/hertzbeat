@@ -59,7 +59,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_SQL
             = "SELECT ts, instance, `%s` FROM %s WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM %s WHERE instance = %s AND ts >= now - %s interval(4h)";
+            = "SELECT first(`ts`), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM %s WHERE instance = %s AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM %s WHERE ts >= now - 1w";
 
