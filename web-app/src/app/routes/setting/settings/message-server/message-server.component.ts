@@ -3,8 +3,9 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import {NoticeSenderService} from "../../../../service/notice-sender.service";
-import {NoticeSender} from "../../../../pojo/NoticeSender";
+
+import { NoticeSender } from '../../../../pojo/NoticeSender';
+import { NoticeSenderService } from '../../../../service/notice-sender.service';
 
 @Component({
   selector: 'app-message-server',
@@ -24,6 +25,7 @@ export class MessageServerComponent implements OnInit {
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
+  sender!: NoticeSender;
 
   ngOnInit(): void {
     this.loadSenderServer();
@@ -57,7 +59,61 @@ export class MessageServerComponent implements OnInit {
     this.isEmailServerModalVisible = false;
   }
 
-  onSaveEmailServer() {
-
-  }
+  onSaveEmailServer() {}
+  // onManageSenderModalOk() {
+  //   this.isManageSenderModalOkLoading = true;
+  //   if (this.isManageSenderModalAdd) {
+  //     const modalOk$ = this.noticeSenderSvc
+  //       .newSender(this.sender)
+  //       .pipe(
+  //         finalize(() => {
+  //           modalOk$.unsubscribe();
+  //           this.isManageSenderModalOkLoading = false;
+  //         })
+  //       )
+  //       .subscribe(
+  //         message => {
+  //           if (message.code === 0) {
+  //             this.isManageSenderModalVisible = false;
+  //             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
+  //               nzDuration: 15000
+  //             });
+  //             this.loadSendersTable();
+  //           } else {
+  //             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+  //           }
+  //         },
+  //         error => {
+  //           this.isManageSenderModalVisible = false;
+  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+  //         }
+  //       );
+  //   } else {
+  //     const modalOk$ = this.noticeSenderSvc
+  //       .editSender(this.sender)
+  //       .pipe(
+  //         finalize(() => {
+  //           modalOk$.unsubscribe();
+  //           this.isManageSenderModalOkLoading = false;
+  //         })
+  //       )
+  //       .subscribe(
+  //         message => {
+  //           if (message.code === 0) {
+  //             this.isManageSenderModalVisible = false;
+  //             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
+  //               nzDuration: 15000
+  //             });
+  //             this.loadSendersTable();
+  //           } else {
+  //             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+  //           }
+  //         },
+  //         error => {
+  //           this.isManageSenderModalVisible = false;
+  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+  //         }
+  //       );
+  //   }
+  // }
 }
