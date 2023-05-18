@@ -17,8 +17,6 @@ import java.util.List;
  *
  * <p>Abstract implementation of GeneralConfigService, providing CRUD operations for configurations.</p>
  * @author zqr10159
- * @param <T> 配置类型
- * @version 1.0
  */
 @Slf4j
 abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigService<T> {
@@ -58,7 +56,7 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
 
             GeneralConfig generalConfig2Save = GeneralConfig.builder()
                     .type(type)
-                    .enabled(enabled)
+                    .enable(enabled)
                     .content(contentJson)
                     .build();
             generalConfigDao.save(generalConfig2Save);
