@@ -3,6 +3,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { finalize } from 'rxjs/operators';
 
 import { NoticeSender } from '../../../../pojo/NoticeSender';
 import { NoticeSenderService } from '../../../../service/notice-sender.service';
@@ -25,7 +26,7 @@ export class MessageServerComponent implements OnInit {
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
-  sender: NoticeSender = new NoticeSender();
+  emailSender = new NoticeSender();
 
   ngOnInit(): void {
     this.loadSenderServer();
@@ -38,6 +39,8 @@ export class MessageServerComponent implements OnInit {
         this.senderServerLoading = false;
         if (message.code === 0) {
           this.senders = message.data;
+          this.emailSender = this.senders.filter(s => s.type === 2)[0];
+          console.log(this.emailSender.emailUsername);
         } else {
           console.warn(message.msg);
         }
@@ -59,61 +62,32 @@ export class MessageServerComponent implements OnInit {
     this.isEmailServerModalVisible = false;
   }
 
-  onSaveEmailServer() {}
-  // onManageSenderModalOk() {
-  //   this.isManageSenderModalOkLoading = true;
-  //   if (this.isManageSenderModalAdd) {
-  //     const modalOk$ = this.noticeSenderSvc
-  //       .newSender(this.sender)
-  //       .pipe(
-  //         finalize(() => {
-  //           modalOk$.unsubscribe();
-  //           this.isManageSenderModalOkLoading = false;
-  //         })
-  //       )
-  //       .subscribe(
-  //         message => {
-  //           if (message.code === 0) {
-  //             this.isManageSenderModalVisible = false;
-  //             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
-  //               nzDuration: 15000
-  //             });
-  //             this.loadSendersTable();
-  //           } else {
-  //             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
-  //           }
-  //         },
-  //         error => {
-  //           this.isManageSenderModalVisible = false;
-  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
-  //         }
-  //       );
-  //   } else {
-  //     const modalOk$ = this.noticeSenderSvc
-  //       .editSender(this.sender)
-  //       .pipe(
-  //         finalize(() => {
-  //           modalOk$.unsubscribe();
-  //           this.isManageSenderModalOkLoading = false;
-  //         })
-  //       )
-  //       .subscribe(
-  //         message => {
-  //           if (message.code === 0) {
-  //             this.isManageSenderModalVisible = false;
-  //             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
-  //               nzDuration: 15000
-  //             });
-  //             this.loadSendersTable();
-  //           } else {
-  //             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
-  //           }
-  //         },
-  //         error => {
-  //           this.isManageSenderModalVisible = false;
-  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
-  //         }
-  //       );
-  //   }
-  // }
+  onSaveEmailServer() {
+    const modalOk$ = this.noticeSenderSvc
+      .newSender(this.emailSender)
+      .pipe(
+        finalize(() => {
+          modalOk$.unsubscribe();
+          this.senderServerLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.isEmailServerModalVisible = false;
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
+              nzDuration: 15000
+            });
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+          }
+        },
+        error => {
+          this.isEmailServerModalVisible = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+        }
+      );
+  }
+
+  protected readonly Boolean = Boolean;
 }

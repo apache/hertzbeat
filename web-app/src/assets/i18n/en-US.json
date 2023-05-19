@@ -240,6 +240,7 @@
   "alert.notice.sender.mail.username": "Email Account",
   "alert.notice.sender.mail.password": "Email Password",
   "alert.notice.sender.mail.port": "Email Port",
+  "alert.notice.sender.mail.ssl": "Enable SSL",
   "alert.notice.sender.mail.enable": "Enable Email Configuration",
   "dashboard.alerts.title": "Recently Alerts List",
   "dashboard.alerts.title-no": "Recently Pending Alerts",

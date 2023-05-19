@@ -1,6 +1,5 @@
 package org.dromara.hertzbeat.manager.config;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -13,9 +12,7 @@ import java.util.Properties;
 
 /**
  *
-        * @author zqr
-        * @date 2023/5/7 23:31
-        * @version 1.0
+        * @author zqr10159
         */
 
 @Getter
@@ -27,6 +24,7 @@ public class MailConfigProperties {
     private String username;
     private String password;
     private Integer port;
+    private boolean ssl;
 
     @Bean
     public JavaMailSender javaMailSender() {
@@ -37,7 +35,7 @@ public class MailConfigProperties {
         mailSender.setPassword(password);
 
         Properties props = mailSender.getJavaMailProperties();
-        props.put("spring.mail.smtp.ssl.enable", "true");
+        props.put("spring.mail.smtp.ssl.enable", ssl);
         props.put("spring.mail.smtp.socketFactory.port", port);
         props.put("spring.mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         props.put("spring.mail.debug", "false");

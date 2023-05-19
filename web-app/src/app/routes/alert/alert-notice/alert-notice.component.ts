@@ -7,10 +7,8 @@ import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { NoticeRule, TagItem } from '../../../pojo/NoticeRule';
-import { NoticeSender } from '../../../pojo/NoticeSender';
 import { NoticeReceiverService } from '../../../service/notice-receiver.service';
 import { NoticeRuleService } from '../../../service/notice-rule.service';
-import { NoticeSenderService } from '../../../service/notice-sender.service';
 import { TagService } from '../../../service/tag.service';
 
 @Component({
@@ -22,7 +20,6 @@ export class AlertNoticeComponent implements OnInit {
   constructor(
     private notifySvc: NzNotificationService,
     private noticeReceiverSvc: NoticeReceiverService,
-    private noticeSenderSvc: NoticeSenderService,
     private modal: NzModalService,
     private noticeRuleSvc: NoticeRuleService,
     private tagService: TagService,
@@ -34,19 +31,13 @@ export class AlertNoticeComponent implements OnInit {
   receiverTableLoading: boolean = true;
   rules!: NoticeRule[];
   ruleTableLoading: boolean = true;
-  senders!: NoticeSender[];
-  senderTableLoading: boolean = true;
 
   ngOnInit(): void {
     this.loadReceiversTable();
     this.loadRulesTable();
-    this.loadSendersTable();
   }
   syncReceiver() {
     this.loadReceiversTable();
-  }
-  syncSender() {
-    this.loadSendersTable();
   }
   syncRule() {
     this.loadRulesTable();
@@ -72,25 +63,6 @@ export class AlertNoticeComponent implements OnInit {
     );
   }
 
-  loadSendersTable() {
-    this.senderTableLoading = true;
-    let senderInit$ = this.noticeSenderSvc.getSenders().subscribe(
-      message => {
-        this.senderTableLoading = false;
-        if (message.code === 0) {
-          this.senders = message.data;
-        } else {
-          console.warn(message.msg);
-        }
-        senderInit$.unsubscribe();
-      },
-      error => {
-        console.error(error.msg);
-        this.senderTableLoading = false;
-        senderInit$.unsubscribe();
-      }
-    );
-  }
   loadRulesTable() {
     this.ruleTableLoading = true;
     let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(
@@ -122,17 +94,6 @@ export class AlertNoticeComponent implements OnInit {
       nzOnOk: () => this.deleteOneNoticeReceiver(receiveId)
     });
   }
-  onDeleteOneNoticeSender(senderId: number) {
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzClosable: false,
-      nzOnOk: () => this.deleteOneNoticeSender(senderId)
-    });
-  }
 
   deleteOneNoticeReceiver(receiveId: number) {
     const deleteReceiver$ = this.noticeReceiverSvc
@@ -147,28 +108,6 @@ export class AlertNoticeComponent implements OnInit {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
             this.loadReceiversTable();
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
-          }
-        },
-        error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
-        }
-      );
-  }
-  deleteOneNoticeSender(senderId: number) {
-    const deleteSender$ = this.noticeSenderSvc
-      .deleteSender(senderId)
-      .pipe(
-        finalize(() => {
-          deleteSender$.unsubscribe();
-        })
-      )
-      .subscribe(
-        message => {
-          if (message.code === 0) {
-            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-            this.loadSendersTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
           }
@@ -312,82 +251,6 @@ export class AlertNoticeComponent implements OnInit {
           },
           error => {
             this.isManageReceiverModalVisible = false;
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
-          }
-        );
-    }
-  }
-  // start 新增或修改通知发送端配置弹出框
-  isManageSenderModalVisible: boolean = false;
-  isManageSenderModalAdd: boolean = true;
-  isManageSenderModalOkLoading: boolean = false;
-  sender!: NoticeSender;
-
-  onNewNoticeSender() {
-    this.sender = new NoticeSender();
-    this.isManageSenderModalVisible = true;
-    this.isManageSenderModalAdd = true;
-  }
-  onEditOneNoticeSender(sender: NoticeSender) {
-    this.sender = sender;
-    this.isManageSenderModalVisible = true;
-    this.isManageSenderModalAdd = false;
-  }
-
-  onManageSenderModalCancel() {
-    this.isManageSenderModalVisible = false;
-  }
-  onManageSenderModalOk() {
-    this.isManageSenderModalOkLoading = true;
-    if (this.isManageSenderModalAdd) {
-      const modalOk$ = this.noticeSenderSvc
-        .newSender(this.sender)
-        .pipe(
-          finalize(() => {
-            modalOk$.unsubscribe();
-            this.isManageSenderModalOkLoading = false;
-          })
-        )
-        .subscribe(
-          message => {
-            if (message.code === 0) {
-              this.isManageSenderModalVisible = false;
-              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
-                nzDuration: 15000
-              });
-              this.loadSendersTable();
-            } else {
-              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
-            }
-          },
-          error => {
-            this.isManageSenderModalVisible = false;
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
-          }
-        );
-    } else {
-      const modalOk$ = this.noticeSenderSvc
-        .editSender(this.sender)
-        .pipe(
-          finalize(() => {
-            modalOk$.unsubscribe();
-            this.isManageSenderModalOkLoading = false;
-          })
-        )
-        .subscribe(
-          message => {
-            if (message.code === 0) {
-              this.isManageSenderModalVisible = false;
-              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
-                nzDuration: 15000
-              });
-              this.loadSendersTable();
-            } else {
-              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
-            }
-          },
-          error => {
-            this.isManageSenderModalVisible = false;
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );

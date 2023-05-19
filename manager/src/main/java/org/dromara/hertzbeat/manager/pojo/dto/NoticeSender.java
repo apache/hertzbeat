@@ -29,6 +29,8 @@ public class NoticeSender {
 	@Max(message = "邮件端口不得大于65535|Mail port must be less than or equal to 65535", value = 65535)
 	@Min(message = "邮件端口不得小于1|Mail port must be greater than or equal to 1", value = 1)
 	private Integer emailPort;
+
+	private boolean emailSSL;
 	
 	private boolean emailEnable;
 }

@@ -38,6 +38,7 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 /**
@@ -81,6 +82,9 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     sender.setPort(noticeSenderConfig.getEmailPort());
                     sender.setUsername(noticeSenderConfig.getEmailUsername());
                     sender.setPassword(noticeSenderConfig.getEmailPassword());
+                    Properties props = sender.getJavaMailProperties();
+                    props.put("spring.mail.smtp.ssl.enable", noticeSenderConfig.isEmailSSL());
+                    log.info("props: {}" , props);
                     emailFromUser = noticeSenderConfig.getEmailUsername();
                 } else {
                     // 若数据库未配置则启用yml配置

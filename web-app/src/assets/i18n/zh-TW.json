@@ -240,6 +240,7 @@
   "alert.notice.sender.mail.username": "郵件帳號",
   "alert.notice.sender.mail.password": "郵件密碼",
   "alert.notice.sender.mail.port": "郵件端口",
+  "alert.notice.sender.mail.ssl": "是否啟用SSL",
   "alert.notice.sender.mail.enable": "啟用郵件設定",
   "dashboard.alerts.title": "最近告警列表",
   "dashboard.alerts.title-no": "最近未處理告警",
