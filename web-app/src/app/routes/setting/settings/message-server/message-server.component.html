@@ -31,6 +31,7 @@
 <!-- email server modal -->
 <nz-modal
   [(nzVisible)]="isEmailServerModalVisible"
+  [nzTitle]="'settings.server.email.setting' | i18n"
   (nzOnCancel)="onCancelEmailServer()"
   (nzOnOk)="onConfigEmailServer()"
   nzMaskClosable="false"

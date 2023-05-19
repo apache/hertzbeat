@@ -25,7 +25,7 @@ export class MessageServerComponent implements OnInit {
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
-  sender!: NoticeSender;
+  sender: NoticeSender = new NoticeSender();
 
   ngOnInit(): void {
     this.loadSenderServer();

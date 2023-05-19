@@ -1,13 +1,10 @@
 package org.dromara.hertzbeat.common.entity.manager;
 
-import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -35,7 +32,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @NoArgsConstructor
 @Schema(description = "Message notification server config entity | 消息通知服务端配置实体")
 @EntityListeners(AuditingEntityListener.class)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 public class GeneralConfig {
 	
 	@Id
@@ -45,7 +41,6 @@ public class GeneralConfig {
 	@NotNull
 	private Byte type;
 	
-	@Type(type = "json")
 	@Schema(title = "Config content", description = "配置内容，格式为json", accessMode = READ_WRITE)
 	@Column(length = 4096)
 	private String content;
