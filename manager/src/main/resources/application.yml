@@ -103,7 +103,9 @@ spring:
 
 common:
   queue:
+    # memory or kafka
     type: memory
+    # properties when queue type is kafka
     kafka:
       servers: 127.0.0.1:9092
       alert-topic: async-collect-data-debug
