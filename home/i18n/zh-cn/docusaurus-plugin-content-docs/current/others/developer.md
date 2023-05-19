@@ -183,6 +183,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center" valign="top" width="14.28%"><a href="https://sppan24.github.io/"><img src="https://avatars.githubusercontent.com/u/15795173?v=4?s=100" width="100px;" alt="SPPan"/><br /><sub><b>SPPan</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=sppan24" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1130600015"><img src="https://avatars.githubusercontent.com/u/67859663?v=4?s=100" width="100px;" alt="ZhangJiashu"/><br /><sub><b>ZhangJiashu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1130600015" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/QZmp236478"><img src="https://avatars.githubusercontent.com/u/56623162?v=4?s=100" width="100px;" alt="impress"/><br /><sub><b>impress</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=QZmp236478" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jx3775250"><img src="https://avatars.githubusercontent.com/u/40455946?v=4?s=100" width="100px;" alt="凌晨一点半"/><br /><sub><b>凌晨一点半</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jx3775250" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
