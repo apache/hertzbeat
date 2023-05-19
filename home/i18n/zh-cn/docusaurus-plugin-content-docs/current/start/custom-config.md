@@ -28,6 +28,22 @@ common:
       sign-name: 赫兹跳动
       template-id: 1343434
 ```
+1.1 腾讯云短信创建签名（sign-name）
+![image](https://github.com/dromara/hertzbeat/assets/40455946/3a4c287d-b23d-4398-8562-4894296af485)
+
+1.2 腾讯云短信创建正文模板（template-id）
+```
+监控:{1}，告警级别:{2}。内容:{3}
+```
+![image](https://github.com/dromara/hertzbeat/assets/40455946/face71a6-46d5-452c-bed3-59d2a975afeb)
+
+
+1.3 腾讯云短信创建应用（app-id）
+![image](https://github.com/dromara/hertzbeat/assets/40455946/2732d710-37fa-4455-af64-48bba273c2f8)
+
+1.4 腾讯云访问管理（secret-id、secret-key）
+![image](https://github.com/dromara/hertzbeat/assets/40455946/36f056f0-94e7-43db-8f07-82893c98024e)
+
 
 2. 配置告警自定义参数  
 
