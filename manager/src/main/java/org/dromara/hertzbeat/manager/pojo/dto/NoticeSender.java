@@ -30,7 +30,7 @@ public class NoticeSender {
 	@Min(message = "邮件端口不得小于1|Mail port must be greater than or equal to 1", value = 1)
 	private Integer emailPort;
 
-	private boolean emailSSL;
+	private boolean emailSsl;
 	
 	private boolean emailEnable;
 }

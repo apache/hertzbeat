@@ -83,8 +83,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     sender.setUsername(noticeSenderConfig.getEmailUsername());
                     sender.setPassword(noticeSenderConfig.getEmailPassword());
                     Properties props = sender.getJavaMailProperties();
-                    props.put("spring.mail.smtp.ssl.enable", noticeSenderConfig.isEmailSSL());
-                    log.info("props: {}" , props);
+                    props.put("spring.mail.smtp.ssl.enable", noticeSenderConfig.isEmailSsl());
                     emailFromUser = noticeSenderConfig.getEmailUsername();
                 } else {
                     // 若数据库未配置则启用yml配置
