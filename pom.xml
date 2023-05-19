@@ -48,6 +48,7 @@
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
         <okio.version>2.8.0</okio.version>
+        <hibernate-types-52.version>2.21.1</hibernate-types-52.version>
 
         <lombok.version>1.18.20</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -273,6 +274,12 @@
                 <artifactId>caffeine</artifactId>
                 <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
                 <version>${caffeine.version}</version>
+            </dependency>
+            <!-- jpa json支持 -->
+            <dependency>
+                <groupId>com.vladmihalcea</groupId>
+                <artifactId>hibernate-types-52</artifactId>
+                <version>${hibernate-types-52.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
