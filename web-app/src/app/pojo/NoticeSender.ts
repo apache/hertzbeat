@@ -7,7 +7,7 @@ export class NoticeSender {
   emailPort!: number;
   emailUsername!: string;
   emailPassword!: string;
-  emailSsl!: boolean;
+  emailSsl: boolean = true;
   emailEnable!: boolean;
   creator!: string;
   modifier!: string;

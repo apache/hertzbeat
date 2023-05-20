@@ -39,8 +39,10 @@ export class MessageServerComponent implements OnInit {
         this.senderServerLoading = false;
         if (message.code === 0) {
           this.senders = message.data;
-          this.emailSender = this.senders.filter(s => s.type === 2)[0];
-          console.log(this.emailSender.emailUsername);
+          let res = this.senders.find(s => s.type === 2);
+          if (res != undefined) {
+            this.emailSender = res;
+          }
         } else {
           console.warn(message.msg);
         }
@@ -75,16 +77,14 @@ export class MessageServerComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.isEmailServerModalVisible = false;
-            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), this.i18nSvc.fanyi('alert.notice.sender.next'), {
-              nzDuration: 15000
-            });
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
           } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }
         },
         error => {
           this.isEmailServerModalVisible = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
   }
