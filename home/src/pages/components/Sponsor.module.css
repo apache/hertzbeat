@@ -1,13 +1,14 @@
 .cardList {
     margin: -0.35rem;
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    justify-content: center;
+    /* flex-wrap: wrap; */
+    /* align-items: flex-start; */
     width: 100%;
 }
 
 .cardItem {
-    width: calc(33.33333% - .7rem);
+    /* width: calc(33.33333% - .7rem); */
     margin: 0.35rem;
     background: var(--bodyBg);
     border-radius: 3px;
@@ -20,8 +21,8 @@
 
 .cardItemTextBody {
     flex: 1;
-    display: inline-block;
-    float: right;
+    /* display: inline-block; */
+    /* float: right; */
     padding: 1rem 0;
 }
 

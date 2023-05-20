@@ -192,7 +192,7 @@ function Home() {
             {/*who is using*/}
             <Section isDark>
               <LogoCarousel logos={usersLink}
-                            headerTitle={translate({ message: 'Who Use HertzBeat?' })}>
+                            headerTitle={translate({ message: 'Who uses HertzBeat?' })}>
               </LogoCarousel>
             </Section>
             {features && features.length > 0 && (
