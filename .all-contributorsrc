@@ -1125,6 +1125,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "eeshaanSA",
+      "name": "Eeshaan Sawant",
+      "avatar_url": "https://avatars.githubusercontent.com/u/100678386?v=4",
+      "profile": "https://github.com/eeshaanSA",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
