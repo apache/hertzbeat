@@ -130,6 +130,12 @@
           "badge": 1
         },
         {
+          "text": "settings",
+          "i18n": "menu.extras.settings",
+          "icon": "anticon-setting",
+          "link": "/setting/settings"
+        },
+        {
           "text": "helpCenter",
           "externalLink": "https://hertzbeat.com/docs/help/guide",
           "target": "_blank",

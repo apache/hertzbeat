@@ -17,22 +17,28 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.dromara.hertzbeat.manager.config.MailConfigProperties;
+import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
+import org.dromara.hertzbeat.manager.pojo.dto.NoticeSender;
 import org.dromara.hertzbeat.manager.service.MailService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 /**
@@ -42,19 +48,54 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("spring.mail.username")
 final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
+
     private final JavaMailSender javaMailSender;
+
+    private final MailConfigProperties mailConfigProperties;
+
     private final MailService mailService;
 
     @Value("${spring.mail.username}")
     private String emailFromUser;
+
+    private final GeneralConfigDao generalConfigDao;
+
+    private final ObjectMapper objectMapper;
+
+    private static final Byte TYPE = 2;
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
         try {
+            //获取sender
+            JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
+            try {
+                GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
+                if (emailConfig != null && emailConfig.isEnable() && emailConfig.getContent() != null) {
+                    // 若启用数据库配置
+                    String content = emailConfig.getContent();
+                    NoticeSender noticeSenderConfig = objectMapper.readValue(content, NoticeSender.class);
+                    sender.setHost(noticeSenderConfig.getEmailHost());
+                    sender.setPort(noticeSenderConfig.getEmailPort());
+                    sender.setUsername(noticeSenderConfig.getEmailUsername());
+                    sender.setPassword(noticeSenderConfig.getEmailPassword());
+                    Properties props = sender.getJavaMailProperties();
+                    props.put("spring.mail.smtp.ssl.enable", noticeSenderConfig.isEmailSsl());
+                    emailFromUser = noticeSenderConfig.getEmailUsername();
+                } else {
+                    // 若数据库未配置则启用yml配置
+                    sender.setHost(mailConfigProperties.getHost());
+                    sender.setPort(mailConfigProperties.getPort());
+                    sender.setUsername(mailConfigProperties.getUsername());
+                    sender.setPassword(mailConfigProperties.getPassword());
+                    emailFromUser = mailConfigProperties.getUsername();
+                }
+            } catch (Exception e) {
+                log.error("Type not found {}",e.getMessage());
+            }
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject(bundle.getString("alerter.notify.title"));
