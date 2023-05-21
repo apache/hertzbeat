@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, Button } from '@douyinfe/semi-ui';
-import Translate from '@docusaurus/Translate'
+import Translate from '@docusaurus/Translate';
+import styles from './DiaLog.module.css';
 
 // from rainbond: https://github.com/goodrain/rainbond-docs/blob/main/src/components/DiaLog/index.tsx
 export default function DiaLog() {
@@ -22,7 +23,7 @@ export default function DiaLog() {
       <>
         <Modal
           title={
-            <p style={{ fontSize: "22px" }}><Translate>support hertzbeat</Translate></p>
+            <p style={{ fontSize: "22px" }}><Translate>Support HertzBeat</Translate></p>
           }
           visible={Visible}
           // onOk={handleOk}
@@ -35,18 +36,18 @@ export default function DiaLog() {
             <img src="/img/tancloud-logo.svg" alt="logo" />
           }
           footer={
-            <div>
-              <p style={{paddingRight: "20px"}}>
+            <div className={styles.goToGithubWrapper}>
+              <p >
                 👇  <b style={{ color: "#26B226"}}><Translate>click</Translate></b>
               </p>
               <a href="https://github.com/dromara/hertzbeat" target="_blank">
                 <Button type="primary" theme="solid">
-                  <Translate>go github</Translate>
+                  <Translate>Go to Github</Translate>
                 </Button>
               </a>
             </div>
           }>
-          <p style={{lineHeight: 1.5}}>
+          <p style={{lineHeight: 1.5, textAlign: "center"}}>
             <Translate>If you like HertzBeat, give us a star on GitHub</Translate>
           </p>
           <p style={{lineHeight: 1.5}}>
