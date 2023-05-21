@@ -98,18 +98,43 @@ html[data-theme=dark] {
 }
 
 .footer__links {
-    width: 75%;
+    width: 100%;
     float: right;
 }
-.footer__bottom {
-    width: 25%;
+footer > div{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
+@media (max-width : 500px){
+    footer > div {
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+}
+.footer__col{
+    text-align: center;
+    text-justify: distribute-all-lines ;
+   
+}
+.footer__title{
+    font-size: x-large;
+    font-weight: 800px;
+}
+
 .footer__bottom > div {
-    text-align: left;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
-.footer--dark {
-    --ifm-footer-background-color: #20232a;
-    --ifm-footer-padding-vertical: 85px;
+
+html[data-theme=dark] footer{
+   background-color: black;
+
 }
 .footer__copyright {
     font-size: .8em;
@@ -269,7 +294,7 @@ a code {
 .highlightSection .prism-code > div:before {
     content: "";
     display: block;
-    width: 12px;
+    /* width: 12px; */
     height: 12px;
     background: #27C941;
     border-radius: 50%;
