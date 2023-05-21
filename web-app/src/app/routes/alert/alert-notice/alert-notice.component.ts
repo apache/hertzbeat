@@ -23,6 +23,7 @@ export class AlertNoticeComponent implements OnInit {
     private modal: NzModalService,
     private noticeRuleSvc: NoticeRuleService,
     private tagService: TagService,
+
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -61,6 +62,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+
   loadRulesTable() {
     this.ruleTableLoading = true;
     let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(

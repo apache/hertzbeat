@@ -13,9 +13,11 @@ import { ColorPickerModule } from 'ngx-color-picker';
 
 import { DefineComponent } from './define/define.component';
 import { SettingRoutingModule } from './setting-routing.module';
+import { MessageServerComponent } from './settings/message-server/message-server.component';
+import { SettingsComponent } from './settings/settings.component';
 import { SettingTagsComponent } from './tags/tags.component';
 
-const COMPONENTS: Array<Type<void>> = [SettingTagsComponent, DefineComponent];
+const COMPONENTS: Array<Type<void>> = [SettingTagsComponent, DefineComponent, SettingsComponent, MessageServerComponent];
 
 @NgModule({
   imports: [
