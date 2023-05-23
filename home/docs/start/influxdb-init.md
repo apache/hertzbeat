@@ -9,8 +9,8 @@ HertzBeat's historical data storage depends on the time series database InfluxDB
 TDengine is the Time Series Data Platform where developers build IoT, analytics, and cloud applications.
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
-
-Note⚠️ Need InfluxDB 1.x Version.
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   
+Note⚠️ Need InfluxDB 1.x Version.  
 
 ### 1. Use HuaweiCloud GaussDB For Influx
 

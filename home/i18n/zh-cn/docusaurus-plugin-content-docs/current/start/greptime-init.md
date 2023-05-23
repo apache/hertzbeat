@@ -9,6 +9,7 @@ HertzBeat的历史数据存储依赖时序数据库 GreptimeDB, 或 TDengine 或
 GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.   
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
+**⚠️ 若不配置时序数据库，则只会留最近一小时历史数据**  
 
 ### 通过Docker方式安装GreptimeDB 
 > 可参考官方网站[安装教程](https://docs.greptime.com/getting-started/overview)  
