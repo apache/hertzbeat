@@ -8,9 +8,9 @@ HertzBeat's historical data storage depends on the time series database TDengine
 
 TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring indicators. Pay attention to support ⚠️ 3.x version.  
 
-**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
-
-Note⚠️ Need TDengine 3.x Version.   
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   
+Note⚠️ Need TDengine 3.x Version.    
 
 > If you have TDengine environment, can directly skip to create a database instance.  
 

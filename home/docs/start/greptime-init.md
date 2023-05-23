@@ -10,6 +10,7 @@ GreptimeDB is an open-source time-series database with a special focus on scalab
 
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**  
 
 ### Install GreptimeDB via Docker   
 > Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
