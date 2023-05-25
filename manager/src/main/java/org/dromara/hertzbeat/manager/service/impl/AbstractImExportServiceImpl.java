@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
@@ -124,7 +125,10 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         BeanUtils.copyProperties(exportMonitor.monitor, monitor);
-        monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags)));
+        monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
+                .stream().
+                filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                .collect(Collectors.toList()));
         monitorDto.setMonitor(monitor);
         monitorDto.setMetrics(exportMonitor.metrics);
         monitorDto.setParams(exportMonitor.params.stream()
