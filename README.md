@@ -297,6 +297,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jx3775250"><img src="https://avatars.githubusercontent.com/u/40455946?v=4?s=100" width="100px;" alt="凌晨一点半"/><br /><sub><b>凌晨一点半</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jx3775250" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/eeshaanSA"><img src="https://avatars.githubusercontent.com/u/100678386?v=4?s=100" width="100px;" alt="Eeshaan Sawant"/><br /><sub><b>Eeshaan Sawant</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=eeshaanSA" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nandofromthebando"><img src="https://avatars.githubusercontent.com/u/87321214?v=4?s=100" width="100px;" alt="nandofromthebando"/><br /><sub><b>nandofromthebando</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=nandofromthebando" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
