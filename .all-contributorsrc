@@ -1134,7 +1134,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "nandofromthebando",
+      "name": "nandofromthebando",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87321214?v=4",
+      "profile": "https://github.com/nandofromthebando",
+      "contributions": [
+        "code"
+      ]
     }
   ],
-  "contributorsPerLine": 7
+  "contributorsPerLine": 7,
+  "commitType": "docs"
 }
