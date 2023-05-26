@@ -188,6 +188,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nandofromthebando"><img src="https://avatars.githubusercontent.com/u/87321214?v=4?s=100" width="100px;" alt="nandofromthebando"/><br /><sub><b>nandofromthebando</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=nandofromthebando" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/caiboking"><img src="https://avatars.githubusercontent.com/u/6509883?v=4?s=100" width="100px;" alt="caiboking"/><br /><sub><b>caiboking</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=caiboking" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
