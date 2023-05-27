@@ -236,10 +236,13 @@ metrics:
         instance: true
       - field: size
         type: 0
-        unit: GB
+        unit: MB
+      - field: free
+        type: 0
+        unit: MB
       - field: used
         type: 0
-        unit: GB
+        unit: MB
       - field: usage
         type: 0
         unit: '%'
@@ -256,11 +259,12 @@ metrics:
       - index=hrStorageIndex
       - descr=hrStorageDescr
       - size=hrStorageSize * hrStorageAllocationUnits
+      - free=(hrStorageSize - hrStorageUsed) * hrStorageAllocationUnits
       - used=hrStorageUsed * hrStorageAllocationUnits
       - usage= hrStorageUsed / hrStorageSize * 100
     units:
-      - size=B->GB
-      - used=B->GB
+      - size=B->MB
+      - used=B->MB
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -287,9 +291,9 @@ metrics:
         type: 0
       - field: hrDiskStorageCapacity
         type: 0
-        unit: GB
+        unit: MB
     units:
-      - hrDiskStorageCapacity=KB->GB
+      - hrDiskStorageCapacity=KB->MB
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -323,7 +327,7 @@ metrics:
     priority: 4
     fields:
       - field: index
-        type: 1
+        type: 0
       - field: descr
         type: 1
         instance: true
