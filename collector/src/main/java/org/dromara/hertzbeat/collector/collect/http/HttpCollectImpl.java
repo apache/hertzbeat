@@ -60,6 +60,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -87,8 +88,8 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * http https collect
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
@@ -114,14 +115,15 @@ public class HttpCollectImpl extends AbstractCollect {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
                     .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
+            boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
-            if (statusCode < HttpStatus.SC_OK || statusCode >= HttpStatus.SC_BAD_REQUEST) {
-                // 1XX 4XX 5XX 状态码 失败
+            if ((statusCode < HttpStatus.SC_OK || statusCode >= HttpStatus.SC_BAD_REQUEST) && !isSuccessInvoke) {
+                // 1XX 4XX 5XX 状态码且不在successCodes中的状态码 失败
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
             } else {
-                // 2xx 3xx 状态码 成功
+                // 2xx 3xx 状态码 或在successCodes中的状态码成功
                 // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
                 // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
                 String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -205,6 +207,10 @@ public class HttpCollectImpl extends AbstractCollect {
                 || "".equals(httpProtocol.getUrl())
                 || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
             httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
+        }
+
+        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
+            httpProtocol.setSuccessCodes(List.of(200));
         }
     }
 
@@ -580,5 +586,9 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
+    }
+
+    private boolean checkSuccessInvoke(Metrics metrics, int statusCode) {
+        return metrics.getHttp().getSuccessCodes().stream().parallel().filter(code -> code == statusCode).findAny().isPresent();
     }
 }
