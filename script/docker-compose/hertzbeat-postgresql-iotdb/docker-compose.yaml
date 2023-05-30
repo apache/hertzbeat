@@ -60,7 +60,7 @@ services:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:
-      - mysql
+      - postgres
       - iotdb
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
