@@ -117,6 +117,7 @@ metrics:
         unit: ms
       - field: days_remaining
         type: 0
+        unit: d
     aliasFields:
       - subject
       - expired
