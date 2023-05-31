@@ -114,6 +114,7 @@ metrics:
         type: 1
       - field: end_timestamp
         type: 0
+        unit: ms
       - field: days_remaining
         type: 0
     aliasFields:
