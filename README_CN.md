@@ -298,6 +298,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nandofromthebando"><img src="https://avatars.githubusercontent.com/u/87321214?v=4?s=100" width="100px;" alt="nandofromthebando"/><br /><sub><b>nandofromthebando</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=nandofromthebando" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caiboking"><img src="https://avatars.githubusercontent.com/u/6509883?v=4?s=100" width="100px;" alt="caiboking"/><br /><sub><b>caiboking</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=caiboking" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/baixing99"><img src="https://avatars.githubusercontent.com/u/73473087?v=4?s=100" width="100px;" alt="baixing99"/><br /><sub><b>baixing99</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=baixing99" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ifrenzyc"><img src="https://avatars.githubusercontent.com/u/543927?v=4?s=100" width="100px;" alt="Yang Chuang"/><br /><sub><b>Yang Chuang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ifrenzyc" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
