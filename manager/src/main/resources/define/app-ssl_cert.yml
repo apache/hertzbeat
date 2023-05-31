@@ -115,6 +115,20 @@ metrics:
       - field: end_timestamp
         type: 0
         unit: ms
+      - field: days_remaining
+        type: 0
+        unit: d
+    aliasFields:
+      - subject
+      - expired
+      - start_time
+      - start_timestamp
+      - end_time
+      - start_timestamp
+      - end_timestamp
+      - days_remaining
+    calculates:
+      - days_remaining=math.floor((end_timestamp-now())/86400000) #下取整
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssl_cert
