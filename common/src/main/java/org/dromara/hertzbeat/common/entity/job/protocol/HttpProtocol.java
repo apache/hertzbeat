@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -90,6 +91,12 @@ public class HttpProtocol {
      * 内容关键字
      */
     private String keyword;
+
+    /**
+     * http success status code. default 200
+     * successCode means what http response status code we consider it collect success.
+     */
+    private List<Integer> successCodes ;
 
     /**
      * 认证信息
