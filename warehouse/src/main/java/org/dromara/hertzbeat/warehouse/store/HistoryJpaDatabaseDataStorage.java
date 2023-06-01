@@ -56,7 +56,6 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 	private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
 
 	private static final int STRING_MAX_LENGTH = 1024;
-	private static final int MAX_HISTORY_TABLE_RECORD = 20_000;
 
 	public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
 	                                     HistoryDao historyDao) {
@@ -89,8 +88,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 			int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
 			log.info("[jpa-metrics-store]-delete {} rows.", rows);
 			long total = historyDao.count();
-			if (total > MAX_HISTORY_TABLE_RECORD) {
-				rows = historyDao.deleteOlderHistoriesRecord();
+			if (total > jpaProperties.getMaxHistoryRecordNum()) {
+				rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
 				log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
 			}
 		} catch (Exception e) {
