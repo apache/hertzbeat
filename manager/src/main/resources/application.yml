@@ -115,7 +115,12 @@ warehouse:
     # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
       enabled: true
+      # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
+      # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
+      # (please set this configuration reasonably as history records can affect performance when it is large)
+      # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
+      max-history-record-num: 6000
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
