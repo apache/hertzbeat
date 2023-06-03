@@ -23,6 +23,7 @@ import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,7 +47,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 认证注册TOKEN管理API
  *
  * @author tomsun28
- *
  */
 @Tag(name = "Auth Manage API | 认证注册TOKEN管理API")
 @RestController()
@@ -87,16 +87,9 @@ public class AccountController {
                 return ResponseEntity.ok(message);
             }
         }
-        // Get the roles the user has - rbac
-        List<String> roles = account.getOwnRoles();
-        // Issue TOKEN      签发TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
-        Map<String, Object> customClaimMap = new HashMap<>(1);
-        customClaimMap.put("refresh", true);
-        String issueRefresh = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME << 5, customClaimMap);
         Map<String, String> resp = new HashMap<>(2);
-        resp.put("token", issueToken);
-        resp.put("refreshToken", issueRefresh);
+        //issue token
+        issueJWTToken(account, loginDto.getIdentifier(), resp);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -128,15 +121,75 @@ public class AccountController {
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
+        Map<String, String> resp = new HashMap<>(2);
+        //issue token
+        issueJWTToken(account, userId, resp);
+        return ResponseEntity.ok(new Message<>(resp));
+    }
+
+    @GetMapping("/generate/token")
+    @Operation(summary = "Generate a new access token", description = "获取新的access token")
+    public ResponseEntity<Message<Map<String, String>>> generateToken(
+            @Valid @RequestBody LoginDto loginDto) {
+        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
+        if (account == null) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+        Map<String, String> resp = new HashMap<>(2);
+        //issue token
+        issueJWTToken(account, loginDto.getIdentifier(), resp);
+        return ResponseEntity.ok(new Message<>(resp));
+    }
+
+    @GetMapping("/validate/{token}")
+    @Operation(summary = "validate token ", description = "验证token可用性")
+    public ResponseEntity<Message<Map<String, String>>> validateToken(
+            @Parameter(description = "TOKEN", example = "xxx")
+            @PathVariable("token") @NotNull final String token) {
+        String userId = null;
+        try {
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            userId = String.valueOf(claims.getSubject());
+        } catch (ExpiredJwtException e) {
+            log.warn(e.getMessage());
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("Token过期")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("解析Token错误")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+
+        if (userId == null) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("非法的TOKEN")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+        SurenessAccount account = accountProvider.loadAccount(userId);
+        if (account == null) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
+        Map<String, String> resp = new HashMap<>();
+        return ResponseEntity.ok(new Message<>(resp));
+    }
+
+
+    private void issueJWTToken(SurenessAccount account, String userId, Map<String, String> resp) {
+        // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN      签发TOKEN
         String issueToken = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
         String issueRefresh = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME << 5, customClaimMap);
-        Map<String, String> resp = new HashMap<>(2);
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
-        return ResponseEntity.ok(new Message<>(resp));
     }
+
 }
