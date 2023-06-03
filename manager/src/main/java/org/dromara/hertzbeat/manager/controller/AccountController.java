@@ -41,6 +41,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+/*todo:
+1.add delete token API(when JWT is expired,cannot get userId,do we need schedule task to scan DB and delete expired JWT?)
+2.add persist in DB (do we need use cache to store JWT?)
+ */
 
 /**
  * Authentication registration TOKEN management API
