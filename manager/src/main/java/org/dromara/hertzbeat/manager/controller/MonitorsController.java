@@ -32,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletResponse;
@@ -47,7 +48,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 监控管理批量API
  *
  * @author tom
- *
  */
 @Tag(name = "Monitor Manage Batch API | 监控列表API")
 @RestController
@@ -175,7 +175,7 @@ public class MonitorsController {
     @Operation(summary = "export monitor config", description = "导出监控配置")
     public void export(
             @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids,
-            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type, 
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }
@@ -186,5 +186,18 @@ public class MonitorsController {
         monitorService.importConfig(file);
         return ResponseEntity.ok(new Message<>("Import success"));
     }
+
+
+    @PostMapping("/copy")
+    @Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
+    public ResponseEntity<Message<Void>> duplicateMonitors(
+            @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids
+    ) throws Exception {
+        if (ids != null && !ids.isEmpty()) {
+            monitorService.copyMonitors(ids);
+        }
+        return ResponseEntity.ok(new Message<>("copy success"));
+    }
+
 
 }

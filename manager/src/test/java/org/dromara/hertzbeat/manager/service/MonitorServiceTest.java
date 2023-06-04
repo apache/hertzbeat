@@ -11,6 +11,7 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -724,5 +725,22 @@ class MonitorServiceTest {
     @Test
     void getMonitorMetrics() {
         Assertions.assertDoesNotThrow(() -> appService.getAppDefineMetricNames("test"));
+    }
+
+
+    @Test
+    void copyMonitors(){
+        Monitor monitor = Monitor.builder()
+                .intervals(1)
+                .name("memory")
+                .app("demoApp")
+                .build();
+        Job job = new Job();
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        List<Param> params = Collections.singletonList(new Param());
+        when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
+        assertDoesNotThrow(()->monitorService.copyMonitors(Arrays.asList(new Long[]{1L})));
+
     }
 }
