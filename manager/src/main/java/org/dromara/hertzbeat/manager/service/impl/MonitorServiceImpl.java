@@ -72,10 +72,9 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
-
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
-    private static final Gson gson =new Gson();
+    private static final Gson GSON =new Gson();
 
     @Autowired
     private AppService appService;
@@ -646,7 +645,7 @@ public class MonitorServiceImpl implements MonitorService {
 
             monitorOpt.ifPresentOrElse(monitor -> {
                 //deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor=gson.fromJson(gson.toJson(monitor),Monitor.class);
+                Monitor newMonitor=GSON.fromJson(GSON.toJson(monitor),Monitor.class);
                 copyMonitor(newMonitor, params);
             }, new Runnable() {
                 @Override
