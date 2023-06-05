@@ -7,7 +7,7 @@ sidebar_label: SSH Protocol Custom Monitoring
 > SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.     
 
 ### SSH protocol collection process   
-【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse reponse data: oneRow, multiRow**】->【**Metric data extraction**】   
+【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse response data: oneRow, multiRow**】->【**Metric data extraction**】   
 
 It can be seen from the process that we define a monitoring type of SSH protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query script statements.
 
@@ -39,7 +39,7 @@ Here the Metric field and the response data can be mapped into a row of collecte
 
 eg：   
 Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
-Memory indicaotr original query command：`free -m`, Console response：  
+Memory metrics original query command：`free -m`, Console response：  
 ```shell
               total        used        free      shared  buff/cache   available
 Mem:           7962        4065         333           1        3562        3593
