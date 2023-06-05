@@ -7,7 +7,7 @@ sidebar_label: HTTP Protocol Custom Monitoring
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring   
 
 ### HTTP protocol collection process     
-【**call HTTP interface**】->【**response verification **】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing(todo)**】->【**Metric data extraction**】
+【**call HTTP interface**】->【**response verification**】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
 HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.   
