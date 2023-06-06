@@ -5,8 +5,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
-import { NoticeSender } from '../../../../pojo/NoticeSender';
-import { NoticeSenderService } from '../../../../service/notice-sender.service';
+import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
+import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
   selector: 'app-message-server',
@@ -18,15 +18,15 @@ export class MessageServerComponent implements OnInit {
     public msg: NzMessageService,
     private notifySvc: NzNotificationService,
     private cdr: ChangeDetectorRef,
-    private noticeSenderSvc: NoticeSenderService,
+    private noticeSenderSvc: GeneralConfigService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  senders!: NoticeSender[];
+  senders!: EmailNoticeSender[];
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
-  emailSender = new NoticeSender();
+  emailSender = new EmailNoticeSender();
 
   ngOnInit(): void {
     this.loadSenderServer();
@@ -34,14 +34,14 @@ export class MessageServerComponent implements OnInit {
 
   loadSenderServer() {
     this.senderServerLoading = true;
-    let senderInit$ = this.noticeSenderSvc.getSenders().subscribe(
+    let senderInit$ = this.noticeSenderSvc.getGeneralConfig('email').subscribe(
       message => {
         this.senderServerLoading = false;
         if (message.code === 0) {
-          this.senders = message.data;
-          let res = this.senders.find(s => s.type === 2);
-          if (res != undefined) {
-            this.emailSender = res;
+          if (message.data) {
+            this.emailSender = message.data;
+          } else {
+            this.emailSender = new EmailNoticeSender();
           }
         } else {
           console.warn(message.msg);
@@ -66,7 +66,7 @@ export class MessageServerComponent implements OnInit {
 
   onSaveEmailServer() {
     const modalOk$ = this.noticeSenderSvc
-      .newSender(this.emailSender)
+      .saveGeneralConfig(this.emailSender, 'email')
       .pipe(
         finalize(() => {
           modalOk$.unsubscribe();
@@ -88,6 +88,4 @@ export class MessageServerComponent implements OnInit {
         }
       );
   }
-
-  protected readonly Boolean = Boolean;
 }

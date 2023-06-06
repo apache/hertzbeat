@@ -54,6 +54,13 @@ Here is the architecture.
 &emsp;&#x1F449;&emsp;[Ubuntu operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml) <br />
 &emsp;&#x1F449;&emsp;[Centos operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml) <br />
 &emsp;&#x1F449;&emsp;[EulerOS operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml) <br />
+&emsp;&#x1F449;&emsp;[Fedora CoreOS operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml) <br />
+&emsp;&#x1F449;&emsp;[OpenSUSE operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml) <br />
+&emsp;&#x1F449;&emsp;[Rocky Linux operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml) <br />
+&emsp;&#x1F449;&emsp;[Red Hat operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml) <br />
+&emsp;&#x1F449;&emsp;[FreeBSD operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml) <br />
+&emsp;&#x1F449;&emsp;[AlmaLinux operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml) <br />
+&emsp;&#x1F449;&emsp;[Debian operating system monitoring](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-debian.yml) <br />
 
 
 ### Middleware monitoring

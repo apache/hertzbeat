@@ -283,9 +283,8 @@ CREATE TABLE  hzb_history
 DROP TABLE IF EXISTS  hzb_config ;
 CREATE TABLE  hzb_config
 (
-    type         tinyint          not null comment '配置类型：1-短信，2-邮件',
+    type         varchar(100)     not null comment '配置类型：sms，email',
     content      varchar(4096)    not null comment '配置内容JSON',
-    enable       boolean          not null default true comment '告警阈值开关',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',
