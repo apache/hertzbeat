@@ -12,7 +12,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
@@ -21,7 +20,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * 消息通知服务端配置实体
+ * 公共配置实体
  * @author zqr10159
  */
 @Entity
@@ -30,25 +29,19 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Message notification server config entity | 消息通知服务端配置实体")
+@Schema(description = "Common server config entity | 公共服务端配置实体")
 @EntityListeners(AuditingEntityListener.class)
 public class GeneralConfig {
 	
 	@Id
-	@Schema(title = "Config type: 1-SMS 2-Email, primary key ", description = "配置类型: 1-短信 2-邮件, 主键",
+	@Schema(title = "Config type: email sms, primary key ", description = "配置类型: email sms, 主键",
 			accessMode = READ_WRITE)
-	@Min(1)
 	@NotNull
-	private Byte type;
+	private String type;
 	
 	@Schema(title = "Config content", description = "配置内容，格式为json", accessMode = READ_WRITE)
-	@Column(length = 4096)
+	@Column(length = 8192)
 	private String content;
-	
-	@Schema(title = "Whether to enable this policy",
-			description = "是否启用此配置",
-			example = "true", accessMode = READ_WRITE)
-	private boolean enable = true;
 	
 	@Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
 	@CreatedBy
