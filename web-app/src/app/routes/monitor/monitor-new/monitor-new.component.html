@@ -64,14 +64,14 @@
 
       <nz-form-item *ngFor="let paramDefine of paramDefines; let i = index">
         <nz-form-label
-          *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+          *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
           nzSpan="7"
           [nzRequired]="paramDefine.required"
           [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
         <nz-form-control
-          *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+          *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
           nzSpan="8"
           [nzErrorTip]="'validation.required' | i18n"
         >
@@ -185,14 +185,14 @@
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
             <nz-form-label
-              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
               nzSpan="7"
               [nzRequired]="paramDefine.required"
               [nzFor]="paramDefine.field"
               >{{ paramDefine.name }}
             </nz-form-label>
             <nz-form-control
-              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
               nzSpan="8"
               [nzErrorTip]="'validation.required' | i18n"
             >

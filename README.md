@@ -314,7 +314,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 Join discussion  
 
-HertzBeat is a project under the [Dromara Open Source Community](https://dromara.org/).
+HertzBeat is a top project under the [Dromara Open Source Community](https://dromara.org/).
 
 ##### Channel
 
