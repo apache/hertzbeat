@@ -10,7 +10,7 @@ import javax.validation.constraints.*;
  *
  */
 @Data
-public class NoticeSender {
+public class EmailNoticeSender {
     
 	@NotNull(message = "类型不能为空|Type cannot be empty")
 	private Integer type;
@@ -30,7 +30,7 @@ public class NoticeSender {
 	@Min(message = "邮件端口不得小于1|Mail port must be greater than or equal to 1", value = 1)
 	private Integer emailPort;
 
-	private boolean emailSsl;
+	private boolean emailSsl = true;
 	
-	private boolean emailEnable;
+	private boolean enable = true;
 }
