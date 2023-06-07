@@ -95,6 +95,8 @@ export class MonitorEditComponent implements OnInit {
                 param.type = 0;
               } else if (define.type === 'key-value') {
                 param.type = 3;
+              } else if (define.type === 'array') {
+                param.type = 4;
               } else {
                 param.type = 1;
               }

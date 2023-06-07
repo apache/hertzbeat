@@ -205,6 +205,16 @@ public interface CommonConstants {
      * 参数类型 密码
      */
     byte PARAM_TYPE_PASSWORD = 2;
+    
+    /**
+     * Parameter Type Map values
+     */
+    byte PARAM_TYPE_MAP = 3;
+    
+    /**
+     * Parameter Type arrays values
+     */
+    byte PARAM_TYPE_ARRAY = 4;
 
     /**
      * Authentication type Account password
