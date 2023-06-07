@@ -36,21 +36,20 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory",
-        matchIfMissing = true)
+@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory", matchIfMissing = true)
 @Slf4j
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToMemoryStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
 
     public InMemoryCommonDataQueue() {
         alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
-        metricsDataToMemoryStorageQueue = new LinkedBlockingQueue<>();
+        metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
     }
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
@@ -58,7 +57,7 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         metrics.put("alertDataQueue", alertDataQueue.size());
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToPersistentStorageQueue", metricsDataToPersistentStorageQueue.size());
-        metrics.put("metricsDataToMemoryStorageQueue", metricsDataToMemoryStorageQueue.size());
+        metrics.put("metricsDataToMemoryStorageQueue", metricsDataToRealTimeStorageQueue.size());
         return metrics;
     }
 
@@ -84,14 +83,14 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return metricsDataToMemoryStorageQueue.poll(2, TimeUnit.SECONDS);
+        return metricsDataToRealTimeStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 
     @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         metricsDataToAlertQueue.offer(metricsData);
         metricsDataToPersistentStorageQueue.offer(metricsData);
-        metricsDataToMemoryStorageQueue.offer(metricsData);
+        metricsDataToRealTimeStorageQueue.offer(metricsData);
     }
 
     @Override
@@ -99,6 +98,6 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         alertDataQueue.clear();
         metricsDataToAlertQueue.clear();
         metricsDataToPersistentStorageQueue.clear();
-        metricsDataToMemoryStorageQueue.clear();
+        metricsDataToRealTimeStorageQueue.clear();
     }
 }

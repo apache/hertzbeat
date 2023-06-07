@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 /**
@@ -42,7 +44,14 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
-    
+    private final ReentrantLock lock1 = new ReentrantLock();
+    private final ReentrantLock lock2 = new ReentrantLock();
+    private final ReentrantLock lock3 = new ReentrantLock();
+    private final ReentrantLock lock4 = new ReentrantLock();
+    private final LinkedBlockingQueue<Alert> alertDataQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
     private final CommonProperties.KafkaProperties kafka;
     
     public KafkaCommonDataQueue(CommonProperties properties) {
@@ -51,6 +60,10 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             throw new IllegalArgumentException("please config common.queue.kafka props");
         }
         this.kafka = properties.getQueue().getKafka();
+        alertDataQueue = new LinkedBlockingQueue<>();
+        metricsDataToAlertQueue = new LinkedBlockingQueue<>();
+        metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
+        metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
     
@@ -105,62 +118,107 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public Alert pollAlertsData() throws InterruptedException {
-        Alert alert = null;
+        Alert alert = alertDataQueue.poll();
+        if (alert != null) {
+            return alert;
+        }
+        lock1.lockInterruptibly();
         try {
             ConsumerRecords<Long, Alert> records = alertDataConsumer.poll(Duration.ofSeconds(1));
+            int index = 0;
             for (ConsumerRecord<Long, Alert> record : records) {
-                alert = record.value();
+                if (index == 0) {
+                    alert = record.value();
+                } else {
+                    alertDataQueue.offer(record.value());
+                }
+                index++;
             }
             alertDataConsumer.commitAsync();
-        }catch (ConcurrentModificationException e){
-            //todo kafka多线程下线程不安全异常
+        } catch (Exception e){
+            log.error(e.getMessage());
+        } finally {
+            lock1.unlock();
         }
         return alert;
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        CollectRep.MetricsData metricsData = null;
+        CollectRep.MetricsData metricsData = metricsDataToAlertQueue.poll();
+        if (metricsData != null) {
+            return metricsData;
+        }
+        lock2.lockInterruptibly();
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToAlertConsumer.poll(Duration.ofSeconds(1));
-            for ( ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                metricsData = record.value();
+            int index = 0;
+            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
+                if (index == 0) {
+                    metricsData = record.value();
+                } else {
+                    metricsDataToAlertQueue.offer(record.value());
+                }
+                index++;
             }
             metricsDataToAlertConsumer.commitAsync();
-        }catch (ConcurrentModificationException e){
-            //kafka多线程下线程不安全异常
+        } catch (Exception e){
+            log.error(e.getMessage());
+        } finally {
+            lock2.unlock();
         }
         return metricsData;
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        CollectRep.MetricsData persistentStorageMetricsData = null;
+        CollectRep.MetricsData persistentStorageMetricsData = metricsDataToPersistentStorageQueue.poll();
+        if (persistentStorageMetricsData != null) {
+            return persistentStorageMetricsData;
+        }
+        lock3.lockInterruptibly();
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToPersistentStorageConsumer.poll(Duration.ofSeconds(1));
-            for ( ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                persistentStorageMetricsData = record.value();
+            int index = 0;
+            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
+                if (index == 0) {
+                    persistentStorageMetricsData = record.value();
+                } else {
+                    metricsDataToPersistentStorageQueue.offer(record.value());
+                }
+                index++;
             }
             metricsDataToPersistentStorageConsumer.commitAsync();
-        }catch (ConcurrentModificationException e){
-            //kafka多线程下线程不安全异常
+        } catch (Exception e){
+            log.error(e.getMessage());
+        } finally {
+            lock3.unlock();
         }
         return persistentStorageMetricsData;
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        CollectRep.MetricsData memoryMetricsData = null;
+        CollectRep.MetricsData realTimeMetricsData = metricsDataToRealTimeStorageQueue.poll();
+        lock4.lockInterruptibly();
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));
-            for ( ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                memoryMetricsData = record.value();
+            int index = 0;
+            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
+                if (index == 0) {
+                    realTimeMetricsData = record.value();
+                } else {
+                    metricsDataToRealTimeStorageQueue.offer(record.value());
+                }
+                index++;
             }
             metricsDataToRealTimeStorageConsumer.commitAsync();
-        }catch (ConcurrentModificationException e){
-            //kafka多线程下线程不安全异常
+        } catch (Exception e){
+            log.error(e.getMessage());
+        } finally {
+            lock4.unlock();
         }
-        return memoryMetricsData;
+        return realTimeMetricsData;
     }
 
     @Override
