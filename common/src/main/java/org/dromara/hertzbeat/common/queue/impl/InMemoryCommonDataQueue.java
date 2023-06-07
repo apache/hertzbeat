@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "Memory",
+@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory",
         matchIfMissing = true)
 @Slf4j
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {

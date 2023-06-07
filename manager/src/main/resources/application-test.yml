@@ -42,13 +42,7 @@ spring:
 common:
   queue:
     type: memory
-    kafka:
-      servers: 127.0.0.1:9092
-      alert-topic: async-collect-data-debug
-      alert-metric-topic: temp-alert-data
-      persistent-storage-topic: persistent-storage-data
-      real-time-memoryStorage-topic: memory-data
-
+    
 warehouse:
   store:
     jpa:
