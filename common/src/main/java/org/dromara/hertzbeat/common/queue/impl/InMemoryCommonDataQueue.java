@@ -63,27 +63,27 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
-    public void addAlertData(Alert alert) {
+    public void sendAlertsData(Alert alert) {
         alertDataQueue.offer(alert);
     }
 
     @Override
-    public Alert pollAlertData() throws InterruptedException {
+    public Alert pollAlertsData() throws InterruptedException {
         return alertDataQueue.poll(2, TimeUnit.SECONDS);
     }
 
     @Override
-    public CollectRep.MetricsData pollAlertMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
         return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
     }
 
     @Override
-    public CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
         return metricsDataToPersistentStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 
     @Override
-    public CollectRep.MetricsData pollRealTimeStorageMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
         return metricsDataToMemoryStorageQueue.poll(2, TimeUnit.SECONDS);
     }
 

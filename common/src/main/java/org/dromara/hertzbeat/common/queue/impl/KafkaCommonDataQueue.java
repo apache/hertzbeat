@@ -41,7 +41,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private KafkaConsumer<Long, Alert> alertDataConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToMemoryStorageConsumer;
+    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
     
     private final CommonProperties.KafkaProperties kafka;
     
@@ -84,10 +84,10 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
             
-            Map<String, Object> metricsToMemoryConsumerConfig = new HashMap<>(consumerConfig);
-            metricsToMemoryConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToMemoryStorageConsumer = new KafkaConsumer<>(metricsToMemoryConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
-            metricsDataToMemoryStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+            Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
+            metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
+            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
             throw e;
@@ -95,7 +95,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void addAlertData(Alert alert) {
+    public void sendAlertsData(Alert alert) {
         if (alertDataProducer != null) {
             alertDataProducer.send(new ProducerRecord<>(kafka.getAlertsDataTopic(), alert));
         } else {
@@ -104,7 +104,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public Alert pollAlertData() throws InterruptedException {
+    public Alert pollAlertsData() throws InterruptedException {
         Alert alert = null;
         try {
             ConsumerRecords<Long, Alert> records = alertDataConsumer.poll(Duration.ofSeconds(1));
@@ -119,7 +119,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollAlertMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
         CollectRep.MetricsData metricsData = null;
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToAlertConsumer.poll(Duration.ofSeconds(1));
@@ -134,7 +134,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
         CollectRep.MetricsData persistentStorageMetricsData = null;
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToPersistentStorageConsumer.poll(Duration.ofSeconds(1));
@@ -149,14 +149,14 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollRealTimeStorageMetricsData() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
         CollectRep.MetricsData memoryMetricsData = null;
         try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToMemoryStorageConsumer.poll(Duration.ofSeconds(1));
+            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));
             for ( ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
                 memoryMetricsData = record.value();
             }
-            metricsDataToMemoryStorageConsumer.commitAsync();
+            metricsDataToRealTimeStorageConsumer.commitAsync();
         }catch (ConcurrentModificationException e){
             //kafka多线程下线程不安全异常
         }
@@ -189,8 +189,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         if (metricsDataToPersistentStorageConsumer != null) {
             metricsDataToPersistentStorageConsumer.close();
         }
-        if (metricsDataToMemoryStorageConsumer != null) {
-            metricsDataToMemoryStorageConsumer.close();
+        if (metricsDataToRealTimeStorageConsumer != null) {
+            metricsDataToRealTimeStorageConsumer.close();
         }
     }
 }
