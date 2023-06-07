@@ -259,6 +259,11 @@ public class WarehouseProperties {
              */
             private String expireTime = "1h";
 
+            /**
+             * The maximum number of history records retained
+             */
+            private Integer maxHistoryRecordNum = 20_000;
+
             public boolean isEnabled() {
                 return enabled;
             }
@@ -273,6 +278,14 @@ public class WarehouseProperties {
 
             public void setExpireTime(String expireTime) {
                 this.expireTime = expireTime;
+            }
+
+            public Integer getMaxHistoryRecordNum() {
+                return maxHistoryRecordNum;
+            }
+
+            public void setMaxHistoryRecordNum(Integer maxHistoryRecordNum) {
+                this.maxHistoryRecordNum = maxHistoryRecordNum;
             }
         }
 
