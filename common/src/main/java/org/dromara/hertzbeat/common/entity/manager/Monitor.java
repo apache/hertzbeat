@@ -155,15 +155,6 @@ public class Monitor {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
-
-    /**
-     * The group of the monitor, like file hierarchical structure,use "/" to split
-     * 监控分组，就像文件夹一样，使用“/”分层级
-     */
-    @Schema(title = "监控分组", example = "cn/baidu/ssl", accessMode = READ_WRITE)
-    @Length(max = 255)
-    private String monitorGroup;
-
     /**
      * 多对多关联中，需设置第三张关联中间表JoinTable
      * JoinTable name 为关联关系中间表名称

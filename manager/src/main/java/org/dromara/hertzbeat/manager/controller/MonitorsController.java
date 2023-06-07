@@ -68,7 +68,6 @@ public class MonitorsController {
             @Parameter(description = "Monitor Name | 监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
             @Parameter(description = "Monitor Host | 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
             @Parameter(description = "Monitor Status | 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
-            @Parameter(description = "Monitor Group | 监控分组，模糊查询",example = "cn/baidu/ssl") @RequestParam(required = false) final String monitorGroup,
             @Parameter(description = "Sort Field | 排序字段", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
             @Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
@@ -100,10 +99,6 @@ public class MonitorsController {
             }
             if (StringUtils.hasText(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                orList.add(predicateName);
-            }
-            if (StringUtils.hasText(monitorGroup)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("monitorGroup"), "%" + monitorGroup + "%");
                 orList.add(predicateName);
             }
 
