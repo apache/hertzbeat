@@ -314,7 +314,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 社区交流
 
-HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下项目。   
+HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级项目。   
 
 ##### 微信交流群
 
