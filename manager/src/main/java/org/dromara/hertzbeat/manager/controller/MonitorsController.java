@@ -34,12 +34,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -68,6 +71,7 @@ public class MonitorsController {
             @Parameter(description = "Monitor Name | 监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
             @Parameter(description = "Monitor Host | 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
             @Parameter(description = "Monitor Status | 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
+            @Parameter(description = "Monitor Status | 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final List<org.dromara.hertzbeat.common.entity.manager.Tag> tags,
             @Parameter(description = "Sort Field | 排序字段", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
             @Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
@@ -88,6 +92,15 @@ public class MonitorsController {
             if (status != null && status >= 0 && status < ALL_MONITOR_STATUS) {
                 Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicateStatus);
+            }
+            if (tags != null && !tags.isEmpty()) {
+                ListJoin<Monitor, org.dromara.hertzbeat.common.entity.manager.Tag> monitors = root
+                        .join(root.getModel()
+                                .getList("tags", org.dromara.hertzbeat.common.entity.manager.Tag.class), JoinType.RIGHT);
+                Predicate predicateTags =monitors.in(tags.stream()
+                        .map(org.dromara.hertzbeat.common.entity.manager.Tag::getId)
+                        .collect(Collectors.toList()));
+                andList.add(predicateTags);
             }
             Predicate[] andPredicates = new Predicate[andList.size()];
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
