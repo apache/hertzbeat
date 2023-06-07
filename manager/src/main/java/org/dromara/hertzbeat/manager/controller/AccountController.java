@@ -93,7 +93,7 @@ public class AccountController {
         }
         Map<String, String> resp = new HashMap<>(2);
         //issue token
-        issueJWTToken(account, loginDto.getIdentifier(), resp);
+        issueJWTToken(account, loginDto.getIdentifier(), resp,PERIOD_TIME);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -127,14 +127,15 @@ public class AccountController {
         }
         Map<String, String> resp = new HashMap<>(2);
         //issue token
-        issueJWTToken(account, userId, resp);
+        issueJWTToken(account, userId, resp,PERIOD_TIME);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
     @GetMapping("/generate/token")
     @Operation(summary = "Generate a new access token", description = "获取新的access token")
     public ResponseEntity<Message<Map<String, String>>> generateToken(
-            @Valid @RequestBody LoginDto loginDto) {
+            @Valid @RequestBody LoginDto loginDto,
+            @Parameter(description = "Token expire time | Token有效时间", example = "3600L") @RequestParam(required = true) final Long tokenExpireTime) {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
@@ -143,7 +144,7 @@ public class AccountController {
         }
         Map<String, String> resp = new HashMap<>(2);
         //issue token
-        issueJWTToken(account, loginDto.getIdentifier(), resp);
+        issueJWTToken(account, loginDto.getIdentifier(), resp, tokenExpireTime);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -184,14 +185,14 @@ public class AccountController {
     }
 
 
-    private void issueJWTToken(SurenessAccount account, String userId, Map<String, String> resp) {
+    private void issueJWTToken(SurenessAccount account, String userId, Map<String, String> resp, Long tokenExpireTime) {
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN      签发TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME, roles);
+        String issueToken = JsonWebTokenUtil.issueJwt(userId, tokenExpireTime, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
-        String issueRefresh = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME << 5, customClaimMap);
+        String issueRefresh = JsonWebTokenUtil.issueJwt(userId, tokenExpireTime << 5, customClaimMap);
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
     }
