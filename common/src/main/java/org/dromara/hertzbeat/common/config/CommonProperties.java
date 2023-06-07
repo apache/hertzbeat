@@ -70,6 +70,8 @@ public class CommonProperties {
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
+        
+        private KafkaProperties kafka;
 
         public QueueType getType() {
             return type;
@@ -77,6 +79,14 @@ public class CommonProperties {
 
         public void setType(QueueType type) {
             this.type = type;
+        }
+        
+        public KafkaProperties getKafka() {
+            return kafka;
+        }
+        
+        public void setKafka(KafkaProperties kafka) {
+            this.kafka = kafka;
         }
     }
 
@@ -87,6 +97,44 @@ public class CommonProperties {
         Kafka,
         /** rabbit mq **/
         Rabbit_Mq
+    }
+    
+    public static class KafkaProperties {
+        /**
+         * kafka的连接服务器url
+         */
+        private String servers;
+        /**
+         * metrics data topic
+         */
+        private String metricsDataTopic;
+        /**
+         * alerts data topic
+         */
+        private String alertsDataTopic;
+        public String getServers() {
+            return servers;
+        }
+        
+        public void setServers(String servers) {
+            this.servers = servers;
+        }
+        
+        public String getMetricsDataTopic() {
+            return metricsDataTopic;
+        }
+        
+        public void setMetricsDataTopic(String metricsDataTopic) {
+            this.metricsDataTopic = metricsDataTopic;
+        }
+        
+        public String getAlertsDataTopic() {
+            return alertsDataTopic;
+        }
+        
+        public void setAlertsDataTopic(String alertsDataTopic) {
+            this.alertsDataTopic = alertsDataTopic;
+        }
     }
 
     public static class SmsProperties {
