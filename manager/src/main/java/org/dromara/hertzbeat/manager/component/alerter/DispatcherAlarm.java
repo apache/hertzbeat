@@ -101,7 +101,7 @@ public class DispatcherAlarm implements InitializingBean {
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    Alert alert = dataQueue.pollAlertData();
+                    Alert alert = dataQueue.pollAlertsData();
                     if (alert != null) {
                         // Determining alarm type storage   判断告警类型入库
                         alertStoreHandler.store(alert);

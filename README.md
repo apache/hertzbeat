@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.   
+> An open source, real-time monitoring system with custom-monitor and agentLess. | 易用友好的开源实时监控告警系统，无需Agent，强大自定义监控能力.   
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,7 +30,7 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitor and agentless.       
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 
@@ -72,7 +72,10 @@
   [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
 - [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
-  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml)
+  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
+  [OpenSUSE](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
+  [Red Hat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
+  [AlmaLinux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
 - [Tomcat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
   [Zookeeper](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
@@ -88,7 +91,7 @@
 
 ## 🐕 Quick Start   
 
-- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn)**.   
+- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In For Free](https://console.tancloud.cn)**.   
 - If you want to deploy HertzBeat local, please refer to the following Deployment Documentation for operation.  
 
 ### 🍞 Install HertzBeat   
@@ -300,6 +303,9 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nandofromthebando"><img src="https://avatars.githubusercontent.com/u/87321214?v=4?s=100" width="100px;" alt="nandofromthebando"/><br /><sub><b>nandofromthebando</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=nandofromthebando" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caiboking"><img src="https://avatars.githubusercontent.com/u/6509883?v=4?s=100" width="100px;" alt="caiboking"/><br /><sub><b>caiboking</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=caiboking" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/baixing99"><img src="https://avatars.githubusercontent.com/u/73473087?v=4?s=100" width="100px;" alt="baixing99"/><br /><sub><b>baixing99</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=baixing99" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ifrenzyc"><img src="https://avatars.githubusercontent.com/u/543927?v=4?s=100" width="100px;" alt="Yang Chuang"/><br /><sub><b>Yang Chuang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ifrenzyc" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wlin20"><img src="https://avatars.githubusercontent.com/u/20657577?v=4?s=100" width="100px;" alt="wlin20"/><br /><sub><b>wlin20</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wlin20" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -311,7 +317,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 Join discussion  
 
-HertzBeat is a project under the [Dromara Open Source Community](https://dromara.org/).
+HertzBeat is a top project under the [Dromara Open Source Community](https://dromara.org/).
 
 ##### Channel
 

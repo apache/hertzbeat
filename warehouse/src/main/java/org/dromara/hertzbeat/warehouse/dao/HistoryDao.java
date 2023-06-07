@@ -23,6 +23,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -43,12 +44,13 @@ public interface HistoryDao extends JpaRepository<History, Long>, JpaSpecificati
 
     /**
      * delete older history record
+     * @param delNum number to be deleted
      * @return rows deleted
      */
     @Modifying
     @Transactional(rollbackFor = Exception.class)
-    @Query(value = "delete from hzb_history limit 10000", nativeQuery = true)
-    int deleteOlderHistoriesRecord();
+    @Query(value = "delete from hzb_history limit :delNum", nativeQuery = true)
+    int deleteOlderHistoriesRecord(@Param(value = "delNum") int delNum);
 
     /**
      * truncateTable

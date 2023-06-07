@@ -296,6 +296,26 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
+  # field-变量字段标识
+  - field: successCode
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 校验成功状态码
+      en-US: Verify Success Code
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: array
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Input Http Status Code'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    defaultValue: '200, 201'
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
@@ -350,6 +370,9 @@ metrics:
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
+      #http success status code. default 200
+      #successCode means what http response status code we consider it collect success.
+      successCodes: [^_^successCode^_^]
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
       parseType: website

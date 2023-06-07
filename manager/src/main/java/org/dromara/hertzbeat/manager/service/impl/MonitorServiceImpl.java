@@ -409,8 +409,18 @@ public class MonitorServiceImpl implements MonitorService {
                                         + param.getValue() + " is invalid key-value value");
                             }
                             break;
+                        case "array":
+                            String[] arrays = param.getValue().split(",");
+                            if (arrays.length == 0) {
+                                throw new IllegalArgumentException("Param field" + field + " value "
+                                        + param.getValue() + " is invalid arrays value");
+                            }
+                            if (param.getValue().startsWith("[") && param.getValue().endsWith("]")) {
+                                param.setValue(param.getValue().substring(1, param.getValue().length() - 1));
+                            }
+                            break;
                         // todo More parameter definitions and actual value format verification
-                        //  更多参数定义与实际值格式校验
+                        // 更多参数定义与实际值格式校验
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
                     }

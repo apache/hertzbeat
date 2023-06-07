@@ -60,6 +60,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -75,24 +76,26 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 
 /**
  * http https collect
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
 
+    private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED, 
+            HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
+            HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
+    
     public HttpCollectImpl() {
     }
 
@@ -114,46 +117,46 @@ public class HttpCollectImpl extends AbstractCollect {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
                     .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
+            boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
-            if (statusCode < HttpStatus.SC_OK || statusCode >= HttpStatus.SC_BAD_REQUEST) {
-                // 1XX 4XX 5XX 状态码 失败
+            if (!isSuccessInvoke) {
+                // 状态码不在successCodes中的状态码为失败
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
-            } else {
-                // 2xx 3xx 状态码 成功
-                // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
-                // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
-                String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                // 根据不同的解析方式解析
-                if (resp == null || "".equals(resp)) {
-                    log.info("http response entity is empty, status: {}.", statusCode);
+            }
+            // 在successCodes中的状态码成功
+            // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
+            // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
+            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            // 根据不同的解析方式解析
+            if (resp == null || "".equals(resp)) {
+                log.info("http response entity is empty, status: {}.", statusCode);
+            }
+            Long responseTime = System.currentTimeMillis() - startTime;
+            String parseType = metrics.getHttp().getParseType();
+            try {
+                if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
+                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
+                    parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
+                    parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
+                    parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
+                } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
+                    parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
+                    parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
+                    parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                } else {
+                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
-                Long responseTime = System.currentTimeMillis() - startTime;
-                String parseType = metrics.getHttp().getParseType();
-                try {
-                    if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
-                        parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
-                        parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
-                        parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                    } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
-                        parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
-                    } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
-                        parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                    } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
-                        parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
-                        parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
-                    } else {
-                        parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    }
-                } catch (Exception e) {
-                    log.info("parse error: {}.", e.getMessage(), e);
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("parse response data error:" + e.getMessage());
-                }
+            } catch (Exception e) {
+                log.info("parse error: {}.", e.getMessage(), e);
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("parse response data error:" + e.getMessage());
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
@@ -205,6 +208,10 @@ public class HttpCollectImpl extends AbstractCollect {
                 || "".equals(httpProtocol.getUrl())
                 || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
             httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
+        }
+
+        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
+            httpProtocol.setSuccessCodes(List.of("200"));
         }
     }
 
@@ -580,5 +587,20 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
+    }
+
+    private boolean checkSuccessInvoke(Metrics metrics, int statusCode) {
+        List<String> successCodes = metrics.getHttp().getSuccessCodes();
+        Set<Integer> successCodeSet = successCodes != null ? successCodes.stream().map(code -> {
+            try {
+                return Integer.valueOf(code);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toSet()) : defaultSuccessStatusCodes;
+        if (successCodeSet.isEmpty()) {
+            successCodeSet = defaultSuccessStatusCodes;
+        }
+        return successCodeSet.contains(statusCode);
     }
 }

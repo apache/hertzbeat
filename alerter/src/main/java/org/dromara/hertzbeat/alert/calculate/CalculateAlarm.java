@@ -95,7 +95,7 @@ public class CalculateAlarm {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = dataQueue.pollAlertMetricsData();
+                    CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
                     if (metricsData != null) {
                         calculate(metricsData);
                     }
