@@ -94,6 +94,6 @@ public class SilenceAlarm {
 				}
 			}
 		}
-		dataQueue.addAlertData(alert);
+		dataQueue.sendAlertsData(alert);
 	}
 }

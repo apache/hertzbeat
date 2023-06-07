@@ -130,7 +130,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
-        commonDataQueue.addAlertData(buildAlertData(alertReport));
+        commonDataQueue.sendAlertsData(buildAlertData(alertReport));
     }
 
     /**

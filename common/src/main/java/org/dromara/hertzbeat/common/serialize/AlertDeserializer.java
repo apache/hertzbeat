@@ -11,19 +11,19 @@ import java.util.Map;
  * kafka告警记录反序列化类
  *
  */
-public class AlertDeserializer implements Deserializer {
+public class AlertDeserializer implements Deserializer<Alert> {
     @Override
-    public void configure(Map configs, boolean isKey) {
+    public void configure(Map<String, ?> configs, boolean isKey) {
         Deserializer.super.configure(configs, isKey);
     }
 
     @Override
-    public Object deserialize(String s, byte[] bytes) {
+    public Alert deserialize(String s, byte[] bytes) {
         return JsonUtil.fromJson(new String(bytes), Alert.class);
     }
 
     @Override
-    public Object deserialize(String topic, Headers headers, byte[] data) {
+    public Alert deserialize(String topic, Headers headers, byte[] data) {
         return Deserializer.super.deserialize(topic, headers, data);
     }
 
