@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.manager.service.MonitorService;
@@ -75,7 +76,7 @@ public class MonitorsController {
             @Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize,
-            @Parameter(description = "Monitor Status | 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestBody(required = false) final List<org.dromara.hertzbeat.common.entity.manager.Tag> tags) {
+            @Parameter(description = "Monitor tags | 监控标签", example = "") @RequestBody(required = false) final List<org.dromara.hertzbeat.common.entity.manager.Tag> tags) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
@@ -93,15 +94,15 @@ public class MonitorsController {
                 Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicateStatus);
             }
-            if (tags != null && !tags.isEmpty()) {
+
+        if (tags != null && !tags.isEmpty()) {
+            tags.stream().forEach(tag->{
                 ListJoin<Monitor, org.dromara.hertzbeat.common.entity.manager.Tag> monitors = root
                         .join(root.getModel()
-                                .getList("tags", org.dromara.hertzbeat.common.entity.manager.Tag.class), JoinType.RIGHT);
-                Predicate predicateTags =monitors.in(tags.stream()
-                        .map(org.dromara.hertzbeat.common.entity.manager.Tag::getId)
-                        .collect(Collectors.toList()));
-                andList.add(predicateTags);
-            }
+                                .getList("tags", org.dromara.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
+                andList.add(criteriaBuilder.equal(monitors.get("id"), tag.getId()));
+            });
+        }
             Predicate[] andPredicates = new Predicate[andList.size()];
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
@@ -114,7 +115,6 @@ public class MonitorsController {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
-
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
@@ -212,6 +212,9 @@ public class MonitorsController {
         }
         return ResponseEntity.ok(new Message<>("copy success"));
     }
+
+
+
 
 
 }
