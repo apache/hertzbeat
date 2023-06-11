@@ -67,9 +67,10 @@ public class UserServiceImpl implements UserService {
         return accountList.get(0);
     }
 
-    //todo: by now we also use sureness default provider ,when complete refactor the auth manage feature, will use our own db
+
     @Override
     public UserAccount findUser(String userName) {
+        //todo: by now we also use sureness default provider ,when complete refactor the auth manage feature, will use our own db
         SurenessAccount account = provider.loadAccount(userName);
         if (account == null) {
 
