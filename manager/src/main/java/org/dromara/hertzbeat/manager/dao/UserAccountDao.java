@@ -31,7 +31,7 @@ public interface UserAccountDao extends JpaRepository<UserAccount, Long>, JpaSpe
      *
      * @param userName
      */
-    void deleteUserAccountsByUserNameEquals(String userName);
+    void deleteUserAccountsByIdentifierEquals(String userName);
 
     /**
      * find user account by user name
@@ -39,6 +39,6 @@ public interface UserAccountDao extends JpaRepository<UserAccount, Long>, JpaSpe
      * @param userName
      * @return account list
      */
-    List<UserAccount> findUserAccountsByUserNameEquals(String userName);
+    List<UserAccount> findUserAccountsByIdentifierEquals(String userName);
 
 }

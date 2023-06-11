@@ -274,4 +274,17 @@ public interface CommonConstants {
      * cache key alert silence
      */
     String CACHE_ALERT_SILENCE = "alert_silence";
+
+    /**
+     * Token validity time in seconds
+     * TOKEN有效期时间 单位秒
+     */
+    static final long PERIOD_TIME = 3600L;
+
+
+    /**
+     * the max amount of token that one user has
+     * 一个用户可用有的最大的token数量
+     */
+    static final int MAX_TOKEN_AMOUNT = 8;
 }

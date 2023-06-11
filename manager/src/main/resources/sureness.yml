@@ -21,6 +21,9 @@
 # eg: /api/v1/source2===get===[] 表示 /api/v1/source2===get 这条资源不支持任何角色访问
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
+  - /api/account/auth/issue/token===get===[admin,user,guest]
+  - /api/account/auth/delete/tokens===delete===[admin,user,guest]
+  - /api/account/auth/get/tokens===get===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
   - /api/monitor/**===get===[admin,user,guest]
   - /api/monitor/**===post===[admin,user]
@@ -54,7 +57,7 @@ resourceRole:
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-  - /api/account/auth/**===*
+  - /api/account/auth/form===get
   - /api/i18n/**===get
   - /api/metrics===get
   - /api/apps/hierarchy===get

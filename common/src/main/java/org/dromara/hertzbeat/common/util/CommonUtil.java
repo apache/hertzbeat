@@ -21,13 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * 公共工具类
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Slf4j
 public class CommonUtil {
@@ -40,6 +41,7 @@ public class CommonUtil {
 
     /**
      * 将字符串str转换为double数字类型
+     *
      * @param str string
      * @return double 数字
      */
@@ -58,7 +60,8 @@ public class CommonUtil {
     /**
      * 将字符串str,此字符串可能带单位,转换为double数字类型
      * 将数值小数点限制到4位
-     * @param str string
+     *
+     * @param str  string
      * @param unit 字符串单位
      * @return string格式的 double 数字 小数点最大到4位
      */
@@ -80,6 +83,7 @@ public class CommonUtil {
 
     /**
      * 邮箱格式校验
+     *
      * @param email 邮箱
      * @return 是否校验成功
      */
@@ -93,6 +97,7 @@ public class CommonUtil {
 
     /**
      * 手机号格式校验
+     *
      * @param phoneNum 手机号
      * @return 是否校验成功
      */
@@ -133,6 +138,15 @@ public class CommonUtil {
             return null;
         }
         return value.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");
+    }
+
+
+    public static boolean isNullOrEmpty(Collection obj) {
+        return (obj == null || obj.isEmpty());
+    }
+
+    public static boolean isNullOrEmpty(String str) {
+        return (str == null || str.length() == 0);
     }
 
 }

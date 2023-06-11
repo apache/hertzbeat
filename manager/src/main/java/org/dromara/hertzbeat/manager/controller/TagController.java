@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.manager.service.TagService;
@@ -68,6 +69,7 @@ public class TagController {
         if (tag.getId() == null || tag.getName() == null) {
             throw new IllegalArgumentException("The Tag not exist.");
         }
+        //todo:test
         tagService.modifyTag(tag);
         return ResponseEntity.ok(new Message<>("Modify success"));
     }

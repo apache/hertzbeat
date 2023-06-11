@@ -17,10 +17,6 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import com.usthe.sureness.provider.SurenessAccount;
-import com.usthe.sureness.provider.SurenessAccountProvider;
-import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
-import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -30,21 +26,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.manager.pojo.dto.UserToken;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
+import org.dromara.hertzbeat.manager.pojo.dto.UserAccount;
+import org.dromara.hertzbeat.manager.service.UserService;
+import org.dromara.hertzbeat.manager.support.JWTTokenHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static org.dromara.hertzbeat.common.constants.CommonConstants.MAX_TOKEN_AMOUNT;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.PERIOD_TIME;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-/*todo:
-1.add delete token API(when JWT is expired,cannot get userId,do we need schedule task to scan DB and delete expired JWT?)
-2.add persist in DB (do we need use cache to store JWT?)
- */
 
 /**
  * Authentication registration TOKEN management API
@@ -58,19 +58,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 public class AccountController {
     /**
-     * Token validity time in seconds
-     * TOKEN有效期时间 单位秒
-     */
-    private static final long PERIOD_TIME = 3600L;
-    /**
      * account data provider
      */
-    private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
+    @Autowired
+    UserService userService;
 
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "账户密码登录获取关联用户信息")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
+        UserAccount account = userService.findUser(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
@@ -91,9 +87,8 @@ public class AccountController {
                 return ResponseEntity.ok(message);
             }
         }
-        Map<String, String> resp = new HashMap<>(2);
         //issue token
-        issueJWTToken(account, loginDto.getIdentifier(), resp,PERIOD_TIME);
+        Map<String, String> resp = userService.formToken(account, loginDto.getIdentifier(), PERIOD_TIME);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -105,12 +100,17 @@ public class AccountController {
         String userId;
         boolean isRefresh;
         try {
-            Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
+            Claims claims = JWTTokenHelper.parseJwt(refreshToken);
             userId = String.valueOf(claims.getSubject());
             isRefresh = claims.get("refresh", Boolean.class);
+        } catch (ExpiredJwtException e) {
+            log.warn(e.getMessage());
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("刷新TOKEN过期")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
         } catch (Exception e) {
             log.info(e.getMessage());
-            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("刷新TOKEN过期或错误")
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("刷新TOKEN错误")
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
@@ -119,32 +119,38 @@ public class AccountController {
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
-        SurenessAccount account = accountProvider.loadAccount(userId);
+        UserAccount account = userService.findUser(userId);
         if (account == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
-        Map<String, String> resp = new HashMap<>(2);
         //issue token
-        issueJWTToken(account, userId, resp,PERIOD_TIME);
+        Map<String, String> resp = userService.formToken(account, userId, PERIOD_TIME);
+
         return ResponseEntity.ok(new Message<>(resp));
     }
 
-    @GetMapping("/generate/token")
+    @GetMapping("/issue/token")
     @Operation(summary = "Generate a new access token", description = "获取新的access token")
     public ResponseEntity<Message<Map<String, String>>> generateToken(
             @Valid @RequestBody LoginDto loginDto,
             @Parameter(description = "Token expire time | Token有效时间", example = "3600L") @RequestParam(required = true) final Long tokenExpireTime) {
-        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
+        UserAccount account = userService.findUser(loginDto.getIdentifier());
         if (account == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
-        Map<String, String> resp = new HashMap<>(2);
+        List<UserToken> tokens = userService.findTokens(loginDto.getIdentifier());
+        if (tokens != null && tokens.size() >= MAX_TOKEN_AMOUNT) {
+            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("已达到TOKEN数量极限，请先删除已有TOKEN")
+                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
+            return ResponseEntity.ok(message);
+        }
         //issue token
-        issueJWTToken(account, loginDto.getIdentifier(), resp, tokenExpireTime);
+        Map<String, String> resp = userService.issueAndSaveToken(account, tokenExpireTime);
+
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -155,7 +161,7 @@ public class AccountController {
             @PathVariable("token") @NotNull final String token) {
         String userId = null;
         try {
-            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            Claims claims = JWTTokenHelper.parseJwt(token);
             userId = String.valueOf(claims.getSubject());
         } catch (ExpiredJwtException e) {
             log.warn(e.getMessage());
@@ -174,27 +180,31 @@ public class AccountController {
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
-        SurenessAccount account = accountProvider.loadAccount(userId);
+        UserAccount account = userService.findUser(userId);
         if (account == null) {
             Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
                     .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
             return ResponseEntity.ok(message);
         }
-        Map<String, String> resp = new HashMap<>();
-        return ResponseEntity.ok(new Message<>(resp));
+        return ResponseEntity.ok(new Message<>("Token 可用"));
     }
 
 
-    private void issueJWTToken(SurenessAccount account, String userId, Map<String, String> resp, Long tokenExpireTime) {
-        // Get the roles the user has - rbac
-        List<String> roles = account.getOwnRoles();
-        // Issue TOKEN      签发TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(userId, tokenExpireTime, roles);
-        Map<String, Object> customClaimMap = new HashMap<>(1);
-        customClaimMap.put("refresh", true);
-        String issueRefresh = JsonWebTokenUtil.issueJwt(userId, tokenExpireTime << 5, customClaimMap);
-        resp.put("token", issueToken);
-        resp.put("refreshToken", issueRefresh);
+    @DeleteMapping("/delete/tokens")
+    @Operation(summary = "delete  existing tokens", description = "删除现有的token")
+    public ResponseEntity<Message<Map<String, String>>> deleteToken(
+            @Parameter(description = "Token id list| Token id list", example = "") @RequestParam(required = true) final List<Long> ids) {
+
+        userService.deleteUserTokens(new HashSet<>(ids));
+        return ResponseEntity.ok(new Message<>("delete success"));
     }
+
+    @GetMapping("/get/tokens/{identifier}")
+    @Operation(summary = "get  existing tokens", description = "获取所有的token")
+    public ResponseEntity<Message<List<UserToken>>> getTokens(@PathVariable("identifier") @NotNull final String identifier) {
+        Message<List<UserToken>> message = new Message<>(userService.findTokens(identifier));
+        return ResponseEntity.ok(message);
+    }
+
 
 }
