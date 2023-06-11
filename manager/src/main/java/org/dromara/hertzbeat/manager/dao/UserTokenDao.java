@@ -1,6 +1,10 @@
 package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.manager.Tag;
+/**
+ * @author:Li Jinming
+ * @Description: 用户JWT token DAO
+ * @date:2023-06-07
+ */
 import org.dromara.hertzbeat.manager.pojo.dto.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

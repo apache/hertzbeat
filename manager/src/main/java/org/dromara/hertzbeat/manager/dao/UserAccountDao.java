@@ -1,5 +1,10 @@
 package org.dromara.hertzbeat.manager.dao;
 
+/**
+ * @author:Li Jinming
+ * @Description: 用户信息DAO
+ * @date:2023-06-07
+ */
 
 import org.dromara.hertzbeat.manager.pojo.dto.UserAccount;
 import org.springframework.data.jpa.repository.JpaRepository;

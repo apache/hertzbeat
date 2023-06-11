@@ -12,12 +12,11 @@ import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.dromara.hertzbeat.manager.dao.UserAccountDao;
 import org.dromara.hertzbeat.manager.pojo.dto.UserAccount;
 import org.dromara.hertzbeat.manager.service.UserService;
-import org.dromara.hertzbeat.manager.support.JWTTokenHelper;
+import org.dromara.hertzbeat.manager.support.JwtTokenHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +30,7 @@ import java.util.stream.Stream;
  */
 
 @Service
-//@Transactional(rollbackFor = Exception.class)
+@Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class UserServiceImpl implements UserService {
     SurenessAccountProvider provider = new DocumentAccountProvider();
@@ -80,7 +79,7 @@ public class UserServiceImpl implements UserService {
             }
             return accountList.get(0);
         }
-        UserAccount userAccount=UserAccount.builder()
+        UserAccount userAccount = UserAccount.builder()
                 .identifier(account.getAppId())
                 .salt(account.getSalt())
                 .ownRoles(account.getOwnRoles())
@@ -101,16 +100,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<String, String> issueAndSaveToken(UserAccount account, Long tokenExpireTime) {
-        Map<String, String> resp = JWTTokenHelper.issueJWTToken(account, account.getIdentifier(), tokenExpireTime);
+        Map<String, String> resp = JwtTokenHelper.issueJwtToken(account, account.getIdentifier(), tokenExpireTime);
         UserToken newToken = UserToken.builder().token(resp.get("token")).accountIdentifier(account.getAppId()).build();
         userTokenDao.save(newToken);
-        resp.put("id",newToken.getId().toString());
+        resp.put("id", newToken.getId().toString());
         return resp;
     }
 
     @Override
-    public Map<String, String> formToken(UserAccount account, String userId, Long tokenExpireTime) {
-        return JWTTokenHelper.issueJWTToken(account, userId, tokenExpireTime);
+    public Map<String, String> formToken(UserAccount account, Long tokenExpireTime) {
+        return JwtTokenHelper.issueJwtToken(account, account.getIdentifier(), tokenExpireTime);
     }
 
     @Override

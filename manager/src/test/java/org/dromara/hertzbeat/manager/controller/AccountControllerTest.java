@@ -1,6 +1,5 @@
 package org.dromara.hertzbeat.manager.controller;
 
-import org.apache.catalina.User;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.manager.dao.UserAccountDao;
 import org.dromara.hertzbeat.manager.pojo.dto.UserAccount;
@@ -8,8 +7,7 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import org.dromara.hertzbeat.manager.service.UserService;
-import org.dromara.hertzbeat.manager.support.JWTTokenHelper;
-import org.hamcrest.Matchers;
+import org.dromara.hertzbeat.manager.support.JwtTokenHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -106,7 +103,7 @@ class AccountControllerTest {
                 .credential("admin")
                 .build();
         Mockito.when(userService.findUser("admin")).thenReturn(originAccount);
-        String token = JWTTokenHelper.issueJWTToken(originAccount, "admin", PERIOD_TIME).get("token");
+        String token = JwtTokenHelper.issueJwtToken(originAccount, "admin", PERIOD_TIME).get("token");
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/account/auth/issue/token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(loginDto))

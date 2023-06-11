@@ -15,13 +15,13 @@ import java.util.Map;
 
 /**
  * @author:Li Jinming
- * @Description:
+ * @Description: sureness's JsonWebTokenUtil 's delegator
  * @date:2023-06-10
  */
 
 
-public class JWTTokenHelper {
-    public static Map<String, String> issueJWTToken(SurenessAccount account, String userId, Long tokenExpireTime) {
+public class JwtTokenHelper {
+    public static Map<String, String> issueJwtToken(SurenessAccount account, String userId, Long tokenExpireTime) {
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN      签发TOKEN

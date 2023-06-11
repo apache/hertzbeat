@@ -27,11 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.manager.pojo.dto.UserToken;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import org.dromara.hertzbeat.manager.pojo.dto.UserAccount;
 import org.dromara.hertzbeat.manager.service.UserService;
-import org.dromara.hertzbeat.manager.support.JWTTokenHelper;
+import org.dromara.hertzbeat.manager.support.JwtTokenHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -88,7 +87,7 @@ public class AccountController {
             }
         }
         //issue token
-        Map<String, String> resp = userService.formToken(account, loginDto.getIdentifier(), PERIOD_TIME);
+        Map<String, String> resp = userService.formToken(account, PERIOD_TIME);
         return ResponseEntity.ok(new Message<>(resp));
     }
 
@@ -100,7 +99,7 @@ public class AccountController {
         String userId;
         boolean isRefresh;
         try {
-            Claims claims = JWTTokenHelper.parseJwt(refreshToken);
+            Claims claims = JwtTokenHelper.parseJwt(refreshToken);
             userId = String.valueOf(claims.getSubject());
             isRefresh = claims.get("refresh", Boolean.class);
         } catch (ExpiredJwtException e) {
@@ -126,7 +125,7 @@ public class AccountController {
             return ResponseEntity.ok(message);
         }
         //issue token
-        Map<String, String> resp = userService.formToken(account, userId, PERIOD_TIME);
+        Map<String, String> resp = userService.formToken(account,  PERIOD_TIME);
 
         return ResponseEntity.ok(new Message<>(resp));
     }
@@ -161,7 +160,7 @@ public class AccountController {
             @PathVariable("token") @NotNull final String token) {
         String userId = null;
         try {
-            Claims claims = JWTTokenHelper.parseJwt(token);
+            Claims claims = JwtTokenHelper.parseJwt(token);
             userId = String.valueOf(claims.getSubject());
         } catch (ExpiredJwtException e) {
             log.warn(e.getMessage());
