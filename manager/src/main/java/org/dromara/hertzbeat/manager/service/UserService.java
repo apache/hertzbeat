@@ -42,7 +42,7 @@ public interface UserService {
     UserAccount findUser(Long id);
 
     /**
-     * 根据 identifier查找一个user
+     * 根据 identifier查找一个user account info
      * @param userName user identifier
      * @return user account info
      */
@@ -66,12 +66,12 @@ public interface UserService {
      * 用户登录时生成新的token
      * @param account user account info
      * @param tokenExpireTime token expire time
-     * @return
+     * @return token and refresh token and tokenId
      */
     Map<String, String> formToken(UserAccount account, Long tokenExpireTime);
 
     /**
-     *
+     * 根据用户identifier查找所生成的tokens
      * @param identifier user identifier
      * @return user tokens
      */
