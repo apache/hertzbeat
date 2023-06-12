@@ -18,6 +18,7 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
@@ -65,15 +66,15 @@ import java.util.stream.Collectors;
  * 监控管理服务实现
  *
  * @author tomsun28
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
 
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
-
     private static final Long MONITOR_ID_TMP = 1000000000L;
+
+    private static final Gson GSON =new Gson();
 
     @Autowired
     private AppService appService;
@@ -89,7 +90,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
-    
+
     @Autowired
     private TagMonitorBindDao tagMonitorBindDao;
 
@@ -402,7 +403,8 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "key-value":
-                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {}) == null) {
+                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {
+                            }) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + param.getValue() + " is invalid key-value value");
                             }
@@ -643,6 +645,28 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void copyMonitors(List<Long> ids) {
+
+        ids.stream().parallel().forEach(id -> {
+            //get monitor and Params according id
+            Optional<Monitor> monitorOpt = monitorDao.findById(id);
+            List<Param> params = paramDao.findParamsByMonitorId(id);
+
+            monitorOpt.ifPresentOrElse(monitor -> {
+                //deep copy original monitor to achieve persist in JPA
+                Monitor newMonitor=GSON.fromJson(GSON.toJson(monitor),Monitor.class);
+                copyMonitor(newMonitor, params);
+            }, new Runnable() {
+                @Override
+                public void run() {
+                    log.warn("can not find the monitor for id ：{}", id);
+                }
+            });
+        });
+    }
+
+    @Override
     public Monitor getMonitor(Long monitorId) {
         return monitorDao.findById(monitorId).orElse(null);
     }
@@ -656,5 +680,23 @@ public class MonitorServiceImpl implements MonitorService {
     public List<Monitor> getAppMonitors(String app) {
         return monitorDao.findMonitorsByAppEquals(app);
     }
+
+
+    private void copyMonitor(Monitor monitor, List<Param> params) {
+        List<Tag> oldTags = monitor.getTags();
+        if (oldTags != null && !oldTags.isEmpty()) {
+            //filter monitor_id and monitor_name of old tags for avoiding duplicate tags
+            List<Tag> newTags = oldTags
+                    .stream()
+                    .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                    .collect(Collectors.toList());
+            monitor.setTags(newTags);
+        }
+        //set a new monitor name
+        monitor.setName(String.format("%s - copy", monitor.getName()));
+
+        addMonitor(monitor, params);
+    }
+
 
 }

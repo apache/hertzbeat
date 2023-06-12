@@ -207,4 +207,12 @@ public interface MonitorService {
      */
     void importConfig(MultipartFile file) throws Exception;
 
+    /**
+     * 根据id，批量复制monitor
+     *
+     * @param ids monitor id
+     */
+    void copyMonitors(List<Long> ids);
+
+
 }
