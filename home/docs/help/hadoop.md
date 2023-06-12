@@ -1,7 +1,8 @@
 ---
 id: hadoop
-title: Monitoring: Hadoop
-sidebar_label: Hadoop keywords: [Open Source Monitoring System, Open Source Java Monitoring, Hadoop JVM Monitoring]
+title: Monitoring Hadoop
+sidebar_label: Hadoop 
+keywords: [Open Source Monitoring System, Open Source Java Monitoring, Hadoop JVM Monitoring]
 ---
 
 > Collect and monitor general performance metrics for the JVM virtual machine in Hadoop.
@@ -16,16 +17,19 @@ sidebar_label: Hadoop keywords: [Open Source Monitoring System, Open Source Java
 Add JVM parameters when the application starts. ⚠️Note that you can customize the exposed port and external IP.
 
 - 1.Enter the hadoop-env.sh configuration file and enter the following command in the terminal:
+
 ```shell
 vi $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 ```
-- 2.Add the following parameters, where <port> is the number of the custom-exposed port:
+
+- 2.Add the following parameters, where `port` is the number of the custom-exposed port
+
 ```shell
 export HADOOP_OPTS= "$HADOOP_OPTS
 -Djava.rmi.server.hostname=对外ip地址 
 -Dcom.sun.management.jmxremote.port=9999
 -Dcom.sun.management.jmxremote.ssl=false
--Dcom.sun.management.jmxremote.authenticate=false " 
+-Dcom.sun.management.jmxremote.authenticate=false "
 ```
 - 3.Save and exit, and then execute "start-all.sh" in the "$HADOOP_HOME/sbin" directory to restart the service.
 

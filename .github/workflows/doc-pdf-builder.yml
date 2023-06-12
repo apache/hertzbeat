@@ -1,4 +1,4 @@
-name: 'pdf-builder'
+name: 'hertzbeat-doc-pdf-builder'
 on:
   push:
     branches: [ master, test ]
@@ -19,7 +19,7 @@ jobs:
           yes "" | sudo ./install.sh
   
       - name: Build PDF
-        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs/ --output docs.pdf
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs.pdf
   
       - name: Upload results
         uses: actions/upload-artifact@v3
