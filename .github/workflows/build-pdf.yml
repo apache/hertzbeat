@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Install Prince
         run: |
+          sudo add-apt-repository multiverse
+          sudo apt update && sudo apt install ttf-mscorefonts-installer
+          sudo fc-cache -f -v
           curl https://www.princexml.com/download/prince-14.2-linux-generic-x86_64.tar.gz -O
           tar zxf prince-14.2-linux-generic-x86_64.tar.gz
           cd prince-14.2-linux-generic-x86_64
