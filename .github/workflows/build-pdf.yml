@@ -15,10 +15,10 @@ jobs:
           sudo apt update && sudo apt install ttf-mscorefonts-installer
           sudo apt-get install language-pack-zh-han*
           sudo fc-cache -f -v
-          LANG="zh_CN.UTF-8"
-          curl https://www.princexml.com/download/prince-15.1-ubuntu20.04-amd64.tar.gz -O
-          tar zxf prince-15.1-ubuntu20.04-amd64.tar.gz
-          cd prince-15.1-ubuntu20.04-amd64
+          export LANG="zh_CN.UTF-8"
+          curl https://www.princexml.com/download/prince-14.2-linux-generic-x86_64.tar.gz -O
+          tar zxf prince-14.2-linux-generic-x86_64.tar.gz
+          cd prince-14.2-linux-generic-x86_64
           yes "" | sudo ./install.sh
   
       - name: Build PDF
