@@ -1,9 +1,9 @@
 name: 'pdf-builder'
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, test ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, test ]
 
 jobs:
   build:
