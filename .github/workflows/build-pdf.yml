@@ -24,6 +24,6 @@ jobs:
         with:
           name: result
           # The output filename can be specified with --output option
-          path: pdf/docs.pdf
+          path: docs.pdf
           if-no-files-found: error
   
