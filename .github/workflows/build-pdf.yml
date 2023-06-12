@@ -18,7 +18,7 @@ jobs:
           LANG="zh_CN.UTF-8"
           curl https://www.princexml.com/download/prince-15.1-ubuntu22.04-amd64.tar.gz -O
           tar zxf prince-15.1-ubuntu22.04-amd64.tar.gz
-          cd prince-15.1-ubuntu22.04-amd64.tar.gz
+          cd prince-15.1-ubuntu22.04-amd64
           yes "" | sudo ./install.sh
   
       - name: Build PDF
