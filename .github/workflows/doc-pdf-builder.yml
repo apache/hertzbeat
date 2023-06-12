@@ -19,18 +19,17 @@ jobs:
           yes "" | sudo ./install.sh
   
       - name: Build CN PDF
-        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs-cn.pdf
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs/docs-cn.pdf
 
       - name: Build EN PDF
-        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/docs --output docs-en.pdf
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/docs --output docs/docs-en.pdf
   
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
-          name: result
+          name: docs-pdf
           # The output filename can be specified with --output option
-          path: 
-            - docs-cn.pdf
-            - docs-en.pdf
+          path: docs/**
           if-no-files-found: error
+          retention-days: 5
   
