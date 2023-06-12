@@ -7,22 +7,23 @@ on:
 
 jobs:
   build:
-    # prerequisites...
-
-    - name: Install Prince
-      run: |
-        curl https://www.princexml.com/download/prince-14.2-linux-generic-x86_64.tar.gz -O
-        tar zxf prince-14.2-linux-generic-x86_64.tar.gz
-        cd prince-14.2-linux-generic-x86_64
-        yes "" | sudo ./install.sh
-
-    - name: Build PDF
-      run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs/ --output docs.pdf
-
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: result
-        # The output filename can be specified with --output option
-        path: pdf/docs.pdf
-        if-no-files-found: error
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Prince
+        run: |
+          curl https://www.princexml.com/download/prince-14.2-linux-generic-x86_64.tar.gz -O
+          tar zxf prince-14.2-linux-generic-x86_64.tar.gz
+          cd prince-14.2-linux-generic-x86_64
+          yes "" | sudo ./install.sh
+  
+      - name: Build PDF
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs/ --output docs.pdf
+  
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: result
+          # The output filename can be specified with --output option
+          path: pdf/docs.pdf
+          if-no-files-found: error
+  
