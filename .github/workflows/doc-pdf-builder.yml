@@ -18,14 +18,19 @@ jobs:
           cd prince-15.1-macos
           yes "" | sudo ./install.sh
   
-      - name: Build PDF
-        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs.pdf
+      - name: Build CN PDF
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs-cn.pdf
+
+      - name: Build EN PDF
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/docs --output docs-en.pdf
   
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
           name: result
           # The output filename can be specified with --output option
-          path: docs.pdf
+          path: 
+            - docs-cn.pdf
+            - docs-en.pdf
           if-no-files-found: error
   
