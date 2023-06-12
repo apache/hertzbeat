@@ -32,20 +32,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitor and manage batch API
  * 监控管理批量API
- *
  *
  *
  */
@@ -71,7 +74,8 @@ public class MonitorsController {
             @Parameter(description = "Sort Field | 排序字段", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
             @Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize,
+            @Parameter(description = "Monitor tags | 监控标签", example = "") @RequestBody(required = false) final List<org.dromara.hertzbeat.common.entity.manager.Tag> tags) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
@@ -89,6 +93,15 @@ public class MonitorsController {
                 Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicateStatus);
             }
+
+        if (tags != null && !tags.isEmpty()) {
+            tags.stream().forEach(tag->{
+                ListJoin<Monitor, org.dromara.hertzbeat.common.entity.manager.Tag> monitors = root
+                        .join(root.getModel()
+                                .getList("tags", org.dromara.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
+                andList.add(criteriaBuilder.equal(monitors.get("id"), tag.getId()));
+            });
+        }
             Predicate[] andPredicates = new Predicate[andList.size()];
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
@@ -175,7 +188,7 @@ public class MonitorsController {
     @Operation(summary = "export monitor config", description = "导出监控配置")
     public void export(
             @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids,
-            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type, 
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }
@@ -186,5 +199,21 @@ public class MonitorsController {
         monitorService.importConfig(file);
         return ResponseEntity.ok(new Message<>("Import success"));
     }
+
+
+    @PostMapping("/copy")
+    @Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
+    public ResponseEntity<Message<Void>> duplicateMonitors(
+            @Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids
+    ) throws Exception {
+        if (ids != null && !ids.isEmpty()) {
+            monitorService.copyMonitors(ids);
+        }
+        return ResponseEntity.ok(new Message<>("copy success"));
+    }
+
+
+
+
 
 }
