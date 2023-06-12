@@ -13,7 +13,9 @@ jobs:
         run: |
           sudo add-apt-repository multiverse
           sudo apt update && sudo apt install ttf-mscorefonts-installer
+          sudo apt-get install language-pack-zh-han*
           sudo fc-cache -f -v
+          LANG="zh_CN.UTF-8"
           curl https://www.princexml.com/download/prince-14.2-linux-generic-x86_64.tar.gz -O
           tar zxf prince-14.2-linux-generic-x86_64.tar.gz
           cd prince-14.2-linux-generic-x86_64
