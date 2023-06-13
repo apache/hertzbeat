@@ -1,9 +1,6 @@
 name: 'hertzbeat-doc-pdf-builder'
 on:
-  push:
-    branches: [ master, test ]
-  pull_request:
-    branches: [ master, test ]
+  page_build
 
 jobs:
   build:
@@ -30,7 +27,7 @@ jobs:
           name: docs-cn-pdf
           path: docs-cn.pdf
           if-no-files-found: error
-          retention-days: 5
+          retention-days: 1
           
       - name: Upload results
         uses: actions/upload-artifact@v3
@@ -38,5 +35,5 @@ jobs:
           name: docs-en-pdf
           path: docs-en.pdf
           if-no-files-found: error
-          retention-days: 5
+          retention-days: 1
   
