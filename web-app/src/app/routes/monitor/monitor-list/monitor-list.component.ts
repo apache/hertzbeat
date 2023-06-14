@@ -25,7 +25,6 @@ export class MonitorListComponent implements OnInit {
     private router: Router,
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
-    private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
