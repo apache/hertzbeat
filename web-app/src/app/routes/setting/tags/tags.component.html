@@ -66,10 +66,10 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'tag.color' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.display' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -77,16 +77,17 @@
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">
+        <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger" class="hoverClass">
+            {{ formatTagName(data) }}
+          </nz-tag>
+        </a>
+      </td>
       <td nzAlign="center">{{ data.name }}</td>
       <td nzAlign="center">{{ data.value }}</td>
       <td nzAlign="center">
-        <nz-tag [nzColor]="data.color">{{ data.color }}</nz-tag>
-      </td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-        <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">{{
-          data.name + ':' + data.value
-        }}</nz-tag>
+        <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger">{{ data.color }}</nz-tag>
       </td>
       <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">

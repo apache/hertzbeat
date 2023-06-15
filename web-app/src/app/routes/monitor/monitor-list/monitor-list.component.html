@@ -7,14 +7,32 @@
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
-    <i nz-icon nzType="reconciliation"></i>
-    <span>{{ 'monitors.list' | i18n }}</span>
-    <a routerLink="/setting/define" [queryParams]="{ app: app }">
+    <i *ngIf="app != undefined" nz-icon nzType="reconciliation"></i>
+    <i *ngIf="app == undefined" nz-icon nzType="laptop"></i>
+    <span *ngIf="app != undefined">{{ 'monitors.list' | i18n }}</span>
+    <span *ngIf="app == undefined">{{ 'menu.monitor.center' | i18n }}</span>
+    <a *ngIf="app != undefined" routerLink="/setting/define" [queryParams]="{ app: app }">
       <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
         <span>{{ 'monitor.app.' + app | i18n }}</span>
       </nz-tag>
     </a>
-    <a [href]="'https://hertzbeat.com/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
+    <nz-tag
+      *ngIf="tag != undefined"
+      style="font-size: 14px; border-radius: 4px; margin-left: 4px"
+      nzColor="#ff4081"
+      class="hoverClass"
+      nzMode="closeable"
+      (nzOnClose)="clearCurrentTag()"
+    >
+      <span nz-icon nzType="tag" nzTheme="outline"></span>
+      <span>{{ tag }}</span>
+    </nz-tag>
+    <a
+      [href]="'https://hertzbeat.com/docs/help/' + (app == undefined ? 'guide' : app)"
+      target="_blank"
+      style="float: right; margin-right: 5%"
+      class="mobile-hide"
+    >
       <button nz-button nzType="primary">
         <span>{{ 'common.button.help' | i18n }} </span>
         <span nz-icon nzType="question-circle"></span>
@@ -29,7 +47,7 @@
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button nz-button nzType="primary">
+    <button *ngIf="app != undefined" nz-button nzType="primary">
       <a routerLink="/monitors/new" [queryParams]="{ app: app }">
         <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
         {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
@@ -76,7 +94,7 @@
       {{ 'common.search' | i18n }}
     </button>
     <input
-      style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
+      style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
       nz-input
       type="text"
       [placeholder]="'monitors.search.placeholder' | i18n"
@@ -85,7 +103,7 @@
       [(ngModel)]="filterContent"
     />
     <nz-select
-      style="margin-right: 10px; float: right; width: 120px"
+      style="margin-right: 10px; float: right"
       nzAllowClear
       [nzPlaceHolder]="'monitors.search.filter' | i18n"
       [(ngModel)]="filterStatus"
@@ -117,12 +135,13 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="20%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'monitor.host' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'monitor.host' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'tag' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="18%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -171,6 +190,13 @@
           <nz-tag nzColor="processing" class="hoverClass">
             <i nz-icon nzType="cloud"></i>
             <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+          </nz-tag>
+        </a>
+      </td>
+      <td nzAlign="left">
+        <a *ngFor="let tag of data?.tags; let i = index" routerLink="/monitors" [queryParams]="{ tag: sliceTagName(tag) }">
+          <nz-tag style="margin-top: 2px" [nzColor]="tag?.color" class="hoverClass">
+            {{ sliceTagName(tag) }}
           </nz-tag>
         </a>
       </td>

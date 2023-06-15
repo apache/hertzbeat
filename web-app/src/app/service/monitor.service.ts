@@ -92,22 +92,27 @@ export class MonitorService {
   }
 
   public getMonitors(
-    app: string,
+    app: string | undefined,
+    tag: string | undefined,
     pageIndex: number,
     pageSize: number,
     sortField?: string | null,
     sortOrder?: string | null
   ): Observable<Message<Page<Monitor>>> {
-    app = app.trim();
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      app: app,
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (app != undefined) {
+      httpParams = httpParams.append('app', app.trim());
+    }
+    if (tag != undefined) {
+      httpParams = httpParams.append('tag', tag);
+    }
     if (sortField != null && sortOrder != null) {
       httpParams = httpParams.appendAll({
         sort: sortField,
@@ -119,7 +124,8 @@ export class MonitorService {
   }
 
   public searchMonitors(
-    app: string | null,
+    app: string | undefined,
+    tag: string | undefined,
     searchValue: string,
     status: number,
     pageIndex: number,
@@ -133,6 +139,9 @@ export class MonitorService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (tag != undefined) {
+      httpParams = httpParams.append('tag', tag);
+    }
     if (status != undefined && status != 9) {
       httpParams = httpParams.append('status', status);
     }

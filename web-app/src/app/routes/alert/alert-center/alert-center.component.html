@@ -39,7 +39,7 @@
     {{ 'common.search' | i18n }}
   </button>
   <input
-    style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
     [placeholder]="'alert.center.search' | i18n"
@@ -50,7 +50,7 @@
   />
   <nz-select
     class="mobile-hide"
-    style="margin-right: 10px; float: right; width: 120px"
+    style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-status' | i18n"
     [(ngModel)]="filterStatus"
@@ -62,7 +62,7 @@
   </nz-select>
   <nz-select
     class="mobile-hide"
-    style="margin-right: 10px; float: right; width: 120px"
+    style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
     [(ngModel)]="filterPriority"
