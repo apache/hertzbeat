@@ -20,7 +20,6 @@ const routes: Routes = [
     // 路由守卫 在路由之前判断是否有认证或者权限进入此路由
     canActivate: [DetectAuthGuard],
     children: [
-      // todo 根据路由自动生成面包屑
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent, data: { titleI18n: 'menu.dashboard' } },
       { path: 'exception', loadChildren: () => import('./exception/exception.module').then(m => m.ExceptionModule) },
