@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
+import { formatTagName } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-setting-tags',
@@ -211,4 +212,5 @@ export class SettingTagsComponent implements OnInit {
     }
   }
   // end 新增修改告警定义model
+  protected readonly formatTagName = formatTagName;
 }
