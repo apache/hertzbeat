@@ -16,11 +16,17 @@
         <span>{{ 'monitor.app.' + app | i18n }}</span>
       </nz-tag>
     </a>
-    <a *ngIf="tag != undefined" routerLink="/setting/tags">
-      <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#ff4081" class="hoverClass">
-        <span>{{ tag }}</span>
-      </nz-tag>
-    </a>
+    <nz-tag
+      *ngIf="tag != undefined"
+      style="font-size: 14px; border-radius: 4px; margin-left: 4px"
+      nzColor="#ff4081"
+      class="hoverClass"
+      nzMode="closeable"
+      (nzOnClose)="clearCurrentTag()"
+    >
+      <span nz-icon nzType="tag" nzTheme="outline"></span>
+      <span>{{ tag }}</span>
+    </nz-tag>
     <a
       [href]="'https://hertzbeat.com/docs/help/' + (app == undefined ? 'guide' : app)"
       target="_blank"

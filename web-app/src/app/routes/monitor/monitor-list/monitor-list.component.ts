@@ -103,6 +103,10 @@ export class MonitorListComponent implements OnInit {
     this.loadMonitorTable();
   }
 
+  clearCurrentTag() {
+    this.router.navigateByUrl(`/monitors`);
+  }
+
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
     let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.tag, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
@@ -135,21 +139,6 @@ export class MonitorListComponent implements OnInit {
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
     // 参数样例
     // this.router.navigate(['/monitors/new'],{queryParams: {app: "linux"}});
-  }
-
-  onEditMonitor() {
-    // 编辑时只能选中一个监控
-    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
-    if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
-      return;
-    }
-    let monitorId = 0;
-    this.checkedMonitorIds.forEach(item => (monitorId = item));
-    this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
   }
 
   onDeleteOneMonitor(monitorId: number) {
