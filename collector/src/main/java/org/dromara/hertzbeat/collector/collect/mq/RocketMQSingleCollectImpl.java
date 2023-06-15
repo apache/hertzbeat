@@ -13,6 +13,7 @@ import org.apache.rocketmq.common.protocol.body.ClusterInfo;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.common.protocol.body.KVTable;
 import org.apache.rocketmq.common.protocol.body.SubscriptionGroupWrapper;
+import org.apache.rocketmq.common.protocol.body.TopicList;
 import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.utils.ThreadUtils;
 import org.apache.rocketmq.remoting.RPCHook;
@@ -31,6 +32,7 @@ import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * rocketmq采集实现类
@@ -164,6 +167,7 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
     private void collectData(DefaultMQAdminExt mqAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
         this.collectClusterData(mqAdminExt, rocketMQCollectData);
         this.collectConsumerData(mqAdminExt, rocketMQCollectData);
+        this.collectTopicData(mqAdminExt, rocketMQCollectData);
     }
 
     /**
@@ -301,6 +305,30 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
             }
         } catch (Exception e) {
             log.warn("collect rocketmq consume data error", e);
+            throw e;
+        }
+    }
+
+    private void collectTopicData(DefaultMQAdminExt defaultMQAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
+        try {
+            TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
+            Set<String> topics = topicList.getTopicList()
+                    .stream()
+                    .filter(topic -> !(topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX) || topic.startsWith(MixAll.DLQ_GROUP_TOPIC_PREFIX)))
+                    .collect(Collectors.toSet());
+            List<Map<String /* topic */, List<RocketMQCollectData.TopicQueueInfo>>> topicInfoList = new ArrayList<>();
+            for (String topic : topics) {
+                Map<String, List<RocketMQCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>();
+                List<RocketMQCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
+
+                // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用极其频繁
+
+                topicQueueInfoTable.put(topic, topicQueueInfoList);
+                topicInfoList.add(topicQueueInfoTable);
+                rocketMQCollectData.setTopicInfoList(topicInfoList);
+            }
+        } catch (Exception e) {
+            log.warn("collect rocketmq topic data error", e);
             throw e;
         }
     }

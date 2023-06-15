@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.collector.collect.mq;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * rocketmq采集数据实体类
@@ -16,6 +17,8 @@ public class RocketMQCollectData {
     private List<ClusterBrokerData> clusterBrokerDataList;
 
     private List<ConsumerInfo> consumerInfoList;
+
+    private List<Map<String /* topic */, List<TopicQueueInfo>>> topicInfoList;
 
     @Data
     public static class ClusterBrokerData {
@@ -53,5 +56,19 @@ public class RocketMQCollectData {
         private double consumeTps;
 
         private long diffTotal;
+    }
+
+    @Data
+    public static class TopicQueueInfo {
+
+        private String brokerName;
+
+        private int queueId;
+
+        private long minOffset;
+
+        private long maxOffset;
+
+        private long lastUpdateTimestamp;
     }
 }
