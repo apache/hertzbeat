@@ -64,6 +64,21 @@ public class Hierarchy {
      */
     @Schema(description = "是否是叶子节点", example = "true", accessMode = READ_WRITE)
     Boolean isLeaf = false;
+    
+    /**
+     * For leaf metric
+     * metric type 0-number: number 1-string: string
+     * 指标类型 0-number:数字 1-string:字符串
+     */
+    @Schema(description = "metric type 0-number: number 1-string: string")
+    private Byte type;
+    
+    /**
+     * metric unit
+     * 指标单位
+     */
+    @Schema(description = "metric unit")
+    private String unit;
 
     /**
      * Next level of association

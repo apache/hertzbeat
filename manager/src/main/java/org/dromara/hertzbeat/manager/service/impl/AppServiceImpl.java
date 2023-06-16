@@ -178,6 +178,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                             hierarchyField.setValue(field.getField());
                             hierarchyField.setLabel(field.getField());
                             hierarchyField.setIsLeaf(true);
+                            // for metric
+                            hierarchyField.setType(field.getType());
+                            hierarchyField.setUnit(field.getUnit());
                             hierarchyFieldList.add(hierarchyField);
                         }
                         hierarchyMetric.setChildren(hierarchyFieldList);

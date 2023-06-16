@@ -181,6 +181,7 @@ export class AlertSettingComponent implements OnInit {
               this.cascadeValues = [this.define.app, this.define.metric];
             }
             this.cascadeOnChange(this.cascadeValues);
+            this.renderAlertRuleExpr(this.define.expr);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -281,7 +282,9 @@ export class AlertSettingComponent implements OnInit {
   isManageModalAdd = true;
   define: AlertDefine = new AlertDefine();
   cascadeValues: string[] = [];
-  otherMetrics: string[] = [];
+  currentMetrics: any[] = [];
+  alertRules: any[] = [{}];
+  isExpr = false;
   cascadeOnChange(values: string[]): void {
     if (values == null || values.length != 3) {
       return;
@@ -290,12 +293,10 @@ export class AlertSettingComponent implements OnInit {
       if (hierarchy.value == values[0]) {
         hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
           if (metrics.value == values[1]) {
-            this.otherMetrics = [];
+            this.currentMetrics = [];
             if (metrics.children) {
               metrics.children.forEach(item => {
-                if (item.value != values[2]) {
-                  this.otherMetrics.push(item.value);
-                }
+                this.currentMetrics.push(item);
               });
             }
           }
@@ -303,6 +304,100 @@ export class AlertSettingComponent implements OnInit {
       }
     });
   }
+
+  switchAlertRuleShow() {
+    this.isExpr = !this.isExpr;
+    if (this.isExpr) {
+      let expr = this.calculateAlertRuleExpr();
+      if (expr != '') {
+        this.define.expr = expr;
+      }
+    }
+  }
+
+  onAddNewAlertRule() {
+    this.alertRules.push({});
+  }
+
+  onRemoveAlertRule(index: number) {
+    this.alertRules.splice(index, 1);
+  }
+
+  calculateAlertRuleExpr() {
+    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined && rule.value != undefined);
+    let index = 0;
+    let expr = '';
+    rules.forEach(rule => {
+      let ruleStr = '';
+      if (rule.metric.type === 0) {
+        ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
+      } else if (rule.metric.type === 1) {
+        ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+      }
+      if (ruleStr != '') {
+        expr = expr + ruleStr;
+      }
+      if (index != rules.length - 1) {
+        expr = `${expr} && `;
+      }
+      index++;
+    });
+    return expr;
+  }
+
+  renderAlertRuleExpr(expr: string) {
+    if (expr == undefined || expr == '') {
+      return;
+    }
+    if (expr.indexOf('||') > 0 || expr.indexOf(' + ') > 0 || expr.indexOf(' - ') > 0) {
+      this.isExpr = true;
+      return;
+    }
+    this.alertRules = [];
+    try {
+      let exprArr: string[] = expr.split('&&');
+      for (let index in exprArr) {
+        let exprStr = exprArr[index].trim();
+        if (exprStr.startsWith('!equals') || exprStr.startsWith('equals')) {
+          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
+          let tmpArr = tmp.split(',');
+          if (tmpArr.length == 2) {
+            let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
+            let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
+            if (exprStr.startsWith('!')) {
+              let rule = { metric: metric, operator: '!equals', value: value };
+              this.alertRules.push(rule);
+            } else {
+              let rule = { metric: metric, operator: 'equals', value: value };
+              this.alertRules.push(rule);
+            }
+          }
+        } else {
+          let values = exprStr.trim().split(' ');
+          if (values.length == 3 && values[2].trim() != '' && !Number.isNaN(parseFloat(values[2].trim()))) {
+            let metric = this.currentMetrics.find(item => item.value == values[0].trim());
+            let rule = { metric: metric, operator: values[1].trim(), value: values[2].trim() };
+            this.alertRules.push(rule);
+          }
+        }
+      }
+      if (this.alertRules.length != exprArr.length) {
+        this.alertRules = [{}];
+        this.isExpr = true;
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      this.isExpr = true;
+      this.alertRules = [{}];
+      return;
+    }
+    if (this.alertRules.length == 0) {
+      this.alertRules = [{}];
+      this.isExpr = true;
+    }
+  }
+
   onManageModalCancel() {
     this.isManageModalVisible = false;
   }
@@ -314,6 +409,12 @@ export class AlertSettingComponent implements OnInit {
       this.define.field = this.cascadeValues[2];
     } else {
       this.define.expr = '';
+    }
+    if (!this.isExpr) {
+      let expr = this.calculateAlertRuleExpr();
+      if (expr != '') {
+        this.define.expr = expr;
+      }
     }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
