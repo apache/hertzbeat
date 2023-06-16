@@ -45,7 +45,7 @@
           "key": "db",
           "text": "数据库",
           "i18n": "menu.monitor.db",
-          "icon": "anticon-database"
+          "icon": "anticon-console-sql"
         },
         {
           "key": "os",
@@ -59,27 +59,27 @@
           "text": "中间件",
           "hide": false,
           "i18n": "menu.monitor.mid",
-          "icon": "anticon-merge-cells"
+          "icon": "anticon-cluster"
         },
         {
           "key": "cn",
           "text": "云原生",
           "hide": false,
           "i18n": "menu.monitor.cn",
-          "icon": "anticon-cloud"
+          "icon": "anticon-cloud-server"
         },
         {
           "key": "network",
           "text": "网络",
           "hide": false,
           "i18n": "menu.monitor.network",
-          "icon": "anticon-wifi"
+          "icon": "anticon-global"
         },
         {
           "key": "custom",
           "text": "自定义",
           "i18n": "menu.monitor.custom",
-          "icon": "anticon-skin"
+          "icon": "anticon-robot"
         }
       ]
     },
@@ -92,7 +92,7 @@
         {
           "text": "告警配置",
           "i18n": "menu.alert.setting",
-          "icon": "anticon-bulb",
+          "icon": "anticon-calculator",
           "link": "/alert/setting"
         },
         {
