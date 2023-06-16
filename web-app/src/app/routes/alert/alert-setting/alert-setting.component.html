@@ -262,9 +262,14 @@
               </nz-select>
               <input
                 nz-input
+                [type]="alertRule.metric?.type === 0 ? 'number' : 'text'"
                 [(ngModel)]="alertRule.value"
                 [ngModelOptions]="{ standalone: true }"
-                [placeholder]="'alert.setting.rule.match-value.place-holder' | i18n"
+                [placeholder]="
+                  alertRule.metric?.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                "
                 nz-col
                 nzSpan="10"
               />

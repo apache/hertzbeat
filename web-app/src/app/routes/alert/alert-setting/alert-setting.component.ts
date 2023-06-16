@@ -374,12 +374,17 @@ export class AlertSettingComponent implements OnInit {
           }
         } else {
           let values = exprStr.trim().split(' ');
-          if (values.length == 3) {
+          if (values.length == 3 && values[2].trim() != '' && !Number.isNaN(parseFloat(values[2].trim()))) {
             let metric = this.currentMetrics.find(item => item.value == values[0].trim());
             let rule = { metric: metric, operator: values[1].trim(), value: values[2].trim() };
             this.alertRules.push(rule);
           }
         }
+      }
+      if (this.alertRules.length != exprArr.length) {
+        this.alertRules = [{}];
+        this.isExpr = true;
+        return;
       }
     } catch (e) {
       console.error(e);
