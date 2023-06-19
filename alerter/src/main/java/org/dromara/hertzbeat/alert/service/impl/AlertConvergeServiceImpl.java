@@ -3,6 +3,9 @@ package org.dromara.hertzbeat.alert.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertConvergeDao;
 import org.dromara.hertzbeat.alert.service.AlertConvergeService;
+import org.dromara.hertzbeat.common.cache.CacheFactory;
+import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.AlertConverge;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,11 +37,13 @@ public class AlertConvergeServiceImpl implements AlertConvergeService {
     @Override
     public void addAlertConverge(AlertConverge alertConverge) throws RuntimeException {
         alertConvergeDao.save(alertConverge);
+        clearAlertConvergesCache();
     }
     
     @Override
     public void modifyAlertConverge(AlertConverge alertConverge) throws RuntimeException {
         alertConvergeDao.save(alertConverge);
+        clearAlertConvergesCache();
     }
     
     @Override
@@ -49,10 +54,16 @@ public class AlertConvergeServiceImpl implements AlertConvergeService {
     @Override
     public void deleteAlertConverges(Set<Long> convergeIds) throws RuntimeException {
         alertConvergeDao.deleteAlertConvergesByIdIn(convergeIds);
+        clearAlertConvergesCache();
     }
     
     @Override
     public Page<AlertConverge> getAlertConverges(Specification<AlertConverge> specification, PageRequest pageRequest) {
         return alertConvergeDao.findAll(specification, pageRequest);
+    }
+    
+    private void clearAlertConvergesCache() {
+        ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
+        convergeCache.remove(CommonConstants.CACHE_ALERT_CONVERGE);
     }
 }

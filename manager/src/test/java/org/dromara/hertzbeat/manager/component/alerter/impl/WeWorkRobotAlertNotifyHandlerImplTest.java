@@ -41,7 +41,7 @@ class WeWorkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTes
         alert.setTags(map);
         alert.setContent("mock content");
         alert.setPriority((byte) 0);
-        alert.setLastTriggerTime(System.currentTimeMillis());
+        alert.setLastAlarmTime(System.currentTimeMillis());
 
         weWorkRobotAlertNotifyHandler.send(receiver, alert);
     }

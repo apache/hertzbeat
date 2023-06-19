@@ -168,9 +168,10 @@ public class CalculateAlarm {
                                 String monitorAlertKey = String.valueOf(monitorId) + define.getId();
                                 Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
                                 if (triggeredAlert != null) {
-                                    int times = triggeredAlert.getTimes() + 1;
-                                    triggeredAlert.setTimes(times);
-                                    triggeredAlert.setLastTriggerTime(currentTimeMilli);
+                                    int times = triggeredAlert.getTriggerTimes() + 1;
+                                    triggeredAlert.setTriggerTimes(times);
+                                    triggeredAlert.setFirstAlarmTime(currentTimeMilli);
+                                    triggeredAlert.setLastAlarmTime(currentTimeMilli);
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (times >= defineTimes) {
                                         triggeredAlertMap.remove(monitorAlertKey);
@@ -189,9 +190,9 @@ public class CalculateAlarm {
                                             .priority(define.getPriority())
                                             .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                                             .target(app + "." + metrics + "." + define.getField())
-                                            .times(1)
-                                            .firstTriggerTime(currentTimeMilli)
-                                            .lastTriggerTime(currentTimeMilli)
+                                            .triggerTimes(1)
+                                            .firstAlarmTime(currentTimeMilli)
+                                            .lastAlarmTime(currentTimeMilli)
                                             // Keyword matching and substitution in the template
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
@@ -257,9 +258,9 @@ public class CalculateAlarm {
                         .content(content)
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                         .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
-                        .firstTriggerTime(currentTimeMilli)
-                        .lastTriggerTime(currentTimeMilli)
-                        .times(1)
+                        .firstAlarmTime(currentTimeMilli)
+                        .lastAlarmTime(currentTimeMilli)
+                        .triggerTimes(1)
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
             }
@@ -287,9 +288,9 @@ public class CalculateAlarm {
                     .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                     .target(CommonConstants.AVAILABILITY)
                     .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
-                    .firstTriggerTime(currentTimeMill)
-                    .lastTriggerTime(currentTimeMill)
-                    .times(1);
+                    .firstAlarmTime(currentTimeMill)
+                    .lastAlarmTime(currentTimeMill)
+                    .triggerTimes(1);
             if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
                 alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build().clone());
                 unAvailableMonitors.add(monitorId);
@@ -298,14 +299,15 @@ public class CalculateAlarm {
             }
             triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
         } else {
-            int times = preAlert.getTimes() + 1;
+            int times = preAlert.getTriggerTimes() + 1;
             if (preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
                 times = 1;
                 preAlert.setContent(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap));
                 preAlert.setTags(tags);
             }
-            preAlert.setTimes(times);
-            preAlert.setLastTriggerTime(currentTimeMill);
+            preAlert.setTriggerTimes(times);
+            preAlert.setFirstAlarmTime(currentTimeMill);
+            preAlert.setLastAlarmTime(currentTimeMill);
             int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
             if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);

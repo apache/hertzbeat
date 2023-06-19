@@ -45,7 +45,7 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         alert.setTags(map);
         alert.setContent("mock content");
         alert.setPriority((byte) 0);
-        alert.setLastTriggerTime(System.currentTimeMillis());
+        alert.setLastAlarmTime(System.currentTimeMillis());
 
         slackAlertNotifyHandler.send(receiver, alert);
     }

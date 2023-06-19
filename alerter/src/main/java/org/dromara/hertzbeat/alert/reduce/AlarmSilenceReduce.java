@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class AlarmSilence {
+public class AlarmSilenceReduce {
 	
 	private final AlertSilenceDao alertSilenceDao;
 	
@@ -40,6 +40,9 @@ public class AlarmSilence {
 			silenceCache.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilenceList);
 		}
 		for (AlertSilence alertSilence : alertSilenceList) {
+			if (!alertSilence.isEnable()) {
+				continue;
+			}
 			// if match the silence rule, return
 			boolean match = alertSilence.isMatchAll();
 			if (!match) {

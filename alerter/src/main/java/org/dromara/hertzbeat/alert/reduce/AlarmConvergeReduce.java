@@ -1,6 +1,5 @@
 package org.dromara.hertzbeat.alert.reduce;
 
-import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertConvergeDao;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
@@ -12,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * alarm converge 
@@ -19,18 +20,28 @@ import java.util.Map;
  * @author tom
  */
 @Service
-@RequiredArgsConstructor
-public class AlarmConverge {
+public class AlarmConvergeReduce {
     
     private final AlertConvergeDao alertConvergeDao;
     
+    private final Map<Integer, Alert> converageAlertMap;
+    
+    public AlarmConvergeReduce(AlertConvergeDao alertConvergeDao) {
+        this.alertConvergeDao = alertConvergeDao;
+        this.converageAlertMap = new ConcurrentHashMap<>(16);
+    }
+    
     /**
-     * alert converge filter data
-     * @param alert alert
+     * currentAlert converge filter data
+     * @param currentAlert currentAlert
      * @return true when not filter
      */
     @SuppressWarnings("unchecked")
-    public boolean filterConverge(Alert alert) {
+    public boolean filterConverge(Alert currentAlert) {
+        // ignore ALERT_STATUS_CODE_RESTORED
+        if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+            return true;
+        }
         ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
         List<AlertConverge> alertConvergeList = (List<AlertConverge>) convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE);
         if (alertConvergeList == null) {
@@ -48,11 +59,14 @@ public class AlarmConverge {
             convergeCache.put(CommonConstants.CACHE_ALERT_CONVERGE, alertConvergeList);
         }
         for (AlertConverge alertConverge : alertConvergeList) {
+            if (!alertConverge.isEnable()) {
+                continue;
+            }
             boolean match = alertConverge.isMatchAll();
             if (!match) {
                 List<TagItem> tags = alertConverge.getTags();
-                if (alert.getTags() != null && !alert.getTags().isEmpty()) {
-                    Map<String, String> alertTagMap = alert.getTags();
+                if (currentAlert.getTags() != null && !currentAlert.getTags().isEmpty()) {
+                    Map<String, String> alertTagMap = currentAlert.getTags();
                     match = tags.stream().anyMatch(item -> {
                         if (alertTagMap.containsKey(item.getName())) {
                             String tagValue = alertTagMap.get(item.getName());
@@ -67,13 +81,35 @@ public class AlarmConverge {
                     });
                 }
                 if (match && alertConverge.getPriorities() != null && !alertConverge.getPriorities().isEmpty()) {
-                    match = alertConverge.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
+                    match = alertConverge.getPriorities().stream().anyMatch(item -> item != null && item == currentAlert.getPriority());
                 }
             }
             if (match) {
-                
-                
-                break;
+                long evalInterval = alertConverge.getEvalInterval() * 1000;
+                long now = System.currentTimeMillis();
+                if (evalInterval <= 0) {
+                    return true;
+                }
+                int alertHash = Objects.hash(currentAlert.getPriority(), currentAlert.getTags());
+                Alert preAlert = converageAlertMap.get(alertHash);
+                if (preAlert == null) {
+                    currentAlert.setTimes(1);
+                    currentAlert.setFirstAlarmTime(now);
+                    currentAlert.setLastAlarmTime(now);
+                    converageAlertMap.put(alertHash, currentAlert);
+                    return true;
+                } else {
+                    if (now - preAlert.getLastAlarmTime() < evalInterval) {
+                        preAlert.setTimes(preAlert.getTimes() + 1);
+                        preAlert.setLastAlarmTime(now);
+                        return false;
+                    } else {
+                        preAlert.setTimes(preAlert.getTimes() + 1);
+                        preAlert.setLastAlarmTime(now);
+                        converageAlertMap.remove(alertHash);
+                        return true;
+                    }
+                }
             }
         }
         return true;

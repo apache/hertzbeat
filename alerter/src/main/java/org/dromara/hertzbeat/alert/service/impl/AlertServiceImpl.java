@@ -156,7 +156,7 @@ public class AlertServiceImpl implements AlertService {
                 .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                 .tags(alertReport.getLabels())
                 .target(alertReport.getAlertName())
-                .times(1)
+                .triggerTimes(1)
                 .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneId.systemDefault()))
                 .build();
     }
