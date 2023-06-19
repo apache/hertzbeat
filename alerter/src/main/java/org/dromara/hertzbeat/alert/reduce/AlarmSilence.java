@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.alert.calculate;
+package org.dromara.hertzbeat.alert.reduce;
 
 import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
@@ -8,7 +8,6 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
-import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,14 +22,17 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
-public class SilenceAlarm {
+public class AlarmSilence {
 	
 	private final AlertSilenceDao alertSilenceDao;
 	
-	private final CommonDataQueue dataQueue;
-	
+	/**
+	 * alert silence filter data
+	 * @param alert alert
+	 * @return true when not filter
+	 */
 	@SuppressWarnings("unchecked")
-	public void filterSilenceAndSendData(Alert alert) {
+	public boolean filterSilence(Alert alert) {
 		ICacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
 		List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
 		if (alertSilenceList == null) {
@@ -71,7 +73,7 @@ public class SilenceAlarm {
 							int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
 							alertSilence.setTimes(times + 1);
 							alertSilenceDao.save(alertSilence);
-							return;
+							return false;
 						}
 					}
 				} else if (alertSilence.getType() == 1) {
@@ -87,13 +89,13 @@ public class SilenceAlarm {
 								int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
 								alertSilence.setTimes(times + 1);
 								alertSilenceDao.save(alertSilence);
-								return;
+								return false;
 							}
 						}
 					}
 				}
 			}
 		}
-		dataQueue.sendAlertsData(alert);
+		return true;
 	}
 }
