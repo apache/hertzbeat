@@ -8,9 +8,8 @@ describe('AlertConvergeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ AlertConvergeComponent ]
-    })
-    .compileComponents();
+      declarations: [AlertConvergeComponent]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AlertConvergeComponent);
     component = fixture.componentInstance;
