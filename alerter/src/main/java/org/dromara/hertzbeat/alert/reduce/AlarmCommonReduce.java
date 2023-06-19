@@ -21,10 +21,7 @@ public class AlarmCommonReduce {
 	private final CommonDataQueue dataQueue;
 	
     public void reduceAndSendAlarm(Alert alert) {
-	    long currentTimeMilli = System.currentTimeMillis();
 		alert.setTimes(1);
-		alert.setFirstAlarmTime(currentTimeMilli);
-		alert.setLastAlarmTime(System.currentTimeMillis());
 		// converge -> silence
 	    if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
 			dataQueue.sendAlertsData(alert);
