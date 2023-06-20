@@ -99,13 +99,14 @@ public class AlarmConvergeReduce {
                     converageAlertMap.put(alertHash, currentAlert);
                     return true;
                 } else {
-                    if (now - preAlert.getLastAlarmTime() < evalInterval) {
+                    if (now - preAlert.getFirstAlarmTime() < evalInterval) {
                         preAlert.setTimes(preAlert.getTimes() + 1);
                         preAlert.setLastAlarmTime(now);
                         return false;
                     } else {
-                        preAlert.setTimes(preAlert.getTimes() + 1);
-                        preAlert.setLastAlarmTime(now);
+                        currentAlert.setTimes(preAlert.getTimes() + 1);
+                        currentAlert.setFirstAlarmTime(preAlert.getFirstAlarmTime());
+                        currentAlert.setLastAlarmTime(now);
                         converageAlertMap.remove(alertHash);
                         return true;
                     }
