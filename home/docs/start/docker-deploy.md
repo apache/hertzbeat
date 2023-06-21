@@ -16,9 +16,14 @@ sidebar_label: Install via Docker
    ```
 
 2. pull HertzBeat Docker mirror  
-   you can look up the mirror version TAG in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
-   ``` 
+   you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)  
+   or in [quay.io mirror repository](https://quay.io/repository/tancloud/hertzbeat)     
+   ```shell
    $ docker pull tancloud/hertzbeat   
+   ```
+   or  
+   ```shell
+   $ docker pull quay.io/tancloud/hertzbeat
    ```
 
 3. Mounted HertzBeat configuration file (optional)    
@@ -60,7 +65,7 @@ $ docker run -d -p 1157:1157 \
    - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    
    - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional, if you don't have a need, just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if no needs.  
    - `--name hertzbeat` : Naming container name hertzbeat 
-   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. Version can be looked up in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**     
 
 6. Begin to explore HertzBeat  
 
