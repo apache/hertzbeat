@@ -96,6 +96,12 @@
           "link": "/alert/setting"
         },
         {
+          "text": "告警收敛",
+          "i18n": "menu.alert.converge",
+          "icon": "anticon-filter",
+          "link": "/alert/converge"
+        },
+        {
           "text": "告警静默",
           "i18n": "menu.alert.silence",
           "icon": "anticon-audio-muted",

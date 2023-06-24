@@ -41,7 +41,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
         alert.setTags(map);
         alert.setContent("mock content");
         alert.setPriority((byte) 0);
-        alert.setLastTriggerTime(System.currentTimeMillis());
+        alert.setLastAlarmTime(System.currentTimeMillis());
 
         dingTalkRobotAlertNotifyHandler.send(receiver, alert);
     }
