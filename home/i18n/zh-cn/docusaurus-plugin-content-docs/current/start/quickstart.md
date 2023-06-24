@@ -55,11 +55,15 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 1. `docker` 环境仅需一条命令即可开始
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+
+```或者使用 quay.io (若 dockerhub 网络链接超时)```
+
+```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
-更多配置详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
+更多配置详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy) 
 
 #### 方式二：通过安装包安装    
 
@@ -69,7 +73,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 4. 部署启动 `$ ./startup.sh `
 5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
-更多配置详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
+更多配置详细步骤参考 [通过安装包安装HertzBeat](package-deploy) 
 
 #### 方式三：本地代码启动   
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
