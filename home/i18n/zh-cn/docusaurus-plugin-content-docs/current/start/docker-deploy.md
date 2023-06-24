@@ -18,10 +18,15 @@ sidebar_label: Docker方式部署
    ```
 
 2. 拉取HertzBeat Docker镜像   
-   镜像版本TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
+   镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
+   或者使用 [quay.io 镜像仓库](https://quay.io/repository/tancloud/hertzbeat)
 
-   ``` shell
+   ```shell
    $ docker pull tancloud/hertzbeat   
+   ```
+   若网络超时或者使用
+   ```shell
+   $ docker pull quay.io/tancloud/hertzbeat
    ```
 
 3. 部署HertzBeat您可能需要掌握的几条命令
@@ -96,7 +101,7 @@ $ docker run -d -p 1157:1157 \
      $ docker update --restart=always hertzbeat
      ```
 
-   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,版本可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**   
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  

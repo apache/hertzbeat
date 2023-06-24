@@ -123,7 +123,8 @@
             "help/dynamic_tp",
             "help/rabbitmq",
             "help/activemq",
-            "help/jetty"
+            "help/jetty",
+            "help/hadoop"
           ]
         },
         {
