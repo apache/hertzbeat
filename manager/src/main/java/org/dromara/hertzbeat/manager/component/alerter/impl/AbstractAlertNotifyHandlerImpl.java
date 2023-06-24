@@ -66,7 +66,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         context.setVariable("priority", bundle.getString("alerter.priority." + alert.getPriority()));
 
         context.setVariable("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
-        context.setVariable("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastTriggerTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        context.setVariable("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
 
         context.setVariable("contentLabel", bundle.getString("alerter.notify.content"));
         context.setVariable("content", alert.getContent());

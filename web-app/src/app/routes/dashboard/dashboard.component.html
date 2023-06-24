@@ -117,7 +117,7 @@
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
-          [nzLabel]="(alert.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
+          [nzLabel]="(alert.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
         >
           <p style="font-weight: 400">
             <nz-tag *ngIf="alert.priority == 0" nzColor="red">

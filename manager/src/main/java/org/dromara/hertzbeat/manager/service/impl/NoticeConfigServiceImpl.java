@@ -185,9 +185,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         Alert alert = new Alert();
         alert.setTarget(ALERT_TEST_TARGET);
         alert.setContent(ALERT_TEST_CONTENT);
-        alert.setTimes(1);
-        alert.setFirstTriggerTime(System.currentTimeMillis());
-        alert.setLastTriggerTime(System.currentTimeMillis());
+        alert.setTriggerTimes(1);
+        alert.setFirstAlarmTime(System.currentTimeMillis());
+        alert.setLastAlarmTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
     }

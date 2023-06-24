@@ -80,8 +80,8 @@ public class MailServiceImpl implements MailService {
         context.setVariable("content", alert.getContent());
         context.setVariable("consoleUrl", alerterProperties.getConsoleUrl());
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
-        context.setVariable("lastTriggerTime", triggerTime);
+        String alarmTime = simpleDateFormat.format(new Date(alert.getLastAlarmTime()));
+        context.setVariable("lastTriggerTime", alarmTime);
         return templateEngine.process("mailAlarm", context);
     }
 }

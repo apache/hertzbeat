@@ -17,7 +17,7 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
-import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
@@ -55,9 +55,9 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlertDao alertDao;
-
+    
     @Autowired
-    private CommonDataQueue commonDataQueue;
+    private AlarmCommonReduce alarmCommonReduce;
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
@@ -130,7 +130,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
-        commonDataQueue.sendAlertsData(buildAlertData(alertReport));
+        alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
     }
 
     /**
@@ -156,7 +156,7 @@ public class AlertServiceImpl implements AlertService {
                 .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                 .tags(alertReport.getLabels())
                 .target(alertReport.getAlertName())
-                .times(3)
+                .triggerTimes(1)
                 .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneId.systemDefault()))
                 .build();
     }
