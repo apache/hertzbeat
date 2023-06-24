@@ -22,8 +22,8 @@ import com.googlecode.aviator.Expression;
 import com.googlecode.aviator.exception.CompileExpressionErrorException;
 import com.googlecode.aviator.exception.ExpressionRuntimeException;
 import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
-import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
+import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.alert.dao.AlertMonitorDao;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
@@ -59,24 +59,20 @@ public class CalculateAlarm {
      * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
     public Map<String, Alert> triggeredAlertMap;
-    
     public Set<Long> unAvailableMonitors;
-
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
-    private final AlerterProperties alerterProperties;
-    private final SilenceAlarm silenceAlarm;
+    private final AlarmCommonReduce alarmCommonReduce;
     private final ResourceBundle bundle;
 
-    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue, SilenceAlarm silenceAlarm,
+    public CalculateAlarm (AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                            AlertDefineService alertDefineService, AlertMonitorDao monitorDao,
-                           AlerterProperties alerterProperties) {
+                           AlarmCommonReduce alarmCommonReduce) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
-        this.silenceAlarm = silenceAlarm;
+        this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
-        this.alerterProperties = alerterProperties;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         this.unAvailableMonitors = Collections.synchronizedSet(new HashSet<>(16));
@@ -172,13 +168,14 @@ public class CalculateAlarm {
                                 String monitorAlertKey = String.valueOf(monitorId) + define.getId();
                                 Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
                                 if (triggeredAlert != null) {
-                                    int times = triggeredAlert.getTimes() + 1;
-                                    triggeredAlert.setTimes(times);
-                                    triggeredAlert.setLastTriggerTime(currentTimeMilli);
+                                    int times = triggeredAlert.getTriggerTimes() + 1;
+                                    triggeredAlert.setTriggerTimes(times);
+                                    triggeredAlert.setFirstAlarmTime(currentTimeMilli);
+                                    triggeredAlert.setLastAlarmTime(currentTimeMilli);
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (times >= defineTimes) {
                                         triggeredAlertMap.remove(monitorAlertKey);
-                                        silenceAlarm.filterSilenceAndSendData(triggeredAlert);
+                                        alarmCommonReduce.reduceAndSendAlarm(triggeredAlert);
                                     }
                                 } else {
                                     fieldValueMap.put("app", app);
@@ -193,16 +190,16 @@ public class CalculateAlarm {
                                             .priority(define.getPriority())
                                             .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                                             .target(app + "." + metrics + "." + define.getField())
-                                            .times(1)
-                                            .firstTriggerTime(currentTimeMilli)
-                                            .lastTriggerTime(currentTimeMilli)
+                                            .triggerTimes(1)
+                                            .firstAlarmTime(currentTimeMilli)
+                                            .lastAlarmTime(currentTimeMilli)
                                             // Keyword matching and substitution in the template
                                             // 模板中关键字匹配替换
                                             .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                                             .build();
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (1 >= defineTimes) {
-                                        silenceAlarm.filterSilenceAndSendData(alert);
+                                        alarmCommonReduce.reduceAndSendAlarm(alert);
                                     } else {
                                         triggeredAlertMap.put(monitorAlertKey, alert);
                                     }
@@ -261,11 +258,11 @@ public class CalculateAlarm {
                         .content(content)
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                         .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
-                        .firstTriggerTime(currentTimeMilli)
-                        .lastTriggerTime(currentTimeMilli)
-                        .times(1)
+                        .firstAlarmTime(currentTimeMilli)
+                        .lastAlarmTime(currentTimeMilli)
+                        .triggerTimes(1)
                         .build();
-                silenceAlarm.filterSilenceAndSendData(resumeAlert);
+                alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
             }
         }
     }
@@ -291,30 +288,30 @@ public class CalculateAlarm {
                     .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                     .target(CommonConstants.AVAILABILITY)
                     .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
-                    .firstTriggerTime(currentTimeMill)
-                    .lastTriggerTime(currentTimeMill)
-                    .nextEvalInterval(alerterProperties.getAlertEvalIntervalBase())
-                    .times(1);
+                    .firstAlarmTime(currentTimeMill)
+                    .lastAlarmTime(currentTimeMill)
+                    .triggerTimes(1);
             if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
-                silenceAlarm.filterSilenceAndSendData(alertBuilder.build().clone());
+                alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build().clone());
                 unAvailableMonitors.add(monitorId);
             } else {
                 alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
             }
             triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
         } else {
-            int times = preAlert.getTimes() + 1;
+            int times = preAlert.getTriggerTimes() + 1;
             if (preAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING) {
                 times = 1;
                 preAlert.setContent(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap));
                 preAlert.setTags(tags);
             }
-            preAlert.setTimes(times);
-            preAlert.setLastTriggerTime(currentTimeMill);
+            preAlert.setTriggerTimes(times);
+            preAlert.setFirstAlarmTime(currentTimeMill);
+            preAlert.setLastAlarmTime(currentTimeMill);
             int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
             if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
-                silenceAlarm.filterSilenceAndSendData(preAlert);
+                alarmCommonReduce.reduceAndSendAlarm(preAlert);
                 unAvailableMonitors.add(monitorId);
             } else {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);

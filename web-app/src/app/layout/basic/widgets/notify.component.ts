@@ -78,7 +78,7 @@ export class HeaderNotifyComponent implements OnInit {
                 id: alert.id,
                 avatar: '/assets/img/notification.svg',
                 title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
-                datetime: new Date(alert.lastTriggerTime).toLocaleString(),
+                datetime: new Date(alert.lastAlarmTime).toLocaleString(),
                 color: 'blue',
                 type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
               };

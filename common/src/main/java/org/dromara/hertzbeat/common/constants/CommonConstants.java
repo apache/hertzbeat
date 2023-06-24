@@ -274,4 +274,9 @@ public interface CommonConstants {
      * cache key alert silence
      */
     String CACHE_ALERT_SILENCE = "alert_silence";
+    
+    /**
+     * cache key alert converge
+     */
+    String CACHE_ALERT_CONVERGE = "alert_converge";
 }
