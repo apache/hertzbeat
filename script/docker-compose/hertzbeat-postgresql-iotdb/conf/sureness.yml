@@ -56,7 +56,9 @@ resourceRole:
 excludedResource:
   - /api/account/auth/**===*
   - /api/i18n/**===get
+  - /api/metrics===get
   - /api/apps/hierarchy===get
+  - /actuator/**===get
   # web ui 前端静态资源
   - /===get
   - /dashboard/**===get
@@ -79,6 +81,8 @@ excludedResource:
   - /swagger-resources/**===get
   - /v2/api-docs===get
   - /v3/api-docs===get
+  # h2 database
+  - /h2-console/**===*
 
 # 用户账户信息
 # 下面有 admin tom lili 三个账户
