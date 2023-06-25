@@ -19,7 +19,7 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--必填,会追加到打包文件名称的末尾-->
-    <id>1.3.1</id>
+    <id>1.3.2</id>
     <!--打包类型,可以设置多种类型,打包的时候不同的类型都会打包打出来-->
     <formats>
         <format>tar</format>
