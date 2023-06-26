@@ -57,14 +57,6 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
             return;
         }
-        if (monitor.getTags() != null) {
-            monitor.getTags().forEach(item -> {
-                tags.put(item.getName(), item.getValue());
-            });
-        }
-        if (!tags.containsKey(CommonConstants.TAG_MONITOR_NAME)) {
-            tags.put(CommonConstants.TAG_MONITOR_NAME, monitor.getName());
-        }
         if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
             // When monitoring is not managed, ignore and silence its alarm messages
             // 当监控未管理时  忽略静默其告警信息
