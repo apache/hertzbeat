@@ -113,7 +113,7 @@ public class IpDomainUtil {
      * @param ipDomain
      * @return IP address type
      */
-    public static String checkIPAddressType(String ipDomain){
+    public static String checkIpAddressType(String ipDomain){
         if (InetAddressUtils.isIPv6Address(ipDomain)) {
             return CollectorConstants.IPV6;
         }

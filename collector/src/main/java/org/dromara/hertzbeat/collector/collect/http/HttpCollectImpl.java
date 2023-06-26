@@ -112,7 +112,7 @@ public class HttpCollectImpl extends AbstractCollect {
             return;
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
-        String ipAddressType=IpDomainUtil.checkIPAddressType(metrics.getHttp().getHost());
+        String ipAddressType=IpDomainUtil.checkIpAddressType(metrics.getHttp().getHost());
         HttpUriRequest request = createHttpRequest(metrics.getHttp(),ipAddressType);
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
