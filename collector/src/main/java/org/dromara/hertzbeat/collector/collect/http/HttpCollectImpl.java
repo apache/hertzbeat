@@ -112,7 +112,8 @@ public class HttpCollectImpl extends AbstractCollect {
             return;
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
-        HttpUriRequest request = createHttpRequest(metrics.getHttp());
+        String ipAddressType=IpDomainUtil.checkIPAddressType(metrics.getHttp().getHost());
+        HttpUriRequest request = createHttpRequest(metrics.getHttp(),ipAddressType);
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
                     .execute(request, httpContext);
@@ -488,7 +489,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http参数配置
      * @return 请求体
      */
-    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
+    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol,String ipAddressType) {
         RequestBuilder requestBuilder;
         // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();
@@ -566,13 +567,15 @@ public class HttpCollectImpl extends AbstractCollect {
         // uri
         String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
+            String baseUri=CollectorConstants.IPV6.equals(ipAddressType)?String.format("[%s]:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri):String.format("%s:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
             } else {
-                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
             }
         }
 
