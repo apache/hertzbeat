@@ -112,8 +112,7 @@ public class HttpCollectImpl extends AbstractCollect {
             return;
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
-        String ipAddressType=IpDomainUtil.checkIpAddressType(metrics.getHttp().getHost());
-        HttpUriRequest request = createHttpRequest(metrics.getHttp(),ipAddressType);
+        HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
                     .execute(request, httpContext);
@@ -489,7 +488,7 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http参数配置
      * @return 请求体
      */
-    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol,String ipAddressType) {
+    public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
         RequestBuilder requestBuilder;
         // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();
@@ -570,7 +569,8 @@ public class HttpCollectImpl extends AbstractCollect {
 
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
-            String baseUri=CollectorConstants.IPV6.equals(ipAddressType)?String.format("[%s]:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri):String.format("%s:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri);
+            String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
+            String baseUri = CollectorConstants.IPV6.equals(ipAddressType) ? String.format("[%s]:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri) : String.format("%s:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
                 requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
