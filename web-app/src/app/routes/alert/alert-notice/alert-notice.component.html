@@ -347,7 +347,7 @@
           {{ 'alert.notice.type.weChatApp-corpId' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="receiver.wechatId" nz-input [required]="receiver.type === 10" name="corpId" type="text" />
+          <input [(ngModel)]="receiver.corpId" nz-input [required]="receiver.type === 10" name="corpId" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
