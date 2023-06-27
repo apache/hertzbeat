@@ -566,13 +566,16 @@ public class HttpCollectImpl extends AbstractCollect {
         // uri
         String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
+            String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
+            String baseUri = CollectorConstants.IPV6.equals(ipAddressType) ? String.format("[%s]:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri) : String.format("%s:%s%s",httpProtocol.getHost(),httpProtocol.getPort(),uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
             } else {
-                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
             }
         }
 
