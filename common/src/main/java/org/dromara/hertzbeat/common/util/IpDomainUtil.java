@@ -19,6 +19,8 @@ package org.dromara.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.util.InetAddressUtils;
+import org.dromara.hertzbeat.common.constants.CollectorConstants;
+
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -104,6 +106,18 @@ public class IpDomainUtil {
             log.warn(e.getMessage());
         }
         return null;
+    }
+
+    /**
+     *
+     * @param ipDomain
+     * @return IP address type
+     */
+    public static String checkIpAddressType(String ipDomain){
+        if (InetAddressUtils.isIPv6Address(ipDomain)) {
+            return CollectorConstants.IPV6;
+        }
+        return CollectorConstants.IPV4;
     }
 
 }
