@@ -1188,6 +1188,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "itxxq",
+      "name": "moxi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46962357?v=4",
+      "profile": "https://github.com/itxxq",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
