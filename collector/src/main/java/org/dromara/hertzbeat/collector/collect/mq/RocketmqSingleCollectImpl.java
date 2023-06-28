@@ -326,7 +326,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                     .collect(Collectors.toSet());
             List<Map<String /* topic */, List<RocketmqCollectData.TopicQueueInfo>>> topicInfoList = new ArrayList<>();
             for (String topic : topics) {
-                Map<String, List<RocketmqCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>();
+                Map<String, List<RocketmqCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>(32);
                 List<RocketmqCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
 
                 // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用次数也会很多
