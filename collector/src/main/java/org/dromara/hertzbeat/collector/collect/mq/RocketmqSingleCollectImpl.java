@@ -53,7 +53,9 @@ import java.util.stream.Collectors;
  * @since 5/6/2023
  */
 @Slf4j
-public class RocketMQSingleCollectImpl extends AbstractCollect implements DisposableBean {
+public class RocketmqSingleCollectImpl extends AbstractCollect implements DisposableBean {
+
+    private static final int WAIT_TIMEOUT = 10;
 
     private static final Set<String> SYSTEM_GROUP_SET = new HashSet<>();
 
@@ -71,7 +73,7 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
         SYSTEM_GROUP_SET.add(MixAll.CID_SYS_RMQ_TRANS);
     }
 
-    public RocketMQSingleCollectImpl() {
+    public RocketmqSingleCollectImpl() {
         Runtime runtime = Runtime.getRuntime();
         int corePoolSize = Math.max(8, runtime.availableProcessors());
         int maximumPoolSize = Math.max(16, runtime.availableProcessors());
@@ -103,13 +105,13 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
         }
         DefaultMQAdminExt mqAdminExt = null;
         try {
-            mqAdminExt = this.createMQAdminExt(metrics);
+            mqAdminExt = this.createMqAdminExt(metrics);
             mqAdminExt.start();
 
-            RocketmqCollectData rocketMQCollectData = new RocketmqCollectData();
-            this.collectData(mqAdminExt, rocketMQCollectData);
+            RocketmqCollectData rocketmqCollectData = new RocketmqCollectData();
+            this.collectData(mqAdminExt, rocketmqCollectData);
 
-            this.fillBuilder(rocketMQCollectData, builder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
+            this.fillBuilder(rocketmqCollectData, builder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
 
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -145,17 +147,17 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
      * @param metrics 数据指标
      * @return DefaultMQAdminExt
      */
-    private DefaultMQAdminExt createMQAdminExt(Metrics metrics) {
+    private DefaultMQAdminExt createMqAdminExt(Metrics metrics) {
         RocketmqProtocol rocketmqProtocol = metrics.getRocketmq();
         assert rocketmqProtocol != null;
         RPCHook rpcHook = null;
         if (StringUtils.isNotBlank(rocketmqProtocol.getAccessKey()) && StringUtils.isNotBlank(rocketmqProtocol.getSecretKey())) {
             rpcHook = new AclClientRPCHook(new SessionCredentials(rocketmqProtocol.getAccessKey(), rocketmqProtocol.getSecretKey()));
         }
-        DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook, 5000L);
-        defaultMQAdminExt.setNamesrvAddr(rocketmqProtocol.getNamesrvHost() + ":" + rocketmqProtocol.getNamesrvPort());
-        defaultMQAdminExt.setInstanceName("admin-" + System.currentTimeMillis());
-        return defaultMQAdminExt;
+        DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt(rpcHook, 5000L);
+        mqAdminExt.setNamesrvAddr(rocketmqProtocol.getNamesrvHost() + ":" + rocketmqProtocol.getNamesrvPort());
+        mqAdminExt.setInstanceName("admin-" + System.currentTimeMillis());
+        return mqAdminExt;
     }
 
     /**
@@ -300,7 +302,7 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
                 });
             }
 
-            if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
+            if (!countDownLatch.await(WAIT_TIMEOUT, TimeUnit.SECONDS)) {
                 log.warn("examineConsumeStats or examineConsumerConnectionInfo timeout");
             }
         } catch (Exception e) {
@@ -311,13 +313,13 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      *
-     * @param defaultMQAdminExt rocketmq提供的远程调用类
+     * @param mqAdminExt rocketmq提供的远程调用类
      * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
-    private void collectTopicData(DefaultMQAdminExt defaultMQAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
+    private void collectTopicData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         try {
-            TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
+            TopicList topicList = mqAdminExt.fetchAllTopicList();
             Set<String> topics = topicList.getTopicList()
                     .stream()
                     .filter(topic -> !(topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX) || topic.startsWith(MixAll.DLQ_GROUP_TOPIC_PREFIX)))
