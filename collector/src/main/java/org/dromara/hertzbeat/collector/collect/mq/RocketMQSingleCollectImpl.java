@@ -197,13 +197,13 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
                     String putTps = kvTable.getTable().get("putTps");
                     if (StringUtils.isNotEmpty(putTps)) {
                         String[] putTpsArr = putTps.split(" ");
-                        clusterBrokerData.setProducerMessageTPS(Double.parseDouble(putTpsArr[0]));
+                        clusterBrokerData.setProducerMessageTps(Double.parseDouble(putTpsArr[0]));
                     }
 
                     String getTransferredTps = kvTable.getTable().get("getTransferedTps");
                     if (StringUtils.isNotEmpty(getTransferredTps)) {
                         String[] getTransferredTpsArr = getTransferredTps.split(" ");
-                        clusterBrokerData.setConsumerMessageTPS(Double.parseDouble(getTransferredTpsArr[0]));
+                        clusterBrokerData.setConsumerMessageTps(Double.parseDouble(getTransferredTpsArr[0]));
                     }
 
                     String msgPutTotalTodayMorning = kvTable.getTable().get("msgPutTotalTodayMorning");

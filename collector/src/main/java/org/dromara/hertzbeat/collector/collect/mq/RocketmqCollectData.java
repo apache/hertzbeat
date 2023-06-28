@@ -29,9 +29,9 @@ public class RocketmqCollectData {
 
         private String version;
 
-        private double producerMessageTPS;
+        private double producerMessageTps;
 
-        private double consumerMessageTPS;
+        private double consumerMessageTps;
 
         private long yesterdayProduceCount;
 

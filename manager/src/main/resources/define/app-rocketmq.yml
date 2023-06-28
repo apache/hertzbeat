@@ -80,8 +80,8 @@ metrics:
       - brokerId
       - address
       - version
-      - producerMessageTPS
-      - consumerMessageTPS
+      - producerMessageTps
+      - consumerMessageTps
       - yesterdayProduceCount
       - yesterdayConsumeCount
       - todayProduceCount
@@ -90,8 +90,8 @@ metrics:
       - BrokerId=brokerId
       - Address=address
       - Version=version
-      - Producer_Message_TPS=producerMessageTPS
-      - Consumer_Message_TPS=consumerMessageTPS
+      - Producer_Message_TPS=producerMessageTps
+      - Consumer_Message_TPS=consumerMessageTps
       - Yesterday_Produce_Count=yesterdayProduceCount
       - Yesterday_Consume_Count=yesterdayConsumeCount
       - Today_Produce_Count=todayProduceCount
