@@ -82,5 +82,6 @@ spring:
     hibernate:
       ddl-auto: update 
     properties:
-      dialect: org.hibernate.dialect.MySQL5InnoDBDialect 
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
 ```
