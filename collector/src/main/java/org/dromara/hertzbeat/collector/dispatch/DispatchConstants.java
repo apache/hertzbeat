@@ -75,6 +75,10 @@ public interface DispatchConstants {
      * protocol ssl Certificate - custom
      */
     String PROTOCOL_SSL_CERT = "ssl_cert";
+    /**
+     * protocol rocketmq
+     */
+    String PROTOCOL_ROCKETMQ = "rocketmq";
     // Protocol type related - end
     // 协议类型相关 - end //
 
