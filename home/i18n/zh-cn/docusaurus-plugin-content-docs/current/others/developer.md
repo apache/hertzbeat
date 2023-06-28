@@ -193,6 +193,7 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ifrenzyc"><img src="https://avatars.githubusercontent.com/u/543927?v=4?s=100" width="100px;" alt="Yang Chuang"/><br /><sub><b>Yang Chuang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ifrenzyc" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wlin20"><img src="https://avatars.githubusercontent.com/u/20657577?v=4?s=100" width="100px;" alt="wlin20"/><br /><sub><b>wlin20</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wlin20" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/guojing1983"><img src="https://avatars.githubusercontent.com/u/60596094?v=4?s=100" width="100px;" alt="guojing1983"/><br /><sub><b>guojing1983</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=guojing1983" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/itxxq"><img src="https://avatars.githubusercontent.com/u/46962357?v=4?s=100" width="100px;" alt="moxi"/><br /><sub><b>moxi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=itxxq" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
