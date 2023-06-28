@@ -154,7 +154,7 @@ public class Metrics {
     /**
      * Monitoring configuration information using the public rocketmq protocol 使用公共的rocketmq协议的监控配置信息
      */
-    private RocketMQProtocol rocketmq;
+    private RocketmqProtocol rocketmq;
 
     /**
      * collector use - Temporarily store subTask indicator group response data

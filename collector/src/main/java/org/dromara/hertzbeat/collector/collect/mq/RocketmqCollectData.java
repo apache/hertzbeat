@@ -12,7 +12,7 @@ import java.util.Map;
  * @since 5/6/2023
  */
 @Data
-public class RocketMQCollectData {
+public class RocketmqCollectData {
 
     private List<ClusterBrokerData> clusterBrokerDataList;
 

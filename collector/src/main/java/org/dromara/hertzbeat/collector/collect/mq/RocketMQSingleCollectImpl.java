@@ -23,7 +23,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.JsonPathParser;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
-import org.dromara.hertzbeat.common.entity.job.protocol.RocketMQProtocol;
+import org.dromara.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +106,7 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
             mqAdminExt = this.createMQAdminExt(metrics);
             mqAdminExt.start();
 
-            RocketMQCollectData rocketMQCollectData = new RocketMQCollectData();
+            RocketmqCollectData rocketMQCollectData = new RocketmqCollectData();
             this.collectData(mqAdminExt, rocketMQCollectData);
 
             this.fillBuilder(rocketMQCollectData, builder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
@@ -135,7 +135,7 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
         if (metrics == null || metrics.getRocketmq() == null) {
             throw new IllegalArgumentException("Mongodb collect must has rocketmq params");
         }
-        RocketMQProtocol rocketmq = metrics.getRocketmq();
+        RocketmqProtocol rocketmq = metrics.getRocketmq();
         Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
         Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
     }
@@ -146,14 +146,14 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
      * @return DefaultMQAdminExt
      */
     private DefaultMQAdminExt createMQAdminExt(Metrics metrics) {
-        RocketMQProtocol rocketMQProtocol = metrics.getRocketmq();
-        assert rocketMQProtocol != null;
+        RocketmqProtocol rocketmqProtocol = metrics.getRocketmq();
+        assert rocketmqProtocol != null;
         RPCHook rpcHook = null;
-        if (StringUtils.isNotBlank(rocketMQProtocol.getAccessKey()) && StringUtils.isNotBlank(rocketMQProtocol.getSecretKey())) {
-            rpcHook = new AclClientRPCHook(new SessionCredentials(rocketMQProtocol.getAccessKey(), rocketMQProtocol.getSecretKey()));
+        if (StringUtils.isNotBlank(rocketmqProtocol.getAccessKey()) && StringUtils.isNotBlank(rocketmqProtocol.getSecretKey())) {
+            rpcHook = new AclClientRPCHook(new SessionCredentials(rocketmqProtocol.getAccessKey(), rocketmqProtocol.getSecretKey()));
         }
         DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook, 5000L);
-        defaultMQAdminExt.setNamesrvAddr(rocketMQProtocol.getNamesrvHost() + ":" + rocketMQProtocol.getNamesrvPort());
+        defaultMQAdminExt.setNamesrvAddr(rocketmqProtocol.getNamesrvHost() + ":" + rocketmqProtocol.getNamesrvPort());
         defaultMQAdminExt.setInstanceName("admin-" + System.currentTimeMillis());
         return defaultMQAdminExt;
     }
@@ -161,31 +161,31 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
     /**
      * 采集rocketmq数据
      * @param mqAdminExt rocketmq提供的远程调用类
-     * @param rocketMQCollectData rocketmq数据采集类
+     * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
-    private void collectData(DefaultMQAdminExt mqAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
-        this.collectClusterData(mqAdminExt, rocketMQCollectData);
-        this.collectConsumerData(mqAdminExt, rocketMQCollectData);
-        this.collectTopicData(mqAdminExt, rocketMQCollectData);
+    private void collectData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
+        this.collectClusterData(mqAdminExt, rocketmqCollectData);
+        this.collectConsumerData(mqAdminExt, rocketmqCollectData);
+        this.collectTopicData(mqAdminExt, rocketmqCollectData);
     }
 
     /**
      * 采集rocketmq的集群数据
      * @param mqAdminExt rocketmq提供的远程调用类
-     * @param rocketMQCollectData rocketmq数据采集类
+     * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
-    private void collectClusterData(DefaultMQAdminExt mqAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
+    private void collectClusterData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         try {
-            List<RocketMQCollectData.ClusterBrokerData> clusterBrokerDataList = new ArrayList<>();
-            rocketMQCollectData.setClusterBrokerDataList(clusterBrokerDataList);
+            List<RocketmqCollectData.ClusterBrokerData> clusterBrokerDataList = new ArrayList<>();
+            rocketmqCollectData.setClusterBrokerDataList(clusterBrokerDataList);
 
             ClusterInfo clusterInfo = mqAdminExt.examineBrokerClusterInfo();
             for (BrokerData brokerData : clusterInfo.getBrokerAddrTable().values()) {
 
                 for (Map.Entry<Long, String> entry : brokerData.getBrokerAddrs().entrySet()) {
-                    RocketMQCollectData.ClusterBrokerData clusterBrokerData = new RocketMQCollectData.ClusterBrokerData();
+                    RocketmqCollectData.ClusterBrokerData clusterBrokerData = new RocketmqCollectData.ClusterBrokerData();
                     clusterBrokerDataList.add(clusterBrokerData);
 
                     clusterBrokerData.setBrokerId(entry.getKey());
@@ -243,10 +243,10 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
     /**
      * 采集rocketmq的消费者数据
      * @param mqAdminExt rocketmq提供的远程调用类
-     * @param rocketMQCollectData rocketmq数据采集类
+     * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
-    private void collectConsumerData(DefaultMQAdminExt mqAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
+    private void collectConsumerData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         Set<String> consumerGroupSet = new HashSet<>();
         try {
             // 获取consumerGroup集合
@@ -256,15 +256,15 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
                 consumerGroupSet.addAll(subscriptionGroupWrapper.getSubscriptionGroupTable().keySet());
             }
 
-            List<RocketMQCollectData.ConsumerInfo> consumerInfoList = Collections.synchronizedList(Lists.newArrayList());
-            rocketMQCollectData.setConsumerInfoList(consumerInfoList);
+            List<RocketmqCollectData.ConsumerInfo> consumerInfoList = Collections.synchronizedList(Lists.newArrayList());
+            rocketmqCollectData.setConsumerInfoList(consumerInfoList);
             CountDownLatch countDownLatch = new CountDownLatch(consumerGroupSet.size());
             for (String consumerGroup : consumerGroupSet) {
                 if (SYSTEM_GROUP_SET.contains(consumerGroup)) {
                     continue;
                 }
                 executorService.submit(() -> {
-                    RocketMQCollectData.ConsumerInfo consumerInfo = new RocketMQCollectData.ConsumerInfo();
+                    RocketmqCollectData.ConsumerInfo consumerInfo = new RocketmqCollectData.ConsumerInfo();
                     consumerInfoList.add(consumerInfo);
                     consumerInfo.setConsumerGroup(consumerGroup);
                     try {
@@ -309,23 +309,29 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
         }
     }
 
-    private void collectTopicData(DefaultMQAdminExt defaultMQAdminExt, RocketMQCollectData rocketMQCollectData) throws Exception {
+    /**
+     *
+     * @param defaultMQAdminExt rocketmq提供的远程调用类
+     * @param rocketmqCollectData rocketmq数据采集类
+     * @throws Exception 远程调用异常
+     */
+    private void collectTopicData(DefaultMQAdminExt defaultMQAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         try {
             TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
             Set<String> topics = topicList.getTopicList()
                     .stream()
                     .filter(topic -> !(topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX) || topic.startsWith(MixAll.DLQ_GROUP_TOPIC_PREFIX)))
                     .collect(Collectors.toSet());
-            List<Map<String /* topic */, List<RocketMQCollectData.TopicQueueInfo>>> topicInfoList = new ArrayList<>();
+            List<Map<String /* topic */, List<RocketmqCollectData.TopicQueueInfo>>> topicInfoList = new ArrayList<>();
             for (String topic : topics) {
-                Map<String, List<RocketMQCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>();
-                List<RocketMQCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
+                Map<String, List<RocketmqCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>();
+                List<RocketmqCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
 
-                // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用极其频繁
+                // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用次数也会很多
 
                 topicQueueInfoTable.put(topic, topicQueueInfoList);
                 topicInfoList.add(topicQueueInfoTable);
-                rocketMQCollectData.setTopicInfoList(topicInfoList);
+                rocketmqCollectData.setTopicInfoList(topicInfoList);
             }
         } catch (Exception e) {
             log.warn("collect rocketmq topic data error", e);
@@ -335,13 +341,13 @@ public class RocketMQSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集数据填充到builder
-     * @param rocketMQCollectData rocketmq数据采集类
+     * @param rocketmqCollectData rocketmq数据采集类
      * @param builder metrics data builder
      * @param aliasFields 字段别名
      * @param parseScript JSON的base path
      */
-    private void fillBuilder(RocketMQCollectData rocketMQCollectData, CollectRep.MetricsData.Builder builder, List<String> aliasFields, String parseScript) {
-        String dataJson = JSONObject.toJSONString(rocketMQCollectData);
+    private void fillBuilder(RocketmqCollectData rocketmqCollectData, CollectRep.MetricsData.Builder builder, List<String> aliasFields, String parseScript) {
+        String dataJson = JSONObject.toJSONString(rocketmqCollectData);
         List<Object> results = JsonPathParser.parseContentWithJsonPath(dataJson, parseScript);
         for (int i = 0; i < results.size(); i++) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

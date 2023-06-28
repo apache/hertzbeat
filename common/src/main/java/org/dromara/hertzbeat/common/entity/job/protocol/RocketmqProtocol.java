@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RocketMQProtocol {
+public class RocketmqProtocol {
 
     /**
      * rocketmq namesrv host
