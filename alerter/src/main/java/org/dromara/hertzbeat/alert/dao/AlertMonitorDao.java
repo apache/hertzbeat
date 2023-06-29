@@ -18,8 +18,11 @@
 package org.dromara.hertzbeat.alert.dao;
 
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -44,5 +47,12 @@ public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecif
      * @return Monitor the list ｜ 监控列表
      */
     List<Monitor> findMonitorsByStatus(Byte status);
-
+    
+    /**
+     * find monitor bind tags by monitorId
+     * @param monitorId monitorId
+     * @return bind tags
+     */
+    @Query("select tag from Tag tag join TagMonitorBind bind on bind.tagId = tag.id where bind.monitorId = :monitorId")
+    List<Tag> findMonitorIdBindTags(@Param(value = "monitorId") Long monitorId);
 }
