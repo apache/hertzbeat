@@ -365,6 +365,18 @@ export class AlertNoticeComponent implements OnInit {
                 case 7:
                   label = `${label}TelegramBot`;
                   break;
+                case 8:
+                  label = `${label}SlackWebHook`;
+                  break;
+                case 9:
+                  label = `${label}Discord Bot`;
+                  break;
+                case 10:
+                  label = `${label}weChatApp`;
+                  break;
+                case 11:
+                  label = `${label}smn`;
+                  break;
               }
               this.receiversOption.push({
                 value: item.id,
