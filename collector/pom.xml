@@ -163,6 +163,13 @@
             <artifactId>snmp4j</artifactId>
             <version>3.6.7</version>
         </dependency>
+
+        <!-- rocketmq -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-tools</artifactId>
+            <version>4.9.4</version>
+        </dependency>
     </dependencies>
 
 </project>
