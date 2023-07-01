@@ -194,7 +194,7 @@
             </build>
         </profile>
         <profile>
-            <id>outer</id>
+            <id>cluster</id>
             <build>
                 <finalName>hertzbeat-collector</finalName>
                 <resources>
