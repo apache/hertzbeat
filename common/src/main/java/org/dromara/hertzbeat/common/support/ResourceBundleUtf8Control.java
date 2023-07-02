@@ -31,8 +31,8 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
+ * i18n resource bundle control
  * @author tom
- *
  */
 public class ResourceBundleUtf8Control extends ResourceBundle.Control {
 
