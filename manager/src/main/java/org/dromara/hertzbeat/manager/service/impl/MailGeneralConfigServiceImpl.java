@@ -15,8 +15,6 @@ import java.lang.reflect.Type;
  * which inherits the AbstractGeneralConfigServiceImpl<NoticeSender> class.
  *
  * @author zqr10159
- * @version 1.0.0
- * @since 2023/5/15
  */
 
 @Service
