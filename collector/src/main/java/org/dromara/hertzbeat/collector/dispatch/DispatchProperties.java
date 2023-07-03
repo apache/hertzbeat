@@ -67,11 +67,24 @@ public class DispatchProperties {
      * 入口可以时etcd信息,http请求,消息中间件消息请求
      */
     public static class EntranceProperties {
+        
+        /**
+         * netty server client config
+         */
+        private NettyProperties netty;
         /**
          * etcd配置信息
          */
         private EtcdProperties etcd;
-
+        
+        public NettyProperties getNetty() {
+            return netty;
+        }
+        
+        public void setNetty(NettyProperties netty) {
+            this.netty = netty;
+        }
+        
         public EtcdProperties getEtcd() {
             return etcd;
         }
@@ -86,7 +99,7 @@ public class DispatchProperties {
              * Whether etcd scheduling is started
              * etcd调度是否启动
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
 
             /**
              * etcd's connection endpoint url
@@ -192,6 +205,62 @@ public class DispatchProperties {
 
             public void setJobDir(String jobDir) {
                 this.jobDir = jobDir;
+            }
+        }
+        
+        public static class NettyProperties {
+            
+            /**
+             * whether netty scheduling is started
+             */
+            private boolean enabled = false;
+            
+            /**
+             * this collector unique identity
+             * default is the host name
+             */
+            private String identity;
+            
+            /**
+             * connect cluster master ip
+             */
+            private String masterIp;
+            
+            /**
+             * connect cluster master port
+             */
+            private int masterPort = 1158;
+            
+            public boolean isEnabled() {
+                return enabled;
+            }
+            
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+            
+            public String getIdentity() {
+                return identity;
+            }
+            
+            public void setIdentity(String identity) {
+                this.identity = identity;
+            }
+            
+            public String getMasterIp() {
+                return masterIp;
+            }
+            
+            public void setMasterIp(String masterIp) {
+                this.masterIp = masterIp;
+            }
+            
+            public int getMasterPort() {
+                return masterPort;
+            }
+            
+            public void setMasterPort(int masterPort) {
+                this.masterPort = masterPort;
             }
         }
     }

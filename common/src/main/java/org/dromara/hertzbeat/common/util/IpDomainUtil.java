@@ -24,6 +24,7 @@ import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 
@@ -110,7 +111,7 @@ public class IpDomainUtil {
 
     /**
      *
-     * @param ipDomain
+     * @param ipDomain ip domain
      * @return IP address type
      */
     public static String checkIpAddressType(String ipDomain){
@@ -118,6 +119,19 @@ public class IpDomainUtil {
             return CollectorConstants.IPV6;
         }
         return CollectorConstants.IPV4;
+    }
+    
+    /**
+     * get current local host name
+     * @return hostname
+     */
+    public static String getCurrentHostName() {
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            return inetAddress.getHostName();   
+        } catch (UnknownHostException e) {
+            return null;
+        }
     }
 
 }
