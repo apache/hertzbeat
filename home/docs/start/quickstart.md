@@ -15,7 +15,13 @@ sidebar_label: Quick Start
 
 ##### 1：Install quickly via docker
 
-1. Just one command to get started: `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+1. Just one command to get started:
+
+```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+
+```or use quay.io (if dockerhub network connect timeout)```
+
+```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. Access `localhost:1157` to start, default account: `admin/hertzbeat`
 

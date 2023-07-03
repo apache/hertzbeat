@@ -22,29 +22,20 @@
         <groupId>org.dromara.hertzbeat</groupId>
         <version>1.0</version>
     </parent>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>10</source>
-                    <target>10</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>hertzbeat-collector</artifactId>
     <name>${project.artifactId}</name>
+    <properties>
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+    </properties>
 
     <dependencies>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -163,6 +154,117 @@
             <artifactId>snmp4j</artifactId>
             <version>3.6.7</version>
         </dependency>
-    </dependencies>
 
+        <!-- rocketmq -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-tools</artifactId>
+            <version>4.9.4</version>
+        </dependency>
+    </dependencies>
+    
+    <profiles>
+        <profile>
+            <id>inner</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <finalName>hertzbeat-collector</finalName>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>11</source>
+                            <target>11</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven-jar-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>cluster</id>
+            <build>
+                <finalName>hertzbeat-collector</finalName>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                        <includes>
+                            <include>*.yml</include>
+                            <include>*.properties</include>
+                            <include>banner.txt</include>
+                        </includes>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>11</source>
+                            <target>11</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven-jar-plugin.version}</version>
+                        <configuration>
+                            <classesDirectory>target/classes/</classesDirectory>
+                            <archive>
+                                <!--生成的jar包不包含maven描述相关文件-->
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <!--项目启动类-->
+                                    <mainClass>org.dromara.hertzbeat.collector.Collector</mainClass>
+                                    <useUniqueVersions>false</useUniqueVersions>
+                                    <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
+                                    <addClasspath>true</addClasspath>
+                                    <!--外部依赖jar包的位置-->
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                                <manifestEntries>
+                                    <Class-Path>. config</Class-Path>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>make-zip</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    
 </project>

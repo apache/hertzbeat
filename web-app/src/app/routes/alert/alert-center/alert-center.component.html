@@ -39,7 +39,7 @@
     {{ 'common.search' | i18n }}
   </button>
   <input
-    style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
     [placeholder]="'alert.center.search' | i18n"
@@ -50,7 +50,7 @@
   />
   <nz-select
     class="mobile-hide"
-    style="margin-right: 10px; float: right; width: 120px"
+    style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-status' | i18n"
     [(ngModel)]="filterStatus"
@@ -62,7 +62,7 @@
   </nz-select>
   <nz-select
     class="mobile-hide"
-    style="margin-right: 10px; float: right; width: 120px"
+    style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
     [(ngModel)]="filterPriority"
@@ -137,7 +137,27 @@
           {{ 'alert.status.' + data.status | i18n }}
         </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.lastTriggerTime | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <nz-tag nz-tooltip [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }" nzTooltipPlacement="top">
+          {{ 'alert.center.first-time' | i18n }} : {{ data.firstAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </nz-tag>
+        <span
+          nz-icon
+          nzType="arrow-down"
+          nzTheme="outline"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
+          nzTooltipPlacement="left"
+        ></span>
+        <nz-tag
+          nz-tooltip
+          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
+          nzTooltipPlacement="bottom"
+          nzColor="processing"
+        >
+          {{ 'alert.center.last-time' | i18n }} : {{ data.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </nz-tag>
+      </td>
       <td nzAlign="center">
         <button
           *ngIf="data.status != 3"

@@ -19,10 +19,7 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant
- * 公共常量
- *
  * @author tomsun28
- *
  */
 public interface CommonConstants {
 
@@ -274,4 +271,9 @@ public interface CommonConstants {
      * cache key alert silence
      */
     String CACHE_ALERT_SILENCE = "alert_silence";
+    
+    /**
+     * cache key alert converge
+     */
+    String CACHE_ALERT_CONVERGE = "alert_converge";
 }

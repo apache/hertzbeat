@@ -99,7 +99,11 @@
 
 1. `docker` 环境仅需一条命令即可开始     
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat` 
+```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+
+```或者使用 quay.io (若 dockerhub 网络链接超时)```
+
+```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
@@ -303,6 +307,11 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/baixing99"><img src="https://avatars.githubusercontent.com/u/73473087?v=4?s=100" width="100px;" alt="baixing99"/><br /><sub><b>baixing99</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=baixing99" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ifrenzyc"><img src="https://avatars.githubusercontent.com/u/543927?v=4?s=100" width="100px;" alt="Yang Chuang"/><br /><sub><b>Yang Chuang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ifrenzyc" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wlin20"><img src="https://avatars.githubusercontent.com/u/20657577?v=4?s=100" width="100px;" alt="wlin20"/><br /><sub><b>wlin20</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=wlin20" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/guojing1983"><img src="https://avatars.githubusercontent.com/u/60596094?v=4?s=100" width="100px;" alt="guojing1983"/><br /><sub><b>guojing1983</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=guojing1983" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/itxxq"><img src="https://avatars.githubusercontent.com/u/46962357?v=4?s=100" width="100px;" alt="moxi"/><br /><sub><b>moxi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=itxxq" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/qq471754603"><img src="https://avatars.githubusercontent.com/u/23146592?v=4?s=100" width="100px;" alt="qq471754603"/><br /><sub><b>qq471754603</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=qq471754603" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

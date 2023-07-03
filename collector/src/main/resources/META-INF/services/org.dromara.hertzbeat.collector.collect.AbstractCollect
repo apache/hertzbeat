@@ -9,3 +9,4 @@ org.dromara.hertzbeat.collector.collect.snmp.SnmpCollectImpl
 org.dromara.hertzbeat.collector.collect.ssh.SshCollectImpl
 org.dromara.hertzbeat.collector.collect.telnet.TelnetCollectImpl
 org.dromara.hertzbeat.collector.collect.ftp.FtpCollectImpl
+org.dromara.hertzbeat.collector.collect.mq.RocketmqSingleCollectImpl
