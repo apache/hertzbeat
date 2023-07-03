@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class LruHashMap<K, V> extends LinkedHashMap<K, V> {
 
-    private int threshold;
+    private final int threshold;
 
     public LruHashMap(int threshold) {
         super(16, 0.75f, true);

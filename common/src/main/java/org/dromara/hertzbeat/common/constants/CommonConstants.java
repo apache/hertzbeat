@@ -19,10 +19,7 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant
- * 公共常量
- *
  * @author tomsun28
- *
  */
 public interface CommonConstants {
 
