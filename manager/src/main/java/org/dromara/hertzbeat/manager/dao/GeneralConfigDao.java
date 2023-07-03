@@ -7,11 +7,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 公共服务端配置Dao
- *
+ * todo common config data cache
  * <p>该接口继承了JpaRepository和JpaSpecificationExecutor两个接口，提供基本的CRUD操作和规范查询能力。</p>
  *
- * @version 1.0
- * @since 2023/5/9 22:39
  * @author zqr10159
  */
 @Component
