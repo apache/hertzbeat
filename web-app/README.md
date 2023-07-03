@@ -23,6 +23,10 @@
 
 2. Execute command in manager  
 
-```mvn package```
+```mvn clean package```
 
 The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
+
+3. Execute command in collector  
+
+```mvn clean package -Pcluster```
