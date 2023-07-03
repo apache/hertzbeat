@@ -1,0 +1,55 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
+http://maven.apache.org/ASSEMBLY/2.0.0 ">
+    <!--必填,会追加到打包文件名称的末尾-->
+    <id>1.3.1</id>
+    <!--打包类型,可以设置多种类型,打包的时候不同的类型都会打包打出来-->
+    <formats>
+        <format>tar</format>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+    <!--第三方依赖设置-->
+    <dependencySets>
+        <dependencySet>
+            <!--使用项目中的artifact,第三方包打包进tar.gz文件的lib目录下-->
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+        </dependencySet>
+    </dependencySets>
+
+    <!--文件相关设置-->
+    <fileSets>
+        <!--bin文件下的所有脚本文件输出到打包后的bin目录下-->
+        <fileSet>
+            <directory>../script/assembly/collector/bin</directory>
+            <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
+            <filtered>true</filtered>
+            <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- src/main/resources目录下配置文件打包到config目录下 -->
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>application.yml</include>
+                <include>logback-spring.xml</include>
+            </includes>
+            <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
+            <filtered>true</filtered>
+            <outputDirectory>${file.separator}config</outputDirectory>
+        </fileSet>
+
+        <!-- 将target目录下的启动jar打包到目录下-->
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+        
+    </fileSets>
+</assembly>
