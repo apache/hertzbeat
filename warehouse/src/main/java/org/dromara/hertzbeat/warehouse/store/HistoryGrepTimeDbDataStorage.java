@@ -342,9 +342,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				log.error(e.getMessage(), e);
 			}
 		}
-		/*
-		TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
-		 */
+		// TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
 		long endTime;
 		long startTime = getExpireTimeFromToken(history);
 
