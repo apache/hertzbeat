@@ -512,8 +512,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
                 if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(CollectUtil.replaceUriSpecialChar(param.getKey()),
-                            CollectUtil.replaceUriSpecialChar(param.getValue()));
+                    requestBuilder.addParameter(param.getKey(), param.getValue());
                 }
             }
         }
