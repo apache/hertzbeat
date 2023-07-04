@@ -9,6 +9,7 @@ import org.dromara.hertzbeat.common.entity.alerter.AlertConverge;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -90,13 +91,15 @@ public class AlarmConvergeReduce {
                 if (evalInterval <= 0) {
                     return true;
                 }
-                int alertHash = Objects.hash(currentAlert.getPriority(), currentAlert.getTags());
+                int alertHash = Objects.hash(currentAlert.getPriority()) 
+                                        + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
+                                        + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
                 Alert preAlert = converageAlertMap.get(alertHash);
                 if (preAlert == null) {
                     currentAlert.setTimes(1);
                     currentAlert.setFirstAlarmTime(now);
                     currentAlert.setLastAlarmTime(now);
-                    converageAlertMap.put(alertHash, currentAlert);
+                    converageAlertMap.put(alertHash, currentAlert.clone());
                     return true;
                 } else {
                     if (now - preAlert.getFirstAlarmTime() < evalInterval) {
@@ -104,10 +107,16 @@ public class AlarmConvergeReduce {
                         preAlert.setLastAlarmTime(now);
                         return false;
                     } else {
-                        currentAlert.setTimes(preAlert.getTimes() + 1);
-                        currentAlert.setFirstAlarmTime(preAlert.getFirstAlarmTime());
+                        currentAlert.setTimes(preAlert.getTimes());
+                        if (preAlert.getTimes() == 1) {
+                            currentAlert.setFirstAlarmTime(now);
+                        } else {
+                            currentAlert.setFirstAlarmTime(preAlert.getFirstAlarmTime());
+                        }
                         currentAlert.setLastAlarmTime(now);
-                        converageAlertMap.remove(alertHash);
+                        preAlert.setFirstAlarmTime(now);
+                        preAlert.setLastAlarmTime(now);
+                        preAlert.setTimes(1);
                         return true;
                     }
                 }
