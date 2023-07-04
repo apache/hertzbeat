@@ -175,7 +175,7 @@ public class CalculateAlarm {
                                     int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
                                     if (times >= defineTimes) {
                                         triggeredAlertMap.remove(monitorAlertKey);
-                                        alarmCommonReduce.reduceAndSendAlarm(triggeredAlert);
+                                        alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
                                     }
                                 } else {
                                     fieldValueMap.put("app", app);
@@ -311,7 +311,7 @@ public class CalculateAlarm {
             int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
             if (times >= defineTimes) {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
-                alarmCommonReduce.reduceAndSendAlarm(preAlert);
+                alarmCommonReduce.reduceAndSendAlarm(preAlert.clone());
                 unAvailableMonitors.add(monitorId);
             } else {
                 preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);

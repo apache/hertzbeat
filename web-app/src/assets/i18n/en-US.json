@@ -185,7 +185,7 @@
   "alert.center.status": "Status",
   "alert.center.time": "Alert Time",
   "alert.center.time.tip": "Alerts were triggered {{times}} times during this alert period",
-  "alert.center.first-time": "First Time",
+  "alert.center.first-time": "Start Time",
   "alert.center.last-time": "Latest Time",
   "alert.center.notify.no-delete": "No items selected for deletion!",
   "alert.center.confirm.delete": "Please confirm whether to delete!",

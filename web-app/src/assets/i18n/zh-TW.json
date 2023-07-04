@@ -185,7 +185,7 @@
   "alert.center.status": "狀態",
   "alert.center.time": "告警時間",
   "alert.center.time.tip": "此告警期間統計觸發 {{times}} 次告警",
-  "alert.center.first-time": "首次",
+  "alert.center.first-time": "開始",
   "alert.center.last-time": "最新",
   "alert.center.notify.no-delete": "未選中任何待刪除項!",
   "alert.center.confirm.delete": "請確認是否刪除!",
