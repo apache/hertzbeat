@@ -5,7 +5,7 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> An open source, real-time monitoring system with custom-monitor and agentless.  
+> An open source, real-time monitoring system with custom-monitoring and agentLess.  
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -25,8 +25,9 @@ slug: /
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitor and agentless.       
-> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitor and agentLess.       
+> **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.   
+> Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
 > We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
