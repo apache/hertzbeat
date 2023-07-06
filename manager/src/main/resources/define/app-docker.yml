@@ -181,7 +181,7 @@ metrics:
       - Status
     calculates:
       - id = Id
-      - name=#`$.Names[0]`
+      - name=/#`$.Names[0]`
       - image = Image
       - command = Command
       - state = State
