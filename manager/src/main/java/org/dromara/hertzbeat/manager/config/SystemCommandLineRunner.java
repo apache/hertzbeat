@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -21,7 +22,12 @@ public class SystemCommandLineRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         SystemConfig systemConfig = systemGeneralConfigService.getConfig();
         if (systemConfig != null) {
-            TimeZone.setDefault(TimeZone.getTimeZone(systemConfig.getTimeZoneId()));
+            if (systemConfig.getTimeZoneId() != null) {
+                TimeZone.setDefault(TimeZone.getTimeZone(systemConfig.getTimeZoneId()));
+            }
+            if (systemConfig.getLanguage() != null) {
+                Locale.setDefault(new Locale(systemConfig.getLanguage()));
+            }
         }
     }
 }
