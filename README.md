@@ -32,7 +32,7 @@
 
 > [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.      
-> Full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
+> Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
 > More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
 
 > We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
