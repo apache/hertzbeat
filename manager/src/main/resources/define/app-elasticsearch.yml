@@ -118,23 +118,6 @@ params:
         value: Digest Auth
   # field-param field key
   # field-变量字段标识符
-  - field: index
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 索引名称
-      en-US: Index Name
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
-  # field-param field key
-  # field-变量字段标识符
   - field: username
     # name-param field display i18n name
     # name-参数字段显示名称
