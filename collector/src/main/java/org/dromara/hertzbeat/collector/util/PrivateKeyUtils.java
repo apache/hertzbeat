@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 将私钥写入~/.ssh
@@ -21,22 +20,29 @@ public class PrivateKeyUtils {
 
     private static final String KEY_PATH = System.getProperty("user.home") + "/.ssh";
 
-    public static void writePrivateKey(String keyStr) throws IOException {
+    /**
+     * write private key to ~/.ssh, filename is ~/.ssh/id_rsa_${host}
+     *
+     * @param host   host
+     * @param keyStr key string
+     * @return key file path
+     * @throws IOException if ~/.ssh is not exist and create dir error
+     */
+    public static String writePrivateKey(String host, String keyStr) throws IOException {
         var sshPath = Paths.get(KEY_PATH);
-        Files.createDirectories(sshPath);
-        try (var paths = Files.list(sshPath)) {
-            var files = paths.collect(Collectors.toUnmodifiableList());
-            for (var file : files) {
-                var k = Files.readString(file);
-                if (Objects.equals(k, keyStr)) {
-                    log.info("{} key is already exists.", keyStr);
-                    return;
-                }
-            }
-            Files.writeString(Paths.get(KEY_PATH, "id_rsa_" + System.currentTimeMillis()), keyStr);
-        } catch (Exception ex) {
-            log.error("write private key {} to ~/.ssh error", keyStr, ex);
+        if (!Files.exists(sshPath)) {
+            Files.createDirectories(sshPath);
         }
+        var keyPath = Paths.get(KEY_PATH, "id_rsa_" + host);
+        if (!Files.exists(keyPath)) {
+            Files.writeString(keyPath, keyStr);
+        } else {
+            var oldKey = Files.readString(keyPath);
+            if (!Objects.equals(oldKey, keyStr)) {
+                Files.writeString(keyPath, keyStr);
+            }
+        }
+        return keyPath.toString();
     }
 
 }

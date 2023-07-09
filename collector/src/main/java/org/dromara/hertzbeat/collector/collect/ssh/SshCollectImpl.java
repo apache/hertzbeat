@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.collector.collect.ssh;
 
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
@@ -39,8 +40,10 @@ import org.apache.sshd.client.session.ClientSession;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -244,7 +247,7 @@ public class SshCollectImpl extends AbstractCollect {
         CommonCache.getInstance().removeCache(identifier);
     }
 
-    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
+    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
                 .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
@@ -273,7 +276,9 @@ public class SshCollectImpl extends AbstractCollect {
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
         } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            PrivateKeyUtils.writePrivateKey(sshProtocol.getPrivateKey());
+            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
+            SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), null)
+                    .forEach(clientSession::addPublicKeyIdentity);
         } else {
             clientSession.close();
             throw new IllegalArgumentException("please input password or secret.");

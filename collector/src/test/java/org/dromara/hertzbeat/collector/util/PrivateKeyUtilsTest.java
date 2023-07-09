@@ -56,6 +56,6 @@ class PrivateKeyUtilsTest {
                 "57YhofOOr0M3yElcFA9Imvek5CYZsyL8eIWGZyadfRiYvGOUyvDDO3BYRG4DmhyF\n" +
                 "KVk3URjEuOCC29ORvZ/7HaCO9iuEbvAA/mrAtd7KdCA+3PzfEOw=\n" +
                 "-----END RSA PRIVATE KEY-----";
-        PrivateKeyUtils.writePrivateKey(key);
+        PrivateKeyUtils.writePrivateKey("127.0.0.1", key);
     }
 }
