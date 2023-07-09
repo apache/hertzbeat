@@ -24,8 +24,8 @@ import org.dromara.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.dromara.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.collector.util.PrivateKeyUtils;
 import org.dromara.hertzbeat.common.constants.CollectorConstants;
-import org.dromara.hertzbeat.collector.util.KeyPairUtil;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
  * ssh协议采集实现
  *
  * @author tom
- *
  */
 @Slf4j
 public class SshCollectImpl extends AbstractCollect {
@@ -63,7 +62,7 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
-    
+
     private static final int DEFAULT_TIMEOUT = 10_000;
 
     public SshCollectImpl() {
@@ -236,7 +235,7 @@ public class SshCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         }
     }
-    
+
     private void removeConnectSessionCache(SshProtocol sshProtocol) {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
@@ -274,10 +273,7 @@ public class SshCollectImpl extends AbstractCollect {
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
         } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var keyPair = KeyPairUtil.getKeyPairFromPrivateKey(sshProtocol.getPrivateKey());
-            if (keyPair != null) {
-                clientSession.addPublicKeyIdentity(keyPair);
-            }
+            PrivateKeyUtils.writePrivateKey(sshProtocol.getPrivateKey());
         } else {
             clientSession.close();
             throw new IllegalArgumentException("please input password or secret.");
