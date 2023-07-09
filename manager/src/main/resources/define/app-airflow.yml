@@ -1,0 +1,140 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控 mid-中间件
+category: custom
+# The monitoring: airflow
+# 监控类型 airflow
+app: airflow
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Apache Airflow
+  en-US: Apache Airflow
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 服务器Host
+      en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # required-true or false
+  # required-是否是必输项 true-必填 false-可选
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 服务端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    defaultValue: 8080
+
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    hide: true
+    required: true
+
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    hide: true
+    required: false
+
+
+
+
+
+# collect metrics config list
+# 采集指标组配置列表
+metrics:
+  - name: airflow_health
+    priority: 0
+    fields:
+      - field: metadatabase
+        type: 1
+      - field: scheduler
+        type: 1
+      - field: triggerer
+        type: 1
+    aliasFields:
+      - $.metadatabase.status
+      - $.scheduler.status
+      - $.triggerer.status
+    calculates:
+      - metadatabase=$.metadatabase.status
+      - scheduler=$.scheduler.status
+      - triggerer=$.triggerer.status
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/v1/health
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: airflow_version
+    priority: 1
+    fields:
+      - field: version
+        type: 1
+      - field: git_version
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/v1/version
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'
