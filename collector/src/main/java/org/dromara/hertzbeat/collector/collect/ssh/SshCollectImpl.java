@@ -279,10 +279,8 @@ public class SshCollectImpl extends AbstractCollect {
             var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
             SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), null)
                     .forEach(clientSession::addPublicKeyIdentity);
-        } else {
-            clientSession.close();
-            throw new IllegalArgumentException("please input password or secret.");
-        }
+        }  // else auth with localhost private public key certificates
+        
         // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             clientSession.close();
