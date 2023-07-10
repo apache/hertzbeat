@@ -123,6 +123,7 @@ params:
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
