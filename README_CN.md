@@ -32,7 +32,8 @@
 
 > [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警系统。     
 > 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等监控，阈值告警通知一步到位。   
-> 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。             
+> 易用友好，全 WEB 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
+> 更自由化的阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。             
 
 > 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需在浏览器配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
 > 您相信只需配置下就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？   
@@ -313,6 +314,7 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/qq471754603"><img src="https://avatars.githubusercontent.com/u/23146592?v=4?s=100" width="100px;" alt="qq471754603"/><br /><sub><b>qq471754603</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=qq471754603" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/san346596324"><img src="https://avatars.githubusercontent.com/u/30828520?v=4?s=100" width="100px;" alt="渭雨"/><br /><sub><b>渭雨</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=san346596324" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/luoxuanzao"><img src="https://avatars.githubusercontent.com/u/44692579?v=4?s=100" width="100px;" alt="liuxuezhuo"/><br /><sub><b>liuxuezhuo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luoxuanzao" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
