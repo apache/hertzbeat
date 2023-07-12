@@ -103,6 +103,10 @@
               <i nz-icon nzType="notification" nzTheme="outline"></i>
               <span>{{ 'alert.notice.type.smn' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 12" nzColor="orange">
+              <i nz-icon nzType="notification" nzTheme="outline"></i>
+              <span>{{ 'alert.notice.type.serverchan' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -117,6 +121,7 @@
             <span *ngIf="data.type == 9">{{ data.discordChannelId }}<br />{{ data.discordBotToken }}</span>
             <span *ngIf="data.type == 10">{{ data.corpId }}<br />{{ data.agentId }}<br />{{ data.appSecret }}</span>
             <span *ngIf="data.type == 11">{{ data.smnAk }}</span>
+            <span *ngIf="data.type == 12">{{ data.serverChanToken }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -249,6 +254,7 @@
             <nz-option [nzValue]="7" [nzLabel]="'alert.notice.type.telegram-bot' | i18n"></nz-option>
             <nz-option [nzValue]="10" [nzLabel]="'alert.notice.type.weChatApp' | i18n"></nz-option>
             <nz-option [nzValue]="11" [nzLabel]="'alert.notice.type.smn' | i18n"></nz-option>
+            <nz-option [nzValue]="12" [nzLabel]="'alert.notice.type.serverchan' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -404,6 +410,14 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.smnTopicUrn" nz-input [required]="receiver.type === 11" name="smnTopicUrn" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 12">
+        <nz-form-label [nzSpan]="7" nzFor="serverChanToken" [nzRequired]="receiver.type === 12">{{
+          'alert.notice.type.serverchan-token' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.serverChanToken" nz-input [required]="receiver.type === 12" name="serverChanToken" type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

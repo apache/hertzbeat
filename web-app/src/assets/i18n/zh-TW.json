@@ -235,6 +235,8 @@
   "alert.notice.type.smn-projectId": "項目ID",
   "alert.notice.type.smn-region": "地域",
   "alert.notice.type.smn-topicUrn": "TopicUrn",
+  "alert.notice.type.serverchan": "ServerChan",
+  "alert.notice.type.serverchan-token": "ServerChanToken",
   "alert.notice.rule": "告警通知策略",
   "alert.notice.rule.new": "新增通知策略",
   "alert.notice.rule.edit": "編輯通知策略",
