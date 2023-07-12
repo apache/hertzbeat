@@ -24,24 +24,17 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
         try {
             ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto serverChanWebHookDto = new ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto();
-            ServerChanAlertNotifyHandlerImpl.MarkdownDTO markdownDTO = new ServerChanAlertNotifyHandlerImpl.MarkdownDTO();
-            markdownDTO.setText(renderContent(alert));
-            markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
-            serverChanWebHookDto.setMarkdown(markdownDTO);
+            serverChanWebHookDto.setTitle(bundle.getString("alerter.notify.title"));
+            serverChanWebHookDto.setDesp(renderContent(alert));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
-            String webHookUrl = alerterProperties.getServerChanNotifyUrl() + receiver.getAccessToken();
+            String webHookUrl = String.format(alerterProperties.getServerChanNotifyUrl(),receiver.getServerChanToken());
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
+            System.out.println(responseEntity);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                assert responseEntity.getBody() != null;
-                if (responseEntity.getBody().getErrCode() == 0) {
                     log.debug("Send ServerChan webHook: {} Success", webHookUrl);
-                } else {
-                    log.warn("Send ServerChan webHook: {} Failed: {}", webHookUrl, responseEntity.getBody().getErrMsg());
-                    throw new AlertNoticeException(responseEntity.getBody().getErrMsg());
-                }
             } else {
                 log.warn("Send ServerChan webHook: {} Failed: {}", webHookUrl, responseEntity.getBody());
                 throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
@@ -75,29 +68,16 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Data
     private static class ServerChanWebHookDto {
         private static final String MARKDOWN = "markdown";
-
         /**
-         * 消息类型
-         */
-        private String msgtype = MARKDOWN;
-
-        /**
-         * markdown消息
-         */
-        private ServerChanAlertNotifyHandlerImpl.MarkdownDTO markdown;
-
-    }
-
-    @Data
-    private static class MarkdownDTO {
-        /**
-         * 消息内容
-         */
-        private String text;
-        /**
-         * 消息标题
+         * 标题
          */
         private String title;
+        /**
+         * markdown消息内容
+         */
+        private String desp;
+
     }
+
 
 }

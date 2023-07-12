@@ -68,7 +68,7 @@ public class AlerterProperties {
     /**
      * ServerChan Notify url
      */
-    private String serverChanNotifyUrl = "https://sctapi.ftqq.com/key.send";
+    private String serverChanNotifyUrl = "https://sctapi.ftqq.com/%s.send";
 
     /**
      * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
