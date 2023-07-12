@@ -1,207 +1,193 @@
 ---
-id: extend-jmx  
-title: JMX协议自定义监控  
+id: extend-jmx
+title: JMX协议自定义监控
 sidebar_label: JMX协议自定义监控    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用SSH协议自定义指标监控。 
-> SSH协议自定义监控可以让我们很方便的通过写sh命令脚本就能监控采集到我们想监控的Linux指标     
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JMX协议自定义指标监控。    
+> JMX协议自定义监控可以让我们很方便的通过配置 JMX Mbean Object 就能监控采集到我们想监控的 Mbean 指标
 
-### SSH协议采集流程    
-【**系统直连Linux**】->【**运行SHELL命令脚本语句**】->【**响应数据解析:oneRow, multiRow**】->【**指标数据提取**】   
+### JMX协议采集流程
+【**对端JAVA应用暴露JMX服务**】->【**HertzBeat直连对端JMX服务**】->【**获取配置的 Mbean Object 数据**】->【**指标数据提取**】
 
-由流程可见，我们自定义一个SSH协议的监控类型，需要配置SSH请求参数，配置获取哪些指标，配置查询脚本语句。
+由流程可见，我们自定义一个JMX协议的监控类型，需要配置JMX请求参数，配置获取哪些指标，配置查询Object信息。
 
-### 数据解析方式   
-SHELL脚本查询回来的数据字段和我们需要的指标映射，就能获取对应的指标数据，目前映射解析方式有两种：oneRow, multiRow，能满足绝大部分指标需求。
+### 数据解析方式
 
-#### **oneRow**   
-> 查询出一列数据, 通过查询返回结果集的字段值(一行一个值)与字段映射    
+通过配置监控模版YML的指标`field`, `aliasFields`, `jmx` 协议的 `objectName` 来和对端系统暴露的 `Mbean`对象信息映射解析。
 
-例如：     
-需要查询Linux的指标 hostname-主机名称，uptime-启动时间     
-主机名称原始查询命令：`hostname`     
-启动时间原始查询命令：`uptime | awk -F "," '{print $1}'`   
-则在hertzbeat对应的这两个指标的查询脚本为(用`;`将其连接到一起)：       
-`hostname; uptime | awk -F "," '{print $1}'`     
-终端响应的数据为：    
-```
-tombook
-14:00:15 up 72 days  
-```  
-则最后采集到的指标数据一一映射为：   
-hostname值为 `tombook`   
-uptime值为 `14:00:15 up 72 days`      
 
-这里指标字段就能和响应数据一一映射为一行采集数据。     
 
-#### **multiRow**
-> 查询多行数据, 通过查询返回结果集的列名称，和查询的指标字段映射  
-
-例如：   
-查询的Linux内存相关指标字段：total-内存总量 used-已使用内存 free-空闲内存 buff-cache-缓存大小 available-可用内存    
-内存指标原始查询命令为：`free -m`, 控制台响应：  
-```shell
-              total        used        free      shared  buff/cache   available
-Mem:           7962        4065         333           1        3562        3593
-Swap:          8191          33        8158
-```
-在hertzbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：  
-`free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
-控制台响应为：  
-```shell
-total  used  free  buff_cache  available
-7962   4066  331   3564        3592
-```
-
-这里指标字段就能和响应数据一一映射为采集数据。
-
-### 自定义步骤  
+### 自定义步骤
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
 ![](/img/docs/advanced/extend-point-1.png)
 
 ------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。   
+下面详细介绍下文件的配置用法，请注意看使用注释。
 
 ### 监控模版YML
 
 > 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
-样例：自定义一个名称为example_linux的自定义监控类型，其使用SSH协议采集指标数据。    
+样例：自定义一个名称为 example_jvm 的自定义监控类型，其使用SSH协议采集指标数据。
 
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
-category: os
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: example_linux
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: example_jvm
+# The monitoring i18n name
 name:
-  zh-CN: 模拟LINUX应用类型
-  en-US: LINUX EXAMPLE APP
-# 监控参数定义. field 这些为输入参数变量，即可以用^_^host^_^的形式写到后面的配置中，系统自动变量值替换
-# 强制固定必须参数 - host
+  zh-CN: 自定义JVM虚拟机
+  en-US: CUSTOM JVM
+# Input params define for monitoring(render web ui by the definition)
 params:
+  # field-param field key
   - field: host
+    # name-param field display i18n name
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
     type: host
+    # required-true or false
     required: true
+  # field-param field key
   - field: port
+    # name-param field display i18n name
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
     type: number
+    # when type is number, range is required
     range: '[0,65535]'
+    # required-true or false
     required: true
-    defaultValue: 22
-    placeholder: '请输入端口'
+    # default value
+    defaultValue: 9999
+  # field-param field key
+  - field: url
+    # name-param field display i18n name
+    name:
+      zh-CN: JMX URL
+      en-US: JMX URL
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # param field input placeholder
+    placeholder: 'service:jmx:rmi:///jndi/rmi://host:port/jmxrmi'
+  # field-param field key
   - field: username
+    # name-param field display i18n name
     name:
       zh-CN: 用户名
       en-US: Username
+    # type-param field type(most mapping the html input type)
     type: text
+    # when type is text, use limit to limit string length
     limit: 20
-    required: true
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
   - field: password
+    # name-param field display i18n name
     name:
       zh-CN: 密码
       en-US: Password
+    # type-param field type(most mapping the html input tag)
     type: password
-    required: true
-# 指标组列表
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
 metrics:
-  # 第一个监控指标组 basic
-  # 注意：内置监控指标有 (responseTime - 响应时间)
+  # metrics - basic
   - name: basic
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
-    # 指标组中的具体监控指标
+    # collect metrics content
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: hostname
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      - field: VmName
         type: 1
-        instance: true
-      - field: version
+      - field: VmVendor
         type: 1
-      - field: uptime
+      - field: VmVersion
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: ssh
-    # 当protocol为http协议时具体的采集配置
-    ssh:
-      # 主机host: ipv4 ipv6 域名
+      - field: Uptime
+        type: 0
+        unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jmx
+    # the config content when protocol is jmx
+    jmx:
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
-      # 响应数据解析方式：oneRow, multiRow
-      parseType: multiRow
+      # jmx mbean object name
+      objectName: java.lang:type=Runtime
+      url: ^_^url^_^
 
-  - name: cpu
+  - name: memory_pool
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: info
+      - field: name
         type: 1
-      - field: cores
+        instance: true
+      - field: committed
         type: 0
-        unit: 核数
-      - field: interrupt
+        unit: MB
+      - field: init
         type: 0
-        unit: 个数
-      - field: load
-        type: 1
-      - field: context_switch
+        unit: MB
+      - field: max
         type: 0
-        unit: 个数
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: ssh
-    # 当protocol为http协议时具体的采集配置
-    ssh:
-      # 主机host: ipv4 ipv6 域名
-      host: ^_^host^_^
-      # 端口
-      port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
-      script: "LANG=C lscpu | awk -F: '/Model name/ {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}'"
-      parseType: oneRow
-
-  - name: memory
-    priority: 2
-    fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: total
-        type: 0
-        unit: Mb
+        unit: MB
       - field: used
         type: 0
-        unit: Mb
-      - field: free
-        type: 0
-        unit: Mb
-      - field: buff_cache
-        type: 0
-        unit: Mb
-      - field: available
-        type: 0
-        unit: Mb
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: ssh
-    # 当protocol为http协议时具体的采集配置
-    ssh:
-      # 主机host: ipv4 ipv6 域名
+        unit: MB
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - Name
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - name=Name
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
+    protocol: jmx
+    jmx:
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
-      script: free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'
-      parseType: multiRow
+      objectName: java.lang:type=MemoryPool,name=*
+      url: ^_^url^_^
 ```
