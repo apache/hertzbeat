@@ -17,6 +17,8 @@
 
 package org.dromara.hertzbeat.collector.collect.ssh;
 
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
@@ -126,11 +128,20 @@ public class SshCollectImpl extends AbstractCollect {
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("The peer refused to connect: service port does not listening or firewall: " + errorMsg);
+        } catch (SshException sshException) {
+            Throwable throwable = sshException.getCause();
+            if (throwable instanceof SshChannelOpenException) {
+                log.warn("Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
+                removeConnectSessionCache(sshProtocol);
+            }
+            String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg("Peer ssh connection failed: " + errorMsg);
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer connection failed: " + errorMsg);
+            builder.setMsg("Peer io connection failed: " + errorMsg);
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
