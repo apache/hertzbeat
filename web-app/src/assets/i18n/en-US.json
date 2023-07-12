@@ -235,6 +235,8 @@
   "alert.notice.type.smn-projectId": "Project ID",
   "alert.notice.type.smn-region": "Region",
   "alert.notice.type.smn-topicUrn": "TopicUrn",
+  "alert.notice.type.serverchan": "ServerChan",
+  "alert.notice.type.serverchan-token": "ServerChanToken",
   "alert.notice.rule": "Alert Notice Policy",
   "alert.notice.rule.new": "New Notice Policy",
   "alert.notice.rule.edit": "Edit Notice Policy",

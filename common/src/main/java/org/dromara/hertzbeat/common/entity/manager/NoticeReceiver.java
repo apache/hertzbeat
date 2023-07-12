@@ -188,6 +188,13 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String smnTopicUrn;
 
+    @Schema(title = "serverChanToken : The notification method is valid for ServerChan",
+            description = "访问token : 通知方式为Server酱有效",
+            example = "SCT193569TSNm6xIabdjqeZPtOGOWcvU1e", accessMode = READ_WRITE)
+    @Length(max = 300)
+    @Column(length = 300)
+    private String serverChanToken;
+
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy
