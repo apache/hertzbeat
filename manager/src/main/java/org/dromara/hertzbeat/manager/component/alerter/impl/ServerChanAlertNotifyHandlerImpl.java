@@ -8,7 +8,10 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-
+/**
+ * @author zqr10159
+ * @description Server酱发送
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

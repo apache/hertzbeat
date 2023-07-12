@@ -414,7 +414,8 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 12">
         <nz-form-label [nzSpan]="7" nzFor="serverChanToken" [nzRequired]="receiver.type === 12">{{
-          'alert.notice.type.serverchan-token' | i18n }}</nz-form-label>
+          'alert.notice.type.serverchan-token' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="receiver.serverChanToken" nz-input [required]="receiver.type === 12" name="serverChanToken" type="text" />
         </nz-form-control>
