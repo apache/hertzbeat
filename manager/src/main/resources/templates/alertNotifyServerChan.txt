@@ -1,0 +1,7 @@
+#### [(${title})]
+##### **[(${targetLabel})]** : [(${target})]
+[# th:if="${monitorId != null}"]   ##### **[(${monitorIdLabel})]** : [(${monitorId})][/]
+[# th:if="${monitorName != null}"]   ##### **[(${monitorNameLabel})]** : [(${monitorName})][/]
+   ##### **[(${priorityLabel})]** : [(${priority})]
+   ##### **[(${triggerTimeLabel})]** : [(${triggerTime})]
+   ##### **[(${contentLabel})]** : [(${content})]
