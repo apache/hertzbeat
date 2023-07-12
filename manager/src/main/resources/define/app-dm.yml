@@ -158,6 +158,7 @@ metrics:
     protocol: jdbc
     # the config content when protocol is jdbc
     jdbc:
+      host: ^_^host^_^
       port: ^_^port^_^
       platform: dm
       username: ^_^username^_^
