@@ -377,6 +377,9 @@ export class AlertNoticeComponent implements OnInit {
                 case 11:
                   label = `${label}smn`;
                   break;
+                case 12:
+                  label = `${label}ServerChan`;
+                  break;
               }
               this.receiversOption.push({
                 value: item.id,
