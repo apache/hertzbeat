@@ -9,6 +9,14 @@ Learn From [webdriverio](https://webdriver.io/)
 yarn install
 ```
 
+## I18N
+
+```console
+yarn write-translations --locale zh-cn
+
+yarn write-translations --locale en
+```
+
 ## Local Development
 
 ```console

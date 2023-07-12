@@ -1,9 +1,9 @@
 ---
-id: extend-ssh  
-title: SSH协议自定义监控  
-sidebar_label: SSH协议自定义监控    
+id: extend-jmx  
+title: JMX协议自定义监控  
+sidebar_label: JMX协议自定义监控    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用SSH协议自定义指标监控。    
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用SSH协议自定义指标监控。 
 > SSH协议自定义监控可以让我们很方便的通过写sh命令脚本就能监控采集到我们想监控的Linux指标     
 
 ### SSH协议采集流程    

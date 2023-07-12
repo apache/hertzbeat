@@ -1,7 +1,7 @@
 ---
 id: extend-tutorial
-title: 快速教程:自定义适配一款基于HTTP协议的监控   
-sidebar_label: 快速教程
+title: 自定义适配一款基于HTTP协议的新监控类型   
+sidebar_label: 教程案例
 ---
 
 通过此教程我们一步一步描述如何在hertzbeat监控系统下自定义新增适配一款基于http协议的监控类型。  
@@ -59,15 +59,13 @@ sidebar_label: 快速教程
 **我们这次获取其app下的 `category`,`app`,`status`,`size`,`availableSize`等指标数据。**
 
 
-### 新增对应的应用定义YML和参数定义YML
+### 新增配置监控模版YML
 
-1. 自定义监控类型需新增配置YML文件
+**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML**
 
-用监控类型命名的监控配置定义文件 - 例如：app-hertzbeat.yml 需位于安装目录 /hertzbeat/define/ 下
+定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 `api`监控模版 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。   
 
-定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 param-api.yml 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。   
-
-定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 app-api.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
+定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 `api`监控模版 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
 
 ```yaml
 # 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
@@ -186,13 +184,13 @@ metrics:
 
 ```
 
-**新增完毕，现在我们重启hertzbeat系统。我们可以看到系统页面已经多了一个`hertzbeat`监控类型了。**
+**点击保存并应用。我们可以看到系统页面的自定义监控菜单已经多了一个`hertzbeat`监控类型了。**
 
 
 ![](/img/docs/advanced/extend-http-example-1.png)
 
 
-### 系统页面添加对`hertzbeat`监控类型的监控
+### 页面添加对`hertzbeat`监控类型的监控
 
 > 我们点击新增 `HertzBeat监控系统`，配置监控IP，端口，采集周期，高级设置里的账户密码等, 点击确定添加监控。
 
@@ -218,10 +216,5 @@ metrics:
 
 #### 完！
 
-HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数headers,params等，我们可以像用postman一样去定义它，可玩性也非常高！
+HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数 `headers,params` 等，我们可以像用postman一样去定义它，可玩性也非常高！
 
-如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
-
-**github: https://github.com/dromara/hertzbeat**
-
-**gitee: https://gitee.com/dromara/hertzbeat**
