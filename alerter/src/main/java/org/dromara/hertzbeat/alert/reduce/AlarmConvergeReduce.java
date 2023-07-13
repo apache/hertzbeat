@@ -46,8 +46,8 @@ public class AlarmConvergeReduce {
     public boolean filterConverge(Alert currentAlert) {
         // ignore ALERT_STATUS_CODE_RESTORED
         if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
-            int alertHash = getAlertStateHash(currentAlert);
-            lastStateAlertMap.put(alertHash, currentAlert);
+            int alertStateHash = getAlertStateHash(currentAlert);
+            lastStateAlertMap.put(alertStateHash, currentAlert);
             return true;
         }
         ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
@@ -99,7 +99,12 @@ public class AlarmConvergeReduce {
         return true;
     }
 
-
+    /**
+     *
+     * @param alertConverge alertConverge
+     * @param currentAlert
+     * @return true when not filter by coverage interval
+     */
     private boolean matchAccordingInterval(AlertConverge alertConverge, Alert currentAlert) {
         long evalInterval = alertConverge.getEvalInterval() * 1000;
         long now = System.currentTimeMillis();
@@ -136,28 +141,43 @@ public class AlarmConvergeReduce {
     }
 
 
+    /**
+     *
+     * @param alertConverge
+     * @param currentAlert
+     * @return true when not filter by alert's priority and status
+     */
     private boolean matchAccordingState(AlertConverge alertConverge, Alert currentAlert) {
         if (alertConverge.getNotifyWhenStateChange().equals("N")) {
             return true;
         }
-        int alertHash = getAlertStateHash(currentAlert);
-        if (lastStateAlertMap.containsKey(alertHash) && lastStateAlertMap.get(alertHash) != null) {
-            Alert preAlert = lastStateAlertMap.get(alertHash);
-            lastStateAlertMap.put(alertHash, currentAlert);
+        int alertStateHash = getAlertStateHash(currentAlert);
+        if (lastStateAlertMap.containsKey(alertStateHash) && lastStateAlertMap.get(alertStateHash) != null) {
+            Alert preAlert = lastStateAlertMap.get(alertStateHash);
+            lastStateAlertMap.put(alertStateHash, currentAlert);
             return !(preAlert.getStatus() == currentAlert.getStatus() && preAlert.getPriority() == currentAlert.getPriority());
         } else {
-            lastStateAlertMap.put(alertHash, currentAlert);
+            lastStateAlertMap.put(alertStateHash, currentAlert);
             return true;
         }
     }
 
+    /**
+     *
+     * @param alert
+     * @return alertHash that bis used by alert coverage
+     */
     private int getAlertHash(Alert alert) {
         return Objects.hash(alert.getPriority())
                 + Arrays.hashCode(alert.getTags().keySet().toArray(new String[0]))
                 + Arrays.hashCode(alert.getTags().values().toArray(new String[0]));
     }
 
-
+    /**
+     *
+     * @param alert
+     * @return alertStateHash that bis used by alert coverage
+     */
     private int getAlertStateHash(Alert alert) {
         return Arrays.hashCode(alert.getTags().keySet().toArray(new String[0]))
                 + Arrays.hashCode(alert.getTags().values().toArray(new String[0]));
