@@ -21,6 +21,7 @@ import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
+import org.dromara.hertzbeat.alert.reduce.AlarmConvergeReduce;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
@@ -59,6 +60,9 @@ public class AlertServiceImpl implements AlertService {
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
 
+    @Autowired
+    private AlarmConvergeReduce alarmConvergeReduce;
+
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
         alertDao.save(alert);
@@ -82,6 +86,7 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public void editAlertStatus(Byte status, List<Long> ids) {
         alertDao.updateAlertsStatus(status, ids);
+        alarmConvergeReduce.refreshStatus(status,ids);
     }
 
     @Override

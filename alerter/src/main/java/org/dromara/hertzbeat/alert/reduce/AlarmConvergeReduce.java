@@ -9,10 +9,7 @@ import org.dromara.hertzbeat.common.entity.alerter.AlertConverge;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -178,6 +175,22 @@ public class AlarmConvergeReduce {
     private int getAlertStateHash(Alert alert) {
         return Arrays.hashCode(alert.getTags().keySet().toArray(new String[0]))
                 + Arrays.hashCode(alert.getTags().values().toArray(new String[0]));
+    }
+
+    /**
+     *
+     * @param status new status
+     * @param ids Alert id list
+     */
+    public void refreshStatus(byte status, List<Long> ids) {
+        //todo:do we need lock in case concurrent issues?
+        lastStateAlertMap.entrySet().parallelStream().forEach(entry -> {
+            if (ids.contains(entry.getValue().getId())) {
+                Alert value = entry.getValue();
+                value.setStatus(status);
+                lastStateAlertMap.put(entry.getKey(), value);
+            }
+        });
     }
 
 }
