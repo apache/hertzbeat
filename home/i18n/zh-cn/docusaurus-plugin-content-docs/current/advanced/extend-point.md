@@ -126,26 +126,6 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
-  # field-param field key
-  # field-变量字段标识符
-  - field: keyword
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 关键字计数
-      en-US: Keyword Num
-    # type-param field type(key-value mapping the html key-value input tags)
-    # type-字段类型(key-value映射为前端key-value的双input格式渲染)
-    type: text
-    # 参数输入框提示信息
-    # param field input placeholder
-    placeholder: 'Input monitored Keyword'
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
     
 metrics:
   # metrics - summary, inner monitoring metrics (responseTime - response time, keyword - number of keywords)
@@ -182,13 +162,6 @@ metrics:
       method: GET
       # if enabled https
       ssl: ^_^ssl^_^
-      authorization:
-        # http auth type: Basic Auth, Digest Auth, Bearer Token
-        type: ^_^authType^_^
-        basicAuthUsername: ^_^username^_^
-        basicAuthPassword: ^_^password^_^
-        digestAuthUsername: ^_^username^_^
-        digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
       parseType: website
