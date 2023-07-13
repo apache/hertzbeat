@@ -1,37 +1,40 @@
 ---
 id: extend-snmp
-title: SNMP协议自定义监控
-sidebar_label: SNMP协议自定义监控    
+title: SNMP Protocol Custom Monitoring
+sidebar_label: SNMP Protocol Custom Monitoring    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用 SNMP 协议自定义指标监控。    
-> SNMP 协议自定义监控可以让我们很方便的通过配置 Mib OID信息 就能监控采集到我们想监控的OID指标
 
-### SNMP协议采集流程
-【**对端开启SNMP服务**】->【**HertzBeat直连对端SNMP服务**】->【**根据配置抓取对端OID指标信息**】->【**指标数据提取**】
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SNMP to customize Metric monitoring.
+> JMX protocol custom monitoring allows us to easily monitor Metrics we want by config SNMP MIB OIDs.
 
-由流程可见，我们自定义一个SNMP协议的监控类型，需要配置SNMP请求参数，配置获取哪些指标，配置查询OID信息。
+### SNMP protocol collection process
+【**Peer Server Enable SNMP Service**】->【**HertzBeat Connect Peer Server SNMP**】->【**Query Oids Data**】->【**Metric data extraction**】
 
-### 数据解析方式
-
-通过配置监控模版YML的指标`field`, `aliasFields`, `snmp` 协议下的 `oids`来抓取对端指定的数据并解析映射。
+It can be seen from the process that we define a monitoring type of Snmp protocol. We need to configure Snmp request parameters, configure which Metrics to obtain, and configure oids.
 
 
+### Data parsing method
 
-### 自定义步骤
+By configuring the metrics `field`, `aliasFields`, and `oids` under the `snmp` protocol of the monitoring template YML to capture the data specified by the peer and parse the mapping.
 
-**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
+
+### Custom Steps
+
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ![](/img/docs/advanced/extend-point-1.png)
 
 ------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。
+Configuration usages of the monitoring templates yml are detailed below.
 
-### 监控模版YML
+### Monitoring Templates YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
-> 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-样例：自定义一个名称为 example_windows 的自定义监控类型，其使用SSH协议采集指标数据。
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+eg：Define a custom monitoring type `app` named `example_windows` which use the SNMP protocol to collect data.
 
 
 ```yaml

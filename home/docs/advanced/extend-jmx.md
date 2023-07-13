@@ -1,37 +1,37 @@
 ---
 id: extend-jmx
-title: JMX协议自定义监控
-sidebar_label: JMX协议自定义监控    
+title: JMX Protocol Custom Monitoring
+sidebar_label: JMX Protocol Custom Monitoring    
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JMX协议自定义指标监控。    
-> JMX协议自定义监控可以让我们很方便的通过配置 JMX Mbean Object 就能监控采集到我们想监控的 Mbean 指标
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JMX to customize Metric monitoring.
+> JMX protocol custom monitoring allows us to easily monitor Metrics we want by config JMX Mbeans Object.
 
-### JMX协议采集流程
-【**对端JAVA应用暴露JMX服务**】->【**HertzBeat直连对端JMX服务**】->【**获取配置的 Mbean Object 数据**】->【**指标数据提取**】
+### JMX protocol collection process
+【**Peer Server Enable Jmx Service**】->【**HertzBeat Connect Peer Server Jmx**】->【**Query Jmx Mbean Object Data**】->【**Metric data extraction**】
 
-由流程可见，我们自定义一个JMX协议的监控类型，需要配置JMX请求参数，配置获取哪些指标，配置查询Object信息。
+It can be seen from the process that we define a monitoring type of JMX protocol. We need to configure JMX request parameters, configure which Metrics to obtain, and configure Mbeans Object.
 
-### 数据解析方式
+### Data parsing method
 
-通过配置监控模版YML的指标`field`, `aliasFields`, `jmx` 协议的 `objectName` 来和对端系统暴露的 `Mbean`对象信息映射解析。
+By configuring the monitoring template YML metrics `field`, `aliasFields`, `objectName` of the `jmx` protocol to map and parse the `Mbean` object information exposed by the peer system.
 
+### Custom Steps   
 
-
-### 自定义步骤
-
-**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ![](/img/docs/advanced/extend-point-1.png)
 
 ------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。
+Configuration usages of the monitoring templates yml are detailed below.
 
-### 监控模版YML
+### Monitoring Templates YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
-> 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-样例：自定义一个名称为 example_jvm 的自定义监控类型，其使用SSH协议采集指标数据。
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+eg：Define a custom monitoring type `app` named `example_jvm` which use the JVM protocol to collect data.
 
 
 ```yaml
