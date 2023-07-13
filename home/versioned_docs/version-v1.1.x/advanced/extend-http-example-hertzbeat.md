@@ -6,7 +6,7 @@ sidebar_label: 教程一:适配一款HTTP协议监控
 
 通过此教程我们一步一步描述如何在hertzbeat监控系统下新增适配一款基于http协议的监控类型。  
 
-阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http.md)了解熟悉了怎么自定义类型，指标，协议等。   
+阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
 
 
 ### HTTP协议解析通用响应结构体，获取指标数据

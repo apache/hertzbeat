@@ -21,14 +21,14 @@ sidebar_label: 快速开始
 2. 创建名称为hertzbeat的数据库  
 3. 执行位于项目仓库/script/sql/目录下的数据库脚本 [schema.sql](https://gitee.com/dromara/hertzbeat/raw/master/script/sql/schema.sql)      
 
-详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init.md)    
+详细步骤参考 [依赖服务MYSQL安装初始化](mysql-init)    
 
 ##### 安装TDengine   
 1. docker安装TDengine   
 `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`     
 2. 创建名称为hertzbeat的数据库
 
-详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init.md)   
+详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init)   
 
 ### 🍞 HertzBeat安装   
 > HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署。  
@@ -36,14 +36,14 @@ sidebar_label: 快速开始
 #### 方式一：Docker方式快速安装
 `docker run -d -p 1157:1157 -v /opt/application.yml:/opt/hertzbeat/config/application.yml --name hertzbeat tancloud/hertzbeat:[版本tag]`  
 
-详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
+详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy) 
 
 #### 方式二：通过安装包安装    
 1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)  
 2. 配置HertzBeat的配置文件 hertzbeat/config/application.yml   
 3. 部署启动 `$ ./startup.sh `   
 
-详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
+详细步骤参考 [通过安装包安装HertzBeat](package-deploy) 
 
 #### 方式三：本地代码启动   
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
