@@ -1,14 +1,10 @@
 package org.dromara.hertzbeat.collector.dispatch.entrance.netty;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
@@ -21,7 +17,7 @@ import org.springframework.util.StringUtils;
  * @author tom
  */
 @Component
-@ConditionalOnProperty(prefix = "collector.dispatch.entrance,netty",
+@ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j
 public class SlaveCollector {

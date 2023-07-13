@@ -2,15 +2,8 @@ package org.dromara.hertzbeat.collector.dispatch.entrance.netty;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * netty inbound collector message handler
@@ -39,6 +32,7 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Channel channel = ctx.channel();
         // go online to cluster master
-        
+        channel.writeAndFlush(ClusterMsg.Message.newBuilder()
+                                      .setIdentity("tom").setType(ClusterMsg.MessageType.HEARTBEAT).build());
     }
 }

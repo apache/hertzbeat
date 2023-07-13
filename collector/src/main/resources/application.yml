@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 server:
-  port: 1158
+  port: 1159
 spring:
   application:
     name: ${HOSTNAME:@hertzbeat-collector@}${PID}
@@ -30,3 +30,11 @@ spring:
   config:
     activate:
       on-profile: cluster
+      
+collector:
+  dispatch:
+    entrance:
+      netty:
+        enabled: true
+        master-ip: 127.0.0.1
+        master-port: 1158

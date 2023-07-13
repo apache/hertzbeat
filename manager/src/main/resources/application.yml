@@ -164,3 +164,8 @@ warehouse:
 alerter:
   # custom console url
   console-url: https://console.tancloud.cn
+
+scheduler:
+  server:
+    enabled: false
+    port: 1158
