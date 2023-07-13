@@ -311,4 +311,37 @@ CREATE TABLE  hzb_config
     primary key (type)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------
+-- Table structure for hzb_collector
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_collector ;
+CREATE TABLE  hzb_collector
+(
+    id           bigint           not null auto_increment comment '采集器主键索引ID',
+    name         varchar(255)     not null comment 'collector identity name',
+    ip           varchar(255)     not null comment 'collector ip',
+    status       tinyint          not null default 0 comment 'collector status: 0-online 1-offline',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    unique key (name)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_collector_monitor_bind
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_collector_monitor_bind ;
+CREATE TABLE  hzb_collector_monitor_bind
+(
+    id           bigint           not null auto_increment comment '主键ID',
+    collector_id bigint           not null comment 'collector ID',
+    monitor_id   bigint           not null comment 'monitor ID',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    index index_collector_monitor (collector_id, monitor_id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;

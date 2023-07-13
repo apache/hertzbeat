@@ -10,6 +10,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.manager.service.CollectorService;
 
 /**
  * netty server initializer
@@ -17,6 +18,12 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
  */
 public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
     
+    private final CollectorService collectorService;
+    
+    public ProtoServerInitializer(CollectorService collectorService) {
+        super();
+        this.collectorService = collectorService;
+    }
     
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
@@ -30,6 +37,6 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast(new ProtobufEncoder());
         // message handler
-        pipeline.addLast(new ServerInboundMessageHandler());
+        pipeline.addLast(new ServerInboundMessageHandler(collectorService));
     }
 }

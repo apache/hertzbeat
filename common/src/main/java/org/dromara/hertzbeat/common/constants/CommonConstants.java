@@ -276,4 +276,14 @@ public interface CommonConstants {
      * cache key alert converge
      */
     String CACHE_ALERT_CONVERGE = "alert_converge";
+    
+    /**
+     * collector status online 0
+     */
+    byte COLLECTOR_STATUS_ONLINE = 0;
+    
+    /**
+     * collector status offline 1
+     */
+    byte COLLECTOR_STATUS_OFFLINE = 1;
 }

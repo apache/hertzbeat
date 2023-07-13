@@ -7,7 +7,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.common.util.JsonUtil;
+import org.dromara.hertzbeat.manager.service.CollectorService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,31 +21,30 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
     
-    private final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-    private final Map<String, ChannelId> collectorChannelMap = new ConcurrentHashMap<>(16);
+    private final CollectorService collectorService;
+    
+    public ServerInboundMessageHandler(CollectorService collectorService) {
+        super();
+        this.collectorService = collectorService;
+    }
     
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
         String identity = message.getIdentity();
-        collectorChannelMap.put(identity, channel.id());
+        collectorService.holdCollectorChannel(identity, channel);
         switch (message.getType()) {
             case HEARTBEAT:
-                // todo 心跳
+                collectorService.collectorHeartbeat(identity);
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:
-                // todo 
+                CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
+                collectorService.collectorGoOnline(identity, collectorInfo);
                 break;
             case GO_OFFLINE:
-                // todo
+                collectorService.collectorGoOffline(identity);
                 break;
         }
-    }
-    
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Channel channel = ctx.channel();
-        channelGroup.add(channel);
     }
 }
