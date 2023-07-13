@@ -148,7 +148,7 @@ public class AlarmConvergeReduce {
      * @return true when not filter by alert's priority and status
      */
     private boolean matchAccordingState(AlertConverge alertConverge, Alert currentAlert) {
-        if (alertConverge.getNotifyWhenStateChange().equals("N")) {
+        if ("N".equals(alertConverge.getNotifyWhenStateChange())) {
             return true;
         }
         int alertStateHash = getAlertStateHash(currentAlert);
