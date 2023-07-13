@@ -328,7 +328,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
         int splitIndex = cal.indexOf("=");
         String field = cal.substring(0, splitIndex).trim();
-        String expressionStr = cal.substring(splitIndex + 1).trim();
+        String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#","#");
         Expression expression;
         try {
             expression = AviatorEvaluator.compile(expressionStr, true);

@@ -94,8 +94,12 @@ spring:
     #Attention: Tencent mail smtps 465,smtp 587
     #请注意腾讯邮箱465为smtps,587为smtp
     port: 587
-    ssl: true
-
+    properties:
+      mail:
+        smtp:
+          socketFactoryClass: javax.net.ssl.SSLSocketFactory
+          ssl:
+            enable: true
 
 common:
   queue:
