@@ -93,6 +93,11 @@ public class AlertConverge {
     @Min(0)
     private Integer evalInterval;
 
+    @Schema(title = "Whether to enable notification when the alarm state changes",
+            description = "是否启用当告警状态变化时才通知",
+            accessMode = READ_WRITE)
+    private String notifyWhenStateChange = "N";
+
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;

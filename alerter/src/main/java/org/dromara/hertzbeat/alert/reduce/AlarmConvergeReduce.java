@@ -16,24 +16,29 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * alarm converge 
+ * alarm converge
  * 告警收敛
+ *
  * @author tom
  */
 @Service
 public class AlarmConvergeReduce {
-    
+
     private final AlertConvergeDao alertConvergeDao;
-    
+
     private final Map<Integer, Alert> converageAlertMap;
-    
+
+    private final Map<Integer, Alert> lastStateAlertMap;
+
     public AlarmConvergeReduce(AlertConvergeDao alertConvergeDao) {
         this.alertConvergeDao = alertConvergeDao;
         this.converageAlertMap = new ConcurrentHashMap<>(16);
+        this.lastStateAlertMap = new ConcurrentHashMap<>(16);
     }
-    
+
     /**
      * currentAlert converge filter data
+     *
      * @param currentAlert currentAlert
      * @return true when not filter
      */
@@ -41,6 +46,8 @@ public class AlarmConvergeReduce {
     public boolean filterConverge(Alert currentAlert) {
         // ignore ALERT_STATUS_CODE_RESTORED
         if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+            int alertHash = getAlertStateHash(currentAlert);
+            lastStateAlertMap.put(alertHash, currentAlert);
             return true;
         }
         ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
@@ -86,42 +93,74 @@ public class AlarmConvergeReduce {
                 }
             }
             if (match) {
-                long evalInterval = alertConverge.getEvalInterval() * 1000;
-                long now = System.currentTimeMillis();
-                if (evalInterval <= 0) {
-                    return true;
-                }
-                int alertHash = Objects.hash(currentAlert.getPriority()) 
-                                        + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
-                                        + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
-                Alert preAlert = converageAlertMap.get(alertHash);
-                if (preAlert == null) {
-                    currentAlert.setTimes(1);
-                    currentAlert.setFirstAlarmTime(now);
-                    currentAlert.setLastAlarmTime(now);
-                    converageAlertMap.put(alertHash, currentAlert.clone());
-                    return true;
-                } else {
-                    if (now - preAlert.getFirstAlarmTime() < evalInterval) {
-                        preAlert.setTimes(preAlert.getTimes() + 1);
-                        preAlert.setLastAlarmTime(now);
-                        return false;
-                    } else {
-                        currentAlert.setTimes(preAlert.getTimes());
-                        if (preAlert.getTimes() == 1) {
-                            currentAlert.setFirstAlarmTime(now);
-                        } else {
-                            currentAlert.setFirstAlarmTime(preAlert.getFirstAlarmTime());
-                        }
-                        currentAlert.setLastAlarmTime(now);
-                        preAlert.setFirstAlarmTime(now);
-                        preAlert.setLastAlarmTime(now);
-                        preAlert.setTimes(1);
-                        return true;
-                    }
-                }
+                return matchAccordingInterval(alertConverge, currentAlert) && matchAccordingState(alertConverge, currentAlert);
             }
         }
         return true;
     }
+
+
+    private boolean matchAccordingInterval(AlertConverge alertConverge, Alert currentAlert) {
+        long evalInterval = alertConverge.getEvalInterval() * 1000;
+        long now = System.currentTimeMillis();
+        if (evalInterval <= 0) {
+            return true;
+        }
+        int alertHash = getAlertHash(currentAlert);
+        Alert preAlert = converageAlertMap.get(alertHash);
+        if (preAlert == null) {
+            currentAlert.setTimes(1);
+            currentAlert.setFirstAlarmTime(now);
+            currentAlert.setLastAlarmTime(now);
+            converageAlertMap.put(alertHash, currentAlert.clone());
+            return true;
+        } else {
+            if (now - preAlert.getFirstAlarmTime() < evalInterval) {
+                preAlert.setTimes(preAlert.getTimes() + 1);
+                preAlert.setLastAlarmTime(now);
+                return false;
+            } else {
+                currentAlert.setTimes(preAlert.getTimes());
+                if (preAlert.getTimes() == 1) {
+                    currentAlert.setFirstAlarmTime(now);
+                } else {
+                    currentAlert.setFirstAlarmTime(preAlert.getFirstAlarmTime());
+                }
+                currentAlert.setLastAlarmTime(now);
+                preAlert.setFirstAlarmTime(now);
+                preAlert.setLastAlarmTime(now);
+                preAlert.setTimes(1);
+                return true;
+            }
+        }
+    }
+
+
+    private boolean matchAccordingState(AlertConverge alertConverge, Alert currentAlert) {
+        if (alertConverge.getNotifyWhenStateChange().equals("N")) {
+            return true;
+        }
+        int alertHash = getAlertStateHash(currentAlert);
+        if (lastStateAlertMap.containsKey(alertHash) && lastStateAlertMap.get(alertHash) != null) {
+            Alert preAlert = lastStateAlertMap.get(alertHash);
+            lastStateAlertMap.put(alertHash, currentAlert);
+            return !(preAlert.getStatus() == currentAlert.getStatus() && preAlert.getPriority() == currentAlert.getPriority());
+        } else {
+            lastStateAlertMap.put(alertHash, currentAlert);
+            return true;
+        }
+    }
+
+    private int getAlertHash(Alert alert) {
+        return Objects.hash(alert.getPriority())
+                + Arrays.hashCode(alert.getTags().keySet().toArray(new String[0]))
+                + Arrays.hashCode(alert.getTags().values().toArray(new String[0]));
+    }
+
+
+    private int getAlertStateHash(Alert alert) {
+        return Arrays.hashCode(alert.getTags().keySet().toArray(new String[0]))
+                + Arrays.hashCode(alert.getTags().values().toArray(new String[0]));
+    }
+
 }
