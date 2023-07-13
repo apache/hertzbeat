@@ -100,7 +100,6 @@ public class AlarmConvergeReduce {
     }
 
     /**
-     *
      * @param alertConverge alertConverge
      * @param currentAlert
      * @return true when not filter by coverage interval
@@ -142,7 +141,6 @@ public class AlarmConvergeReduce {
 
 
     /**
-     *
      * @param alertConverge
      * @param currentAlert
      * @return true when not filter by alert's priority and status
@@ -154,6 +152,7 @@ public class AlarmConvergeReduce {
         int alertStateHash = getAlertStateHash(currentAlert);
         if (lastStateAlertMap.containsKey(alertStateHash) && lastStateAlertMap.get(alertStateHash) != null) {
             Alert preAlert = lastStateAlertMap.get(alertStateHash);
+            currentAlert.setTimes(preAlert.getTimes() + 1);
             lastStateAlertMap.put(alertStateHash, currentAlert);
             return !(preAlert.getStatus() == currentAlert.getStatus() && preAlert.getPriority() == currentAlert.getPriority());
         } else {
@@ -163,7 +162,6 @@ public class AlarmConvergeReduce {
     }
 
     /**
-     *
      * @param alert
      * @return alertHash that bis used by alert coverage
      */
@@ -174,7 +172,6 @@ public class AlarmConvergeReduce {
     }
 
     /**
-     *
      * @param alert
      * @return alertStateHash that bis used by alert coverage
      */
