@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "hzb_collector_monitor_bind", indexes = {
-        @Index(name = "index_collector_monitor", columnList = "collector_id"),
+        @Index(name = "index_collector_monitor", columnList = "collector"),
         @Index(name = "index_collector_monitor", columnList = "monitor_id")
 })
 @Data
@@ -39,9 +39,8 @@ public class CollectorMonitorBind {
     @Schema(title = "primary id", example = "87584674384")
     private Long id;
     
-    @Schema(title = "collector ID", example = "87432674384")
-    @Column(name = "collector_id")
-    private Long collectorId;
+    @Schema(title = "collector name", example = "87432674384")
+    private String collector;
     
     @Schema(title = "monitor ID", example = "87432674336")
     @Column(name = "monitor_id")

@@ -40,13 +40,6 @@ public interface CollectorService {
      */
     void collectorGoOffline(String identity);
     
-    
-    /**
-     * collector heartbeat 
-     * @param identity collector identity name
-     */
-    void collectorHeartbeat(String identity);
-    
     /**
      * reBalance dispatch monitoring jobs when collector go online or offline or timeout
      */

@@ -4,16 +4,17 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.service.CollectorService;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * netty inbound collector message handler
@@ -22,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
     
     private final CollectorService collectorService;
+    
+    private final Map<ChannelId, String> channelCollectorMap = new ConcurrentHashMap<>(8);
     
     public ServerInboundMessageHandler(CollectorService collectorService) {
         super();
@@ -32,10 +35,10 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
         String identity = message.getIdentity();
+        channelCollectorMap.put(channel.id(), identity);
         collectorService.holdCollectorChannel(identity, channel);
         switch (message.getType()) {
             case HEARTBEAT:
-                collectorService.collectorHeartbeat(identity);
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:
@@ -45,6 +48,19 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             case GO_OFFLINE:
                 collectorService.collectorGoOffline(identity);
                 break;
+        }
+    }
+    
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        IdleStateEvent event = (IdleStateEvent) evt;
+        if (event.state() == IdleState.READER_IDLE) {
+            // collector timeout
+            ChannelId channelId = ctx.channel().id();
+            String collector = channelCollectorMap.get(channelId);
+            if (StringUtils.hasText(collector)) {
+                collectorService.collectorGoOffline(collector);
+            }
         }
     }
 }

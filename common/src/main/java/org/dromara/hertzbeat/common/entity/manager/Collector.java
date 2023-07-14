@@ -13,8 +13,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Min;
@@ -35,7 +36,8 @@ import java.time.LocalDateTime;
 public class Collector {
     
     @Id
-    @Schema(title = "primary id", example = "87584674384")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(title = "primary id", example = "2")
     private Long id;
     
 	@Schema(title = "collector identity name", description = "collector identity name")

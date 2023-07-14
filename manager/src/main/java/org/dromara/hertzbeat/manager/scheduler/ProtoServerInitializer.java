@@ -9,6 +9,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.manager.service.CollectorService;
 
@@ -36,6 +37,8 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(new ProtobufDecoder(ClusterMsg.Message.getDefaultInstance()));
         pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast(new ProtobufEncoder());
+        // idle state
+        pipeline.addLast(new IdleStateHandler(100, 0, 0));
         // message handler
         pipeline.addLast(new ServerInboundMessageHandler(collectorService));
     }

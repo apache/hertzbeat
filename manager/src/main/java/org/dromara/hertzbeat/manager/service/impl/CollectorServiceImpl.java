@@ -53,17 +53,6 @@ public class CollectorServiceImpl implements CollectorService {
     }
     
     @Override
-    public void collectorHeartbeat(String identity) {
-        // todo 这里使用心跳来维护判断采集器状态
-        // todo 比如配置5分钟内没有新的心跳，就更新采集器的状态为offline 然后 re balance 监控任务分发
-        
-        
-        // 1. 程序启动时将读取数据库所有采集器记录，将其加入心跳判断map
-        // 2. 新启动一个线程，定时判断采集器的心跳记录，对符合条件的(比如6分钟离线)采集器进行online offline状态处理，然后触发 re balance
-        // 3. 外部采集器在这里上报心跳，来更新心跳记录
-    }
-    
-    @Override
     public void reBalanceMonitoringJobs() {
         // todo 根据采集器集群状态重新分发随机路由的采集任务，对于指定采集器的任务不用重新分发
     }

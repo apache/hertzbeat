@@ -336,12 +336,12 @@ DROP TABLE IF EXISTS  hzb_collector_monitor_bind ;
 CREATE TABLE  hzb_collector_monitor_bind
 (
     id           bigint           not null auto_increment comment '主键ID',
-    collector_id bigint           not null comment 'collector ID',
+    collector    varchar(255)     not null comment 'collector ID',
     monitor_id   bigint           not null comment 'monitor ID',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),
-    index index_collector_monitor (collector_id, monitor_id)
+    index index_collector_monitor (collector, monitor_id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 COMMIT;

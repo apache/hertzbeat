@@ -17,17 +17,25 @@
 
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
+import io.netty.channel.Channel;
+import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Job;
+import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.IpDomainUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,9 +48,29 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CollectJobService {
 
-    @Autowired
-    private TimerDispatch timerDispatch;
-
+    private static final String COLLECTOR_STR = "-collector";
+    
+    private final TimerDispatch timerDispatch;
+    
+    private String collectorIdentity = null;
+    
+    private volatile Channel collectorChannel = null;
+    
+    public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties) {
+        this.timerDispatch = timerDispatch;
+        if (properties != null && properties.getEntrance() != null 
+                    && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
+            String collectorName = properties.getEntrance().getNetty().getIdentity();
+            if (StringUtils.hasText(collectorName)) {
+                collectorIdentity = collectorName;
+            } else {
+                String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
+                collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+            }
+        }
+    }
+    
     /**
      * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
@@ -112,5 +140,34 @@ public class CollectJobService {
             timerDispatch.deleteJob(jobId, true);
         }
     }
-
+    
+    /**
+     * collector online 
+     * @param channel message channel
+     */
+    public void collectorGoOnline(Channel channel) {
+        collectorChannel = channel;
+        CollectorInfo collectorInfo = CollectorInfo.builder()
+                                              .name(collectorIdentity)
+                                              .ip(IpDomainUtil.getLocalhostIp())
+                                              // todo more info
+                                              .build();
+        String msg = JsonUtil.toJson(collectorInfo);
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                                             .setIdentity(collectorIdentity)
+                                             .setType(ClusterMsg.MessageType.GO_ONLINE)
+                                             .setMsg(msg)
+                                             .build();
+        channel.writeAndFlush(message);
+        // start a thread to send heartbeat to cluster server periodically
+        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutor.scheduleAtFixedRate(() -> {
+            ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                                                   .setIdentity(collectorIdentity)
+                                                   .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                                   .build();
+            collectorChannel.writeAndFlush(heartbeat);
+            log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+        }, 10, 10, TimeUnit.SECONDS);
+    }
 }
