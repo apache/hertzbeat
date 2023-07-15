@@ -1,5 +1,5 @@
 ---
-title: 开源实时监控 HertzBeat v1.3.2 发布, 更稳定更易用
+title: Open source monitoring HertzBeat v1.3.2 released, Easier to use 
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -8,21 +8,24 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-官网: hertzbeat.com | tancloud.cn
+Website: hertzbeat.com | tancloud.cn
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
 
 
-### HertzBeat 介绍
+### What is HertzBeat?
 
-> HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。      
-> 致力于**易用友好**，全 WEB 页面操作，鼠标点一点就能监控告警，零上手学习成本。   
-> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等指标监控，阈值告警通知一步到位。   
-> 支持更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
+> **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.      
+> Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
+> More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
+> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
+> We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
@@ -31,49 +34,70 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 **Gitee: https://gitee.com/dromara/hertzbeat**
 
-### v1.3.2 来了
+### v1.3.2 
 
-**这次累计 27 位小伙伴们的辛苦贡献才出来了这个令人欣喜的版本。 感谢他们！爱心💗**
+Hi guys! Major release. HertzBeat v1.3.2 has published.   
 
-这个版本我们支持对**freebsd, debian, opensuse, redhat, apache doris**等新的监控类型和指标。    
+**This delightful version came out of the hard work of 27 friends. Thank them! Love 💗**
 
-- 支持WEB页面配置邮件服务器，取代之前的文件配置
-- 支持告警收敛，是否遇到了重复告警频繁发送，有了告警收敛马上解决
-- 公共消息队列支持Kafka，除了我们默认的内置内存消息队列，也支持了外置Kafka消息队列，提升系统性能。
-- 新的监控中心页面，聚合所有监控类型，不用像之前那样切来切去了。
-- 支持标签分组展示，把同一业务类别的监控们分组标记，统一管理。
-- 阈值配置不仅仅有表达式，还支持更人性化的操作UI，之前的表达式对新人不太友好很容易出错，现在可以直接UI操作啦，它可以和表达式互相切换。
-- 还有HTTP ipv6等更多功能。   
+In this version, we support new monitoring types and indicators for **freebsd, debian, opensuse, redhat, apache doris**, etc.
 
-修复了大量BUG，完善文档代码，提高了整体的稳定可用性。更多新功能欢迎探索！   
+- Support WEB page configuration mail server, replace the previous file configuration
+- Supports alarm convergence. If repeated alarms are frequently sent, it will be resolved immediately with alarm convergence
+- The public message queue supports Kafka. In addition to our default built-in memory message queue, it also supports an external Kafka message queue to improve system performance.
+- The new monitoring center page aggregates all monitoring types, no need to switch back and forth like before.
+- Support label group display, group and mark monitors of the same business category for unified management.
+- Threshold configuration not only has expressions, but also supports a more user-friendly operation UI. The previous expressions were not friendly to newcomers and were prone to errors. Now you can directly operate the UI, and it can switch between expressions.
+- There are many more functions such as HTTP ipv6.
+
+Fixed a large number of BUG, improved the document code, and improved the overall stability and usability. More new features are welcome to explore!
 
 
+Let's Try Now!
 
-只需要一条docker命令即可安装体验hertzbeat:    
+Only one docker command is needed to install and experience hertzbeat：
+
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 
-若dockerhub网络超时，可以使用下面命令:   
-`docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat`
+```or use quay.io (if dockerhub network connect timeout)```
+
+```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
+
+--- 
+
+Upgrade Note⚠️.
+
+For h2 database users, sholud exec sql below:
+```sql
+ALTER TABLE HZB_PARAM DROP CONSTRAINT CONSTRAINT_82;;
+```
+
+How to Enable H2 WEB Console:     
+Modify `application.yml` and restart, access `ip:1157/h2-console`
+```
+spring:
+  h2:
+    console:
+      path: /h2-console
+      enabled: true
+```
+
 
 ----
 
-## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!   
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
+## ⛄ Supported
 
-- Website, Port Telnet, Http Api, Ping Connect, Jvm, SiteMap, Ssl Certificate, SpringBoot2, FTP Server, SpringBoot3
-- Mysql, PostgreSQL, MariaDB, Redis, ElasticSearch, SqlServer, Oracle, MongoDB, DM, OpenGauss, ClickHouse, IoTDB, Redis Cluster, Redis Sentinel
-- Linux, Ubuntu, CentOS, Windows, EulerOS, Fedora CoreOS, OpenSUSE, Rocky Linux, Red Hat, FreeBSD, AlmaLinux, Debian Linux
+- Site Monitor, Port Availability, Http Api, Ping Connectivity, Jvm, SiteMap Full Site, Ssl Certificate, SpringBoot, FTP Server
+- Mysql, PostgreSQL, MariaDB, Redis, ElasticSearch, SqlServer, Oracle, MongoDB, Damon, OpenGauss, ClickHouse, IoTDB, Redis Cluster
+- Linux, Ubuntu, CentOS, Windows
 - Tomcat, Nacos, Zookeeper, RabbitMQ, Flink, Kafka, ShenYu, DynamicTp, Jetty, ActiveMQ
 - Kubernetes, Docker
-- CiscoSwitch, HpeSwitch, HuaweiSwitch, TpLinkSwitch, H3cSwitch
-- 和更多自定义监控模版。
-- 通知支持 Discord Slack Telegram 邮件 钉钉 微信 飞书 短信 Webhook。
+- Huawei Switch, HPE Switch, TP-LINK Switch, Cisco Switch
+- and more for your custom monitoring.
+- Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook`.
 
 ----
-
-**欢迎star三连来支持我们**     
 
 **Github: https://github.com/dromara/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**  

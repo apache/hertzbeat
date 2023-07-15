@@ -1,10 +1,10 @@
 ---
 id: extend-http-default  
 title: HTTP Protocol System Default Parsing Method  
-sidebar_label: System Default Parsing Method
+sidebar_label: Default Parsing Method
 ---
 
-> After calling the HTTP interface to obtain the response data, use the default parsing method of hertzbeat to parse the response data.    
+> After calling the HTTP api to obtain the response data, use the default parsing method of hertzbeat to parse the response data.    
 
 **The interface response data structure must be consistent with the data structure rules specified by hertzbeat**   
 
@@ -76,7 +76,7 @@ If there are multiple virtual machines, the multilayer format is: :
 ]
 ```
 
-**The corresponding monitoring configuration definition file YML can be configured as follows**  
+**The corresponding monitoring template yml can be configured as follows**  
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
