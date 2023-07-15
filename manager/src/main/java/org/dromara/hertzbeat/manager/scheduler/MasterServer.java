@@ -8,7 +8,6 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
-import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -23,16 +22,16 @@ import org.springframework.stereotype.Component;
 public class MasterServer {
     
     
-    private final CollectorService collectorService;
+    private final CollectorScheduling collectorScheduling;
     
     private final CommonThreadPool commonThreadPool;
     
-    public MasterServer(SchedulerProperties schedulerProperties, CollectorService collectorService, CommonThreadPool threadPool) throws Exception {
+    public MasterServer(SchedulerProperties schedulerProperties, CollectorScheduling collectorScheduling, CommonThreadPool threadPool) throws Exception {
         if (schedulerProperties == null || schedulerProperties.getServer() == null) {
             log.error("init error, please config scheduler server props in application.yml");
             throw new IllegalArgumentException("please config scheduler server props");
         }
-        this.collectorService = collectorService;
+        this.collectorScheduling = collectorScheduling;
         this.commonThreadPool = threadPool;
         serverStartup(schedulerProperties);
     }
@@ -48,7 +47,7 @@ public class MasterServer {
                 b.group(bossGroup, workerGroup)
                         .channel(NioServerSocketChannel.class)
                         .handler(new LoggingHandler(LogLevel.INFO))
-                        .childHandler(new ProtoServerInitializer(collectorService));
+                        .childHandler(new ProtoServerInitializer(collectorScheduling));
                 b.bind(port).sync().channel().closeFuture().sync();
             } catch (Exception e) {
                 log.error(e.getMessage());

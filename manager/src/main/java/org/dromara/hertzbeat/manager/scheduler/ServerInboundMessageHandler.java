@@ -9,7 +9,6 @@ import io.netty.handler.timeout.IdleStateEvent;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
@@ -22,13 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
     
-    private final CollectorService collectorService;
+    private final CollectorScheduling collectorScheduling;
     
     private final Map<ChannelId, String> channelCollectorMap = new ConcurrentHashMap<>(8);
     
-    public ServerInboundMessageHandler(CollectorService collectorService) {
+    public ServerInboundMessageHandler(CollectorScheduling collectorScheduling) {
         super();
-        this.collectorService = collectorService;
+        this.collectorScheduling = collectorScheduling;
     }
     
     @Override
@@ -36,17 +35,17 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
         Channel channel = channelHandlerContext.channel();
         String identity = message.getIdentity();
         channelCollectorMap.put(channel.id(), identity);
-        collectorService.holdCollectorChannel(identity, channel);
+        collectorScheduling.holdCollectorChannel(identity, channel);
         switch (message.getType()) {
             case HEARTBEAT:
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:
                 CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
-                collectorService.collectorGoOnline(identity, collectorInfo);
+                collectorScheduling.collectorGoOnline(identity, collectorInfo);
                 break;
             case GO_OFFLINE:
-                collectorService.collectorGoOffline(identity);
+                collectorScheduling.collectorGoOffline(identity);
                 break;
         }
     }
@@ -59,7 +58,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             ChannelId channelId = ctx.channel().id();
             String collector = channelCollectorMap.get(channelId);
             if (StringUtils.hasText(collector)) {
-                collectorService.collectorGoOffline(collector);
+                collectorScheduling.collectorGoOffline(collector);
             }
         }
     }

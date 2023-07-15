@@ -21,6 +21,8 @@ import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
+
 
 /**
  * CollectorMonitorBind repository
@@ -30,4 +32,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorBind, Long>, JpaSpecificationExecutor<CollectorMonitorBind> {
     
+    
+    /**
+     * find monitors by collector
+     * @param collector collector
+     * @return monitor bind
+     */
+    List<CollectorMonitorBind> findCollectorMonitorBindsByCollector(String collector); 
 }

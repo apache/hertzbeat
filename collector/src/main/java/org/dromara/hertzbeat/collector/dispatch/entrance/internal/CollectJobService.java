@@ -104,29 +104,9 @@ public class CollectJobService {
      * 下发周期性异步采集任务
      *
      * @param job Collect task details      采集任务详情
-     * @return long Job ID      任务ID
      */
-    public long addAsyncCollectJob(Job job) {
-        long jobId = SnowFlakeIdGenerator.generateId();
-        job.setId(jobId);
+    public void addAsyncCollectJob(Job job) {
         timerDispatch.addJob(job, null);
-        return job.getId();
-    }
-
-    /**
-     * Update the periodic asynchronous collection tasks that have been delivered
-     * 更新已经下发的周期性异步采集任务
-     *
-     * @param modifyJob Collect task details        采集任务详情
-     * @return long Job ID      新任务ID
-     */
-    public long updateAsyncCollectJob(Job modifyJob) {
-        long preJobId = modifyJob.getId();
-        long newJobId = SnowFlakeIdGenerator.generateId();
-        modifyJob.setId(newJobId);
-        timerDispatch.deleteJob(preJobId, true);
-        timerDispatch.addJob(modifyJob, null);
-        return newJobId;
     }
 
     /**

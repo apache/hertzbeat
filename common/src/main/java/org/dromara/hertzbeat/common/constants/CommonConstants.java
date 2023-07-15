@@ -286,4 +286,9 @@ public interface CommonConstants {
      * collector status offline 1
      */
     byte COLLECTOR_STATUS_OFFLINE = 1;
+    
+    /**
+     * default main collector name
+     */
+    String MAIN_COLLECTOR_NODE = "main-default-collector";
 }

@@ -25,9 +25,9 @@ import java.util.List;
 /**
  * Collection job management provides api interface
  * 调度采集job管理api接口
- *
+ * @author tom
  */
-public interface CollectJobSchedule {
+public interface CollectJobScheduling {
 
     /**
      * Execute a one-time collection task and get the collected data response

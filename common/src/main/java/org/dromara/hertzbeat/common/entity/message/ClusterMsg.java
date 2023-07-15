@@ -57,12 +57,28 @@ public final class ClusterMsg {
         ISSUE_CYCLIC_TASK(3),
         /**
          * <pre>
+         * delete cyclic collect task
+         * </pre>
+         *
+         * <code>DELETE_CYCLIC_TASK = 4;</code>
+         */
+        DELETE_CYCLIC_TASK(4),
+        /**
+         * <pre>
          * issue one-time collect task
          * </pre>
          *
-         * <code>ISSUE_ONE_TIME_TASK = 4;</code>
+         * <code>ISSUE_ONE_TIME_TASK = 5;</code>
          */
-        ISSUE_ONE_TIME_TASK(4),
+        ISSUE_ONE_TIME_TASK(5),
+        /**
+         * <pre>
+         * response one-time collect task
+         * </pre>
+         *
+         * <code>RESPONSE_ONE_TIME_TASK = 6;</code>
+         */
+        RESPONSE_ONE_TIME_TASK(6),
         UNRECOGNIZED(-1),
         ;
         
@@ -100,12 +116,28 @@ public final class ClusterMsg {
         public static final int ISSUE_CYCLIC_TASK_VALUE = 3;
         /**
          * <pre>
+         * delete cyclic collect task
+         * </pre>
+         *
+         * <code>DELETE_CYCLIC_TASK = 4;</code>
+         */
+        public static final int DELETE_CYCLIC_TASK_VALUE = 4;
+        /**
+         * <pre>
          * issue one-time collect task
          * </pre>
          *
-         * <code>ISSUE_ONE_TIME_TASK = 4;</code>
+         * <code>ISSUE_ONE_TIME_TASK = 5;</code>
          */
-        public static final int ISSUE_ONE_TIME_TASK_VALUE = 4;
+        public static final int ISSUE_ONE_TIME_TASK_VALUE = 5;
+        /**
+         * <pre>
+         * response one-time collect task
+         * </pre>
+         *
+         * <code>RESPONSE_ONE_TIME_TASK = 6;</code>
+         */
+        public static final int RESPONSE_ONE_TIME_TASK_VALUE = 6;
         
         
         public final int getNumber() {
@@ -141,7 +173,11 @@ public final class ClusterMsg {
                 case 3:
                     return ISSUE_CYCLIC_TASK;
                 case 4:
+                    return DELETE_CYCLIC_TASK;
+                case 5:
                     return ISSUE_ONE_TIME_TASK;
+                case 6:
+                    return RESPONSE_ONE_TIME_TASK;
                 default:
                     return null;
             }
@@ -1244,10 +1280,11 @@ public final class ClusterMsg {
                         "at.common.entity.message\"p\n\007Message\022\020\n\010i" +
                         "dentity\030\001 \001(\t\022F\n\004type\030\002 \001(\01628.org.dromar" +
                         "a.hertzbeat.common.entity.message.Messag" +
-                        "eType\022\013\n\003msg\030\003 \001(\t*k\n\013MessageType\022\r\n\tHEA" +
-                        "RTBEAT\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002\022" +
-                        "\025\n\021ISSUE_CYCLIC_TASK\020\003\022\027\n\023ISSUE_ONE_TIME" +
-                        "_TASK\020\004b\006proto3"
+                        "eType\022\013\n\003msg\030\003 \001(\t*\237\001\n\013MessageType\022\r\n\tHE" +
+                        "ARTBEAT\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002" +
+                        "\022\025\n\021ISSUE_CYCLIC_TASK\020\003\022\026\n\022DELETE_CYCLIC" +
+                        "_TASK\020\004\022\027\n\023ISSUE_ONE_TIME_TASK\020\005\022\032\n\026RESP" +
+                        "ONSE_ONE_TIME_TASK\020\006b\006proto3"
         };
         descriptor = com.google.protobuf.Descriptors.FileDescriptor
                              .internalBuildGeneratedFileFrom(descriptorData,

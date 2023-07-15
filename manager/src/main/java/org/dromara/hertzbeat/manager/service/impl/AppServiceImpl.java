@@ -30,6 +30,7 @@ import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.dromara.hertzbeat.manager.service.AppService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -71,9 +72,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Autowired
     private MonitorDao monitorDao;
-
+    
     @Autowired
-    private CollectJobService collectJobService;
+    private CollectJobScheduling collectJobScheduling;
 
     @Autowired
     private ParamDao paramDao;
@@ -279,7 +280,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
                 // 下发采集任务
-                long newJobId = collectJobService.addAsyncCollectJob(appDefine);
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
                 monitorDao.save(monitor);

@@ -1,23 +1,8 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package org.dromara.hertzbeat.manager.scheduler;
 
-package org.dromara.hertzbeat.manager.service;
-
-import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
@@ -25,41 +10,49 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
-import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 采集任务调度初始化
+ * scheduler init
  * @author tom
- *
  */
-@Service
-@Order(value = 2)
+@Configuration
 @Slf4j
-public class JobSchedulerInit implements CommandLineRunner {
-
+public class SchedulerInit implements CommandLineRunner {
+    
+    @Autowired
+    private CollectorScheduling collectorScheduling;
+    
+    @Autowired
+    private CollectJobScheduling collectJobScheduling;
+   
+    private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
+    
     @Autowired
     private AppService appService;
-
-    @Autowired
-    private CollectJobService collectJobService;
-
+    
     @Autowired
     private MonitorDao monitorDao;
-
+    
     @Autowired
     private ParamDao paramDao;
-
+    
     @Override
     public void run(String... args) throws Exception {
-        // 读取数据库已经添加应用 构造采集任务
+        // insert default consistent node
+        CollectorInfo collectorInfo = CollectorInfo.builder()
+                                              .name(CommonConstants.MAIN_COLLECTOR_NODE)
+                                              .ip(MAIN_COLLECTOR_NODE_IP)
+                                              .build();
+        collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
+        // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte)0, (byte)4));
         for (Monitor monitor : monitors) {
             try {
@@ -73,11 +66,11 @@ public class JobSchedulerInit implements CommandLineRunner {
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-                List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                List<Configmap> configmaps = params.stream()
+                                                     .map(param -> new Configmap(param.getField(), param.getValue(),
+                                                             param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
-                // 下发采集任务
-                long jobId = collectJobService.addAsyncCollectJob(appDefine);
+                long jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(jobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {

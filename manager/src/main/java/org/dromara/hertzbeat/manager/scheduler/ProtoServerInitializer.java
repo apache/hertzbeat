@@ -11,7 +11,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
-import org.dromara.hertzbeat.manager.service.CollectorService;
 
 /**
  * netty server initializer
@@ -19,11 +18,11 @@ import org.dromara.hertzbeat.manager.service.CollectorService;
  */
 public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
     
-    private final CollectorService collectorService;
+    private final CollectorScheduling collectorScheduling;
     
-    public ProtoServerInitializer(CollectorService collectorService) {
+    public ProtoServerInitializer(CollectorScheduling collectorScheduling) {
         super();
-        this.collectorService = collectorService;
+        this.collectorScheduling = collectorScheduling;
     }
     
     @Override
@@ -40,6 +39,6 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
         // idle state
         pipeline.addLast(new IdleStateHandler(100, 0, 0));
         // message handler
-        pipeline.addLast(new ServerInboundMessageHandler(collectorService));
+        pipeline.addLast(new ServerInboundMessageHandler(collectorScheduling));
     }
 }

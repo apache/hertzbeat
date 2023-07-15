@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.service;
+package org.dromara.hertzbeat.manager.scheduler;
 
 import io.netty.channel.Channel;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**
  * slave collector service
- *
+ * @author tom
  */
-public interface CollectorService {
+public interface CollectorScheduling {
     
     
     /**
@@ -43,7 +43,7 @@ public interface CollectorService {
     /**
      * reBalance dispatch monitoring jobs when collector go online or offline or timeout
      */
-    void reBalanceMonitoringJobs();
+    void reBalanceCollectorAssignJobs();
     
     /**
      * hold and update collector message channel map

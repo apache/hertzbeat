@@ -38,6 +38,10 @@ enum MessageType
     GO_OFFLINE = 2;
     // issue cyclic collect task 
     ISSUE_CYCLIC_TASK = 3;
+    // delete cyclic collect task
+    DELETE_CYCLIC_TASK = 4;
     // issue one-time collect task
-    ISSUE_ONE_TIME_TASK = 4;
+    ISSUE_ONE_TIME_TASK = 5;
+    // response one-time collect task
+    RESPONSE_ONE_TIME_TASK = 6;
 }

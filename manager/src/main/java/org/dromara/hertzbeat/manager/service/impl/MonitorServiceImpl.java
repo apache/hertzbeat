@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
-import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -38,6 +37,7 @@ import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.ImExportService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
@@ -78,9 +78,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private AppService appService;
-
+    
     @Autowired
-    private CollectJobService collectJobService;
+    private CollectJobScheduling collectJobScheduling;
 
     @Autowired
     private MonitorDao monitorDao;
@@ -122,7 +122,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
-        List<CollectRep.MetricsData> collectRep = collectJobService.collectSyncJobData(appDefine);
+        List<CollectRep.MetricsData> collectRep = collectJobScheduling.collectSyncJobData(appDefine);
         // If the detection result fails, a detection exception is thrown
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
@@ -159,7 +159,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         // 下发采集任务得到jobId
-        long jobId = collectJobService.addAsyncCollectJob(appDefine);
+        long jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
         // Brush the library after the download is successful
         // 下发成功后刷库
         try {
@@ -172,7 +172,7 @@ public class MonitorServiceImpl implements MonitorService {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
             // 刷库异常取消之前的下发任务
-            collectJobService.cancelAsyncCollectJob(jobId);
+            collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -207,7 +207,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         // 下发采集任务得到jobId
-        long jobId = collectJobService.addAsyncCollectJob(appDefine);
+        long jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
         // Brush the library after the download is successful
         // 下发成功后刷库
         try {
@@ -220,7 +220,7 @@ public class MonitorServiceImpl implements MonitorService {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
             // 刷库异常取消之前的下发任务
-            collectJobService.cancelAsyncCollectJob(jobId);
+            collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -471,7 +471,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
             }
-            long newJobId = collectJobService.updateAsyncCollectJob(appDefine);
+            long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
             monitor.setJobId(newJobId);
         }
         // After the update is successfully released, refresh the database
@@ -489,7 +489,7 @@ public class MonitorServiceImpl implements MonitorService {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
             // 刷库异常取消之前的下发任务
-            collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -504,7 +504,7 @@ public class MonitorServiceImpl implements MonitorService {
             paramDao.deleteParamsByMonitorId(id);
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
-            collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
         }
     }
@@ -520,7 +520,7 @@ public class MonitorServiceImpl implements MonitorService {
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
-                collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }
         }
@@ -565,7 +565,7 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
-                collectJobService.cancelAsyncCollectJob(monitor.getJobId());
+                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 monitor.setJobId(null);
             }
             monitorDao.saveAll(managedMonitors);
@@ -595,7 +595,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
                 // Issue collection tasks       下发采集任务
-                long newJobId = collectJobService.addAsyncCollectJob(appDefine);
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }
