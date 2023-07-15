@@ -62,5 +62,17 @@
   "item.label.华为云开源活动": {
     "message": "HuaweiCloud Event",
     "description": "Navbar item with label 华为云开源活动"
+  },
+  "item.label.Docs": {
+    "message": "Docs",
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.Others": {
+    "message": "Others",
+    "description": "Navbar item with label Others"
+  },
+  "item.label.contributors": {
+    "message": "Contributors",
+    "description": "Navbar item with label contributors"
   }
 }

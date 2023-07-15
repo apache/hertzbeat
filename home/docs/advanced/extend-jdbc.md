@@ -49,19 +49,20 @@ Here by mapping the Metric field with the key of the response data, we can  obta
 
 ### Custom Steps  
 
-In order to configure a custom monitoring type, you need to add and configure YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example_sql.yml in the installation directory /hertzbeat/app/
-2. Restart hertzbeat system, we successfully fit a new custom monitoring type.
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ------- 
-Configuration usages of the file is detailed below. Please pay attention to usage annotation.   
+Configuration usages of the monitoring templates yml are detailed below.
 
-### Monitoring configuration definition file   
+### Monitoring Templates YML
 
-> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-eg：Define a custom monitoring type named example_sql which use the JDBC protocol to collect data.    
-The file name: example_sql.yml in /define/example_sql.yml   
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+eg：Define a custom monitoring type `app` named `example_sql` which use the JDBC protocol to collect data.    
+ 
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

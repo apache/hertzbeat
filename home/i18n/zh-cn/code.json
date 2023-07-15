@@ -471,5 +471,14 @@
   },
   "quickstart": {
     "message": "快速开始"
+  },
+  "Who uses HertzBeat?": {
+    "message": "Who uses HertzBeat?"
+  },
+  "Support HertzBeat": {
+    "message": "Support HertzBeat"
+  },
+  "Go to Github": {
+    "message": "Go to Github"
   }
 }
