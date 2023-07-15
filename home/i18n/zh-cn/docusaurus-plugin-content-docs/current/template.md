@@ -15,6 +15,8 @@ sidebar_label: 监控模版
 
 **我们将所有监控采集类型(mysql,website,jvm,k8s)都定义为yml模版，用户可以导入这些模版到hertzbeat系统中，使其支持对应类型的监控，非常方便！** 
 
+![](/img/docs/advanced/extend-point-1.png)
+
 **欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模版，可用的模板如下:**
 
 ### 应用服务监控模版 

@@ -62,5 +62,17 @@
   "item.label.华为云开源活动": {
     "message": "华为云开源活动",
     "description": "Navbar item with label 华为云开源活动"
+  },
+  "item.label.Docs": {
+    "message": "文档中心",
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.Others": {
+    "message": "其它信息",
+    "description": "Navbar item with label Others"
+  },
+  "item.label.contributors": {
+    "message": "开发者们",
+    "description": "Navbar item with label contributors"
   }
 }

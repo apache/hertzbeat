@@ -66,5 +66,13 @@
   "sidebar.docs.link.Install via HuaweiCloud": {
     "message": "华为云方式部署",
     "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+  },
+  "sidebar.docs.category.jmx": {
+    "message": "JMX协议",
+    "description": "The label for category jmx in sidebar docs"
+  },
+  "sidebar.docs.category.snmp": {
+    "message": "SNMP协议",
+    "description": "The label for category snmp in sidebar docs"
   }
 }

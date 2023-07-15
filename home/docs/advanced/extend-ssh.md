@@ -55,21 +55,22 @@ total  used  free  buff_cache  available
 
 Here the Metric field and the response data can be mapped into collected data one by one.
 
-### Custom Steps  
+### Custom Steps
 
-In order to configure a custom monitoring type, you need to add and configure YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example_linux.yml in the installation directory /hertzbeat/app/
-2. Restart hertzbeat system, we successfully fit a new custom monitoring type.
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ------- 
-Configuration usages of the file are detailed below. Please pay attention to usage annotation.   
+Configuration usages of the monitoring templates yml are detailed below.
 
-### Monitoring configuration definition file   
+### Monitoring Templates YML
 
-> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-eg：Define a custom monitoring type named example_linux which use the SSH protocol to collect data.    
-The file name: example_linux.yml in /define/example_linux.yml   
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+eg：Define a custom monitoring type `app` named `example_linux` which use the SSH protocol to collect data.
+
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
