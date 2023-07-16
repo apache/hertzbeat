@@ -189,7 +189,7 @@ class MonitorServiceTest {
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            assertEquals("监控名称不能重复!", e.getMessage());
+            assertEquals("Monitoring name cannot be repeated!", e.getMessage());
         }
     }
 
