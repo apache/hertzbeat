@@ -26,7 +26,6 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
