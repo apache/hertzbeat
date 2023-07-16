@@ -113,7 +113,7 @@ class MonitorServiceTest {
         when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
     }
 
     /**
@@ -139,7 +139,7 @@ class MonitorServiceTest {
         when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
     }
 
     @Test
@@ -155,7 +155,7 @@ class MonitorServiceTest {
         when(monitorDao.save(monitor)).thenReturn(monitor);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
-        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params));
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null));
     }
 
     @Test
@@ -170,7 +170,7 @@ class MonitorServiceTest {
         when(collectJobScheduling.addAsyncCollectJob(job)).thenReturn(1L);
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null));
     }
 
     /**
@@ -549,7 +549,7 @@ class MonitorServiceTest {
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null);
         } catch (IllegalArgumentException e) {
             assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
@@ -560,7 +560,7 @@ class MonitorServiceTest {
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
         try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null);
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
@@ -569,7 +569,7 @@ class MonitorServiceTest {
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams()));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null));
     }
 
     @Test

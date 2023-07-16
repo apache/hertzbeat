@@ -26,12 +26,14 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
+import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -86,6 +88,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private ParamDao paramDao;
+    
+    @Autowired
+    private CollectorDao collectorDao;
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
@@ -104,7 +109,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(readOnly = true)
-    public void detectMonitor(Monitor monitor, List<Param> params) throws MonitorDetectException {
+    public void detectMonitor(Monitor monitor, List<Param> params, String collector) throws MonitorDetectException {
         Long monitorId = monitor.getId();
         if (monitorId == null || monitorId == 0) {
             monitorId = MONITOR_ID_TMP;
@@ -121,7 +126,12 @@ public class MonitorServiceImpl implements MonitorService {
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
-        List<CollectRep.MetricsData> collectRep = collectJobScheduling.collectSyncJobData(appDefine);
+        List<CollectRep.MetricsData> collectRep;
+        if (collector != null) {
+            collectRep = collectJobScheduling.collectSyncJobData(appDefine, collector);
+        } else {
+            collectRep = collectJobScheduling.collectSyncJobData(appDefine);
+        }
         // If the detection result fails, a detection exception is thrown
         // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
@@ -134,7 +144,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
+    public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
@@ -158,7 +168,12 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         // 下发采集任务得到jobId
-        long jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
+        long jobId;
+        if (collector == null) {
+            jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
+        } else {
+            jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+        }
         // Brush the library after the download is successful
         // 下发成功后刷库
         try {
@@ -290,17 +305,23 @@ public class MonitorServiceImpl implements MonitorService {
                 Monitor existMonitor = monitorOptional.get();
                 if (isModify) {
                     if (!existMonitor.getId().equals(monitor.getId())) {
-                        throw new IllegalArgumentException("监控名称不能重复!");
+                        throw new IllegalArgumentException("Monitoring name cannot be repeated!");
                     }
                 } else {
-                    throw new IllegalArgumentException("监控名称不能重复!");
+                    throw new IllegalArgumentException("Monitoring name cannot be repeated!");
                 }
             }
         }
         if (monitor.getTags() != null) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
-
+        // the dispatch collector must exist if pin
+        if (StringUtils.hasText(monitorDto.getCollector())) {
+            Optional<Collector> optionalCollector = collectorDao.findCollectorByName(monitorDto.getCollector());
+            if (optionalCollector.isEmpty()) {
+                throw new IllegalArgumentException("The pinned collector does not exist.");
+            }
+        }
         // Parameter definition structure verification  参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (paramDefines != null) {
@@ -430,7 +451,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void modifyMonitor(Monitor monitor, List<Param> params) throws RuntimeException {
+    public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
         // 查判断monitorId对应的此监控是否存在
@@ -470,7 +491,12 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
             }
-            long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
+            long newJobId;
+            if (collector == null) {
+                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
+            } else {
+                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
+            }
             monitor.setJobId(newJobId);
         }
         // After the update is successfully released, refresh the database
@@ -654,7 +680,7 @@ public class MonitorServiceImpl implements MonitorService {
 
             monitorOpt.ifPresentOrElse(monitor -> {
                 //deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor=GSON.fromJson(GSON.toJson(monitor),Monitor.class);
+                Monitor newMonitor=GSON.fromJson(GSON.toJson(monitor), Monitor.class);
                 copyMonitor(newMonitor, params);
             }, new Runnable() {
                 @Override
@@ -719,7 +745,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         //set a new monitor name
         monitor.setName(String.format("%s - copy", monitor.getName()));
-        addMonitor(monitor, params);
+        addMonitor(monitor, params, null);
     }
 
 }
