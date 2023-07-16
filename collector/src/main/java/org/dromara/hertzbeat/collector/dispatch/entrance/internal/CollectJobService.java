@@ -27,6 +27,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -148,5 +149,19 @@ public class CollectJobService {
             collectorChannel.writeAndFlush(heartbeat);
             log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
         }, 10, 3, TimeUnit.SECONDS);
+    }
+    
+    /**
+     * send async collect response data
+     * @param metricsData collect data
+     */
+    public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
+        String data = ProtoJsonUtil.toJsonStr(metricsData);
+        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                                               .setIdentity(collectorIdentity)
+                                               .setMsg(data)
+                                               .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                               .build();
+        collectorChannel.writeAndFlush(heartbeat);
     }
 }

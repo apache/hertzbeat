@@ -42,6 +42,8 @@ enum MessageType
     DELETE_CYCLIC_TASK = 4;
     // issue one-time collect task
     ISSUE_ONE_TIME_TASK = 5;
-    // response one-time collect task
-    RESPONSE_ONE_TIME_TASK = 6;
+    // response one-time collect data
+    RESPONSE_ONE_TIME_TASK_DATA = 6;
+    // response cyclic collect data
+    RESPONSE_CYCLIC_TASK_DATA = 7;
 }

@@ -11,6 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import org.dromara.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
+import org.dromara.hertzbeat.common.queue.impl.KafkaCommonDataQueue;
+import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.util.StringUtils;
@@ -57,7 +61,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             case GO_OFFLINE:
                 collectorScheduling.collectorGoOffline(identity);
                 break;
-            case RESPONSE_ONE_TIME_TASK:
+            case RESPONSE_ONE_TIME_TASK_DATA:
                 try {
                     TypeReference<List<String>> typeReference = new TypeReference<>() {};
                     List<String> jsonArr = JsonUtil.fromJson(message.getMsg(), typeReference);
@@ -72,6 +76,18 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                     collectJobScheduling.collectSyncJobResponse(metricsDataList);   
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                }
+                break;
+            case RESPONSE_CYCLIC_TASK_DATA:
+                CommonDataQueue dataQueue = SpringContextHolder.getBean(CommonDataQueue.class);
+                if (dataQueue instanceof KafkaCommonDataQueue) {
+                    log.error("netty receiver collector response collect data, but common data queue is kafka, please enable inMemory data queue.");
+                    return;
+                }
+                CollectRep.MetricsData metricsData = (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(message.getMsg(),
+                        CollectRep.MetricsData.newBuilder());
+                if (metricsData != null) {
+                    dataQueue.sendMetricsData(metricsData);
                 }
                 break;
         }

@@ -52,7 +52,7 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 String response = JsonUtil.toJson(jsons);
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder()
                                               .setMsg(response)
-                                              .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK).build());
+                                              .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build());
                 break;
             case DELETE_CYCLIC_TASK:
                 TypeReference<List<Long>> typeReference = new TypeReference<>() {};
