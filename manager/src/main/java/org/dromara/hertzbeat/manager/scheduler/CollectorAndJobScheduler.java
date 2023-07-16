@@ -194,14 +194,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 }
             }
         });
-//        consistentHash.getDispatchJobCache().forEach(cacheJob -> {
-//            Job job = jobContentCache.get(cacheJob.getJobId());
-//            if (job == null) {
-//                log.error("assigning cache job {} content is null.", cacheJob.getJobId());
-//            } else {
-//                addAsyncCollectJob(job); 
-//            }
-//        });
     }
     
     @Override
