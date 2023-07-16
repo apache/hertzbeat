@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 
 /**
  * collector entity
+ * @author tom
  */
 @Entity
 @Table(name = "hzb_collector", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))

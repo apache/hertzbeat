@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 
 /**
  * collector entity
+ * @author tom
  */
 @Entity
 @Table(name = "hzb_collector_monitor_bind", indexes = {
