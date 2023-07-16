@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -44,7 +47,7 @@ import java.util.stream.Collectors;
 @Component
 @AutoConfigureAfter(value = {SchedulerProperties.class})
 @Slf4j
-public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling {
+public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling, CommandLineRunner {
     
     private final Map<String, Channel> collectorChannelMap = new ConcurrentHashMap<>(16);
     
@@ -142,7 +145,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     if (!assignJobs.getAddingJobs().isEmpty()) {
                         Set<Long> addedJobIds = new HashSet<>(8);
                         for (Long addingJobId : assignJobs.getAddingJobs()) {
-                            Job job = jobContentCache.remove(addingJobId);
+                            Job job = jobContentCache.get(addingJobId);
                             if (job == null) {
                                 log.error("assigning job {} content is null.", addingJobId);
                                 continue;
@@ -165,7 +168,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                         if (!assignJobs.getAddingJobs().isEmpty()) {
                             Set<Long> addedJobIds = new HashSet<>(8);
                             for (Long addingJobId : assignJobs.getAddingJobs()) {
-                                Job job = jobContentCache.remove(addingJobId);
+                                Job job = jobContentCache.get(addingJobId);
                                 if (job == null) {
                                     log.error("assigning job {} content is null.", addingJobId);
                                     continue;
@@ -191,6 +194,14 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 }
             }
         });
+//        consistentHash.getDispatchJobCache().forEach(cacheJob -> {
+//            Job job = jobContentCache.get(cacheJob.getJobId());
+//            if (job == null) {
+//                log.error("assigning cache job {} content is null.", cacheJob.getJobId());
+//            } else {
+//                addAsyncCollectJob(job); 
+//            }
+//        });
     }
     
     @Override
@@ -470,5 +481,20 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         if (eventListener != null) {
             eventListener.response(metricsDataList);
         }
+    }
+    
+    @Override
+    public void run(String... args) throws Exception {
+        // start detect not active channel client
+        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutor.scheduleAtFixedRate(() -> {
+            collectorChannelMap.forEach((collector, channel) -> {
+                if (!channel.isActive()) {
+                    channel.closeFuture();
+                    collectorChannelMap.remove(collector);
+                    collectorGoOffline(collector);
+                }
+            });
+            }, 10, 3, TimeUnit.SECONDS);
     }
 }

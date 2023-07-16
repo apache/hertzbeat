@@ -103,6 +103,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             if (StringUtils.hasText(collector)) {
                 collectorScheduling.collectorGoOffline(collector);
             }
+            ctx.channel().closeFuture();
         }
     }
 }

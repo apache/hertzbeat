@@ -80,19 +80,11 @@ public class AssignJobs {
         }
     }
 
-    public Set<Long> removeAssignJobs(Set<Long> jobIds) {
-        Set<Long> removed = new HashSet<>(16);
+    public void removeAssignJobs(Set<Long> jobIds) {
         if (jobs == null || jobIds == null || jobIds.isEmpty()) {
-            return removed;
+            return;
         }
-        jobIds.forEach(jobId -> {
-            if (jobId != null) {
-                if (jobs.remove(jobId)) {
-                    removed.add(jobId);
-                }
-            }
-        });
-        return removed;
+        jobs.removeAll(jobIds);
     }
     
     public void removeAddingJobs(Set<Long> jobIds) {

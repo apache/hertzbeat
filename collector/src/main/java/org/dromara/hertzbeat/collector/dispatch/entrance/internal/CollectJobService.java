@@ -142,13 +142,15 @@ public class CollectJobService {
         // start a thread to send heartbeat to cluster server periodically
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutor.scheduleAtFixedRate(() -> {
-            ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                                   .setIdentity(collectorIdentity)
-                                                   .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                                   .build();
-            collectorChannel.writeAndFlush(heartbeat);
-            log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
-        }, 10, 3, TimeUnit.SECONDS);
+            if (collectorChannel.isActive()) {
+                ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                                                       .setIdentity(collectorIdentity)
+                                                       .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                                       .build();
+                collectorChannel.writeAndFlush(heartbeat);
+                log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
+            }
+        }, 5, 5, TimeUnit.SECONDS);
     }
     
     /**

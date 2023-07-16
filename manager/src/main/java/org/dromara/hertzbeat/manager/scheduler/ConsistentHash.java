@@ -79,11 +79,12 @@ public class ConsistentHash {
                 }
                 higherNode.virtualNodeMap.put(higherVirtualNodeKey, dispatchJobs);
                 Set<Long> jobIds = reDispatchJobs.stream().map(item -> item[0]).collect(Collectors.toSet());
-                Set<Long> reDispatchJobSet = higherNode.assignJobs.removeAssignJobs(jobIds);
-                higherNode.assignJobs.addRemovingJobs(reDispatchJobSet);
-                // 分配任务到新的虚拟节点上
                 newNode.addVirtualNodeJobs(virtualHashKey, reDispatchJobs);
-                newNode.assignJobs.addAddingJobs(reDispatchJobSet);
+                if (higherNode != newNode) {
+                    higherNode.assignJobs.removeAssignJobs(jobIds);
+                    higherNode.assignJobs.addRemovingJobs(jobIds);
+                    newNode.assignJobs.addAddingJobs(jobIds);
+                }
             }
         }
         existNodeMap.put(newNode.name, newNode);
@@ -115,32 +116,39 @@ public class ConsistentHash {
             if (higherVirtualEntry == null) {
                 higherVirtualEntry = hashCircle.firstEntry();
             }
+            if (higherVirtualEntry.getValue() == deletedNode) {
+                higherVirtualEntry = null;
+            }
             // jobId
             Set<Long> removeJobIds = removeJobHashSet.stream().map(item -> item[0]).collect(Collectors.toSet());
-            Set<Long> removeJobSet = deletedNode.assignJobs.removeAssignJobs(removeJobIds);
-            deletedNode.assignJobs.addRemovingJobs(removeJobSet);
+            deletedNode.assignJobs.removeAssignJobs(removeJobIds);
+            deletedNode.assignJobs.addRemovingJobs(removeJobIds);
             if (higherVirtualEntry == null) {
                 // jobId-dispatchHash
                 virtualNodeEntry.getValue().forEach(value -> {
                     Long jobId = value[0];
                     Integer dispatchHash = value[1].intValue();
-                    if (removeJobSet != null) {
-                        if (removeJobSet.contains(jobId)) {
-                            dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
-                        } else {
-                            log.error("Get job {} from removeJobMap null.", jobId);
-                        }
+                    if (removeJobIds.contains(jobId)) {
+                        dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
                     } else {
-                        log.error("removeJob is null.");
+                        log.error("Get job {} from removeJobMap null.", jobId);
                     }
                 });
             } else {
                 Node higherVirtualNode = higherVirtualEntry.getValue();
                 higherVirtualNode.addVirtualNodeJobs(higherVirtualEntry.getKey(), removeJobHashSet);
-                higherVirtualNode.assignJobs.addAddingJobs(removeJobSet);
+                higherVirtualNode.assignJobs.addAddingJobs(removeJobIds);
             }
         }
         deletedNode.destroy();
+        if (!dispatchJobCache.isEmpty()) {
+            Iterator<DispatchJob> iterator = dispatchJobCache.iterator();
+            while (iterator.hasNext()) {
+                DispatchJob dispatchJob = iterator.next();
+                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId);
+                iterator.remove();
+            }
+        }
         return deletedNode;
     }
 
