@@ -56,8 +56,10 @@ public class SlaveCollector {
                 try {
                     channel = b.connect(properties.getMasterIp(), properties.getMasterPort()).sync().channel();
                     channel.closeFuture().sync();
-                } catch (Exception e) {
-                    log.error("collector connect cluster server error: {}. try after 10s." , e.getMessage());
+                } catch (InterruptedException ignored) {
+                    log.error("collector shutdown now!");
+                } catch (Exception e2) {
+                    log.error("collector connect cluster server error: {}. try after 10s." , e2.getMessage());
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException ignored) {}

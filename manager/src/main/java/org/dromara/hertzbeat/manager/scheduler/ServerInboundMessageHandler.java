@@ -78,7 +78,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     }
     
     @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         IdleStateEvent event = (IdleStateEvent) evt;
         if (event.state() == IdleState.READER_IDLE) {
             // collector timeout

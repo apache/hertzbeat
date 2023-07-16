@@ -40,7 +40,7 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast(new ProtobufEncoder());
         // idle state
-        pipeline.addLast(new IdleStateHandler(100, 0, 0));
+        pipeline.addLast(new IdleStateHandler(20, 0, 0));
         // message handler
         pipeline.addLast(new ServerInboundMessageHandler(collectorScheduling, collectJobScheduling));
     }

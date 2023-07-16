@@ -105,7 +105,7 @@ public class CollectJobService {
      * @param job Collect task details      采集任务详情
      */
     public void addAsyncCollectJob(Job job) {
-        timerDispatch.addJob(job, null);
+        timerDispatch.addJob(job.clone(), null);
     }
 
     /**
@@ -147,6 +147,6 @@ public class CollectJobService {
                                                    .build();
             collectorChannel.writeAndFlush(heartbeat);
             log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
-        }, 10, 10, TimeUnit.SECONDS);
+        }, 10, 3, TimeUnit.SECONDS);
     }
 }
