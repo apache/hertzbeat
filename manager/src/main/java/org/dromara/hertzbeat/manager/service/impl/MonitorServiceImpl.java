@@ -69,12 +69,11 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
-
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
-    private static final Gson GSON =new Gson();
+    private static final Gson GSON = new Gson();
 
     @Autowired
     private AppService appService;
@@ -665,7 +664,33 @@ public class MonitorServiceImpl implements MonitorService {
             });
         });
     }
-
+    
+    @Override
+    public void updateAppCollectJob(Job job) {
+        List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
+                                                  stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+                                                  .collect(Collectors.toList());
+        if (!availableMonitors.isEmpty()) {
+            for (Monitor monitor : availableMonitors) {
+                // 这里暂时是深拷贝处理
+                Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setCyclic(true);
+                appDefine.setTimestamp(System.currentTimeMillis());
+                
+                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+                // 下发采集任务
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
+                monitor.setJobId(newJobId);
+                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                monitorDao.save(monitor);
+            }
+        }
+    }
+    
     @Override
     public Monitor getMonitor(Long monitorId) {
         return monitorDao.findById(monitorId).orElse(null);
@@ -694,9 +719,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         //set a new monitor name
         monitor.setName(String.format("%s - copy", monitor.getName()));
-
         addMonitor(monitor, params);
     }
-
 
 }

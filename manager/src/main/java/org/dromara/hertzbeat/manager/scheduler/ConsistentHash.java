@@ -189,16 +189,15 @@ public class ConsistentHash {
      * 预先根据采集任务信息获取其分配到的采集器节点
      *
      * @param dispatchKey 采集任务路由key: ip+appId
-     * @param jobId jobId
      * @return 采集器节点
      */
-    public Node preDispatchJob(String dispatchKey, Long jobId) {
+    public Node preDispatchJob(String dispatchKey) {
         if (dispatchKey == null || "".equals(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }
         int dispatchHash = hash(dispatchKey);
-        return preDispatchJob(dispatchHash, jobId);
+        return preDispatchJob(dispatchHash);
     }
 
     /**
@@ -229,10 +228,9 @@ public class ConsistentHash {
      * 预先根据采集任务信息获取其分配到的采集器节点
      *
      * @param dispatchHash 采集任务路由hash
-     * @param jobId jobId
      * @return 采集器节点
      */
-    public Node preDispatchJob(Integer dispatchHash, Long jobId) {
+    public Node preDispatchJob(Integer dispatchHash) {
         if (dispatchHash == null || hashCircle == null || hashCircle.isEmpty()) {
             log.warn("There is no available collector registered.");
             return null;

@@ -20,9 +20,12 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
     
     private final CollectorScheduling collectorScheduling;
     
-    public ProtoServerInitializer(CollectorScheduling collectorScheduling) {
+    private final CollectJobScheduling collectJobScheduling;
+    
+    public ProtoServerInitializer(CollectorScheduling collectorScheduling, CollectJobScheduling collectJobScheduling) {
         super();
         this.collectorScheduling = collectorScheduling;
+        this.collectJobScheduling = collectJobScheduling;
     }
     
     @Override
@@ -39,6 +42,6 @@ public class ProtoServerInitializer extends ChannelInitializer<SocketChannel> {
         // idle state
         pipeline.addLast(new IdleStateHandler(100, 0, 0));
         // message handler
-        pipeline.addLast(new ServerInboundMessageHandler(collectorScheduling));
+        pipeline.addLast(new ServerInboundMessageHandler(collectorScheduling, collectJobScheduling));
     }
 }

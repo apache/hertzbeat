@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service;
 
+import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
@@ -213,6 +214,11 @@ public interface MonitorService {
      * @param ids monitor id
      */
     void copyMonitors(List<Long> ids);
-
-
+    
+    
+    /**
+     * update app collect job by app
+     * @param job job content
+     */
+    void updateAppCollectJob(Job job);
 }

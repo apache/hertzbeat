@@ -5,18 +5,22 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
+import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.util.JsonUtil;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +48,9 @@ public class SchedulerInit implements CommandLineRunner {
     @Autowired
     private ParamDao paramDao;
     
+    @Autowired
+    private CollectorMonitorBindDao collectorMonitorBindDao;
+    
     @Override
     public void run(String... args) throws Exception {
         // insert default consistent node
@@ -54,6 +61,9 @@ public class SchedulerInit implements CommandLineRunner {
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte)0, (byte)4));
+        List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
+        Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
+                Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
         for (Monitor monitor : monitors) {
             try {
                 // 构造采集任务Job实体
@@ -70,7 +80,13 @@ public class SchedulerInit implements CommandLineRunner {
                                                      .map(param -> new Configmap(param.getField(), param.getValue(),
                                                              param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
-                long jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
+                String collector = monitorIdCollectorMap.get(monitor.getId());
+                long jobId;
+                if (StringUtils.hasText(collector)) {
+                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+                } else {
+                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine);   
+                }
                 monitor.setJobId(jobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {

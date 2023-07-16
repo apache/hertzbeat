@@ -24,14 +24,18 @@ public class MasterServer {
     
     private final CollectorScheduling collectorScheduling;
     
+    private final CollectJobScheduling collectJobScheduling;
+    
     private final CommonThreadPool commonThreadPool;
     
-    public MasterServer(SchedulerProperties schedulerProperties, CollectorScheduling collectorScheduling, CommonThreadPool threadPool) throws Exception {
+    public MasterServer(SchedulerProperties schedulerProperties, CollectorScheduling collectorScheduling,
+                        CollectJobScheduling collectJobScheduling, CommonThreadPool threadPool) throws Exception {
         if (schedulerProperties == null || schedulerProperties.getServer() == null) {
             log.error("init error, please config scheduler server props in application.yml");
             throw new IllegalArgumentException("please config scheduler server props");
         }
         this.collectorScheduling = collectorScheduling;
+        this.collectJobScheduling = collectJobScheduling;
         this.commonThreadPool = threadPool;
         serverStartup(schedulerProperties);
     }
@@ -47,7 +51,7 @@ public class MasterServer {
                 b.group(bossGroup, workerGroup)
                         .channel(NioServerSocketChannel.class)
                         .handler(new LoggingHandler(LogLevel.INFO))
-                        .childHandler(new ProtoServerInitializer(collectorScheduling));
+                        .childHandler(new ProtoServerInitializer(collectorScheduling, collectJobScheduling));
                 b.bind(port).sync().channel().closeFuture().sync();
             } catch (Exception e) {
                 log.error(e.getMessage());

@@ -93,5 +93,10 @@ public interface CollectJobScheduling {
      * @param jobId Job ID      任务ID
      */
     void cancelAsyncCollectJob(Long jobId);
-
+    
+    /**
+     * one-time collect job response data
+     * @param metricsDataList collect data
+     */
+    void collectSyncJobResponse(List<CollectRep.MetricsData> metricsDataList);
 }

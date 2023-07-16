@@ -38,5 +38,5 @@ public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorB
      * @param collector collector
      * @return monitor bind
      */
-    List<CollectorMonitorBind> findCollectorMonitorBindsByCollector(String collector); 
+    List<CollectorMonitorBind> findCollectorMonitorBindsByCollector(String collector);
 }
