@@ -321,6 +321,8 @@ public class MonitorServiceImpl implements MonitorService {
             if (optionalCollector.isEmpty()) {
                 throw new IllegalArgumentException("The pinned collector does not exist.");
             }
+        } else {
+            monitorDto.setCollector(null);
         }
         // Parameter definition structure verification  参数定义结构校验
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());

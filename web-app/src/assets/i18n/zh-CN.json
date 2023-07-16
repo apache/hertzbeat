@@ -56,6 +56,11 @@
     "description.tip": "更多标识和描述此监控的备注信息",
     "intervals": "采集间隔(秒)",
     "intervals.tip": "监控周期性采集数据间隔时间,单位秒",
+    "collector": "采集器",
+    "collector.tip": "配置此监控使用哪台采集器调度采集",
+    "collector.system.default": "默认系统调度",
+    "collector.status.online": "在线",
+    "collector.status.offline": "离线",
     "category": {
       "": "监控类别",
       "service": "应用服务",
