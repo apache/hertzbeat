@@ -91,4 +91,14 @@ public interface AlertService {
      */
     void addNewAlertReport(AlertReport alertReport);
 
+    /**
+     * Dynamic conditional query
+     * 动态条件查询
+     *
+     * @param specification Query conditions        查询条件
+     * @return search result    查询结果
+     */
+    List<Alert> getAlerts(Specification<Alert> specification);
+
+
 }
