@@ -14,7 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * netty client for cluster slave collector
+ * collect server for cluster
  * @author tom
  */
 @Component

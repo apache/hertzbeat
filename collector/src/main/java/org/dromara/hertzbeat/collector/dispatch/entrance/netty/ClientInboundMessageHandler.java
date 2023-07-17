@@ -33,10 +33,14 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
         Channel channel = channelHandlerContext.channel();
         switch (message.getType()) {
             case HEARTBEAT:
-                log.info("collector receive master server response heartbeat, time: {}. ", System.currentTimeMillis());
+                log.info("collector receive manager server response heartbeat, time: {}. ", System.currentTimeMillis());
                 break;
             case ISSUE_CYCLIC_TASK:
                 Job job = JsonUtil.fromJson(message.getMsg(), Job.class);
+                if (job == null) {
+                    log.error("collector receive cyclic task job is null");
+                    return;
+                }
                 collectJobService.addAsyncCollectJob(job);
                 break;
             case ISSUE_ONE_TIME_TASK:

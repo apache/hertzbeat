@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * netty server for cluster master
+ * manage server for cluster
  * @author tom
  */
 @Component
