@@ -7,7 +7,8 @@ sidebar_label: HTTP Protocol Custom Monitoring
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring   
 
 ### HTTP protocol collection process     
-【**call HTTP interface**】->【**response verification**】->【**parse reponse data**】->【**default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing**】->【**Metric data extraction**】
+
+【**Call HTTP API**】->【**Response Verification**】->【**Parse Response Data**】->【**Default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
 HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.   
@@ -18,19 +19,22 @@ HTTP protocol supports us to customize HTTP request path, request header, reques
 
 ### Custom Steps  
 
-In order to configure a custom monitoring type, you need to add and configure YML file.
-1. Monitoring configuration definition file named after monitoring type - eg：example.yml in the installation directory /hertzbeat/define/ 
-2. Restart hertzbeat system, we successfully fit a new custom monitoring type. 
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ------- 
-Configuration usages of the two files are detailed below. Please pay attention to usage annotation.   
 
-### Monitoring configuration definition file   
+Configuration usages of the monitoring templates yml are detailed below. Please pay attention to usage annotation.   
 
-> Monitoring configuration definition file is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
+### Monitoring Templates YML
 
-eg：Define a custom monitoring type named example_http which use the HTTP protocol to collect data.    
-The file name: example_http.yml in /define/example_http.yml   
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
+
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+eg：Define a custom monitoring type `app` named `example_http` which use the HTTP protocol to collect data.
+
+**Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

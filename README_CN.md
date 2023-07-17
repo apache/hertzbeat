@@ -316,6 +316,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/san346596324"><img src="https://avatars.githubusercontent.com/u/30828520?v=4?s=100" width="100px;" alt="渭雨"/><br /><sub><b>渭雨</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=san346596324" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/luoxuanzao"><img src="https://avatars.githubusercontent.com/u/44692579?v=4?s=100" width="100px;" alt="liuxuezhuo"/><br /><sub><b>liuxuezhuo</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luoxuanzao" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lisongning"><img src="https://avatars.githubusercontent.com/u/93140178?v=4?s=100" width="100px;" alt="lisongning"/><br /><sub><b>lisongning</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=lisongning" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/YutingNie"><img src="https://avatars.githubusercontent.com/u/104416402?v=4?s=100" width="100px;" alt="YutingNie"/><br /><sub><b>YutingNie</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=YutingNie" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -327,7 +328,7 @@ Thanks these wonderful people, welcome to join us:
 
 ## 💬 社区交流
 
-HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级项目，Gitee GVP。   
+HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级项目。Gitee GVP。   
 
 ##### 微信交流群
 

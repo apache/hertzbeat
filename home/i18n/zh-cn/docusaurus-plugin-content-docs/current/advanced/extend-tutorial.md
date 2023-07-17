@@ -1,12 +1,12 @@
 ---
 id: extend-tutorial
-title: 快速教程:自定义适配一款基于HTTP协议的监控   
-sidebar_label: 快速教程
+title: 自定义适配一款基于HTTP协议的新监控类型   
+sidebar_label: 教程案例
 ---
 
 通过此教程我们一步一步描述如何在hertzbeat监控系统下自定义新增适配一款基于http协议的监控类型。  
 
-阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http.md)了解熟悉了怎么自定义类型，指标，协议等。   
+阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
 
 
 ### HTTP协议解析通用响应结构体，获取指标数据
@@ -59,38 +59,62 @@ sidebar_label: 快速教程
 **我们这次获取其app下的 `category`,`app`,`status`,`size`,`availableSize`等指标数据。**
 
 
-### 新增对应的应用定义YML和参数定义YML
+### 新增配置监控模版YML
 
-1. 自定义监控类型需新增配置YML文件
+**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML**
 
-用监控类型命名的监控配置定义文件 - 例如：app-hertzbeat.yml 需位于安装目录 /hertzbeat/define/ 下
+定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 `api`监控模版 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。   
 
-定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 param-api.yml 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。   
-
-定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 app-api.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
+定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 `api`监控模版 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: custom
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
 app: hertzbeat
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
   zh-CN: HertzBeat监控系统
   en-US: HertzBeat Monitor
+# Input params define for monitoring(render web ui by the definition)
+# 监控所需输入参数定义(根据定义渲染页面UI)
 params:
+  # field-param field key
+  # field-字段名称标识符
   - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 主机Host
       en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
     required: true
+  # field-param field key
+  # field-变量字段标识符
   - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
     range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
     required: true
+    # default value
+    # 端口默认值
     defaultValue: 1157
   - field: ssl
     name:
@@ -132,20 +156,22 @@ params:
     type: password
     required: false
     hide: true
-# 指标组列表
 metrics:
+  # the first metrics summary
+  # attention: Built-in monitoring metrics contains (responseTime - Response time)
   # 第一个监控指标组 summary
   # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: summary
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
+    # collect metrics content
     # 指标组中的具体监控指标
     fields:
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: responseTime
-        type: 0
-        unit: ms
       - field: app
         type: 1
         instance: true
@@ -156,43 +182,52 @@ metrics:
       - field: size
         type: 0
       - field: availableSize
-        type: 0  
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
+        type: 0
+    #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
     protocol: http
-# 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
+    # 当protocol为http协议时具体的采集配置
     http:
+      # http host: ipv4 ipv6 domain
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # http port
       # 端口
       port: ^_^port^_^
+      # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
       # url请求接口路径，我们这里不需要输入传参，写死为 /api/summary
       url: /api/summary
       timeout: ^_^timeout^_^
-      # 请求方式 GET POST PUT DELETE PATCH，写死为 
+      # http method: GET POST PUT DELETE PATCH, default fixed value is GET
+      # 请求方式 GET POST PUT DELETE PATCH，写死为 GET
       method: GET
+      # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
+      # http auth
       # 认证
       authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
         # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
       parseType: jsonPath
-      parseScript: '$.data.apps.*' 
-
+      parseScript: '$.data.apps.*'
 ```
 
-**新增完毕，现在我们重启hertzbeat系统。我们可以看到系统页面已经多了一个`hertzbeat`监控类型了。**
+**点击保存并应用。我们可以看到系统页面的自定义监控菜单已经多了一个`hertzbeat`监控类型了。**
 
 
 ![](/img/docs/advanced/extend-http-example-1.png)
 
 
-### 系统页面添加对`hertzbeat`监控类型的监控
+### 页面添加对`hertzbeat`监控类型的监控
 
 > 我们点击新增 `HertzBeat监控系统`，配置监控IP，端口，采集周期，高级设置里的账户密码等, 点击确定添加监控。
 
@@ -218,10 +253,5 @@ metrics:
 
 #### 完！
 
-HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数headers,params等，我们可以像用postman一样去定义它，可玩性也非常高！
+HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数 `headers,params` 等，我们可以像用postman一样去定义它，可玩性也非常高！
 
-如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
-
-**github: https://github.com/dromara/hertzbeat**
-
-**gitee: https://gitee.com/dromara/hertzbeat**

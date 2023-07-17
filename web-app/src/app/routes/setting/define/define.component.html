@@ -10,7 +10,7 @@
     <i nz-icon nzType="code"></i>
     <span>{{ 'menu.extras.define' | i18n }}</span>
     <nz-tag
-      *ngIf="currentApp !== undefined"
+      *ngIf="currentApp !== undefined && currentApp != null"
       style="font-size: 14px; border-radius: 4px; margin-left: 4px"
       nzColor="#3f51b5"
       class="hoverClass"
