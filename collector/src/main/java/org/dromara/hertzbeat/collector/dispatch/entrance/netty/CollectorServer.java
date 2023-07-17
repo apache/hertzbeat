@@ -21,13 +21,13 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j
-public class SlaveCollector {
+public class CollectorServer {
     
     private final CollectJobService collectJobService;
     
     private final CommonThreadPool commonThreadPool;
     
-    public SlaveCollector(DispatchProperties properties, CollectJobService jobService, CommonThreadPool threadPool) throws Exception {
+    public CollectorServer(DispatchProperties properties, CollectJobService jobService, CommonThreadPool threadPool) throws Exception {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
