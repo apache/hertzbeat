@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "scheduler.server",
         name = "enabled", havingValue = "true")
 @Slf4j
-public class ManagerServer {
+public class ManageServer {
     
     
     private final CollectorScheduling collectorScheduling;
@@ -28,8 +28,8 @@ public class ManagerServer {
     
     private final CommonThreadPool commonThreadPool;
     
-    public ManagerServer(SchedulerProperties schedulerProperties, CollectorScheduling collectorScheduling,
-                         CollectJobScheduling collectJobScheduling, CommonThreadPool threadPool) throws Exception {
+    public ManageServer(SchedulerProperties schedulerProperties, CollectorScheduling collectorScheduling,
+                        CollectJobScheduling collectJobScheduling, CommonThreadPool threadPool) throws Exception {
         if (schedulerProperties == null || schedulerProperties.getServer() == null) {
             log.error("init error, please config scheduler server props in application.yml");
             throw new IllegalArgumentException("please config scheduler server props");
