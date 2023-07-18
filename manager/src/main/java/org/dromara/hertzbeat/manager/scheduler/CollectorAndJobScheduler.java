@@ -75,13 +75,28 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     
     @Autowired
     private ParamDao paramDao;
-    
+
+    @Override
+    public void collectorGoOnline(String identity) {
+        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
+        if (collectorOptional.isPresent()) {
+            Collector collector = collectorOptional.get();
+            CollectorInfo collectorInfo = new CollectorInfo();
+            collectorInfo.setIp(collector.getIp());
+            collectorInfo.setName(collector.getName());
+            this.collectorGoOnline(identity, collectorInfo);
+        }
+    }
+
     @Override
     public void collectorGoOnline(String identity, CollectorInfo collectorInfo) {
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        Collector collector = null;
+        Collector collector;
         if (collectorOptional.isPresent()) {
             collector = collectorOptional.get();
+            if (collector.getStatus() == CommonConstants.COLLECTOR_STATUS_ONLINE) {
+                return;
+            }
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
             collector.setIp(collectorInfo.getIp());
         } else {

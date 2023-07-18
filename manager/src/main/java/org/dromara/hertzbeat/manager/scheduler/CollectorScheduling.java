@@ -25,7 +25,12 @@ import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
  * @author tom
  */
 public interface CollectorScheduling {
-    
+
+    /**
+     * register collector go online
+     * @param identity collector identity name
+     */
+    void collectorGoOnline(String identity);
     
     /**
      * register collector go online

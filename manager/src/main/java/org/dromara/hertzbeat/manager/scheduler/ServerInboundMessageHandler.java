@@ -8,16 +8,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
-import org.dromara.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.dromara.hertzbeat.common.queue.impl.KafkaCommonDataQueue;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,23 +26,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * netty inbound collector message handler
+ *
  * @author tom
  */
 @Slf4j
 public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
-    
+
     private final CollectorScheduling collectorScheduling;
-    
+
     private final CollectJobScheduling collectJobScheduling;
-    
+
     private final Map<ChannelId, String> channelCollectorMap = new ConcurrentHashMap<>(8);
-    
+
     public ServerInboundMessageHandler(CollectorScheduling collectorScheduling, CollectJobScheduling collectJobScheduling) {
         super();
         this.collectorScheduling = collectorScheduling;
         this.collectJobScheduling = collectJobScheduling;
     }
-    
+
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
@@ -52,6 +52,8 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
         collectorScheduling.holdCollectorChannel(identity, channel);
         switch (message.getType()) {
             case HEARTBEAT:
+                // 用于处理collector连接断开后重连
+                collectorScheduling.collectorGoOnline(identity);
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:
@@ -63,17 +65,18 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 break;
             case RESPONSE_ONE_TIME_TASK_DATA:
                 try {
-                    TypeReference<List<String>> typeReference = new TypeReference<>() {};
+                    TypeReference<List<String>> typeReference = new TypeReference<>() {
+                    };
                     List<String> jsonArr = JsonUtil.fromJson(message.getMsg(), typeReference);
                     List<CollectRep.MetricsData> metricsDataList = new ArrayList<>(jsonArr.size());
                     for (String str : jsonArr) {
-                        CollectRep.MetricsData metricsData = (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(str, 
+                        CollectRep.MetricsData metricsData = (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(str,
                                 CollectRep.MetricsData.newBuilder());
                         if (metricsData != null) {
                             metricsDataList.add(metricsData);
                         }
                     }
-                    collectJobScheduling.collectSyncJobResponse(metricsDataList);   
+                    collectJobScheduling.collectSyncJobResponse(metricsDataList);
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -92,7 +95,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 break;
         }
     }
-    
+
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         IdleStateEvent event = (IdleStateEvent) evt;
@@ -100,7 +103,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             // collector timeout
             ChannelId channelId = ctx.channel().id();
             String collector = channelCollectorMap.get(channelId);
-            if (StringUtils.hasText(collector)) {
+            if (org.springframework.util.StringUtils.hasText(collector)) {
                 collectorScheduling.collectorGoOffline(collector);
             }
             ctx.channel().closeFuture();
