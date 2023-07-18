@@ -215,7 +215,12 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     public void holdCollectorChannel(String identity, Channel channel) {
         this.collectorChannelMap.put(identity, channel);
     }
-    
+
+    @Override
+    public boolean isCollectorChannelExist(String identity) {
+        return this.collectorChannelMap.get(identity) != null;
+    }
+
     @Override
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         // todo dispatchKey ip+port or id
