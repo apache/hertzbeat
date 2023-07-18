@@ -57,8 +57,6 @@ public class AlertsController {
 
     @Autowired
     private AlertService alertService;
-    @Autowired
-    AlertConvertTenCloudServiceImpl alertConvertTenCloudService;
 
     @GetMapping
     @Operation(summary = "Get a list of alarm information based on query filter items", description = "根据查询过滤项获取告警信息列表")
@@ -157,13 +155,5 @@ public class AlertsController {
         return ResponseEntity.ok(new Message<>("Add report success"));
     }
 
-    @PostMapping("/report1")
-    @Operation(summary = "Interface for reporting external alarm information ｜ 对外上报告警信息 接口",
-            description = "对外 新增一个告警")
-    public ResponseEntity<Message<Void>> addNewAlertReportTencent(@Valid @RequestBody String alertReport) {
-        System.out.println(alertReport);
-        Object convert = alertConvertTenCloudService.convert(alertReport);
-        System.out.println(convert);
-        return ResponseEntity.ok(new Message<>("Add report success"));
-    }
+
 }

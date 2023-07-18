@@ -1,21 +1,31 @@
 package org.dromara.hertzbeat.alert.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.util.Date;
 
 @lombok.Data
-public class TenCloudAlertReport {
+@AllArgsConstructor
+@NoArgsConstructor
+public class TenCloudAlertReport implements Serializable {
     private String sessionID;
     private String alarmStatus;
     private String alarmType;
     private AlarmObjInfo alarmObjInfo;
     private AlarmPolicyInfo alarmPolicyInfo;
-    private OffsetDateTime firstOccurTime;
+    private String firstOccurTime;
     private long durationTime;
-    private OffsetDateTime recoverTime;
+    private String recoverTime;
 
     @lombok.Data
-    public class AlarmObjInfo {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AlarmObjInfo {
         private String region;
         private String namespace;
         private String appID;
@@ -24,12 +34,16 @@ public class TenCloudAlertReport {
     }
 
     @lombok.Data
-    public class Dimensions {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Dimensions {
         private String unInstanceID;
         private String objID;
     }
     @lombok.Data
-    public class AlarmPolicyInfo {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AlarmPolicyInfo {
         private String policyID;
         private String policyType;
         private String policyName;
@@ -37,7 +51,9 @@ public class TenCloudAlertReport {
         private Conditions conditions;
     }
     @lombok.Data
-    public class Conditions {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Conditions {
         private String metricName;
         private String metricShowName;
         private String calcType;

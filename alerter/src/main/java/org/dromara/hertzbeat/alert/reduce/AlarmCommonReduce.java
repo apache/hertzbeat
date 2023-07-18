@@ -33,6 +33,7 @@ public class AlarmCommonReduce {
     public void reduceAndSendAlarm(Alert alert) {
 		alert.setTimes(1);
 	    Map<String, String> tags = alert.getTags();
+		System.out.println(tags);
 	    String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
 	    if (monitorIdStr == null) {
 		    log.error("alert tags monitorId can not be null: {}.", alert);
