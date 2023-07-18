@@ -48,12 +48,15 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
         String identity = message.getIdentity();
+        boolean isCollectorChannelExist = collectorScheduling.isCollectorChannelExist(identity);
         channelCollectorMap.put(channel.id(), identity);
         collectorScheduling.holdCollectorChannel(identity, channel);
         switch (message.getType()) {
             case HEARTBEAT:
                 // 用于处理collector连接断开后重连
-                collectorScheduling.collectorGoOnline(identity);
+                if (!isCollectorChannelExist) {
+                    collectorScheduling.collectorGoOnline(identity);
+                }
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:

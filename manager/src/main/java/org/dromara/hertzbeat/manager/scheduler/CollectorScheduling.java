@@ -56,4 +56,11 @@ public interface CollectorScheduling {
      * @param channel message channel
      */
     void holdCollectorChannel(String identity, Channel channel);
+
+    /**
+     * judge collector message channel exist
+     * @param identity collector identity name
+     * @return true/false
+     */
+    boolean isCollectorChannelExist(String identity);
 }
