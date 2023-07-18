@@ -18,6 +18,7 @@
 package org.dromara.hertzbeat.alert.controller;
 
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
+import org.dromara.hertzbeat.alert.service.impl.AlertConvertTenCloudServiceImpl;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
@@ -56,6 +57,8 @@ public class AlertsController {
 
     @Autowired
     private AlertService alertService;
+    @Autowired
+    AlertConvertTenCloudServiceImpl alertConvertTenCloudService;
 
     @GetMapping
     @Operation(summary = "Get a list of alarm information based on query filter items", description = "根据查询过滤项获取告警信息列表")
@@ -151,6 +154,16 @@ public class AlertsController {
     public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
         // 校验请求数据 TODO
         alertService.addNewAlertReport(alertReport);
+        return ResponseEntity.ok(new Message<>("Add report success"));
+    }
+
+    @PostMapping("/report1")
+    @Operation(summary = "Interface for reporting external alarm information ｜ 对外上报告警信息 接口",
+            description = "对外 新增一个告警")
+    public ResponseEntity<Message<Void>> addNewAlertReportTencent(@Valid @RequestBody String alertReport) {
+        System.out.println(alertReport);
+        Object convert = alertConvertTenCloudService.convert(alertReport);
+        System.out.println(convert);
         return ResponseEntity.ok(new Message<>("Add report success"));
     }
 }
