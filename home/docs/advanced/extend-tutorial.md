@@ -1,15 +1,15 @@
 ---
 id: extend-tutorial
 title: Quick Tutorial Customize and adapt a monitoring based on HTTP protocol
-sidebar_label: Quick Tutorial
+sidebar_label: Tutorial Case
 ---
 
 Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the hertzbeat monitoring tool.
 
-Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http.md).
+Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [Http Protocol Customization](extend-http).
 
 
-### HTTP protocol parses the general response structure to obtain indicator data
+### HTTP protocol parses the general response structure to obtain metrics data
 
 > In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as indicator data.
 
@@ -56,133 +56,145 @@ As above, usually our background API interface will design such a general return
 }
 ```
 
-**This time we get the indicator data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
+**This time we get the metrics data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
 
 
-### Add corresponding application definition YML and parameter definition YML
+### Add Monitoring Template Yml
 
-1. Custom monitoring type needs to add configuration YML file
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-A monitoring configuration definition file named after the monitoring type - for example: app-hertzbeat.yml needs to be located in the installation directory /hertzbeat/define/
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-Define which parameters we need to enter on the page. The general HTTP protocol parameters mainly include ip, port, headers, params, uri, account password, etc. We directly reuse the parameter definition content in param-api.yml and delete our No need to enter parameters such as uri parameters and keyword keywords.
 
-Define what type of collection is, which protocol collection method needs to be used, what indicators are collected, protocol configuration parameters, etc. We directly reuse the definition content in app-api.yml and modify it to our current monitoring type `hertzbeat` configuration parameters, as follows: Note⚠️We get `category`, `app` in the interface response data this time, Fields such as `status`, `size`, `availableSize` are used as indicator data.
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+
+Here we define a custom monitoring type `app` named `hertzbeat` which use the HTTP protocol to collect data.
+
+**Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**
 
 ```yaml
-# This monitoring type belongs to the category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
-# Monitoring application type name (consistent with the file name) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat
+# The monitoring i18n name
 name:
-   en-GB: HertzBeat Monitoring Tool
-   en-US: Hertz Beat Monitor
+  zh-CN: HertzBeat监控系统
+  en-US: HertzBeat Monitor
+# Input params define for monitoring(render web ui by the definition)
 params:
-   - field: host
-     name:
-       en-CN: Host Host
-       en-US: Host
-     type: host
-     required: true
-   - field: port
-     name:
-       en-CN: port
-       en-US: Port
-     type: number
-     range: '[0,65535]'
-     required: true
-     defaultValue: 1157
-   - field: ssl
-     name:
-       en-GB: Enable HTTPS
-       en-US: HTTPS
-     type: boolean
-     required: true
-   - field: timeout
-     name:
-       en-CN: Timeout (ms)
-       en-US: Timeout(ms)
-     type: number
-     required: false
-     hide: true
-   - field: authType
-     name:
-       en-CN: Authentication method
-       en-US: Auth Type
-     type: radio
-     required: false
-     hide: true
-     options:
-       - label: Basic Auth
-         value: Basic Auth
-       - label: Digest Auth
-         value: Digest Auth
-   - field: username
-     name:
-       en-CN: username
-       en-US: Username
-     type: text
-     limit: 20
-     required: false
-     hide: true
-   - field: password
-     name:
-       en-CN: Password
-       en-US: Password
-     type: password
-     required: false
-     hide: true
-# List of indicator groups
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 1157
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
 metrics:
-   # The first monitoring indicator group summary
-   # Note: Built-in monitoring indicators have (responseTime - response time)
-   - name: summary
-     # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
-     priority: 0
-     # Specific monitoring indicators in the indicator group
-     fields:
-       # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
-       - field: responseTime
-         type: 0
-         unit: ms
-       - field: app
-         type: 1
-         instance: true
-       - field: category
-         type: 1
-       - field: status
-         type: 0
-       - field: size
-         type: 0
-       - field: availableSize
-         type: 0
-# Monitoring and collection protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
-     protocol: http
-# When the protocol is the http protocol, the specific collection configuration
-     http:
-       host: ^_^host^_^
-       # port
-       port: ^_^port^_^
-       # url request interface path, we don’t need to enter parameters here, it’s written as /api/summary
-       url: /api/summary
-       timeout: ^_^timeout^_^
-       # Request method GET POST PUT DELETE PATCH, hardcoded as
-       method: GET
-       # Whether to enable ssl/tls, that is, http or https, default false
-       ssl: ^_^ssl^_^
-       # authentication
-       authorization:
-         # Authentication methods: Basic Auth, Digest Auth, Bearer Token
-         type: ^_^authType^_^
-         basicAuthUsername: ^_^username^_^
-         basicAuthPassword: ^_^password^_^
-         digestAuthUsername: ^_^username^_^
-         digestAuthPassword: ^_^password^_^
-       # Response data parsing method: default-system rules, jsonPath-jsonPath script, website-website usability indicator monitoring, we use jsonpath here to parse the response data
-       parseType: jsonPath
-       parseScript: '$.data.apps.*'
-
+  # the first metrics summary
+  # attention: Built-in monitoring metrics contains (responseTime - Response time)
+  - name: summary
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
+      - field: app
+        type: 1
+        instance: true
+      - field: category
+        type: 1
+      - field: status
+        type: 0
+      - field: size
+        type: 0
+      - field: availableSize
+        type: 0
+    #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
+      url: /api/summary
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH, default fixed value is GET
+      method: GET
+      # if enabled https, default value is false
+      ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
+      parseType: jsonPath
+      parseScript: '$.data.apps.*'
 ```
 
 **The addition is complete, now we restart the hertzbeat system. We can see that the system page has added a `hertzbeat` monitoring type. **

@@ -1,0 +1,91 @@
+package org.dromara.hertzbeat.common.config;
+
+import com.googlecode.aviator.AviatorEvaluator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author mikezzb
+ *
+ */
+class AviatorConfigurationTest {
+
+    @BeforeAll
+    static void setUp() {
+        AviatorConfiguration aviatorConfig = new AviatorConfiguration();
+        aviatorConfig.configAviatorEvaluator();
+    }
+
+    @Test
+    void testCustomStringFunctions() {
+        Map<String, Object> env = new HashMap<>();
+        env.put("k1", "Intel");
+        env.put("k2", "intel");
+        env.put("k3", "Ubuntu 18.04.6 LTS");
+        env.put("k4", "ubuntu");
+        env.put("k5", "Ubntu");
+        env.put("k6", null);
+
+        // test StrEqualFunction
+        String expr1 = "equals(k1,k2)"; // case-insensitive
+        Boolean res1 = (Boolean) AviatorEvaluator.compile(expr1).execute(env);
+        Assertions.assertTrue(res1);
+
+        String expr2 = "equals(k1,k3)";
+        Boolean res2 = (Boolean) AviatorEvaluator.compile(expr2).execute(env);
+        Assertions.assertFalse(res2);
+
+        // test StrContainsFunction
+        String expr3 = "contains(k3,k4)"; // case-insensitive
+        Boolean res3 = (Boolean) AviatorEvaluator.compile(expr3).execute(env);
+        Assertions.assertTrue(res3);
+
+        String expr4 = "contains(k4,k3)";
+        Boolean res4 = (Boolean) AviatorEvaluator.compile(expr4).execute(env);
+        Assertions.assertFalse(res4);
+
+        String expr5 = "contains(k3,k5)"; // subsequence
+        Boolean res5 = (Boolean) AviatorEvaluator.compile(expr5).execute(env);
+        Assertions.assertFalse(res5);
+
+        // test StrExistsFunction
+        String expr6 = "exists('DNE_Key1')";
+        Boolean res6 = (Boolean) AviatorEvaluator.compile(expr6).execute(env);
+        Assertions.assertFalse(res6);
+
+        String expr7 = "exists('k6')";
+        Boolean res7 = (Boolean) AviatorEvaluator.compile(expr7).execute(env);
+        Assertions.assertTrue(res7);
+
+        // test StrMatchesFunction
+        String regex1 = "'^[a-zA-Z0-9]+$'"; // only alphanumeric
+        String expr8 = "matches(k6," + regex1 + ")";
+        env.put("k6", "Ubntu50681269");
+        Boolean res8 = (Boolean) AviatorEvaluator.compile(expr8).execute(env);
+        Assertions.assertTrue(res8);
+        env.put("k6", "Ubnt_u50681269");
+        Boolean res9 = (Boolean) AviatorEvaluator.compile(expr8).execute(env);
+        Assertions.assertFalse(res9);
+
+        String regex2 = "'^Ubuntu.*'"; // starts with
+        String expr9 = "matches(k3," + regex2 + ")";
+        Boolean res10 = (Boolean) AviatorEvaluator.compile(expr9).execute(env);
+        Assertions.assertTrue(res10);
+        env.put("k3", "Ubunt_u50681269");
+        Boolean res11 = (Boolean) AviatorEvaluator.compile(expr9).execute(env);
+        Assertions.assertFalse(res11);
+
+        String regex3 = "\"^\\\\[LOG\\\\].*error$\""; // starts & ends with
+        String expr10 = "matches(k7," + regex3 + ")";
+        env.put("k7", "[LOG] detected system error");
+        Boolean res12 = (Boolean) AviatorEvaluator.compile(expr10).execute(env);
+        Assertions.assertTrue(res12);
+        env.put("k7", "[LOG detected system error");
+        Boolean res13 = (Boolean) AviatorEvaluator.compile(expr10).execute(env);
+        Assertions.assertFalse(res13);
+    }
+}

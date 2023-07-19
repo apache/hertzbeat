@@ -4,9 +4,9 @@ title: Tutorial 2 Obtain TOKEN index value based on HTTP protocol for subsequent
 sidebar_label: Tutorial 2 Get TOKEN for subsequent authentication
 ---
 
-Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an indicator group, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent indicator group collection and authentication.
+Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics group, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent indicator group collection and authentication.
 
-Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http.md).
+Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
 ### Request process
 
@@ -37,12 +37,19 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 
 ### Add custom monitoring type `hertzbeat_token`
 
-1. The custom monitoring type needs to add a new configuration YML file. We directly reuse the `hertzbeat` monitoring type in Tutorial 1 and modify it based on it
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-A monitoring configuration definition file named after the monitoring type - app-hertzbeat_token.yml needs to be located in the installation directory /hertzbeat/define/
+> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
 
-The monitoring configuration definition file is used to define the collection type, which protocol collection method needs to be used, the collection indicators, protocol configuration parameters, etc.
-We directly reuse the definition content in app-hertzbeat.yml and modify it to our current monitoring type `hertzbeat_auth` configuration parameters, such as `app, category, etc`.
+
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
+
+
+1. The custom monitoring type needs to add a new configuration monitoring template yml. We directly reuse the `hertzbeat` monitoring type in Tutorial 1 and modify it based on it
+
+A monitoring configuration definition file named after the monitoring type - hertzbeat_token
+
+We directly reuse the definition content in `hertzbeat` and modify it to our current monitoring type `hertzbeat_auth` configuration parameters, such as `app, category, etc`.
 
 ```yaml
 # This monitoring type belongs to the category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -101,9 +108,9 @@ metrics: ....
 
 ```
 
-### Define indicator group `auth` login request to get `token`
+### Define metrics group `auth` login request to get `token`
 
-1. Add an index group definition `auth` in `app-hertzbeat_token.yml`, set the collection priority to the highest 0, and collect the index `token`.
+1. Add an index group definition `auth` in `hertzbeat_token`, set the collection priority to the highest 0, and collect the index `token`.
 
 ```yaml
 
@@ -196,7 +203,7 @@ metrics:
 
 ```
 
-**At this time, restart the hertzbeat system, add `hertzbeat_token` type monitoring on the system page, configure input parameters, `content-type` fill in `application/json`, `request Body` fill in the account password json as follows: **
+**At this time, save and apply, add `hertzbeat_token` type monitoring on the system page, configure input parameters, `content-type` fill in `application/json`, `request Body` fill in the account password json as follows: **
 
 ```json
 {
@@ -233,7 +240,7 @@ metrics:
          bearerTokenToken: ^o^token^o^
 ```
 
-**The final `app-hertzbeat_token.yml` is defined as follows:**
+**The final `hertzbeat_token` template yml is defined as follows:**
 
 ```yaml
 
@@ -368,7 +375,7 @@ metrics:
 
 ```
 
-**After the configuration is complete, restart the `hertzbeat` system again, and check the monitoring details page**
+**After the configuration is complete, save and apply, and check the monitoring details page**
 
 ![](/img/docs/advanced/extend-http-example-8.png)
 
@@ -384,7 +391,7 @@ metrics:
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please give us a star on GitHub Gitee, thank you very much. Thanks for the old iron support. Refill!
+If you think hertzbeat is a good open source project, please give us a star on GitHub Gitee, thank you very much.  
 
 **github: https://github.com/dromara/hertzbeat**
 

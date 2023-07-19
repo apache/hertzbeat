@@ -111,9 +111,9 @@
   style="width: 100%; height: 400px; margin-top: 1%"
 ></div>
 
-<div nz-row nzGutter="16" style="margin-top: 25px">
-  <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md">
-    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate">
+<div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
+  <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md" style="height: 100%">
+    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
@@ -139,7 +139,7 @@
       </nz-timeline>
     </nz-card>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="7" class="mb-md">
+  <div nz-col nzXs="24" nzSm="12" nzMd="7" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsEChartOption"
@@ -147,11 +147,11 @@
       [autoResize]="true"
       [loading]="alertsLoading"
       (chartInit)="onAlertNumChartInit($event)"
-      style="width: 100%; height: 300px; padding-left: 30px"
+      style="width: 100%; height: inherit; padding-left: 30px"
       class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="5" class="mb-md">
+  <div nz-col nzXs="24" nzSm="12" nzMd="5" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsDealEChartOption"
@@ -159,7 +159,7 @@
       [autoResize]="true"
       [loading]="alertsDealLoading"
       (chartInit)="onAlertRateChartInit($event)"
-      style="width: 100%; height: 300px"
+      style="width: 100%; height: inherit"
       class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>

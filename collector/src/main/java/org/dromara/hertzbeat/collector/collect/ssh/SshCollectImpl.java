@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.collector.collect.ssh;
 
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
@@ -24,8 +25,8 @@ import org.dromara.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.dromara.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.collector.util.PrivateKeyUtils;
 import org.dromara.hertzbeat.common.constants.CollectorConstants;
-import org.dromara.hertzbeat.collector.util.KeyPairUtil;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -39,8 +40,10 @@ import org.apache.sshd.client.session.ClientSession;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,7 +58,6 @@ import java.util.stream.Collectors;
  * ssh协议采集实现
  *
  * @author tom
- *
  */
 @Slf4j
 public class SshCollectImpl extends AbstractCollect {
@@ -63,7 +65,7 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
-    
+
     private static final int DEFAULT_TIMEOUT = 10_000;
 
     public SshCollectImpl() {
@@ -236,7 +238,7 @@ public class SshCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         }
     }
-    
+
     private void removeConnectSessionCache(SshProtocol sshProtocol) {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
@@ -245,7 +247,7 @@ public class SshCollectImpl extends AbstractCollect {
         CommonCache.getInstance().removeCache(identifier);
     }
 
-    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException {
+    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
                 .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
@@ -274,14 +276,11 @@ public class SshCollectImpl extends AbstractCollect {
         if (StringUtils.hasText(sshProtocol.getPassword())) {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
         } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var keyPair = KeyPairUtil.getKeyPairFromPrivateKey(sshProtocol.getPrivateKey());
-            if (keyPair != null) {
-                clientSession.addPublicKeyIdentity(keyPair);
-            }
-        } else {
-            clientSession.close();
-            throw new IllegalArgumentException("please input password or secret.");
-        }
+            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
+            SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), null)
+                    .forEach(clientSession::addPublicKeyIdentity);
+        }  // else auth with localhost private public key certificates
+        
         // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             clientSession.close();

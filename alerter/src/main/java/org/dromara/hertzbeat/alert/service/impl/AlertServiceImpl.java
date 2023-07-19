@@ -134,6 +134,12 @@ public class AlertServiceImpl implements AlertService {
         alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
     }
 
+    @Override
+    public List<Alert> getAlerts(Specification<Alert> specification) {
+
+        return alertDao.findAll(specification);
+    }
+
     /**
      * The external alarm information is converted to Alert  对外告警信息 转换为Alert
      * @param alertReport 对外告警信息

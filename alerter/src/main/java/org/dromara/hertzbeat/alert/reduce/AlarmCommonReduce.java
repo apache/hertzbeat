@@ -36,16 +36,16 @@ public class AlarmCommonReduce {
 		System.out.println(tags);
 	    String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
 	    if (monitorIdStr == null) {
-		    log.error("alert tags monitorId can not be null: {}.", alert);
-		    return;
-	    }
-	    long monitorId = Long.parseLong(monitorIdStr);
-	    List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
-		tagList.forEach(tag -> {
-			if (!tags.containsKey(tag.getName())) {
-				tags.put(tag.getName(), tag.getValue());
-			}
-		});
+            log.debug("receiver extern alarm message: {}", alert);
+	    } else {
+            long monitorId = Long.parseLong(monitorIdStr);
+            List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
+            tagList.forEach(tag -> {
+                if (!tags.containsKey(tag.getName())) {
+                    tags.put(tag.getName(), tag.getValue());
+                }
+            });   
+        }
 		// converge -> silence
 	    if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
 			dataQueue.sendAlertsData(alert);
