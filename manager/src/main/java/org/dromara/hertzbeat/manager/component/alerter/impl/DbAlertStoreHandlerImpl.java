@@ -39,43 +39,44 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
+    
     private final MonitorService monitorService;
+    
     private final AlertService alertService;
 
     @Override
     public void store(Alert alert) {
-        // todo Using the cache does not directly manipulate the library
         Map<String, String> tags = alert.getTags();
         String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
-        if (monitorIdStr == null) {
-            log.error("alert tags monitorId is null.");
-            return;
-        }
-        long monitorId = Long.parseLong(monitorIdStr);
-        Monitor monitor = monitorService.getMonitor(monitorId);
-        if (monitor == null) {
-            log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
-            return;
-        }
-        if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
-            // When monitoring is not managed, ignore and silence its alarm messages
-            // 当监控未管理时  忽略静默其告警信息
-            return;
-        }
-        if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
-            if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
-                // Availability Alarm Need to change the monitoring status to unavailable
-                // 可用性告警 需变更监控状态为不可用
-                monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
+        if (monitorIdStr != null) {
+            long monitorId = Long.parseLong(monitorIdStr);
+            Monitor monitor = monitorService.getMonitor(monitorId);
+            if (monitor == null) {
+                log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
+                return;
             }
+            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+                // When monitoring is not managed, ignore and silence its alarm messages
+                // 当监控未管理时  忽略静默其告警信息
+                return;
+            }
+            if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
+                if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
+                    // Availability Alarm Need to change the monitoring status to unavailable
+                    // 可用性告警 需变更监控状态为不可用
+                    monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
+                }
+            } else {
+                // If the alarm is restored, the monitoring state needs to be restored
+                // 若是恢复告警 需对监控状态进行恢复
+                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+                    monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
+                }
+            }    
         } else {
-            // If the alarm is restored, the monitoring state needs to be restored
-            // 若是恢复告警 需对监控状态进行恢复
-            if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
-                monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
-            }
+            log.debug("store extern alert content: {}.", alert);
         }
-        // Alarm drop library  告警落库
+        // Alarm store db
         alertService.addAlert(alert);
     }
 }
