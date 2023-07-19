@@ -8,7 +8,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -17,6 +16,7 @@ import org.dromara.hertzbeat.common.queue.impl.KafkaCommonDataQueue;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +106,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             // collector timeout
             ChannelId channelId = ctx.channel().id();
             String collector = channelCollectorMap.get(channelId);
-            if (org.springframework.util.StringUtils.hasText(collector)) {
+            if (StringUtils.hasText(collector)) {
                 collectorScheduling.collectorGoOffline(collector);
             }
             ctx.channel().closeFuture();

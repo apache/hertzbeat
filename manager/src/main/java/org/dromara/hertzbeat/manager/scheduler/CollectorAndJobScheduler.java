@@ -117,7 +117,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     // 构造采集任务Job实体
                     Job appDefine = appService.getAppDefine(monitor.getApp());
                     // todo 这里暂时是深拷贝处理
-                    appDefine = JsonUtil.fromJson(JsonUtil.toJson(appDefine), Job.class);
+                    appDefine = appDefine.clone();
                     appDefine.setId(monitor.getJobId());
                     appDefine.setMonitorId(monitor.getId());
                     appDefine.setInterval(monitor.getIntervals());

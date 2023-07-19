@@ -5,10 +5,11 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
+import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
-import org.dromara.hertzbeat.common.util.JsonUtil;
+import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
@@ -49,10 +50,18 @@ public class SchedulerInit implements CommandLineRunner {
     private ParamDao paramDao;
     
     @Autowired
+    private CollectorDao collectorDao;
+    
+    @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
     
     @Override
     public void run(String... args) throws Exception {
+        // init pre collector status
+        List<Collector> collectors = collectorDao.findAll().stream()
+                                             .peek(item -> item.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE))
+                                             .collect(Collectors.toList());
+        collectorDao.saveAll(collectors);
         // insert default consistent node
         CollectorInfo collectorInfo = CollectorInfo.builder()
                                               .name(CommonConstants.MAIN_COLLECTOR_NODE)
@@ -69,7 +78,7 @@ public class SchedulerInit implements CommandLineRunner {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 // todo 这里暂时是深拷贝处理
-                appDefine = JsonUtil.fromJson(JsonUtil.toJson(appDefine), Job.class);
+                appDefine = appDefine.clone();
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());
