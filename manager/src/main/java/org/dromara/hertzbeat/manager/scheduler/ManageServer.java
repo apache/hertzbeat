@@ -2,12 +2,15 @@ package org.dromara.hertzbeat.manager.scheduler;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
+import org.dromara.hertzbeat.common.util.NetworkUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -44,8 +47,17 @@ public class ManageServer {
         commonThreadPool.execute(() -> {
             Thread.currentThread().setName("cluster netty server");
             int port = properties.getServer().getPort();
-            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            EventLoopGroup bossGroup;
+            EventLoopGroup workerGroup;
+
+            if (this.useEpoll()) {
+                bossGroup = new EpollEventLoopGroup(1);
+                workerGroup = new EpollEventLoopGroup();
+            } else {
+                bossGroup = new NioEventLoopGroup(1);
+                workerGroup = new NioEventLoopGroup();
+            }
+
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -63,5 +75,8 @@ public class ManageServer {
         });
     }
     
-    
+    private boolean useEpoll() {
+        return NetworkUtil.isLinuxPlatform()
+                && Epoll.isAvailable();
+    }
 }
