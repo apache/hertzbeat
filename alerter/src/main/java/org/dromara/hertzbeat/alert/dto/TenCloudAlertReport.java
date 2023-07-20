@@ -3,6 +3,8 @@ package org.dromara.hertzbeat.alert.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -11,9 +13,10 @@ import java.io.Serializable;
  * @author zqr10159
  * 腾讯云告警实体类
  */
-@lombok.Data
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TenCloudAlertReport implements Serializable {
     @JsonProperty("sessionID")
     private String sessionId;
@@ -25,7 +28,7 @@ public class TenCloudAlertReport implements Serializable {
     private int durationTime;
     private String recoverTime;
 
-    @lombok.Data
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AlarmObjInfo {
@@ -37,7 +40,7 @@ public class TenCloudAlertReport implements Serializable {
         private Dimensions dimensions;
     }
 
-    @lombok.Data
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Dimensions {
@@ -46,7 +49,7 @@ public class TenCloudAlertReport implements Serializable {
         @JsonProperty("objID")
         private String objId;
     }
-    @lombok.Data
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AlarmPolicyInfo {
@@ -58,7 +61,7 @@ public class TenCloudAlertReport implements Serializable {
         private String policyTypeCname;
         private Conditions conditions;
     }
-    @lombok.Data
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Conditions {
