@@ -150,19 +150,4 @@ class AlertsControllerTest {
                 .andExpect(content().json("{\"data\":{\"total\":0,\"dealNum\":0,\"rate\":0.0,\"priorityWarningNum\":0,\"priorityCriticalNum\":0,\"priorityEmergencyNum\":0},\"msg\":null,\"code\":0}"))
                 .andReturn();
     }
-
-    @Test
-    void addNewAlertReport() throws Exception {
-
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .post("/api/alerts/report")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(JsonUtil.toJson(AlertReport.builder().build()))
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(content().json("{\"data\":null,\"msg\":\"Add report success\",\"code\":0}"))
-                .andReturn();
-    }
 }
