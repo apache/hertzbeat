@@ -5,5 +5,8 @@ package org.dromara.hertzbeat.alert.service;
  * Alert Convert Interface
  */
 public interface AlertConvertService<T> {
+    /*
+    Alert Convert Method
+     */
     T convert(String json);
 }
