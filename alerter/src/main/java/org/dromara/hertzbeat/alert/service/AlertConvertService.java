@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.alert.service;
 
 /**
  * Alert Convert Interface.
- *
+ * @author zqr10159
  * @param <T> the type of object to convert the JSON into
  */
 public interface AlertConvertService<T> {
