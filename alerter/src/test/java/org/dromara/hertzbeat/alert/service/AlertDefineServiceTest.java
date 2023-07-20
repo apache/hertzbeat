@@ -110,7 +110,7 @@ class AlertDefineServiceTest {
     @Test
     void getAlertDefine() {
         long id = 1L;
-        AlertDefine alertDefine = AlertDefine.builder().id(1L).build();
+        AlertDefine alertDefine = AlertDefine.builder().id(id).build();
         when(alertDefineDao.findById(id)).thenReturn(Optional.of(alertDefine));
         assertDoesNotThrow(() -> alertDefineService.getAlertDefine(id));
     }
