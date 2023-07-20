@@ -18,10 +18,8 @@
 package org.dromara.hertzbeat.alert.controller;
 
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
-import org.dromara.hertzbeat.alert.service.impl.AlertConvertTenCloudServiceImpl;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +34,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -145,15 +142,5 @@ public class AlertsController {
         Message<AlertSummary> message = new Message<>(alertSummary);
         return ResponseEntity.ok(message);
     }
-
-    @PostMapping("/report")
-    @Operation(summary = "Interface for reporting external alarm information ｜ 对外上报告警信息 接口",
-            description = "对外 新增一个告警")
-    public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
-        // 校验请求数据 TODO
-        alertService.addNewAlertReport(alertReport);
-        return ResponseEntity.ok(new Message<>("Add report success"));
-    }
-
-
+    
 }
