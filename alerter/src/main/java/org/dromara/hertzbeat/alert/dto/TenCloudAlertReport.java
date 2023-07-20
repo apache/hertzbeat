@@ -1,14 +1,15 @@
 package org.dromara.hertzbeat.alert.dto;
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.OffsetDateTime;
-import java.util.Date;
 
+/**
+ * @author zqr10159
+ * 腾讯云告警实体类
+ */
 @lombok.Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class TenCloudAlertReport implements Serializable {
     private AlarmObjInfo alarmObjInfo;
     private AlarmPolicyInfo alarmPolicyInfo;
     private String firstOccurTime;
-    private long durationTime;
+    private int durationTime;
     private String recoverTime;
 
     @lombok.Data
