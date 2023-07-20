@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.alert.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +15,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TenCloudAlertReport implements Serializable {
-    private String sessionID;
+    @JsonProperty("sessionID")
+    private String sessionId;
     private String alarmStatus;
     private String alarmType;
     private AlarmObjInfo alarmObjInfo;
@@ -29,7 +31,8 @@ public class TenCloudAlertReport implements Serializable {
     public static class AlarmObjInfo {
         private String region;
         private String namespace;
-        private String appID;
+        @JsonProperty("appID")
+        private String appId;
         private String uin;
         private Dimensions dimensions;
     }
@@ -38,17 +41,21 @@ public class TenCloudAlertReport implements Serializable {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Dimensions {
-        private String unInstanceID;
-        private String objID;
+        @JsonProperty("unInstanceID")
+        private String unInstanceId;
+        @JsonProperty("objID")
+        private String objId;
     }
     @lombok.Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AlarmPolicyInfo {
-        private String policyID;
+        @JsonProperty("policyID")
+        private String policyId;
         private String policyType;
         private String policyName;
-        private String policyTypeCName;
+        @JsonProperty("policyTypeCName")
+        private String policyTypeCname;
         private Conditions conditions;
     }
     @lombok.Data

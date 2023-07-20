@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 
 /**
@@ -31,12 +29,11 @@ public class AlertConvertTenCloudServiceImpl implements AlertConvertService<Aler
         try {
             tenCloudAlertReport = objectMapper.readValue(json, TenCloudAlertReport.class);
             StringBuilder contentBuilder = new StringBuilder();
-            String content = contentBuilder.append("[").append("告警对象：")
+            String content = contentBuilder.append("[").append("告警对象：地区")
                     .append(tenCloudAlertReport.getAlarmObjInfo().getRegion()).append("|")
-                    .append(tenCloudAlertReport.getAlarmObjInfo().getNamespace()).append("|")
-                    .append(tenCloudAlertReport.getAlarmObjInfo().getAppID()).append("]")
+                    .append(tenCloudAlertReport.getAlarmObjInfo().getNamespace()).append("]")
                     .append("[").append("告警内容：")
-                    .append(tenCloudAlertReport.getAlarmPolicyInfo().getPolicyTypeCName()).append("|")
+                    .append(tenCloudAlertReport.getAlarmPolicyInfo().getPolicyTypeCname()).append("|")
                     .append(tenCloudAlertReport.getAlarmPolicyInfo().getConditions().getMetricShowName()).append("|")
                     .append(tenCloudAlertReport.getAlarmPolicyInfo().getConditions().getMetricName())
                     .append(tenCloudAlertReport.getAlarmPolicyInfo().getConditions().getCalcType())
@@ -46,7 +43,7 @@ public class AlertConvertTenCloudServiceImpl implements AlertConvertService<Aler
                     .append(tenCloudAlertReport.getAlarmPolicyInfo().getConditions().getCurrentValue())
                     .append(tenCloudAlertReport.getAlarmPolicyInfo().getConditions().getCalcUnit()).append("]").toString();
 
-            HashMap<String, String> tagMap = new HashMap<>();
+            HashMap<String, String> tagMap = new HashMap<>(1);
             tagMap.put("app", "TenCloud");
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             long occurTime = sdf.parse(tenCloudAlertReport.getFirstOccurTime()).getTime();
