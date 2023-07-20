@@ -1251,6 +1251,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "a-little-fool",
+      "name": "小笨蛋",
+      "avatar_url": "https://avatars.githubusercontent.com/u/105542329?v=4",
+      "profile": "https://github.com/a-little-fool",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
