@@ -543,7 +543,7 @@ public class HttpCollectImpl extends AbstractCollect {
         // 判断是否使用Bearer Token认证
         if (httpProtocol.getAuthorization() != null) {
             HttpProtocol.Authorization authorization = httpProtocol.getAuthorization();
-            if (DispatchConstants.BEARER_TOKEN.equals(authorization.getType())) {
+            if (DispatchConstants.BEARER_TOKEN.equalsIgnoreCase(authorization.getType())) {
                 // 若使用 将token放入到header里面
                 String value = DispatchConstants.BEARER + " " + authorization.getBearerTokenToken();
                 requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
