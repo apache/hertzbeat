@@ -39,7 +39,7 @@ An open-source, real-time monitoring system with custom monitoring and agentless
 * Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any desired metrics by simply configuring the `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
 * Powerful customization, multi-type support, easy expansion, and low coupling.
 
-HertzBeat aims to help developers and small teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
+HertzBeat aims to help developers and teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ----
 
