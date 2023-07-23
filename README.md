@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open source, real-time monitoring system with custom-monitoring and agentLess. | 易用友好的开源实时监控告警系统，无需Agent，强大自定义监控能力.   
+An open-source, real-time monitoring system with custom monitoring and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，强大自定义监控能力.   
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,24 +30,24 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
-> **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.      
-> Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
-> More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.  
+[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring and agentless capabilities. It combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
-> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?   
+### Features
 
-> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
-> We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
+* Easy to use, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
+* Provides a more flexible threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
+* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any desired metrics by simply configuring the `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+* Powerful customization, multi-type support, easy expansion, and low coupling.
 
-----   
+HertzBeat aims to help developers and teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
+
+----
 
 [![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)   
 
 [![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/) 
 
-----   
+----
 
 ## 🥐 Architecture   
 
@@ -55,7 +55,7 @@
 
 ## ⛄ Supported   
 
-> We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.       
+> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing users to import them to support corresponding types of monitoring.
 > Welcome everyone to contribute your customized general monitoring type YML template during use.
 
 
@@ -92,8 +92,8 @@
 
 ## 🐕 Quick Start   
 
-- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In For Free](https://console.tancloud.cn)**.   
-- If you want to deploy HertzBeat local, please refer to the following Deployment Documentation for operation.  
+- If you prefer to use HertzBeat directly without deploying it, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In For Free](https://console.tancloud.cn)**.   
+- If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat   
 
@@ -146,7 +146,7 @@ Detailed steps refer to [Install via Docker-Compose](script/docker-compose/READM
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:     
+Thanks to these wonderful people, welcome to join us:     
 [Contributor Guide](CONTRIBUTING.md)   
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
