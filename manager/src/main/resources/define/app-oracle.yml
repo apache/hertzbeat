@@ -192,7 +192,8 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
-      queryType: oneRow
+      queryType: multiRow
+      
       sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
       url: ^_^url^_^
 
@@ -507,4 +508,45 @@ metrics:
       timeout: ^_^timeout^_^
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
+      url: ^_^url^_^
+
+  - name: slow_query
+    priority: 1
+    fields:
+      - field: sql_id
+        type: 1
+      - field: child_number
+        type: 1
+      - field: executions
+        type: 1
+        unit: 次数
+      - field: per_secs
+        type: 1
+        unit: 秒
+      - field: cpu_secs
+        type: 1
+        unit: 秒
+      - field: buffer_gets
+        type: 1
+      - field: disk_reads
+        type: 1
+      - field: fetches
+        type: 1
+      - field: parse_calls
+        type: 1
+      - field: optimizer_cost
+        type: 1
+      - field: sql_text
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM (SELECT sql_id, child_number, executions, ROUND(CASE WHEN executions = 0 THEN NULL ELSE elapsed_time / (executions*1000000) END,4) AS per_secs, cpu_time / 1000000 AS cpu_secs, buffer_gets, disk_reads, fetches, parse_calls, optimizer_cost, sql_text FROM  v$sql  ) where rownum <= 10 ORDER BY  per_secs DESC
       url: ^_^url^_^
