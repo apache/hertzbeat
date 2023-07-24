@@ -509,6 +509,7 @@ metrics:
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
       url: ^_^url^_^
+
   - name: slow_query
     priority: 1
     fields:
