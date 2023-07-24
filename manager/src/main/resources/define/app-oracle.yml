@@ -193,7 +193,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: multiRow
-      #oneRow显示不全列表
+      
       sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
       url: ^_^url^_^
 
@@ -509,7 +509,6 @@ metrics:
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
       url: ^_^url^_^
-#慢sql展示
   - name: slow_query
     priority: 1
     fields:
