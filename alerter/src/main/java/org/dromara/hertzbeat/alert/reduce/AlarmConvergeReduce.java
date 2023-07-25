@@ -80,6 +80,8 @@ public class AlarmConvergeReduce {
                             return false;
                         }
                     });
+                } else {
+                    match = true;
                 }
                 if (match && alertConverge.getPriorities() != null && !alertConverge.getPriorities().isEmpty()) {
                     match = alertConverge.getPriorities().stream().anyMatch(item -> item != null && item == currentAlert.getPriority());
