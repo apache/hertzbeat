@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
@@ -133,6 +134,12 @@ public class AlertServiceImpl implements AlertService {
         alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
     }
 
+    @Override
+    public List<Alert> getAlerts(Specification<Alert> specification) {
+
+        return alertDao.findAll(specification);
+    }
+
     /**
      * The external alarm information is converted to Alert  对外告警信息 转换为Alert
      * @param alertReport 对外告警信息
@@ -160,5 +167,7 @@ public class AlertServiceImpl implements AlertService {
                 .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneId.systemDefault()))
                 .build();
     }
+
+
 
 }

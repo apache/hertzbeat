@@ -6,7 +6,7 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 通过此教程我们一步一步描述如何在教程一的基础上改造，新增一个指标组，先调用认证接口获取TOKEN后，使用TOKEN作为参数供后面的指标组采集认证使用。
 
-阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http.md)了解熟悉了怎么自定义类型，指标，协议等。   
+阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
 
 ### 请求流程   
 
@@ -37,9 +37,7 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 ### 新增自定义监控类型`hertzbeat_token`
 
-1. 自定义监控类型需新增配置YML文件,我们直接复用教程一的 `hertzbeat` 监控类型，在其基础上修改
-
-用监控类型命名的监控配置定义文件 - app-hertzbeat_token.yml 需位于安装目录 /hertzbeat/define/ 下
+1. 自定义监控类型需新增配置监控模版YML,我们直接复用教程一的 `hertzbeat` 监控类型，在其基础上修改
 
 监控配置定义文件是用来定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。
 我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。

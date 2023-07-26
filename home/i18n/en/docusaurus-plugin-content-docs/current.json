@@ -8,7 +8,7 @@
     "description": "The label for category quickstart in sidebar docs"
   },
   "sidebar.docs.category.custom": {
-    "message": "Custom Monitor",
+    "message": "Custom Monitoring",
     "description": "The label for category custom in sidebar docs"
   },
   "sidebar.docs.category.http": {
@@ -66,5 +66,13 @@
   "sidebar.docs.link.Install via HuaweiCloud": {
     "message": "Install via HuaweiCloud",
     "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+  },
+  "sidebar.docs.category.jmx": {
+    "message": "JMX Protocol",
+    "description": "The label for category jmx in sidebar docs"
+  },
+  "sidebar.docs.category.snmp": {
+    "message": "SNMP Protocol",
+    "description": "The label for category snmp in sidebar docs"
   }
 }
