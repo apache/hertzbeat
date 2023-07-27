@@ -17,13 +17,16 @@ Website: hertzbeat.com | tancloud.cn
 
 ### What is HertzBeat?
 
-> HertzBeat is an open source real-time monitoring and alerting tool with powerful custom monitoring capabilities and no Agent required.     
-> It supports monitoring of application services, database, operating system, middleware, cloud native, network and other metrics, and threshold alert notification in one step.   
-> Support more liberal threshold rules (calculation expressions), `email` `Discord` `Slack` `Telegram` `Pegging` `WeChat` `FlyBook` `SMS` `Webhook` and other ways to timely delivery.
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
+> **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.      
+> Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
+> More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-> We have made the protocol specifications such as `Http,Jmx,Ssh,Snmp,Jdbc` configurable so that you can simply configure `YML` to use these protocols to customize the collection of any metrics you want.
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
-> Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by defining YML?
+> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
+> We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)

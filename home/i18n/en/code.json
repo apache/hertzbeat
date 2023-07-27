@@ -203,7 +203,7 @@
     "message": "Convenient"
   },
   "custom-multi-support": {
-    "message": "Custom Monitor"
+    "message": "Custom Monitoring"
   },
   "opensource": {
     "message": "Opensource Friendly"
@@ -471,5 +471,11 @@
   },
   "quickstart": {
     "message": "Quick Start"
+  },
+  "Support HertzBeat": {
+    "message": "Support HertzBeat"
+  },
+  "Go to Github": {
+    "message": "Go to Github"
   }
 }

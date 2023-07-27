@@ -3,7 +3,7 @@ id: extend-http-jsonpath
 title: HTTP Protocol JsonPath Parsing Method  
 sidebar_label: JsonPath Parsing Method
 ---
-> After calling the HTTP interface to obtain the response data, use JsonPath script parsing method to parse the response data.
+> After calling the HTTP api to obtain the response data, use JsonPath script parsing method to parse the response data.
 
 Note⚠️ The response data is JSON format. 
 
@@ -95,7 +95,7 @@ We use the jsonpath script to parse, and the corresponding script is: `$.number[
 ```
 This data structure conforms to the data format specification of HertzBeat, and the Metric `type,num` is successfully extracted.
 
-**The corresponding monitoring configuration definition file YML can be configured as follows**   
+**The corresponding monitoring template yml can be configured as follows**   
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

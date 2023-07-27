@@ -15,7 +15,7 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
 # 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控 mid-中间件
-category: custom
+category: mid
 # The monitoring: airflow
 # 监控类型 airflow
 app: airflow
@@ -78,10 +78,6 @@ params:
     hide: true
     required: false
 
-
-
-
-
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
@@ -124,15 +120,10 @@ metrics:
         type: 1
       - field: git_version
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: /api/v1/version
       timeout: ^_^timeout^_^
       method: GET

@@ -60,6 +60,20 @@
           "items": [
             "advanced/extend-ssh"
           ]
+        },
+        {
+          "type": "category",
+          "label": "jmx",
+          "items": [
+            "advanced/extend-jmx"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "snmp",
+          "items": [
+            "advanced/extend-snmp"
+          ]
         }
       ]
     },

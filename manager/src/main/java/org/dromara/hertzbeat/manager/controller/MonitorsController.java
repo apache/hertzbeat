@@ -99,11 +99,11 @@ public class MonitorsController {
 			if (StringUtils.hasText(tag)) {
 				String[] tagArr = tag.split(":");
 				String tagName = tagArr[0];
-				String tagValue = tagArr[1];
 				ListJoin<Monitor, org.dromara.hertzbeat.common.entity.manager.Tag> tagJoin = root
 						.join(root.getModel()
 								.getList("tags", org.dromara.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
 				if (tagArr.length == TAG_LENGTH) {
+					String tagValue = tagArr[1];
 					andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
 					andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagValue));
 				} else {
