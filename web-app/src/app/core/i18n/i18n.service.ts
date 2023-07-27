@@ -1,5 +1,6 @@
 import { Platform } from '@angular/cdk/platform';
 import { registerLocaleData } from '@angular/common';
+import { HttpHeaders } from '@angular/common/http';
 import ngEn from '@angular/common/locales/en';
 import ngZh from '@angular/common/locales/zh';
 import ngZhTw from '@angular/common/locales/zh-Hant';
@@ -94,7 +95,8 @@ export class I18NService extends AlainI18nBaseService {
   }
 
   loadLangData(lang: string): Observable<NzSafeAny> {
-    return zip(this.http.get(`./assets/i18n/${lang}.json`), this.http.get(`/i18n/${lang}`)).pipe(
+    const headers = new HttpHeaders({ 'Cache-Control': 'no-cache' });
+    return zip(this.http.get(`./assets/i18n/${lang}.json`, null, { headers: headers }), this.http.get(`/i18n/${lang}`)).pipe(
       map(([langLocalData, langRemoteData]: [Record<string, string>, Message<any>]) => {
         let remote: Record<string, string> = langRemoteData.data;
         Object.keys(remote).forEach(key => {
