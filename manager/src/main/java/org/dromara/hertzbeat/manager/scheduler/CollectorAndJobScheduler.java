@@ -12,6 +12,7 @@ import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -127,6 +129,16 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     List<Configmap> configmaps = params.stream()
                                                          .map(param -> new Configmap(param.getField(), param.getValue(),
                                                                  param.getType())).collect(Collectors.toList());
+                    List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                                                                  .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                                                                  .collect(Collectors.toList());
+                    paramDefaultValue.forEach(defaultVar -> {
+                        if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                            // todo type
+                            Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                            configmaps.add(configmap);
+                        }
+                    });
                     appDefine.setConfigmap(configmaps);
                     long jobId = addAsyncCollectJob(appDefine, identity);
                     monitor.setJobId(jobId);

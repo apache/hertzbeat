@@ -9,6 +9,7 @@ import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
@@ -77,8 +78,6 @@ public class SchedulerInit implements CommandLineRunner {
             try {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
-                // todo 这里暂时是深拷贝处理
-                appDefine = appDefine.clone();
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());
@@ -88,6 +87,16 @@ public class SchedulerInit implements CommandLineRunner {
                 List<Configmap> configmaps = params.stream()
                                                      .map(param -> new Configmap(param.getField(), param.getValue(),
                                                              param.getType())).collect(Collectors.toList());
+                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                                                              .collect(Collectors.toList());
+                paramDefaultValue.forEach(defaultVar -> {
+                    if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                        // todo type
+                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                        configmaps.add(configmap);
+                    }
+                });
                 appDefine.setConfigmap(configmaps);
                 String collector = monitorIdCollectorMap.get(monitor.getId());
                 long jobId;

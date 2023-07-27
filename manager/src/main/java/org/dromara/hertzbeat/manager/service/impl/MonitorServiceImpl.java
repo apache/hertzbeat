@@ -719,6 +719,16 @@ public class MonitorServiceImpl implements MonitorService {
                 
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                                                              .collect(Collectors.toList());
+                paramDefaultValue.forEach(defaultVar -> {
+                    if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                        // todo type
+                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                        configmaps.add(configmap);
+                    }
+                });
                 appDefine.setConfigmap(configmaps);
                 // 下发采集任务
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
