@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.collector.collect.ssh;
 
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
+import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
@@ -45,9 +46,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,17 +95,15 @@ public class SshCollectImpl extends AbstractCollect {
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
-            if (!channel.open().verify(timeout).isOpened()) {
-                removeConnectSessionCache(sshProtocol);
-                channel.close();
-                clientSession.close();
-                throw new Exception("ssh channel open failed");
-            }
+            channel.setErr(new NoCloseOutputStream(System.err));
+            channel.open().verify(timeout);
             List<ClientChannelEvent> list = new ArrayList<>();
             list.add(ClientChannelEvent.CLOSED);
-            channel.waitFor(list, timeout);
+            Collection<ClientChannelEvent> waitEvents = channel.waitFor(list, timeout);
+            if (waitEvents.contains(ClientChannelEvent.TIMEOUT)) {
+                throw new SocketTimeoutException("Failed to retrieve command result in time: " + sshProtocol.getScript());
+            }
             Long responseTime = System.currentTimeMillis() - startTime;
-            channel.close();
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -132,7 +133,6 @@ public class SshCollectImpl extends AbstractCollect {
             Throwable throwable = sshException.getCause();
             if (throwable instanceof SshChannelOpenException) {
                 log.warn("Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
-                removeConnectSessionCache(sshProtocol);
             }
             String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
