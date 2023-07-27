@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -65,8 +67,6 @@ public class JobSchedulerInit implements CommandLineRunner {
             try {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
-                // todo 这里暂时是深拷贝处理
-                appDefine = JsonUtil.fromJson(JsonUtil.toJson(appDefine), Job.class);
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());
@@ -75,6 +75,16 @@ public class JobSchedulerInit implements CommandLineRunner {
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param ->
                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                                                              .collect(Collectors.toList());
+                paramDefaultValue.forEach(defaultVar -> {
+                    if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                        // todo type
+                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                        configmaps.add(configmap);
+                    }
+                });
                 appDefine.setConfigmap(configmaps);
                 // 下发采集任务
                 long jobId = collectJobService.addAsyncCollectJob(appDefine);

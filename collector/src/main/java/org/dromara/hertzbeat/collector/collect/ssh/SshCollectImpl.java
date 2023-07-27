@@ -88,10 +88,12 @@ public class SshCollectImpl extends AbstractCollect {
             return;
         }
         SshProtocol sshProtocol = metrics.getSsh();
+        boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
         int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
         ClientChannel channel = null;
+        ClientSession clientSession = null;
         try {
-            ClientSession clientSession = getConnectSession(sshProtocol, timeout);
+            clientSession = getConnectSession(sshProtocol, timeout, reuseConnection);
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
@@ -151,6 +153,13 @@ public class SshCollectImpl extends AbstractCollect {
             if (channel != null && channel.isOpen()) {
                 try {
                     channel.close();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+            if (clientSession != null && !reuseConnection) {
+                try {
+                    clientSession.close();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -258,28 +267,31 @@ public class SshCollectImpl extends AbstractCollect {
         CommonCache.getInstance().removeCache(identifier);
     }
 
-    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout) throws IOException, GeneralSecurityException {
+    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
+            throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                .build();
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+                                             .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
+                                             .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
+                                             .build();
         ClientSession clientSession = null;
-        if (cacheOption.isPresent()) {
-            clientSession = ((SshConnect) cacheOption.get()).getConnection();
-            try {
-                if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
+        if (reuseConnection) {
+            Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+            if (cacheOption.isPresent()) {
+                clientSession = ((SshConnect) cacheOption.get()).getConnection();
+                try {
+                    if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
+                        clientSession = null;
+                        CommonCache.getInstance().removeCache(identifier);
+                    }
+                } catch (Exception e) {
+                    log.warn(e.getMessage());
                     clientSession = null;
                     CommonCache.getInstance().removeCache(identifier);
                 }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-                clientSession = null;
-                CommonCache.getInstance().removeCache(identifier);
             }
-        }
-        if (clientSession != null) {
-            return clientSession;
+            if (clientSession != null) {
+                return clientSession;
+            }   
         }
         SshClient sshClient = CommonSshClient.getSshClient();
         clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
@@ -297,8 +309,10 @@ public class SshCollectImpl extends AbstractCollect {
             clientSession.close();
             throw new IllegalArgumentException("ssh auth failed.");
         }
-        SshConnect sshConnect = new SshConnect(clientSession);
-        CommonCache.getInstance().addCache(identifier, sshConnect);
+        if (reuseConnection) {
+            SshConnect sshConnect = new SshConnect(clientSession);
+            CommonCache.getInstance().addCache(identifier, sshConnect);   
+        }
         return clientSession;
     }
 
