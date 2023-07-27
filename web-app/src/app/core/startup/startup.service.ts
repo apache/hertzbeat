@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ACLService } from '@delon/acl';
@@ -6,7 +6,7 @@ import { DA_SERVICE_TOKEN, ITokenService } from '@delon/auth';
 import { ALAIN_I18N_TOKEN, Menu, MenuService, SettingsService, TitleService } from '@delon/theme';
 import type { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { NzIconService } from 'ng-zorro-antd/icon';
-import { Observable, zip, of } from 'rxjs';
+import { Observable, zip } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ICONS } from '../../../style-icons';
@@ -39,9 +39,10 @@ export class StartupService {
 
   public loadConfigResourceViaHttp(): Observable<void> {
     const defaultLang = this.i18n.defaultLang;
+    const headers = new HttpHeaders({ 'Cache-Control': 'no-cache' });
     return zip(
       this.i18n.loadLangData(defaultLang),
-      this.httpClient.get('./assets/app-data.json'),
+      this.httpClient.get('./assets/app-data.json', { headers: headers }),
       this.httpClient.get('/apps/hierarchy')
     ).pipe(
       catchError((res: NzSafeAny) => {
@@ -74,7 +75,7 @@ export class StartupService {
             });
           }
         });
-        // 刷新菜单
+        // flush menu
         this.menuService.resume();
         // Can be set page suffix title, https://ng-alain.com/theme/title
         this.titleService.suffix = appData.app.name;
