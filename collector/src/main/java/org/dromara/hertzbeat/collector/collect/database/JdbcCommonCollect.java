@@ -32,6 +32,8 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -54,6 +56,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_ONE_ROW = "oneRow";
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
+    
+    private static final String RUN_SCRIPT = "runScript";
 
     public JdbcCommonCollect(){}
 
@@ -83,6 +87,11 @@ public class JdbcCommonCollect extends AbstractCollect {
                     break;
                 case QUERY_TYPE_COLUMNS:
                     queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                    break;
+                case RUN_SCRIPT:
+                    Connection connection = statement.getConnection();
+                    FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
+                    ScriptUtils.executeSqlScript(connection, rc);
                     break;
                 default:
                     builder.setCode(CollectRep.Code.FAIL);

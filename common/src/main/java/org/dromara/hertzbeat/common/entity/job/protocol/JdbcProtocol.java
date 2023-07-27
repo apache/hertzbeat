@@ -61,7 +61,7 @@ public class JdbcProtocol {
      */
     private String platform;
     /**
-     * SQL查询方式： oneRow, multiRow, columns
+     * SQL查询方式： oneRow, multiRow, columns, runScript
      */
     private String queryType;
     /**
