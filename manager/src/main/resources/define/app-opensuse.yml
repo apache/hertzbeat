@@ -83,6 +83,21 @@ params:
     defaultValue: 6000
   # field-param field key
   # field-变量字段标识符
+  - field: reuseConnection
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    defaultValue: true
+  # field-param field key
+  # field-变量字段标识符
   - field: username
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -169,6 +184,7 @@ metrics:
       # ssh private key
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
       script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
       # ssh response data parse type: oneRow, multiRow
@@ -217,6 +233,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: "LANG=C lscpu | awk -F: '$1==\"Model name\" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
       parseType: oneRow
 
@@ -262,6 +279,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
       parseType: multiRow
 
@@ -290,6 +308,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
       parseType: oneRow
 
@@ -313,6 +332,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
       parseType: multiRow
 
@@ -341,6 +361,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: df -m | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
       parseType: multiRow
 
@@ -366,6 +387,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: ps -aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
       parseType: multiRow
 
@@ -391,5 +413,6 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       script: ps -aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
       parseType: multiRow

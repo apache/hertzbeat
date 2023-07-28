@@ -101,10 +101,17 @@ export class MonitorEditComponent implements OnInit {
                 param.type = 1;
               }
               if (define.type === 'boolean') {
-                param.value = false;
-              }
-              if (param.field === 'host') {
+                param.value = define.defaultValue == 'true';
+              } else if (param.field === 'host') {
                 param.value = this.monitor.host;
+              } else if (define.defaultValue != undefined) {
+                if (define.type === 'number') {
+                  param.value = Number(define.defaultValue);
+                } else if (define.type === 'boolean') {
+                  param.value = define.defaultValue.toLowerCase() == 'true';
+                } else {
+                  param.value = define.defaultValue;
+                }
               }
             } else {
               if (define.type === 'boolean') {

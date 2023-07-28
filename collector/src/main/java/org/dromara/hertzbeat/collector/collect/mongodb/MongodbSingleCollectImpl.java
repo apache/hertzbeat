@@ -17,8 +17,8 @@
 
 package org.dromara.hertzbeat.collector.collect.mongodb;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -47,20 +47,18 @@ import lombok.extern.slf4j.Slf4j;
  * Mongodb 单机指标收集器
  *
  * @author <a href="mailto:liudonghua123@gmail.com">liudonghua</a>
- * @version 1.0
- *          Created by liudonghua on 2023/01/01
- *          see also https://www.mongodb.com/languages/java,
- *          https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
+ * see also https://www.mongodb.com/languages/java,
+ * https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
  */
 @Slf4j
 public class MongodbSingleCollectImpl extends AbstractCollect {
 
     /**
      * 支持的 mongodb diagnostic 命令，排除internal/deprecated相关的命令
-     * 可参考 https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/,
-     * https://www.mongodb.com/docs/mongodb-shell/run-commands/
+     * 可参考 <a href="https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/">...</a>,
+     * <a href="https://www.mongodb.com/docs/mongodb-shell/run-commands/">...</a>
      * 注意：一些命令需要相应的权限才能执行，否则执行虽然不会报错，但是返回的结果是空的，
-     * 详见 https://www.mongodb.com/docs/manual/reference/built-in-roles/
+     * 详见 <a href="https://www.mongodb.com/docs/manual/reference/built-in-roles/">...</a>
      */
     private static final String[] SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS = {
             "buildInfo",
@@ -199,14 +197,10 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
         // 复用失败则新建连接 connect to mongodb
         String url;
-        try {
-            // 密码可能包含特殊字符，需要使用类似js的encodeURIComponent进行编码，这里使用java的URLEncoder
-            url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
-                    URLEncoder.encode(mongodbProtocol.getPassword(), "UTF-8"), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
-                    mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        // 密码可能包含特殊字符，需要使用类似js的encodeURIComponent进行编码，这里使用java的URLEncoder
+        url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+                URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
+                mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
         mongoClient = MongoClients.create(url);
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
         CommonCache.getInstance().addCache(identifier, mongodbConnect);
