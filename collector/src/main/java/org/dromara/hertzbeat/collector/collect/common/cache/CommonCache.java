@@ -159,6 +159,7 @@ public class CommonCache {
      * @param timeDiff 缓存对象保存时间 millis
      */
     public void addCache(Object key, Object value, Long timeDiff) {
+        removeCache(key);
         if (timeDiff == null) {
             timeDiff = DEFAULT_CACHE_TIMEOUT;
         }

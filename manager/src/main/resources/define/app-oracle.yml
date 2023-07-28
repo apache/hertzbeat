@@ -313,11 +313,11 @@ metrics:
         type: 1
         instance: true
       - field: total
-        type: 1
+        type: 0
       - field: used
-        type: 1
+        type: 0
       - field: free
-        type: 1
+        type: 0
       - field: used_percentage
         type: 0
         unit: '%'
