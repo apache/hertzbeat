@@ -171,5 +171,5 @@ alerter:
 
 scheduler:
   server:
-    enabled: false
+    enabled: true
     port: 1158

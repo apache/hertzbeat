@@ -224,12 +224,12 @@ public class DispatchProperties {
             /**
              * connect cluster master ip
              */
-            private String masterIp;
+            private String managerIp;
             
             /**
              * connect cluster master port
              */
-            private int masterPort = 1158;
+            private int managerPort = 1158;
             
             public boolean isEnabled() {
                 return enabled;
@@ -247,20 +247,20 @@ public class DispatchProperties {
                 this.identity = identity;
             }
             
-            public String getMasterIp() {
-                return masterIp;
+            public String getManagerIp() {
+                return managerIp;
             }
             
-            public void setMasterIp(String masterIp) {
-                this.masterIp = masterIp;
+            public void setManagerIp(String managerIp) {
+                this.managerIp = managerIp;
             }
             
-            public int getMasterPort() {
-                return masterPort;
+            public int getManagerPort() {
+                return managerPort;
             }
             
-            public void setMasterPort(int masterPort) {
-                this.masterPort = masterPort;
+            public void setManagerPort(int managerPort) {
+                this.managerPort = managerPort;
             }
         }
     }

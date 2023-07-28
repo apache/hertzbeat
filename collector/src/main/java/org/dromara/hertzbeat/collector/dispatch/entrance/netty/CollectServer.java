@@ -33,7 +33,7 @@ public class CollectServer {
             throw new IllegalArgumentException("please config dispatch entrance netty props");
         }
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
-        if (nettyProperties.getMasterIp() == null || nettyProperties.getMasterPort() == 0) {
+        if (nettyProperties.getManagerIp() == null || nettyProperties.getManagerPort() == 0) {
             throw new IllegalArgumentException("please config dispatch entrance netty master ip and port");
         }
         this.collectJobService = jobService;
@@ -54,7 +54,7 @@ public class CollectServer {
             while (first || channel == null || !channel.isActive()) {
                 first = false;
                 try {
-                    channel = b.connect(properties.getMasterIp(), properties.getMasterPort()).sync().channel();
+                    channel = b.connect(properties.getManagerIp(), properties.getManagerPort()).sync().channel();
                     channel.closeFuture().sync();
                 } catch (InterruptedException ignored) {
                     log.error("collector shutdown now!");

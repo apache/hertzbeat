@@ -23,7 +23,7 @@ public class SchedulerProperties {
     
     public static class ServerProperties {
         
-        private boolean enabled = false;
+        private boolean enabled = true;
         
         private int port = 1158;
         
