@@ -14,23 +14,25 @@ import org.apache.sshd.core.CoreModuleProperties;
 @Slf4j
 public class CommonSshClient {
 
-    private static SshClient sshClient;
+    private static final SshClient SSH_CLIENT;
 
 
     static {
-        sshClient = SshClient.setUpDefaultClient();
+        SSH_CLIENT = SshClient.setUpDefaultClient();
         // 接受所有服务端公钥校验，会打印warn日志 Server at {} presented unverified {} key: {}
         AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
-        sshClient.setServerKeyVerifier(verifier);
-        // 设置链接保活心跳2000毫秒一次, 客户端等待保活心跳响应超时时间300_0000毫秒
+        SSH_CLIENT.setServerKeyVerifier(verifier);
+        // 设置链接保活心跳2000毫秒一次, 客户端等待保活心跳响应超时时间300_000毫秒
         PropertyResolverUtils.updateProperty(
-                sshClient, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
+                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
         PropertyResolverUtils.updateProperty(
-                sshClient, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 300_000);
-        sshClient.start();
+                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 300_000);
+        PropertyResolverUtils.updateProperty(
+                SSH_CLIENT, CoreModuleProperties.SOCKET_KEEPALIVE.getName(), true);
+        SSH_CLIENT.start();
     }
 
     public static SshClient getSshClient() {
-        return sshClient;
+        return SSH_CLIENT;
     }
 }
