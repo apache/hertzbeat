@@ -20,8 +20,10 @@ package org.dromara.hertzbeat.manager.dao;
 import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -39,4 +41,19 @@ public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorB
      * @return monitor bind
      */
     List<CollectorMonitorBind> findCollectorMonitorBindsByCollector(String collector);
+    
+    /**
+     * find bind collector by monitor id
+     * @param monitorId monitor id
+     * @return collector bind
+     */
+    Optional<CollectorMonitorBind> findCollectorMonitorBindByMonitorId(Long monitorId);
+    
+    
+    /**
+     * delete bind by monitor id
+     * @param monitorId monitor id
+     */
+    @Modifying
+    void deleteCollectorMonitorBindsByMonitorId(Long monitorId);
 }

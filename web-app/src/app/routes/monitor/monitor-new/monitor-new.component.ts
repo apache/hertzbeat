@@ -64,7 +64,7 @@ export class MonitorNewComponent implements OnInit {
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
           this.detected = true;
           this.passwordVisible = false;
-          this.isSpinning = false;
+          this.isSpinning = true;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
       )
@@ -121,13 +121,19 @@ export class MonitorNewComponent implements OnInit {
           return this.collectorSvc.getCollectors();
         })
       )
-      .subscribe(message => {
-        if (message.code === 0) {
-          this.collectors = message.data;
-        } else {
-          console.warn(message.msg);
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.collectors = message.data;
+          } else {
+            console.warn(message.msg);
+          }
+          this.isSpinning = false;
+        },
+        error => {
+          this.isSpinning = true;
         }
-      });
+      );
   }
 
   onHostChange(hostValue: string) {

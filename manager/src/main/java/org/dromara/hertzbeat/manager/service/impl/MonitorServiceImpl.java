@@ -27,6 +27,7 @@ import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
@@ -34,6 +35,7 @@ import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -91,6 +93,9 @@ public class MonitorServiceImpl implements MonitorService {
     
     @Autowired
     private CollectorDao collectorDao;
+    
+    @Autowired
+    private CollectorMonitorBindDao collectorMonitorBindDao;
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
@@ -177,6 +182,12 @@ public class MonitorServiceImpl implements MonitorService {
         // Brush the library after the download is successful
         // 下发成功后刷库
         try {
+            if (collector != null) {
+                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
+                                                                    .collector(collector).monitorId(monitorId)
+                                                                    .build();
+                collectorMonitorBindDao.save(collectorMonitorBind);
+            }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             monitor.setStatus(CommonConstants.AVAILABLE_CODE);
@@ -504,6 +515,13 @@ public class MonitorServiceImpl implements MonitorService {
         // After the update is successfully released, refresh the database
         // 下发更新成功后刷库
         try {
+            collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
+            if (collector != null) {
+                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
+                                                                    .collector(collector).monitorId(monitorId)
+                                                                    .build();
+                collectorMonitorBindDao.save(collectorMonitorBind);
+            }
             monitor.setStatus(preMonitor.getStatus());
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
@@ -568,6 +586,8 @@ public class MonitorServiceImpl implements MonitorService {
                     .filter(Metrics::isVisible)
                     .map(Metrics::getName).collect(Collectors.toList());
             monitorDto.setMetrics(metrics);
+            Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
+            bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;
         } else {
             return null;

@@ -332,14 +332,7 @@
             <nz-option nzCustomContent [nzValue]="''" [nzLabel]="'monitor.collector.system.default' | i18n">
               <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
             </nz-option>
-            <nz-option
-              nzCustomContent
-              *ngFor="let item of collectors"
-              nzValue="lucy"
-              nzLabel="Lucy"
-              [nzValue]="item.name"
-              [nzLabel]="item.name"
-            >
+            <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
               <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
                 item.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
               }}</nz-tag>
