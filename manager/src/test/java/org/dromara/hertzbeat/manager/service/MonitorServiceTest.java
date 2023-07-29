@@ -10,6 +10,8 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.manager.dao.CollectorDao;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -42,17 +44,17 @@ import static org.mockito.Mockito.*;
 /**
  * newBranch feature-clickhouse#179
  * 配置带密码的clickhouse
- * https://www.cnblogs.com/it1042290135/p/16202478.html
+ * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
- * 9363是promethus的http端口(在config.xml里面打开), http://clickhouse:9363/metrics
+ * 9363是promethus的http端口(在config.xml里面打开), <a href="http://clickhouse:9363/metrics">...</a>
  * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
  * <p>
  * <p>
- * https://hub.docker.com/r/clickhouse/clickhouse-server/
+ * <a href="https://hub.docker.com/r/clickhouse/clickhouse-server/">...</a>
  * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server
- * curl 'http://localhost:18123/'
+ * curl '<a href="http://localhost:18123/">...</a>'
  * web UI
- * http://localhost:18123/play
+ * <a href="http://localhost:18123/play">...</a>
  * <p>
  * 明文密码linux可以登录了,但是navicat还是无法登录
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
@@ -83,6 +85,13 @@ class MonitorServiceTest {
     
     @Mock
     private TagMonitorBindDao tagMonitorBindDao;
+    
+    @Mock
+    private CollectorDao collectorDao;
+    
+    @Mock
+    private CollectorMonitorBindDao collectorMonitorBindDao;
+    
     @Mock
     private CalculateAlarm calculateAlarm;
 
@@ -607,6 +616,7 @@ class MonitorServiceTest {
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId())).thenReturn(Optional.empty());
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         assertNotNull(monitorDto);
     }
