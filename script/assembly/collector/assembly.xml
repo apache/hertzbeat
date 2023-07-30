@@ -36,6 +36,8 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <includes>
                 <include>application.yml</include>
                 <include>logback-spring.xml</include>
+                <include>banner.txt</include>
+                <include>META-INF/**</include>
             </includes>
             <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
             <filtered>true</filtered>

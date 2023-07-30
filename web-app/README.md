@@ -23,7 +23,7 @@
 
 2. Execute command in root  
 
-```mvn clean package```
+```mvn clean install```
 
 The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
 
