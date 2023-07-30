@@ -104,6 +104,9 @@ public class ConsistentHash {
      */
     public Node removeNode(String name) {
         Node deletedNode = existNodeMap.remove(name);
+        if (deletedNode == null) {
+            return null;
+        }
         for (Map.Entry<Integer, Set<Long[]>> virtualNodeEntry : deletedNode.virtualNodeMap.entrySet()) {
             Integer virtualNodeHash = virtualNodeEntry.getKey();
             Set<Long[]> removeJobHashSet = virtualNodeEntry.getValue();

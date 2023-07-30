@@ -118,7 +118,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 try {
                     // 构造采集任务Job实体
                     Job appDefine = appService.getAppDefine(monitor.getApp());
-                    appDefine.setId(monitor.getJobId());
                     appDefine.setMonitorId(monitor.getId());
                     appDefine.setInterval(monitor.getIntervals());
                     appDefine.setCyclic(true);

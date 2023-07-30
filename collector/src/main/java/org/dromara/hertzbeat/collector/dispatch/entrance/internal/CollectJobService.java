@@ -162,7 +162,7 @@ public class CollectJobService {
         ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
                                                .setIdentity(collectorIdentity)
                                                .setMsg(data)
-                                               .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                               .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
                                                .build();
         collectorChannel.writeAndFlush(heartbeat);
     }
