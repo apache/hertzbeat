@@ -4,6 +4,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -61,7 +62,7 @@ public class ManageServer {
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
-                        .channel(NioServerSocketChannel.class)
+                        .channel(this.useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                         .handler(new LoggingHandler(LogLevel.INFO))
                         .childHandler(new ProtoServerInitializer(collectorScheduling, collectJobScheduling));
                 b.bind(port).sync().channel().closeFuture().sync();
