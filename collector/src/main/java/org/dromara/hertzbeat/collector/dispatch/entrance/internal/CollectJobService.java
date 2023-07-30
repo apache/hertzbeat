@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
 import io.netty.channel.Channel;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
+import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -31,6 +32,7 @@ import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -52,12 +54,15 @@ public class CollectJobService {
     
     private final TimerDispatch timerDispatch;
     
+    private final WorkerPool workerPool;
+    
     private String collectorIdentity = null;
     
     private volatile Channel collectorChannel = null;
     
-    public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties) {
+    public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
+        this.workerPool = workerPool;
         if (properties != null && properties.getEntrance() != null 
                     && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
             String collectorName = properties.getEntrance().getNetty().getIdentity();
@@ -97,6 +102,29 @@ public class CollectJobService {
             log.info("The sync task runs for 120 seconds with no response and returns");
         }
         return metricsData;
+    }
+    
+    /**
+     * Execute a one-time collection task and send the collected data response
+     *
+     * @param oneTimeJob Collect task details  采集任务详情
+     * @param channel channel 
+     */
+    public void collectSyncJobData(Job oneTimeJob, Channel channel) {
+        workerPool.executeJob(() -> {
+            List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
+            List<String> jsons = new ArrayList<>(metricsDataList.size());
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                String json = ProtoJsonUtil.toJsonStr(metricsData);
+                if (json != null) {
+                    jsons.add(json);
+                }
+            }
+            String response = JsonUtil.toJson(jsons);
+            channel.writeAndFlush(ClusterMsg.Message.newBuilder()
+                                          .setMsg(response)
+                                          .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build()); 
+        });
     }
 
     /**
