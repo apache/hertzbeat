@@ -151,6 +151,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     public void collectorGoOffline(String identity) {
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
         if (collectorOptional.isPresent()) {
+            log.info("the collector: {} is going offline now.", identity);
             Collector collector = collectorOptional.get();
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE);
             collectorDao.save(collector);

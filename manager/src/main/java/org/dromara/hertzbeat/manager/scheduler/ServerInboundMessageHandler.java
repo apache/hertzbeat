@@ -55,15 +55,21 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
             case HEARTBEAT:
                 // 用于处理collector连接断开后重连
                 if (!isCollectorChannelExist) {
+                    log.info("the collector {} has reconnected and to go online.", identity);
                     collectorScheduling.collectorGoOnline(identity);
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("server receive collector heartbeat");   
                 }
                 channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.HEARTBEAT).build());
                 break;
             case GO_ONLINE:
+                log.info("the collector {} actively requests to go online.", identity);
                 CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
                 collectorScheduling.collectorGoOnline(identity, collectorInfo);
                 break;
             case GO_OFFLINE:
+                log.info("the collector {} actively requests to go offline.", identity);
                 collectorScheduling.collectorGoOffline(identity);
                 break;
             case RESPONSE_ONE_TIME_TASK_DATA:
@@ -71,6 +77,10 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                     TypeReference<List<String>> typeReference = new TypeReference<>() {
                     };
                     List<String> jsonArr = JsonUtil.fromJson(message.getMsg(), typeReference);
+                    if (jsonArr == null) {
+                        log.error("netty receive response one time task data parse null error");
+                        break;
+                    }
                     List<CollectRep.MetricsData> metricsDataList = new ArrayList<>(jsonArr.size());
                     for (String str : jsonArr) {
                         CollectRep.MetricsData metricsData = (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(str,
@@ -81,7 +91,7 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                     }
                     collectJobScheduling.collectSyncJobResponse(metricsDataList);
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    log.error("netty receive response one time task data error: {}." , e.getMessage(), e);
                 }
                 break;
             case RESPONSE_CYCLIC_TASK_DATA:
@@ -102,11 +112,12 @@ public class ServerInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         IdleStateEvent event = (IdleStateEvent) evt;
-        if (event.state() == IdleState.READER_IDLE) {
+        if (event.state() == IdleState.ALL_IDLE) {
             // collector timeout
             ChannelId channelId = ctx.channel().id();
             String collector = channelCollectorMap.get(channelId);
             if (StringUtils.hasText(collector)) {
+                log.info("all idle event triggered. the collector {} is going offline.", collector);
                 collectorScheduling.collectorGoOffline(collector);
             }
             ctx.channel().closeFuture();
