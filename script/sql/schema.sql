@@ -28,7 +28,7 @@ use hertzbeat;
 DROP TABLE IF EXISTS  hzb_monitor ;
 CREATE TABLE  hzb_monitor
 (
-     id           bigint       not null auto_increment comment '监控ID',
+     id           bigint       not null comment '监控ID',
      job_id       bigint       comment '监控对应下发的任务ID',
      name         varchar(100) not null comment '监控的名称',
      app          varchar(100) not null comment '监控的类型:linux,mysql,jvm...',

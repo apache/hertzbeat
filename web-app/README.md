@@ -21,7 +21,7 @@
 
 ```ng build --configuration production```
 
-2. Execute command in manager  
+2. Execute command in root  
 
 ```mvn clean package```
 
