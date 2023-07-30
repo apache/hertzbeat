@@ -9,6 +9,6 @@ ENV TZ=Asia/Shanghai
 
 EXPOSE 1159
 
-WORKDIR /opt/hertzbeat/
+WORKDIR /opt/hertzbeat-collector/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
