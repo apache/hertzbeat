@@ -649,6 +649,7 @@ class MonitorServiceTest {
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
+        job.setParams(new ArrayList<>());
         when(appService.getAppDefine(monitors.get(0).getApp())).thenReturn(job);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(monitors.get(0).getId())).thenReturn(params);
