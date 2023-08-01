@@ -287,7 +287,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             log.error("there is no collector online to assign job.");
             CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                                                          .setCode(CollectRep.Code.FAIL)
-                                                         .setMsg("no collector online to assign job")
+                                                         .setMsg("the collector is offline and cannot assign job")
                                                          .build();
             return Collections.singletonList(metricsData);
         }
