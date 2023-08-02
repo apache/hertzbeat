@@ -94,17 +94,17 @@
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
 
 ### 🍞 HertzBeat安装
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
+> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持x86/arm64。
 
 ##### 方式一：Docker方式快速安装  
 
 1. `docker` 环境仅需一条命令即可开始     
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
-```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 

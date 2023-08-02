@@ -211,6 +211,7 @@
                             <include>*.yml</include>
                             <include>*.properties</include>
                             <include>banner.txt</include>
+                            <include>META-INF/**</include>
                         </includes>
                     </resource>
                 </resources>

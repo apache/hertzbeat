@@ -5,14 +5,16 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { finalize, switchMap } from 'rxjs/operators';
 
+import { Collector } from '../../../pojo/Collector';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { Tag } from '../../../pojo/Tag';
 import { AppDefineService } from '../../../service/app-define.service';
+import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { TagService } from '../../../service/tag.service';
 
@@ -30,6 +32,7 @@ export class MonitorEditComponent implements OnInit {
     private titleSvc: TitleService,
     private notifySvc: NzNotificationService,
     private tagSvc: TagService,
+    private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -40,6 +43,8 @@ export class MonitorEditComponent implements OnInit {
   advancedParams!: Param[];
   paramValueMap = new Map<String, Param>();
   monitor = new Monitor();
+  collectors!: Collector[];
+  collector: string = '';
   profileForm: FormGroup = new FormGroup({});
   detected: boolean = true;
   passwordVisible: boolean = false;
@@ -50,7 +55,7 @@ export class MonitorEditComponent implements OnInit {
     this.route.paramMap
       .pipe(
         switchMap((paramMap: ParamMap) => {
-          this.isSpinning = false;
+          this.isSpinning = true;
           this.passwordVisible = false;
           let id = paramMap.get('monitorId');
           this.monitor.id = Number(id);
@@ -62,6 +67,7 @@ export class MonitorEditComponent implements OnInit {
         switchMap((message: Message<any>) => {
           if (message.code === 0) {
             this.monitor = message.data.monitor;
+            this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
             if (message.data.params != null) {
               message.data.params.forEach((item: Param) => {
@@ -80,64 +86,85 @@ export class MonitorEditComponent implements OnInit {
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
       )
-      .subscribe(message => {
-        if (message.code === 0) {
-          this.params = [];
-          this.advancedParams = [];
-          this.paramDefines = [];
-          this.advancedParamDefines = [];
-          message.data.forEach(define => {
-            let param = this.paramValueMap.get(define.field);
-            if (param === undefined) {
-              param = new Param();
-              param.field = define.field;
-              if (define.type === 'number') {
-                param.type = 0;
-              } else if (define.type === 'key-value') {
-                param.type = 3;
-              } else if (define.type === 'array') {
-                param.type = 4;
-              } else {
-                param.type = 1;
-              }
-              if (define.type === 'boolean') {
-                param.value = define.defaultValue == 'true';
-              } else if (param.field === 'host') {
-                param.value = this.monitor.host;
-              } else if (define.defaultValue != undefined) {
+      .pipe(
+        switchMap(message => {
+          if (message.code === 0) {
+            this.params = [];
+            this.advancedParams = [];
+            this.paramDefines = [];
+            this.advancedParamDefines = [];
+            message.data.forEach(define => {
+              let param = this.paramValueMap.get(define.field);
+              if (param === undefined) {
+                param = new Param();
+                param.field = define.field;
                 if (define.type === 'number') {
-                  param.value = Number(define.defaultValue);
-                } else if (define.type === 'boolean') {
-                  param.value = define.defaultValue.toLowerCase() == 'true';
+                  param.type = 0;
+                } else if (define.type === 'key-value') {
+                  param.type = 3;
+                } else if (define.type === 'array') {
+                  param.type = 4;
                 } else {
-                  param.value = define.defaultValue;
+                  param.type = 1;
+                }
+                if (define.type === 'boolean') {
+                  param.value = define.defaultValue == 'true';
+                } else if (param.field === 'host') {
+                  param.value = this.monitor.host;
+                } else if (define.defaultValue != undefined) {
+                  if (define.type === 'number') {
+                    param.value = Number(define.defaultValue);
+                  } else if (define.type === 'boolean') {
+                    param.value = define.defaultValue.toLowerCase() == 'true';
+                  } else {
+                    param.value = define.defaultValue;
+                  }
+                }
+              } else {
+                if (define.type === 'boolean') {
+                  if (param.value != null) {
+                    param.value = param.value.toLowerCase() == 'true';
+                  } else {
+                    param.value = false;
+                  }
                 }
               }
-            } else {
-              if (define.type === 'boolean') {
-                if (param.value != null) {
-                  param.value = param.value.toLowerCase() == 'true';
-                } else {
-                  param.value = false;
-                }
+              define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
+              if (define.hide) {
+                this.advancedParams.push(param);
+                this.advancedParamDefines.push(define);
+              } else {
+                this.params.push(param);
+                this.paramDefines.push(define);
               }
-            }
-            define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
-            if (define.hide) {
-              this.advancedParams.push(param);
-              this.advancedParamDefines.push(define);
-            } else {
-              this.params.push(param);
-              this.paramDefines.push(define);
-            }
-            if (define.field == 'host' && define.type == 'host' && define.name != `monitor.app.${this.monitor.app}.param.${define.field}`) {
-              this.hostName = define.name;
-            }
-          });
-        } else {
-          console.warn(message.msg);
+              if (
+                define.field == 'host' &&
+                define.type == 'host' &&
+                define.name != `monitor.app.${this.monitor.app}.param.${define.field}`
+              ) {
+                this.hostName = define.name;
+              }
+            });
+          } else {
+            console.warn(message.msg);
+          }
+          return this.collectorSvc.getCollectors();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.collectors = message.data;
+          } else {
+            console.warn(message.msg);
+          }
+          this.isSpinning = false;
+        },
+        error => {
+          console.error(error);
+          this.isSpinning = false;
         }
-      });
+      );
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
@@ -184,6 +211,7 @@ export class MonitorEditComponent implements OnInit {
     let addMonitor = {
       detected: this.detected,
       monitor: this.monitor,
+      collector: this.collector,
       params: this.params.concat(this.advancedParams)
     };
     if (this.detected) {
@@ -238,6 +266,7 @@ export class MonitorEditComponent implements OnInit {
     let detectMonitor = {
       detected: this.detected,
       monitor: this.monitor,
+      collector: this.collector,
       params: this.params.concat(this.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
