@@ -5,7 +5,7 @@ sidebar_label: Enterprise
 ---
 
 :::tip
-**Open source does not mean completely free. If you modify HertzBeat's logo, name, copyright, etc., please ask us for authorization, otherwise there will be legal risks.**     
+**Open source does not mean completely free. If you [modify HertzBeat's logo, name, copyright](https://github.com/dromara/hertzbeat/blob/master/NOTICE), etc., please ask us for authorization, otherwise there will be [legal risks](legal).**     
 **Open source is based on mutual trust, please don't let developers chill.**
 :::
 
