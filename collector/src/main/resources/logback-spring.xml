@@ -84,6 +84,14 @@
         </root>
     </springProfile>
 
+    <springProfile name="cluster">
+        <root level="INFO">
+            <appender-ref ref="ConsoleAppender"/>
+            <appender-ref ref="SystemOutFileAppender"/>
+            <appender-ref ref="ErrOutFileAppender"/>
+        </root>
+    </springProfile>
+
     <!-- 开发环境配置 -->
     <springProfile name="dev">
         <root level="INFO">
