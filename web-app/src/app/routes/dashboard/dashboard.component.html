@@ -100,16 +100,54 @@
   </div>
 </div>
 
-<div
-  echarts
-  [options]="appsCountEChartOption"
-  theme="default"
-  [autoResize]="true"
-  [loading]="appsCountLoading"
-  (chartClick)="onChartClick($event)"
-  (chartInit)="onAppsCountChartInit($event)"
-  style="width: 100%; height: 400px; margin-top: 1%"
-></div>
+<div nz-row nzGutter="16" style="margin-top: 25px; height: 400px">
+  <div nz-col nzXs="24" nzSm="24" nzMd="6" class="mb-md" style="height: 100%"> </div>
+  <div nz-col nzXs="24" nzSm="24" nzMd="12" style="height: 100%">
+    <div
+      echarts
+      [options]="appsCountEChartOption"
+      theme="default"
+      [autoResize]="true"
+      [loading]="appsCountLoading"
+      (chartClick)="onChartClick($event)"
+      (chartInit)="onAppsCountChartInit($event)"
+      style="width: 100%; height: inherit"
+    ></div>
+  </div>
+  <div nz-col nzXs="24" nzSm="24" nzMd="6" class="mb-md" style="height: 100%">
+    <div class="mb-md" style="overflow-y: scroll; height: inherit">
+      <nz-card *ngFor="let collector of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
+        <nz-card-tab>
+          <nz-tabset nzSize="small">
+            <nz-tab [nzTitle]="'collector.status' | i18n">
+              <nz-tag [nzColor]="collector.status == 0 ? 'processing' : 'error'">{{
+                collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+              }}</nz-tag>
+            </nz-tab>
+            <nz-tab [nzTitle]="'collector.task' | i18n">
+              <span>99</span>
+            </nz-tab>
+            <nz-tab [nzTitle]="'collector.start-time' | i18n">
+              <span>{{ (collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}</span>
+            </nz-tab>
+            <nz-tab [nzTitle]="'collector.ip' | i18n">
+              <span> {{ collector.ip }}</span>
+            </nz-tab>
+            <nz-tab [nzTitle]="'collector.node' | i18n">
+              <span> {{ collector.name }}</span>
+            </nz-tab>
+          </nz-tabset>
+        </nz-card-tab>
+        <ng-template #collectorCardTitle>
+          <span style="font-size: medium; font-weight: bold">
+            <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
+            <span>{{ 'collector' | i18n }} : {{ collector.name }}</span>
+          </span>
+        </ng-template>
+      </nz-card>
+    </div>
+  </div>
+</div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
   <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md" style="height: 100%">

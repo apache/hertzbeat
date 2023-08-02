@@ -10,6 +10,8 @@ import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
 import { AlertService } from '../../service/alert.service';
 import { MonitorService } from '../../service/monitor.service';
+import {Collector} from "../../pojo/Collector";
+import {CollectorService} from "../../service/collector.service";
 
 @Component({
   selector: 'app-dashboard',
@@ -22,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private alertSvc: AlertService,
+    private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -42,6 +45,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appsCountTheme!: EChartsOption;
   appsCountEchartsInstance!: any;
   pageResize$!: any;
+
+  // collector list
+  collectors!: Collector[];
 
   // 告警列表
   alerts!: Alert[];
@@ -260,6 +266,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.refreshAppsCount();
     this.refreshAlertContentList();
+    this.refreshCollectorContentList();
     this.refreshAlertSummary();
   }
   refreshAppsCount(): void {
@@ -401,6 +408,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error => {
         alertsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
+  }
+
+  refreshCollectorContentList(): void {
+    let collectorInit$ = this.collectorSvc.getCollectors().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.collectors = message.data;
+          this.cdr.detectChanges();
+        } else {
+          console.warn(message.msg);
+        }
+        collectorInit$.unsubscribe();
+      },
+      error => {
+        collectorInit$.unsubscribe();
         console.error(error.msg);
       }
     );
