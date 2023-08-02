@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service;
 
+import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
@@ -48,18 +49,20 @@ public interface MonitorService {
      *
      * @param monitor Monitoring entity information    监控实体信息
      * @param params  Parameter information            参数信息
+     * @param collector collector pinned
      * @throws MonitorDetectException Probe failure throws  探测失败抛出
      */
-    void detectMonitor(Monitor monitor, List<Param> params) throws MonitorDetectException;
+    void detectMonitor(Monitor monitor, List<Param> params, String collector) throws MonitorDetectException;
 
     /**
      * Add monitoring       新增监控
      *
      * @param monitor Monitoring Entity     监控实体
      * @param params  Parameter information 参数信息
+     * @param collector collector pinned
      * @throws RuntimeException Add process exception throw     新增过程异常抛出
      */
-    void addMonitor(Monitor monitor, List<Param> params) throws RuntimeException;
+    void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException;
 
     /**
      * Verify the correctness of request data parameters
@@ -77,9 +80,10 @@ public interface MonitorService {
      *
      * @param monitor Monitor Entity        监控实体
      * @param params  Parameter information 参数信息
+     * @param collector collector pinned
      * @throws RuntimeException Exception thrown during modification    修改过程中异常抛出
      */
-    void modifyMonitor(Monitor monitor, List<Param> params) throws RuntimeException;
+    void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException;
 
     /**
      * Delete Monitor
@@ -213,6 +217,11 @@ public interface MonitorService {
      * @param ids monitor id
      */
     void copyMonitors(List<Long> ids);
-
-
+    
+    
+    /**
+     * update app collect job by app
+     * @param job job content
+     */
+    void updateAppCollectJob(Job job);
 }

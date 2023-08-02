@@ -64,9 +64,9 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
             formList.forEach(it -> {
                 monitorService.validate(it, false);
                 if (it.isDetected()) {
-                    monitorService.detectMonitor(it.getMonitor(), it.getParams());
+                    monitorService.detectMonitor(it.getMonitor(), it.getParams(), it.getCollector());
                 }
-                monitorService.addMonitor(it.getMonitor(), it.getParams());
+                monitorService.addMonitor(it.getMonitor(), it.getParams(), it.getCollector());
             });
         }
     }

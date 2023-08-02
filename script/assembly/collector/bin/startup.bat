@@ -34,7 +34,7 @@ echo %DEPLOY_DIR%
 set CONF_DIR=%DEPLOY_DIR%\config
 echo %CONF_DIR%
 
-set SERVER_PORT=1158
+set SERVER_PORT=1159
 
 for /f "tokens=1-5" %%i in ('netstat -ano^|findstr "0.0.0.0:%SERVER_PORT%"') do (
     echo The HertzBeat %SERVER_NAME% port %SERVER_PORT% already used!

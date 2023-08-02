@@ -18,6 +18,7 @@
 package org.dromara.hertzbeat.collector.dispatch.timer;
 
 
+import org.dromara.hertzbeat.common.util.NetworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -528,7 +529,7 @@ public class HashedWheelTimer implements Timer {
                         return currentTime;
                     }
                 }
-                if (isWindows()) {
+                if (NetworkUtil.isWindowsPlatform()) {
                     sleepTimeMs = sleepTimeMs / 10 * 10;
                 }
 
@@ -802,9 +803,4 @@ public class HashedWheelTimer implements Timer {
         }
     }
 
-    private static final boolean IS_OS_WINDOWS = System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
-
-    private boolean isWindows() {
-        return IS_OS_WINDOWS;
-    }
 }
