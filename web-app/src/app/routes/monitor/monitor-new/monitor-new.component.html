@@ -324,6 +324,30 @@
       <nz-divider></nz-divider>
 
       <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="collector" [nzTooltipTitle]="'monitor.collector.tip' | i18n">
+          {{ 'monitor.collector' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-select [(ngModel)]="collector" name="collector" id="collector" [nzCustomTemplate]="collectorTemplate">
+            <nz-option nzCustomContent [nzValue]="''" [nzLabel]="'monitor.collector.system.default' | i18n">
+              <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
+            </nz-option>
+            <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
+              <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
+                item.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+              }}</nz-tag>
+              <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
+              <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
+              <nz-tag nzColor="success">{{ item.ip }}</nz-tag>
+            </nz-option>
+          </nz-select>
+          <ng-template #collectorTemplate let-selected>
+            <nz-tag nzColor="processing">{{ selected.nzLabel }}</nz-tag>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="intervals" [nzTooltipTitle]="'monitor.intervals.tip' | i18n">
           {{ 'monitor.intervals' | i18n }}
         </nz-form-label>

@@ -139,7 +139,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             response.setCode(CollectRep.Code.FAIL);
             response.setMsg("not support " + app + ", "
                     + metrics.getName() + ", " + metrics.getProtocol());
-            return;
         } else {
             try {
                 abstractCollect.collect(response, monitorId, app, metrics);

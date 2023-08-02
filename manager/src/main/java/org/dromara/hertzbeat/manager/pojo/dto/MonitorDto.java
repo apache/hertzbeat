@@ -70,4 +70,10 @@ public class MonitorDto {
      */
     @Schema(description = "是否进行探测", accessMode = READ_WRITE)
     private boolean detected;
+    
+    /**
+     * which collector this monitoring want to pin
+     */
+    @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
+    private String collector;
 }
