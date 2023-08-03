@@ -1,9 +1,10 @@
 package org.dromara.hertzbeat.manager.service;
 
+import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.List;
 
 /**
  * collector service
@@ -13,9 +14,11 @@ public interface CollectorService {
     
     /**
      * Dynamic conditional query
-     * @param specification Query conditions   
-     * @return Search result   
+     *
+     * @param specification Query conditions
+     * @param pageRequest pageIndex pageSize
+     * @return Search result
      */
-    List<Collector> getCollectors(Specification<Collector> specification);
+    Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest);
     
 }
