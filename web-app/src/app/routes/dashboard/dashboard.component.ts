@@ -8,10 +8,10 @@ import { fromEvent } from 'rxjs';
 
 import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
+import { Collector } from '../../pojo/Collector';
 import { AlertService } from '../../service/alert.service';
+import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
-import {Collector} from "../../pojo/Collector";
-import {CollectorService} from "../../service/collector.service";
 
 @Component({
   selector: 'app-dashboard',
@@ -270,11 +270,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshAlertSummary();
   }
   refreshAppsCount(): void {
-    this.appCountService = new AppCount();
-    this.appCountOs = new AppCount();
-    this.appCountDb = new AppCount();
-    this.appCountMid = new AppCount();
-    this.appCountCustom = new AppCount();
+    if (this.appCountService == undefined) {
+      this.appCountService = new AppCount();
+    }
+    if (this.appCountOs == undefined) {
+      this.appCountOs = new AppCount();
+    }
+    if (this.appCountDb == undefined) {
+      this.appCountDb = new AppCount();
+    }
+    if (this.appCountMid == undefined) {
+      this.appCountMid = new AppCount();
+    }
+    if (this.appCountCustom == undefined) {
+      this.appCountCustom = new AppCount();
+    }
     let dashboard$ = this.monitorSvc.getAppsMonitorSummary().subscribe(
       message => {
         dashboard$.unsubscribe();

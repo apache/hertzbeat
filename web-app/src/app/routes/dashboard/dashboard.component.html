@@ -120,26 +120,38 @@
         <nz-card-tab>
           <nz-tabset nzSize="small">
             <nz-tab [nzTitle]="'collector.status' | i18n">
-              <nz-tag [nzColor]="collector.status == 0 ? 'processing' : 'error'">{{
-                collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
-              }}</nz-tag>
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
+                <nz-tag style="font-size: larger; margin: 4%" [nzColor]="collector.status == 0 ? 'processing' : 'error'">{{
+                  collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+                }}</nz-tag>
+              </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.task' | i18n">
-              <span>99</span>
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
+                <span style="font-size: xxx-large; font-weight: bolder; margin: 4%">33</span>
+              </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.start-time' | i18n">
-              <span>{{ (collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}</span>
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
+                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{
+                  (collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
+                }}</span>
+              </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.ip' | i18n">
-              <span> {{ collector.ip }}</span>
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
+                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ collector.ip }}</span>
+              </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.node' | i18n">
-              <span> {{ collector.name }}</span>
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
+                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ collector.name }}</span>
+              </div>
             </nz-tab>
           </nz-tabset>
         </nz-card-tab>
         <ng-template #collectorCardTitle>
-          <span style="font-size: medium; font-weight: bold">
+          <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="collector.name">
             <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
             <span>{{ 'collector' | i18n }} : {{ collector.name }}</span>
           </span>
