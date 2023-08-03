@@ -450,6 +450,8 @@
   "collector.start-time": "启动时间",
   "collector.ip": "IP地址",
   "collector.node": "节点名称",
+  "collector.pinned": "固定任务",
+  "collector.dispatched": "调度任务",
   "validation.email.required": "请输入邮箱地址！",
   "validation.email.wrong-format": "邮箱地址格式错误！",
   "validation.email.invalid": "无效的邮箱地址！",

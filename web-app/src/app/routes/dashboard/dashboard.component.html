@@ -116,44 +116,49 @@
   </div>
   <div nz-col nzXs="24" nzSm="24" nzMd="6" class="mb-md" style="height: 100%">
     <div class="mb-md" style="overflow-y: scroll; height: inherit">
-      <nz-card *ngFor="let collector of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
+      <nz-card *ngFor="let item of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
         <nz-card-tab>
           <nz-tabset nzSize="small">
             <nz-tab [nzTitle]="'collector.status' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <nz-tag style="font-size: larger; margin: 4%" [nzColor]="collector.status == 0 ? 'processing' : 'error'">{{
-                  collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+                <nz-tag style="font-size: larger; margin: 4%" [nzColor]="item.collector.status == 0 ? 'processing' : 'error'">{{
+                  item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
                 }}</nz-tag>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.task' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xxx-large; font-weight: bolder; margin: 4%">33</span>
+                <span style="font-size: xxx-large; font-weight: bolder; margin: 4%">
+                  {{ item.pinMonitorNum + item.dispatchMonitorNum }}
+                </span>
+                <br />
+                <nz-tag style="margin-bottom: 4%">{{ 'collector.pinned' | i18n }} : {{ item.pinMonitorNum }}</nz-tag>
+                <nz-tag style="margin-bottom: 4%">{{ 'collector.dispatched' | i18n }} : {{ item.dispatchMonitorNum }}</nz-tag>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.start-time' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
                 <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{
-                  (collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
+                  (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
                 }}</span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.ip' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ collector.ip }}</span>
+                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ item.collector.ip }}</span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.node' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ collector.name }}</span>
+                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ item.collector.name }}</span>
               </div>
             </nz-tab>
           </nz-tabset>
         </nz-card-tab>
         <ng-template #collectorCardTitle>
-          <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="collector.name">
+          <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
             <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
-            <span>{{ 'collector' | i18n }} : {{ collector.name }}</span>
+            <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
           </span>
         </ng-template>
       </nz-card>

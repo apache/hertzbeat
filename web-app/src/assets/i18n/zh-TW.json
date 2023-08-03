@@ -448,6 +448,8 @@
   "collector.start-time": "啟動時間",
   "collector.ip": "IP地址",
   "collector.node": "節點名稱",
+  "collector.pinned": "固定任務",
+  "collector.dispatched": "調度任務",
   "validation.email.required": "請輸入郵箱地址！",
   "validation.email.wrong-format": "郵箱地址格式錯誤！",
   "validation.email.invalid": "無效的郵箱地址！",

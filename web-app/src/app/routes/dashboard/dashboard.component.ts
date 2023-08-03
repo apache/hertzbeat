@@ -12,6 +12,7 @@ import { Collector } from '../../pojo/Collector';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
+import {CollectorSummary} from "../../pojo/CollectorSummary";
 
 @Component({
   selector: 'app-dashboard',
@@ -47,7 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pageResize$!: any;
 
   // collector list
-  collectors!: Collector[];
+  collectors!: CollectorSummary[];
 
   // 告警列表
   alerts!: Alert[];
@@ -422,7 +423,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     let collectorInit$ = this.collectorSvc.getCollectors().subscribe(
       message => {
         if (message.code === 0) {
-          this.collectors = message.data;
+          this.collectors = message.data.content;
           this.cdr.detectChanges();
         } else {
           console.warn(message.msg);
