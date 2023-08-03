@@ -5,7 +5,8 @@ sidebar_label: Legal Risks
 ---
 
 :::tip
-**Open source does not mean completely free. If you [modify HertzBeat's logo, name, copyright](https://github.com/dromara/hertzbeat/blob/master/NOTICE), etc., please ask us for authorization, otherwise there will be legal risks.**
+**Open source does not mean completely free. If you [modify HertzBeat's logo, name, copyright](https://github.com/dromara/hertzbeat/blob/master/NOTICE), etc., please ask us for authorization, otherwise there will be legal risks.**   
+**We have the right to pursue all illegal gains of individuals who destroy open source and profit from it.**
 :::
 
 ### HertzBeat Open Source License 

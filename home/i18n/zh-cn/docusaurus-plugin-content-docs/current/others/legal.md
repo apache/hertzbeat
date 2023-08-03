@@ -5,8 +5,8 @@ sidebar_label: 法律风险
 ---
 
 :::tip
-**开源不等于完全免费，如果您基于HertzBeat二次开发修改了[logo，名称，版权](https://github.com/dromara/hertzbeat/blob/master/NOTICE)等，请找我们授权，否则会有法律风险。**     
-**开源基于相互信任，请不要让人寒心。**   
+**开源不等同于免费，如果您基于HertzBeat二次开发修改了[logo，名称，版权](https://github.com/dromara/hertzbeat/blob/master/NOTICE)等，请找我们授权，否则会有法律风险。**     
+**我们有权利追诉破坏开源并因此获利的团队个人的全部违法所得，也欢迎给我们[提供侵权线索](#欢迎给我们提供侵权线索证据)。**   
 :::
 
 
