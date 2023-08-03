@@ -120,36 +120,44 @@
           <nz-tabset nzSize="small">
             <nz-tab [nzTitle]="'collector.status' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <nz-tag style="font-size: larger; margin: 4%" [nzColor]="item.collector.status == 0 ? 'processing' : 'error'">{{
-                  item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
-                }}</nz-tag>
+                <span
+                  [style]="
+                    'font-size: x-large; font-weight: bolder; margin: 8%;' + (item.collector.status == 0 ? 'color: green' : 'color: red')
+                  "
+                >
+                  {{
+                    item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+                  }}
+                </span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.task' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xxx-large; font-weight: bolder; margin: 4%">
+                <span style="font-size: xxx-large; font-weight: bolder; margin: 4%; color: white">
                   {{ item.pinMonitorNum + item.dispatchMonitorNum }}
                 </span>
                 <br />
-                <nz-tag style="margin-bottom: 4%">{{ 'collector.pinned' | i18n }} : {{ item.pinMonitorNum }}</nz-tag>
-                <nz-tag style="margin-bottom: 4%">{{ 'collector.dispatched' | i18n }} : {{ item.dispatchMonitorNum }}</nz-tag>
+                <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
+                <nz-tag style="margin-bottom: 4%; font-weight: bolder"
+                  >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
+                >
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.start-time' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{
+                <span style="font-size: x-large; font-weight: bolder; margin: 8%; color: white">{{
                   (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
                 }}</span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.ip' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ item.collector.ip }}</span>
+                <span style="font-size: x-large; font-weight: bolder; margin: 8%; color: white">{{ item.collector.ip }}</span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.node' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca">
-                <span style="font-size: xx-large; font-weight: bolder; margin: 8%">{{ item.collector.name }}</span>
+                <span style="font-size: x-large; font-weight: bolder; margin: 8%; color: white">{{ item.collector.name }}</span>
               </div>
             </nz-tab>
           </nz-tabset>
