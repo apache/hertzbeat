@@ -124,7 +124,7 @@ export class MonitorNewComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.collectors = message.data;
+            this.collectors = message.data.content.map(item => item.collector);
           } else {
             console.warn(message.msg);
           }
