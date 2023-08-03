@@ -166,7 +166,7 @@
 </div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
-  <div nz-col nzXs="24" nzSm="24" nzMd="12" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" class="mb-md" style="height: 100%">
     <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
       <nz-timeline nzMode="left">
         <nz-timeline-item
@@ -193,7 +193,7 @@
       </nz-timeline>
     </nz-card>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="7" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 7 }" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsEChartOption"
@@ -205,7 +205,7 @@
       class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>
-  <div nz-col nzXs="24" nzSm="12" nzMd="5" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 5 }" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsDealEChartOption"
