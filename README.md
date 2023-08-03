@@ -30,7 +30,8 @@ An open-source, real-time monitoring system with custom monitoring and agentless
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring and agentless capabilities. It combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
+[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring and agentless capabilities.    
+It combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
 
 ### Features
 
@@ -97,17 +98,17 @@ HertzBeat aims to help developers and teams quickly build their own monitoring s
 
 ### 🍞 Install HertzBeat   
 
-> HertzBeat supports installation through source code, docker or package, cpu support X86/ARM64.   
+> HertzBeat supports installation through source code, docker or package, cpu support x86/arm64.   
 
 ##### 1：Install quickly via docker   
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
 
 ```or use quay.io (if dockerhub network connect timeout)```
 
-```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
 
