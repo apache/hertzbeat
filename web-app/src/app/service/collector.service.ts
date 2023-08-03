@@ -3,7 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Collector } from '../pojo/Collector';
+import { CollectorSummary } from '../pojo/CollectorSummary';
 import { Message } from '../pojo/Message';
+import { Page } from '../pojo/Page';
 
 const collector_uri = '/collector';
 
@@ -13,7 +15,7 @@ const collector_uri = '/collector';
 export class CollectorService {
   constructor(private http: HttpClient) {}
 
-  public getCollectors(): Observable<Message<Collector[]>> {
-    return this.http.get<Message<Collector[]>>(collector_uri);
+  public getCollectors(): Observable<Message<Page<CollectorSummary>>> {
+    return this.http.get<Message<Page<CollectorSummary>>>(collector_uri);
   }
 }
