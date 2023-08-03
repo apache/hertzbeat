@@ -8,11 +8,10 @@ import { fromEvent } from 'rxjs';
 
 import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
-import { Collector } from '../../pojo/Collector';
+import { CollectorSummary } from '../../pojo/CollectorSummary';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
-import {CollectorSummary} from "../../pojo/CollectorSummary";
 
 @Component({
   selector: 'app-dashboard',

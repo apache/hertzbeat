@@ -3,9 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Collector } from '../pojo/Collector';
+import { CollectorSummary } from '../pojo/CollectorSummary';
 import { Message } from '../pojo/Message';
-import {CollectorSummary} from "../pojo/CollectorSummary";
-import {Page} from "../pojo/Page";
+import { Page } from '../pojo/Page';
 
 const collector_uri = '/collector';
 
