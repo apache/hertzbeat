@@ -366,7 +366,7 @@ metrics:
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
-      script: ps -aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      script: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
       parseType: multiRow
 
   - name: top_mem_process
