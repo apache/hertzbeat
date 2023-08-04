@@ -17,16 +17,17 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.dromara.hertzbeat.manager.config.MailConfigProperties;
+import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
 import org.dromara.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.dromara.hertzbeat.manager.service.MailService;
-import org.dromara.hertzbeat.manager.service.impl.MailGeneralConfigServiceImpl;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -41,6 +42,7 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
+ *
  */
 @Component
 @RequiredArgsConstructor
@@ -49,14 +51,28 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final JavaMailSender javaMailSender;
 
-    private final MailConfigProperties mailConfigProperties;
-
     private final MailService mailService;
+    
+    @Value("${spring.mail.host:smtp.demo.com}")
+    private String host;
+    
+    @Value("${spring.mail.username:demo}")
+    private String username;
+    
+    @Value("${spring.mail.password:demo}")
+    private String password;
+    
+    @Value("${spring.mail.port:465}")
+    private Integer port;
+    
+    @Value("${spring.mail.properties.mail.smtp.ssl.enable:true}")
+    private boolean sslEnable = true;
 
-    @Value("${spring.mail.username}")
-    private String emailFromUser;
+    private final GeneralConfigDao generalConfigDao;
 
-    private final MailGeneralConfigServiceImpl mailGeneralConfigService;
+    private final ObjectMapper objectMapper;
+
+    private static final String TYPE = "email";
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
@@ -65,35 +81,42 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
         try {
             //获取sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
+            String fromUsername = username;
             try {
                 boolean useDatabase = false;
-                EmailNoticeSender emailNoticeSenderConfig = mailGeneralConfigService.getConfig();
-                if (emailNoticeSenderConfig != null && emailNoticeSenderConfig.isEnable()) {
-                    sender.setHost(emailNoticeSenderConfig.getEmailHost());
-                    sender.setPort(emailNoticeSenderConfig.getEmailPort());
-                    sender.setUsername(emailNoticeSenderConfig.getEmailUsername());
-                    sender.setPassword(emailNoticeSenderConfig.getEmailPassword());
-                    Properties props = sender.getJavaMailProperties();
-                    props.put("spring.mail.smtp.ssl.enable", emailNoticeSenderConfig.isEmailSsl());
-                    emailFromUser = emailNoticeSenderConfig.getEmailUsername();
-                    useDatabase = true;
-                }
+                GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
+                if (emailConfig != null && emailConfig.getContent() != null) {
+                    // 若启用数据库配置
+                    String content = emailConfig.getContent();
+                    EmailNoticeSender emailNoticeSenderConfig = objectMapper.readValue(content, EmailNoticeSender.class);
+                    if (emailNoticeSenderConfig.isEnable()) {
+                        sender.setHost(emailNoticeSenderConfig.getEmailHost());
+                        sender.setPort(emailNoticeSenderConfig.getEmailPort());
+                        sender.setUsername(emailNoticeSenderConfig.getEmailUsername());
+                        sender.setPassword(emailNoticeSenderConfig.getEmailPassword());
+                        Properties props = sender.getJavaMailProperties();
+                        props.put("mail.smtp.ssl.enable", emailNoticeSenderConfig.isEmailSsl());
+                        fromUsername = emailNoticeSenderConfig.getEmailUsername();  
+                        useDatabase = true;
+                    }
+                } 
                 if (!useDatabase) {
                     // 若数据库未配置则启用yml配置
-                    sender.setHost(mailConfigProperties.getHost());
-                    sender.setPort(mailConfigProperties.getPort());
-                    sender.setUsername(mailConfigProperties.getUsername());
-                    sender.setPassword(mailConfigProperties.getPassword());
-                    emailFromUser = mailConfigProperties.getUsername();
+                    sender.setHost(host);
+                    sender.setPort(port);
+                    sender.setUsername(username);
+                    sender.setPassword(password);
+                    Properties props = sender.getJavaMailProperties();
+                    props.put("mail.smtp.ssl.enable", sslEnable);
                 }
             } catch (Exception e) {
-                log.error("Type not found {}", e.getMessage());
+                log.error("Type not found {}",e.getMessage());
             }
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject(bundle.getString("alerter.notify.title"));
             //Set sender Email 设置发件人Email
-            messageHelper.setFrom(emailFromUser);
+            messageHelper.setFrom(fromUsername);
             //Set recipient Email 设定收件人Email
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());

@@ -21,8 +21,12 @@
 
 ```ng build --configuration production```
 
-2. Execute command in manager  
+2. Execute command in root  
 
-```mvn package```
+```mvn clean install```
 
 The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
+
+3. Execute command in collector  
+
+```mvn clean package -Pcluster```

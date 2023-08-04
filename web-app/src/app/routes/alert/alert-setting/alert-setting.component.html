@@ -151,6 +151,7 @@
             required
             name="target"
             id="target"
+            [nzShowSearch]="true"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
             (ngModelChange)="cascadeOnChange($event)"
@@ -182,7 +183,10 @@
                   <code>instance : {{ 'alert.setting.target.instance' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>{{ 'alert.setting.operator' | i18n }} : equals(str1,str2), ==, <, <=, >, >=, !=, ( ), +, -, &&, ||</code>
+                  <code>
+                    {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
+                    <, <=, >, >=, !=, ( ), +, -, &&, ||
+                  </code>
                 </nz-list-item>
               </nz-list>
             </nz-collapse-panel>
@@ -248,7 +252,7 @@
                 <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'=='" [nzLabel]="'=='"></nz-option>
                 <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'!='" [nzLabel]="'!='"></nz-option>
                 <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'<='" [nzLabel]="'<='"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>='" [nzLabel]="'<='"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>='" [nzLabel]="'>='"></nz-option>
                 <nz-option
                   *ngIf="!alertRule.metric || alertRule.metric.type === 1"
                   [nzValue]="'equals'"
@@ -258,6 +262,26 @@
                   *ngIf="!alertRule.metric || alertRule.metric.type === 1"
                   [nzValue]="'!equals'"
                   [nzLabel]="'alert.setting.rule.operator.str-no-equals' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'contains'"
+                  [nzLabel]="'alert.setting.rule.operator.str-contains' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'!contains'"
+                  [nzLabel]="'alert.setting.rule.operator.str-no-contains' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'matches'"
+                  [nzLabel]="'alert.setting.rule.operator.str-matches' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'!matches'"
+                  [nzLabel]="'alert.setting.rule.operator.str-no-matches' | i18n"
                 ></nz-option>
               </nz-select>
               <input
@@ -274,17 +298,6 @@
                 nzSpan="10"
               />
               <button
-                *ngIf="i === alertRules.length - 1 && i < 4"
-                nz-button
-                nzType="primary"
-                nz-col
-                nzSpan="2"
-                nzGhost="true"
-                (click)="onAddNewAlertRule()"
-              >
-                <span nz-icon nzType="plus"></span>
-              </button>
-              <button
                 *ngIf="i != alertRules.length - 1 || i == 4"
                 nz-button
                 nz-col
@@ -294,6 +307,17 @@
                 (click)="onRemoveAlertRule(i)"
               >
                 <span nz-icon nzType="minus"></span>
+              </button>
+              <button
+                *ngIf="i === alertRules.length - 1 && i < 4"
+                nz-button
+                nzType="primary"
+                nz-col
+                nzSpan="2"
+                nzGhost="true"
+                (click)="onAddNewAlertRule()"
+              >
+                <span nz-icon nzType="plus"></span>
               </button>
             </div>
           </div>
@@ -350,7 +374,7 @@
                   <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : {{ 'alert.setting.template.metric-value' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item *ngFor="let item of currentMetrics">
-                  <code>&#36;{{ '{' + item + '}' }} : {{ 'alert.setting.template.other-value' | i18n }}</code>
+                  <code>&#36;{{ '{' + item.value + '}' }} : {{ 'alert.setting.template.other-value' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>&#36;&#123;instance&#125; : {{ 'alert.setting.template.instance-value' | i18n }}</code>

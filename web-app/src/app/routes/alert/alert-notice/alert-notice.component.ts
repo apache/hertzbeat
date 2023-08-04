@@ -291,6 +291,9 @@ export class AlertNoticeComponent implements OnInit {
     } else {
       this.isLimit = true;
     }
+    this.dayCheckOptions.forEach(item => {
+      item.checked = this.rule.days != undefined && this.rule.days.indexOf(item.value) >= 0;
+    });
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption.push({
@@ -313,19 +316,12 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
 
-  onNoticeRuleDaysChange(value: any[]) {
-    this.rule.days = value
-      .filter(item => item.checked == true)
-      .map(item => item.value)
-      .concat();
-  }
-
   onNoticeRuleLimitChange(limit: boolean) {
     if (!limit) {
       this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
     } else {
       this.rule.days = this.dayCheckOptions
-        .filter(item => item.checked == true)
+        .filter(item => item.checked)
         .map(item => item.value)
         .concat();
     }
@@ -376,6 +372,9 @@ export class AlertNoticeComponent implements OnInit {
                   break;
                 case 11:
                   label = `${label}smn`;
+                  break;
+                case 12:
+                  label = `${label}ServerChan`;
                   break;
               }
               this.receiversOption.push({
@@ -492,6 +491,14 @@ export class AlertNoticeComponent implements OnInit {
     });
     if (this.rule.priorities != undefined) {
       this.rule.priorities = this.rule.priorities.filter(item => item != null && item != 9);
+    }
+    if (this.isLimit) {
+      this.rule.days = this.dayCheckOptions
+        .filter(item => item.checked)
+        .map(item => item.value)
+        .concat();
+    } else {
+      this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
     }
     this.isManageRuleModalOkLoading = true;
     if (this.isManageRuleModalAdd) {

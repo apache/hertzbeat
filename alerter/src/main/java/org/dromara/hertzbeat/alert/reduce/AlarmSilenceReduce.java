@@ -61,7 +61,9 @@ public class AlarmSilenceReduce {
 							return false;
 						}
 					});
-				}
+				} else {
+                    match = true;
+                }
 				if (match && alertSilence.getPriorities() != null && !alertSilence.getPriorities().isEmpty()) {
 					match = alertSilence.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
 				}

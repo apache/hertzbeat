@@ -19,10 +19,7 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant
- * 公共常量
- *
  * @author tomsun28
- *
  */
 public interface CommonConstants {
 
@@ -279,4 +276,19 @@ public interface CommonConstants {
      * cache key alert converge
      */
     String CACHE_ALERT_CONVERGE = "alert_converge";
+    
+    /**
+     * collector status online 0
+     */
+    byte COLLECTOR_STATUS_ONLINE = 0;
+    
+    /**
+     * collector status offline 1
+     */
+    byte COLLECTOR_STATUS_OFFLINE = 1;
+    
+    /**
+     * default main collector name
+     */
+    String MAIN_COLLECTOR_NODE = "main-default-collector";
 }
