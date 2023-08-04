@@ -346,6 +346,12 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "host":
                             String hostValue = param.getValue();
+                            if(hostValue.contains("http://")){
+                                hostValue = hostValue.replace("http://", "");
+                            }
+                            if(hostValue.contains("https://")){
+                                hostValue = hostValue.replace("https://", "");
+                            }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + hostValue + " is invalid host value.");

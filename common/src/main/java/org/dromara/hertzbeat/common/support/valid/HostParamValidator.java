@@ -32,6 +32,12 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         // 判断value是否满足ipv4 ipv5 域名 格式
+        if(value.contains("http://")){
+            value = value.replace("http://", "");
+        }
+        if(value.contains("https://")){
+            value = value.replace("https://", "");
+        }
         return IpDomainUtil.validateIpDomain(value);
     }
 }
