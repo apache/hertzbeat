@@ -89,14 +89,27 @@ public class AppController {
     }
 
     @PostMapping(path = "/define/yml")
-    @Operation(summary = "Save and apply monitoring type define yml", description = "保存并应用监控类型的定义YML")
-    public ResponseEntity<Message<Void>> applyAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
+    @Operation(summary = "Add new monitoring type define yml", description = "新增监控类型的定义YML")
+    public ResponseEntity<Message<Void>> newAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
-            appService.applyMonitorDefineYml(defineDto.getDefine());
+            appService.applyMonitorDefineYml(defineDto.getDefine(), false);
         } catch (Exception e) {
             return ResponseEntity.ok(Message.<Void>builder()
                             .code(CommonConstants.FAIL_CODE)
                             .msg(e.getMessage()).build());
+        }
+        return ResponseEntity.ok(Message.<Void>builder().build());
+    }
+    
+    @PutMapping(path = "/define/yml")
+    @Operation(summary = "Update monitoring type define yml", description = "更新监控类型的定义YML")
+    public ResponseEntity<Message<Void>> updateAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
+        try {
+            appService.applyMonitorDefineYml(defineDto.getDefine(), true);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.<Void>builder()
+                                             .code(CommonConstants.FAIL_CODE)
+                                             .msg(e.getMessage()).build());
         }
         return ResponseEntity.ok(Message.<Void>builder().build());
     }
