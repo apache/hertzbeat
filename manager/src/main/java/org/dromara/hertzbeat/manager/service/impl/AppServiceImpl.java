@@ -317,6 +317,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                         inputStream.close();
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
+                        log.error("Ignore this template file: {}.", resource.getFilename());
                     }
                 }
             } catch (Exception e) {
@@ -328,6 +329,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             log.info("load define path {}", defineAppPath);
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
+                    if (appFile.isHidden() 
+                                || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
+                        log.error("Ignore this template file: {}.", appFile.getName());
+                    }
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         Job app = yaml.loadAs(fileInputStream, Job.class);
                         if (app != null) {
@@ -335,7 +340,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                         }
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
-                        throw e;
+                        log.error("Ignore this template file: {}.", appFile.getName());
                     }
                 }
             }
