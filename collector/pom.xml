@@ -56,6 +56,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- run sql script-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.3.23</version>
+        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -205,6 +211,7 @@
                             <include>*.yml</include>
                             <include>*.properties</include>
                             <include>banner.txt</include>
+                            <include>META-INF/**</include>
                         </includes>
                     </resource>
                 </resources>

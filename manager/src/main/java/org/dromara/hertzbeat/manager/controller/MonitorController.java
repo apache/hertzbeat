@@ -39,7 +39,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 监控管理API
  *
  * @author tomsun28
- *
  */
 @Tag(name = "Monitor Manage API | 监控管理API")
 @RestController
@@ -56,9 +55,9 @@ public class MonitorController {
         monitorService.validate(monitorDto, false);
         if (monitorDto.isDetected()) {
             // Probe    进行探测
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
-        monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+        monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(new Message<>("Add success"));
     }
 
@@ -69,9 +68,9 @@ public class MonitorController {
         monitorService.validate(monitorDto, true);
         if (monitorDto.isDetected()) {
             // Probe    进行探测
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
-        monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+        monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(new Message<>("Modify success"));
     }
 
@@ -108,7 +107,7 @@ public class MonitorController {
     @Operation(summary = "Perform availability detection on this monitoring based on monitoring information", description = "根据监控信息去对此监控进行可用性探测")
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, null);
-        monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+        monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(new Message<>("Detect success."));
     }
 
@@ -117,7 +116,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, false);
         if (monitorDto.isDetected()) {
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams());
+            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
         monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(new Message<>("Add success"));

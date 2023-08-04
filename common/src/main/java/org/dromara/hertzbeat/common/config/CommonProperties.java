@@ -95,6 +95,8 @@ public class CommonProperties {
         Memory,
         /** kafka **/
         Kafka,
+        /** with netty connect **/
+        Netty,
         /** rabbit mq **/
         Rabbit_Mq
     }

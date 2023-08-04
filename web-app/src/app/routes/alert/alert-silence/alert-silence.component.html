@@ -206,12 +206,7 @@
       <nz-form-item *ngIf="silence.type == 1">
         <nz-form-label nzSpan="7" nzFor="days">{{ 'alert.notice.rule.period-chose' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-checkbox-group
-            name="days"
-            id="days"
-            [(ngModel)]="dayCheckOptions"
-            (ngModelChange)="onSilenceDaysChange(dayCheckOptions)"
-          ></nz-checkbox-group>
+          <nz-checkbox-group name="days" id="days" [(ngModel)]="dayCheckOptions"></nz-checkbox-group>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="silence.type == 1">

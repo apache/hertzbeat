@@ -8,7 +8,9 @@ import { fromEvent } from 'rxjs';
 
 import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
+import { CollectorSummary } from '../../pojo/CollectorSummary';
 import { AlertService } from '../../service/alert.service';
+import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
 
 @Component({
@@ -22,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private alertSvc: AlertService,
+    private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -42,6 +45,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appsCountTheme!: EChartsOption;
   appsCountEchartsInstance!: any;
   pageResize$!: any;
+
+  // collector list
+  collectors!: CollectorSummary[];
 
   // 告警列表
   alerts!: Alert[];
@@ -260,14 +266,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.refreshAppsCount();
     this.refreshAlertContentList();
+    this.refreshCollectorContentList();
     this.refreshAlertSummary();
   }
   refreshAppsCount(): void {
-    this.appCountService = new AppCount();
-    this.appCountOs = new AppCount();
-    this.appCountDb = new AppCount();
-    this.appCountMid = new AppCount();
-    this.appCountCustom = new AppCount();
+    let appCountService: AppCount = new AppCount();
+    let appCountOs: AppCount = new AppCount();
+    let appCountDb: AppCount = new AppCount();
+    let appCountMid: AppCount = new AppCount();
+    let appCountCustom: AppCount = new AppCount();
     let dashboard$ = this.monitorSvc.getAppsMonitorSummary().subscribe(
       message => {
         dashboard$.unsubscribe();
@@ -288,37 +295,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
             total = total + (app.size ? app.size : 0);
             switch (app.category) {
               case 'service':
-                this.appCountService.size += app.size;
-                this.appCountService.availableSize += app.availableSize;
-                this.appCountService.unAvailableSize += app.unAvailableSize;
-                this.appCountService.unManageSize += app.unManageSize;
+                appCountService.size += app.size;
+                appCountService.availableSize += app.availableSize;
+                appCountService.unAvailableSize += app.unAvailableSize;
+                appCountService.unManageSize += app.unManageSize;
                 break;
               case 'db':
-                this.appCountDb.size += app.size;
-                this.appCountDb.availableSize += app.availableSize;
-                this.appCountDb.unAvailableSize += app.unAvailableSize;
-                this.appCountDb.unManageSize += app.unManageSize;
+                appCountDb.size += app.size;
+                appCountDb.availableSize += app.availableSize;
+                appCountDb.unAvailableSize += app.unAvailableSize;
+                appCountDb.unManageSize += app.unManageSize;
                 break;
               case 'os':
-                this.appCountOs.size += app.size;
-                this.appCountOs.availableSize += app.availableSize;
-                this.appCountOs.unAvailableSize += app.unAvailableSize;
-                this.appCountOs.unManageSize += app.unManageSize;
+                appCountOs.size += app.size;
+                appCountOs.availableSize += app.availableSize;
+                appCountOs.unAvailableSize += app.unAvailableSize;
+                appCountOs.unManageSize += app.unManageSize;
                 break;
               case 'mid':
-                this.appCountMid.size += app.size;
-                this.appCountMid.availableSize += app.availableSize;
-                this.appCountMid.unAvailableSize += app.unAvailableSize;
-                this.appCountMid.unManageSize += app.unManageSize;
+                appCountMid.size += app.size;
+                appCountMid.availableSize += app.availableSize;
+                appCountMid.unAvailableSize += app.unAvailableSize;
+                appCountMid.unManageSize += app.unManageSize;
                 break;
               case 'custom':
-                this.appCountCustom.size += app.size;
-                this.appCountCustom.availableSize += app.availableSize;
-                this.appCountCustom.unAvailableSize += app.unAvailableSize;
-                this.appCountCustom.unManageSize += app.unManageSize;
+                appCountCustom.size += app.size;
+                appCountCustom.availableSize += app.availableSize;
+                appCountCustom.unAvailableSize += app.unAvailableSize;
+                appCountCustom.unManageSize += app.unManageSize;
                 break;
             }
           });
+          this.appCountService = appCountService;
+          this.appCountOs = appCountOs;
+          this.appCountDb = appCountDb;
+          this.appCountMid = appCountMid;
+          this.appCountCustom = appCountCustom;
           // @ts-ignore
           this.appsCountTheme.series[0].data = [{ value: total, name: this.i18nSvc.fanyi('dashboard.monitors.total') }];
           // @ts-ignore
@@ -401,6 +413,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error => {
         alertsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
+  }
+
+  refreshCollectorContentList(): void {
+    let collectorInit$ = this.collectorSvc.getCollectors().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.collectors = message.data.content;
+          this.cdr.detectChanges();
+        } else {
+          console.warn(message.msg);
+        }
+        collectorInit$.unsubscribe();
+      },
+      error => {
+        collectorInit$.unsubscribe();
         console.error(error.msg);
       }
     );
