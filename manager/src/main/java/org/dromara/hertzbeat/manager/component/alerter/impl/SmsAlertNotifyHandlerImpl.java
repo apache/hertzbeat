@@ -39,7 +39,7 @@ import java.util.ResourceBundle;
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty("common.sms.tencent.app-id")
-final class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final TencentSmsClient tencentSmsClient;
 

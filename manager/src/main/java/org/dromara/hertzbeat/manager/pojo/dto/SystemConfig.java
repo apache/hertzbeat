@@ -1,6 +1,9 @@
 package org.dromara.hertzbeat.manager.pojo.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 系统配置
@@ -9,6 +12,9 @@ import lombok.Data;
  * @since 4/7/2023
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SystemConfig {
 
     /**
@@ -17,7 +23,7 @@ public class SystemConfig {
     private String timeZoneId;
 
     /**
-     * 系统语言
+     * 系统语言地区
      */
-    private String language;
+    private String locale;
 }
