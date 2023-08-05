@@ -1,10 +1,10 @@
+import { DOCUMENT } from '@angular/common';
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
-import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
 import { SystemConfig } from '../../../../pojo/SystemConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
@@ -18,11 +18,13 @@ export class SystemConfigComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private notifySvc: NzNotificationService,
     private configService: GeneralConfigService,
+    private settings: SettingsService,
+    @Inject(DOCUMENT) private doc: any,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   loading = true;
-  config!: SystemConfig | undefined;
+  config!: SystemConfig;
 
   ngOnInit(): void {
     this.loadSystemConfig();
@@ -66,6 +68,12 @@ export class SystemConfigComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
+            let language = this.config.locale.replace('_', '-');
+            this.i18nSvc.loadLangData(language).subscribe(res => {
+              this.i18nSvc.use(language, res);
+              this.settings.setLayout('lang', language);
+              setTimeout(() => this.doc.location.reload());
+            });
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }

@@ -4,8 +4,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { DefineComponent } from './define/define.component';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
 import { SettingsComponent } from './settings/settings.component';
+import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
-import {SystemConfigComponent} from "./settings/system-config/system-config.component";
 
 const routes: Routes = [
   { path: 'tags', component: SettingTagsComponent },
