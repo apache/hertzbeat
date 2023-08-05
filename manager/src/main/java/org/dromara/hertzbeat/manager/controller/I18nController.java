@@ -53,8 +53,8 @@ public class I18nController {
         if (lang == null || "".equals(lang)) {
             lang = "zh-CN";
         }
-        lang = "zh-cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
-        lang = "en-us".equalsIgnoreCase(lang) ? "en-US" : lang;
+        lang = "zh-cn".equalsIgnoreCase(lang) || "zh_cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
+        lang = "en-us".equalsIgnoreCase(lang) || "en_us".equalsIgnoreCase(lang) ? "en-US" : lang;
         Map<String, String> i18nResource = appService.getI18nResources(lang);
         return ResponseEntity.ok(new Message<>(i18nResource));
     }
