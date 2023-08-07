@@ -15,9 +15,16 @@ import { DefineComponent } from './define/define.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
 import { SettingsComponent } from './settings/settings.component';
+import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
 
-const COMPONENTS: Array<Type<void>> = [SettingTagsComponent, DefineComponent, SettingsComponent, MessageServerComponent];
+const COMPONENTS: Array<Type<void>> = [
+  SettingTagsComponent,
+  DefineComponent,
+  SettingsComponent,
+  MessageServerComponent,
+  SystemConfigComponent
+];
 
 @NgModule({
   imports: [

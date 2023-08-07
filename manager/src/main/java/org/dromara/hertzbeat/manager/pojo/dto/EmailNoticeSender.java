@@ -1,6 +1,8 @@
 package org.dromara.hertzbeat.manager.pojo.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 
@@ -10,6 +12,8 @@ import javax.validation.constraints.*;
  * @author zqr
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailNoticeSender {
     
 	@NotNull(message = "类型不能为空|Type cannot be empty")
