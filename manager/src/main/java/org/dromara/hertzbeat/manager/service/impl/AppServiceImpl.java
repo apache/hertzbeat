@@ -332,6 +332,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     if (appFile.isHidden() 
                                 || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
                         log.error("Ignore this template file: {}.", appFile.getName());
+                        continue;
                     }
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         Job app = yaml.loadAs(fileInputStream, Job.class);
