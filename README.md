@@ -114,7 +114,7 @@
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
 
-3. Deploy Collector Clusters 
+3. Deploy collector clusters 
 
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
