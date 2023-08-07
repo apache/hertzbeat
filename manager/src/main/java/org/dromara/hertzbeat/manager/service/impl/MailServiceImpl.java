@@ -20,9 +20,11 @@ package org.dromara.hertzbeat.manager.service.impl;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.service.MailService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -83,5 +85,11 @@ public class MailServiceImpl implements MailService {
         String alarmTime = simpleDateFormat.format(new Date(alert.getLastAlarmTime()));
         context.setVariable("lastTriggerTime", alarmTime);
         return templateEngine.process("mailAlarm", context);
+    }
+    
+    @EventListener(SystemConfigChangeEvent.class)
+    public void onEvent(SystemConfigChangeEvent event) {
+        log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
+        this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }

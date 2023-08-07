@@ -30,4 +30,10 @@ public interface GeneralConfigService<T> {
      * @return 查询到的配置
      */
     T getConfig();
+    
+    /**
+     * handler after save config
+     * @param config config
+     */
+    default void handler(T config) {}
 }

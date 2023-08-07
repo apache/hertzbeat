@@ -40,7 +40,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+public class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {

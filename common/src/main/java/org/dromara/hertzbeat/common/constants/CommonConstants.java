@@ -291,4 +291,9 @@ public interface CommonConstants {
      * default main collector name
      */
     String MAIN_COLLECTOR_NODE = "main-default-collector";
+    
+    /**
+     * locale spilt
+     */
+    String LOCALE_SEPARATOR = "_";
 }

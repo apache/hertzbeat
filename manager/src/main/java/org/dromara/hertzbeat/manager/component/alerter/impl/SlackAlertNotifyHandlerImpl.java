@@ -44,7 +44,7 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+public class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private static final String SUCCESS = "ok";
     private final RestTemplate restTemplate;
 

@@ -20,6 +20,10 @@ export class SettingsComponent implements AfterViewInit, OnDestroy {
     {
       key: 'server',
       title: this.i18nSvc.fanyi('settings.server')
+    },
+    {
+      key: 'config',
+      title: this.i18nSvc.fanyi('settings.system-config')
     }
   ];
 

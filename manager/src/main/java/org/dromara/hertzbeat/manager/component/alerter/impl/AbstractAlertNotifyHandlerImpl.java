@@ -17,11 +17,14 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -37,9 +40,10 @@ import java.util.ResourceBundle;
  * @version 2.1
  * Created by Musk.Chen on 2023/1/16
  */
-abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
+@Slf4j
+public abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
-    protected final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Resource
@@ -81,5 +85,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
      * @return Thymeleaf模板名称
      */
     protected abstract String templateName();
-
+    
+    @EventListener(SystemConfigChangeEvent.class)
+    public void onEvent(SystemConfigChangeEvent event) {
+        log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
+        this.bundle = ResourceBundleUtil.getBundle("alerter");
+    }
 }

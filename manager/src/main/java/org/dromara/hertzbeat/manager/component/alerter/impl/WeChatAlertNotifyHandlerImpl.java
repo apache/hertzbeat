@@ -25,7 +25,7 @@ import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
  *
  *
  */
-final class WeChatAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class WeChatAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Override
     public void send(NoticeReceiver receiver, Alert alert) {
         // todo

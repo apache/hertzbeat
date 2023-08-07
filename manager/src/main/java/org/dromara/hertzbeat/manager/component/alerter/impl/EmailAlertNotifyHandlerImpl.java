@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
@@ -30,6 +31,7 @@ import org.dromara.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.dromara.hertzbeat.manager.service.MailService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -47,7 +49,7 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private final JavaMailSender javaMailSender;
 
@@ -74,7 +76,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private static final String TYPE = "email";
 
-    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
@@ -133,5 +135,11 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Override
     public byte type() {
         return 1;
+    }
+    
+    @EventListener(SystemConfigChangeEvent.class)
+    public void onEvent(SystemConfigChangeEvent event) {
+        log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
+        this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }
