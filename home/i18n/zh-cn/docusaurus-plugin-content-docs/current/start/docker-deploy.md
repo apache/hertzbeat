@@ -79,13 +79,13 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 
    - `-p 1157:1157 -p 1158:1158`  : 映射容器端口到主机端口，请注意，前面是宿主机的端口号，后面是容器的端口号。1157是WEB端口，1158是集群端口。
 
-   - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
+   - `-v $(pwd)/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
 
-   - `-v /opt/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
+   - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
 
-   - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
+   - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
 
-   - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
+   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
 
    - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)  
 
@@ -117,7 +117,7 @@ $ docker run -d \
    - `-e IDENTITY=custom-collector-name`  : (可选) 设置采集器的唯一标识名称。⚠️注意多采集器时采集器名称需保证唯一性。  
    - `-e MANAGER_IP=127.0.0.1` : 重要⚠️ 设置连接的主HertzBeat服务地址IP。
    - `-e MANAGER_PORT=1158` :  (可选) 设置连接的主HertzBeat服务地址端口，默认 1158.
-   - `-v /opt/logs:/opt/hertzbeat-collector/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
+   - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
    - `--name hertzbeat-collector` : 命名容器名称 hertzbeat-collector
    - `tancloud/hertzbeat-collector` : 使用拉取最新的的HertzBeat采集器官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat-collector`代替。**   
 

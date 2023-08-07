@@ -84,7 +84,7 @@ $ docker run -d \
    - `-e IDENTITY=custom-collector-name`  : (optional) Set the collector unique identity name. Attention the clusters collector name must unique.
    - `-e MANAGER_IP=127.0.0.1` : Important⚠️ Set the main hertzbeat server ip.
    - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
-   - `-v /opt/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
+   - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
    - `--name hertzbeat-collector` : Naming container name hertzbeat-collector
    - `tancloud/hertzbeat-collector` : Use the pulled latest HertzBeat-Collector official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat-collector` instead if you pull `quay.io` docker image.**
 
