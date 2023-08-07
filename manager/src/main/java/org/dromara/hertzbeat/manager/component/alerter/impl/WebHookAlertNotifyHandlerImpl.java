@@ -34,7 +34,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final RestTemplate restTemplate;
 
     @Override

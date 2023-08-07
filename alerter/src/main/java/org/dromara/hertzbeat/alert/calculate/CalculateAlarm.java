@@ -23,7 +23,6 @@ import com.googlecode.aviator.exception.CompileExpressionErrorException;
 import com.googlecode.aviator.exception.ExpressionRuntimeException;
 import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
-import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
@@ -35,11 +34,13 @@ import org.dromara.hertzbeat.alert.util.AlertTemplateUtil;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
 
 import javax.persistence.criteria.Predicate;
 import java.util.*;
@@ -55,7 +56,7 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATU
  *
  * @author tom
  */
-@Configuration
+@Component
 @Slf4j
 public class CalculateAlarm {
 
@@ -71,7 +72,7 @@ public class CalculateAlarm {
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
     private final AlarmCommonReduce alarmCommonReduce;
-    private final ResourceBundle bundle;
+    private ResourceBundle bundle;
     private final AlertService alertService;
 
     public CalculateAlarm(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
@@ -365,5 +366,11 @@ public class CalculateAlarm {
 
         //query results
         return alertService.getAlerts(specification);
+    }
+    
+    @EventListener(SystemConfigChangeEvent.class)
+    public void onEvent(SystemConfigChangeEvent event) {
+        log.info("calculate alarm receive system config change event: {}.", event.getSource());
+        this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }
