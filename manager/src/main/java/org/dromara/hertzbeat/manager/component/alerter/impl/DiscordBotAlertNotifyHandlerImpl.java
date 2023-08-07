@@ -23,7 +23,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+public class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {

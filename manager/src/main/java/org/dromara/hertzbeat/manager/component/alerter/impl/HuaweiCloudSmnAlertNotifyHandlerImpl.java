@@ -26,12 +26,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -41,9 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
-
+public class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private final Map<String, SmnClient> smnClientMap = new ConcurrentHashMap<>();
 
     @Override

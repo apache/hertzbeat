@@ -9,8 +9,8 @@ import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 /**
+ * Server酱发送
  * @author zqr10159
- * @description Server酱发送
  */
 @Component
 @RequiredArgsConstructor

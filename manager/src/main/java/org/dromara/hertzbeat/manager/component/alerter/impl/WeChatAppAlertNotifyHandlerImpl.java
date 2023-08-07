@@ -1,10 +1,10 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
@@ -21,7 +21,6 @@ import java.util.Objects;
 /**
  * WeChat app alert notify impl
  * @author hdd
- * @create 2023/04/04
  */
 @Component
 @RequiredArgsConstructor
@@ -61,7 +60,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.TextDTO textDTO = new WeChatAppDTO.TextDTO();
-                textDTO.setContent(JSON.toJSONString(alert));
+                textDTO.setContent(JsonUtil.toJson(alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
                         .msgType(DEFAULT_TYPE)

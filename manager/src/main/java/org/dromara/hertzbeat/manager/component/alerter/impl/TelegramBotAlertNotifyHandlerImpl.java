@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information by Telegram Bot
@@ -42,8 +41,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-    private final RestTemplate restTemplate;
+public class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
