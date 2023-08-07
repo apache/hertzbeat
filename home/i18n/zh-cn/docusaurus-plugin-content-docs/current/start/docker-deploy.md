@@ -23,10 +23,12 @@ sidebar_label: Docker方式部署
 
    ```shell
    $ docker pull tancloud/hertzbeat   
+   $ docker pull tancloud/hertzbeat-collector   
    ```
    若网络超时或者使用
    ```shell
    $ docker pull quay.io/tancloud/hertzbeat
+   $ docker pull quay.io/tancloud/hertzbeat-collector   
    ```
 
 3. 部署HertzBeat您可能需要掌握的几条命令
@@ -45,31 +47,29 @@ sidebar_label: Docker方式部署
    $ exit
    ```
 
-4. 配置挂载的HertzBeat的配置文件(可选)      
-   在主机目录下创建application.yml，eg:/opt/application.yml        
-   配置文件完整内容见项目仓库[/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml) 您可以根据需求修改配置文件
-   - 若需使用邮件发送告警，需替换`application.yml`里面的邮件服务器参数
+4. 挂载并配置HertzBeat的配置文件(可选)      
+   下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml    
+   下载源 [github/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml) 或 [gitee/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)   
+   - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
    - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）       
    - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)   
    - **推荐**若需使用时序数据库IotDB来存储指标数据库，需替换`application.yml`里面的`warehouse.storeiot-db`参数 具体步骤参见 [使用IotDB存储指标数据](iotdb-init)    
 
-5. 配置挂载的HertzBeat用户配置文件，自定义用户密码(可选)         
+5. 挂载并配置HertzBeat用户配置文件，自定义用户密码(可选)         
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
-   在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
-   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+   下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml    
+   下载源 [github/script/sureness.yml](https://github.com/dromara/hertzbeat/raw/master/script/sureness.yml) 或 [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)   
    具体修改步骤参考 [配置修改账户密码](account-modify)   
 
 6. 启动HertzBeat Docker容器    
 
 ```shell 
-$ docker run -d -p 1157:1157 \
-    -e LANG=zh_CN.UTF-8 \
-    -e TZ=Asia/Shanghai \
-    -v /opt/data:/opt/hertzbeat/data \
-    -v /opt/logs:/opt/hertzbeat/logs \
-    -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
-    -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
+$ docker run -d -p 1157:1157 -p 1158:1158 \
+    -v $(pwd)/data:/opt/hertzbeat/data \
+    -v $(pwd)/logs:/opt/hertzbeat/logs \
+    -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
+    -v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml \
     --restart=always \
     --name hertzbeat tancloud/hertzbeat
 ```
@@ -77,11 +77,7 @@ $ docker run -d -p 1157:1157 \
  	这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
    - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
 
-   - `-p 1157:1157`  : 映射容器端口到主机端口，请注意，前面是宿主机的端口号，后面是容器的端口号。
-
-   - `-e LANG=zh_CN.UTF-8`  : (可选) 设置语言
-
-   - `-e TZ=Asia/Shanghai` : (可选) 设置时区
+   - `-p 1157:1157 -p 1158:1158`  : 映射容器端口到主机端口，请注意，前面是宿主机的端口号，后面是容器的端口号。1157是WEB端口，1158是集群端口。
 
    - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
 
@@ -105,6 +101,27 @@ $ docker run -d -p 1157:1157 \
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  
+
+8. 部署采集器集群(可选)
+
+```shell 
+$ docker run -d \
+    -e IDENTITY=custom-collector-name \
+    -e MANAGER_IP=127.0.0.1 \
+    -e MANAGER_PORT=1158 \
+    --name hertzbeat-collector tancloud/hertzbeat-collector
+```
+
+   这条命令启动一个运行HertzBeat采集器的Docker容器，并直连上了HertzBeat主服务节点。 
+   - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
+   - `-e IDENTITY=custom-collector-name`  : (可选) 设置采集器的唯一标识名称。⚠️注意多采集器时采集器名称需保证唯一性。  
+   - `-e MANAGER_IP=127.0.0.1` : 重要⚠️ 设置连接的主HertzBeat服务地址IP。
+   - `-e MANAGER_PORT=1158` :  (可选) 设置连接的主HertzBeat服务地址端口，默认 1158.
+   - `-v /opt/logs:/opt/hertzbeat-collector/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
+   - `--name hertzbeat-collector` : 命名容器名称 hertzbeat-collector
+   - `tancloud/hertzbeat-collector` : 使用拉取最新的的HertzBeat采集器官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat-collector`代替。**   
+
+8. 浏览器访问主HertzBeat服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器  
 
 **HAVE FUN**   
 
