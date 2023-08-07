@@ -159,7 +159,7 @@ export class DefineComponent implements OnInit {
   saveAndApply() {
     this.saveLoading = true;
     const saveDefine$ = this.appDefineSvc
-      .saveAppDefineYmlContent(this.code)
+      .newAppDefineYmlContent(this.code, this.currentApp == null)
       .pipe(
         finalize(() => {
           saveDefine$.unsubscribe();
