@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-An open-source, real-time monitoring system with custom monitoring and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，强大自定义监控能力.   
+An open-source, real-time monitoring system with custom monitoring, high performance and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能，强大自定义监控能力.   
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,17 +30,18 @@ An open-source, real-time monitoring system with custom monitoring and agentless
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring and agentless capabilities.    
-It combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
+[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance and agentless capabilities.   
 
 ### Features
 
-* Easy to use, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
-* Provides a more flexible threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any desired metrics by simply configuring the `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Powerful customization, multi-type support, easy expansion, and low coupling.
+* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
+* Easy to use, agentless, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
+* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-side collaboration.
+* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-HertzBeat aims to help developers and teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
+
+> HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
 
 ----
 
