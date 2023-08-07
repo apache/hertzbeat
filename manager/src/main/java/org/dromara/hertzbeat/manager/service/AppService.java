@@ -94,9 +94,11 @@ public interface AppService {
 
     /**
      * update and apply app define yml
+     *
      * @param ymlContent yml content
+     * @param isModify is modified?
      */
-    void applyMonitorDefineYml(String ymlContent);
+    void applyMonitorDefineYml(String ymlContent, boolean isModify);
 
     /**
      * delete monitor define yml
