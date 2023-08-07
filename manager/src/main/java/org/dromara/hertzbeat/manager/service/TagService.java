@@ -31,7 +31,6 @@ import java.util.Set;
  * 标签服务
  *
  * @author tom
- *
  */
 public interface TagService {
 
@@ -75,6 +74,7 @@ public interface TagService {
 
     /**
      * remove monitor system tags
+     *
      * @param monitor monitor
      */
     void deleteMonitorSystemTags(Monitor monitor);
