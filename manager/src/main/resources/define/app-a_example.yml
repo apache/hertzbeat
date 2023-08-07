@@ -24,6 +24,11 @@ app: a_example
 name:
   zh-CN: 模拟应用
   en-US: EXAMPLE APP
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: PING连通性 - Hertzbeat 支持您使用在线配置对端服务的IP或域名地址，监控本机网络与对端网络的PING可连通性。
+  en-US: PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
