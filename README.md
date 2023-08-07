@@ -329,6 +329,7 @@ Thanks to these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/littlezhongzer"><img src="https://avatars.githubusercontent.com/u/33685289?v=4?s=100" width="100px;" alt="littlezhongzer"/><br /><sub><b>littlezhongzer</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=littlezhongzer" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChenXiangxxxxx"><img src="https://avatars.githubusercontent.com/u/90089594?v=4?s=100" width="100px;" alt="ChenXiangxxxxx"/><br /><sub><b>ChenXiangxxxxx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ChenXiangxxxxx" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Mr-zhou315"><img src="https://avatars.githubusercontent.com/u/10276100?v=4?s=100" width="100px;" alt="Mr.zhou"/><br /><sub><b>Mr.zhou</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Mr-zhou315" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
