@@ -1,22 +1,7 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="alert"></i>
-    <span>{{ 'menu.alert.converge' | i18n }}</span>
-    <a href="https://hertzbeat.com/docs/help/alert_converge" target="_blank" style="float: right; margin-right: 5%">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'alert.help.converge' | i18n"
+  [guild_link]="'alert.help.converge.link' | i18n"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <div style="margin-bottom: 20px">

@@ -6,10 +6,14 @@ import { DelonACLModule } from '@delon/acl';
 import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 
+import { HelpMassageShowComponent } from './components/help-massage-show/help-massage-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
+import {NzBreadCrumbModule} from "ng-zorro-antd/breadcrumb";
+import {NzTagModule} from "ng-zorro-antd/tag";
+
 
 // #region third libs
 
@@ -19,7 +23,7 @@ const THIRDMODULES: Array<Type<void>> = [];
 
 // #region your components & directives
 
-const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent];
+const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent, HelpMassageShowComponent];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
 
 // #endregion
@@ -36,12 +40,15 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
     ...SHARED_DELON_MODULES,
     ...SHARED_ZORRO_MODULES,
     // third libs
-    ...THIRDMODULES
+    ...THIRDMODULES,
+    NzBreadCrumbModule,
+    NzTagModule
   ],
   declarations: [
     // your components
     ...COMPONENTS,
-    ...DIRECTIVES
+    ...DIRECTIVES,
+    HelpMassageShowComponent
   ],
   exports: [
     CommonModule,
