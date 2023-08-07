@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.service;
 
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,4 +73,9 @@ public interface TagService {
      */
     List<Tag> listTag(Set<Long> ids);
 
+    /**
+     * remove monitor system tags
+     * @param monitor monitor
+     */
+    void deleteMonitorSystemTags(Monitor monitor);
 }
