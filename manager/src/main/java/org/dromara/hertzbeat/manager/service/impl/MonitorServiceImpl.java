@@ -80,8 +80,8 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
     public static final String BLANK = "";
-    public static final String patternHttp  = "(?i)http://";
-    public static final String patternHttps  = "(?i)https://";
+    public static final String PATTERN_HTTP  = "(?i)http://";
+    public static final String PATTERN_HTTPS  = "(?i)https://";
 
     private static final Gson GSON = new Gson();
 
@@ -386,10 +386,10 @@ public class MonitorServiceImpl implements MonitorService {
                         case "host":
                             String hostValue = param.getValue();
                             if(hostValue.toLowerCase().contains(HTTP)){
-                                hostValue = hostValue.replaceAll(patternHttp, BLANK);
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
                             }
                             if(hostValue.toLowerCase().contains(HTTPS)){
-                                hostValue = hostValue.replace(patternHttps, BLANK);
+                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
                             }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
