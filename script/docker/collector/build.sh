@@ -20,9 +20,9 @@ cd `dirname $0`
 # 当前脚本目录
 CURRENT_DIR=`pwd`
 # 跳转制品目录
-cd ../../../manager/target
+cd ../../../collector/target
 # 自动捕获hertzbeat版本
-VERSION=`ls *.tar| awk -F"-" '{print $2}' | awk -F".tar" '{print $1}'`
+VERSION=`ls *.tar| awk -F"-" '{print $3}' | awk -F".tar" '{print $1}'`
 # 强制使用版本参数
 if [ -n "$1" ]; then
     VERSION="$1";
@@ -31,12 +31,11 @@ fi
 # 编译上下文目录
 CONTEXT_DIR=`pwd`
 
-echo "docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
+echo "docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
 #docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:v"$VERSION" -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
 #docker build -t tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION"
 
+echo "docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
-echo "docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
-
-#docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
+#docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push

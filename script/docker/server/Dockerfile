@@ -14,7 +14,7 @@ ADD hertzbeat-${VERSION}.tar /opt/
 #ENV TZ=Asia/Shanghai
 #ENV LANG=zh_CN.UTF-8
 
-EXPOSE 1157 22
+EXPOSE 1157 1158 22
 
 WORKDIR /opt/hertzbeat/
 
