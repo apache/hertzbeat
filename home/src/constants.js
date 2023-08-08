@@ -14,7 +14,7 @@ export const features = [
             docker: <code>{'docker run -d -p 1157:1157 -p 1158:1158 tancloud/hertzbeat'}</code>,
             console: (
               <a href={'https://www.console.tancloud.cn'}>
-                <strong>Login Now</strong>
+                Login Now
               </a>
             ),
             br: <br />,
@@ -51,12 +51,12 @@ export const features = [
           values={{
             github: (
               <a href={'https://github.com/dromara/hertzbeat'}>
-                <strong>HertzBeat Code Github</strong>
+                HertzBeat Code Github
               </a>
             ),
             gitee: (
               <a href={'https://gitee.com/dromara/hertzbeat'}>
-                <strong>HertzBeat Code Gitee</strong>
+                HertzBeat Code Gitee
               </a>
             ),
             br: <br />,
