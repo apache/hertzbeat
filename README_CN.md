@@ -8,7 +8,7 @@
 
 ## HertzBeat 赫兹跳动 | [English Documentation](README.md)           
 
-> 易用友好的开源实时监控告警系统，无需Agent，高性能，强大自定义监控能力。
+> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力。
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,7 +30,7 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源高性能实时监控告警系统。     
+[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。     
 
 ### 特点
 
