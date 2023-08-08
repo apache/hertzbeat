@@ -119,11 +119,17 @@ function Home() {
                   loop={true}
                   speed={0}
                   autoplay={{
-                    delay: 3000,
+                    delay: 6000,
                     disableOnInteraction: false,
                     waitForTransition: false,
                   }}
               >
+                <SwiperSlide>
+                  <img
+                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      src={useBaseUrl('/img/docs/hertzbeat-arch.png')}
+                  />
+                </SwiperSlide>
                 <SwiperSlide>
                   <img
                       style={{ width: '1000px', display: 'block', margin: '0 auto' }}
