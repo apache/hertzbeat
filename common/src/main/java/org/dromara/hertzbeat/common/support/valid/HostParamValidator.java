@@ -28,15 +28,20 @@ import javax.validation.ConstraintValidatorContext;
  *
  */
 public class HostParamValidator implements ConstraintValidator<HostValid, String> {
+	public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
+    public static final String BLANK = "";
+    public static final String patternHttp  = "(?i)http://";
+    public static final String patternHttps  = "(?i)https://";
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         // 判断value是否满足ipv4 ipv5 域名 格式
-        if(value.contains("http://")){
-            value = value.replace("http://", "");
+        if(value.toLowerCase().contains(HTTP)){
+            value = value.replaceAll(patternHttp,BLANK);
         }
-        if(value.contains("https://")){
-            value = value.replace("https://", "");
+        if(value.toLowerCase().contains(HTTPS)){
+            value = value.replace(patternHttps,BLANK);
         }
         return IpDomainUtil.validateIpDomain(value);
     }
