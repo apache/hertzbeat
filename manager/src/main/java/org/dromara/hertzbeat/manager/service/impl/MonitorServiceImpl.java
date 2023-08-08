@@ -269,14 +269,14 @@ public class MonitorServiceImpl implements MonitorService {
     public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
         var imExportService = imExportServiceMap.get(type);
         if (imExportService == null) {
-            throw new IllegalArgumentException("not support export type: " + type);
+            throw new IllegalArgumentException("Unsupported export type: " + type);
         }
         var fileName = imExportService.getFileName();
-        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
-        res.setContentType("application/octet-stream;charset=UTF-8");
+        res.setHeader(HttpHeaders.CONTENT_TYPE, "application/octet-stream;charset=UTF-8");
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        res.setHeader("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION);
         imExportService.exportConfig(res.getOutputStream(), ids);
+
     }
 
     @Override
@@ -388,16 +388,10 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "host":
-                            String hostValue = param.getValue();
-                            if(hostValue.toLowerCase().contains(HTTP)){
-                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
-                            }
-                            if(hostValue.toLowerCase().contains(HTTPS)){
-                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
-                            }
+                            String hostValue = param.getValue().replaceAll(PATTERN_HTTPS, "").replaceAll(PATTERN_HTTP, "");
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + hostValue + " is invalid host value.");
+                                        + hostValue + " is an invalid host value.");
                             }
                             break;
                         case "password":
@@ -411,7 +405,6 @@ public class MonitorServiceImpl implements MonitorService {
                             param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
                             break;
                         case "boolean":
-                            // boolean check
                             String booleanValue = param.getValue();
                             if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
@@ -452,10 +445,9 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "key-value":
-                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {
-                            }) == null) {
+                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {}) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid key-value value");
+                                        + param.getValue() + " is an invalid key-value value");
                             }
                             break;
                         case "array":
