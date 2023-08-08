@@ -28,7 +28,7 @@ import javax.validation.ConstraintValidatorContext;
  *
  */
 public class HostParamValidator implements ConstraintValidator<HostValid, String> {
-	public static final String HTTP = "http://";
+    public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
     public static final String BLANK = "";
     public static final String patternHttp  = "(?i)http://";
@@ -37,11 +37,11 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         // 判断value是否满足ipv4 ipv5 域名 格式
-        if(value.toLowerCase().contains(HTTP)){
-            value = value.replaceAll(patternHttp,BLANK);
+        if(value != null && value.toLowerCase().contains(HTTP)){
+            value = value.replaceAll(patternHttp, BLANK);
         }
-        if(value.toLowerCase().contains(HTTPS)){
-            value = value.replace(patternHttps,BLANK);
+        if(value != null && value.toLowerCase().contains(HTTPS)){
+            value = value.replace(patternHttps, BLANK);
         }
         return IpDomainUtil.validateIpDomain(value);
     }

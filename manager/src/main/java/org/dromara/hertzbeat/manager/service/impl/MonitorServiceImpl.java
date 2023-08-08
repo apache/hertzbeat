@@ -386,10 +386,10 @@ public class MonitorServiceImpl implements MonitorService {
                         case "host":
                             String hostValue = param.getValue();
                             if(hostValue.toLowerCase().contains(HTTP)){
-                                hostValue = hostValue.replaceAll(patternHttp,BLANK);
+                                hostValue = hostValue.replaceAll(patternHttp, BLANK);
                             }
                             if(hostValue.toLowerCase().contains(HTTPS)){
-                                hostValue = hostValue.replace(patternHttps,BLANK);
+                                hostValue = hostValue.replace(patternHttps, BLANK);
                             }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
