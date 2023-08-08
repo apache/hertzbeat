@@ -76,7 +76,10 @@ class MonitorServiceTest {
 
     @Mock
     private AppService appService;
-    
+
+    @Mock
+    private TagService tagService;
+
     @Mock
     private CollectJobScheduling collectJobScheduling;
 
