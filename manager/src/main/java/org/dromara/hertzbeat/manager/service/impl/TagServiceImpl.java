@@ -17,6 +17,8 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.manager.dao.TagDao;
 import org.dromara.hertzbeat.manager.service.TagService;
@@ -32,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author tom
@@ -75,5 +78,12 @@ public class TagServiceImpl implements TagService {
         return tagDao.findByIdIn(ids);
     }
 
+    @Override
+    public void deleteMonitorSystemTags(Monitor monitor) {
+        if (CollectionUtils.isNotEmpty(monitor.getTags())) {
+            List<Tag> tags = monitor.getTags().stream().filter(tag -> tag.getType() == (byte) 0).collect(Collectors.toList());
+            tagDao.deleteAll(tags);
+        }
+    }
 
 }
