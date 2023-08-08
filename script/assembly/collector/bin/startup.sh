@@ -36,7 +36,7 @@ DEPLOY_DIR=`pwd`
 # 如果指定的是目录,spring则会读取目录中的所有配置文件
 CONF_DIR=$DEPLOY_DIR/config
 # 应用的端口号
-SERVER_PORT=1158
+SERVER_PORT=1159
 
 PIDS=`ps -ef | grep java | grep "$CONF_DIR" | awk '{print $2}'`
 if [ "$1" = "status" ]; then

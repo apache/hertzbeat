@@ -22,7 +22,7 @@ setlocal enabledelayedexpansion
 set SERVER_NAME="${project.artifactId}"
 
 
-set SERVER_PORT=1158
+set SERVER_PORT=1159
 
 echo Start shutdown HertzBeat %SERVER_NAME% 
 

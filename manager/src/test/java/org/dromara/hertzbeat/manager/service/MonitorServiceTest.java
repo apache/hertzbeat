@@ -2,7 +2,6 @@ package org.dromara.hertzbeat.manager.service;
 
 import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
-import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -11,12 +10,14 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.dromara.hertzbeat.manager.dao.CollectorDao;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.dromara.hertzbeat.manager.pojo.dto.AppCount;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.dromara.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -43,17 +44,17 @@ import static org.mockito.Mockito.*;
 /**
  * newBranch feature-clickhouse#179
  * 配置带密码的clickhouse
- * https://www.cnblogs.com/it1042290135/p/16202478.html
+ * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
- * 9363是promethus的http端口(在config.xml里面打开), http://clickhouse:9363/metrics
+ * 9363是promethus的http端口(在config.xml里面打开), <a href="http://clickhouse:9363/metrics">...</a>
  * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
  * <p>
  * <p>
- * https://hub.docker.com/r/clickhouse/clickhouse-server/
+ * <a href="https://hub.docker.com/r/clickhouse/clickhouse-server/">...</a>
  * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server
- * curl 'http://localhost:18123/'
+ * curl '<a href="http://localhost:18123/">...</a>'
  * web UI
- * http://localhost:18123/play
+ * <a href="http://localhost:18123/play">...</a>
  * <p>
  * 明文密码linux可以登录了,但是navicat还是无法登录
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
@@ -75,15 +76,22 @@ class MonitorServiceTest {
 
     @Mock
     private AppService appService;
-
+    
     @Mock
-    private CollectJobService collectJobService;
+    private CollectJobScheduling collectJobScheduling;
 
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
     
     @Mock
     private TagMonitorBindDao tagMonitorBindDao;
+    
+    @Mock
+    private CollectorDao collectorDao;
+    
+    @Mock
+    private CollectorMonitorBindDao collectorMonitorBindDao;
+    
     @Mock
     private CalculateAlarm calculateAlarm;
 
@@ -111,10 +119,10 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
 
         List<CollectRep.MetricsData> collectRep = new ArrayList<>();
-        when(collectJobService.collectSyncJobData(job)).thenReturn(collectRep);
+        when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
     }
 
     /**
@@ -137,10 +145,10 @@ class MonitorServiceTest {
         CollectRep.MetricsData failCode = CollectRep.MetricsData.newBuilder()
                 .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
         collectRep.add(failCode);
-        when(collectJobService.collectSyncJobData(job)).thenReturn(collectRep);
+        when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
-        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params));
+        assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
     }
 
     @Test
@@ -152,11 +160,11 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobService.addAsyncCollectJob(job)).thenReturn(1L);
+        when(collectJobScheduling.addAsyncCollectJob(job)).thenReturn(1L);
         when(monitorDao.save(monitor)).thenReturn(monitor);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
-        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params));
+        assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null));
     }
 
     @Test
@@ -168,10 +176,10 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobService.addAsyncCollectJob(job)).thenReturn(1L);
+        when(collectJobScheduling.addAsyncCollectJob(job)).thenReturn(1L);
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null));
     }
 
     /**
@@ -190,7 +198,7 @@ class MonitorServiceTest {
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
-            assertEquals("监控名称不能重复!", e.getMessage());
+            assertEquals("Monitoring name cannot be repeated!", e.getMessage());
         }
     }
 
@@ -550,7 +558,7 @@ class MonitorServiceTest {
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null);
         } catch (IllegalArgumentException e) {
             assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
@@ -561,7 +569,7 @@ class MonitorServiceTest {
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
         try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams());
+            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null);
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
@@ -570,7 +578,7 @@ class MonitorServiceTest {
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams()));
+        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null));
     }
 
     @Test
@@ -608,6 +616,7 @@ class MonitorServiceTest {
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId())).thenReturn(Optional.empty());
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
         assertNotNull(monitorDto);
     }
@@ -649,6 +658,7 @@ class MonitorServiceTest {
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
+        job.setParams(new ArrayList<>());
         when(appService.getAppDefine(monitors.get(0).getApp())).thenReturn(job);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(monitors.get(0).getId())).thenReturn(params);
