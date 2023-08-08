@@ -8,7 +8,7 @@ RUN mkdir /var/run/sshd
 
 ADD hertzbeat-1.3.2.tar /opt/
 
-ENV TZ=Asia/Shanghai
+#ENV TZ=Asia/Shanghai
 #ENV LANG=zh_CN.UTF-8
 
 EXPOSE 1157 22
