@@ -11,7 +11,7 @@ export const features = [
       <>
         <Translate
           values={{
-            docker: <code>{'docker run -d -p 1157:1157 tancloud/hertzbeat'}</code>,
+            docker: <code>{'docker run -d -p 1157:1157 -p 1158:1158 tancloud/hertzbeat'}</code>,
             TANCLOUD: <strong>TANCLOUD</strong>,
             console: (
               <a href={'https://www.console.tancloud.cn'}>
