@@ -78,6 +78,12 @@ import java.util.stream.Collectors;
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
+    public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
+    public static final String BLANK = "";
+    public static final String PATTERN_HTTP  = "(?i)http://";
+    public static final String PATTERN_HTTPS  = "(?i)https://";
+
     private static final Gson GSON = new Gson();
 
     @Autowired
@@ -383,6 +389,12 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "host":
                             String hostValue = param.getValue();
+                            if(hostValue.toLowerCase().contains(HTTP)){
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
+                            }
+                            if(hostValue.toLowerCase().contains(HTTPS)){
+                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
+                            }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + hostValue + " is invalid host value.");
