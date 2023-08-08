@@ -45,6 +45,7 @@ import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.ImExportService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
+import org.dromara.hertzbeat.manager.service.TagService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
@@ -77,10 +78,19 @@ import java.util.stream.Collectors;
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
+    public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
+    public static final String BLANK = "";
+    public static final String PATTERN_HTTP  = "(?i)http://";
+    public static final String PATTERN_HTTPS  = "(?i)https://";
+
     private static final Gson GSON = new Gson();
 
     @Autowired
     private AppService appService;
+
+    @Autowired
+    private TagService tagService;
     
     @Autowired
     private CollectJobScheduling collectJobScheduling;
@@ -379,6 +389,12 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "host":
                             String hostValue = param.getValue();
+                            if(hostValue.toLowerCase().contains(HTTP)){
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
+                            }
+                            if(hostValue.toLowerCase().contains(HTTPS)){
+                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
+                            }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + hostValue + " is invalid host value.");
@@ -546,6 +562,8 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitorOptional.isPresent()) {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
+            // delete tag 删除监控对应的标签
+            tagService.deleteMonitorSystemTags(monitor);
             paramDao.deleteParamsByMonitorId(id);
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
@@ -565,6 +583,8 @@ public class MonitorServiceImpl implements MonitorService {
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
+                // delete tag 删除监控对应的标签
+                tagService.deleteMonitorSystemTags(monitor);
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
             }

@@ -38,7 +38,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = HostParamValidator.class)
 public @interface HostValid {
 
-    String message() default "监控Host必须是ipv4,ipv6或域名";
+    String message() default "监控Host必须是ipv4,ipv6或域名,<br>EX:127.0.0.1 或者 hertzbeat.com";
 
     Class<?>[] groups() default {};
 
