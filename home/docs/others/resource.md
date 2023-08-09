@@ -4,6 +4,10 @@ title: Related resources
 sidebar_label: Related resources     
 ---
 
+## HertzBeat Introduce PDF
+
+Download: [PDF](http://cdn.hertzbeat.com/hertzbeat.pdf)   
+
 ## Icon resources 
 
 ### TANCLOUD-HertzBeat LOGO   

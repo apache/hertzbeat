@@ -1,6 +1,6 @@
 ---
 id: hertzbeat  
-title: HertzBeat 实时监控系统   
+title: HertzBeat 开源实时监控系统   
 sidebar_label: HertzBeat 实时监控    
 ---
 
@@ -140,7 +140,10 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 ----- 
 
-## 功能描述
+## 即刻体验一波 
+
+Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat`   
+浏览器访问 `http://localhost:1157` 默认账户密码 `admin/hertzbeat`
 
 ### 登陆页面
 
@@ -277,3 +280,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 **`HertzBeat`更多强大的功能欢迎使用探索。Have Fun!**
 
 ----- 
+
+**官网: https://hertzbeat.com/**    
+**Github: https://github.com/dromara/hertzbeat**      
+**Gitee: https://gitee.com/dromara/hertzbeat**
