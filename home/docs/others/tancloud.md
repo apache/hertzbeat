@@ -1,11 +1,11 @@
 ---
-id: hertzbeat  
-title: HertzBeat 实时监控系统   
-sidebar_label: HertzBeat 实时监控    
+id: tancloud  
+title: TanCloud 高性能实时监控系统   
+sidebar_label: TanCloud 实时监控    
 ---
 
 
-> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力。
+> 易用友好的高性能实时云监控服务，无需Agent，高性能集群，强大自定义监控能力。
 
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
@@ -20,7 +20,7 @@ sidebar_label: HertzBeat 实时监控
 
 ## 🎡 <font color="green">介绍</font>
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+[TanCloud 探云](https://tancloud.cn) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的高性能实时云监控服务。
 
 ### 特点
 
@@ -31,24 +31,17 @@ sidebar_label: HertzBeat 实时监控
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式消息及时送达。
 
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。    
+> `TanCloud`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。    
 > 当然我们也提供了对应的 **[SAAS版本监控云服务](https://console.tancloud.cn)**，中小团队和个人无需再为监控自有资源而去部署一套监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
-----   
-
-### 完全开源
-
-- 使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
-- 无监控数量`License`，监控类型等伪开源限制。
-- 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 但开源不等同于免费，如果基于HertzBeat二次开发修改了logo，名称，版权等，[请找我们授权，否则会有法律风险](https://hertzbeat.com/docs/others/private)。
+----
 
 ### 强大的监控模版  
 
-> 开始我们就说 HertzBeat 的特点是自定义监控能力，无需 Agent。在讨论这两点之前，我们先介绍下 HertzBeat 的不一样的监控模版。而正是因为这样的监控模版设计，才会有了后面的高级特性。  
+> 开始我们就说 TanCloud 的特点是自定义监控能力，无需 Agent。在讨论这两点之前，我们先介绍下 TanCloud 的不一样的监控模版。而正是因为这样的监控模版设计，才会有了后面的高级特性。  
 
-HertzBeat 自身并没有去创造一种采集数据协议，让对端来适配它。而是充分使用了现有的生态，SNMP采集网络交换机路由器信息，JMX采集JAVA应用信息，JDBC规范采集数据集信息，SSH直连执行脚本获取回显信息，HTTP+(JsonPath | prometheus等)解析接口信息，IPMI采集服务器信息等等。   
-HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模版的形式，来制定模版使用这些协议来采集任何想要的指标信息。  
+TanCloud 自身并没有去创造一种采集数据协议，让对端来适配它。而是充分使用了现有的生态，SNMP采集网络交换机路由器信息，JMX采集JAVA应用信息，JDBC规范采集数据集信息，SSH直连执行脚本获取回显信息，HTTP+(JsonPath | prometheus等)解析接口信息，IPMI采集服务器信息等等。   
+TanCloud 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模版的形式，来制定模版使用这些协议来采集任何想要的指标信息。  
 
 ![hertzbeat](/img/blog/multi-protocol.png)
 
@@ -90,11 +83,11 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 
 ### 强大自定义功能  
 
-> 由前面的**监控模版**介绍，大概清楚了 HertzBeat 拥有的强大自定义功能。      
+> 由前面的**监控模版**介绍，大概清楚了 TanCloud 拥有的强大自定义功能。      
 > 我们将每个监控类型都视为一个监控模版，不管是官方内置的还是后期用户自定义新增的。用户都可以方便的通过修改监控模版来新增修改删除监控指标。       
 > 模版里面包含各个协议的使用，指标别名转换，指标计算，单位转换等一系列功能，帮助用户能采集到自己想要的监控指标。    
 
-![hertzbeat](/img/docs/custom-arch.png)
+![TanCloud](/img/docs/custom-arch.png)
 
 ### 无需 Agent  
 
@@ -102,9 +95,9 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 > 每台主机得装个 agent，为了监控不同应用中间件可能还得装几个对应的 agent，量上来了轻轻松松上千个，写个批量脚本可能会减轻点负担。    
 > agent 的版本是否与主应用兼容, agent 与主应用的通讯调试, agent 的同步升级等等等等，这些全是头大的点。    
 
-HertzBeat 的原理就是使用不同的协议去直连对端系统，采集 PULL 的形式去拉取采集数据，无需用户在对端主机上部署安装 Agent | Exporter等。    
-比如监控 linux, 在 HertzBeat 端输入IP端口账户密码或密钥即可。   
-比如监控 mysql, 在 HertzBeat 端输入IP端口账户密码即可。    
+TanCloud 的原理就是使用不同的协议去直连对端系统，采集 PULL 的形式去拉取采集数据，无需用户在对端主机上部署安装 Agent | Exporter等。    
+比如监控 linux, 在 TanCloud 端输入IP端口账户密码或密钥即可。   
+比如监控 mysql, 在 TanCloud 端输入IP端口账户密码即可。    
 **密码等敏感信息全链路加密** 
 
 ### 高性能集群   
@@ -117,10 +110,10 @@ HertzBeat 的原理就是使用不同的协议去直连对端系统，采集 PUL
 
 ### 云边协同  
 
-> 支持部署边缘采集器集群，与主 HertzBeat 服务云边协同提升采集能力。
+> 支持部署边缘采集器集群，与主 TanCloud 服务云边协同提升采集能力。
 
 在多个网络不相通的隔离网络中，在以往的方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。  
-HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 HertzBeat 服务统一调度管理展示。  
+TanCloud 提供云边协同能力，可以在多个隔离网络部署边缘采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 TanCloud 服务统一调度管理展示。  
 
 ![hertzbeat](/img/docs/cluster-arch.png)
 
@@ -136,7 +129,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 -----
 
-**`HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。**
+**`TanCloud`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。**
 
 ----- 
 
@@ -144,7 +137,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 ### 登陆页面
 
-- HertzBeat 的用户管理统一由配置文件 `sureness.yml` 维护，用户可以通过修改此文件来新增删除修改用户信息，用户角色权限等。默认账户密码 admin/hertzbeat
+- TanCloud 的用户管理统一由配置文件 `sureness.yml` 维护，用户可以通过修改此文件来新增删除修改用户信息，用户角色权限等。默认账户密码 admin/tancloud
 
 ![hertzbeat](/img/home/0.png)  
 
@@ -266,7 +259,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 ### 监控模版
 
-- HertzBeat 将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- TanCloud 将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 同理我们内置的所有监控类型(mysql,website,jvm,k8s)也一一映射为对应的监控模版，用户可以新增修改监控模版来自定义监控功能。
 
 ![hertzbeat](/img/home/9.png)  
@@ -274,6 +267,6 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 -----
 
-**`HertzBeat`更多强大的功能欢迎使用探索。Have Fun!**
+**`TanCloud`更多强大的功能欢迎使用探索。Have Fun!**
 
 ----- 
