@@ -8,15 +8,15 @@ sidebar_label: Related resources
 
 Download: [PDF](http://cdn.hertzbeat.com/hertzbeat.pdf)   
 
-## Icon resources 
+## Icon Resources 
 
-### TANCLOUD-HertzBeat LOGO   
+### TanCloud-HertzBeat Logo   
 
 ![logo](/img/tancloud-logo.svg)  
 
 Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
 
-### TANCLOUD BRAND LOGO  
+### TanCloud Brand Logo  
 
 ![logo](/img/tancloud-brand.svg)  
 
