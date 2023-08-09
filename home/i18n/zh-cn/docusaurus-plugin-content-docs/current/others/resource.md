@@ -4,6 +4,10 @@ title: 相关资源
 sidebar_label: 相关资源     
 ---
 
+## HertzBeat PDF介绍文档
+
+下载: [PDF](http://cdn.hertzbeat.com/hertzbeat.pdf)
+
 ## 图标资源  
 
 ### HertzBeat LOGO   
