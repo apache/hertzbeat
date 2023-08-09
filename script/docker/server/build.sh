@@ -39,4 +39,4 @@ echo "docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbe
 
 echo "docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
-#docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
+docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push

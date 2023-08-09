@@ -33,9 +33,10 @@ CONTEXT_DIR=`pwd`
 
 echo "docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
-#docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:v"$VERSION" -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
-#docker build -t tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION"
+docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
 
-echo "docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
+#docker build -t tancloud/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION"
+
+#echo "docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
 #docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push
