@@ -55,7 +55,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
     --name hertzbeat tancloud/hertzbeat
 ```
 
-   This command starts a running HertzBeat Docker container with mapping port 1157. If existing processes on the host use the port, please modify host mapped port.  
+   This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.  
