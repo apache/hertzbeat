@@ -41,7 +41,7 @@ sidebar_label: Install via Docker
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
    If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
    Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
-   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
+   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)    
    For detail steps, please refer to [Configure Account Password](account-modify)    
 
 5. Start the HertzBeat Docker container    
