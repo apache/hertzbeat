@@ -142,7 +142,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
           entrance:
             netty:
               enabled: true
-              identity: ${IDENTITY}
+              identity: ${IDENTITY:}
               manager-ip: ${MANAGER_IP:127.0.0.1}
               manager-port: ${MANAGER_PORT:1158}
       ```

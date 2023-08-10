@@ -91,7 +91,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAG
          entrance:
            netty:
              enabled: true
-             identity: ${IDENTITY}
+             identity: ${IDENTITY:}
              manager-ip: ${MANAGER_IP:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```

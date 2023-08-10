@@ -41,7 +41,7 @@ sidebar_label: Install via Docker
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
    If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
    Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
-   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
+   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)    
    For detail steps, please refer to [Configure Account Password](account-modify)    
 
 5. Start the HertzBeat Docker container    
@@ -55,7 +55,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
     --name hertzbeat tancloud/hertzbeat
 ```
 
-   This command starts a running HertzBeat Docker container with mapping port 1157. If existing processes on the host use the port, please modify host mapped port.  
+   This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.  

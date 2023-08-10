@@ -63,7 +63,7 @@ sidebar_label: 安装包方式部署
          entrance:
            netty:
              enabled: true
-             identity: ${IDENTITY}
+             identity: ${IDENTITY:}
              manager-ip: ${MANAGER_IP:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
