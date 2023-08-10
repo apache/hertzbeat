@@ -65,7 +65,7 @@ In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user
          entrance:
            netty:
              enabled: true
-             identity: ${IDENTITY}
+             identity: ${IDENTITY:}
              manager-ip: ${MANAGER_IP:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```

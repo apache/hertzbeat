@@ -135,7 +135,7 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](home/static/img/docs/hertzbeat-stru-en.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 <br>  
 
@@ -279,4 +279,4 @@ git pull upstream master
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     
