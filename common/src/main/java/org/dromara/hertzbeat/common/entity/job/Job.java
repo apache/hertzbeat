@@ -19,14 +19,14 @@ package org.dromara.hertzbeat.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,6 +72,12 @@ public class Job {
      * 监控的类型 eg: linux | mysql | jvm
      */
     private String app;
+    
+    /**
+     * the monitor help link eg: https://hertzbeat.com/docs/advanced/extend-point
+     * 帮助链接 eg: https://hertzbeat.com/docs/advanced/extend-point
+     */
+    private String help;
     /**
      * The internationalized name of the monitoring type    监控类型的国际化名称
      * zh-CN: PING连通性

@@ -17,16 +17,16 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -46,7 +46,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -125,6 +132,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     i18nMap.put("monitor.app." + job.getApp(), i18nName);
                 }
             }
+            // 帮助链接改为I18n
+            i18nMap.put("monitor.app.help." +  job.getApp(), StringUtils.hasText(job.getHelp())?job.getHelp():String.format("%s%s","https://hertzbeat.com/zh-cn/docs/help/", job.getApp()));
             for (ParamDefine paramDefine : job.getParams()) {
                 Map<String, String> paramDefineName = paramDefine.getName();
                 if (paramDefineName != null && !paramDefineName.isEmpty()) {

@@ -28,7 +28,7 @@
       <span>{{ tag }}</span>
     </nz-tag>
     <a
-      [href]="'https://hertzbeat.com/docs/help/' + (app == undefined ? 'guide' : app)"
+      [href]="'monitor.app.help.' + app | i18n"
       target="_blank"
       style="float: right; margin-right: 5%"
       class="mobile-hide"
