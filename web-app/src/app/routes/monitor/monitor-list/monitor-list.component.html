@@ -27,12 +27,7 @@
       <span nz-icon nzType="tag" nzTheme="outline"></span>
       <span>{{ tag }}</span>
     </nz-tag>
-    <a
-      [href]="'monitor.app.help.' + app | i18n"
-      target="_blank"
-      style="float: right; margin-right: 5%"
-      class="mobile-hide"
-    >
+    <a [href]="'monitor.app.help.' + app | i18n" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
       <button nz-button nzType="primary">
         <span>{{ 'common.button.help' | i18n }} </span>
         <span nz-icon nzType="question-circle"></span>
