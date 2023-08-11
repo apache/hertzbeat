@@ -39,7 +39,9 @@ export class DefineComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((paramMap: ParamMap) => {
       this.currentApp = paramMap.get('app') || undefined;
-      this.loadAppDefineContent(this.currentApp);
+      if (this.currentApp != undefined) {
+        this.loadAppDefineContent(this.currentApp);
+      }
     });
     this.loadMenus();
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;

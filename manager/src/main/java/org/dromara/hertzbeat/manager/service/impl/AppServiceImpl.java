@@ -71,6 +71,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
+    private static final String JAVA_PATH_SEPARATOR = "/";
+    
     @Autowired
     private MonitorDao monitorDao;
     
@@ -202,22 +204,25 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-            classpath = Objects.requireNonNull(this.getClass().getResource(File.separator)).getPath();
-            defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-            defineAppFile = new File(defineAppPath);
-            if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-                try {
-                    // load define app yml in jar
-                    log.info("load define app yml in internal jar");
-                    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                    Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
-                    InputStream inputStream = resource.getInputStream();
-                    String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-                    inputStream.close();
-                    return content;
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
+            URL resourceUrl = this.getClass().getResource(JAVA_PATH_SEPARATOR);
+            if (resourceUrl != null) {
+                classpath = resourceUrl.getPath();
+                defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+                defineAppFile = new File(defineAppPath);
+                if (!defineAppFile.exists() || !defineAppFile.isFile()) {
+                    try {
+                        // load define app yml in jar
+                        log.info("load define app yml in internal jar");
+                        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                        Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
+                        InputStream inputStream = resource.getInputStream();
+                        String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+                        inputStream.close();
+                        return content;
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                    }
+                }   
             }
         }
         log.info("load {} define app yml in file: {}", app, defineAppPath);
