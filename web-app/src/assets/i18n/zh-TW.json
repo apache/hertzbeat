@@ -339,6 +339,7 @@
   "monitors.detail.chart.query-3m": "查詢近3月",
   "monitors.detail.chart.no-data": "暫無數據",
   "monitors.detail.chart.unit": "單位",
+  "monitors.detail.value.null": "無數據",
   "common.name": "名稱",
   "common.value": "值",
   "common.search": "搜索",

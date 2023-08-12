@@ -339,6 +339,7 @@
   "monitors.detail.chart.query-3m": "Query 3 Month",
   "monitors.detail.chart.no-data": "No Metrics Data",
   "monitors.detail.chart.unit": "Unit",
+  "monitors.detail.value.null": "No Value",
   "common.name": "Name",
   "common.value": "Value",
   "common.search": "Search",

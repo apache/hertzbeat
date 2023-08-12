@@ -304,8 +304,11 @@
                 [(ngModel)]="alertRule.value"
                 [ngModelOptions]="{ standalone: true }"
                 [placeholder]="
-                  (alertRule.operator == 'exists' || alertRule.operator == '!exists') ? '' :
-                  (alertRule.metric?.type === 0 ? ('alert.setting.rule.numeric-value.place-holder' | i18n) : ('alert.setting.rule.string-value.place-holder' | i18n))
+                  alertRule.operator == 'exists' || alertRule.operator == '!exists'
+                    ? ''
+                    : alertRule.metric?.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
                 "
                 nz-col
                 nzSpan="10"

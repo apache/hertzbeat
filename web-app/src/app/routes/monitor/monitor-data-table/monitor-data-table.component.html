@@ -9,6 +9,7 @@
       <tr *ngFor="let valueRow of smallTable.data">
         <td *ngFor="let value of valueRow.values; let i = index">
           {{ value.origin }}
+          <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
           <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
         </td>
       </tr>
@@ -29,6 +30,7 @@
         <td>{{ field.name }}</td>
         <td
           >{{ rowValues[i].origin }}
+          <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
           <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
         </td>
       </tr>
