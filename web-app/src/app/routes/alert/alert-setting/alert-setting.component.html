@@ -183,6 +183,12 @@
                   <code>instance : {{ 'alert.setting.target.instance' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item>
+                  <code>system_value_row_count : {{ 'alert.setting.target.system_value_row_count' | i18n }}</code>
+                  <nz-tag [nzColor]="'success'">
+                    {{ 'alert.setting.number' | i18n }}
+                  </nz-tag>
+                </nz-list-item>
+                <nz-list-item>
                   <code>
                     {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
                     <, <=, >, >=, !=, ( ), +, -, &&, ||
@@ -227,8 +233,13 @@
                 [nzDropdownMatchSelectWidth]="false"
                 [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
               >
-                <nz-option *ngFor="let item of currentMetrics" [nzValue]="item" [nzLabel]="item.value" nzCustomContent>
-                  {{ item.value }}
+                <nz-option
+                  *ngFor="let item of currentMetrics"
+                  [nzValue]="item"
+                  [nzLabel]="item.label ? item.label : item.value"
+                  nzCustomContent
+                >
+                  {{ item.label ? item.label : item.value }}
                   <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
                     {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
                   </nz-tag>

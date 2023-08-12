@@ -154,6 +154,7 @@
   "alert.setting.target.tip": "选中的指标对象",
   "alert.setting.target.other": "所属行其它指标对象",
   "alert.setting.target.instance": "所属行实例",
+  "alert.setting.target.system_value_row_count": "系统-指标值行数量",
   "alert.setting.operator": "支持操作符函数",
   "alert.silence.new": "新增静默策略",
   "alert.silence.edit": "编辑静默策略",

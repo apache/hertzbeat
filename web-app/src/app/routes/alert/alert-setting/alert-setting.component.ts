@@ -298,6 +298,11 @@ export class AlertSettingComponent implements OnInit {
               metrics.children.forEach(item => {
                 this.currentMetrics.push(item);
               });
+              this.currentMetrics.push({
+                value: 'system_value_row_count',
+                type: 0,
+                label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
+              });
             }
           }
         });

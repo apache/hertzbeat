@@ -154,6 +154,7 @@
   "alert.setting.target.tip": "The selected metric object",
   "alert.setting.target.other": "Other metric objects of the row",
   "alert.setting.target.instance": "Instance of the row",
+  "alert.setting.target.system_value_row_count": "System-Metrics value row count",
   "alert.setting.operator": "Supported operator functions",
   "alert.silence.new": "New Silence Strategy",
   "alert.silence.edit": "Edit Silence Strategy",
