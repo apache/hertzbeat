@@ -77,12 +77,12 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
                     exportMonitor.setMonitor(monitor);
                     monitors.add(exportMonitor);
-                    String metrics = getCellValueAsString(row.getCell(10));
+                    String metrics = getCellValueAsString(row.getCell(11));
                     if (StringUtils.hasText(metrics)) {
                         List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
                         exportMonitor.setMetrics(metricList);
                     }
-                    boolean detected = getCellValueAsBoolean(row.getCell(11));
+                    boolean detected = getCellValueAsBoolean(row.getCell(12));
                     exportMonitor.setDetected(detected);
                 }
             }
@@ -133,17 +133,19 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     .collect(Collectors.toList());
             monitor.setTags(tags);
         }
+        monitor.setCollector(getCellValueAsString(row.getCell(7)));
+
 
         return monitor;
     }
 
     private ParamDTO extractParamDataFromRow(Row row) {
-        String fieldName = getCellValueAsString(row.getCell(7));
+        String fieldName = getCellValueAsString(row.getCell(8));
         if (StringUtils.hasText(fieldName)) {
             ParamDTO param = new ParamDTO();
             param.setField(fieldName);
-            param.setType(getCellValueAsByte(row.getCell(8)));
-            param.setValue(getCellValueAsString(row.getCell(9)));
+            param.setType(getCellValueAsByte(row.getCell(9)));
+            param.setValue(getCellValueAsString(row.getCell(10)));
             return param;
         }
         return null;
@@ -220,7 +222,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // 设置表头
-            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "field", "type", "value", "metrics", "detected" };
+            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "collector(default null if system dispatch)", "field", "type", "value", "metrics", "detected" };
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -263,25 +265,28 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         Cell tagsCell = row.createCell(6);
                         tagsCell.setCellValue(monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.joining(",")));
                         tagsCell.setCellStyle(cellStyle);
+                        Cell collectorCell = row.createCell(7);
+                        collectorCell.setCellValue(monitorDTO.getCollector());
+                        collectorCell.setCellStyle(cellStyle);
                         if (metricList != null && i < metricList.size()) {
-                            Cell metricCell = row.createCell(10);
+                            Cell metricCell = row.createCell(11);
                             metricCell.setCellValue(String.join(",", metricList));
                             metricCell.setCellStyle(cellStyle);
                         }
-                        Cell detectedCell = row.createCell(11);
+                        Cell detectedCell = row.createCell(12);
                         detectedCell.setCellValue(monitor.getDetected() != null && monitor.getDetected());
                         detectedCell.setCellStyle(cellStyle);
                     }
                     // 填写参数信息
                     if (i < paramList.size()) {
                         ParamDTO paramDTO = paramList.get(i);
-                        Cell fieldCell = row.createCell(7);
+                        Cell fieldCell = row.createCell(8);
                         fieldCell.setCellValue(paramDTO.getField());
                         fieldCell.setCellStyle(cellStyle);
-                        Cell typeCell = row.createCell(8);
+                        Cell typeCell = row.createCell(9);
                         typeCell.setCellValue(paramDTO.getType());
                         typeCell.setCellStyle(cellStyle);
-                        Cell valueCell = row.createCell(9);
+                        Cell valueCell = row.createCell(10);
                         valueCell.setCellValue(paramDTO.getValue());
                         valueCell.setCellStyle(cellStyle);
                     }
