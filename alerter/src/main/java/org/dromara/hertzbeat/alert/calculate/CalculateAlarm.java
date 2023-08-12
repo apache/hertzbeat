@@ -170,16 +170,18 @@ public class CalculateAlarm {
                         }
                         for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                             String valueStr = valueRow.getColumns(index);
-                            CollectRep.Field field = fields.get(index);
-                            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                                Double doubleValue = CommonUtil.parseStrDouble(valueStr);
-                                if (doubleValue != null) {
-                                    fieldValueMap.put(field.getName(), doubleValue);
-                                }
-                            } else {
-                                if (!"".equals(valueStr)) {
-                                    fieldValueMap.put(field.getName(), valueStr);
-                                }
+                            if (!CommonConstants.NULL_VALUE.equals(valueStr)) {
+                                CollectRep.Field field = fields.get(index);
+                                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                                    Double doubleValue = CommonUtil.parseStrDouble(valueStr);
+                                    if (doubleValue != null) {
+                                        fieldValueMap.put(field.getName(), doubleValue);
+                                    }
+                                } else {
+                                    if (!"".equals(valueStr)) {
+                                        fieldValueMap.put(field.getName(), valueStr);
+                                    }
+                                }   
                             }
                         }
                         try {

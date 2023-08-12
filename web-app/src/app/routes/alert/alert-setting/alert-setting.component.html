@@ -294,16 +294,18 @@
                   [nzValue]="'!matches'"
                   [nzLabel]="'alert.setting.rule.operator.str-no-matches' | i18n"
                 ></nz-option>
+                <nz-option [nzValue]="'exists'" [nzLabel]="'alert.setting.rule.operator.exists' | i18n"></nz-option>
+                <nz-option [nzValue]="'!exists'" [nzLabel]="'alert.setting.rule.operator.no-exists' | i18n"></nz-option>
               </nz-select>
               <input
                 nz-input
+                [disabled]="alertRule.operator == 'exists' || alertRule.operator == '!exists'"
                 [type]="alertRule.metric?.type === 0 ? 'number' : 'text'"
                 [(ngModel)]="alertRule.value"
                 [ngModelOptions]="{ standalone: true }"
                 [placeholder]="
-                  alertRule.metric?.type === 0
-                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
-                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                  (alertRule.operator == 'exists' || alertRule.operator == '!exists') ? '' :
+                  (alertRule.metric?.type === 0 ? ('alert.setting.rule.numeric-value.place-holder' | i18n) : ('alert.setting.rule.string-value.place-holder' | i18n))
                 "
                 nz-col
                 nzSpan="10"

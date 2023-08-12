@@ -126,6 +126,8 @@
   "alert.setting.rule.operator.str-no-contains": "不包含",
   "alert.setting.rule.operator.str-matches": "匹配",
   "alert.setting.rule.operator.str-no-matches": "不匹配",
+  "alert.setting.rule.operator.exists": "存在值",
+  "alert.setting.rule.operator.no-exists": "不存在值",
   "alert.setting.rule.string-value.place-holder": "請輸入匹配字符串",
   "alert.setting.rule.numeric-value.place-holder": "請輸入匹配數值",
   "alert.setting.times": "觸發次數",

@@ -329,15 +329,19 @@ export class AlertSettingComponent implements OnInit {
   }
 
   calculateAlertRuleExpr() {
-    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined && rule.value != undefined);
+    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
     let index = 0;
     let expr = '';
     rules.forEach(rule => {
       let ruleStr = '';
-      if (rule.metric.type === 0) {
-        ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
-      } else if (rule.metric.type === 1) {
-        ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+      if (rule.operator == 'exists' || rule.operator == '!exists') {
+        ruleStr = `${rule.operator}(${rule.metric.value})`;
+      } else {
+        if (rule.metric.type === 0) {
+          ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
+        } else if (rule.metric.type === 1) {
+          ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+        }
       }
       if (ruleStr != '') {
         expr = expr + ruleStr;
@@ -363,19 +367,25 @@ export class AlertSettingComponent implements OnInit {
       let exprArr: string[] = expr.split('&&');
       for (let index in exprArr) {
         let exprStr = exprArr[index].trim();
-        if (exprStr.startsWith('!equals') || exprStr.startsWith('equals')) {
+        const twoParamExpressionArr = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches'];
+        const oneParamExpressionArr = ['exists', '!exists'];
+        let findIndexInTowParamExpression = twoParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        let findIndexInOneParamExpression = oneParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        if (findIndexInTowParamExpression >= 0) {
           let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
           let tmpArr = tmp.split(',');
           if (tmpArr.length == 2) {
             let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
             let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
-            if (exprStr.startsWith('!')) {
-              let rule = { metric: metric, operator: '!equals', value: value };
-              this.alertRules.push(rule);
-            } else {
-              let rule = { metric: metric, operator: 'equals', value: value };
-              this.alertRules.push(rule);
-            }
+            let rule = { metric: metric, operator: twoParamExpressionArr[findIndexInTowParamExpression], value: value };
+            this.alertRules.push(rule);
+          }
+        } else if (findIndexInOneParamExpression >= 0) {
+          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
+          if (tmp != '' && tmp != null) {
+            let metric = this.currentMetrics.find(item => item.value == tmp.trim());
+            let rule = { metric: metric, operator: oneParamExpressionArr[findIndexInOneParamExpression] };
+            this.alertRules.push(rule);
           }
         } else {
           let values = exprStr.trim().split(' ');
