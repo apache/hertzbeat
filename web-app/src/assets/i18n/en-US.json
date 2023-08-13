@@ -126,7 +126,7 @@
   "alert.setting.rule.operator.str-no-contains": "not contains",
   "alert.setting.rule.operator.str-matches": "matches",
   "alert.setting.rule.operator.str-no-matches": "not matches",
-  "alert.setting.rule.operator.exists": "exist value",
+  "alert.setting.rule.operator.exists": "value exists",
   "alert.setting.rule.operator.no-exists": "no value exists",
   "alert.setting.rule.string-value.place-holder": "Please input string",
   "alert.setting.rule.numeric-value.place-holder": "Please input numeric",
