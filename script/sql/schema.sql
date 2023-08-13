@@ -133,6 +133,7 @@ CREATE TABLE  hzb_alert_define
     expr         varchar(255)     comment '告警触发条件表达式',
     priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     times        int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
+    tags         varchar(4000)    comment '附加告警标签(status:success,env:prod)',
     enable       boolean          not null default true comment '告警阈值开关',
     template     varchar(255)     not null comment '告警通知模板内容',
     creator      varchar(100)     comment '创建者',

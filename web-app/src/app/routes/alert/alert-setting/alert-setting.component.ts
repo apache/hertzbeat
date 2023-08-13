@@ -12,9 +12,12 @@ import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
+import { TagItem } from '../../../pojo/NoticeRule';
+import { Tag } from '../../../pojo/Tag';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
@@ -31,6 +34,7 @@ export class AlertSettingComponent implements OnInit {
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
     private settingsSvc: SettingsService,
+    private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -104,6 +108,7 @@ export class AlertSettingComponent implements OnInit {
 
   onNewAlertDefine() {
     this.define = new AlertDefine();
+    this.define.tags = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -179,6 +184,9 @@ export class AlertSettingComponent implements OnInit {
               this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
             } else {
               this.cascadeValues = [this.define.app, this.define.metric];
+            }
+            if (this.define.tags == undefined) {
+              this.define.tags = [];
             }
             this.cascadeOnChange(this.cascadeValues);
             this.renderAlertRuleExpr(this.define.expr);
@@ -479,7 +487,84 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
+
+  onRemoveTag(tag: TagItem) {
+    if (this.define != undefined && this.define.tags != undefined) {
+      this.define.tags = this.define.tags.filter(item => item !== tag);
+    }
+  }
+
+  sliceTagName(tag: TagItem): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
+
   // end 新增修改告警定义model
+
+  // start Tag model
+  isTagManageModalVisible = false;
+  isTagManageModalOkLoading = false;
+  tagCheckedAll: boolean = false;
+  tagTableLoading = false;
+  tagSearch!: string;
+  tags!: Tag[];
+  checkedTags = new Set<Tag>();
+  loadTagsTable() {
+    this.tagTableLoading = true;
+    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
+      message => {
+        this.tagTableLoading = false;
+        this.tagCheckedAll = false;
+        this.checkedTags.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.tags = page.content;
+        } else {
+          console.warn(message.msg);
+        }
+        tagsReq$.unsubscribe();
+      },
+      error => {
+        this.tagTableLoading = false;
+        tagsReq$.unsubscribe();
+      }
+    );
+  }
+  onShowTagsModal() {
+    this.isTagManageModalVisible = true;
+    this.loadTagsTable();
+  }
+  onTagManageModalCancel() {
+    this.isTagManageModalVisible = false;
+  }
+  onTagManageModalOk() {
+    this.isTagManageModalOkLoading = true;
+    this.checkedTags.forEach(item => {
+      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.value) == undefined) {
+        this.define.tags.push(item);
+      }
+    });
+    this.isTagManageModalOkLoading = false;
+    this.isTagManageModalVisible = false;
+  }
+  onTagAllChecked(checked: boolean) {
+    if (checked) {
+      this.tags.forEach(tag => this.checkedTags.add(tag));
+    } else {
+      this.checkedTags.clear();
+    }
+  }
+  onTagItemChecked(tag: Tag, checked: boolean) {
+    if (checked) {
+      this.checkedTags.add(tag);
+    } else {
+      this.checkedTags.delete(tag);
+    }
+  }
+  // end tag model
 
   // start 告警定义与监控关联model
   isConnectModalVisible = false;

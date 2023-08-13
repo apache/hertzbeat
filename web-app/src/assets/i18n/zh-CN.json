@@ -435,7 +435,7 @@
   "tag.update-time": "更新时间",
   "tag.display": "效果",
   "tag.bind": "绑定标签",
-  "tag.bind.tip": "您可以使用标签(Tag)进行监控资源的分类管理， 例如给资源分别绑定生产环境、测试环境的标签。",
+  "tag.bind.tip": "您可以使用标签进行监控资源的分类管理， 例如给资源分别绑定生产环境、测试环境的标签。",
   "define.save-apply": "保存并应用",
   "define.delete": "删除监控类型",
   "define.delete.confirm": "请确认是否删除 {{app}} 监控类型? 删除后无法添加此类监控。",

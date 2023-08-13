@@ -433,7 +433,7 @@
   "tag.update-time": "更新時間",
   "tag.display": "效果",
   "tag.bind": "綁定標簽",
-  "tag.bind.tip": "您可以使用標簽(Tag)進行監控資源的分類管理, 例如給資源分別綁定生産環境、測試環境的標簽。",
+  "tag.bind.tip": "您可以使用標簽進行監控資源的分類管理, 例如給資源分別綁定生産環境、測試環境的標簽。",
   "define.save-apply": "保存並應用",
   "define.delete": "刪除監控類型",
   "define.delete.confirm": "請確認是否刪除 {{app}} 監控類型? 刪除後無法添加此類監控。",
