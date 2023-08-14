@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.Predicate;
 import java.util.*;
@@ -60,6 +61,8 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATU
 @Slf4j
 public class CalculateAlarm {
 
+    private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
+    
     /**
      * The alarm in the process is triggered
      * 触发中告警信息
@@ -134,89 +137,60 @@ public class CalculateAlarm {
         }
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Map<String, Object> fieldValueMap = new HashMap<>(16);
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            if (!valueRow.getColumnsList().isEmpty()) {
-                fieldValueMap.clear();
-                String instance = valueRow.getInstance();
-                if (!"".equals(instance)) {
-                    fieldValueMap.put("instance", instance);
+        int valueRowCount = metricsData.getValuesCount();
+        for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
+            List<AlertDefine> defines = entry.getValue();
+            for (AlertDefine define : defines) {
+                String expr = define.getExpr();
+                if (!StringUtils.hasText(expr)) {
+                    continue;
                 }
-                for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
-                    String valueStr = valueRow.getColumns(index);
-                    CollectRep.Field field = fields.get(index);
-                    if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                        Double doubleValue = CommonUtil.parseStrDouble(valueStr);
-                        if (doubleValue != null) {
-                            fieldValueMap.put(field.getName(), doubleValue);
+                if (expr.contains(SYSTEM_VALUE_ROW_COUNT)) {
+                    fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                    try {
+                        boolean match = execAlertExpression(fieldValueMap, expr);
+                        if (match) {
+                            // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                            // 阈值规则匹配，判断已触发阈值次数，触发告警
+                            afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
+                            // 若此阈值已被触发，则其它数据行的触发忽略
+                            continue;
                         }
-                    } else {
-                        if (!"".equals(valueStr)) {
-                            fieldValueMap.put(field.getName(), valueStr);
-                        }
+                    } catch (Exception e) {
+                        log.warn(e.getMessage(), e);
                     }
                 }
-                for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
-                    List<AlertDefine> defines = entry.getValue();
-                    for (AlertDefine define : defines) {
-                        String expr = define.getExpr();
-                        try {
-                            Boolean match = false;
-                            try {
-                                Expression expression = AviatorEvaluator.compile(expr, true);
-                                match = (Boolean) expression.execute(fieldValueMap);
-                            } catch (CompileExpressionErrorException |
-                                     ExpressionSyntaxErrorException compileException) {
-                                log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
-                            } catch (ExpressionRuntimeException expressionRuntimeException) {
-                                log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
-                            } catch (Exception e) {
-                                log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
-                            }
-
-                            if (match != null && match) {
-                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                // 阈值规则匹配，判断已触发阈值次数，触发告警
-                                String monitorAlertKey = String.valueOf(monitorId) + define.getId();
-                                Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
-                                if (triggeredAlert != null) {
-                                    int times = triggeredAlert.getTriggerTimes() + 1;
-                                    triggeredAlert.setTriggerTimes(times);
-                                    triggeredAlert.setFirstAlarmTime(currentTimeMilli);
-                                    triggeredAlert.setLastAlarmTime(currentTimeMilli);
-                                    int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
-                                    if (times >= defineTimes) {
-                                        triggeredAlertMap.remove(monitorAlertKey);
-                                        alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
+                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                    if (!valueRow.getColumnsList().isEmpty()) {
+                        fieldValueMap.clear();
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                        String instance = valueRow.getInstance();
+                        if (!"".equals(instance)) {
+                            fieldValueMap.put("instance", instance);
+                        }
+                        for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
+                            String valueStr = valueRow.getColumns(index);
+                            if (!CommonConstants.NULL_VALUE.equals(valueStr)) {
+                                CollectRep.Field field = fields.get(index);
+                                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                                    Double doubleValue = CommonUtil.parseStrDouble(valueStr);
+                                    if (doubleValue != null) {
+                                        fieldValueMap.put(field.getName(), doubleValue);
                                     }
                                 } else {
-                                    fieldValueMap.put("app", app);
-                                    fieldValueMap.put("metrics", metrics);
-                                    fieldValueMap.put("metric", define.getField());
-                                    Map<String, String> tags = new HashMap<>(6);
-                                    tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-                                    tags.put(CommonConstants.TAG_MONITOR_APP, app);
-                                    Alert alert = Alert.builder()
-                                            .tags(tags)
-                                            .alertDefineId(define.getId())
-                                            .priority(define.getPriority())
-                                            .status(ALERT_STATUS_CODE_PENDING)
-                                            .target(app + "." + metrics + "." + define.getField())
-                                            .triggerTimes(1)
-                                            .firstAlarmTime(currentTimeMilli)
-                                            .lastAlarmTime(currentTimeMilli)
-                                            // Keyword matching and substitution in the template
-                                            // 模板中关键字匹配替换
-                                            .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
-                                            .build();
-                                    int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
-                                    if (1 >= defineTimes) {
-                                        alarmCommonReduce.reduceAndSendAlarm(alert);
-                                    } else {
-                                        triggeredAlertMap.put(monitorAlertKey, alert);
+                                    if (!"".equals(valueStr)) {
+                                        fieldValueMap.put(field.getName(), valueStr);
                                     }
-                                }
-                                // Threshold rules below this priority are ignored
-                                // 此优先级以下的阈值规则则忽略
+                                }   
+                            }
+                        }
+                        try {
+                            boolean match = execAlertExpression(fieldValueMap, expr);
+                            if (match) {
+                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                                // 阈值规则匹配，判断已触发阈值次数，触发告警
+                                afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
+                                // 若此阈值已被触发，则其它数据行的触发忽略
                                 break;
                             }
                         } catch (Exception e) {
@@ -224,11 +198,68 @@ public class CalculateAlarm {
                         }
                     }
                 }
-
             }
         }
     }
-
+    
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, Map<String, Object> fieldValueMap, AlertDefine define) {
+        String monitorAlertKey = String.valueOf(monitorId) + define.getId();
+        Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
+        if (triggeredAlert != null) {
+            int times = triggeredAlert.getTriggerTimes() + 1;
+            triggeredAlert.setTriggerTimes(times);
+            triggeredAlert.setFirstAlarmTime(currentTimeMilli);
+            triggeredAlert.setLastAlarmTime(currentTimeMilli);
+            int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
+            if (times >= defineTimes) {
+                triggeredAlertMap.remove(monitorAlertKey);
+                alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
+            }
+        } else {
+            fieldValueMap.put("app", app);
+            fieldValueMap.put("metrics", metrics);
+            fieldValueMap.put("metric", define.getField());
+            Map<String, String> tags = new HashMap<>(6);
+            tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+            tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            Alert alert = Alert.builder()
+                                  .tags(tags)
+                                  .alertDefineId(define.getId())
+                                  .priority(define.getPriority())
+                                  .status(ALERT_STATUS_CODE_PENDING)
+                                  .target(app + "." + metrics + "." + define.getField())
+                                  .triggerTimes(1)
+                                  .firstAlarmTime(currentTimeMilli)
+                                  .lastAlarmTime(currentTimeMilli)
+                                  // Keyword matching and substitution in the template
+                                  // 模板中关键字匹配替换
+                                  .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
+                                  .build();
+            int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
+            if (1 >= defineTimes) {
+                alarmCommonReduce.reduceAndSendAlarm(alert);
+            } else {
+                triggeredAlertMap.put(monitorAlertKey, alert);
+            }
+        }
+    }
+    
+    private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
+        Boolean match = false;
+        try {
+            Expression expression = AviatorEvaluator.compile(expr, true);
+            match = (Boolean) expression.execute(fieldValueMap);
+        } catch (CompileExpressionErrorException |
+                 ExpressionSyntaxErrorException compileException) {
+            log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
+        } catch (ExpressionRuntimeException expressionRuntimeException) {
+            log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
+        } catch (Exception e) {
+            log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
+        }
+        return match;
+    }
+    
     private void handlerAvailableMetrics(long monitorId, String app, String metrics, CollectRep.MetricsData metricsData) {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             // Collection and abnormal

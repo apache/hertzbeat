@@ -183,6 +183,12 @@
                   <code>instance : {{ 'alert.setting.target.instance' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item>
+                  <code>system_value_row_count : {{ 'alert.setting.target.system_value_row_count' | i18n }}</code>
+                  <nz-tag [nzColor]="'success'">
+                    {{ 'alert.setting.number' | i18n }}
+                  </nz-tag>
+                </nz-list-item>
+                <nz-list-item>
                   <code>
                     {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
                     <, <=, >, >=, !=, ( ), +, -, &&, ||
@@ -227,8 +233,13 @@
                 [nzDropdownMatchSelectWidth]="false"
                 [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
               >
-                <nz-option *ngFor="let item of currentMetrics" [nzValue]="item" [nzLabel]="item.value" nzCustomContent>
-                  {{ item.value }}
+                <nz-option
+                  *ngFor="let item of currentMetrics"
+                  [nzValue]="item"
+                  [nzLabel]="item.label ? item.label : item.value"
+                  nzCustomContent
+                >
+                  {{ item.label ? item.label : item.value }}
                   <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
                     {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
                   </nz-tag>
@@ -243,6 +254,7 @@
                 nz-col
                 nzSpan="4"
                 [nzShowArrow]="false"
+                [nzDropdownMatchSelectWidth]="false"
                 style="text-align: center; font-weight: bolder"
                 [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
                 [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
@@ -283,14 +295,19 @@
                   [nzValue]="'!matches'"
                   [nzLabel]="'alert.setting.rule.operator.str-no-matches' | i18n"
                 ></nz-option>
+                <nz-option [nzValue]="'exists'" [nzLabel]="'alert.setting.rule.operator.exists' | i18n"></nz-option>
+                <nz-option [nzValue]="'!exists'" [nzLabel]="'alert.setting.rule.operator.no-exists' | i18n"></nz-option>
               </nz-select>
               <input
                 nz-input
+                [disabled]="alertRule.operator == 'exists' || alertRule.operator == '!exists'"
                 [type]="alertRule.metric?.type === 0 ? 'number' : 'text'"
                 [(ngModel)]="alertRule.value"
                 [ngModelOptions]="{ standalone: true }"
                 [placeholder]="
-                  alertRule.metric?.type === 0
+                  alertRule.operator == 'exists' || alertRule.operator == '!exists'
+                    ? ''
+                    : alertRule.metric?.type === 0
                     ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
                     : ('alert.setting.rule.string-value.place-holder' | i18n)
                 "
