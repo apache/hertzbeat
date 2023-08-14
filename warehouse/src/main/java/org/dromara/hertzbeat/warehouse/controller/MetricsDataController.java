@@ -121,7 +121,9 @@ public class MetricsDataController {
             dataBuilder.fields(fields);
             List<ValueRow> valueRows = storageData.getValuesList().stream().map(redisValueRow ->
                     ValueRow.builder().instance(redisValueRow.getInstance())
-                            .values(redisValueRow.getColumnsList().stream().map(Value::new).collect(Collectors.toList()))
+                            .values(redisValueRow.getColumnsList().stream()
+                                            .map(origin -> CommonConstants.NULL_VALUE.equals(origin) ? new Value()
+                                                                   : new Value(origin)).collect(Collectors.toList()))
                             .build()).collect(Collectors.toList());
             dataBuilder.valueRows(valueRows);
             return ResponseEntity.ok().body(new Message<>(dataBuilder.build()));
@@ -165,7 +167,7 @@ public class MetricsDataController {
         if (history == null) {
             history = "6h";
         }
-        Map<String, List<Value>> instanceValuesMap = null;
+        Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
             instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
         } else {

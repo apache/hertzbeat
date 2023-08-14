@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -72,7 +73,7 @@ public class AviatorConfiguration {
         });
 
         AviatorEvaluator.getInstance().addFunction(new StrContainsFunction());
-        AviatorEvaluator.getInstance().addFunction(new StrExistsFunction());
+        AviatorEvaluator.getInstance().addFunction(new ObjectExistsFunction());
         AviatorEvaluator.getInstance().addFunction(new StrMatchesFunction());
     }
 
@@ -125,20 +126,21 @@ public class AviatorConfiguration {
     }
 
     /**
-     * 自定义aviator判断环境中是否存在字符串
+     * 自定义aviator判断环境中此对象是否存在值
      */
-    private static class StrExistsFunction extends AbstractFunction {
+    private static class ObjectExistsFunction extends AbstractFunction {
         @Override
         public AviatorObject call(Map<String, Object> env, AviatorObject arg) {
             if (arg == null) {
                 return AviatorBoolean.FALSE;
             }
             Object keyTmp = arg.getValue(env);
-            if (keyTmp == null) {
+            if (Objects.isNull(keyTmp)) {
                 return AviatorBoolean.FALSE;
+            } else {
+                String key = String.valueOf(keyTmp);
+                return AviatorBoolean.valueOf(StringUtils.isNotEmpty(key));
             }
-            String key = String.valueOf(keyTmp);
-            return AviatorBoolean.valueOf(env.containsKey(key));
         }
         @Override
         public String getName() {
