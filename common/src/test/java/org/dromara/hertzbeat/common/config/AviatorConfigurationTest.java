@@ -55,11 +55,19 @@ class AviatorConfigurationTest {
         // test StrExistsFunction
         String expr6 = "exists('DNE_Key1')";
         Boolean res6 = (Boolean) AviatorEvaluator.compile(expr6).execute(env);
-        Assertions.assertFalse(res6);
+        Assertions.assertTrue(res6);
 
-        String expr7 = "exists('k6')";
+        String expr7 = "exists(k6)";
         Boolean res7 = (Boolean) AviatorEvaluator.compile(expr7).execute(env);
-        Assertions.assertTrue(res7);
+        Assertions.assertFalse(res7);
+        
+        String expr21 = "exists('k5')";
+        Boolean res21 = (Boolean) AviatorEvaluator.compile(expr21).execute(env);
+        Assertions.assertTrue(res21);
+        
+        String expr22 = "exists(k5)";
+        Boolean res22 = (Boolean) AviatorEvaluator.compile(expr22).execute(env);
+        Assertions.assertTrue(res22);
 
         // test StrMatchesFunction
         String regex1 = "'^[a-zA-Z0-9]+$'"; // only alphanumeric
