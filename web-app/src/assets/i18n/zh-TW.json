@@ -303,6 +303,8 @@
   "monitors.enable": "啓用監控",
   "monitors.cancel": "取消監控",
   "monitors.export": "導出監控",
+  "monitors.export.switch-type": "請選擇導出文件格式!",
+  "monitors.export.use-type": "以 {{type}} 文件格式導出監控",
   "monitors.import": "導入監控",
   "monitors.search.placeholder": "搜索監控",
   "monitors.search.filter": "監控狀態",
