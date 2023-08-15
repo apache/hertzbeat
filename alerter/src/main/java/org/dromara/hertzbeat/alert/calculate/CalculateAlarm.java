@@ -218,9 +218,7 @@ public class CalculateAlarm {
         Alert notResolvedAlert = notResolvedAlertMap.remove(notResolvedAlertKey);
         if (notResolvedAlert != null) {
             // Sending an alarm Restore
-            Map<String, String> tags = new HashMap<>(6);
-            tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-            tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            Map<String, String> tags = notResolvedAlert.getTags();
             String content = this.bundle.getString("alerter.alarm.resolved") + " : " + expr;
             Alert resumeAlert = Alert.builder()
                                         .tags(tags)
@@ -374,6 +372,9 @@ public class CalculateAlarm {
                 Map<String, String> tags = new HashMap<>(6);
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
+                if (notResolvedAlert.getTags() != null) {
+                    tags.putAll(notResolvedAlert.getTags());
+                }
                 String content = this.bundle.getString("alerter.availability.resolved");
                 Alert resumeAlert = Alert.builder()
                                             .tags(tags)
@@ -387,6 +388,7 @@ public class CalculateAlarm {
                                             .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
                 Runnable updateStatusJob = () -> {
+                    // todo update pre all type alarm status 
                     updateAvailabilityAlertStatus(monitorId, resumeAlert);
                 };
                 workerPool.executeJob(updateStatusJob);
@@ -397,7 +399,7 @@ public class CalculateAlarm {
     private void updateAvailabilityAlertStatus(long monitorId, Alert restoreAlert) {
         List<Alert> availabilityAlerts = queryAvailabilityAlerts(monitorId, restoreAlert);
         availabilityAlerts.stream().parallel().forEach(alert -> {
-            log.info("updating alert id:{}",alert.getId());
+            log.info("updating alert status solved id: {}", alert.getId());
             alertService.editAlertStatus(ALERT_STATUS_CODE_SOLVED, List.of(alert.getId()));
         });
     }

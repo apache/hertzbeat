@@ -546,7 +546,6 @@ public class MonitorServiceImpl implements MonitorService {
             if (params != null) {
                 paramDao.saveAll(params);
             }
-            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
@@ -774,7 +773,6 @@ public class MonitorServiceImpl implements MonitorService {
                 // 下发采集任务
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
-                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
                 monitorDao.save(monitor);
             }
         }
