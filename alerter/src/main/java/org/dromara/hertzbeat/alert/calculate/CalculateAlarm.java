@@ -161,7 +161,7 @@ public class CalculateAlarm {
                             afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
                             // 若此阈值已被触发，则其它数据行的触发忽略
                             continue;
-                        } else {
+                        } else if (define.isResolvedNotice()) {
                             String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + null;
                             handleResolvedAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                         }
@@ -201,7 +201,7 @@ public class CalculateAlarm {
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
                                 // 若此阈值已被触发，则其它数据行的触发忽略
                                 break;
-                            } else {
+                            } else if (define.isResolvedNotice()) {
                                 String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (!"".equals(instance) ? instance : null);
                                 handleResolvedAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                             }
@@ -361,7 +361,7 @@ public class CalculateAlarm {
                     preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
                 }
             }
-        } else {
+        } else if (avaAlertDefine.isResolvedNotice()) {
             // Check whether an availability or unreachable alarm is generated before the association monitoring
             // and send a clear alarm to clear the monitoring status
             // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复

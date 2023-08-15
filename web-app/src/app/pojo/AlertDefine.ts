@@ -13,6 +13,7 @@ export class AlertDefine {
   times: number = 3;
   tags!: TagItem[];
   enable: boolean = true;
+  resolvedNotice: boolean = false;
   template!: string;
   creator!: string;
   modifier!: string;

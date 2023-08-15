@@ -450,6 +450,19 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="resolvedNotice" [nzTooltipTitle]="'alert.setting.resolved-notice.tip' | i18n">
+          {{ 'alert.setting.resolved-notice' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch
+            [(ngModel)]="define.resolvedNotice"
+            [ngModelOptions]="{ standalone: true }"
+            name="resolvedNotice"
+            id="resolvedNotice"
+          ></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable" [nzTooltipTitle]="'alert.setting.enable.tip' | i18n">
           {{ 'alert.setting.enable' | i18n }}
         </nz-form-label>

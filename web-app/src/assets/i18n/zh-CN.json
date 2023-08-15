@@ -146,6 +146,8 @@
   "alert.setting.default.tip": "此告警阈值配置是否应用于全局所有此类型监控",
   "alert.setting.enable": "启用告警",
   "alert.setting.enable.tip": "此告警阈值配置开启生效或关闭",
+  "alert.setting.resolved-notice": "恢复通知",
+  "alert.setting.resolved-notice.tip": "是否在此阈值规则下告警恢复时发送对应的恢复通知",
   "alert.setting.connect": "告警定义关联监控",
   "alert.setting.connect.left": "未关联监控",
   "alert.setting.connect.right": "已关联监控",
