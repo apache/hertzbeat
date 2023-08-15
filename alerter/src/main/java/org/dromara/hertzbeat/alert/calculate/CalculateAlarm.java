@@ -71,7 +71,7 @@ public class CalculateAlarm {
      * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
      * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
-    public Map<String, Alert> triggeredAlertMap;
+    private final Map<String, Alert> triggeredAlertMap;
     /**
      * The not resolved alert
      * key - monitorId + alertDefineId + (instance)
