@@ -25,6 +25,7 @@ import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.alert.dao.AlertMonitorDao;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
@@ -222,6 +223,12 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            if (define.getTags() != null && !define.getTags().isEmpty()) {
+                for (TagItem tagItem : define.getTags()) {
+                    fieldValueMap.put(tagItem.getName(), tagItem.getValue());
+                    tags.put(tagItem.getName(), tagItem.getValue());
+                }
+            }
             Alert alert = Alert.builder()
                                   .tags(tags)
                                   .alertDefineId(define.getId())
@@ -327,6 +334,12 @@ public class CalculateAlarm {
         tags.put("code", code.name());
         Map<String, Object> valueMap = tags.entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (avaAlertDefine.getTags() != null && !avaAlertDefine.getTags().isEmpty()) {
+            for (TagItem tagItem : avaAlertDefine.getTags()) {
+                valueMap.put(tagItem.getName(), tagItem.getValue());
+                tags.put(tagItem.getName(), tagItem.getValue());
+            }
+        }
         if (preAlert == null) {
             Alert.AlertBuilder alertBuilder = Alert.builder()
                     .tags(tags)
