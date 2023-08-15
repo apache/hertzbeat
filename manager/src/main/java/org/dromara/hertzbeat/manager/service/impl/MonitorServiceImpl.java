@@ -33,6 +33,7 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -50,6 +51,7 @@ import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -115,6 +117,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private CalculateAlarm calculateAlarm;
+    
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
@@ -546,6 +551,7 @@ public class MonitorServiceImpl implements MonitorService {
                 paramDao.saveAll(params);
             }
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
+            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
@@ -569,6 +575,7 @@ public class MonitorServiceImpl implements MonitorService {
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
     }
 
@@ -587,6 +594,7 @@ public class MonitorServiceImpl implements MonitorService {
                 tagService.deleteMonitorSystemTags(monitor);
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }
     }
@@ -675,6 +683,7 @@ public class MonitorServiceImpl implements MonitorService {
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
             monitorDao.saveAll(unManagedMonitors);
         }
@@ -774,6 +783,7 @@ public class MonitorServiceImpl implements MonitorService {
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
                 calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
                 monitorDao.save(monitor);
             }
         }
