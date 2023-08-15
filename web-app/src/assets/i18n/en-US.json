@@ -303,6 +303,8 @@
   "monitors.enable": "Enable Monitor",
   "monitors.cancel": "Cancel Monitor",
   "monitors.export": "Export Monitor",
+  "monitors.export.switch-type": "Please select the export file format!",
+  "monitors.export.use-type": "Export monitors in {{type}} file format",
   "monitors.import": "Import Monitor",
   "monitors.search.placeholder": "Search Monitor",
   "monitors.search.filter": "Monitor Status",
