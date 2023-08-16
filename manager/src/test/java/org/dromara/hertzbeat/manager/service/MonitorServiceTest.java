@@ -1,6 +1,5 @@
 package org.dromara.hertzbeat.manager.service;
 
-import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -32,6 +31,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -96,7 +96,7 @@ class MonitorServiceTest {
     private CollectorMonitorBindDao collectorMonitorBindDao;
     
     @Mock
-    private CalculateAlarm calculateAlarm;
+    private ApplicationContext applicationContext;
 
     @Mock
     Map<String, Alert> triggeredAlertMap = spy(new HashMap<>());
@@ -105,9 +105,7 @@ class MonitorServiceTest {
      * 属性无法直接mock,测试执行前-手动赋值
      */
     @BeforeEach
-    public void setUp() {
-        calculateAlarm.triggeredAlertMap = triggeredAlertMap;
-    }
+    public void setUp() {}
 
     @Test
     void detectMonitorEmpty() {
