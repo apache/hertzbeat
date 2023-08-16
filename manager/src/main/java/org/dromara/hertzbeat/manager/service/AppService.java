@@ -100,8 +100,6 @@ public interface AppService {
      */
     void applyMonitorDefineYml(String ymlContent, boolean isModify);
 
-    void applyMonitorDefineYml(String ymlContent);
-
     /**
      * delete monitor define yml
      * @param app app
