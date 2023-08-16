@@ -450,6 +450,19 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="recoverNotice" [nzTooltipTitle]="'alert.setting.recover-notice.tip' | i18n">
+          {{ 'alert.setting.recover-notice' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch
+            [(ngModel)]="define.recoverNotice"
+            [ngModelOptions]="{ standalone: true }"
+            name="recoverNotice"
+            id="recoverNotice"
+          ></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable" [nzTooltipTitle]="'alert.setting.enable.tip' | i18n">
           {{ 'alert.setting.enable' | i18n }}
         </nz-form-label>

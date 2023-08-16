@@ -125,21 +125,22 @@ CREATE TABLE  hzb_tag_monitor_bind
 DROP TABLE IF EXISTS  hzb_alert_define ;
 CREATE TABLE  hzb_alert_define
 (
-    id           bigint           not null auto_increment comment '告警定义ID',
-    app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
-    metric       varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
-    field        varchar(100)     comment '配置告警的指标:usage,cores...',
-    preset       boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
-    expr         varchar(255)     comment '告警触发条件表达式',
-    priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
-    times        int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
-    tags         varchar(4000)    comment '附加告警标签(status:success,env:prod)',
-    enable       boolean          not null default true comment '告警阈值开关',
-    template     varchar(255)     not null comment '告警通知模板内容',
-    creator      varchar(100)     comment '创建者',
-    modifier     varchar(100)     comment '最新修改者',
-    gmt_create   timestamp        default current_timestamp comment 'create time',
-    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    id                bigint           not null auto_increment comment '告警定义ID',
+    app               varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
+    metric            varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
+    field             varchar(100)     comment '配置告警的指标:usage,cores...',
+    preset            boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
+    expr              varchar(255)     comment '告警触发条件表达式',
+    priority          tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    times             int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
+    tags              varchar(4000)    comment '附加告警标签(status:success,env:prod)',
+    enable            boolean          not null default true comment '告警阈值开关',
+    template          varchar(255)     not null comment '告警通知模板内容',
+    recover_notice    boolean          not null default false comment 'Is send alarm recovered notice | 是否发送告警恢复通知',
+    creator           varchar(100)     comment '创建者',
+    modifier          varchar(100)     comment '最新修改者',
+    gmt_create        timestamp        default current_timestamp comment 'create time',
+    gmt_update        datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 

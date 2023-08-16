@@ -105,6 +105,10 @@ public class AlertDefine {
 
     @Schema(title = "告警阈值开关", example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
+    
+    @Schema(title = "Is send alarm recover notice | 是否发送告警恢复通知", example = "false", accessMode = READ_WRITE)
+    @Column(columnDefinition = "boolean default false")
+    private boolean recoverNotice = false;
 
     @Schema(title = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
