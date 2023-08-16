@@ -261,7 +261,7 @@ export class AlertNoticeComponent implements OnInit {
   isManageRuleModalVisible: boolean = false;
   isManageRuleModalAdd: boolean = true;
   isManageRuleModalOkLoading: boolean = false;
-  rule: NoticeRule = new NoticeRule();
+  rule!: NoticeRule;
   receiversOption: any[] = [];
   searchTag!: string;
   tagsOption: any[] = [];
