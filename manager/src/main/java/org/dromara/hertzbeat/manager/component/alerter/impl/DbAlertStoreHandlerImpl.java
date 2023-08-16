@@ -32,8 +32,8 @@ import java.util.Map;
 /**
  * 报警持久化 - 落地到数据库
  * Alarm data persistence - landing in the database
- * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
  *
+ * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
  */
 @Component
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
     private final MonitorService monitorService;
     
     private final AlertService alertService;
-
+    
     @Override
     public void store(Alert alert) {
         Map<String, String> tags = alert.getTags();
@@ -60,19 +60,17 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
                 // 当监控未管理时  忽略静默其告警信息
                 return;
             }
-            if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
-                if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
+            if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
+                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
                     // Availability Alarm Need to change the monitoring status to unavailable
                     // 可用性告警 需变更监控状态为不可用
                     monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
-                }
-            } else {
-                // If the alarm is restored, the monitoring state needs to be restored
-                // 若是恢复告警 需对监控状态进行恢复
-                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+                } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
+                    // If the alarm is restored, the monitoring state needs to be restored
+                    // 若是恢复告警 需对监控状态进行恢复
                     monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
                 }
-            }    
+            }
         } else {
             log.debug("store extern alert content: {}.", alert);
         }
