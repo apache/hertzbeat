@@ -136,7 +136,7 @@ CREATE TABLE  hzb_alert_define
     tags              varchar(4000)    comment '附加告警标签(status:success,env:prod)',
     enable            boolean          not null default true comment '告警阈值开关',
     template          varchar(255)     not null comment '告警通知模板内容',
-    resolved_notice   boolean          not null default false comment 'Is send alarm resolved notice | 是否发送告警恢复通知',
+    recover_notice    boolean          not null default false comment 'Is send alarm recovered notice | 是否发送告警恢复通知',
     creator           varchar(100)     comment '创建者',
     modifier          varchar(100)     comment '最新修改者',
     gmt_create        timestamp        default current_timestamp comment 'create time',
