@@ -79,6 +79,12 @@ public class Job {
      */
     private Map<String, String> name;
     /**
+     * The description and help of the monitoring type
+     * zh-CN: PING连通性 - 支持您使用在线配置对端服务的IP或域名地址，监控本机网络与对端网络的PING可连通性。
+     * en-US: PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
+     */
+    private Map<String, String> help;
+    /**
      * Task dispatch start timestamp
      * 任务派发开始时间戳
      */

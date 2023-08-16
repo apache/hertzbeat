@@ -68,7 +68,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     
     @Autowired
     private MonitorDao monitorDao;
-    
+
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
     @Override
@@ -118,13 +118,20 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(128);
         for (Job job : appDefines.values()) {
-            // todo needs to support the indicator name
-            // 后面需要支持指标名称
+            // TODO needs to support the metrics name i18n
+            // TODO 后面需要支持指标名称国际化
             Map<String, String> name = job.getName();
             if (name != null && !name.isEmpty()) {
                 String i18nName = Optional.ofNullable(name.get(lang)).orElse(name.values().stream().findFirst().orElse(null));
                 if (i18nName != null) {
                     i18nMap.put("monitor.app." + job.getApp(), i18nName);
+                }
+            }
+            Map<String, String> help = job.getHelp();
+            if (help != null && !help.isEmpty()) {
+                String i18nHelp = Optional.ofNullable(help.get(lang)).orElse(help.values().stream().findFirst().orElse(null));
+                if (i18nHelp != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
                 }
             }
             for (ParamDefine paramDefine : job.getParams()) {
@@ -264,7 +271,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         boolean hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
         Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
         if (!isModify) {
-            Assert.isNull(appDefines.get(app.getApp().toLowerCase()), 
+            Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
         }
     }
@@ -338,8 +345,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             log.info("load define path {}", defineAppPath);
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
-                    if (appFile.isHidden() 
-                                || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
+                    if (appFile.isHidden()
+                            || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
                         log.error("Ignore this template file: {}.", appFile.getName());
                         continue;
                     }
