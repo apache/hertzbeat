@@ -41,7 +41,7 @@ Even small corrections to typos are very welcome :)
 1. Need `nodejs npm angular-cli` environment
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
-4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
+4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npmmirror.com`
 5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
 6. Browser access to localhost:4200 to start   
 
