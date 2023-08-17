@@ -25,6 +25,7 @@ import org.dromara.hertzbeat.manager.component.alerter.AlertStoreHandler;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -47,7 +48,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
     @Override
     public void store(Alert alert) {
         Map<String, String> tags = alert.getTags();
-        String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
+        String monitorIdStr = tags != null ? tags.get(CommonConstants.TAG_MONITOR_ID) : null;
         if (monitorIdStr != null) {
             long monitorId = Long.parseLong(monitorIdStr);
             Monitor monitor = monitorService.getMonitor(monitorId);
@@ -73,6 +74,9 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             }
         } else {
             log.debug("store extern alert content: {}.", alert);
+        }
+        if (tags != null && tags.containsKey(CommonConstants.IGNORE)) {
+            throw new IgnoreException("Ignore this alarm.");
         }
         // Alarm store db
         alertService.addAlert(alert);

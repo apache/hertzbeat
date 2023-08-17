@@ -361,7 +361,7 @@ public class CalculateAlarm {
                     preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
                 }
             }
-        } else if (avaAlertDefine.isRecoverNotice()) {
+        } else {
             // Check whether an availability or unreachable alarm is generated before the association monitoring
             // and send a clear alarm to clear the monitoring status
             // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
@@ -372,6 +372,9 @@ public class CalculateAlarm {
                 Map<String, String> tags = new HashMap<>(6);
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
+                if (!avaAlertDefine.isRecoverNotice()) {
+                    tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
+                }
                 if (notResolvedAlert.getTags() != null) {
                     tags.putAll(notResolvedAlert.getTags());
                 }

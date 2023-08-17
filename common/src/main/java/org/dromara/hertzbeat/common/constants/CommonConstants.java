@@ -296,4 +296,9 @@ public interface CommonConstants {
      * locale spilt
      */
     String LOCALE_SEPARATOR = "_";
+    
+    /**
+     * ignore label
+     */
+    String IGNORE = "ignore";
 }
