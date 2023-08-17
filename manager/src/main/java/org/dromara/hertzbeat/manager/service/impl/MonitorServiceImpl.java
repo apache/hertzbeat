@@ -177,26 +177,20 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
-        List<Configmap> configmaps = params.stream().map(param -> {
-            param.setMonitorId(monitorId);
-            return new Configmap(param.getField(), param.getValue(), param.getType());
-        }).collect(Collectors.toList());
+
+        List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType()))
+                .collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        // Send the collection task to get the job ID
-        // 下发采集任务得到jobId
-        long jobId;
-        if (collector == null) {
-            jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
-        } else {
-            jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-        }
-        // Brush the library after the download is successful
-        // 下发成功后刷库
+
+        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine) :
+                collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+
         try {
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                                                                    .collector(collector).monitorId(monitorId)
-                                                                    .build();
+                        .collector(collector)
+                        .monitorId(monitorId)
+                        .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
             monitor.setId(monitorId);
@@ -205,9 +199,7 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            // Repository brushing abnormally cancels the previously delivered task
-            // 刷库异常取消之前的下发任务
+            log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
