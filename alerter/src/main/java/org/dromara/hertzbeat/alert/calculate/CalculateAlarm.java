@@ -219,6 +219,7 @@ public class CalculateAlarm {
         if (notResolvedAlert != null) {
             // Sending an alarm Restore
             Map<String, String> tags = notResolvedAlert.getTags();
+            tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
             String content = this.bundle.getString("alerter.alarm.recover") + " : " + expr;
             Alert resumeAlert = Alert.builder()
                                         .tags(tags)
@@ -372,6 +373,7 @@ public class CalculateAlarm {
                 Map<String, String> tags = new HashMap<>(6);
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
+                tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
                 if (!avaAlertDefine.isRecoverNotice()) {
                     tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
                 }
