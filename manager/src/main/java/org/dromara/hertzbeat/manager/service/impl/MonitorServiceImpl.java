@@ -218,10 +218,13 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(monitor.getApp());
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
-        List<String> metricsDefineNames = metricsDefine.stream().map(Metrics::getName).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)) {
+        Set<String> metricsDefineNamesSet = metricsDefine.stream()
+                .map(Metrics::getName)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNamesSet.containsAll(metrics)) {
             throw new MonitorMetricsException("no select metrics or select illegal metrics");
         }
+
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
         appDefine.setMetrics(realMetrics);
         appDefine.setMonitorId(monitorId);
@@ -785,20 +788,21 @@ public class MonitorServiceImpl implements MonitorService {
         return monitorDao.findMonitorsByAppEquals(app);
     }
 
-
     private void copyMonitor(Monitor monitor, List<Param> params) {
         List<Tag> oldTags = monitor.getTags();
-        if (oldTags != null && !oldTags.isEmpty()) {
-            //filter monitor_id and monitor_name of old tags for avoiding duplicate tags
-            List<Tag> newTags = oldTags
-                    .stream()
-                    .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                    .collect(Collectors.toList());
-            monitor.setTags(newTags);
-        }
-        //set a new monitor name
+        List<Tag> newTags = filterTags(oldTags);
+
+        monitor.setTags(newTags);
+
         monitor.setName(String.format("%s - copy", monitor.getName()));
         addMonitor(monitor, params, null);
     }
-
+    private List<Tag> filterTags(List<Tag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return tags.stream()
+                .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                .collect(Collectors.toList());
+    }
 }
