@@ -10,8 +10,7 @@
       </div>
       <div nz-col nzSpan="15">
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
           <span>{{ 'monitor.status.unavailable' | i18n }} </span
@@ -81,8 +80,7 @@
           <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span
-          ><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
           <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
@@ -114,7 +112,7 @@
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
                 <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
                   {{
-                  item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+                    item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
                   }}
                 </span>
               </div>
@@ -127,7 +125,7 @@
                 <br />
                 <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
                 <nz-tag style="margin-bottom: 4%; font-weight: bolder"
-                >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
+                  >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
                 >
               </div>
             </nz-tab>
@@ -135,7 +133,7 @@
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder; color: white">{{
                   (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
-                  }}</span>
+                }}</span>
               </div>
             </nz-tab>
             <nz-tab [nzTitle]="'collector.ip' | i18n">
