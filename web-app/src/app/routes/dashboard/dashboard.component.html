@@ -10,16 +10,15 @@
       </div>
       <div nz-col nzSpan="15">
         <nz-tag class="mb-xs">
-            <span>{{ 'monitor.status.available' | i18n }} </span
-            ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-            <span>{{ 'monitor.status.unavailable' | i18n }} </span
-            ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -35,16 +34,13 @@
       </div>
       <div nz-col nzSpan="15">
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -60,16 +56,13 @@
       </div>
       <div nz-col nzSpan="15">
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -85,16 +78,14 @@
       </div>
       <div nz-col nzSpan="15">
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.available' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
+          <span>{{ 'monitor.status.available' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-            <span>{{ 'monitor.status.unavailable' | i18n }} </span
-            ><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }} </span
+          ><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
         </nz-tag>
         <nz-tag class="mb-xs">
-          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span
-          style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
+          <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
         </nz-tag>
       </div>
     </div>
@@ -116,14 +107,12 @@
   </div>
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
     <div style="overflow-y: scroll; height: inherit">
-      <nz-card *ngFor="let item of collectors; let i = index" class="rounded-lg" nzBordered="false"
-               [nzTitle]="collectorCardTitle">
+      <nz-card *ngFor="let item of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
         <nz-card-tab>
           <nz-tabset nzSize="small">
             <nz-tab [nzTitle]="'collector.status' | i18n">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span
-                  [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
+                <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
                   {{
                   item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
                   }}
@@ -135,9 +124,8 @@
                 <span style="font-size: xxx-large; font-weight: bolder; color: white">
                   {{ item.pinMonitorNum + item.dispatchMonitorNum }}
                 </span>
-                <br/>
-                <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}
-                  : {{ item.pinMonitorNum }}</nz-tag>
+                <br />
+                <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
                 <nz-tag style="margin-bottom: 4%; font-weight: bolder"
                 >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
                 >
@@ -175,8 +163,7 @@
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" class="mb-md" style="height: 100%">
-    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate"
-             style="height: inherit; overflow-y: scroll">
+    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
       <nz-timeline nzMode="left">
         <nz-timeline-item
           *ngFor="let alert of alerts; let i = index"
