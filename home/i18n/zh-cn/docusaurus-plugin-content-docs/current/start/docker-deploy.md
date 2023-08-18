@@ -66,6 +66,8 @@ sidebar_label: Docker方式部署
 
 ```shell 
 $ docker run -d -p 1157:1157 -p 1158:1158 \
+    -e LANG=zh_CN.UTF-8 \
+    -e TZ=Asia/Shanghai \
     -v $(pwd)/data:/opt/hertzbeat/data \
     -v $(pwd)/logs:/opt/hertzbeat/logs \
     -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
@@ -76,15 +78,12 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 
  	这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
    - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
-
+   - `-e LANG=zh_CN.UTF-8`  : 设置系统语言
+   - `-e TZ=Asia/Shanghai` : 设置系统时区
    - `-p 1157:1157 -p 1158:1158`  : 映射容器端口到主机端口，请注意，前面是宿主机的端口号，后面是容器的端口号。1157是WEB端口，1158是集群端口。
-
-   - `-v $(pwd)/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
-
-   - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
-
+   - `-v $(pwd)/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失
+   - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
-
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
 
    - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)  
