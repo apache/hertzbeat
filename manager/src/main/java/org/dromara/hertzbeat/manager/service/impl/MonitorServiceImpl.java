@@ -177,9 +177,10 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
-
-        List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType()))
-                .collect(Collectors.toList());
+        List<Configmap> configmaps = params.stream().map(param -> {
+            param.setMonitorId(monitorId);
+            return new Configmap(param.getField(), param.getValue(), param.getType());
+        }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
 
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine) :
