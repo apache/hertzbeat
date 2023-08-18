@@ -48,6 +48,8 @@ sidebar_label: Install via Docker
 
 ```shell 
 $ docker run -d -p 1157:1157 -p 1158:1158 \
+    -e LANG=en_US.UTF-8 \
+    -e TZ=Asia/Shanghai \
     -v $(pwd)/data:/opt/hertzbeat/data \
     -v $(pwd)/logs:/opt/hertzbeat/logs \
     -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
@@ -58,6 +60,8 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
    This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
+   - `-e LANG=en_US.UTF-8`  : Set the system language
+   - `-e TZ=Asia/Shanghai` : Set the system timezone
    - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.  
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional, if you don't have a need, just delete it) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    

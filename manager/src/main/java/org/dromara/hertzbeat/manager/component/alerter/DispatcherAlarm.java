@@ -25,6 +25,7 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -108,8 +109,11 @@ public class DispatcherAlarm implements InitializingBean {
                         // 通知分发
                         sendNotify(alert);
                     }
+                } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
                     log.error(e.getMessage());
+                } catch (Exception exception) {
+                    log.error(exception.getMessage(), exception);
                 }
             }
         }

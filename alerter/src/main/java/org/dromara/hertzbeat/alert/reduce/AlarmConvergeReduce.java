@@ -39,8 +39,8 @@ public class AlarmConvergeReduce {
      */
     @SuppressWarnings("unchecked")
     public boolean filterConverge(Alert currentAlert) {
-        // ignore ALERT_STATUS_CODE_RESTORED
-        if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+        // ignore monitor status auto recover notice
+        if (currentAlert.getTags() != null && currentAlert.getTags().containsKey(CommonConstants.IGNORE)) {
             return true;
         }
         ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();

@@ -152,6 +152,7 @@
             name="target"
             id="target"
             [nzShowSearch]="true"
+            [nzPlaceHolder]="'alert.setting.target.place-holder' | i18n"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
             (ngModelChange)="cascadeOnChange($event)"
