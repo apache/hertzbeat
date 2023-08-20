@@ -23,6 +23,14 @@ app: api_code
 name:
   zh-CN: API Code
   en-US: API Code
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 api 返回的状态码进行监控。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/api_code
+  en-US: https://hertzbeat.com/docs/help/api_code
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:

@@ -20,6 +20,8 @@ export class HelpMassageShowComponent implements OnInit {
   help_massage_content: string = "content";
   @Input()
   guild_link: string = "content";
+  @Input()
+  module_name: string = "content";
   constructor(
     private route: ActivatedRoute,
     private router: Router,

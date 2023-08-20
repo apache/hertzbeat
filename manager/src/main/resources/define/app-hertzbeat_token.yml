@@ -25,6 +25,14 @@ app: hertzbeat_token
 name:
   zh-CN: HertzBeat监控(Token)
   en-US: HertzBeat Monitor(Token)
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控(Token)</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "<i>New HertzBeat Monitor(Token)</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/hertzbeat_token
+  en-US: https://hertzbeat.com/docs/help/hertzbeat_token
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

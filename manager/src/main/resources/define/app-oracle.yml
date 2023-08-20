@@ -24,6 +24,14 @@ app: oracle
 name:
   zh-CN: Oracle数据库
   en-US: Oracle DB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 Oracle 数据库的通用指标（tablespace、user connect、performance）进行测量监控。<br>您可以点击 “<i>新建 Oracle数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors Oracle database through general performance indicator. You could click the "<i>New Oracle DB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/oracle/
+  en-US: https://hertzbeat.com/docs/help/oracle/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

@@ -24,6 +24,14 @@ app: postgresql
 name:
   zh-CN: PostgreSQL数据库
   en-US: PostgreSQL DB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 PostgreSQL 数据库的通用性能指标(basic、state、activity)进行采集监控，支持版本为 PostgreSQL 10+。<br>您可以点击“<i>新建 PostgreSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors PostgreSQL database through basic performance indicators such as state and activity, the version we support is PostgreSQL 10+. <br>You could click the "<i>New MariPostgreSQLaDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/postgresql
+  en-US: https://hertzbeat.com/docs/help/postgresql
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

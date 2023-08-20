@@ -22,6 +22,14 @@ app: doris_be
 name:
   zh-CN: Doris 数据库BE
   en-US: Doris DatabaseBE
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 DORIS 数据库FE的通用性能指标（load channel count、memtable flush total、process thread num、light work max threads等）进行采集监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseBE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors Doris DatabaseBE through general performance indicator such as load channel count, memtable flush total, process thread num and light work max threads. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseBE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/doris_be/
+  en-US: https://hertzbeat.com/docs/help/doris_be/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

@@ -132,6 +132,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
                 }
             }
+
+            Map<String, String> helpLink = job.getHelpLink();
+            if (helpLink != null && !helpLink.isEmpty()) {
+                String i18nHelp = Optional.ofNullable(helpLink.get(lang)).orElse(helpLink.values().stream().findFirst().orElse(null));
+                if (i18nHelp != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".helpLink", i18nHelp);
+                }
+            }
+
             for (ParamDefine paramDefine : job.getParams()) {
                 Map<String, String> paramDefineName = paramDefine.getName();
                 if (paramDefineName != null && !paramDefineName.isEmpty()) {
@@ -229,11 +238,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public void applyMonitorDefineYml(String ymlContent, boolean isModify) {
-
-    }
-
-    @Override
-    public void applyMonitorDefineYml(String ymlContent) {
         Yaml yaml = new Yaml();
         Job app;
         try {
@@ -243,7 +247,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new IllegalArgumentException("parse yml define error: " + e.getMessage());
         }
         // app params verify
-        verifyDefineAppContent(app);
+        verifyDefineAppContent(app, isModify);
         String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
         String defineAppPath = classpath + "define" + File.separator + "app-" + app.getApp() + ".yml";
         File defineAppFile = new File(defineAppPath);
@@ -259,17 +263,21 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);
     }
 
-    private void verifyDefineAppContent(Job app) {
-        Assert.notNull(app, "define yml can not null");
-        Assert.notNull(app.getApp(), "define yml require attributes app");
-        Assert.notNull(app.getCategory(), "define yml require attributes category");
-        Assert.notEmpty(app.getName(), "define yml require attributes name");
-        Assert.notEmpty(app.getParams(), "define yml require attributes params");
+    private void verifyDefineAppContent(Job app, boolean isModify) {
+        Assert.notNull(app, "monitoring template can not null");
+        Assert.notNull(app.getApp(), "monitoring template require attributes app");
+        Assert.notNull(app.getCategory(), "monitoring template require attributes category");
+        Assert.notEmpty(app.getName(), "monitoring template require attributes name");
+        Assert.notEmpty(app.getParams(), "monitoring template require attributes params");
         boolean hasParamHost = app.getParams().stream().anyMatch(item -> "host".equals(item.getField()));
-        Assert.isTrue(hasParamHost, "define yml attributes params must have param host");
-        Assert.notEmpty(app.getMetrics(), "define yml require attributes metrics");
+        Assert.isTrue(hasParamHost, "monitoring template attributes params must have param host");
+        Assert.notEmpty(app.getMetrics(), "monitoring template require attributes metrics");
         boolean hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
-        Assert.isTrue(hasAvailableMetrics, "define yml metrics list must have one priority 0 metrics");
+        Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
+        if (!isModify) {
+            Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
+                    "monitoring template name " + app.getApp() + " already exists.");
+        }
     }
 
     @Override
@@ -329,6 +337,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                         inputStream.close();
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
+                        log.error("Ignore this template file: {}.", resource.getFilename());
                     }
                 }
             } catch (Exception e) {
@@ -340,6 +349,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             log.info("load define path {}", defineAppPath);
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
+                    if (appFile.isHidden()
+                            || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
+                        log.error("Ignore this template file: {}.", appFile.getName());
+                        continue;
+                    }
                     try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
                         Job app = yaml.loadAs(fileInputStream, Job.class);
                         if (app != null) {
@@ -347,7 +361,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                         }
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
-                        throw e;
+                        log.error("Ignore this template file: {}.", appFile.getName());
                     }
                 }
             }

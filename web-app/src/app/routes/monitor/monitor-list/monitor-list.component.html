@@ -1,45 +1,14 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i *ngIf="app != undefined" nz-icon nzType="reconciliation"></i>
-    <i *ngIf="app == undefined" nz-icon nzType="laptop"></i>
-    <span *ngIf="app != undefined">{{ 'monitors.list' | i18n }}</span>
-    <span *ngIf="app == undefined">{{ 'menu.monitor.center' | i18n }}</span>
-    <a *ngIf="app != undefined" routerLink="/setting/define" [queryParams]="{ app: app }">
-      <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
-        <span>{{ 'monitor.app.' + app | i18n }}</span>
-      </nz-tag>
-    </a>
-    <nz-tag
-      *ngIf="tag != undefined"
-      style="font-size: 14px; border-radius: 4px; margin-left: 4px"
-      nzColor="#ff4081"
-      class="hoverClass"
-      nzMode="closeable"
-      (nzOnClose)="clearCurrentTag()"
-    >
-      <span nz-icon nzType="tag" nzTheme="outline"></span>
-      <span>{{ tag }}</span>
-    </nz-tag>
-    <a
-      [href]="'https://hertzbeat.com/docs/help/' + (app == undefined ? 'guide' : app)"
-      target="_blank"
-      style="float: right; margin-right: 5%"
-      class="mobile-hide"
-    >
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  *ngIf="app != undefined"
+  [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
+  [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
+></app-help-massage-show>
+<app-help-massage-show
+  *ngIf="app == undefined"
+  [help_massage_content]="'monitors.center.help' | i18n"
+  [guild_link]="'monitors.center.help.link' | i18n"
+  [module_name]="'menu.monitor.center'"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <div style="margin-bottom: 20px" nz-row>

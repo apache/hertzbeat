@@ -24,6 +24,14 @@ app: ssl_cert
 name:
   zh-CN: SSL证书
   en-US: SSL Certificate
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 通过证书名称、是否过期、有效期开始时间、有效期开始时间戳(ms)、过期时间、过期时间戳(ms)等指标对网站的 SSL 证书进行监测。您可以点击“<i>新建 SSL 证书</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors website's SSL certificates through indicators such as certificate name, expiration date, validity start time, validity start timestamp (ms), expiration time, and expiration timestamp (ms). <br>You could click the "<i>New SSL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/ssl_cert
+  en-US: https://hertzbeat.com/docs/help/ssl_cert
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

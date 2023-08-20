@@ -24,6 +24,14 @@ app: almalinux
 name:
   zh-CN: AlmaLinux
   en-US: AlmaLinux
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 AlmaLinux 通用性能指标进行采集监控。<br>您可以点击“<i>新建 AlmaLinux </i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors AlmaLinux through general performance indicators such as airflow health and airflow version. You could click the "<i>New AlmaLinux</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/almalinux
+  en-US: https://hertzbeat.com/docs/help/almalinux
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
