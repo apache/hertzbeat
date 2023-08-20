@@ -21,6 +21,7 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
+import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
@@ -118,28 +119,34 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(128);
         for (Job job : appDefines.values()) {
-            // TODO needs to support the metrics name i18n
-            // TODO 后面需要支持指标名称国际化
             Map<String, String> name = job.getName();
-            if (name != null && !name.isEmpty()) {
-                String i18nName = Optional.ofNullable(name.get(lang)).orElse(name.values().stream().findFirst().orElse(null));
-                if (i18nName != null) {
-                    i18nMap.put("monitor.app." + job.getApp(), i18nName);
-                }
+            String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
+            if (i18nName != null) {
+                i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
             Map<String, String> help = job.getHelp();
-            if (help != null && !help.isEmpty()) {
-                String i18nHelp = Optional.ofNullable(help.get(lang)).orElse(help.values().stream().findFirst().orElse(null));
-                if (i18nHelp != null) {
-                    i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
-                }
+            String i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
+            if (i18nHelp != null) {
+                i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
             }
             for (ParamDefine paramDefine : job.getParams()) {
                 Map<String, String> paramDefineName = paramDefine.getName();
-                if (paramDefineName != null && !paramDefineName.isEmpty()) {
-                    String i18nName = Optional.ofNullable(paramDefineName.get(lang)).orElse(paramDefineName.values().stream().findFirst().orElse(null));
-                    if (i18nName != null) {
-                        i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nName);
+                String i18nParamName = CommonUtil.getLangMappingValueFromI18nMap(lang, paramDefineName);
+                if (i18nParamName != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nParamName);
+                }
+            }
+            for (Metrics metrics : job.getMetrics()) {
+                Map<String, String> metricsI18nName = metrics.getI18n();
+                String i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
+                if (i18nMetricsName != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName(), i18nMetricsName);
+                }
+                for (Metrics.Field field : metrics.getFields()) {
+                    Map<String, String> fieldI18nName = field.getI18n();
+                    String i18nMetricName = CommonUtil.getLangMappingValueFromI18nMap(lang, fieldI18nName);
+                    if (i18nMetricName != null) {
+                        i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName() + ".metric." + field.getField(), i18nMetricName);
                     }
                 }
             }
@@ -156,7 +163,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             hierarchyApp.setValue(job.getApp());
             Map<String, String> nameMap = job.getName();
             if (nameMap != null && !nameMap.isEmpty()) {
-                String i18nName = Optional.ofNullable(nameMap.get(lang)).orElse(nameMap.values().stream().findFirst().orElse(null));
+                String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
                 if (i18nName != null) {
                     hierarchyApp.setLabel(i18nName);
                 }
@@ -166,13 +173,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 for (Metrics metrics : job.getMetrics()) {
                     Hierarchy hierarchyMetric = new Hierarchy();
                     hierarchyMetric.setValue(metrics.getName());
-                    hierarchyMetric.setLabel(metrics.getName());
+                    String metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
+                    hierarchyMetric.setLabel(metricsI18nName != null ? metricsI18nName : metrics.getName());
                     List<Hierarchy> hierarchyFieldList = new LinkedList<>();
                     if (metrics.getFields() != null) {
                         for (Metrics.Field field : metrics.getFields()) {
                             Hierarchy hierarchyField = new Hierarchy();
                             hierarchyField.setValue(field.getField());
-                            hierarchyField.setLabel(field.getField());
+                            String metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
+                            hierarchyField.setLabel(metricI18nName != null ? metricI18nName : field.getField());
                             hierarchyField.setIsLeaf(true);
                             // for metric
                             hierarchyField.setType(field.getType());

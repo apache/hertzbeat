@@ -7,20 +7,21 @@ import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
+import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
 
 // #region third libs
 
-const THIRDMODULES: Array<Type<void>> = [];
+const ThirdModules: Array<Type<void>> = [];
 
 // #endregion
 
 // #region your components & directives
 
 const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent];
-const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
+const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe];
 
 // #endregion
 
@@ -36,7 +37,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
     ...SHARED_DELON_MODULES,
     ...SHARED_ZORRO_MODULES,
     // third libs
-    ...THIRDMODULES
+    ...ThirdModules
   ],
   declarations: [
     // your components
@@ -54,7 +55,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe];
     ...SHARED_DELON_MODULES,
     ...SHARED_ZORRO_MODULES,
     // third libs
-    ...THIRDMODULES,
+    ...ThirdModules,
     // your components
     ...COMPONENTS,
     ...DIRECTIVES

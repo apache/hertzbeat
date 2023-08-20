@@ -87,7 +87,13 @@ export class AlertCenterComponent implements OnInit {
     }
     const targets = target.split('.');
     if (targets.length === 3) {
-      return `${this.i18nSvc.fanyi(`monitor.app.${targets[0]}`)} / ${targets[1]} / ${targets[2]}`;
+      let app = this.i18nSvc.fanyi(`monitor.app.${targets[0]}`);
+      let metrics = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}`);
+      let metric = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}`);
+      let value = app == `monitor.app.${targets[0]}` ? targets[0] : app;
+      value += ` / ${metrics == `monitor.app.${targets[0]}.metrics.${targets[1]}` ? targets[1] : metrics}`;
+      value += ` / ${metric == `monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}` ? targets[2] : metric}`;
+      return value;
     }
     if (target === 'availability') {
       return this.i18nSvc.fanyi('monitor.availability');

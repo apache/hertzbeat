@@ -151,6 +151,9 @@ metrics:
   # metrics - basic, inner monitoring metrics (responseTime - response time)
   # 监控指标组 - basic, 内置监控指标有 (responseTime - 响应时间)
   - name: basic
+    i18n:
+      zh-CN: 系统基本信息
+      en-US: Basic Info
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -165,10 +168,19 @@ metrics:
       - field: hostname
         type: 1
         instance: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
       - field: version
         type: 1
+        i18n:
+          zh-CN: 操作系统版本
+          en-US: System Version
       - field: uptime
         type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Uptime
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
