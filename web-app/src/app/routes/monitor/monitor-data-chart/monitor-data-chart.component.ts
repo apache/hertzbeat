@@ -37,9 +37,14 @@ export class MonitorDataChartComponent implements OnInit {
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnInit(): void {
+    let metricsI18n = this.i18nSvc.fanyi(`monitor.app.${this.app}.metrics.${this.metrics}`);
+    let metricI18n = this.i18nSvc.fanyi(`monitor.app.${this.app}.metrics.${this.metrics}.metric.${this.metric}`);
+    let title = `${metricsI18n == `monitor.app.${this.app}.metrics.${this.metrics}` ? this.metrics : metricI18n}.${
+      metricI18n == `monitor.app.${this.app}.metrics.${this.metrics}.metric.${this.metric}` ? this.metric : metricI18n
+    }`;
     this.lineHistoryTheme = {
       title: {
-        text: `${this.metrics}.${this.metric}`,
+        text: title,
         textStyle: {
           fontSize: 16,
           fontFamily: 'monospace',
