@@ -40,6 +40,9 @@ public class AlertTemplateUtil {
     private static final Pattern PATTERN = Pattern.compile("\\$\\{(\\w+)\\}");
 
     public static String render(String template, Map<String, Object> replaceData) {
+        if (template == null) {
+            return "";  // 或者其他默认值
+        }
         try {
             Matcher matcher = PATTERN.matcher(template);
             StringBuffer buffer = new StringBuffer();
