@@ -712,7 +712,7 @@ public class MonitorServiceImpl implements MonitorService {
                 Job job = appService.getAppDefine(item.getApp());
                 item.setCategory(job.getCategory());
             } catch (Exception ignored) {
-                // Ignore exceptions
+                return null;
             }
             list.add(item);
         }
