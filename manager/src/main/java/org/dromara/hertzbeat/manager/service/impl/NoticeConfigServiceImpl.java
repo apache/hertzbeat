@@ -112,62 +112,57 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     @Override
     @SuppressWarnings("unchecked")
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
-        // use cache
+        List<NoticeRule> rules = getNoticeRulesFromCacheOrDatabase();
+        Set<Long> filterReceivers = rules.stream()
+                .filter(rule -> matchesRule(alert, rule))
+                .map(NoticeRule::getReceiverId)
+                .collect(Collectors.toSet());
+        return noticeReceiverDao.findAllById(filterReceivers);
+    }
+
+    private List<NoticeRule> getNoticeRulesFromCacheOrDatabase() {
         ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
         if (rules == null) {
             rules = noticeRuleDao.findNoticeRulesByEnableTrue();
             noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
         }
+        return rules;
+    }
+    private boolean matchesRule(Alert alert, NoticeRule rule) {
+        LocalDateTime nowDate = LocalDateTime.now();
+        int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+        LocalTime nowTime = nowDate.toLocalTime();
 
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
-        Set<Long> filterReceivers = rules.stream()
-                .filter(rule -> {
-                    LocalDateTime nowDate = LocalDateTime.now();
-                    // filter day
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
-                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (!dayMatch) {
-                            return false;
-                        }
-                    }
-                    // filter time
-                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
-                        LocalTime nowTime = nowDate.toLocalTime();
+        return matchesDay(rule, currentDayOfWeek) &&
+                matchesTime(rule, nowTime) &&
+                matchesPriority(rule, alert.getPriority()) &&
+                matchesTags(rule, alert);
+    }
+    private boolean matchesDay(NoticeRule rule, int currentDayOfWeek) {
+        return rule.getDays() == null || rule.getDays().isEmpty() || rule.getDays().contains(currentDayOfWeek);
+    }
 
-                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
-                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
-                            return false;
-                        }
-                    }
+    private boolean matchesTime(NoticeRule rule, LocalTime nowTime) {
+        if (rule.getPeriodStart() == null || rule.getPeriodEnd() == null) {
+            return true;
+        }
+        LocalTime startTime = rule.getPeriodStart().toLocalTime();
+        LocalTime endTime = rule.getPeriodEnd().toLocalTime();
+        return nowTime.isAfter(startTime) && nowTime.isBefore(endTime);
+    }
 
-                    if (rule.isFilterAll()) {
-                        return true;
-                    }
-                    // filter priorities
-                    if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
-                        boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                        if (!priorityMatch) {
-                            return false;
-                        }
-                    }
-                    // filter tags
-                    if (rule.getTags() != null && !rule.getTags().isEmpty()) {
-                        return rule.getTags().stream().anyMatch(tagItem -> {
-                            if (!alert.getTags().containsKey(tagItem.getName())) {
-                                return false;
-                            }
-                            String alertTagValue = alert.getTags().get(tagItem.getName());
-                            return Objects.equals(tagItem.getValue(), alertTagValue);
-                        });
-                    }
-                    return true;
-                })
-                .map(NoticeRule::getReceiverId)
-                .collect(Collectors.toSet());
-        return noticeReceiverDao.findAllById(filterReceivers);
+    private boolean matchesPriority(NoticeRule rule, int alertPriority) {
+        return rule.isFilterAll() || (rule.getPriorities() != null && rule.getPriorities().contains(alertPriority));
+    }
+
+    private boolean matchesTags(NoticeRule rule, Alert alert) {
+        if (rule.getTags() == null || rule.getTags().isEmpty()) {
+            return true;
+        }
+        return rule.getTags().stream()
+                .anyMatch(tagItem -> alert.getTags().containsKey(tagItem.getName()) &&
+                        Objects.equals(tagItem.getValue(), alert.getTags().get(tagItem.getName())));
     }
 
     @Override

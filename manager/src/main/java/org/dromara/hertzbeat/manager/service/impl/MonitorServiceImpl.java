@@ -705,16 +705,18 @@ public class MonitorServiceImpl implements MonitorService {
         }
         //Traverse the map obtained by statistics and convert it into a List<App Count> result set
         //遍历统计得到的map，转换成List<App Count>结果集
-        return appCountMap.values().stream().map(item -> {
+        List<AppCount> list = new ArrayList<>();
+        for (AppCount item : appCountMap.values()) {
             item.setSize(item.getAvailableSize() + item.getUnManageSize() + item.getUnAvailableSize());
             try {
                 Job job = appService.getAppDefine(item.getApp());
                 item.setCategory(job.getCategory());
             } catch (Exception ignored) {
-                return null;
+                // Ignore exceptions
             }
-            return item;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+            list.add(item);
+        }
+        return list;
     }
     
     @Override
@@ -755,7 +757,6 @@ public class MonitorServiceImpl implements MonitorService {
                                                               .collect(Collectors.toList());
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        // todo type
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
                         configmaps.add(configmap);
                     }
