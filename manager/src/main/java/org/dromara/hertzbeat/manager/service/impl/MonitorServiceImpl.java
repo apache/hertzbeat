@@ -733,29 +733,37 @@ public class MonitorServiceImpl implements MonitorService {
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
     }
-    
+
     @Override
     public void updateAppCollectJob(Job job) {
         List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
-                                                  stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
-                                                  .collect(Collectors.toList());
+                stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+                .collect(Collectors.toList());
         if (!availableMonitors.isEmpty()) {
             for (Monitor monitor : availableMonitors) {
-                // 这里暂时是深拷贝处理
+                if (monitor == null) {
+                    continue;
+                }
                 Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                if (monitor.getId() != null) {
+                    appDefine.setMonitorId(monitor.getId());
+                } else {
+                    continue;
+                }
+                if (monitor.getIntervals() !=null ) {
+                    appDefine.setInterval(monitor.getIntervals());
+                } else {
+                    continue;
+                }
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-                
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                                                              .collect(Collectors.toList());
+                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .collect(Collectors.toList());
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        // todo type
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
                         configmaps.add(configmap);
                     }
