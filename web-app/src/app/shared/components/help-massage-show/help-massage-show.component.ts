@@ -9,12 +9,12 @@ import {Monitor} from '../../../pojo/Monitor';
 import {MonitorService} from '../../../service/monitor.service';
 import { ElementRef, Renderer2,ViewChild  } from '@angular/core';
 
-
 @Component({
   selector: 'app-help-massage-show',
   templateUrl: './help-massage-show.component.html',
   styleUrls: ['./help-massage-show.component.less']
 })
+
 export class HelpMassageShowComponent implements OnInit {
   @Input()
   help_massage_content: string = "content";
@@ -22,6 +22,8 @@ export class HelpMassageShowComponent implements OnInit {
   guild_link: string = "content";
   @Input()
   module_name: string = "content";
+  @Input()
+  icon_name: string = "home";
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -30,18 +32,19 @@ export class HelpMassageShowComponent implements OnInit {
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
     private rd2: Renderer2,
+    private el: ElementRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {
   }
   isCollapsed: boolean = false;
-  isLevel2Collapsed: boolean = false;
+  targetHeight: number = 140;
   @ViewChild('collapsed_content') collapsed_content: any;
-  initialHeight: number = 28.8;
   handleButtonClick(): void {
     this.isCollapsed = !this.isCollapsed;
-    this.isLevel2Collapsed = !this.isLevel2Collapsed;
-    const targetHeight = this.isLevel2Collapsed ? 28.8 : 140;
-    this.rd2.setStyle(this.collapsed_content.nativeElement, 'height', `${targetHeight}px`);
+    localStorage.setItem("collapse_status", JSON.stringify(this.isCollapsed));
+    this.targetHeight = localStorage.getItem("collapse_status") === "true" ? 28.8 : 140;
+    localStorage.setItem("collapse_height", JSON.stringify(this.targetHeight));
+    this.rd2.setStyle(this.collapsed_content.nativeElement, 'height', `${this.targetHeight}px`);
   }
 
   app!: string | undefined;
@@ -54,6 +57,8 @@ export class HelpMassageShowComponent implements OnInit {
   checkedMonitorIds = new Set<number>();
 
   ngOnInit(): void {
+    this.isCollapsed = (localStorage.getItem("collapse_status") === "true" ? true : false);
+    this.el.nativeElement.querySelector('.help_massage_div').style.height = `${localStorage.getItem("collapse_height")}px`;
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
       let tagStr = paramMap.get('tag');

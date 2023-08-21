@@ -14,6 +14,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
 import { formatTagName } from '../../../shared/utils/common-util';
 
+
 @Component({
   selector: 'app-monitor-list',
   templateUrl: './monitor-list.component.html',

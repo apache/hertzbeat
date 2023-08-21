@@ -29,6 +29,7 @@ name:
 help:
   zh-CN: HertzBeat 使用<a class='help_module_content' href='https://zh.wikipedia.org/zh-cn/JMX'> JMX 协议</a>对 Tomcat 的通用性能指标(memory_pool、code_cache、class_loading、thread)进行采集监控，<a class='help_module_content' href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>点击查看开启步骤</a>。<br>您可以点击“<i>新建 Tomcat 应用服务器</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors general performance indicators of Tomcat through <a class='help_module_content' href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX protocol</a>. <a class='help_module_content' href='https://geekflare.com/enable-jmx-tomcat-to-monitor-administer/'>Click here to view the specific steps.</a> You could click the "<i>New Tomcat</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat使用<a href=' https://zh.wikipedia.org/zh-cn/JMX'> JMX協定</a>對Tomcat的通用性能指標（memory_pool、code_cache、class_loading、thread）進行採集監控，<a href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>點擊查看開啟步驟</a>。<br>您可以點擊“<i>新建Tomcat應用伺服器</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/tomcat
   en-US: https://hertzbeat.com/docs/help/tomcat

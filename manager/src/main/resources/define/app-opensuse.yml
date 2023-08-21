@@ -29,6 +29,7 @@ name:
 help:
   zh-CN: Hertzbeat 对 OpenSUSE 的通用指标进行测量监控。<br>您可以点击 “<i>新建 OpenSUSE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors OpenSUSE through general performance indicator. You could click the "<i>New OpenSUSE</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對OpenSUSE的通用名額進行量測監控。<br>您可以點擊“<i>新建OpenSUSE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/opensuse
   en-US: https://hertzbeat.com/docs/help/opensuse

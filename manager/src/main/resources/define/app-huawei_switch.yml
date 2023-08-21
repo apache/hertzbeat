@@ -29,6 +29,7 @@ name:
 help:
   zh-CN: Hertzbeat 对 Huawei 通用交换机的通用指标进行测量监控。<br>您可以点击 “<i>新建 Huawei通用交换机</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors Huawei Switch through general performance indicator. You could click the "<i>New Huawei Switch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Huawei通用交換機的通用名額進行量測監控。<br>您可以點擊“<i>新建Huawei通用交換機</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/huawei_switch
   en-US: https://hertzbeat.com/docs/help/huawei_switch
