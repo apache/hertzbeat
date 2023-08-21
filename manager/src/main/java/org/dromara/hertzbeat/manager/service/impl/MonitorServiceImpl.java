@@ -704,8 +704,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         //Traverse the map obtained by statistics and convert it into a List<App Count> result set
         //遍历统计得到的map，转换成List<App Count>结果集
-        List<AppCount> list = new ArrayList<>();
-        for (AppCount item : appCountMap.values()) {
+        return appCountMap.values().stream().map(item -> {
             item.setSize(item.getAvailableSize() + item.getUnManageSize() + item.getUnAvailableSize());
             try {
                 Job job = appService.getAppDefine(item.getApp());
@@ -713,9 +712,8 @@ public class MonitorServiceImpl implements MonitorService {
             } catch (Exception ignored) {
                 return null;
             }
-            list.add(item);
-        }
-        return list;
+            return item;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
     
     @Override
