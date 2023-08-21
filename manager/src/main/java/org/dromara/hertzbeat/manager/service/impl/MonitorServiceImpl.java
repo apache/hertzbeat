@@ -742,10 +742,10 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
         if (!availableMonitors.isEmpty()) {
             for (Monitor monitor : availableMonitors) {
-                if (monitor == null) {
+                Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
+                if (monitor == null || appDefine == null) {
                     continue;
                 }
-                Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
                 if (monitor.getId() != null) {
                     appDefine.setMonitorId(monitor.getId());
                 } else {
