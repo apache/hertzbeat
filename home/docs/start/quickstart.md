@@ -6,8 +6,8 @@ sidebar_label: Quick Start
 
 ### 🐕 Quick Start
 
-- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn)**.
-- If you want to deploy HertzBeat local, please refer to the following Deployment Documentation for operation.
+- If you prefer to use HertzBeat directly without deploying it, we provide SAAS Monitoring Cloud-TanCloud, **[Log In For Free](https://console.tancloud.cn)**.
+- If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat
 
@@ -17,32 +17,57 @@ sidebar_label: Quick Start
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
 
 ```or use quay.io (if dockerhub network connect timeout)```
 
-```docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-2. Access `localhost:1157` to start, default account: `admin/hertzbeat`
+2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+
+3. Deploy collector clusters
+
+```
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+```
+- `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+- `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
 ##### 2：Install via package
 
-1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. Need Jdk Environment, `jdk11`
-3. [optional]Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`
-4. Run shell `$ ./startup.sh `
-5. Access `localhost:1157` to start, default account: `admin/hertzbeat`
+1. Download the release package `hertzbeat-xx.zip` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. Need `java jdk11` Environment
+3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
+4. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+5. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+6. Deploy collector clusters
+    - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+    - Need `java jdk11` Environment
+    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+      ```yaml
+      collector:
+        dispatch:
+          entrance:
+            netty:
+              enabled: true
+              identity: ${IDENTITY:}
+              manager-ip: ${MANAGER_IP:127.0.0.1}
+              manager-port: ${MANAGER_PORT:1158}
+      ```
+    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+    - Access `http://localhost:1157` and we will see the registered new collector in dashboard
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)
 
 ##### 3：Start via source code
 
-1. Local source code debugging needs to start the back-end project manager and the front-end project web-app.
-2. Backend：need `maven3+`, `java11`, `lombok`, start the manager service.
+1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.
+2. Backend：need `maven3+`, `java11`, `lombok`, start the `manager` service.
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
-4. Access `localhost:4200` to start, default account: `admin/hertzbeat`
+4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
 Detailed steps refer to [CONTRIBUTING](../others/contributing)   
 

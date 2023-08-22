@@ -20,7 +20,6 @@ package org.dromara.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.alert.calculate.CalculateAlarm;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
@@ -33,6 +32,7 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.dromara.hertzbeat.common.util.*;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -45,10 +45,12 @@ import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.ImExportService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
+import org.dromara.hertzbeat.manager.service.TagService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -76,18 +78,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
-
+    
+    public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
+    public static final String BLANK = "";
+    public static final String PATTERN_HTTP = "(?i)http://";
+    public static final String PATTERN_HTTPS = "(?i)https://";
+    
     private static final Gson GSON = new Gson();
-
+    
     @Autowired
     private AppService appService;
     
     @Autowired
+    private TagService tagService;
+    
+    @Autowired
     private CollectJobScheduling collectJobScheduling;
-
+    
     @Autowired
     private MonitorDao monitorDao;
-
+    
     @Autowired
     private ParamDao paramDao;
     
@@ -96,22 +107,22 @@ public class MonitorServiceImpl implements MonitorService {
     
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-
+    
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
-
+    
     @Autowired
     private TagMonitorBindDao tagMonitorBindDao;
-
+    
     @Autowired
-    private CalculateAlarm calculateAlarm;
-
+    private ApplicationContext applicationContext;
+    
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
-
+    
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public void detectMonitor(Monitor monitor, List<Param> params, String collector) throws MonitorDetectException {
@@ -124,12 +135,12 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param ->
-                new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                                                                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // To detect availability, you only need to collect the set of availability indicators with a priority of 0.
         // 探测可用性只需要采集优先级为0的可用性指标集合
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
-                .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
+                                                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
         List<CollectRep.MetricsData> collectRep;
         if (collector != null) {
@@ -146,7 +157,7 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
@@ -171,20 +182,15 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        // Send the collection task to get the job ID
-        // 下发采集任务得到jobId
-        long jobId;
-        if (collector == null) {
-            jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
-        } else {
-            jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-        }
-        // Brush the library after the download is successful
-        // 下发成功后刷库
+        
+        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine) :
+                             collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+        
         try {
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                                                                    .collector(collector).monitorId(monitorId)
+                                                                    .collector(collector)
+                                                                    .monitorId(monitorId)
                                                                     .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
@@ -194,14 +200,12 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            // Repository brushing abnormally cancels the previously delivered task
-            // 刷库异常取消之前的下发任务
+            log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
-
+    
     @Override
     public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
         long monitorId = SnowFlakeIdGenerator.generateId();
@@ -215,10 +219,13 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(monitor.getApp());
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
-        List<String> metricsDefineNames = metricsDefine.stream().map(Metrics::getName).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNames.containsAll(metrics)) {
+        Set<String> metricsDefineNamesSet = metricsDefine.stream()
+                                                    .map(Metrics::getName)
+                                                    .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(metrics) || !metricsDefineNamesSet.containsAll(metrics)) {
             throw new MonitorMetricsException("no select metrics or select illegal metrics");
         }
+        
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
         appDefine.setMetrics(realMetrics);
         appDefine.setMonitorId(monitorId);
@@ -249,12 +256,12 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
-
+    
     @Override
     public List<String> getMonitorMetrics(String app) {
         return appService.getAppDefineMetricNames(app);
     }
-
+    
     @Override
     public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
         var imExportService = imExportServiceMap.get(type);
@@ -268,7 +275,7 @@ public class MonitorServiceImpl implements MonitorService {
         res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
-
+    
     @Override
     public void importConfig(MultipartFile file) throws Exception {
         var fileName = file.getOriginalFilename();
@@ -291,8 +298,8 @@ public class MonitorServiceImpl implements MonitorService {
         var imExportService = imExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
     }
-
-
+    
+    
     @Override
     @Transactional(readOnly = true)
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
@@ -302,13 +309,13 @@ public class MonitorServiceImpl implements MonitorService {
         monitor.setHost(monitor.getHost().trim());
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
-                .stream()
-                .peek(param -> {
-                    param.setMonitorId(monitor.getId());
-                    String value = param.getValue() == null ? null : param.getValue().trim();
-                    param.setValue(value);
-                })
-                .collect(Collectors.toMap(Param::getField, param -> param));
+                                              .stream()
+                                              .peek(param -> {
+                                                  param.setMonitorId(monitor.getId());
+                                                  String value = param.getValue() == null ? null : param.getValue().trim();
+                                                  param.setValue(value);
+                                              })
+                                              .collect(Collectors.toMap(Param::getField, param -> param));
         // Check name uniqueness    校验名称唯一性
         if (isModify != null) {
             Optional<Monitor> monitorOptional = monitorDao.findMonitorByNameEquals(monitor.getName());
@@ -352,13 +359,13 @@ public class MonitorServiceImpl implements MonitorService {
                                 doubleValue = Double.parseDouble(param.getValue());
                             } catch (Exception e) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
-                                        + paramDefine.getType() + " is invalid.");
+                                                                           + paramDefine.getType() + " is invalid.");
                             }
                             if (paramDefine.getRange() != null) {
                                 if (!IntervalExpressionUtil.validNumberIntervalExpress(doubleValue,
                                         paramDefine.getRange())) {
                                     throw new IllegalArgumentException("Params field " + field + " type "
-                                            + paramDefine.getType() + " over range " + paramDefine.getRange());
+                                                                               + paramDefine.getType() + " over range " + paramDefine.getRange());
                                 }
                             }
                             param.setType(CommonConstants.PARAM_TYPE_NUMBER);
@@ -367,21 +374,27 @@ public class MonitorServiceImpl implements MonitorService {
                             Short textareaLimit = paramDefine.getLimit();
                             if (textareaLimit != null && param.getValue().length() > textareaLimit) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
-                                        + paramDefine.getType() + " over limit " + param.getValue());
+                                                                           + paramDefine.getType() + " over limit " + param.getValue());
                             }
                             break;
                         case "text":
                             Short textLimit = paramDefine.getLimit();
                             if (textLimit != null && param.getValue().length() > textLimit) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
-                                        + paramDefine.getType() + " over limit " + textLimit);
+                                                                           + paramDefine.getType() + " over limit " + textLimit);
                             }
                             break;
                         case "host":
                             String hostValue = param.getValue();
+                            if (hostValue.toLowerCase().contains(HTTP)) {
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
+                            }
+                            if (hostValue.toLowerCase().contains(HTTPS)) {
+                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
+                            }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + hostValue + " is invalid host value.");
+                                                                           + hostValue + " is invalid host value.");
                             }
                             break;
                         case "password":
@@ -399,7 +412,7 @@ public class MonitorServiceImpl implements MonitorService {
                             String booleanValue = param.getValue();
                             if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + booleanValue + " is invalid boolean value.");
+                                                                           + booleanValue + " is invalid boolean value.");
                             }
                             break;
                         case "radio":
@@ -416,7 +429,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             if (invalid) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid option value");
+                                                                           + param.getValue() + " is invalid option value");
                             }
                             break;
                         case "checkbox":
@@ -432,21 +445,21 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             if (checkboxInvalid) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid checkbox value");
+                                                                           + param.getValue() + " is invalid checkbox value");
                             }
                             break;
                         case "key-value":
                             if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {
                             }) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid key-value value");
+                                                                           + param.getValue() + " is invalid key-value value");
                             }
                             break;
                         case "array":
                             String[] arrays = param.getValue().split(",");
                             if (arrays.length == 0) {
                                 throw new IllegalArgumentException("Param field" + field + " value "
-                                        + param.getValue() + " is invalid arrays value");
+                                                                           + param.getValue() + " is invalid arrays value");
                             }
                             if (param.getValue().startsWith("[") && param.getValue().endsWith("]")) {
                                 param.setValue(param.getValue().substring(1, param.getValue().length() - 1));
@@ -461,7 +474,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
@@ -501,7 +514,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setTimestamp(System.currentTimeMillis());
             if (params != null) {
                 List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                                                                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
             }
             long newJobId;
@@ -529,7 +542,6 @@ public class MonitorServiceImpl implements MonitorService {
             if (params != null) {
                 paramDao.saveAll(params);
             }
-            calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitorId));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
@@ -538,7 +550,7 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMonitor(long id) throws RuntimeException {
@@ -546,14 +558,16 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitorOptional.isPresent()) {
             Monitor monitor = monitorOptional.get();
             monitorDao.deleteById(id);
+            // delete tag 删除监控对应的标签
+            tagService.deleteMonitorSystemTags(monitor);
             paramDao.deleteParamsByMonitorId(id);
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
-            calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMonitors(Set<Long> ids) throws RuntimeException {
@@ -565,12 +579,14 @@ public class MonitorServiceImpl implements MonitorService {
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
+                // delete tag 删除监控对应的标签
+                tagService.deleteMonitorSystemTags(monitor);
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
-                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public MonitorDto getMonitorDto(long id) throws RuntimeException {
@@ -583,8 +599,8 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setParams(params);
             Job job = appService.getAppDefine(monitor.getApp());
             List<String> metrics = job.getMetrics().stream()
-                    .filter(Metrics::isVisible)
-                    .map(Metrics::getName).collect(Collectors.toList());
+                                           .filter(Metrics::isVisible)
+                                           .map(Metrics::getName).collect(Collectors.toList());
             monitorDto.setMetrics(metrics);
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
@@ -593,12 +609,12 @@ public class MonitorServiceImpl implements MonitorService {
             return null;
         }
     }
-
+    
     @Override
     public Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest) {
         return monitorDao.findAll(specification, pageRequest);
     }
-
+    
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Delete corresponding monitoring periodic task
@@ -606,10 +622,10 @@ public class MonitorServiceImpl implements MonitorService {
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
-                .collect(Collectors.toList());
+                                                .stream().filter(monitor ->
+                                                                         monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
+                                                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
+                                                .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
@@ -618,16 +634,16 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDao.saveAll(managedMonitors);
         }
     }
-
+    
     @Override
     public void enableManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
         // 更新监控状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
-                .collect(Collectors.toList());
+                                                  .stream().filter(monitor ->
+                                                                           monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
+                                                  .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
+                                                  .collect(Collectors.toList());
         if (!unManagedMonitors.isEmpty()) {
             for (Monitor monitor : unManagedMonitors) {
                 // Construct the collection task Job entity
@@ -639,13 +655,12 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                                                                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                                                               .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                                                               .collect(Collectors.toList());
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        // todo type
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
                         configmaps.add(configmap);
                     }
@@ -654,12 +669,12 @@ public class MonitorServiceImpl implements MonitorService {
                 // Issue collection tasks       下发采集任务
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
-                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
+                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
             monitorDao.saveAll(unManagedMonitors);
         }
     }
-
+    
     @Override
     public List<AppCount> getAllAppMonitorsCount() {
         List<AppCount> appCounts = monitorDao.findAppsStatusCount();
@@ -700,51 +715,54 @@ public class MonitorServiceImpl implements MonitorService {
             return item;
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void copyMonitors(List<Long> ids) {
-
+        
         ids.stream().parallel().forEach(id -> {
-            //get monitor and Params according id
+            // get monitor and Params according id
             Optional<Monitor> monitorOpt = monitorDao.findById(id);
             List<Param> params = paramDao.findParamsByMonitorId(id);
-
+            
             monitorOpt.ifPresentOrElse(monitor -> {
-                //deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor=GSON.fromJson(GSON.toJson(monitor), Monitor.class);
+                // deep copy original monitor to achieve persist in JPA
+                Monitor newMonitor = GSON.fromJson(GSON.toJson(monitor), Monitor.class);
                 copyMonitor(newMonitor, params);
-            }, new Runnable() {
-                @Override
-                public void run() {
-                    log.warn("can not find the monitor for id ：{}", id);
-                }
-            });
+            }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
     }
-    
+
     @Override
     public void updateAppCollectJob(Job job) {
         List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
-                                                  stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
-                                                  .collect(Collectors.toList());
+                stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+                .collect(Collectors.toList());
         if (!availableMonitors.isEmpty()) {
             for (Monitor monitor : availableMonitors) {
-                // 这里暂时是深拷贝处理
                 Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                if (monitor == null || appDefine == null) {
+                    continue;
+                }
+                if (monitor.getId() != null) {
+                    appDefine.setMonitorId(monitor.getId());
+                } else {
+                    continue;
+                }
+                if (monitor.getIntervals() !=null ) {
+                    appDefine.setInterval(monitor.getIntervals());
+                } else {
+                    continue;
+                }
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-                
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                                                              .collect(Collectors.toList());
+                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .collect(Collectors.toList());
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        // todo type
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
                         configmaps.add(configmap);
                     }
@@ -753,7 +771,6 @@ public class MonitorServiceImpl implements MonitorService {
                 // 下发采集任务
                 long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 monitor.setJobId(newJobId);
-                calculateAlarm.triggeredAlertMap.remove(String.valueOf(monitor.getId()));
                 monitorDao.save(monitor);
             }
         }
@@ -763,31 +780,33 @@ public class MonitorServiceImpl implements MonitorService {
     public Monitor getMonitor(Long monitorId) {
         return monitorDao.findById(monitorId).orElse(null);
     }
-
+    
     @Override
     public void updateMonitorStatus(Long monitorId, byte status) {
         monitorDao.updateMonitorStatus(monitorId, status);
     }
-
+    
     @Override
     public List<Monitor> getAppMonitors(String app) {
         return monitorDao.findMonitorsByAppEquals(app);
     }
-
-
+    
     private void copyMonitor(Monitor monitor, List<Param> params) {
         List<Tag> oldTags = monitor.getTags();
-        if (oldTags != null && !oldTags.isEmpty()) {
-            //filter monitor_id and monitor_name of old tags for avoiding duplicate tags
-            List<Tag> newTags = oldTags
-                    .stream()
-                    .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                    .collect(Collectors.toList());
-            monitor.setTags(newTags);
-        }
-        //set a new monitor name
+        List<Tag> newTags = filterTags(oldTags);
+        
+        monitor.setTags(newTags);
+        
         monitor.setName(String.format("%s - copy", monitor.getName()));
         addMonitor(monitor, params, null);
     }
-
+    
+    private List<Tag> filterTags(List<Tag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return new LinkedList<>();
+        }
+        return tags.stream()
+                       .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                       .collect(Collectors.toList());
+    }
 }

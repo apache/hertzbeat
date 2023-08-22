@@ -84,7 +84,9 @@ public class Job {
      * en-US: PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
      */
     private Map<String, String> help;
+
     private Map<String, String> helpLink;
+
     /**
      * Task dispatch start timestamp
      * 任务派发开始时间戳
