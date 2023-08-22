@@ -41,8 +41,7 @@ public class AlertTemplateUtil {
 
     public static String render(String template, Map<String, Object> replaceData) {
         if (template == null) {
-            // 或者其他默认值
-            return "";  
+            return null;  
         }
         try {
             Matcher matcher = PATTERN.matcher(template);
