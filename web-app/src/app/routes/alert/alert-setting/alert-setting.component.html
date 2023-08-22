@@ -1,24 +1,10 @@
+<app-help-massage-show
+  [help_massage_content]="'alert.help.setting' | i18n"
+  [guild_link]="'alert.help.center.setting' | i18n"
+  [module_name]="'menu.alert.setting'"
+  [icon_name]="'monitor_icon.alert_setting' | i18n"
+></app-help-massage-show>
 <nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="alert"></i>
-    <span>{{ 'menu.alert.setting' | i18n }}</span>
-    <a href="https://hertzbeat.com/docs/help/alert_threshold" target="_blank" style="float: right; margin-right: 5%">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
-<nz-divider></nz-divider>
-
 <div style="margin-bottom: 20px">
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>

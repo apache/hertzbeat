@@ -24,6 +24,15 @@ app: kafka
 name:
   zh-CN: Kafka消息系统
   en-US: Kafka Message
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 Kafka 的通用性能指标(server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent)进行采集监控。<br><span class='help_module_span'>⚠️注意：由于系统使用 <a class='help_module_content' href='https://zh.wikipedia.org/zh-cn/JMX'>JMX 协议</a>对 Kafka 进行指标采集，您需要在 Kafka 开启 JMX 服务, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>点击查看开启步骤</a>。</span>
+  en-US: "HertzBeat monitors kafka through general performance indicators such as code cache, active controller count, broker partition count. <br><span class='help_module_span'>⚠️Note：Due to the system using <a class='help_module_content' href='https://en.wikipedia.org/wiki/Java_Management_Extensions'>JMX protocol </a> for collect indicator data in Kafka, you need to enable JMX service in Kafka. <a class='help_module_content' href='https://hertzbeat.com/docs/help/kafka'>Click here to view the specific steps.</a></span>"
+  zh-TW: HertzBeat對Kafka的通用性能指標（server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：由於系統使用<a class='help_ module_ content' href='https://zh.wikipedia.org/zh-cn/JMX'>JMX協定</a>對Kafka進行名額採集，您需要在Kafka開啟JMX服務，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>點擊查看開啟步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/kafka
+  en-US: https://hertzbeat.com/docs/help/kafka
 # Input params define for monitoring(render web ui by the definition)
 # 监控所需输入参数定义(根据定义渲染页面UI)
 params:
