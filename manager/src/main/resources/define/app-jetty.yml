@@ -24,6 +24,15 @@ app: jetty
 name:
   zh-CN: Jetty应用服务器
   en-US: Jetty AppServer
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX 协议</a>对 Jetty 应用服务器的通用性能指标（memory pool、class loading、thread）进行采集监控。<br><span class='help_module_span'>⚠️注意：您需要在 Jetty 应用开启 JMX 服务, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>点击查看开启步骤</a>。</span>
+  en-US: "HertzBeat monitors general performance indicators(memory pool, class loading, thread) of Jetty application server through <a class='help_module_content' href='https://zh.wikipedia.org/JMX'>JMX protocol</a>. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in Jetty application. <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>Click here to view the specific steps.</a></span>"
+  zh-TW: HertzBeat使用<a class='help_ module_ content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX協定</a>對Jetty應用伺服器的通用性能指標（memory pool、class loading、thread）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：您需要在Jetty應用開啟JMX服務，<a class='help_ module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>點擊查看開啟步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/jetty/
+  en-US: https://hertzbeat.com/docs/help/jetty/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
