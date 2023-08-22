@@ -131,11 +131,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             }
 
             Map<String, String> helpLink = job.getHelpLink();
-            if (helpLink != null && !helpLink.isEmpty()) {
-                String i18nHelp = Optional.ofNullable(helpLink.get(lang)).orElse(helpLink.values().stream().findFirst().orElse(null));
-                if (i18nHelp != null) {
-                    i18nMap.put("monitor.app." + job.getApp() + ".helpLink", i18nHelp);
-                }
+            String i18nHelpLink = CommonUtil.getLangMappingValueFromI18nMap(lang, helpLink);
+            if (i18nHelpLink != null) {
+                i18nMap.put("monitor.app." + job.getApp() + ".helpLink", i18nHelpLink);
             }
 
             for (ParamDefine paramDefine : job.getParams()) {
