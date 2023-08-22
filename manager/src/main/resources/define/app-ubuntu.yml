@@ -508,7 +508,7 @@ metrics:
   - name: top_mem_process
     i18n:
       zh-CN: Top10 内存进程
-      en-US: Total10 Memory Process
+      en-US: Top10 Memory Process
     priority: 7
     fields:
       - field: pid
@@ -517,18 +517,18 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
-      - field: cpu_usage
-        type: 0
-        unit: '%'
-        i18n:
-          zh-CN: CPU占用率
-          en-US: CPU Usage
       - field: mem_usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存占用率
           en-US: Memory Usage
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU占用率
+          en-US: CPU Usage
       - field: command
         type: 1
         i18n:
