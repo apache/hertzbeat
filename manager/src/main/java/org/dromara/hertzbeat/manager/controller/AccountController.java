@@ -103,7 +103,9 @@ public class AccountController {
 
     @GetMapping("/refresh/{refreshToken}")
     @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "使用刷新TOKEN重新获取TOKEN")
-    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(@PathVariable("refreshToken") @NotNull final String refreshToken) {
+    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(
+            @Parameter(description = "Refresh TOKEN | 刷新TOKEN", example = "xxx")
+            @PathVariable("refreshToken") @NotNull final String refreshToken) {
         try {
             Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
             String userId = String.valueOf(claims.getSubject());
