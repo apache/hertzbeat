@@ -1,0 +1,216 @@
+category: db
+app: tidb
+name:
+  zh-CN: tidb数据库
+  en-US: tidb
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+
+  - field: port
+    name:
+      zh-CN: jdbc端口
+      en-US: jdbc Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 4000
+
+  - field: service-port
+    name:
+      zh-CN: service-端口
+      en-US: service-port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 10080
+
+  - field: pd-port
+    name:
+      zh-CN: pd-端口
+      en-US: pd-port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 2379
+
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    required: false
+
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+# 指标组列表
+metrics:
+  - name: basic
+    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    priority: 0
+    # 指标组中的具体监控指标
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: version
+        type: 1
+        instance: true
+      - field: port
+        type: 1
+      - field: datadir
+        type: 1
+      - field: max_connections
+        type: 0
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - version
+      - port
+      - datadir
+      - max_connections
+# (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+# eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - port=port
+      - datadir=datadir
+      - max_connections=max_connections
+      - version=version+"_"+version_compile_os+"_"+version_compile_machine
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port';
+      url: ^_^url^_^
+
+  - name: stores
+    priority: 0
+    fields:
+      - field: address
+        type: 1
+      - field: version
+        type: 1
+      - field: status_address
+        type: 1
+      - field: deploy_path
+        type: 1
+      - field: state_name
+        type: 1
+
+      - field: capacity
+        type: 1
+      - field: available
+        type: 1
+      - field: used_size
+        type: 1
+      - field: start_ts
+        type: 1
+      - field: last_heartbeat_ts
+        type: 1
+      - field: uptime
+        type: 1
+    aliasFields:
+      - $.store.address
+      - $.store.version
+      - $.store.status_address
+      - $.store.deploy_path
+      - $.store.state_name
+      - $.status.capacity
+      - $.status.available
+      - $.status.used_size
+      - $.status.start_ts
+      - $.status.last_heartbeat_ts
+      - $.status.uptime
+    calculates:
+      - address=$.store.address
+      - version=$.store.version
+      - status_address=$.store.status_address
+      - deploy_path=$.store.deploy_path
+      - state_name=$.store.state_name
+      - capacity=$.status.capacity
+      - available=$.status.available
+      - used_size=$.status.used_size
+      - start_ts=$.status.start_ts
+      - last_heartbeat_ts=$.status.last_heartbeat_ts
+      - uptime=$.status.uptime
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^url^_^
+      # 端口
+      port: ^_^pd-port^_^
+      # url请求接口路径
+      url: '/pd/api/v1/stores'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$.stores.*'
+
+  - name: status
+    priority: 0
+    fields:
+      - field: connections
+        type: 0
+      - field: version
+        type: 1
+      - field: git_hash
+        type: 1
+    #    aliasFields:
+    #    calculates:
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^url^_^
+      # 端口
+      port: ^_^service-port^_^
+      # url请求接口路径
+      url: '/status'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'
+
