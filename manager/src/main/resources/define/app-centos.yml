@@ -24,6 +24,15 @@ app: centos
 name:
   zh-CN: Centos Linux
   en-US: Centos Linux
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 CentOS 操作系统的通用性能指标(basic、cpu、memory、disk、interface、disk_free)进行采集监控。<br>您可以点击“<i>新建 CentOS 操作系统</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors CentOS operating system through general performance indicators such as cpu and memory. You could click the "<i>New CentOS</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat對CentOS作業系統的通用性能指標（basic、cpu、memory、disk、interface、disk_free）進行採集監控。<br>您可以點擊“<i>新建CentOS作業系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/centos/
+  en-US: https://hertzbeat.com/docs/help/centos/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
