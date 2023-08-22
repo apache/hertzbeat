@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * ftp protocol collection implementation
@@ -51,11 +52,7 @@ public class FtpCollectImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(it -> {
                 if (valueMap.containsKey(it)) {
                     String fieldValue = valueMap.get(it);
-                    if (fieldValue == null) {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    } else {
-                        valueRowBuilder.addColumns(fieldValue);
-                    }
+                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 } else {
                     valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                 }

@@ -197,8 +197,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private void queryOneRow(Statement statement, String sql, List<String> columns,
                                            CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         statement.setMaxRows(1);
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String column : columns) {
@@ -213,8 +212,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
                 builder.addValues(valueRowBuilder.build());
             }
-        } finally {
-            resultSet.close();
         }
     }
 
@@ -231,8 +228,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
                                               CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             HashMap<String, String> values = new HashMap<>(columns.size());
             while (resultSet.next()) {
                 if (resultSet.getString(1) != null) {
@@ -251,8 +247,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
             }
             builder.addValues(valueRowBuilder.build());
-        } finally {
-            resultSet.close();
         }
     }
 
@@ -268,8 +262,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
                                CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String column : columns) {
@@ -284,8 +277,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
                 builder.addValues(valueRowBuilder.build());
             }
-        } finally {
-            resultSet.close();
         }
     }
 
