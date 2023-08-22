@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
+import org.dromara.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -102,41 +103,33 @@ public class AccountController {
 
     @GetMapping("/refresh/{refreshToken}")
     @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "使用刷新TOKEN重新获取TOKEN")
-    public ResponseEntity<Message<Map<String, String>>> refreshToken(
+    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(
             @Parameter(description = "Refresh TOKEN | 刷新TOKEN", example = "xxx")
             @PathVariable("refreshToken") @NotNull final String refreshToken) {
-        String userId;
-        boolean isRefresh;
         try {
             Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
-            userId = String.valueOf(claims.getSubject());
-            isRefresh = claims.get("refresh", Boolean.class);
+            String userId = String.valueOf(claims.getSubject());
+            boolean isRefresh = claims.get("refresh", Boolean.class);
+            if (userId == null || !isRefresh) {
+                return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "非法的刷新TOKEN"));
+            }
+            SurenessAccount account = accountProvider.loadAccount(userId);
+            if (account == null) {
+                return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "TOKEN对应的账户不存在"));
+            }
+            List<String> roles = account.getOwnRoles();
+            String issueToken = issueToken(userId, roles, PERIOD_TIME);
+            String issueRefresh = issueToken(userId, roles, PERIOD_TIME << 5);
+            RefreshTokenResponse response = new RefreshTokenResponse(issueToken, issueRefresh);
+            return ResponseEntity.ok(new Message<>(response));
         } catch (Exception e) {
-            log.info(e.getMessage());
-            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("刷新TOKEN过期或错误")
-                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-            return ResponseEntity.ok(message);
+            log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
+            return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "刷新TOKEN过期或错误"));
         }
-        if (userId == null || !isRefresh) {
-            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("非法的刷新TOKEN")
-                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-            return ResponseEntity.ok(message);
-        }
-        SurenessAccount account = accountProvider.loadAccount(userId);
-        if (account == null) {
-            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("TOKEN对应的账户不存在")
-                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-            return ResponseEntity.ok(message);
-        }
-        List<String> roles = account.getOwnRoles();
-        // Issue TOKEN      签发TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME, roles);
+    }
+    private String issueToken(String userId, List<String> roles, long expirationMillis) {
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
-        String issueRefresh = JsonWebTokenUtil.issueJwt(userId, PERIOD_TIME << 5, customClaimMap);
-        Map<String, String> resp = new HashMap<>(2);
-        resp.put("token", issueToken);
-        resp.put("refreshToken", issueRefresh);
-        return ResponseEntity.ok(new Message<>(resp));
+        return JsonWebTokenUtil.issueJwt(userId, expirationMillis, roles, customClaimMap);
     }
 }
