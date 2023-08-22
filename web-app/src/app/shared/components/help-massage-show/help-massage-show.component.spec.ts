@@ -1,6 +1,6 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {HelpMassageShowComponent} from './help-massage-show.component';
+import { HelpMassageShowComponent } from './help-massage-show.component';
 
 describe('HelpMassageShowComponent', () => {
   let component: HelpMassageShowComponent;
@@ -9,8 +9,7 @@ describe('HelpMassageShowComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [HelpMassageShowComponent]
-    })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(HelpMassageShowComponent);
     component = fixture.componentInstance;

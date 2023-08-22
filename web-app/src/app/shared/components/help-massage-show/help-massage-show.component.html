@@ -1,30 +1,32 @@
 <div #collapsed_content class="help_massage_div" id="collapsed">
-  <div class="level1_breabcrumb" [ngClass]="{ 'collapsed': isCollapsed }">
+  <div class="level1_breabcrumb" [ngClass]="{ collapsed: isCollapsed }">
     <div class="breabcrumb_massage_show">
       <div class="flex help_massage_nav">
         <a [routerLink]="['/']" [queryParams]="{ app: app }">
-          <i nz-icon nzType="home" style="color: rgba(29,29,29,0.84)"></i>
+          <i nz-icon nzType="home" style="color: rgba(29, 29, 29, 0.84)"></i>
           <span class="help_massage_nav_item">{{ 'menu.dashboard' | i18n }}</span>
         </a>
       </div>
 
       <div class="flex help_massage_nav">
         <a [routerLink]="">
-          <i nz-icon nzType={{icon_name}} style="color: rgba(29,29,29,0.84)"></i>
+          <i nz-icon nzType="{{ icon_name }}" style="color: rgba(29, 29, 29, 0.84)"></i>
           <span class="help_massage_nav_item" *ngIf="app != undefined">{{ 'monitor.app.' + app | i18n }}</span>
           <span class="help_massage_nav_item" *ngIf="app == undefined">{{ module_name | i18n }}</span>
         </a>
       </div>
-
     </div>
     <div class="handover_button">
-      <button class="handover_button_content" id="handover_button_self" (click)="handleButtonClick()">{{ isCollapsed ? '展开' : '收起' }}</button>
+      <button class="handover_button_content" id="handover_button_self" (click)="handleButtonClick()">{{
+        isCollapsed ? '展开' : '收起'
+      }}</button>
       <i nz-icon="" nztype="home" class="anticon anticon-home">
-        <svg viewBox="64 64 896 896" focusable="false" fill="#000000" width="1.12em" height="1.12em" data-icon="alert"
-             aria-hidden="true">
+        <svg viewBox="64 64 896 896" focusable="false" fill="#000000" width="1.12em" height="1.12em" data-icon="alert" aria-hidden="true">
           <path
             d="M550.4 793.6L490.666667 853.333333l-59.733334-59.733333L256 618.666667l59.733333-59.733334 174.933334 174.933334 174.933333-174.933334 59.733333 59.733334-174.933333 174.933333zM490.666667 332.8l-174.933334 174.933333L256 448l174.933333-174.933333L490.666667 213.333333l59.733333 59.733334 174.933333 174.933333-59.733333 59.733333-174.933333-174.933333z"
-            fill="#000000" p-id="3525"></path>
+            fill="#000000"
+            p-id="3525"
+          ></path>
         </svg>
       </i>
     </div>
@@ -37,11 +39,12 @@
       <div class="flex help_link_nav">
         <a [href]="'question.link' | i18n" target="_blank">
           <i nz-icon="" nztype="alert" ng-reflect-nz-type="alert" class="anticon anticon-alert">
-            <svg viewBox="64 64 896 896" focusable="false" fill="#ffffff" width="1em" height="1em" data-icon="alert"
-                 aria-hidden="true">
+            <svg viewBox="64 64 896 896" focusable="false" fill="#ffffff" width="1em" height="1em" data-icon="alert" aria-hidden="true">
               <path
                 d="M517.119 954.878c244.589 0 442.879-198.289 442.879-442.879 0-244.594-198.289-442.879-442.879-442.879C272.524 69.12 74.24 267.404 74.24 511.999 74.24 756.588 272.524 954.878 517.119 954.878L517.119 954.878zM517.119 891.608c-209.654 0-379.612-169.955-379.612-379.609s169.957-379.612 379.612-379.612 379.609 169.957 379.609 379.612S726.773 891.608 517.119 891.608L517.119 891.608zM523.949 243.992c-54.662 0-97.177 16.705-127.547 50.112-30.367 31.885-44.795 74.402-44.795 127.547l59.98 0c0-37.202 8.35-66.052 25.055-87.31 18.222-25.055 46.312-37.202 84.272-37.202 31.885 0 56.945 8.352 74.405 26.572 16.705 16.702 25.81 40.24 25.81 70.607 0 21.26-7.59 41-22.775 59.98-4.55 6.072-13.665 15.185-25.81 27.33-41 36.445-66.055 65.295-76.685 88.075-9.11 18.98-13.665 40.995-13.665 66.05l0 17.465 60.735 0 0-17.465c0-20.5 4.56-38.725 14.43-55.425 7.59-13.665 18.98-27.335 35.68-41.755 33.405-29.612 53.91-49.352 61.5-58.462 18.98-25.055 28.85-54.665 28.85-88.83 0-45.552-14.425-81.235-42.515-107.05C611.258 256.902 572.544 243.992 523.949 243.992L523.949 243.992zM512.564 706.363c-12.907 0-23.535 3.795-32.647 12.905-9.11 8.345-12.905 18.98-12.905 31.885s3.795 23.54 12.905 32.65c9.112 8.345 19.74 12.905 32.647 12.905 12.91 0 23.535-4.56 32.645-12.905 9.11-8.355 13.665-18.985 13.665-32.65 0-12.905-4.555-23.54-12.905-31.885C536.859 710.158 525.474 706.363 512.564 706.363L512.564 706.363z"
-                fill="#2c2c2c" p-id="5529"></path>
+                fill="#2c2c2c"
+                p-id="5529"
+              ></path>
             </svg>
           </i>
           <span class="help_link_nav_item hover_blue">{{ 'menu.link.question' | i18n }}</span>
@@ -54,7 +57,9 @@
             <svg focusable="false" fill="#ffffff" width="1em" height="1em" data-icon="alert" aria-hidden="true">
               <path
                 d="M512 0c282.773333 0 512 229.226667 512 512S794.773333 1024 512 1024 0 794.773333 0 512 229.226667 0 512 0z m0 64C264.576 64 64 264.576 64 512s200.576 448 448 448 448-200.576 448-448S759.424 64 512 64z m202.666667 554.666667a32 32 0 0 1 0 64h-405.333334a32 32 0 0 1 0-64h405.333334z m0-149.333334a32 32 0 0 1 0 64h-405.333334a32 32 0 0 1 0-64h405.333334z m-234.666667-149.333333a32 32 0 0 1 0 64h-170.666667a32 32 0 0 1 0-64h170.666667z"
-                fill="#2c2c2c" p-id="8407"></path>
+                fill="#2c2c2c"
+                p-id="8407"
+              ></path>
             </svg>
           </i>
           <span class="help_link_nav_item hover_blue">{{ 'menu.link.guild' | i18n }}</span>
@@ -62,5 +67,4 @@
       </div>
     </div>
   </div>
-
-
+</div>
