@@ -7,6 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+/**
+ * Refresh Token Response
+ * @author Carpe-Wang
+ */
 @Data
 @Builder
 @NoArgsConstructor
