@@ -24,8 +24,8 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
     public Boolean checkType(String responseStr) {
         try {
             PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(responseStr, PromVectorOrMatrix.class);
-            if (DispatchConstants.PARSE_PROM_QL_VECTOR.equals(promVectorOrMatrix.getData().getResultType())) {
-                return true;
+            if (promVectorOrMatrix != null && promVectorOrMatrix.getData() != null) {
+                return DispatchConstants.PARSE_PROM_QL_VECTOR.equals(promVectorOrMatrix.getData().getResultType());
             }
             return false;
         } catch (Exception e) {
@@ -38,6 +38,9 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
         boolean setTimeFlag = false;
         boolean setValueFlag = false;
         PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(resp, PromVectorOrMatrix.class);
+        if (promVectorOrMatrix == null){
+            return;
+        }
         List<PromVectorOrMatrix.Result> result = promVectorOrMatrix.getData().getResult();
         for (PromVectorOrMatrix.Result r : result) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -53,7 +56,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
                     if (CommonConstants.PROM_TIME.equals(aliasField)) {
                         for (Object o : r.getValue()) {
                             if (o instanceof Double) {
-                                valueRowBuilder.addColumns(String.valueOf(new BigDecimal((Double) o * 1000)));
+                                valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf((Double) o * 1000)));
                                 setTimeFlag = true;
                             }
                         }
