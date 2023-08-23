@@ -19,8 +19,8 @@ package org.dromara.hertzbeat.common.support.valid;
 
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * host注解数据自定义校验器

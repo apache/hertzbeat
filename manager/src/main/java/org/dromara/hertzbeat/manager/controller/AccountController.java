@@ -33,8 +33,8 @@ import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +90,8 @@ public class AccountController {
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN      签发TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
+        String issueToken = JsonWebTokenUtil.
+                issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
         String issueRefresh = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME << 5, customClaimMap);

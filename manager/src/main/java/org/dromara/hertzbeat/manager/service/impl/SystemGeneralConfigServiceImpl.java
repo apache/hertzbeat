@@ -9,7 +9,7 @@ import org.dromara.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
 import java.util.Locale;
 import java.util.TimeZone;

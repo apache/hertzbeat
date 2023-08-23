@@ -70,17 +70,16 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: zqr10159
+    url: jdbc:mysql://localhost:3306/hertzbeat
     hikari:
       max-lifetime: 120000
 
   jpa:
     hibernate:
       ddl-auto: update
-
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:

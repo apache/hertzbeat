@@ -9,7 +9,7 @@ import org.dromara.hertzbeat.manager.service.GeneralConfigService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
