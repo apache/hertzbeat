@@ -12,9 +12,12 @@ import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
+import { TagItem } from '../../../pojo/NoticeRule';
+import { Tag } from '../../../pojo/Tag';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
@@ -31,6 +34,7 @@ export class AlertSettingComponent implements OnInit {
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
     private settingsSvc: SettingsService,
+    private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -104,6 +108,7 @@ export class AlertSettingComponent implements OnInit {
 
   onNewAlertDefine() {
     this.define = new AlertDefine();
+    this.define.tags = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -179,6 +184,9 @@ export class AlertSettingComponent implements OnInit {
               this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
             } else {
               this.cascadeValues = [this.define.app, this.define.metric];
+            }
+            if (this.define.tags == undefined) {
+              this.define.tags = [];
             }
             this.cascadeOnChange(this.cascadeValues);
             this.renderAlertRuleExpr(this.define.expr);
@@ -298,6 +306,11 @@ export class AlertSettingComponent implements OnInit {
               metrics.children.forEach(item => {
                 this.currentMetrics.push(item);
               });
+              this.currentMetrics.push({
+                value: 'system_value_row_count',
+                type: 0,
+                label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
+              });
             }
           }
         });
@@ -324,15 +337,19 @@ export class AlertSettingComponent implements OnInit {
   }
 
   calculateAlertRuleExpr() {
-    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined && rule.value != undefined);
+    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
     let index = 0;
     let expr = '';
     rules.forEach(rule => {
       let ruleStr = '';
-      if (rule.metric.type === 0) {
-        ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
-      } else if (rule.metric.type === 1) {
-        ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+      if (rule.operator == 'exists' || rule.operator == '!exists') {
+        ruleStr = `${rule.operator}(${rule.metric.value})`;
+      } else {
+        if (rule.metric.type === 0) {
+          ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
+        } else if (rule.metric.type === 1) {
+          ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+        }
       }
       if (ruleStr != '') {
         expr = expr + ruleStr;
@@ -358,19 +375,25 @@ export class AlertSettingComponent implements OnInit {
       let exprArr: string[] = expr.split('&&');
       for (let index in exprArr) {
         let exprStr = exprArr[index].trim();
-        if (exprStr.startsWith('!equals') || exprStr.startsWith('equals')) {
+        const twoParamExpressionArr = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches'];
+        const oneParamExpressionArr = ['exists', '!exists'];
+        let findIndexInTowParamExpression = twoParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        let findIndexInOneParamExpression = oneParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        if (findIndexInTowParamExpression >= 0) {
           let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
           let tmpArr = tmp.split(',');
           if (tmpArr.length == 2) {
             let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
             let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
-            if (exprStr.startsWith('!')) {
-              let rule = { metric: metric, operator: '!equals', value: value };
-              this.alertRules.push(rule);
-            } else {
-              let rule = { metric: metric, operator: 'equals', value: value };
-              this.alertRules.push(rule);
-            }
+            let rule = { metric: metric, operator: twoParamExpressionArr[findIndexInTowParamExpression], value: value };
+            this.alertRules.push(rule);
+          }
+        } else if (findIndexInOneParamExpression >= 0) {
+          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
+          if (tmp != '' && tmp != null) {
+            let metric = this.currentMetrics.find(item => item.value == tmp.trim());
+            let rule = { metric: metric, operator: oneParamExpressionArr[findIndexInOneParamExpression] };
+            this.alertRules.push(rule);
           }
         } else {
           let values = exprStr.trim().split(' ');
@@ -464,7 +487,84 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
+
+  onRemoveTag(tag: TagItem) {
+    if (this.define != undefined && this.define.tags != undefined) {
+      this.define.tags = this.define.tags.filter(item => item !== tag);
+    }
+  }
+
+  sliceTagName(tag: TagItem): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
+
   // end 新增修改告警定义model
+
+  // start Tag model
+  isTagManageModalVisible = false;
+  isTagManageModalOkLoading = false;
+  tagCheckedAll: boolean = false;
+  tagTableLoading = false;
+  tagSearch!: string;
+  tags!: Tag[];
+  checkedTags = new Set<Tag>();
+  loadTagsTable() {
+    this.tagTableLoading = true;
+    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
+      message => {
+        this.tagTableLoading = false;
+        this.tagCheckedAll = false;
+        this.checkedTags.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.tags = page.content;
+        } else {
+          console.warn(message.msg);
+        }
+        tagsReq$.unsubscribe();
+      },
+      error => {
+        this.tagTableLoading = false;
+        tagsReq$.unsubscribe();
+      }
+    );
+  }
+  onShowTagsModal() {
+    this.isTagManageModalVisible = true;
+    this.loadTagsTable();
+  }
+  onTagManageModalCancel() {
+    this.isTagManageModalVisible = false;
+  }
+  onTagManageModalOk() {
+    this.isTagManageModalOkLoading = true;
+    this.checkedTags.forEach(item => {
+      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.value) == undefined) {
+        this.define.tags.push(item);
+      }
+    });
+    this.isTagManageModalOkLoading = false;
+    this.isTagManageModalVisible = false;
+  }
+  onTagAllChecked(checked: boolean) {
+    if (checked) {
+      this.tags.forEach(tag => this.checkedTags.add(tag));
+    } else {
+      this.checkedTags.clear();
+    }
+  }
+  onTagItemChecked(tag: Tag, checked: boolean) {
+    if (checked) {
+      this.checkedTags.add(tag);
+    } else {
+      this.checkedTags.delete(tag);
+    }
+  }
+  // end tag model
 
   // start 告警定义与监控关联model
   isConnectModalVisible = false;

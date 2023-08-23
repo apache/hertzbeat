@@ -61,12 +61,12 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
                 .map(this::convert)
                 .collect(Collectors.toUnmodifiableList());
         if (!CollectionUtils.isEmpty(formList)) {
-            formList.forEach(it -> {
-                monitorService.validate(it, false);
-                if (it.isDetected()) {
-                    monitorService.detectMonitor(it.getMonitor(), it.getParams(), it.getCollector());
+            formList.forEach(monitorDto -> {
+                monitorService.validate(monitorDto, false);
+                if (monitorDto.isDetected()) {
+                    monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
                 }
-                monitorService.addMonitor(it.getMonitor(), it.getParams(), it.getCollector());
+                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
             });
         }
     }
@@ -116,6 +116,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
                 .collect(Collectors.toUnmodifiableList()));
         exportMonitor.setMetrics(dto.getMetrics());
         exportMonitor.setDetected(false);
+        exportMonitor.getMonitor().setCollector(dto.getCollector());
         return exportMonitor;
     }
 
@@ -130,6 +131,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
                 filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
                 .collect(Collectors.toList()));
         monitorDto.setMonitor(monitor);
+        monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
         monitorDto.setMetrics(exportMonitor.metrics);
         monitorDto.setParams(exportMonitor.params.stream()
                 .map(it -> {
@@ -181,6 +183,8 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private String description;
         @Excel(name = "Tags")
         private List<Long> tags;
+        @Excel(name = "Collector")
+        private String collector;
     }
 
 

@@ -8,7 +8,7 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-An open-source, real-time monitoring system with custom monitoring and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，强大自定义监控能力.   
+> An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.   
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -30,17 +30,19 @@ An open-source, real-time monitoring system with custom monitoring and agentless
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring and agentless capabilities.    
-It combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
+[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.   
 
 ### Features
 
-* Easy to use, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
-* Provides a more flexible threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any desired metrics by simply configuring the `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Powerful customization, multi-type support, easy expansion, and low coupling.
+* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
+* Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
+* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
+* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
-HertzBeat aims to help developers and teams quickly build their own monitoring system. We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started for free](https://console.tancloud.cn)**.
+
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
+> We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
 ----
 
@@ -72,6 +74,8 @@ HertzBeat aims to help developers and teams quickly build their own monitoring s
   [DM](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
   [ClickHouse](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
   [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
+  [Doris BE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_be.yml),
+  [Doris FE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_fe.yml)
 - [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
@@ -88,12 +92,12 @@ HertzBeat aims to help developers and teams quickly build their own monitoring s
   [HuaweiSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
 - And More Your Custom Template.
-- Notified Support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
+- Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
 
 ## 🐕 Quick Start   
 
-- If you prefer to use HertzBeat directly without deploying it, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In For Free](https://console.tancloud.cn)**.   
+- If you prefer to use HertzBeat directly without deploying it, we provide SAAS Monitoring Cloud-TanCloud, **[Log In For Free](https://console.tancloud.cn)**.   
 - If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat   
@@ -110,17 +114,42 @@ HertzBeat aims to help developers and teams quickly build their own monitoring s
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-2. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
+2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
+
+3. Deploy collector clusters 
+
+```
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+```
+- `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+- `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)   
 
 ##### 2：Install via package  
 
-1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. Need `Java11` Environment
+1. Download the release package `hertzbeat-xx.zip` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. Need `java jdk11` Environment
 3. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
-4. Run shell `$ ./startup.sh ` or `startup.bat`   
-5. Access `localhost:1157` to start, default account: `admin/hertzbeat`  
+4. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`   
+5. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
+6. Deploy collector clusters
+    - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+    - Need `java jdk11` Environment
+    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+      ```yaml
+      collector:
+        dispatch:
+          entrance:
+            netty:
+              enabled: true
+              identity: ${IDENTITY:}
+              manager-ip: ${MANAGER_IP:127.0.0.1}
+              manager-port: ${MANAGER_PORT:1158}
+      ```
+    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+    - Access `http://localhost:1157` and you will see the registered new collector in dashboard 
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)   
 
@@ -129,7 +158,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.  
 2. Backend：need `maven3+`, `java11`, `lombok`, start the `manager` service.  
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
-4. Access `localhost:4200` to start, default account: `admin/hertzbeat`  
+4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`  
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
 
@@ -366,6 +395,7 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 ##### Friends   
 
+- [Sa-Token](https://github.com/dromara/Sa-Token) : 一个轻量级 java 权限认证框架，让鉴权变得简单、优雅
 - [DynamicTp](https://github.com/dromara/dynamic-tp) : 轻量级动态线程池，内置监控告警功能，集成三方中间件线程池管理，基于主流配置中心
 - [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  

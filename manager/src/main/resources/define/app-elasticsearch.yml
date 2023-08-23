@@ -24,6 +24,15 @@ app: elasticsearch
 name:
   zh-CN: ElasticSearch
   en-US: ElasticSearch
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 ElasticSearch 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ElasticSearch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors ElasticSearch through general performance indicator. You could click the "<i>New ElasticSearch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對ElasticSearch資料庫監控通用名額進行量測監控。<br>您可以點擊“<i>新建ElasticSearch</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/elasticsearch
+  en-US: https://hertzbeat.com/docs/help/elasticsearch
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

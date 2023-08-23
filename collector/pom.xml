@@ -177,6 +177,15 @@
             </activation>
             <build>
                 <finalName>hertzbeat-collector</finalName>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                        <includes>
+                            <include>META-INF/**</include>
+                        </includes>
+                    </resource>
+                </resources>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -210,6 +219,7 @@
                         <includes>
                             <include>*.yml</include>
                             <include>*.properties</include>
+                            <include>*.xml</include>
                             <include>banner.txt</include>
                             <include>META-INF/**</include>
                         </includes>

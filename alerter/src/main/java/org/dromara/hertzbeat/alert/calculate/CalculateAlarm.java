@@ -25,6 +25,7 @@ import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.alert.dao.AlertMonitorDao;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
@@ -34,6 +35,7 @@ import org.dromara.hertzbeat.alert.util.AlertTemplateUtil;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
@@ -41,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import jakarta.persistence.criteria.Predicate;
 import java.util.*;
@@ -60,14 +63,20 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATU
 @Slf4j
 public class CalculateAlarm {
 
+    private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
+    
     /**
      * The alarm in the process is triggered
      * 触发中告警信息
      * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
      * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
-    public Map<String, Alert> triggeredAlertMap;
-    public Set<Long> unAvailableMonitors;
+    private final Map<String, Alert> triggeredAlertMap;
+    /**
+     * The not recover alert
+     * key - monitorId + alertDefineId + (instance)
+     */
+    private final Map<String, Alert> notRecoveredAlertMap;
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
@@ -85,13 +94,13 @@ public class CalculateAlarm {
         this.alertService = alertService;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
-        this.unAvailableMonitors = Collections.synchronizedSet(new HashSet<>(16));
+        this.notRecoveredAlertMap = new ConcurrentHashMap<>(128);
         // Initialize stateAlertMap
         // 初始化stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
-                this.unAvailableMonitors.add(monitor.getId());
+                this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY, Alert.builder().build());
             }
         }
         startCalculate();
@@ -123,7 +132,7 @@ public class CalculateAlarm {
         // If the indicator group whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE, the highest severity alarm is generated to monitor the status change
         // 先判断调度优先级为0的指标组采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警进行监控状态变更
         if (metricsData.getPriority() == 0) {
-            handlerAvailableMetrics(monitorId, app, metrics, metricsData);
+            handlerAvailableMetrics(monitorId, app, metricsData);
         }
         // Query the alarm definitions associated with the indicator set of the monitoring type
         // 查出此监控类型下的此指标集合下关联配置的告警定义信息
@@ -134,147 +143,257 @@ public class CalculateAlarm {
         }
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Map<String, Object> fieldValueMap = new HashMap<>(16);
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            if (!valueRow.getColumnsList().isEmpty()) {
-                fieldValueMap.clear();
-                String instance = valueRow.getInstance();
-                if (!"".equals(instance)) {
-                    fieldValueMap.put("instance", instance);
+        int valueRowCount = metricsData.getValuesCount();
+        for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
+            List<AlertDefine> defines = entry.getValue();
+            for (AlertDefine define : defines) {
+                String expr = define.getExpr();
+                if (!StringUtils.hasText(expr)) {
+                    continue;
                 }
-                for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
-                    String valueStr = valueRow.getColumns(index);
-                    CollectRep.Field field = fields.get(index);
-                    if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                        Double doubleValue = CommonUtil.parseStrDouble(valueStr);
-                        if (doubleValue != null) {
-                            fieldValueMap.put(field.getName(), doubleValue);
+                if (expr.contains(SYSTEM_VALUE_ROW_COUNT)) {
+                    fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                    try {
+                        boolean match = execAlertExpression(fieldValueMap, expr);
+                        if (match) {
+                            // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                            // 阈值规则匹配，判断已触发阈值次数，触发告警
+                            afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
+                            // 若此阈值已被触发，则其它数据行的触发忽略
+                            continue;
+                        } else if (define.isRecoverNotice()) {
+                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + null;
+                            handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                         }
-                    } else {
-                        if (!"".equals(valueStr)) {
-                            fieldValueMap.put(field.getName(), valueStr);
-                        }
+                    } catch (Exception e) {
+                        log.warn(e.getMessage(), e);
                     }
                 }
-                for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
-                    List<AlertDefine> defines = entry.getValue();
-                    for (AlertDefine define : defines) {
-                        String expr = define.getExpr();
-                        try {
-                            Boolean match = false;
-                            try {
-                                Expression expression = AviatorEvaluator.compile(expr, true);
-                                match = (Boolean) expression.execute(fieldValueMap);
-                            } catch (CompileExpressionErrorException |
-                                     ExpressionSyntaxErrorException compileException) {
-                                log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
-                            } catch (ExpressionRuntimeException expressionRuntimeException) {
-                                log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
-                            } catch (Exception e) {
-                                log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
-                            }
-
-                            if (match != null && match) {
-                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                // 阈值规则匹配，判断已触发阈值次数，触发告警
-                                String monitorAlertKey = String.valueOf(monitorId) + define.getId();
-                                Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
-                                if (triggeredAlert != null) {
-                                    int times = triggeredAlert.getTriggerTimes() + 1;
-                                    triggeredAlert.setTriggerTimes(times);
-                                    triggeredAlert.setFirstAlarmTime(currentTimeMilli);
-                                    triggeredAlert.setLastAlarmTime(currentTimeMilli);
-                                    int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
-                                    if (times >= defineTimes) {
-                                        triggeredAlertMap.remove(monitorAlertKey);
-                                        alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
+                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                    if (!valueRow.getColumnsList().isEmpty()) {
+                        fieldValueMap.clear();
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                        String instance = valueRow.getInstance();
+                        if (!"".equals(instance)) {
+                            fieldValueMap.put("instance", instance);
+                        }
+                        for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
+                            String valueStr = valueRow.getColumns(index);
+                            if (!CommonConstants.NULL_VALUE.equals(valueStr)) {
+                                CollectRep.Field field = fields.get(index);
+                                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                                    Double doubleValue = CommonUtil.parseStrDouble(valueStr);
+                                    if (doubleValue != null) {
+                                        fieldValueMap.put(field.getName(), doubleValue);
                                     }
                                 } else {
-                                    fieldValueMap.put("app", app);
-                                    fieldValueMap.put("metrics", metrics);
-                                    fieldValueMap.put("metric", define.getField());
-                                    Map<String, String> tags = new HashMap<>(6);
-                                    tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-                                    tags.put(CommonConstants.TAG_MONITOR_APP, app);
-                                    Alert alert = Alert.builder()
-                                            .tags(tags)
-                                            .alertDefineId(define.getId())
-                                            .priority(define.getPriority())
-                                            .status(ALERT_STATUS_CODE_PENDING)
-                                            .target(app + "." + metrics + "." + define.getField())
-                                            .triggerTimes(1)
-                                            .firstAlarmTime(currentTimeMilli)
-                                            .lastAlarmTime(currentTimeMilli)
-                                            // Keyword matching and substitution in the template
-                                            // 模板中关键字匹配替换
-                                            .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
-                                            .build();
-                                    int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
-                                    if (1 >= defineTimes) {
-                                        alarmCommonReduce.reduceAndSendAlarm(alert);
-                                    } else {
-                                        triggeredAlertMap.put(monitorAlertKey, alert);
+                                    if (!"".equals(valueStr)) {
+                                        fieldValueMap.put(field.getName(), valueStr);
                                     }
-                                }
-                                // Threshold rules below this priority are ignored
-                                // 此优先级以下的阈值规则则忽略
+                                }   
+                            }
+                        }
+                        try {
+                            boolean match = execAlertExpression(fieldValueMap, expr);
+                            if (match) {
+                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                                // 阈值规则匹配，判断已触发阈值次数，触发告警
+                                afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
+                                // 若此阈值已被触发，则其它数据行的触发忽略
                                 break;
+                            } else if (define.isRecoverNotice()) {
+                                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (!"".equals(instance) ? instance : null);
+                                handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                             }
                         } catch (Exception e) {
                             log.warn(e.getMessage(), e);
                         }
                     }
                 }
-
             }
         }
     }
-
-    private void handlerAvailableMetrics(long monitorId, String app, String metrics, CollectRep.MetricsData metricsData) {
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
-            // Collection and abnormal
-            // 采集异常
-            if (metricsData.getCode() == CollectRep.Code.UN_AVAILABLE) {
-                // The todo collector is unavailable
-                // todo 采集器不可用
-                return;
-            } else if (metricsData.getCode() == CollectRep.Code.UN_REACHABLE) {
-                // UN_REACHABLE Peer unreachable (Network layer icmp)
-                // UN_REACHABLE 对端不可达(网络层icmp)
-                handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
-            } else if (metricsData.getCode() == CollectRep.Code.UN_CONNECTABLE) {
-                // UN_CONNECTABLE Peer connection failure (transport layer tcp,udp)
-                // UN_CONNECTABLE 对端连接失败(传输层tcp,udp)
-                handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
-            } else {
-                // Other exceptions
-                // 其他异常
-                handlerMonitorAvailableAlert(monitorId, app, metricsData.getCode());
+    
+    private void handleRecoveredAlert(long currentTimeMilli, long monitorId, String app, AlertDefine define, String expr, String notResolvedAlertKey) {
+        Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
+        if (notResolvedAlert != null) {
+            // Sending an alarm Restore
+            Map<String, String> tags = notResolvedAlert.getTags();
+            tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
+            String content = this.bundle.getString("alerter.alarm.recover") + " : " + expr;
+            Alert resumeAlert = Alert.builder()
+                                        .tags(tags)
+                                        .target(define.getApp() + "." + define.getMetric() + "." + define.getField())
+                                        .content(content)
+                                        .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
+                                        .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
+                                        .firstAlarmTime(currentTimeMilli)
+                                        .lastAlarmTime(currentTimeMilli)
+                                        .triggerTimes(1)
+                                        .build();
+            alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
+        }
+    }
+    
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, Map<String, Object> fieldValueMap, AlertDefine define) {
+        String monitorAlertKey = String.valueOf(monitorId) + define.getId();
+        Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
+        if (triggeredAlert != null) {
+            int times = triggeredAlert.getTriggerTimes() + 1;
+            triggeredAlert.setTriggerTimes(times);
+            triggeredAlert.setFirstAlarmTime(currentTimeMilli);
+            triggeredAlert.setLastAlarmTime(currentTimeMilli);
+            int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
+            if (times >= defineTimes) {
+                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + fieldValueMap.get("instance");
+                triggeredAlertMap.remove(monitorAlertKey);
+                notRecoveredAlertMap.put(notResolvedAlertKey, triggeredAlert);
+                alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
             }
-            return;
         } else {
-            // Check whether an availability or unreachable alarm is generated before the association monitoring, and send a clear alarm to clear the monitoring status
+            fieldValueMap.put("app", app);
+            fieldValueMap.put("metrics", metrics);
+            fieldValueMap.put("metric", define.getField());
+            Map<String, String> tags = new HashMap<>(6);
+            tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+            tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            if (define.getTags() != null && !define.getTags().isEmpty()) {
+                for (TagItem tagItem : define.getTags()) {
+                    fieldValueMap.put(tagItem.getName(), tagItem.getValue());
+                    tags.put(tagItem.getName(), tagItem.getValue());
+                }
+            }
+            Alert alert = Alert.builder()
+                                  .tags(tags)
+                                  .alertDefineId(define.getId())
+                                  .priority(define.getPriority())
+                                  .status(ALERT_STATUS_CODE_PENDING)
+                                  .target(app + "." + metrics + "." + define.getField())
+                                  .triggerTimes(1)
+                                  .firstAlarmTime(currentTimeMilli)
+                                  .lastAlarmTime(currentTimeMilli)
+                                  // Keyword matching and substitution in the template
+                                  // 模板中关键字匹配替换
+                                  .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
+                                  .build();
+            int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
+            if (1 >= defineTimes) {
+                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + fieldValueMap.get("instance");
+                notRecoveredAlertMap.put(notResolvedAlertKey, alert);
+                alarmCommonReduce.reduceAndSendAlarm(alert);
+            } else {
+                triggeredAlertMap.put(monitorAlertKey, alert);
+            }
+        }
+    }
+    
+    private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
+        Boolean match = false;
+        try {
+            Expression expression = AviatorEvaluator.compile(expr, true);
+            match = (Boolean) expression.execute(fieldValueMap);
+        } catch (CompileExpressionErrorException |
+                 ExpressionSyntaxErrorException compileException) {
+            log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
+        } catch (ExpressionRuntimeException expressionRuntimeException) {
+            log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
+        } catch (Exception e) {
+            log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
+        }
+        return match;
+    }
+    
+    private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
+        AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
+        if (avaAlertDefine == null) {
+            return;
+        }
+        long currentTimeMill = System.currentTimeMillis();
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
+            Map<String, String> tags = new HashMap<>(6);
+            tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
+            tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            tags.put("metrics", CommonConstants.AVAILABILITY);
+            tags.put("code", metricsData.getCode().name());
+            Map<String, Object> valueMap = tags.entrySet().stream()
+                                                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if (avaAlertDefine.getTags() != null && !avaAlertDefine.getTags().isEmpty()) {
+                for (TagItem tagItem : avaAlertDefine.getTags()) {
+                    valueMap.put(tagItem.getName(), tagItem.getValue());
+                    tags.put(tagItem.getName(), tagItem.getValue());
+                }
+            }
+            if (preAlert == null) {
+                Alert.AlertBuilder alertBuilder = Alert.builder()
+                                                          .tags(tags)
+                                                          .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                                                          .status(ALERT_STATUS_CODE_PENDING)
+                                                          .target(CommonConstants.AVAILABILITY)
+                                                          .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
+                                                          .firstAlarmTime(currentTimeMill)
+                                                          .lastAlarmTime(currentTimeMill)
+                                                          .triggerTimes(1);
+                if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
+                    String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
+                    notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
+                    alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build().clone());
+                } else {
+                    alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
+                }
+                triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
+            } else {
+                int times = preAlert.getTriggerTimes() + 1;
+                if (preAlert.getStatus() == ALERT_STATUS_CODE_PENDING) {
+                    times = 1;
+                    preAlert.setContent(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap));
+                    preAlert.setTags(tags);
+                }
+                preAlert.setTriggerTimes(times);
+                preAlert.setFirstAlarmTime(currentTimeMill);
+                preAlert.setLastAlarmTime(currentTimeMill);
+                int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
+                if (times >= defineTimes) {
+                    preAlert.setStatus(ALERT_STATUS_CODE_PENDING);
+                    String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
+                    notRecoveredAlertMap.put(notResolvedAlertKey, preAlert.clone());
+                    alarmCommonReduce.reduceAndSendAlarm(preAlert.clone());
+                } else {
+                    preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
+                }
+            }
+        } else {
+            // Check whether an availability or unreachable alarm is generated before the association monitoring
+            // and send a clear alarm to clear the monitoring status
             // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
-            triggeredAlertMap.remove(String.valueOf(monitorId));
-            boolean isRestartUnavailable = unAvailableMonitors.remove(monitorId);
-            if (isRestartUnavailable) {
+            String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
+            Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
+            if (notResolvedAlert != null) {
                 // Sending an alarm Restore
                 Map<String, String> tags = new HashMap<>(6);
                 tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
                 tags.put(CommonConstants.TAG_MONITOR_APP, app);
-                String content = this.bundle.getString("alerter.availability.resolved");
-                long currentTimeMilli = System.currentTimeMillis();
+                tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
+                if (!avaAlertDefine.isRecoverNotice()) {
+                    tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
+                }
+                if (notResolvedAlert.getTags() != null) {
+                    tags.putAll(notResolvedAlert.getTags());
+                }
+                String content = this.bundle.getString("alerter.availability.recover");
                 Alert resumeAlert = Alert.builder()
-                        .tags(tags)
-                        .target(CommonConstants.AVAILABILITY)
-                        .content(content)
-                        .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
-                        .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
-                        .firstAlarmTime(currentTimeMilli)
-                        .lastAlarmTime(currentTimeMilli)
-                        .triggerTimes(1)
-                        .build();
+                                            .tags(tags)
+                                            .target(CommonConstants.AVAILABILITY)
+                                            .content(content)
+                                            .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
+                                            .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
+                                            .firstAlarmTime(currentTimeMill)
+                                            .lastAlarmTime(currentTimeMill)
+                                            .triggerTimes(1)
+                                            .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
                 Runnable updateStatusJob = () -> {
+                    // todo update pre all type alarm status 
                     updateAvailabilityAlertStatus(monitorId, resumeAlert);
                 };
                 workerPool.executeJob(updateStatusJob);
@@ -282,63 +401,10 @@ public class CalculateAlarm {
         }
     }
 
-    private void handlerMonitorAvailableAlert(long monitorId, String app, CollectRep.Code code) {
-        AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
-        if (avaAlertDefine == null) {
-            return;
-        }
-        Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
-        long currentTimeMill = System.currentTimeMillis();
-        Map<String, String> tags = new HashMap<>(6);
-        tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-        tags.put(CommonConstants.TAG_MONITOR_APP, app);
-        tags.put("metrics", CommonConstants.AVAILABILITY);
-        tags.put("code", code.name());
-        Map<String, Object> valueMap = tags.entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        if (preAlert == null) {
-            Alert.AlertBuilder alertBuilder = Alert.builder()
-                    .tags(tags)
-                    .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
-                    .status(ALERT_STATUS_CODE_PENDING)
-                    .target(CommonConstants.AVAILABILITY)
-                    .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
-                    .firstAlarmTime(currentTimeMill)
-                    .lastAlarmTime(currentTimeMill)
-                    .triggerTimes(1);
-            if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
-                alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build().clone());
-                unAvailableMonitors.add(monitorId);
-            } else {
-                alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
-            }
-            triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
-        } else {
-            int times = preAlert.getTriggerTimes() + 1;
-            if (preAlert.getStatus() == ALERT_STATUS_CODE_PENDING) {
-                times = 1;
-                preAlert.setContent(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap));
-                preAlert.setTags(tags);
-            }
-            preAlert.setTriggerTimes(times);
-            preAlert.setFirstAlarmTime(currentTimeMill);
-            preAlert.setLastAlarmTime(currentTimeMill);
-            int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
-            if (times >= defineTimes) {
-                preAlert.setStatus(ALERT_STATUS_CODE_PENDING);
-                alarmCommonReduce.reduceAndSendAlarm(preAlert.clone());
-                unAvailableMonitors.add(monitorId);
-            } else {
-                preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
-            }
-        }
-    }
-
-
     private void updateAvailabilityAlertStatus(long monitorId, Alert restoreAlert) {
         List<Alert> availabilityAlerts = queryAvailabilityAlerts(monitorId, restoreAlert);
         availabilityAlerts.stream().parallel().forEach(alert -> {
-            log.info("updating alert id:{}",alert.getId());
+            log.info("updating alert status solved id: {}", alert.getId());
             alertService.editAlertStatus(ALERT_STATUS_CODE_SOLVED, List.of(alert.getId()));
         });
     }
@@ -369,8 +435,15 @@ public class CalculateAlarm {
     }
     
     @EventListener(SystemConfigChangeEvent.class)
-    public void onEvent(SystemConfigChangeEvent event) {
+    public void onSystemConfigChangeEvent(SystemConfigChangeEvent event) {
         log.info("calculate alarm receive system config change event: {}.", event.getSource());
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
+    
+    @EventListener(MonitorDeletedEvent.class)
+    public void onMonitorDeletedEvent(MonitorDeletedEvent event) {
+        log.info("calculate alarm receive monitor {} has been deleted.", event.getMonitorId());
+        this.triggeredAlertMap.remove(String.valueOf(event.getMonitorId()));
+    }
+    
 }

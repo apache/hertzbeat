@@ -21,6 +21,7 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
+import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
@@ -64,9 +65,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
+    private static final String JAVA_PATH_SEPARATOR = "/";
+    
     @Autowired
     private MonitorDao monitorDao;
-    
+
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
     @Override
@@ -116,21 +119,41 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(128);
         for (Job job : appDefines.values()) {
-            // todo needs to support the indicator name
-            // 后面需要支持指标名称
             Map<String, String> name = job.getName();
-            if (name != null && !name.isEmpty()) {
-                String i18nName = Optional.ofNullable(name.get(lang)).orElse(name.values().stream().findFirst().orElse(null));
-                if (i18nName != null) {
-                    i18nMap.put("monitor.app." + job.getApp(), i18nName);
-                }
+            String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
+            if (i18nName != null) {
+                i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
+            Map<String, String> help = job.getHelp();
+            String i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
+            if (i18nHelp != null) {
+                i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
+            }
+
+            Map<String, String> helpLink = job.getHelpLink();
+            String i18nHelpLink = CommonUtil.getLangMappingValueFromI18nMap(lang, helpLink);
+            if (i18nHelpLink != null) {
+                i18nMap.put("monitor.app." + job.getApp() + ".helpLink", i18nHelpLink);
+            }
+
             for (ParamDefine paramDefine : job.getParams()) {
                 Map<String, String> paramDefineName = paramDefine.getName();
-                if (paramDefineName != null && !paramDefineName.isEmpty()) {
-                    String i18nName = Optional.ofNullable(paramDefineName.get(lang)).orElse(paramDefineName.values().stream().findFirst().orElse(null));
-                    if (i18nName != null) {
-                        i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nName);
+                String i18nParamName = CommonUtil.getLangMappingValueFromI18nMap(lang, paramDefineName);
+                if (i18nParamName != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nParamName);
+                }
+            }
+            for (Metrics metrics : job.getMetrics()) {
+                Map<String, String> metricsI18nName = metrics.getI18n();
+                String i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
+                if (i18nMetricsName != null) {
+                    i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName(), i18nMetricsName);
+                }
+                for (Metrics.Field field : metrics.getFields()) {
+                    Map<String, String> fieldI18nName = field.getI18n();
+                    String i18nMetricName = CommonUtil.getLangMappingValueFromI18nMap(lang, fieldI18nName);
+                    if (i18nMetricName != null) {
+                        i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName() + ".metric." + field.getField(), i18nMetricName);
                     }
                 }
             }
@@ -147,7 +170,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             hierarchyApp.setValue(job.getApp());
             Map<String, String> nameMap = job.getName();
             if (nameMap != null && !nameMap.isEmpty()) {
-                String i18nName = Optional.ofNullable(nameMap.get(lang)).orElse(nameMap.values().stream().findFirst().orElse(null));
+                String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
                 if (i18nName != null) {
                     hierarchyApp.setLabel(i18nName);
                 }
@@ -157,13 +180,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 for (Metrics metrics : job.getMetrics()) {
                     Hierarchy hierarchyMetric = new Hierarchy();
                     hierarchyMetric.setValue(metrics.getName());
-                    hierarchyMetric.setLabel(metrics.getName());
+                    String metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
+                    hierarchyMetric.setLabel(metricsI18nName != null ? metricsI18nName : metrics.getName());
                     List<Hierarchy> hierarchyFieldList = new LinkedList<>();
                     if (metrics.getFields() != null) {
                         for (Metrics.Field field : metrics.getFields()) {
                             Hierarchy hierarchyField = new Hierarchy();
                             hierarchyField.setValue(field.getField());
-                            hierarchyField.setLabel(field.getField());
+                            String metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
+                            hierarchyField.setLabel(metricI18nName != null ? metricI18nName : field.getField());
                             hierarchyField.setIsLeaf(true);
                             // for metric
                             hierarchyField.setType(field.getType());
@@ -193,22 +218,25 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
         File defineAppFile = new File(defineAppPath);
         if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-            classpath = Objects.requireNonNull(this.getClass().getResource(File.separator)).getPath();
-            defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-            defineAppFile = new File(defineAppPath);
-            if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-                try {
-                    // load define app yml in jar
-                    log.info("load define app yml in internal jar");
-                    ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                    Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
-                    InputStream inputStream = resource.getInputStream();
-                    String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-                    inputStream.close();
-                    return content;
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
+            URL resourceUrl = this.getClass().getResource(JAVA_PATH_SEPARATOR);
+            if (resourceUrl != null) {
+                classpath = resourceUrl.getPath();
+                defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+                defineAppFile = new File(defineAppPath);
+                if (!defineAppFile.exists() || !defineAppFile.isFile()) {
+                    try {
+                        // load define app yml in jar
+                        log.info("load define app yml in internal jar");
+                        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+                        Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
+                        InputStream inputStream = resource.getInputStream();
+                        String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+                        inputStream.close();
+                        return content;
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                    }
+                }   
             }
         }
         log.info("load {} define app yml in file: {}", app, defineAppPath);
@@ -259,7 +287,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         boolean hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
         Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
         if (!isModify) {
-            Assert.isNull(appDefines.get(app.getApp().toLowerCase()), 
+            Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
         }
     }
@@ -333,8 +361,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             log.info("load define path {}", defineAppPath);
             for (File appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
-                    if (appFile.isHidden() 
-                                || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
+                    if (appFile.isHidden()
+                            || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
                         log.error("Ignore this template file: {}.", appFile.getName());
                         continue;
                     }
