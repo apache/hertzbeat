@@ -1,8 +1,8 @@
 category: db
 app: tidb
 name:
-  zh-CN: tidb数据库
-  en-US: tidb
+  zh-CN: TiDB数据库
+  en-US: TiDB
 params:
   - field: host
     name:
