@@ -20,6 +20,8 @@ export class MonitorDataTableComponent {
   }
   private _monitorId!: number;
   @Input()
+  app!: string;
+  @Input()
   metrics!: string;
 
   time!: any;

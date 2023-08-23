@@ -135,7 +135,7 @@
             </ng-template>
             <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
               <div *ngFor="let metric of metrics; let i = index">
-                <app-monitor-data-table [metrics]="metric" [monitorId]="monitorId"></app-monitor-data-table>
+                <app-monitor-data-table [metrics]="metric" [monitorId]="monitorId" [app]="app"></app-monitor-data-table>
               </div>
             </div>
           </nz-tab>
