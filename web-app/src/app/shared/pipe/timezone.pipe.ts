@@ -1,4 +1,4 @@
-import { formatDate, Location } from '@angular/common';
+import { formatDate } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({

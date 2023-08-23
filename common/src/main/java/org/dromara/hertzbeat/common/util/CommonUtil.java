@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -133,6 +135,15 @@ public class CommonUtil {
             return null;
         }
         return value.replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");
+    }
+    
+    public static String getLangMappingValueFromI18nMap(String lang, Map<String, String> i18nMap) {
+        if (i18nMap == null || i18nMap.isEmpty()) {
+            return null;
+        }
+        return Optional.ofNullable(i18nMap.get(lang))
+                       .orElse(i18nMap.values().stream()
+                                       .findFirst().orElse(null));
     }
 
 }
