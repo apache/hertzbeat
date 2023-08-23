@@ -174,6 +174,11 @@ metrics:
   # metrics - cpu
   # 监控指标组 - cpu
   - name: cpu
+    # metrics name i18n label
+    # 指标组国际化展示名称
+    i18n:
+      zh-CN: CPU 信息
+      en-US: CPU Info
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
@@ -182,19 +187,31 @@ metrics:
     # collect metrics content
     # 具体监控指标列表
     fields:
-      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
+      # field-指标名称, i18n-指标国际化展示名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: hostname
         type: 1
         instance: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
       - field: usage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
       - field: cores
         type: 0
+        i18n:
+          zh-CN: 核数
+          en-US: Cores
       - field: waitTime
         type: 0
         unit: s
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -245,19 +262,34 @@ metrics:
       parseScript: '$'
 
   - name: memory
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory Info
     priority: 1
     fields:
       - field: hostname
         type: 1
         instance: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Hostname
       - field: total
         type: 0
         unit: kb
+        i18n:
+          zh-CN: 总量
+          en-US: Total
       - field: usage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
       - field: speed
         type: 0
+        i18n:
+          zh-CN: 速率
+          en-US: Speed
     protocol: http
     http:
       host: ^_^host^_^

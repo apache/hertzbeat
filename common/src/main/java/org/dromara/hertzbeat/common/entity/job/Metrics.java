@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.job.protocol.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,6 +52,13 @@ public class Metrics {
      * 公共属性-名称 eg: cpu | memory | health
      */
     private String name;
+    /**
+     * metrics group name's i18n value
+     * 指标集合的国际化名称
+     * zh-CN: CPU信息
+     * en-US: CPU Info
+     */
+    private Map<String, String> i18n;
     /**
      * 公共属性-采集监控协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
      */
@@ -241,6 +249,13 @@ public class Metrics {
          * 指标名称
          */
         private String field;
+        /**
+         * metric field name's i18n value
+         * 指标的国际化名称
+         * zh-CN: CPU 版本号
+         * en-US: CPU Version
+         */
+        private Map<String, String> i18n;
         /**
          * Indicator type 0-number: number 1-string: string
          * 指标类型 0-number:数字 1-string:字符串
