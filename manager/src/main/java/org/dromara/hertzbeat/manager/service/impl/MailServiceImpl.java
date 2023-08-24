@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.ResourceBundle;

@@ -30,7 +30,7 @@
         <!--hertzbeat 相关模块-->
         <hertzbeat.version>1.0</hertzbeat.version>
 
-        <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
+        <spring-boot-dependencies.version>3.1.0</spring-boot-dependencies.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <springdoc.version>1.6.11</springdoc.version>
         <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
@@ -48,9 +48,10 @@
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
         <okio.version>2.8.0</okio.version>
+        <httpclient.version>4.5.14</httpclient.version>
 
-        <lombok.version>1.18.20</lombok.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <lombok.version>1.18.28</lombok.version>
+        <slf4j.version>2.0.7</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>1.32</snake.yaml.version>
         <kafka-clients.version>3.4.0</kafka-clients.version>
@@ -59,7 +60,7 @@
         <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
         <mongodb-driver.version>4.6.1</mongodb-driver.version>
-        <clickhouse.version>1.4.4</clickhouse.version>
+        <clickhouse.version>0.4.6</clickhouse.version>
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.1</postgresql.version>
         <h2.version>2.1.214</h2.version>
@@ -146,6 +147,11 @@
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
             <!-- mysql -->
             <dependency>
                 <groupId>mysql</groupId>
@@ -177,8 +183,8 @@
             </dependency>
             <!-- clickhouse -->
             <dependency>
-                <groupId>cc.blynk.clickhouse</groupId>
-                <artifactId>clickhouse4j</artifactId>
+                <groupId>com.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
                 <version>${clickhouse.version}</version>
             </dependency>
             <!-- dm -->

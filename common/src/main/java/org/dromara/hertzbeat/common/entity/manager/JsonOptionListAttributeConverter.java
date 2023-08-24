@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.common.entity.manager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 import java.util.List;
 
 /**

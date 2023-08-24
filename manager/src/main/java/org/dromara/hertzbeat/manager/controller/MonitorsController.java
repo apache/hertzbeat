@@ -33,16 +33,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.ListJoin;
-import javax.persistence.criteria.Predicate;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
