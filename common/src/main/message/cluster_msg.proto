@@ -46,4 +46,6 @@ enum MessageType
     RESPONSE_ONE_TIME_TASK_DATA = 6;
     // response cyclic collect data
     RESPONSE_CYCLIC_TASK_DATA = 7;
+    // collector go close to master
+    GO_CLOSE = 8;
 }

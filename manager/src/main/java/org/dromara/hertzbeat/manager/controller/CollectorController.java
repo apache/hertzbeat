@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -49,6 +50,8 @@ public class CollectorController {
 
     @Autowired
     private CollectorService collectorService;
+    @Autowired
+    private CollectorAndJobScheduler collectorAndJobScheduler;
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
@@ -73,4 +76,21 @@ public class CollectorController {
         Message<Page<CollectorSummary>> message = new Message<>(receivers);
         return ResponseEntity.ok(message);
     }
+
+    @GetMapping("/online")
+    @Operation(summary = "online collector")
+    public ResponseEntity<String> onlineCollector(
+            @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
+        collectorAndJobScheduler.onlineCollector(collectorName);
+        return ResponseEntity.ok("ok");
+    }
+
+    @GetMapping("/offline")
+    @Operation(summary = "offline collector")
+    public ResponseEntity<String> offlineCollector(
+            @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
+        collectorAndJobScheduler.offlineCollector(collectorName);
+        return ResponseEntity.ok("ok");
+    }
+
 }

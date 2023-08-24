@@ -232,6 +232,31 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     }
 
     @Override
+    public boolean offlineCollector(String identity) {
+        Channel channel = this.collectorChannelMap.get(identity);
+        if (channel == null) {
+            return false;
+        }
+        channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_OFFLINE).build());
+        log.info("send offline message to collector success");
+        this.collectorGoOffline(identity);
+        return true;
+    }
+
+    @Override
+    public boolean onlineCollector(String identity) {
+        Channel channel = this.collectorChannelMap.get(identity);
+        if (channel == null) {
+            return false;
+        }
+        channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_ONLINE).build());
+        // todo 是否等待返回
+        log.info("send online message to collector success");
+        this.collectorGoOnline(identity);
+        return true;
+    }
+
+    @Override
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         // todo dispatchKey ip+port or id
         String dispatchKey = String.valueOf(job.getMonitorId());

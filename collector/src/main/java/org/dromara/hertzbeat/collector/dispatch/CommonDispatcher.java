@@ -40,15 +40,17 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Indicator group collection task and response data scheduler
  * 指标组采集任务与响应数据调度器
  *
  * @author tomsun28
- *
  */
 @Component
 @Slf4j
@@ -84,9 +86,17 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * Metric group task and start time mapping map
      * 指标组任务与开始时间映射map
      */
-    private final Map<String, MetricsTime> metricsTimeoutMonitorMap;
+    private Map<String, MetricsTime> metricsTimeoutMonitorMap;
 
     private final List<UnitConvert> unitConvertList;
+
+    private final ThreadPoolExecutor poolExecutor;
+
+    private final WorkerPool workerPool;
+
+    private final AtomicBoolean started = new AtomicBoolean(false);
+
+    private final Lock lock = new ReentrantLock();
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
                             TimerDispatch timerDispatch,
@@ -97,75 +107,108 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         this.jobRequestQueue = jobRequestQueue;
         this.timerDispatch = timerDispatch;
         this.unitConvertList = unitConvertList;
-        ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(2, 2, 1,
+        this.workerPool = workerPool;
+        poolExecutor = new ThreadPoolExecutor(2, 2, 1,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(), r -> {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
             return thread;
         });
-        // Pull the indicator group collection task from the task queue and put it into the thread pool for execution
-        // 从任务队列拉取指标组采集任务放入线程池执行
-        poolExecutor.execute(() -> {
-            Thread.currentThread().setName("metrics-task-dispatcher");
-            while (!Thread.currentThread().isInterrupted()) {
-                MetricsCollect metricsCollect = null;
-                try {
-                    metricsCollect = jobRequestQueue.getJob();
-                    if (metricsCollect != null) {
-                        workerPool.executeJob(metricsCollect);
-                    }
-                } catch (RejectedExecutionException rejected) {
-                    log.info("[Dispatcher]-the worker pool is full, reject this metrics task, " +
-                            "sleep and put in queue again.");
+
+        this.start();
+    }
+
+    public void start() {
+        lock.lock();
+        try {
+            if (started.get()) {
+                return;
+            }
+
+            // Pull the indicator group collection task from the task queue and put it into the thread pool for execution
+            // 从任务队列拉取指标组采集任务放入线程池执行
+            poolExecutor.execute(() -> {
+                Thread.currentThread().setName("metrics-task-dispatcher");
+                while (!Thread.currentThread().isInterrupted()) {
+                    MetricsCollect metricsCollect = null;
                     try {
-                        Thread.sleep(1000);
+                        metricsCollect = jobRequestQueue.getJob();
                         if (metricsCollect != null) {
-                            // 在队列里的优先级增大
-                            metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
-                            jobRequestQueue.addJob(metricsCollect);
+                            workerPool.executeJob(metricsCollect);
                         }
-                    } catch (InterruptedException ignored) {}
-                } catch (Exception e) {
-                    log.error("[Dispatcher]-{}.", e.getMessage(), e);
-                }
-            }
-        });
-        // Monitoring indicator group collection task execution t
-        // 监控指标组采集任务执行时间
-        metricsTimeoutMonitorMap = new ConcurrentHashMap<>(128);
-        poolExecutor.execute(() -> {
-            Thread.currentThread().setName("metrics-task-monitor");
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    // Detect whether the collection unit of each indicator group has timed out for 4 minutes, and if it times out, it will be discarded and an exception will be returned.
-                    // 检测每个指标组采集单元是否超时4分钟,超时则丢弃并返回异常
-                    long deadline = System.currentTimeMillis() - DURATION_TIME;
-                    for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
-                        MetricsTime metricsTime = entry.getValue();
-                        if (metricsTime.getStartTime() < deadline) {
-                            // Metric group collection timeout      指标组采集超时
-                            WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
-                            CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                                    .setId(timerJob.getJob().getMonitorId())
-                                    .setApp(timerJob.getJob().getApp())
-                                    .setMetrics(metricsTime.getMetrics().getName())
-                                    .setPriority(metricsTime.getMetrics().getPriority())
-                                    .setTime(System.currentTimeMillis())
-                                    .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
-                            log.error("[Collect Timeout]: \n{}", metricsData);
-                            if (metricsData.getPriority() == 0) {
-                                dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                    } catch (RejectedExecutionException rejected) {
+                        log.info("[Dispatcher]-the worker pool is full, reject this metrics task, " +
+                                "sleep and put in queue again.");
+                        try {
+                            Thread.sleep(1000);
+                            if (metricsCollect != null) {
+                                // 在队列里的优先级增大
+                                metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
+                                jobRequestQueue.addJob(metricsCollect);
                             }
-                            metricsTimeoutMonitorMap.remove(entry.getKey());
+                        } catch (InterruptedException ignored) {
                         }
+                    } catch (Exception e) {
+                        log.error("[Dispatcher]-{}.", e.getMessage(), e);
                     }
-                    Thread.sleep(20000);
-                } catch (Exception e) {
-                    log.error("[Monitor]-{}.", e.getMessage(), e);
                 }
+            });
+            // Monitoring indicator group collection task execution t
+            // 监控指标组采集任务执行时间
+            metricsTimeoutMonitorMap = new ConcurrentHashMap<>(128);
+            poolExecutor.execute(() -> {
+                Thread.currentThread().setName("metrics-task-monitor");
+                while (!Thread.currentThread().isInterrupted()) {
+                    try {
+                        // Detect whether the collection unit of each indicator group has timed out for 4 minutes, and if it times out, it will be discarded and an exception will be returned.
+                        // 检测每个指标组采集单元是否超时4分钟,超时则丢弃并返回异常
+                        long deadline = System.currentTimeMillis() - DURATION_TIME;
+                        for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
+                            MetricsTime metricsTime = entry.getValue();
+                            if (metricsTime.getStartTime() < deadline) {
+                                // Metric group collection timeout      指标组采集超时
+                                WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
+                                CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                                        .setId(timerJob.getJob().getMonitorId())
+                                        .setApp(timerJob.getJob().getApp())
+                                        .setMetrics(metricsTime.getMetrics().getName())
+                                        .setPriority(metricsTime.getMetrics().getPriority())
+                                        .setTime(System.currentTimeMillis())
+                                        .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
+                                log.error("[Collect Timeout]: \n{}", metricsData);
+                                if (metricsData.getPriority() == 0) {
+                                    dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                                }
+                                metricsTimeoutMonitorMap.remove(entry.getKey());
+                            }
+                        }
+                        Thread.sleep(20000);
+                    } catch (Exception e) {
+                        log.error("[Monitor]-{}.", e.getMessage(), e);
+                    }
+                }
+            });
+
+            started.set(true);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void close() {
+        lock.lock();
+        try {
+            if (!this.started.get()) {
+                return;
             }
-        });
+            this.poolExecutor.shutdown();
+            if (this.poolExecutor.isShutdown()) {
+                started.set(false);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -246,7 +289,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
                         AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
                         AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
-                        for (int index = 0; index < subTaskNum; index ++) {
+                        for (int index = 0; index < subTaskNum; index++) {
                             Map<String, Configmap> configmap = configmapList.get(index);
                             JsonElement metricJson = GSON.toJsonTree(metricItem);
                             CollectUtil.replaceCryPlaceholder(metricJson, configmap);

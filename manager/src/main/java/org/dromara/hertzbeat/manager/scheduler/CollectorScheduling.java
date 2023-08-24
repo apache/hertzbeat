@@ -63,4 +63,8 @@ public interface CollectorScheduling {
      * @return true/false
      */
     boolean isCollectorChannelExist(String identity);
+
+    boolean offlineCollector(String identity);
+
+    boolean onlineCollector(String identity);
 }

@@ -5,9 +5,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.collector.dispatch.CommonDispatcher;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
+        CommonDispatcher commonDispatcher = SpringContextHolder.getBean(CommonDispatcher.class);
         switch (message.getType()) {
             case HEARTBEAT:
                 log.info("collector receive manager server response heartbeat, time: {}. ", System.currentTimeMillis());
@@ -52,6 +55,14 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                         collectJobService.cancelAsyncCollectJob(jobId);
                     }   
                 }
+                break;
+            case GO_OFFLINE:
+                commonDispatcher.close();
+                log.info("offline collector success");
+                break;
+            case GO_ONLINE:
+                commonDispatcher.start();
+                log.info("online collector success");
                 break;
         }
     }

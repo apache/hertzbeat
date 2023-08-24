@@ -26,6 +26,8 @@ public class CollectServer {
     private final CollectJobService collectJobService;
     
     private final CommonThreadPool commonThreadPool;
+
+    private EventLoopGroup workerGroup;
     
     public CollectServer(DispatchProperties properties, CollectJobService jobService, CommonThreadPool threadPool) throws Exception {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
@@ -43,7 +45,7 @@ public class CollectServer {
     
     private void collectorClientStartup(DispatchProperties.EntranceProperties.NettyProperties properties) throws Exception {
         commonThreadPool.execute(() -> {
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            workerGroup = new NioEventLoopGroup();
             Bootstrap b = new Bootstrap();
             b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
             b.group(workerGroup)
@@ -68,6 +70,15 @@ public class CollectServer {
             workerGroup.shutdownGracefully();
         });
     }
-    
+
+    private void close() {
+        try {
+            this.workerGroup.shutdownGracefully();
+
+            commonThreadPool.destroy();
+        } catch (Exception e) {
+            log.error("CollectServer shutdown exception, ", e);
+        }
+    }
     
 }
