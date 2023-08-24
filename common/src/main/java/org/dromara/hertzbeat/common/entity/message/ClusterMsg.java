@@ -87,6 +87,14 @@ public final class ClusterMsg {
          * <code>RESPONSE_CYCLIC_TASK_DATA = 7;</code>
          */
         RESPONSE_CYCLIC_TASK_DATA(7),
+        /**
+         * <pre>
+         * collector go close to master
+         * </pre>
+         *
+         * <code>GO_CLOSE = 8;</code>
+         */
+        GO_CLOSE(8),
         UNRECOGNIZED(-1),
         ;
         
@@ -154,6 +162,14 @@ public final class ClusterMsg {
          * <code>RESPONSE_CYCLIC_TASK_DATA = 7;</code>
          */
         public static final int RESPONSE_CYCLIC_TASK_DATA_VALUE = 7;
+        /**
+         * <pre>
+         * collector go close to master
+         * </pre>
+         *
+         * <code>GO_CLOSE = 8;</code>
+         */
+        public static final int GO_CLOSE_VALUE = 8;
         
         
         public final int getNumber() {
@@ -196,6 +212,8 @@ public final class ClusterMsg {
                     return RESPONSE_ONE_TIME_TASK_DATA;
                 case 7:
                     return RESPONSE_CYCLIC_TASK_DATA;
+                case 8:
+                    return GO_CLOSE;
                 default:
                     return null;
             }
@@ -1298,12 +1316,12 @@ public final class ClusterMsg {
                         "at.common.entity.message\"p\n\007Message\022\020\n\010i" +
                         "dentity\030\001 \001(\t\022F\n\004type\030\002 \001(\01628.org.dromar" +
                         "a.hertzbeat.common.entity.message.Messag" +
-                        "eType\022\013\n\003msg\030\003 \001(\t*\303\001\n\013MessageType\022\r\n\tHE" +
+                        "eType\022\013\n\003msg\030\003 \001(\t*\321\001\n\013MessageType\022\r\n\tHE" +
                         "ARTBEAT\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002" +
                         "\022\025\n\021ISSUE_CYCLIC_TASK\020\003\022\026\n\022DELETE_CYCLIC" +
                         "_TASK\020\004\022\027\n\023ISSUE_ONE_TIME_TASK\020\005\022\037\n\033RESP" +
                         "ONSE_ONE_TIME_TASK_DATA\020\006\022\035\n\031RESPONSE_CY" +
-                        "CLIC_TASK_DATA\020\007b\006proto3"
+                        "CLIC_TASK_DATA\020\007\022\014\n\010GO_CLOSE\020\010b\006proto3"
         };
         descriptor = com.google.protobuf.Descriptors.FileDescriptor
                              .internalBuildGeneratedFileFrom(descriptorData,
