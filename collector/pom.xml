@@ -27,6 +27,9 @@
     <artifactId>hertzbeat-collector</artifactId>
     <name>${project.artifactId}</name>
     <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
@@ -190,10 +193,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>11</source>
-                            <target>11</target>
-                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
