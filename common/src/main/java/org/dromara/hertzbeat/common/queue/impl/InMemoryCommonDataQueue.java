@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory", matchIfMissing = true)
 @Slf4j
+@Primary
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     private final LinkedBlockingQueue<Alert> alertDataQueue;
