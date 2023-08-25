@@ -64,7 +64,24 @@ public interface CollectorScheduling {
      */
     boolean isCollectorChannelExist(String identity);
 
+    /**
+     * offline collector(stop collector collect operation)
+     * @param identity collector identity name
+     * @return true/false
+     */
     boolean offlineCollector(String identity);
 
+    /**
+     * online collector(start collector collect operation)
+     * @param identity collector identity name
+     * @return true/false
+     */
     boolean onlineCollector(String identity);
+
+    /**
+     * close collector(stop collector collect operation and disconnect)
+     * @param identity collector identity name
+     * @return true/false
+     */
+    boolean closeCollector(String identity);
 }

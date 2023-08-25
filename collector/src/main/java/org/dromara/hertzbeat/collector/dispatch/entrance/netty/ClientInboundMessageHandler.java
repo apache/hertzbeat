@@ -64,6 +64,12 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 commonDispatcher.start();
                 log.info("online collector success");
                 break;
+            case GO_CLOSE:
+                CollectServer collectServer = SpringContextHolder.getBean(CollectServer.class);
+                commonDispatcher.close();
+                collectServer.close();
+                log.info("close collector success");
+                break;
         }
     }
     

@@ -202,8 +202,9 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             if (!this.started.get()) {
                 return;
             }
-            this.poolExecutor.shutdown();
+            this.poolExecutor.shutdownNow();
             if (this.poolExecutor.isShutdown()) {
+                log.info("comm");
                 started.set(false);
             }
         } finally {

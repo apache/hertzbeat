@@ -30,7 +30,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -79,18 +81,25 @@ public class CollectorController {
 
     @GetMapping("/online")
     @Operation(summary = "online collector")
-    public ResponseEntity<String> onlineCollector(
+    public ResponseEntity<Message<Void>> onlineCollector(
             @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
         collectorAndJobScheduler.onlineCollector(collectorName);
-        return ResponseEntity.ok("ok");
+        return ResponseEntity.ok(new Message<>("Online success"));
     }
 
     @GetMapping("/offline")
     @Operation(summary = "offline collector")
-    public ResponseEntity<String> offlineCollector(
+    public ResponseEntity<Message<Void>> offlineCollector(
             @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
         collectorAndJobScheduler.offlineCollector(collectorName);
-        return ResponseEntity.ok("ok");
+        return ResponseEntity.ok(new Message<>("Offline success"));
+    }
+
+    @DeleteMapping(path = "/{collectorName}")
+    public ResponseEntity<Message<Void>> deleteCollector(
+            @Parameter(description = "en: Collector ID,zh: 采集器ID", example = "1") @PathVariable("collectorName") final String collectorName) {
+        collectorAndJobScheduler.closeCollector(collectorName);
+        return ResponseEntity.ok(new Message<>("Delete success"));
     }
 
 }

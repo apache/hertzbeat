@@ -238,7 +238,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             return false;
         }
         channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_OFFLINE).build());
-        log.info("send offline message to collector success");
+        log.info("send offline collector message to {} success", identity);
         this.collectorGoOffline(identity);
         return true;
     }
@@ -250,9 +250,21 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             return false;
         }
         channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_ONLINE).build());
-        // todo 是否等待返回
-        log.info("send online message to collector success");
+        log.info("send online collector message to {} success", identity);
         this.collectorGoOnline(identity);
+        return true;
+    }
+
+    @Override
+    public boolean closeCollector(String identity) {
+        Channel channel = this.collectorChannelMap.get(identity);
+        if (channel == null) {
+            return false;
+        }
+        channel.writeAndFlush(ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build());
+        log.info("send close collector message to {} success", identity);
+        this.collectorGoOffline(identity);
+        this.collectorChannelMap.remove(identity);
         return true;
     }
 

@@ -71,11 +71,13 @@ public class CollectServer {
         });
     }
 
-    private void close() {
+    public void close() {
         try {
             this.workerGroup.shutdownGracefully();
 
-            commonThreadPool.destroy();
+            this.commonThreadPool.destroy();
+
+            log.info("collect server close success");
         } catch (Exception e) {
             log.error("CollectServer shutdown exception, ", e);
         }
