@@ -33,7 +33,7 @@
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <mysql.version>8.0.28</mysql.version>
         <nekohtml.version>1.9.22</nekohtml.version>
-        <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
+        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
         <warehouse.version>1.0</warehouse.version>
         <easy-poi.version>4.3.0</easy-poi.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
@@ -121,7 +121,7 @@
         <!--sureness-->
         <dependency>
             <groupId>com.usthe.sureness</groupId>
-            <artifactId>spring-boot-starter-sureness</artifactId>
+            <artifactId>spring-boot3-starter-sureness</artifactId>
         </dependency>
         <!-- h2 database-->
         <dependency>

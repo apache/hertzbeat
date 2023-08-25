@@ -33,7 +33,7 @@
         <spring-boot-dependencies.version>3.1.0</spring-boot-dependencies.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <springdoc.version>1.6.11</springdoc.version>
-        <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
+        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
 
         <nekohtml.version>1.9.22</nekohtml.version>
         <checker-qual.version>3.19.0</checker-qual.version>
@@ -221,7 +221,7 @@
             <!--sureness-->
             <dependency>
                 <groupId>com.usthe.sureness</groupId>
-                <artifactId>spring-boot-starter-sureness</artifactId>
+                <artifactId>spring-boot3-starter-sureness</artifactId>
                 <version>${spring-boot-starter-sureness.version}</version>
             </dependency>
             <dependency>

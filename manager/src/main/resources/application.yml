@@ -53,6 +53,7 @@ management:
     enabled-by-default: on
 
 sureness:
+  container: jakarta_servlet
   auths:
     - digest
     - basic
