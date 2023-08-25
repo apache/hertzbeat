@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @author tom
  */
 @Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty")
 @Slf4j
 public class NettyDataQueue implements CommonDataQueue {
     
