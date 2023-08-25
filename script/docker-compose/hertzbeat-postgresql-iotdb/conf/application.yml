@@ -130,3 +130,13 @@ warehouse:
       host: 127.0.0.1
       port: 6379
       password: 123456
+
+common:
+  queue:
+    # memory or kafka
+    type: memory
+    # properties when queue type is kafka
+    kafka:
+      servers: 127.0.0.1:9092
+      metrics-data-topic: async-metrics-data
+      alerts-data-topic: async-alerts-data
