@@ -91,7 +91,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
 
     private String generateContent(Alert alert){
-        Map<String,Object> contentMap=new HashMap<>();
+        Map<String,Object> contentMap = new HashMap<>(8);
         contentMap.put("alertDefineId",alert.getAlertDefineId());
         contentMap.put("content",alert.getContent());
         contentMap.put("monitorName",alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
