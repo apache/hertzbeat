@@ -36,6 +36,7 @@ export class HelpMassageShowComponent implements OnInit {
   ) {}
   isCollapsed: boolean = false;
   targetHeight: number = 140;
+  collapse_expand: string = "collapse";
   @ViewChild('collapsed_content') collapsed_content: any;
   handleButtonClick(): void {
     this.isCollapsed = !this.isCollapsed;
@@ -43,6 +44,8 @@ export class HelpMassageShowComponent implements OnInit {
     this.targetHeight = localStorage.getItem('collapse_status') === 'true' ? 28.8 : 140;
     localStorage.setItem('collapse_height', JSON.stringify(this.targetHeight));
     this.rd2.setStyle(this.collapsed_content.nativeElement, 'height', `${this.targetHeight}px`);
+    this.collapse_expand = this.isCollapsed ? "unfold" : "collapse";
+    localStorage.setItem('collapse_button', JSON.stringify(this.collapse_expand));
   }
 
   app!: string | undefined;
@@ -57,6 +60,7 @@ export class HelpMassageShowComponent implements OnInit {
   ngOnInit(): void {
     this.isCollapsed = localStorage.getItem('collapse_status') === 'true' ? true : false;
     this.el.nativeElement.querySelector('.help_massage_div').style.height = `${localStorage.getItem('collapse_height')}px`;
+    this.collapse_expand = this.isCollapsed ? "expand" : "collapse";
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
       let tagStr = paramMap.get('tag');
