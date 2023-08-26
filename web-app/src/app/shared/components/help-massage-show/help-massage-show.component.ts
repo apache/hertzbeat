@@ -44,7 +44,7 @@ export class HelpMassageShowComponent implements OnInit {
     this.targetHeight = localStorage.getItem('collapse_status') === 'true' ? 28.8 : 140;
     localStorage.setItem('collapse_height', JSON.stringify(this.targetHeight));
     this.rd2.setStyle(this.collapsed_content.nativeElement, 'height', `${this.targetHeight}px`);
-    this.collapse_expand = this.isCollapsed ? "unfold" : "collapse";
+    this.collapse_expand = this.isCollapsed ? "expand" : "collapse";
     localStorage.setItem('collapse_button', JSON.stringify(this.collapse_expand));
   }
 
