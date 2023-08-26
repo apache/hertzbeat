@@ -158,3 +158,8 @@ common:
       servers: 127.0.0.1:9092
       metrics-data-topic: async-metrics-data
       alerts-data-topic: async-alerts-data
+
+scheduler:
+  server:
+    enabled: true
+    port: 1158

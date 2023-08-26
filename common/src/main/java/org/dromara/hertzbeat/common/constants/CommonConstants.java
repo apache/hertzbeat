@@ -251,6 +251,11 @@ public interface CommonConstants {
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
+    
+    /**
+     * 内有标签: alarm type
+     */
+    String TAG_ALARM_TYPE = "type";
 
     /**
      * notice_period type 类型字段, 每日类型
@@ -291,4 +296,14 @@ public interface CommonConstants {
      * default main collector name
      */
     String MAIN_COLLECTOR_NODE = "main-default-collector";
+    
+    /**
+     * locale spilt
+     */
+    String LOCALE_SEPARATOR = "_";
+    
+    /**
+     * ignore label
+     */
+    String IGNORE = "ignore";
 }

@@ -18,14 +18,16 @@ sidebar_label: Install via Package
    ```
    
 2. Download HertzBeat installation package    
-   Download installation package corresponding to your system environment   
+   Download installation package `hertzbeat-xx.zip` `hertzbeat-collector-xx.zip` corresponding to your system environment   
    - download from [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) repository 
    - download from [GITHUB Release](https://github.com/dromara/hertzbeat/releases) repository
 
 3. Configure HertzBeat's configuration file(optional)        
    Unzip the installation package to the host eg: /opt/hertzbeat    
    ``` 
-   $ tar zxvf hertzbeat-[version number].tar.gz   
+   $ tar zxvf hertzbeat-[version].tar.gz
+   or
+   $ unzip -o hertzbeat-[version].zip
    ```
    Modify the configuration file `hertzbeat/config/application.yml` params according to your needs.      
    - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
@@ -35,11 +37,11 @@ sidebar_label: Install via Package
 
 4. Configure the account file(optional)     
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
-   If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.     
+   If you need add, delete or modify account or password, configure `hertzbeat/config/sureness.yml`. Ignore this step without this demand.     
    For detail steps, please refer to [Configure Account Password](account-modify)  
 
 5. Start the service   
-   Execute the startup script `startup.sh` in the installation directory `hertzbeat/bin/`   
+   Execute the startup script `startup.sh` in the installation directory `hertzbeat/bin/`, or `startup.bat` in windows.   
    ``` 
    $ ./startup.sh 
    ```
@@ -50,7 +52,25 @@ In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user
 
 6. Begin to explore HertzBeat    
 
-   Access http://ip:1157/ using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!    
+   Access http://localhost:1157/ using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!    
+
+7. Deploy collector clusters (Optional)
+
+   - Download and unzip the collector release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - Also need to install `java jdk11` environment like above.
+   - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+     ```yaml
+     collector:
+       dispatch:
+         entrance:
+           netty:
+             enabled: true
+             identity: ${IDENTITY:}
+             manager-ip: ${MANAGER_IP:127.0.0.1}
+             manager-port: ${MANAGER_PORT:1158}
+     ```
+   - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+   - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
 **HAVE FUN**
 

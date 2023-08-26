@@ -1,11 +1,11 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
@@ -24,7 +24,6 @@ import java.util.Objects;
 /**
  * WeChat app alert notify impl
  * @author hdd
- * @create 2023/04/04
  */
 @Component
 @RequiredArgsConstructor

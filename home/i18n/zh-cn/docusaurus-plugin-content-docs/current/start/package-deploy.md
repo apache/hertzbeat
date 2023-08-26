@@ -19,14 +19,16 @@ sidebar_label: 安装包方式部署
    ```
    
 2. 下载HertzBeat安装包
-   下载您系统环境对应的安装包
+   下载您系统环境对应的安装包 `hertzbeat-xx.zip` `hertzbeat-collector-xx.zip`
    - 从[GITEE Release](https://gitee.com/dromara/hertzbeat/releases) 仓库下载
    - 从[GITHUB Release](https://github.com/dromara/hertzbeat/releases) 仓库下载
 
 3. 配置HertzBeat的配置文件(可选)       
    解压安装包到主机 eg: /opt/hertzbeat  
    ``` 
-   $ tar zxvf hertzbeat-[版本号].tar.gz   
+   $ tar zxvf hertzbeat-[版本号].tar.gz
+   or
+   $ unzip -o hertzbeat-[版本号].zip
    ```
    修改位于 `hertzbeat/config/application.yml` 的配置文件(可选)，您可以根据需求修改配置文件     
    - 若需使用邮件发送告警，需替换`application.yml`里面的邮件服务器参数
@@ -50,6 +52,23 @@ sidebar_label: 安装包方式部署
 
 6. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  
+
+7. 部署采集器集群(可选)
+   - 下载解压采集器安装包`hertzbeat-collector-xx.zip`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - 也需要如上步骤一样提前安装`java jdk11`环境
+   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `manager-ip` `manager-port`
+     ```yaml
+     collector:
+       dispatch:
+         entrance:
+           netty:
+             enabled: true
+             identity: ${IDENTITY:}
+             manager-ip: ${MANAGER_IP:127.0.0.1}
+             manager-port: ${MANAGER_PORT:1158}
+     ```
+   - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+   - 浏览器访问主HertzBeat服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
 **HAVE FUN**
 
