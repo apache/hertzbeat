@@ -25,12 +25,12 @@
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--hertzbeat 相关模块-->
         <hertzbeat.version>1.0</hertzbeat.version>
 
-        <spring-boot-dependencies.version>3.1.0</spring-boot-dependencies.version>
+        <spring-boot-dependencies.version>3.1.3</spring-boot-dependencies.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <springdoc.version>1.6.11</springdoc.version>
         <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
