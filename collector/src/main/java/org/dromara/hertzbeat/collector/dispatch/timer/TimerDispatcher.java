@@ -38,23 +38,23 @@ public class TimerDispatcher implements TimerDispatch {
      * time round schedule
      * 时间轮调度
      */
-    private Timer wheelTimer;
+    private final Timer wheelTimer;
     /**
      * Existing periodic scheduled tasks
      * 已存在的周期性调度任务
      */
-    private Map<Long, Timeout> currentCyclicTaskMap;
+    private final Map<Long, Timeout> currentCyclicTaskMap;
     /**
      * Existing temporary scheduled tasks
      * 已存在的临时性调度任务
      */
-    private Map<Long, Timeout> currentTempTaskMap;
+    private final Map<Long, Timeout> currentTempTaskMap;
     /**
      * One-time task response listener holds
      * 一次性任务响应监听器持有
      * jobId - listener
      */
-    private Map<Long, CollectResponseEventListener> eventListeners;
+    private final Map<Long, CollectResponseEventListener> eventListeners;
 
     public TimerDispatcher() {
         this.wheelTimer = new HashedWheelTimer(r -> {
@@ -104,7 +104,15 @@ public class TimerDispatcher implements TimerDispatch {
             }
         }
     }
-
+    
+    @Override
+    public void clearJobs() {
+        currentCyclicTaskMap.forEach((key, value) -> value.cancel());
+        currentCyclicTaskMap.clear();
+        currentTempTaskMap.forEach((key, value) -> value.cancel());
+        currentTempTaskMap.clear();
+    }
+    
     @Override
     public void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps) {
         currentTempTaskMap.remove(jobId);
