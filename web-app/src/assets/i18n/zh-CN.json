@@ -576,5 +576,7 @@
   "validation.date.required": "请选择起止日期",
   "validation.goal.required": "请输入目标描述",
   "validation.standard.required": "请输入衡量标准",
-  "validation.required": "请填充必填项! "
+  "validation.required": "请填充必填项! ",
+  "expand": "展开",
+  "collapse": "收起"
 }
