@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component;
  * manage server for cluster
  * @author tom
  */
-@Component
-@ConditionalOnProperty(prefix = "scheduler.server",
-        name = "enabled", havingValue = "true")
+//@Component
+//@ConditionalOnProperty(prefix = "scheduler.server",
+//        name = "enabled", havingValue = "true")
 @Slf4j
 public class ManageServer {
     

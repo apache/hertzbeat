@@ -1,7 +1,8 @@
-package org.dromara.hertzbeat.manager.netty;
+package org.dromara.hertzbeat.manager.netty.process;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.manager.netty.ManageServer;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
