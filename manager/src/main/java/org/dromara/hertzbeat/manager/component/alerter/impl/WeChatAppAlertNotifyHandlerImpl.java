@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -60,7 +63,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.TextDTO textDTO = new WeChatAppDTO.TextDTO();
-                textDTO.setContent(JsonUtil.toJson(alert));
+                textDTO.setContent(generateContent(alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
                         .msgType(DEFAULT_TYPE)
@@ -84,6 +87,15 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Override
     public byte type() {
         return 10;
+    }
+
+
+    private String generateContent(Alert alert){
+        Map<String,Object> contentMap = new HashMap<>(8);
+        contentMap.put("alertDefineId",alert.getAlertDefineId());
+        contentMap.put("content",alert.getContent());
+        contentMap.put("monitorName",alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
+        return JSON.toJSONString(contentMap);
     }
 
 }
