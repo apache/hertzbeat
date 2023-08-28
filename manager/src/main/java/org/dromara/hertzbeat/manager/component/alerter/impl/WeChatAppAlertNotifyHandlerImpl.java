@@ -95,7 +95,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
         contentMap.put("alertDefineId",alert.getAlertDefineId());
         contentMap.put("content",alert.getContent());
         contentMap.put("monitorName",alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
-        return JSON.toJSONString(contentMap);
+        return JsonUtil.toJson(contentMap);
     }
 
 }
