@@ -14,6 +14,7 @@
         <module>common</module>
         <module>collector</module>
         <module>warehouse</module>
+        <module>remoting</module>
     </modules>
 
     <properties>
@@ -92,6 +93,12 @@
             <dependency>
                 <groupId>org.dromara.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- remoting -->
+            <dependency>
+                <groupId>org.dromara.hertzbeat</groupId>
+                <artifactId>hertzbeat-remoting</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- spring -->

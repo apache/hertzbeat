@@ -196,7 +196,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
     }
 
-    public void close() {
+    public void shutdown() {
         lock.lock();
         try {
             if (!this.started.get()) {

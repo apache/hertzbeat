@@ -16,17 +16,16 @@ import java.util.List;
 
 /**
  * netty inbound collector message handler
- * @author tom
  */
 @Slf4j
 public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
-    
+
     private final CollectJobService collectJobService;
-    
+
     public ClientInboundMessageHandler(CollectJobService collectJobService) {
         this.collectJobService = collectJobService;
     }
-    
+
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ClusterMsg.Message message) throws Exception {
         Channel channel = channelHandlerContext.channel();
@@ -48,16 +47,17 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 collectJobService.collectSyncJobData(oneTimeJob, channel);
                 break;
             case DELETE_CYCLIC_TASK:
-                TypeReference<List<Long>> typeReference = new TypeReference<>() {};
+                TypeReference<List<Long>> typeReference = new TypeReference<>() {
+                };
                 List<Long> jobs = JsonUtil.fromJson(message.getMsg(), typeReference);
                 if (jobs != null && !jobs.isEmpty()) {
                     for (Long jobId : jobs) {
                         collectJobService.cancelAsyncCollectJob(jobId);
-                    }   
+                    }
                 }
                 break;
             case GO_OFFLINE:
-                commonDispatcher.close();
+                commonDispatcher.shutdown();
                 log.info("offline collector success");
                 break;
             case GO_ONLINE:
@@ -66,13 +66,12 @@ public class ClientInboundMessageHandler extends SimpleChannelInboundHandler<Clu
                 break;
             case GO_CLOSE:
                 CollectServer collectServer = SpringContextHolder.getBean(CollectServer.class);
-                commonDispatcher.close();
-                collectServer.close();
-                log.info("close collector success");
+                commonDispatcher.shutdown();
+                collectServer.shutdown();
                 break;
         }
     }
-    
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Channel channel = ctx.channel();

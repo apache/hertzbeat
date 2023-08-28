@@ -6,10 +6,13 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
+import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +31,8 @@ public class CollectServer {
     private final CommonThreadPool commonThreadPool;
 
     private EventLoopGroup workerGroup;
+
+    private Channel channel;
     
     public CollectServer(DispatchProperties properties, CollectJobService jobService, CommonThreadPool threadPool) throws Exception {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
@@ -51,13 +56,13 @@ public class CollectServer {
             b.group(workerGroup)
                     .channel(NioSocketChannel.class)
                     .handler(new ProtoClientInitializer(collectJobService));
-            Channel channel = null;
+            this.channel = null;
             boolean first = true;
-            while (first || channel == null || !channel.isActive()) {
+            while (first || this.channel == null || !this.channel.isActive()) {
                 first = false;
                 try {
-                    channel = b.connect(properties.getManagerIp(), properties.getManagerPort()).sync().channel();
-                    channel.closeFuture().sync();
+                    this.channel = b.connect(properties.getManagerIp(), properties.getManagerPort()).sync().channel();
+                    this.channel.closeFuture().sync();
                 } catch (InterruptedException ignored) {
                     log.error("collector shutdown now!");
                 } catch (Exception e2) {
@@ -71,8 +76,17 @@ public class CollectServer {
         });
     }
 
-    public void close() {
+    public void shutdown() {
         try {
+
+            if (this.channel != null) {
+                this.channel.close().addListener(future -> {
+                    Attribute<Object> remoteAddrAttr = channel.attr(AttributeKey.valueOf("RemoteAddr"));
+                    String remoteAddr = remoteAddrAttr.get() != null ? remoteAddrAttr.get().toString() : "";
+                    log.info("close channel, close the connection to remote address {}", remoteAddr);
+                });
+            }
+
             this.workerGroup.shutdownGracefully();
 
             this.commonThreadPool.destroy();
