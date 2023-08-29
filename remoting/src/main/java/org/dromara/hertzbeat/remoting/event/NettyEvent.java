@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.remoting.event;
 import io.netty.channel.Channel;
 
 /**
+ * netty event
  */
 public class NettyEvent {
 
