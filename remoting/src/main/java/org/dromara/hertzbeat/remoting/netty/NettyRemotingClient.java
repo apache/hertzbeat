@@ -107,7 +107,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void sendMsg(final ClusterMsg.Message request) {
-        this.channel.writeAndFlush(request);
+        this.channel.writeAndFlush(request).addListener(future -> {
+            if (!future.isSuccess()) {
+                log.warn("failed to send request message to server. address: {}, ", channel.remoteAddress(), future.cause());
+            }
+        });;
     }
 
     @Override
