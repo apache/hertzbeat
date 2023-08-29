@@ -18,7 +18,7 @@ public interface RemotingClient extends RemotingService {
 
     /**
      * send message to server
-     * @param message request message
+     * @param request request message
      */
     void sendMsg(final ClusterMsg.Message request);
 
