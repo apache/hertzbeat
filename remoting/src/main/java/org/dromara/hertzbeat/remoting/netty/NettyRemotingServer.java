@@ -109,7 +109,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             this.nettyEventExecutor.shutdown();
 
         } catch (Exception e) {
-            log.error("Netty Server shutdown exception, {}", e.getMessage());
+            log.error("Netty Server shutdown exception, ", e);
         }
     }
 
@@ -118,15 +118,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ClusterMsg.Message msg) throws Exception {
-            NettyRemotingProcessor processor = NettyRemotingServer.this.processorTable.get(msg.getType());
-            if (processor == null) {
-                log.info("request type {} not supported", msg.getTypeValue());
-                return;
-            }
-            ClusterMsg.Message response = processor.handle(msg);
-            if (response != null) {
-                ctx.writeAndFlush(response);
-            }
+            NettyRemotingServer.this.processReceiveMsg(ctx, msg);
         }
 
         @Override
