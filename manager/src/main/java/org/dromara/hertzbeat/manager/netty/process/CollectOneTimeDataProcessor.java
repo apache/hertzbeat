@@ -41,7 +41,7 @@ public class CollectOneTimeDataProcessor implements NettyRemotingProcessor {
                 metricsDataList.add(metricsData);
             }
         }
-        this.manageServer.getCollectJobScheduling().collectSyncJobResponse(metricsDataList);
+        this.manageServer.getCollectorAndJobScheduler().collectSyncJobResponse(metricsDataList);
         return null;
     }
 }

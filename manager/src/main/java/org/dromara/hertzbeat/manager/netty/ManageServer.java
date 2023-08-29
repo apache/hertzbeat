@@ -6,8 +6,7 @@ import org.dromara.hertzbeat.manager.netty.process.CollectOneTimeDataProcessor;
 import org.dromara.hertzbeat.manager.netty.process.CollectorOfflineProcessor;
 import org.dromara.hertzbeat.manager.netty.process.CollectorOnlineProcessor;
 import org.dromara.hertzbeat.manager.netty.process.HeartbeatProcessor;
-import org.dromara.hertzbeat.manager.scheduler.CollectJobScheduling;
-import org.dromara.hertzbeat.manager.scheduler.CollectorScheduling;
+import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
@@ -15,9 +14,6 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.nio.channels.Channel;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * manage server
@@ -27,19 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
         name = "enabled", havingValue = "true")
 public class ManageServer {
 
-    private final ConcurrentHashMap<String, Channel> channelTable = new ConcurrentHashMap<>();
-
-    private final CollectorScheduling collectorScheduling;
-
-    private final CollectJobScheduling collectJobScheduling;
+    private final CollectorAndJobScheduler collectorAndJobScheduler;
 
     private RemotingServer remotingServer;
 
     public ManageServer(final SchedulerProperties schedulerProperties,
-                        final CollectorScheduling collectorScheduling,
-                        final CollectJobScheduling collectJobScheduling) {
-        this.collectorScheduling = collectorScheduling;
-        this.collectJobScheduling = collectJobScheduling;
+                        final CollectorAndJobScheduler collectorAndJobScheduler) {
+        this.collectorAndJobScheduler = collectorAndJobScheduler;
         this.init(schedulerProperties);
 
         this.start();
@@ -63,15 +53,7 @@ public class ManageServer {
         this.remotingServer.start();
     }
 
-    public ConcurrentHashMap<String, Channel> getChannelTable() {
-        return channelTable;
-    }
-
-    public CollectorScheduling getCollectorScheduling() {
-        return collectorScheduling;
-    }
-
-    public CollectJobScheduling getCollectJobScheduling() {
-        return collectJobScheduling;
+    public CollectorAndJobScheduler getCollectorAndJobScheduler() {
+        return collectorAndJobScheduler;
     }
 }

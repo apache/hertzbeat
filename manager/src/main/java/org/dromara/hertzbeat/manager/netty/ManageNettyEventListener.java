@@ -20,12 +20,12 @@ public class ManageNettyEventListener implements NettyEventListener {
 
     @Override
     public void onChannelIdle(Channel channel) {
-        for (Map.Entry<String, java.nio.channels.Channel> entry : manageServer.getChannelTable().entrySet()) {
+        for (Map.Entry<String, Channel> entry : manageServer.getCollectorAndJobScheduler().getCollectorChannelMap().entrySet()) {
             if (entry.getValue().equals(channel)) {
                 String collector = entry.getKey();
                 if (collector != null) {
                     log.info("handle idle event triggered. the collector {} is going offline.", collector);
-                    this.manageServer.getCollectorScheduling().collectorGoOffline(collector);
+                    this.manageServer.getCollectorAndJobScheduler().collectorGoOffline(collector);
                 }
                 break;
             }

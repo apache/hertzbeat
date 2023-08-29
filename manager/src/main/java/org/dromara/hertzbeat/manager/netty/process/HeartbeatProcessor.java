@@ -20,10 +20,10 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
     @Override
     public ClusterMsg.Message handle(ClusterMsg.Message message) {
         String identity = message.getIdentity();
-        boolean isChannelExist = this.manageServer.getCollectorScheduling().isCollectorChannelExist(identity);
+        boolean isChannelExist = this.manageServer.getCollectorAndJobScheduler().isCollectorChannelExist(identity);
         if (!isChannelExist) {
             log.info("the collector {} has reconnected and to go online.", identity);
-            this.manageServer.getCollectorScheduling().collectorGoOnline(identity);
+            this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(identity);
         }
         if (log.isDebugEnabled()) {
             log.debug("server receive collector heartbeat");

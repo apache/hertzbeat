@@ -556,4 +556,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             });
             }, 10, 3, TimeUnit.SECONDS);
     }
+
+    public Map<String, Channel> getCollectorChannelMap() {
+        return collectorChannelMap;
+    }
 }
