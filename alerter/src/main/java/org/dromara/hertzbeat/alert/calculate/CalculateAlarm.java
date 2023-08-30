@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.Predicate;
@@ -64,7 +65,7 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATU
 public class CalculateAlarm {
 
     private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
-    
+
     /**
      * The alarm in the process is triggered
      * 触发中告警信息
@@ -170,50 +171,54 @@ public class CalculateAlarm {
                     }
                 }
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                    if (!valueRow.getColumnsList().isEmpty()) {
-                        fieldValueMap.clear();
-                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
-                        String instance = valueRow.getInstance();
-                        if (!"".equals(instance)) {
-                            fieldValueMap.put("instance", instance);
+
+                    if (CollectionUtils.isEmpty(valueRow.getColumnsList())) {
+                        continue;
+                    }
+                    fieldValueMap.clear();
+                    fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                    String instance = valueRow.getInstance();
+                    if (!"".equals(instance)) {
+                        fieldValueMap.put("instance", instance);
+                    }
+                    for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
+                        String valueStr = valueRow.getColumns(index);
+                        if (CommonConstants.NULL_VALUE.equals(valueStr)) {
+                            continue;
                         }
-                        for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
-                            String valueStr = valueRow.getColumns(index);
-                            if (!CommonConstants.NULL_VALUE.equals(valueStr)) {
-                                CollectRep.Field field = fields.get(index);
-                                if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                                    Double doubleValue = CommonUtil.parseStrDouble(valueStr);
-                                    if (doubleValue != null) {
-                                        fieldValueMap.put(field.getName(), doubleValue);
-                                    }
-                                } else {
-                                    if (!"".equals(valueStr)) {
-                                        fieldValueMap.put(field.getName(), valueStr);
-                                    }
-                                }   
+                        CollectRep.Field field = fields.get(index);
+
+                        if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                            Double doubleValue = CommonUtil.parseStrDouble(valueStr);
+                            if (doubleValue != null) {
+                                fieldValueMap.put(field.getName(), doubleValue);
+                            }
+                        } else {
+                            if (!"".equals(valueStr)) {
+                                fieldValueMap.put(field.getName(), valueStr);
                             }
                         }
-                        try {
-                            boolean match = execAlertExpression(fieldValueMap, expr);
-                            if (match) {
-                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                // 阈值规则匹配，判断已触发阈值次数，触发告警
-                                afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
-                                // 若此阈值已被触发，则其它数据行的触发忽略
-                                break;
-                            } else if (define.isRecoverNotice()) {
-                                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (!"".equals(instance) ? instance : null);
-                                handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
-                            }
-                        } catch (Exception e) {
-                            log.warn(e.getMessage(), e);
+                    }
+                    try {
+                        boolean match = execAlertExpression(fieldValueMap, expr);
+                        if (match) {
+                            // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                            // 阈值规则匹配，判断已触发阈值次数，触发告警
+                            afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
+                            // 若此阈值已被触发，则其它数据行的触发忽略
+                            break;
+                        } else if (define.isRecoverNotice()) {
+                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (!"".equals(instance) ? instance : null);
+                            handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                         }
+                    } catch (Exception e) {
+                        log.warn(e.getMessage(), e);
                     }
                 }
             }
         }
     }
-    
+
     private void handleRecoveredAlert(long currentTimeMilli, long monitorId, String app, AlertDefine define, String expr, String notResolvedAlertKey) {
         Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
         if (notResolvedAlert != null) {
@@ -234,7 +239,7 @@ public class CalculateAlarm {
             alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
         }
     }
-    
+
     private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, Map<String, Object> fieldValueMap, AlertDefine define) {
         String monitorAlertKey = String.valueOf(monitorId) + define.getId();
         Alert triggeredAlert = triggeredAlertMap.get(monitorAlertKey);
@@ -257,7 +262,7 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
-            if (define.getTags() != null && !define.getTags().isEmpty()) {
+            if (!CollectionUtils.isEmpty(define.getTags())) {
                 for (TagItem tagItem : define.getTags()) {
                     fieldValueMap.put(tagItem.getName(), tagItem.getValue());
                     tags.put(tagItem.getName(), tagItem.getValue());
@@ -286,7 +291,7 @@ public class CalculateAlarm {
             }
         }
     }
-    
+
     private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
         Boolean match = false;
         try {
@@ -302,7 +307,7 @@ public class CalculateAlarm {
         }
         return match;
     }
-    
+
     private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
         AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
         if (avaAlertDefine == null) {
@@ -318,7 +323,8 @@ public class CalculateAlarm {
             tags.put("code", metricsData.getCode().name());
             Map<String, Object> valueMap = tags.entrySet().stream()
                                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            if (avaAlertDefine.getTags() != null && !avaAlertDefine.getTags().isEmpty()) {
+
+            if (!CollectionUtils.isEmpty(avaAlertDefine.getTags())) {//未来可以使用 org.apache.commons.collections.CollectionUtils.isNotEmpty
                 for (TagItem tagItem : avaAlertDefine.getTags()) {
                     valueMap.put(tagItem.getName(), tagItem.getValue());
                     tags.put(tagItem.getName(), tagItem.getValue());
@@ -433,17 +439,17 @@ public class CalculateAlarm {
         //query results
         return alertService.getAlerts(specification);
     }
-    
+
     @EventListener(SystemConfigChangeEvent.class)
     public void onSystemConfigChangeEvent(SystemConfigChangeEvent event) {
         log.info("calculate alarm receive system config change event: {}.", event.getSource());
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
-    
+
     @EventListener(MonitorDeletedEvent.class)
     public void onMonitorDeletedEvent(MonitorDeletedEvent event) {
         log.info("calculate alarm receive monitor {} has been deleted.", event.getMonitorId());
         this.triggeredAlertMap.remove(String.valueOf(event.getMonitorId()));
     }
-    
+
 }
