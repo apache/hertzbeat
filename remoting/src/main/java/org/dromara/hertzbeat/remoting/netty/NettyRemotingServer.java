@@ -26,6 +26,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.common.support.CommonThreadPool;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 
@@ -37,51 +38,58 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private final NettyServerConfig nettyServerConfig;
 
+    private final CommonThreadPool threadPool;
+
     private EventLoopGroup bossGroup;
 
     private EventLoopGroup workerGroup;
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
-                               final NettyEventListener nettyEventListener) {
+                               final NettyEventListener nettyEventListener,
+                               final CommonThreadPool threadPool) {
         super(nettyEventListener);
         this.nettyServerConfig = nettyServerConfig;
+        this.threadPool = threadPool;
     }
 
     @Override
     public void start() {
-        int port = this.nettyServerConfig.getPort();
 
-        this.nettyEventExecutor.start();
+        this.threadPool.execute(() -> {
+            int port = this.nettyServerConfig.getPort();
 
-        if (this.useEpoll()) {
-            bossGroup = new EpollEventLoopGroup(1);
-            workerGroup = new EpollEventLoopGroup();
-        } else {
-            bossGroup = new NioEventLoopGroup(1);
-            workerGroup = new NioEventLoopGroup();
-        }
+            if (this.useEpoll()) {
+                bossGroup = new EpollEventLoopGroup(1);
+                workerGroup = new EpollEventLoopGroup();
+            } else {
+                bossGroup = new NioEventLoopGroup(1);
+                workerGroup = new NioEventLoopGroup();
+            }
 
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-                    .channel(this.useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
-                    .handler(new LoggingHandler(LogLevel.INFO))
-                    .childOption(ChannelOption.TCP_NODELAY, true)
-                    .childOption(ChannelOption.SO_KEEPALIVE, false)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel channel) throws Exception {
-                            NettyRemotingServer.this.initChannel(channel);
-                        }
-                    });
-            b.bind(port).sync().channel().closeFuture().sync();
-        } catch (Exception e) {
-            log.error("Netty Server start exception, {}", e.getMessage());
-            throw new RuntimeException(e);
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-        }
+            try {
+                ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, workerGroup)
+                        .channel(this.useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
+                        .handler(new LoggingHandler(LogLevel.INFO))
+                        .childOption(ChannelOption.TCP_NODELAY, true)
+                        .childOption(ChannelOption.SO_KEEPALIVE, false)
+                        .childHandler(new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            protected void initChannel(SocketChannel channel) throws Exception {
+                                NettyRemotingServer.this.initChannel(channel);
+                            }
+                        });
+                b.bind(port).sync().channel().closeFuture().sync();
+            } catch (InterruptedException ignored) {
+                log.info("server shutdown now!");
+            } catch (Exception e) {
+                log.error("Netty Server start exception, {}", e.getMessage());
+                throw new RuntimeException(e);
+            } finally {
+                bossGroup.shutdownGracefully();
+                workerGroup.shutdownGracefully();
+            }
+        });
     }
 
     private void initChannel(final SocketChannel channel) {
@@ -106,7 +114,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
             this.workerGroup.shutdownGracefully();
 
-            this.nettyEventExecutor.shutdown();
+            this.threadPool.destroy();
 
         } catch (Exception e) {
             log.error("Netty Server shutdown exception, ", e);
@@ -126,7 +134,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.ALL_IDLE) {
                 ctx.channel().closeFuture();
-                NettyRemotingServer.this.addEvent(ctx.channel());
+                NettyRemotingServer.this.nettyEventListener.onChannelIdle(ctx.channel());
             }
         }
     }

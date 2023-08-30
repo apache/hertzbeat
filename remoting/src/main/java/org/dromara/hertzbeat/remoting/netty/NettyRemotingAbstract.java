@@ -7,14 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.util.NetworkUtil;
 import org.dromara.hertzbeat.remoting.RemotingService;
-import org.dromara.hertzbeat.remoting.event.NettyEvent;
-import org.dromara.hertzbeat.remoting.event.NettyEventExecutor;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * netty remote abstract
+ * 参考: org.apache.rocketmq.remoting.netty.NettyRemotingAbstract
  */
 @Slf4j
 public abstract class NettyRemotingAbstract implements RemotingService {
@@ -22,12 +21,10 @@ public abstract class NettyRemotingAbstract implements RemotingService {
 
     protected ConcurrentHashMap<String, ResponseFuture> responseTable = new ConcurrentHashMap<>();
 
-    protected NettyEventExecutor nettyEventExecutor;
+    protected NettyEventListener nettyEventListener;
 
     protected NettyRemotingAbstract(NettyEventListener nettyEventListener) {
-        if (nettyEventListener != null) {
-            this.nettyEventExecutor = new NettyEventExecutor(nettyEventListener);
-        }
+        this.nettyEventListener = nettyEventListener;
     }
 
     public void registerProcessor(final ClusterMsg.MessageType messageType, final NettyRemotingProcessor processor) {
@@ -35,23 +32,35 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     }
 
     protected void processReceiveMsg(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+        if (ClusterMsg.Direction.REQUEST.equals(message.getDirection())) {
+            this.processRequestMsg(ctx, message);
+        } else {
+            this.processResponseMsg(message);
+        }
+    }
+
+    protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         NettyRemotingProcessor processor = this.processorTable.get(message.getType());
         if (processor == null) {
-
             log.info("request type {} not supported", message.getType());
             return;
         }
         ClusterMsg.Message response = processor.handle(message);
         if (response != null) {
-            if (this.responseTable.containsKey(message.getIdentity())) {
-                ResponseFuture responseFuture = this.responseTable.get(message.getIdentity());
-                responseFuture.putResponse(response);
-            }
             ctx.writeAndFlush(response);
         }
     }
 
-    protected ClusterMsg.Message sendMsgSync(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {
+    protected void processResponseMsg(ClusterMsg.Message message) {
+        if (this.responseTable.containsKey(message.getIdentity())) {
+            ResponseFuture responseFuture = this.responseTable.get(message.getIdentity());
+            responseFuture.putResponse(message);
+        } else {
+            log.warn("receive response not in responseTable, identity: {}", message.getIdentity());
+        }
+    }
+
+    protected ClusterMsg.Message sendMsgSyncImpl(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {
         final String identity = request.getIdentity();
 
         try {
@@ -74,14 +83,6 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             responseTable.remove(identity);
         }
         return null;
-    }
-
-    protected void addEvent(Channel channel) {
-        if (this.nettyEventExecutor == null) {
-            return;
-        }
-        NettyEvent nettyEvent = new NettyEvent(channel);
-        this.nettyEventExecutor.addEvent(nettyEvent);
     }
 
     protected boolean useEpoll() {

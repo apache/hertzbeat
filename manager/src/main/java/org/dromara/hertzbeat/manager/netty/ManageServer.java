@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.manager.netty;
 
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.common.support.CommonThreadPool;
 import org.dromara.hertzbeat.manager.netty.process.CollectCyclicDataProcessor;
 import org.dromara.hertzbeat.manager.netty.process.CollectOneTimeDataProcessor;
 import org.dromara.hertzbeat.manager.netty.process.CollectorOfflineProcessor;
@@ -28,18 +29,19 @@ public class ManageServer {
     private RemotingServer remotingServer;
 
     public ManageServer(final SchedulerProperties schedulerProperties,
-                        final CollectorAndJobScheduler collectorAndJobScheduler) {
+                        final CollectorAndJobScheduler collectorAndJobScheduler,
+                        final CommonThreadPool threadPool) {
         this.collectorAndJobScheduler = collectorAndJobScheduler;
-        this.init(schedulerProperties);
+        this.init(schedulerProperties, threadPool);
 
         this.start();
     }
 
-    public void init(final SchedulerProperties schedulerProperties) {
+    public void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
         NettyEventListener nettyEventListener = new ManageNettyEventListener(this);
-        this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener);
+        this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
 
         // register processor
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));

@@ -28,5 +28,5 @@ public interface RemotingClient extends RemotingService {
      * @param timeoutMillis timeout millis
      * @return response message
      */
-    ClusterMsg.Message sendMsg(final ClusterMsg.Message request, final  int timeoutMillis);
+    ClusterMsg.Message sendMsgSync(final ClusterMsg.Message request, final  int timeoutMillis);
 }
