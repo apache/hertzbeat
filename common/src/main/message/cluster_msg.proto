@@ -22,10 +22,12 @@ message Message
 {
     // collector identity
     string identity = 1;
+    // message direction
+    Direction direction = 2;
     // message type
-    MessageType type = 2;
+    MessageType type = 3;
     // message content
-    string msg = 3;
+    string msg = 4;
 }
 
 enum MessageType
@@ -48,4 +50,11 @@ enum MessageType
     RESPONSE_CYCLIC_TASK_DATA = 7;
     // collector go close to master
     GO_CLOSE = 8;
+}
+
+enum Direction {
+    // request message
+    REQUEST = 0;
+    // request response
+    RESPONSE = 1;
 }
