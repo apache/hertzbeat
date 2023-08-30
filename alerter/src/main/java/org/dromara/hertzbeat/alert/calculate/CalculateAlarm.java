@@ -324,7 +324,7 @@ public class CalculateAlarm {
             Map<String, Object> valueMap = tags.entrySet().stream()
                                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            if (!CollectionUtils.isEmpty(avaAlertDefine.getTags())) {//未来可以使用 org.apache.commons.collections.CollectionUtils.isNotEmpty
+            if (!CollectionUtils.isEmpty(avaAlertDefine.getTags())) {
                 for (TagItem tagItem : avaAlertDefine.getTags()) {
                     valueMap.put(tagItem.getName(), tagItem.getValue());
                     tags.put(tagItem.getName(), tagItem.getValue());
