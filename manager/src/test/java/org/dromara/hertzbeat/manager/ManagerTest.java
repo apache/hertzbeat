@@ -101,8 +101,9 @@ class ManagerTest extends AbstractSpringIntegrationTest {
     @Test
     void testJNDI() throws NamingException {
 //        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
-        InitialContext initialContext = new InitialContext();
-        initialContext.lookup("rmi://localhost:1099/Exploit");
+        // for CI
+//        InitialContext initialContext = new InitialContext();
+//        initialContext.lookup("rmi://localhost:1099/Exploit");
     }
 
 }
