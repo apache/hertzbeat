@@ -131,7 +131,6 @@
             [required]="paramDefine.required"
             [nzMin]="getNumber(paramDefine.range || '', 0) || -1000"
             [nzMax]="getNumber(paramDefine.range || '', 1) || 65535"
-            
             [nzStep]="1"
             [nzPlaceHolder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
             [name]="paramDefine.field"
