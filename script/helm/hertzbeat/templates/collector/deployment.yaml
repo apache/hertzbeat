@@ -32,8 +32,7 @@ spec:
           image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.collector.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 1159
+            - containerPort: 1159
               protocol: TCP
           livenessProbe:
             tcpSocket:
@@ -43,9 +42,17 @@ spec:
               port: 1159
           envFrom:
             - configMapRef:
-                name: "{{ include "hertzbeat.collector" . }}-env"
+                name: "{{ include "hertzbeat.collector" . }}"
+          volumeMounts:
+            - mountPath: /opt/hertzbeat-collector/config/application.yml
+              subPath: application.yml
+              name: application
           resources:
             {{- toYaml .Values.collector.resources | nindent 12 }}
+      volumes:
+        - name: application
+          configMap:
+            name: {{ include "hertzbeat.collector" . }}
       {{- with .Values.collector.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

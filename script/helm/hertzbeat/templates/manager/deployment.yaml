@@ -42,8 +42,22 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 1157
+          volumeMounts:
+            - mountPath: /opt/hertzbeat/config/application.yml
+              subPath: application.yml
+              name: application
+            - mountPath: /opt/hertzbeat/config/sureness.yml
+              subPath: sureness.yml
+              name: sureness
           resources:
             {{- toYaml .Values.manager.resources | nindent 12 }}
+      volumes:
+        - name: application
+          configMap:
+            name: {{ include "hertzbeat.manager" . }}
+        - name: sureness
+          configMap:
+            name: {{ include "hertzbeat.manager" . }}
       {{- with .Values.manager.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
