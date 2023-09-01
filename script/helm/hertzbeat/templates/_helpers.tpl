@@ -23,10 +23,13 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s" (include "hertzbeat.fullname" .) -}}
 {{- end -}}
 
+{{- define "hertzbeat.manager.host" -}}
+{{- printf "%s-cluster" (include "hertzbeat.manager" .) -}}
+{{- end -}}
+
 {{- define "hertzbeat.collector" -}}
 {{- printf "%s-collector" (include "hertzbeat.fullname" .) -}}
 {{- end -}}
-
 
 {{/*
 Create chart name and version as used by the chart label.

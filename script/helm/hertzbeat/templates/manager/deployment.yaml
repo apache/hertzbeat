@@ -33,7 +33,7 @@ spec:
             - name: http
               containerPort: 1157
               protocol: TCP
-            - name: netty
+            - name: cluster
               containerPort: 1158
               protocol: TCP
           livenessProbe:

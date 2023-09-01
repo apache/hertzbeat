@@ -41,6 +41,9 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 1159
+          envFrom:
+            - configMapRef:
+                name: "{{ include "hertzbeat.collector" . }}-env"
           resources:
             {{- toYaml .Values.collector.resources | nindent 12 }}
       {{- with .Values.collector.nodeSelector }}
