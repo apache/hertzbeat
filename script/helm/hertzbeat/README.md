@@ -16,8 +16,6 @@
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
 > We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
-![hertzBeat](hertzbeat-arch.png)
-
 ## Helm Chart for HertzBeat
 
 This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https://github.com/dromara/hertzbeat) in a Kubernetes cluster. Welcome to [contribute](https://github.com/dromara/hertzbeat/tree/master/script/helm) to Helm Chart for HertzBeat.
