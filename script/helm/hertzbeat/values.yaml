@@ -46,13 +46,14 @@ database:
   timezone: "Asia/Shanghai"
   rootPassword: "123456"
   persistence:
-    enabled: false
+    enabled: true
     existingClaim: ""
     storageClass: ""
     subPath: ""
     accessMode: ReadWriteOnce
     size: 4Gi
     annotations: {}
+    resourcePolicy: "keep"
     
   podAnnotations: { }
   podSecurityContext: { }

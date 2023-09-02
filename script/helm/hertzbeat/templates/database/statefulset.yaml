@@ -57,11 +57,11 @@ spec:
         {{- if not .Values.database.persistence.enabled }}
         - name: data
           emptyDir: {}
-        {{- else if .Values.database.persistence.existingClaim }}
+        {{- else }}
         - name: data
-          persistentVolumeClaim:
-            claimName: {{ .Values.database.persistence.existingClaim }}
-        {{- end -}}
+          persistentVolumeClaim: 
+            claimName: {{ .Values.database.persistence.existingClaim | default (include "hertzbeat.database" .) }}
+        {{- end }}
       {{- with .Values.manager.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -74,26 +74,26 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{- if and .Values.database.persistence.enabled (not .Values.database.persistence.existingClaim) }}
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-      labels:
-        {{- include "hertzbeat.labels" . | indent 8 }}
-      annotations:
-      {{- range $key, $value := .Values.database.persistence.annotations }}
-        {{ $key }}: {{ $value | quote }}
-      {{- end }}
-    spec:
-      accessModes: [{{ .Values.database.persistence.accessMode | quote }}]
-      {{- if .Values.database.persistence.storageClass }}
-      {{- if (eq "-" .Values.database.persistence.storageClass) }}
-      storageClassName: ""
-      {{- else }}
-      storageClassName: "{{ .Values.database.persistence.storageClass }}"
-      {{- end }}
-      {{- end }}
-      resources:
-        requests:
-          storage: {{ .Values.database.persistence.size | quote }}
-  {{- end -}}
+{{/*  {{- if and .Values.database.persistence.enabled (not .Values.database.persistence.existingClaim) }}*/}}
+{{/*  volumeClaimTemplates:*/}}
+{{/*    - metadata:*/}}
+{{/*        name: data*/}}
+{{/*        labels:*/}}
+{{/*          {{- include "hertzbeat.labels" . | indent 10 }}*/}}
+{{/*        annotations:*/}}
+{{/*        {{- range $key, $value := .Values.database.persistence.annotations }}*/}}
+{{/*          {{ $key }}: {{ $value | quote }}*/}}
+{{/*        {{- end }}*/}}
+{{/*      spec:*/}}
+{{/*        accessModes: [{{ .Values.database.persistence.accessMode | quote }}]*/}}
+{{/*        {{- if .Values.database.persistence.storageClass }}*/}}
+{{/*        {{- if (eq "-" .Values.database.persistence.storageClass) }}*/}}
+{{/*        storageClassName: ""*/}}
+{{/*        {{- else }}*/}}
+{{/*        storageClassName: "{{ .Values.database.persistence.storageClass }}"*/}}
+{{/*        {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*        resources:*/}}
+{{/*          requests:*/}}
+{{/*            storage: {{ .Values.database.persistence.size | quote }}*/}}
+{{/*  {{- end -}}*/}}
