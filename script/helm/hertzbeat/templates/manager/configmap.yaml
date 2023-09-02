@@ -108,7 +108,7 @@ data:
         # store history metrics data, enable only one below
         # 存储历史数据方式, 下方只能enabled启用一种方式
         jpa:
-          enabled: true
+          enabled: false
           # The maximum retention time for history records, after which records will be deleted
           expire-time: 1h
           # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
@@ -125,8 +125,8 @@ data:
           enabled: false
           endpoint: localhost:4001
         iot-db:
-          enabled: false
-          host: 127.0.0.1
+          enabled: true
+          host: {{ include "hertzbeat.tsdb" . }}
           rpc-port: 6667
           username: root
           password: root

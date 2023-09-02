@@ -35,6 +35,10 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-database" (include "hertzbeat.fullname" .) -}}
 {{- end -}}
 
+{{- define "hertzbeat.tsdb" -}}
+{{- printf "%s-tsdb" (include "hertzbeat.fullname" .) -}}
+{{- end -}}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}

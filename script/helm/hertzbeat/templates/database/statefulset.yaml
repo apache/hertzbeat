@@ -62,15 +62,15 @@ spec:
           persistentVolumeClaim: 
             claimName: {{ .Values.database.persistence.existingClaim | default (include "hertzbeat.database" .) }}
         {{- end }}
-      {{- with .Values.manager.nodeSelector }}
+      {{- with .Values.database.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.manager.affinity }}
+      {{- with .Values.database.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.manager.tolerations }}
+      {{- with .Values.database.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

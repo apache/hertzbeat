@@ -63,8 +63,32 @@ database:
   tolerations: [ ]
   affinity: { }
 
-# Expose Network
+tsdb:
+  image:
+    repository: apache/iotdb
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "0.13.3-node"
+  timezone: "Asia/Shanghai"
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    subPath: ""
+    accessMode: ReadWriteOnce
+    size: 4Gi
+    annotations: {}
+    resourcePolicy: "keep"
+  
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
 
+# Expose Network
 expose:
   # Set how to expose the service. Set the type as "ingress", "clusterIP", "nodePort" or "loadBalancer"
   # and fill the information in the corresponding section
