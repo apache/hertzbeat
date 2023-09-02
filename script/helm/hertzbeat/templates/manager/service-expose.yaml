@@ -16,12 +16,12 @@ spec:
 spec:
   type: NodePort
   ports:
-    - port: {{ .Values.expose.NodePort.ports.port }}
+    - port: {{ .Values.expose.nodePort.ports.port }}
       targetPort: 1157
       protocol: TCP
       name: http
-      {{- if .Values.expose.NodePort.ports.nodePort }}
-      nodePort: {{ .Values.expose.NodePort.ports.nodePort }}
+      {{- if .Values.expose.nodePort.ports.nodePort }}
+      nodePort: {{ .Values.expose.nodePort.ports.nodePort }}
       {{- end }}
   selector:
     {{- include "hertzbeat.selectorLabels" . | nindent 4 }}

@@ -97,7 +97,7 @@ expose:
     ports:
       # The service port Harbor listens on when serving HTTP
       port: 1157
-  NodePort:
+  nodePort:
     ports:
       # The service port Harbor listens on when serving HTTP
       port: 1157
@@ -111,7 +111,6 @@ expose:
       port: 1157
     sourceRanges: [ ]
   ingress:
-    enabled: false
     className: ""
     annotations: { }
     # kubernetes.io/ingress.class: nginx
