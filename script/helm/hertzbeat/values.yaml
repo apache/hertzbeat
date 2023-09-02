@@ -21,7 +21,7 @@ collector:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-  replicaCount: 3
+  replicaCount: 1
   autoscaling:
     enabled: false
     minReplicas: 1
@@ -29,6 +29,31 @@ collector:
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: 80
   
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+database:
+  image:
+    repository: mysql
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "8"
+  timezone: "Asia/Shanghai"
+  rootPassword: "123456"
+  persistence:
+    enabled: false
+    existingClaim: ""
+    storageClass: ""
+    subPath: ""
+    accessMode: ReadWriteOnce
+    size: 4Gi
+    annotations: {}
+    
   podAnnotations: { }
   podSecurityContext: { }
   securityContext: { }
