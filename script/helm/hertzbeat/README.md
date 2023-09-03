@@ -30,7 +30,7 @@ This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https
 ### Add Helm repository
 
 ```bash
-helm repo add hertzbeat https://charts.hertzbeat.com
+helm repo add tancloud https://charts.hertzbeat.com
 helm repo update
 ```
 
