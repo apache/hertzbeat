@@ -237,7 +237,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // Reset Construction Execution Metrics Group View  重置构造执行指标组视图
                 job.constructPriorMetrics();
                 timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
-            } else if (CollectionUtils.isNotEmpty(metricsSet)) {
+            } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level indicator group is completed, and the execution of the next level indicator group starts
                 // 当前级别指标组执行完成，开始执行下一级别的指标组
                 // use pre collect metrics data to replace next metrics config params

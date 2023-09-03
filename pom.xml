@@ -59,13 +59,12 @@
         <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
         <mongodb-driver.version>4.6.1</mongodb-driver.version>
-        <clickhouse.version>1.${commons-collections4.version}</clickhouse.version>
+        <clickhouse.version>1.4.4</clickhouse.version>
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.1</postgresql.version>
         <h2.version>2.1.214</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
-
         <commons-collections4.version>4.4</commons-collections4.version>
     </properties>
 
@@ -275,7 +274,7 @@
                 <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
                 <version>${caffeine.version}</version>
             </dependency>
-            <!--            通用集合操作-->
+            <!--  通用集合操作  -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
