@@ -20,6 +20,8 @@
 
 This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https://github.com/dromara/hertzbeat) in a Kubernetes cluster. Welcome to [contribute](https://github.com/dromara/hertzbeat/tree/master/script/helm) to Helm Chart for HertzBeat.
 
+[ArtifactHub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+
 ## Prerequisites
 
 - Kubernetes cluster 1.20+
@@ -30,7 +32,7 @@ This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https
 ### Add Helm repository
 
 ```bash
-helm repo add tancloud https://charts.hertzbeat.com
+helm repo add hertzbeat https://charts.hertzbeat.com/
 helm repo update
 ```
 
@@ -72,7 +74,7 @@ If HertzBeat is deployed behind the proxy, set it as the URL of proxy.
 
 Install the HertzBeat helm chart with a release name `my-release`:
 ```bash
-helm install hertzbeat tancloud/hertzbeat
+helm install hertzbeat hertzbeat/hertzbeat
 ```
 
 ## Uninstallation
@@ -149,4 +151,4 @@ The following table lists the configurable parameters of the HertzBeat chart and
 [resources]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
 [hertzbeat]: https://github.com/dromara/hertzbeat/
 [artifacthub]: https://artifacthub.io/
-[helm]: https://helm.sh/  
+[helm]: https://helm.sh/
