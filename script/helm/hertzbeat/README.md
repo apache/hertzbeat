@@ -1,5 +1,10 @@
 # Helm Chart for HertzBeat
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
+
+<div class="artifacthub-widget" data-url="https://artifacthub.io/packages/helm/hertzbeat/hertzbeat" data-theme="light" data-header="true" data-stars="true" data-responsive="false"><blockquote><p lang="en" dir="ltr"><b>hertzbeat</b>: An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.</p>&mdash; Open in <a href="https://artifacthub.io/packages/helm/hertzbeat/hertzbeat">Artifact Hub</a></blockquote></div><script async src="https://artifacthub.io/artifacthub-widget.js"></script>
+
+
 ## What is HertzBeat?
 
 > An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.
@@ -19,8 +24,6 @@
 ## Helm Chart for HertzBeat
 
 This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https://github.com/dromara/hertzbeat) in a Kubernetes cluster. Welcome to [contribute](https://github.com/dromara/hertzbeat/tree/master/script/helm) to Helm Chart for HertzBeat.
-
-[ArtifactHub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 ## Prerequisites
 
