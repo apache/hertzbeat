@@ -17,6 +17,9 @@ sidebar_label: 开发者们
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cuipiheqiuqiu"><img src="https://avatars.githubusercontent.com/u/76642201?v=4?s=100" width="100px;" alt="cuipiheqiuqiu"/><br /><sub><b>cuipiheqiuqiu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=cuipiheqiuqiu" title="Tests">⚠️</a> <a href="#design-cuipiheqiuqiu" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hudongdong129"><img src="https://avatars.githubusercontent.com/u/34374227?v=4?s=100" width="100px;" alt="hudongdong129"/><br /><sub><b>hudongdong129</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=hudongdong129" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=hudongdong129" title="Tests">⚠️</a> <a href="https://github.com/dromara/hertzbeat/commits?author=hudongdong129" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zqr10159"><img src="https://avatars.githubusercontent.com/u/30048352?v=4?s=100" width="100px;" alt="zqr10159"/><br /><sub><b>Logic</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Code">💻</a><a href="#design-Ceilzcx" title="Design">🎨</a></td>
+    </tr>
   </tbody>
 </table>
 
