@@ -81,6 +81,9 @@ metrics:
   # Note: The built-in monitoring indicators include (responseTime - response time)
   # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: summary
+    i18n:
+      zh-CN: 概要
+      en-US: Summary
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
@@ -93,6 +96,9 @@ metrics:
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: ResponseTime
     # Monitoring and collection protocols eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: icmp
