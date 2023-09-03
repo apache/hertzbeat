@@ -5,6 +5,7 @@ type: application
 home: https://hertzbeat.com/
 sources:
   - https://github.com/dromara/hertzbeat
+  - https://charts.hertzbeat.com
 maintainers:
   - name: tom
     email: tomsun28@outlook.com

@@ -1,6 +1,6 @@
 # Helm Chart for HertzBeat
 
-## What is HertzBeat? 
+## What is HertzBeat?
 
 > An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.
 
@@ -30,7 +30,8 @@ This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https
 ### Add Helm repository
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add hertzbeat https://charts.hertzbeat.com
+helm repo update
 ```
 
 ### Configure the chart
@@ -71,14 +72,14 @@ If HertzBeat is deployed behind the proxy, set it as the URL of proxy.
 
 Install the HertzBeat helm chart with a release name `my-release`:
 ```bash
-helm install hertz tancloud/hertzbeat
+helm install hertzbeat tancloud/hertzbeat
 ```
 
 ## Uninstallation
 
-To uninstall/delete the `hertz` deployment:
+To uninstall/delete the `hertzbeat` deployment:
 ```bash
-helm uninstall hertz
+helm uninstall hertzbeat
 ```
 
 ## Configuration
@@ -145,7 +146,7 @@ The following table lists the configurable parameters of the HertzBeat chart and
 | `tsdb.podAnnotations`                   | Annotations to add to the nginx pod                                                                                                                                                                             | `{}`                               |
 
 
-[resources]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/  
-[hertzbeat]: https://github.com/dromara/hertzbeat/  
-[artifacthub]: https://artifacthub.io/  
+[resources]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+[hertzbeat]: https://github.com/dromara/hertzbeat/
+[artifacthub]: https://artifacthub.io/
 [helm]: https://helm.sh/  
