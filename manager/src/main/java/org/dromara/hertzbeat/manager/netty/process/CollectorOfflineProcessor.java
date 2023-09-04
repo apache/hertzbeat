@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.manager.netty.process;
 
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.manager.netty.ManageServer;
@@ -18,7 +19,7 @@ public class CollectorOfflineProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ClusterMsg.Message message) {
+    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go offline.", collector);
         this.manageServer.getCollectorAndJobScheduler().collectorGoOffline(collector);

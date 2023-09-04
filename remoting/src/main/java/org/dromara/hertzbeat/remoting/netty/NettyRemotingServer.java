@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.remoting.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -29,6 +30,8 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
+
+import java.util.List;
 
 /**
  * netty server
@@ -119,6 +122,21 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         } catch (Exception e) {
             log.error("Netty Server shutdown exception, ", e);
         }
+    }
+
+    @Override
+    public void sendMsg(final Channel channel, final ClusterMsg.Message request) {
+        this.sendMsgImpl(channel, request);
+    }
+
+    @Override
+    public ClusterMsg.Message sendMsgSync(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {
+        return this.sendMsgSyncImpl(channel, request, timeoutMillis);
+    }
+
+    @Override
+    public void registerHook(List<NettyHook> nettyHookList) {
+        this.nettyHookList.addAll(nettyHookList);
     }
 
     @ChannelHandler.Sharable

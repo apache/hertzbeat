@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
-import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 

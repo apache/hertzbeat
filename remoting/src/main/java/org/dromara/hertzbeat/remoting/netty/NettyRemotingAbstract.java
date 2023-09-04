@@ -9,6 +9,8 @@ import org.dromara.hertzbeat.common.util.NetworkUtil;
 import org.dromara.hertzbeat.remoting.RemotingService;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,6 +22,8 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     protected ConcurrentHashMap<ClusterMsg.MessageType, NettyRemotingProcessor> processorTable = new ConcurrentHashMap<>();
 
     protected ConcurrentHashMap<String, ResponseFuture> responseTable = new ConcurrentHashMap<>();
+
+    protected List<NettyHook> nettyHookList = new ArrayList<>();
 
     protected NettyEventListener nettyEventListener;
 
@@ -39,25 +43,44 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         }
     }
 
-    protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        NettyRemotingProcessor processor = this.processorTable.get(message.getType());
+    protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMsg.Message request) {
+        this.doBeforeRequest(ctx, request);
+
+        NettyRemotingProcessor processor = this.processorTable.get(request.getType());
         if (processor == null) {
-            log.info("request type {} not supported", message.getType());
+            log.info("request type {} not supported", request.getType());
             return;
         }
-        ClusterMsg.Message response = processor.handle(message);
+        ClusterMsg.Message response = processor.handle(ctx, request);
         if (response != null) {
             ctx.writeAndFlush(response);
         }
     }
 
-    protected void processResponseMsg(ClusterMsg.Message message) {
-        if (this.responseTable.containsKey(message.getIdentity())) {
-            ResponseFuture responseFuture = this.responseTable.get(message.getIdentity());
-            responseFuture.putResponse(message);
-        } else {
-            log.warn("receive response not in responseTable, identity: {}", message.getIdentity());
+    private void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message request) {
+        if (this.nettyHookList == null || this.nettyHookList.isEmpty()) {
+            return;
         }
+        for (NettyHook nettyHook : this.nettyHookList) {
+            nettyHook.doBeforeRequest(ctx, request);
+        }
+    }
+
+    protected void processResponseMsg(ClusterMsg.Message response) {
+        if (this.responseTable.containsKey(response.getIdentity())) {
+            ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
+            responseFuture.putResponse(response);
+        } else {
+            log.warn("receive response not in responseTable, identity: {}", response.getIdentity());
+        }
+    }
+
+    protected void sendMsgImpl(final Channel channel, final ClusterMsg.Message request) {
+        channel.writeAndFlush(request).addListener(future -> {
+            if (!future.isSuccess()) {
+                log.warn("failed to send request message to server. address: {}, ", channel.remoteAddress(), future.cause());
+            }
+        });
     }
 
     protected ClusterMsg.Message sendMsgSyncImpl(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {

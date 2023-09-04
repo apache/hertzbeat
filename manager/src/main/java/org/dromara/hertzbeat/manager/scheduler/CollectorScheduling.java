@@ -51,20 +51,6 @@ public interface CollectorScheduling {
     void reBalanceCollectorAssignJobs();
     
     /**
-     * hold and update collector message channel map
-     * @param identity collector identity name
-     * @param channel message channel
-     */
-    void holdCollectorChannel(String identity, Channel channel);
-
-    /**
-     * judge collector message channel exist
-     * @param identity collector identity name
-     * @return true/false
-     */
-    boolean isCollectorChannelExist(String identity);
-
-    /**
      * offline collector(stop collector collect operation)
      * @param identity collector identity name
      * @return true/false
@@ -77,11 +63,4 @@ public interface CollectorScheduling {
      * @return true/false
      */
     boolean onlineCollector(String identity);
-
-    /**
-     * close collector(stop collector collect operation and disconnect)
-     * @param identity collector identity name
-     * @return true/false
-     */
-    boolean closeCollector(String identity);
 }

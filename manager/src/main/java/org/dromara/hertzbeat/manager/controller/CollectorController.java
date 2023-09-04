@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
-import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
+import org.dromara.hertzbeat.manager.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -53,7 +53,7 @@ public class CollectorController {
     @Autowired
     private CollectorService collectorService;
     @Autowired
-    private CollectorAndJobScheduler collectorAndJobScheduler;
+    private ManageServer manageServer;
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
@@ -83,7 +83,7 @@ public class CollectorController {
     @Operation(summary = "online collector")
     public ResponseEntity<Message<Void>> onlineCollector(
             @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
-        collectorAndJobScheduler.onlineCollector(collectorName);
+        this.manageServer.getCollectorAndJobScheduler().onlineCollector(collectorName);
         return ResponseEntity.ok(new Message<>("Online success"));
     }
 
@@ -91,14 +91,14 @@ public class CollectorController {
     @Operation(summary = "offline collector")
     public ResponseEntity<Message<Void>> offlineCollector(
             @Parameter(description = "collector name", example = "1") @RequestParam String collectorName) {
-        collectorAndJobScheduler.offlineCollector(collectorName);
+        this.manageServer.getCollectorAndJobScheduler().offlineCollector(collectorName);
         return ResponseEntity.ok(new Message<>("Offline success"));
     }
 
     @DeleteMapping(path = "/{collectorName}")
     public ResponseEntity<Message<Void>> deleteCollector(
             @Parameter(description = "en: Collector ID,zh: 采集器ID", example = "1") @PathVariable("collectorName") final String collectorName) {
-        collectorAndJobScheduler.closeCollector(collectorName);
+        this.manageServer.closeChannel(collectorName);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
 

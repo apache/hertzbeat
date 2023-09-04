@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.manager.netty.process;
 
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.manager.netty.ManageServer;
@@ -18,9 +19,9 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ClusterMsg.Message message) {
+    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         String identity = message.getIdentity();
-        boolean isChannelExist = this.manageServer.getCollectorAndJobScheduler().isCollectorChannelExist(identity);
+        boolean isChannelExist = this.manageServer.isChannelExist(identity);
         if (!isChannelExist) {
             log.info("the collector {} has reconnected and to go online.", identity);
             this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(identity);

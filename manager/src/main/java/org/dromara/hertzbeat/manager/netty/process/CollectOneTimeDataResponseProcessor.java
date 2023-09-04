@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.manager.netty.process;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -13,19 +14,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * handle one-time collect data message
+ * handle one-time collect data response message
  */
 @Slf4j
-public class CollectOneTimeDataProcessor implements NettyRemotingProcessor {
+public class CollectOneTimeDataResponseProcessor implements NettyRemotingProcessor {
 
     private final ManageServer manageServer;
 
-    public CollectOneTimeDataProcessor(ManageServer manageServer) {
+    public CollectOneTimeDataResponseProcessor(ManageServer manageServer) {
         this.manageServer = manageServer;
     }
 
     @Override
-    public ClusterMsg.Message handle(ClusterMsg.Message message) {
+    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         TypeReference<List<String>> typeReference = new TypeReference<>() {
         };
         List<String> jsonArr = JsonUtil.fromJson(message.getMsg(), typeReference);
