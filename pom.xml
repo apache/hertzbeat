@@ -65,7 +65,7 @@
         <h2.version>2.1.214</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
-
+        <commons-collections4.version>4.4</commons-collections4.version>
     </properties>
 
     <dependencyManagement>
@@ -274,6 +274,13 @@
                 <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
                 <version>${caffeine.version}</version>
             </dependency>
+            <!--  通用集合操作  -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

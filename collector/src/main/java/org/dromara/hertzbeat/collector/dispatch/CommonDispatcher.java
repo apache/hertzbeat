@@ -19,6 +19,10 @@ package org.dromara.hertzbeat.collector.dispatch;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.collector.dispatch.timer.WheelTimerTask;
@@ -29,26 +33,22 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Indicator group collection task and response data scheduler
  * 指标组采集任务与响应数据调度器
  *
  * @author tomsun28
- *
  */
 @Component
 @Slf4j
@@ -125,7 +125,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
                             jobRequestQueue.addJob(metricsCollect);
                         }
-                    } catch (InterruptedException ignored) {}
+                    } catch (InterruptedException ignored) {
+                    }
                 } catch (Exception e) {
                     log.error("[Dispatcher]-{}.", e.getMessage(), e);
                 }
@@ -241,31 +242,33 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // 当前级别指标组执行完成，开始执行下一级别的指标组
                 // use pre collect metrics data to replace next metrics config params
                 List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
-                metricsSet.forEach(metricItem -> {
-                    if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(GSON.toJsonTree(metricItem))) {
-                        int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
-                        AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
-                        AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
-                        for (int index = 0; index < subTaskNum; index ++) {
-                            Map<String, Configmap> configmap = configmapList.get(index);
-                            JsonElement metricJson = GSON.toJsonTree(metricItem);
-                            CollectUtil.replaceCryPlaceholder(metricJson, configmap);
-                            Metrics metric = GSON.fromJson(metricJson, Metrics.class);
-                            metric.setSubTaskNum(subTaskNumAtomic);
-                            metric.setSubTaskId(index);
-                            metric.setSubTaskDataRef(metricsDataReference);
-                            MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
-                            jobRequestQueue.addJob(metricsCollect);
-                            metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
-                                    new MetricsTime(System.currentTimeMillis(), metric, timeout));
-                        }
-                    } else {
+                for (Metrics metricItem : metricsSet) {
+                    if (CollectionUtils.isEmpty(configmapList) || CollectUtil.notContainCryPlaceholder(GSON.toJsonTree(metricItem))) {
                         MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
                         jobRequestQueue.addJob(metricsCollect);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
                                 new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                        continue;
                     }
-                });
+
+                    int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
+                    AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
+                    AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
+                    for (int index = 0; index < subTaskNum; index++) {
+                        Map<String, Configmap> configmap = configmapList.get(index);
+                        JsonElement metricJson = GSON.toJsonTree(metricItem);
+                        CollectUtil.replaceCryPlaceholder(metricJson, configmap);
+                        Metrics metric = GSON.fromJson(metricJson, Metrics.class);
+                        metric.setSubTaskNum(subTaskNumAtomic);
+                        metric.setSubTaskId(index);
+                        metric.setSubTaskDataRef(metricsDataReference);
+                        MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
+                        jobRequestQueue.addJob(metricsCollect);
+                        metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
+                                new MetricsTime(System.currentTimeMillis(), metric, timeout));
+                    }
+
+                }
             } else {
                 // The list of indicator groups at the current execution level has not been fully executed.
                 // It needs to wait for the execution of other indicator groups of the same level to complete the execution and enter the next level for execution.
@@ -314,22 +317,17 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
             return null;
         }
-        List<Map<String, Configmap>> mapList = new LinkedList<>();
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
-                continue;
-            }
-            Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
-            int index = 0;
-            for (CollectRep.Field field : metricsData.getFieldsList()) {
-                String value = valueRow.getColumns(index);
-                index++;
-                Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
-                configmapMap.put(field.getName(), configmap);
-            }
-            mapList.add(configmapMap);
-        }
-        return mapList;
+        return CollectionUtils.emptyIfNull(metricsData.getValuesList())
+                .stream()
+                .filter(ele -> ele.getColumnsCount() == metricsData.getFieldsCount())
+                .map(ele -> IntStream.range(0, metricsData.getFieldsList().size())
+                        .boxed()
+                        .map(index -> {
+                            String value = ele.getColumns(index);
+                            CollectRep.Field field = metricsData.getFieldsList().get(index);
+                            return new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
+                        }).collect(Collectors.toMap(Configmap::getKey, item -> item, (a, b) -> b)))
+                .collect(Collectors.toList());
     }
 
     @Data
