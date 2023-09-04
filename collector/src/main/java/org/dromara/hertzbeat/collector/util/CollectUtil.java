@@ -182,6 +182,10 @@ public class CollectUtil {
         return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).find();
     }
 
+    public static boolean notContainCryPlaceholder(JsonElement jsonElement) {
+        return !containCryPlaceholder(jsonElement);
+    }
+
     /**
      * json parameter replacement
      * json 参数替换
