@@ -380,7 +380,7 @@
                 <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : {{ 'alert.setting.template.metric-value' | i18n }}</code>
                 </nz-list-item>
-                <nz-list-item *ngFor="let item of currentMetrics">
+                <nz-list-item *ngFor="let item of filterMetrics(currentMetrics, cascadeValues)">
                   <code>&#36;{{ '{' + item.value + '}' }} : {{ 'alert.setting.template.other-value' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
