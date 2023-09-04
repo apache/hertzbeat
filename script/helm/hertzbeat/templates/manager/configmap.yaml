@@ -52,10 +52,7 @@ data:
         - basic
         - jwt
       jwt:
-        secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
-                 LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
-                 8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
-                 dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+        secret: {{ .Values.manager.jwtSecretKey }}
     
     ---
     spring:
@@ -231,8 +228,8 @@ data:
       - /h2-console/**===*
     
     account:
-      - appId: admin
-        credential: hertzbeat
+      - appId: {{ .Values.manager.account.username }}
+        credential: {{ .Values.manager.account.password }}
         role: [admin,user]
       - appId: tom
         credential: hertzbeat
