@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hertzbeat.collector" . }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+    component: collector
+spec:
+  {{- if not .Values.collector.autoscaling.enabled }}
+  replicas: {{ .Values.collector.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "hertzbeat.selectorLabels" . | nindent 6 }}
+      component: collector
+  template:
+    metadata:
+      {{- with .Values.collector.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "hertzbeat.selectorLabels" . | nindent 8 }}
+        component: collector
+    spec:
+      securityContext:
+        {{- toYaml .Values.collector.podSecurityContext | nindent 8 }}
+      containers:
+        - name: hertzbeat-collector
+          securityContext:
+            {{- toYaml .Values.collector.securityContext | nindent 12 }}
+          image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.collector.image.pullPolicy }}
+          ports:
+            - containerPort: 1159
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 1159
+          readinessProbe:
+            tcpSocket:
+              port: 1159
+          envFrom:
+            - configMapRef:
+                name: "{{ include "hertzbeat.collector" . }}"
+          volumeMounts:
+            - mountPath: /opt/hertzbeat-collector/config/application.yml
+              subPath: application.yml
+              name: application
+          resources:
+            {{- toYaml .Values.collector.resources | nindent 12 }}
+      volumes:
+        - name: application
+          configMap:
+            name: {{ include "hertzbeat.collector" . }}
+      {{- with .Values.collector.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.collector.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.collector.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

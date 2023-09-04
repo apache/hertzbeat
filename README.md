@@ -10,6 +10,8 @@
 
 > An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.   
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
@@ -164,9 +166,15 @@ Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)
 
 ##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose  
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
+
+##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+
+Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+
+Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
 
