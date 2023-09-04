@@ -658,7 +658,7 @@ export class AlertSettingComponent implements OnInit {
     if (cascadeValues.length !== 3) {
       return currentMetrics;
     }
-    // 过滤与 valueToFilter 不相等的元素
+    // 过滤与cascadeValues[2]不相等的元素
     return currentMetrics.filter(item => item.value !== cascadeValues[2]);
   }
   // end 告警定义与监控关联model
