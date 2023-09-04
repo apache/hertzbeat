@@ -77,4 +77,10 @@ Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at 
 
 Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
 
+##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+
+Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+
+Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+
 **HAVE FUN**  
