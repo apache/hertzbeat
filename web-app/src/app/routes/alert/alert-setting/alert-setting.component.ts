@@ -653,5 +653,13 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
   }
+  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
+    // 检查是否需要过滤
+    if (cascadeValues.length !== 3) {
+      return currentMetrics;
+    }
+    // 过滤与cascadeValues[2]不相等的元素
+    return currentMetrics.filter(item => item.value !== cascadeValues[2]);
+  }
   // end 告警定义与监控关联model
 }
