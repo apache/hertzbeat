@@ -141,7 +141,7 @@
   "alert.setting.template.monitor-type": "监控类型名称",
   "alert.setting.template.metrics-name": "监控指标集合名称",
   "alert.setting.template.metric-name": "监控指标名称",
-  "alert.setting.template.metric-value": "监控指标对象值",
+  "alert.setting.template.metric-value": "指标值",
   "alert.setting.template.other-value": "所属行其它指标值",
   "alert.setting.template.instance-value": "所属行实例值",
   "alert.setting.default": "全局默认",

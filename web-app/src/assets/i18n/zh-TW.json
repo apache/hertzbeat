@@ -140,7 +140,7 @@
   "alert.setting.template.monitor-type": "監控類型名稱",
   "alert.setting.template.metrics-name": "監控指標集合名稱",
   "alert.setting.template.metric-name": "監控指標名稱",
-  "alert.setting.template.metric-value": "監控指標對象值",
+  "alert.setting.template.metric-value": "指標值",
   "alert.setting.template.other-value": "所屬行其它指標值",
   "alert.setting.template.instance-value": "所屬行實例值",
   "alert.setting.default": "全局默認",
