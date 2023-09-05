@@ -1,0 +1,44 @@
+{{- if or (eq .Values.expose.type "ClusterIP") (eq .Values.expose.type "NodePort") (eq .Values.expose.type "LoadBalancer") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "hertzbeat.manager" . }}-http"
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+{{- if eq .Values.expose.type "ClusterIP" }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.expose.clusterIP.ports.port }}
+      targetPort: 1157
+{{- else if eq .Values.expose.type "NodePort" }}
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.expose.nodePort.ports.port }}
+      targetPort: 1157
+      protocol: TCP
+      name: http
+      {{- if .Values.expose.nodePort.ports.nodePort }}
+      nodePort: {{ .Values.expose.nodePort.ports.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "hertzbeat.selectorLabels" . | nindent 4 }}
+    component: manager
+{{- else if eq .Values.expose.type "LoadBalancer" }}
+spec:
+  type: LoadBalancer
+  {{- with .Values.expose.loadBalancer.sourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.expose.loadBalancer.ip }}
+  loadBalancerIP: {{ .Values.expose.loadBalancer.ip }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.expose.loadBalancer.ports.port }}
+      targetPort: 1157
+{{- end }}
+{{- end }}

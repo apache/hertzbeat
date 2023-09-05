@@ -25,6 +25,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import javax.annotation.PostConstruct;
+
 /**
  * @author tomsun28
  *
@@ -36,8 +38,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaRepositories(basePackages = {"org.dromara.hertzbeat"})
 @EntityScan(basePackages = {"org.dromara.hertzbeat"})
 public class Manager {
-
     public static void main(String[] args) {
         SpringApplication.run(Manager.class, args);
+    }
+    @PostConstruct
+    public void init() {
+        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
     }
 }

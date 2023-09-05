@@ -79,7 +79,7 @@ import { CONSTS } from 'src/app/shared/consts';
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
         HertzBeat {{ version }}<br />
-        Copyright &copy; 2021-2023
+        Copyright &copy; 2021-{{ currentYear }}
         <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
         <br />
         Licensed under the Apache License, Version 2.0
@@ -104,6 +104,7 @@ export class LayoutBasicComponent {
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
   version = CONSTS.VERSION;
+  currentYear = new Date().getFullYear();
   get user(): User {
     return this.settings.user;
   }

@@ -653,5 +653,18 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
   }
+  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
+    if (cascadeValues.length !== 3) {
+      return currentMetrics;
+    }
+    // sort the cascadeValues[2] to first
+    return currentMetrics.sort((a, b) => {
+      if (a.value !== cascadeValues[2]) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+  }
   // end 告警定义与监控关联model
 }
