@@ -2,7 +2,7 @@
   *ngIf="app != undefined"
   [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
   [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
-  [icon_name]="'monitor_icon.' + app | i18n"
+  [icon_name]="('monitor_icon.' + app | i18n) == 'monitor_icon.' + app ? ('monitor_icon.center' | i18n) : ('monitor_icon.' + app | i18n)"
 ></app-help-massage-show>
 <app-help-massage-show
   *ngIf="app == undefined"

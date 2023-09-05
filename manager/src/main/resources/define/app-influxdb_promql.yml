@@ -11,7 +11,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 InfluxDB-PromQL 的通用指标进行测量监控。<br>您可以点击 “<i>新建 InfluxDB-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors InfluxDB-PromQL through general performance indicator. You could click the "<i>New InfluxDB-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  en-US: Hertzbeat monitors InfluxDB-PromQL through general performance metric. You could click the "<i>New InfluxDB-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對InfluxDB-PromQL的通用名額進行量測監控。<br>您可以點擊“<i>新建InfluxDB-PromQL</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/influxdb_promql
@@ -131,7 +131,7 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # Specific monitoring indicators in the indicator group.
+    # Specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
@@ -195,7 +195,7 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
-    # Specific monitoring indicators in the indicator group.
+    # Specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
@@ -263,7 +263,7 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
-    # Specific monitoring indicators in the indicator group.
+    # Specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
@@ -327,7 +327,7 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
-    # Specific monitoring indicators in the indicator group.
+    # Specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
