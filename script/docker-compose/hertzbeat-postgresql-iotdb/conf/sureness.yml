@@ -92,7 +92,7 @@ excludedResource:
 account:
   - appId: admin
     credential: hertzbeat
-    role: [admin,user]
+    role: [admin]
   - appId: tom
     credential: hertzbeat
     role: [user]
