@@ -58,7 +58,7 @@ public class RemotingServiceTest {
     public void testSendMsg() {
         final String msg = "hello world";
 
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, message -> {
+        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
             Assertions.assertEquals(msg, message.getMsg());
             return null;
         });
@@ -76,7 +76,7 @@ public class RemotingServiceTest {
         final String requestMsg = "request";
         final String responseMsg = "response";
 
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, message -> {
+        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
             Assertions.assertEquals(requestMsg, message.getMsg());
             return ClusterMsg.Message.newBuilder()
                     .setDirection(ClusterMsg.Direction.RESPONSE)
