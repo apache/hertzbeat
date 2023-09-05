@@ -85,25 +85,18 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.monitor' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'alert.center.target' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.target' | i18n }}</th>
       <th nzAlign="center" nzWidth="9%">{{ 'alert.center.priority' | i18n }}</th>
-      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center" nzWidth="16%">{{ 'alert.center.tags' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.center.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.center.content' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.status' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'alert.center.time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="left">
-        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.tags.monitorId]">
-          {{ data.tags.monitorName }}
-          <span nz-icon nzType="area-chart"></span>
-        </button>
-      </td>
       <td nzAlign="center">{{ renderAlertTarget(data.target) }}</td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.priority == 0" nzColor="red">
@@ -121,9 +114,17 @@
       </td>
       <td nzAlign="left">{{ data.content }}</td>
       <td nzAlign="left">
-        <nz-tag style="margin-top: 2px" *ngFor="let tag of data?.tmp; let i = index">
-          {{ sliceTagName(tag) }}
-        </nz-tag>
+        <span *ngFor="let tag of data?.tmp; let i = index">
+          <a [routerLink]="['/monitors/' + tag.value]" *ngIf="tag.name == 'monitorId'">
+            <nz-tag class="hoverClass" nzColor="magenta" style="margin-top: 2px">
+              <span nz-icon nzType="area-chart"></span>
+              {{ sliceTagName(tag) }}
+            </nz-tag>
+          </a>
+          <nz-tag *ngIf="tag.name != 'monitorId'" style="margin-top: 2px">
+            {{ sliceTagName(tag) }}
+          </nz-tag>
+        </span>
       </td>
       <td nzAlign="center">
         <nz-tag [nzColor]="data.status == 3 ? '' : 'orange'">
