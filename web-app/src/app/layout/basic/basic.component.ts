@@ -1,9 +1,9 @@
-import {Component, Inject} from '@angular/core';
-import {ALAIN_I18N_TOKEN, SettingsService, User} from '@delon/theme';
+import { Component, Inject } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
 import { CONSTS } from 'src/app/shared/consts';
-import {I18NService} from "@core";
 
 @Component({
   selector: 'layout-basic',
