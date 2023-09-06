@@ -22,7 +22,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 OpenGauss 数据库的通用性能指标(basic、state、activity)进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 OpenGauss 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors OpenGauss database through general performance indicators such as state and activity, the version we support is PostgreSQL10+. You could click the "<i>New OpenGauss</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  en-US: HertzBeat monitors OpenGauss database through general performance metrics such as state and activity, the version we support is PostgreSQL10+. You could click the "<i>New OpenGauss</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat對OpenGauss資料庫的通用性能指標（basic、state、activity）進行採集監控，支持版本為PostgreSQL10+。<br>您可以點擊“<i>新建OpenGauss資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/opengauss
