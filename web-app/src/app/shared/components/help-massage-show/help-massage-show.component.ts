@@ -58,7 +58,7 @@ export class HelpMassageShowComponent implements OnInit {
   checkedMonitorIds = new Set<number>();
 
   ngOnInit(): void {
-    this.isCollapsed = localStorage.getItem('collapse_status') === 'true' ? true : false;
+    this.isCollapsed = localStorage.getItem('collapse_status') === 'true';
     this.el.nativeElement.querySelector('.help_massage_div').style.height = `${localStorage.getItem('collapse_height')}px`;
     this.collapse_expand = this.isCollapsed ? 'expand' : 'collapse';
     this.route.queryParamMap.subscribe(paramMap => {

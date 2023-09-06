@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
 import org.dromara.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.springframework.http.ResponseEntity;
@@ -98,6 +99,7 @@ public class AccountController {
         Map<String, String> resp = new HashMap<>(2);
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
+        resp.put("role", JsonUtil.toJson(roles));
         return ResponseEntity.ok(new Message<>(resp));
     }
 

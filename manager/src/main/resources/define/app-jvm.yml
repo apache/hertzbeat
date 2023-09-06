@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 使用 <a href="https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial_zh_CN.html">JMX</a> 协议对 JVM 虚拟机的通用性能指标进行采集监控。⚠️注意：您需要在 JVM 应用中开启 JMX 服务，应用启动时添加 JVM 参数, 可自定义暴露端口,对外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">点击查看开启步骤</a>。
-  en-US: "HertzBeat using <a href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX</a> protocol to monitor and collect general performance indicator of virtual machine. ⚠️Note: You need to enable JVM services in JVM application, and add the JVM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>Click here to view the activation steps.</a>"
+  en-US: "HertzBeat using <a href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX</a> protocol to monitor and collect general performance metric of virtual machine. ⚠️Note: You need to enable JVM services in JVM application, and add the JVM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>Click here to view the activation steps.</a>"
   zh-TW: HertzBeat使用<a href=“https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial_zh_CN.html “>JMX</a>協定對JVM虛擬機器的通用性能指標進行採集監控。 ⚠️ 注意：您需要在JVM應用中開啟JMX服務，應用啟動時添加JVM參數，可自定義暴露埠，對外IP。<a href=“https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote“>點擊查看開啟步驟</a>。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/jvm/
