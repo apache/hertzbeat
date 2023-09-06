@@ -11,6 +11,7 @@ import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
+import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { formatTagName } from '../../../shared/utils/common-util';
 
@@ -27,6 +28,7 @@ export class MonitorListComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
+    private storageSvc: MemoryStorageService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -105,6 +107,21 @@ export class MonitorListComponent implements OnInit {
 
   clearCurrentTag() {
     this.router.navigateByUrl(`/monitors`);
+  }
+
+  getAppIconName(app: string | undefined): string {
+    let hierarchy: any[] = this.storageSvc.getData('hierarchy');
+    let find = hierarchy.find((item: { category: string; value: string }) => {
+      return item.value == app;
+    });
+    if (find == undefined) {
+      return this.i18nSvc.fanyi('monitor_icon.center');
+    }
+    let icon = this.i18nSvc.fanyi(`monitor_icon.${find.category}`);
+    if (icon == `monitor_icon.${find.category}`) {
+      return this.i18nSvc.fanyi('monitor_icon.center');
+    }
+    return icon;
   }
 
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
