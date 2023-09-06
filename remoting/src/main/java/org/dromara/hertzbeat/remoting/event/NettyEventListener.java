@@ -7,6 +7,9 @@ import io.netty.channel.Channel;
  */
 public interface NettyEventListener {
 
-    void onChannelIdle(final Channel channel);
+    default void onChannelActive(final Channel channel) {
+    }
 
+    default void onChannelIdle(final Channel channel) {
+    }
 }

@@ -130,17 +130,18 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     class NettyClientHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
 
         @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            NettyRemotingClient.this.channelActive(ctx);
+        }
+
+        @Override
         protected void channelRead0(ChannelHandlerContext ctx, ClusterMsg.Message msg) throws Exception {
             NettyRemotingClient.this.processReceiveMsg(ctx, msg);
         }
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            IdleStateEvent event = (IdleStateEvent) evt;
-            if (event.state() == IdleState.ALL_IDLE) {
-                ctx.channel().closeFuture();
-                NettyRemotingClient.this.nettyEventListener.onChannelIdle(ctx.channel());
-            }
+            NettyRemotingClient.this.channelIdle(ctx, evt);
         }
     }
 }

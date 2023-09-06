@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.remoting;
 
+import org.assertj.core.util.Lists;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
 import org.dromara.hertzbeat.remoting.netty.NettyClientConfig;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * test NettyRemotingClient and NettyRemotingServer
@@ -91,6 +94,27 @@ public class RemotingServiceTest {
                 .build();
         ClusterMsg.Message response = this.remotingClient.sendMsgSync(request, 3000);
         Assertions.assertEquals(responseMsg, response.getMsg());
+    }
+
+    @Test
+    public void testNettyHook() {
+        this.remotingServer.registerHook(Lists.newArrayList(
+                (ctx, message) -> {
+                    Assertions.assertEquals("hello world", message.getMsg());
+                }
+        ));
+
+        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) ->
+                ClusterMsg.Message.newBuilder()
+                        .setDirection(ClusterMsg.Direction.RESPONSE)
+                        .build());
+
+        ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.HEARTBEAT)
+                .setMsg("hello world")
+                .build();
+        this.remotingClient.sendMsg(request);
     }
 
 }

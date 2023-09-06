@@ -3,6 +3,8 @@ package org.dromara.hertzbeat.remoting.netty;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.epoll.Epoll;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.util.NetworkUtil;
@@ -106,6 +108,20 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             responseTable.remove(identity);
         }
         return null;
+    }
+
+    protected void channelActive(ChannelHandlerContext ctx) {
+        if (this.nettyEventListener != null && ctx.channel().isActive()) {
+            this.nettyEventListener.onChannelActive(ctx.channel());
+        }
+    }
+
+    protected void channelIdle(ChannelHandlerContext ctx, Object evt) {
+        IdleStateEvent event = (IdleStateEvent) evt;
+        if (this.nettyEventListener != null && event.state() == IdleState.ALL_IDLE) {
+            ctx.channel().closeFuture();
+            this.nettyEventListener.onChannelIdle(ctx.channel());
+        }
     }
 
     protected boolean useEpoll() {
