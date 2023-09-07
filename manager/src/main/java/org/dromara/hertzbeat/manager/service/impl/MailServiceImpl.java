@@ -85,7 +85,7 @@ public class MailServiceImpl implements MailService {
         model.put("nameTriggerTime", bundle.getString("alerter.notify.triggerTime"));
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastTriggerTime()));
+        String triggerTime = simpleDateFormat.format(new Date(alert.getLastAlarmTime()));
         model.put("lastTriggerTime",triggerTime);
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
