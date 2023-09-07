@@ -7,9 +7,12 @@ import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { NoticeRule, TagItem } from '../../../pojo/NoticeRule';
+import {NoticeTemplate} from "../../../pojo/NoticeTemplate";
 import { NoticeReceiverService } from '../../../service/notice-receiver.service';
+import { NoticeTemplateService } from '../../../service/notice-template.service';
 import { NoticeRuleService } from '../../../service/notice-rule.service';
 import { TagService } from '../../../service/tag.service';
+
 
 @Component({
   selector: 'app-alert-notice',
@@ -21,23 +24,31 @@ export class AlertNoticeComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private noticeReceiverSvc: NoticeReceiverService,
     private modal: NzModalService,
+    private noticeTemplateSvc: NoticeTemplateService,
     private noticeRuleSvc: NoticeRuleService,
     private tagService: TagService,
-
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   receivers!: NoticeReceiver[];
   receiverTableLoading: boolean = true;
+  templates!: NoticeTemplate[];
+  templateTableLoading: boolean = true;
   rules!: NoticeRule[];
   ruleTableLoading: boolean = true;
-
+  loading = false;
+  code: string = '';
+  originalCode: string = '';
   ngOnInit(): void {
     this.loadReceiversTable();
     this.loadRulesTable();
+    this.loadTemplatesTable();
   }
   syncReceiver() {
     this.loadReceiversTable();
+  }
+  syncTemplate() {
+    this.loadTemplatesTable();
   }
   syncRule() {
     this.loadRulesTable();
@@ -62,7 +73,26 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+  loadTemplatesTable(){
+    this.templateTableLoading = true;
+    let templatesInit$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
+      message => {
+        this.templateTableLoading = false;
+        if (message.code === 0) {
+          this.templates = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+        templatesInit$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        this.templateTableLoading = false;
+        templatesInit$.unsubscribe();
+      }
+    );
 
+  }
   loadRulesTable() {
     this.ruleTableLoading = true;
     let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(
@@ -128,6 +158,39 @@ export class AlertNoticeComponent implements OnInit {
       nzClosable: false,
       nzOnOk: () => this.deleteOneNoticeRule(ruleId)
     });
+  }
+  onDeleteOneNoticeTemplate(templateId: number) {
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzClosable: false,
+      nzOnOk: () => this.deleteOneNoticeTemplate(templateId)
+    });
+  }
+  deleteOneNoticeTemplate(templateId: number) {
+    const deleteTemplate$ = this.noticeTemplateSvc
+      .deleteNoticeTemplate(templateId)
+      .pipe(
+        finalize(() => {
+          deleteTemplate$.unsubscribe();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+            this.loadTemplatesTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
+        }
+      );
   }
 
   deleteOneNoticeRule(ruleId: number) {
@@ -257,11 +320,41 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
 
+
+
+  isManageTemplateModalVisible: boolean = false;
+  isManageTemplateModalAdd: boolean = true;
+  isManageTemplateModalOkLoading: boolean = false;
+  isShowTemplateModalVisible: boolean = false;
+  template: NoticeTemplate = new NoticeTemplate();
+  templatesOption: any[] = [];
+  onNewNoticeTemplate() {
+    this.template = new NoticeTemplate();
+    this.isManageTemplateModalVisible = true;
+    this.isManageTemplateModalAdd = true;
+  }
+
+  onEditOneNoticeTemplate(template: NoticeTemplate) {
+    this.template = template;
+    this.isManageTemplateModalVisible = true;
+    this.isManageTemplateModalAdd = false;
+
+
+  }
+  onShowOneNoticeTemplate(template: NoticeTemplate) {
+    this.template = template;
+    this.isShowTemplateModalVisible=true;
+
+
+
+  }
+
   // start 新增或修改通知策略弹出框
-  isManageRuleModalVisible: boolean = false;
+
+  isManageRuleModalVisible = false;
   isManageRuleModalAdd: boolean = true;
   isManageRuleModalOkLoading: boolean = false;
-  rule!: NoticeRule;
+  rule: NoticeRule = new NoticeRule();
   receiversOption: any[] = [];
   searchTag!: string;
   tagsOption: any[] = [];
@@ -291,9 +384,6 @@ export class AlertNoticeComponent implements OnInit {
     } else {
       this.isLimit = true;
     }
-    this.dayCheckOptions.forEach(item => {
-      item.checked = this.rule.days != undefined && this.rule.days.indexOf(item.value) >= 0;
-    });
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption.push({
@@ -316,17 +406,29 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
 
+  onNoticeRuleDaysChange(value: any[]) {
+    this.rule.days = value
+      .filter(item => item.checked == true)
+      .map(item => item.value)
+      .concat();
+  }
+
+
   onNoticeRuleLimitChange(limit: boolean) {
     if (!limit) {
       this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
     } else {
       this.rule.days = this.dayCheckOptions
-        .filter(item => item.checked)
+        .filter(item => item.checked == true)
         .map(item => item.value)
         .concat();
     }
   }
+  loadReciverType(reciverId:number){
 
+    return 5;
+
+  }
   loadReceiversOption() {
     let receiverOption$ = this.noticeReceiverSvc.getReceivers().subscribe(
       message => {
@@ -346,7 +448,7 @@ export class AlertNoticeComponent implements OnInit {
                 case 2:
                   label = `${label}WebHook`;
                   break;
-                case 3:
+                case 10:
                   label = `${label}WeChat`;
                   break;
                 case 4:
@@ -362,19 +464,13 @@ export class AlertNoticeComponent implements OnInit {
                   label = `${label}TelegramBot`;
                   break;
                 case 8:
-                  label = `${label}SlackWebHook`;
+                  label = `${label}Slack`;
                   break;
                 case 9:
-                  label = `${label}Discord Bot`;
-                  break;
-                case 10:
-                  label = `${label}weChatApp`;
+                  label = `${label}Discord`;
                   break;
                 case 11:
-                  label = `${label}smn`;
-                  break;
-                case 12:
-                  label = `${label}ServerChan`;
+                  label = `${label}SMN`;
                   break;
               }
               this.receiversOption.push({
@@ -394,7 +490,122 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+  loadTemplatesByReciverTypeOption(receiverType: number) {
+    let templateOption$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
+      message => {
+        if (message.code === 0) {
+          let data = message.data;
+          this.templatesOption = [];
+          if (data != undefined) {
+            data.forEach(item => {
+              if(item.type == receiverType){
+                let label = `${item.name}-`;
+                switch (item.type) {
+                  case 0:
+                    label = `${label}Phone`;
+                    break;
+                  case 1:
+                    label = `${label}Email`;
+                    break;
+                  case 2:
+                    label = `${label}WebHook`;
+                    break;
+                  case 3:
+                    label = `${label}WeChat`;
+                    break;
+                  case 4:
+                    label = `${label}WeWork`;
+                    break;
+                  case 5:
+                    label = `${label}DingDing`;
+                    break;
+                  case 6:
+                    label = `${label}FeiShu`;
+                    break;
+                  case 7:
+                    label = `${label}TelegramBot`;
+                    break;
+                }
+                this.templatesOption.push({
+                  value: item.id,
+                  label: label
+                });}
 
+            });
+          }
+        } else {
+          console.warn(message.msg);
+        }
+        templateOption$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        templateOption$.unsubscribe();
+      }
+    );
+  }
+  loadTemplatesOption() {
+    let templateOption$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
+      message => {
+        if (message.code === 0) {
+          let data = message.data;
+          this.templatesOption = [];
+          if (data != undefined) {
+            data.forEach(item => {
+              let label = `${item.name}-`;
+              switch (item.type) {
+                case 0:
+                  label = `${label}Phone`;
+                  break;
+                case 1:
+                  label = `${label}Email`;
+                  break;
+                case 2:
+                  label = `${label}WebHook`;
+                  break;
+                case 10:
+                  label = `${label}WeChat`;
+                  break;
+                case 4:
+                  label = `${label}WeWork`;
+                  break;
+                case 5:
+                  label = `${label}DingDing`;
+                  break;
+                case 6:
+                  label = `${label}FeiShu`;
+                  break;
+                case 7:
+                  label = `${label}TelegramBot`;
+                  break;
+                case 8:
+                  label = `${label}Slack`;
+                  break;
+                case 9:
+                  label = `${label}Discord`;
+                  break;
+                case 11:
+                  label = `${label}SMN`;
+                  break;
+              }
+              this.templatesOption.push({
+                value: item.id,
+                label: label
+              });
+
+            });
+          }
+        } else {
+          console.warn(message.msg);
+        }
+        templateOption$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        templateOption$.unsubscribe();
+      }
+    );
+  }
   loadTagsOption() {
     let tagsInit$ = this.tagService.loadTags(this.searchTag, undefined, 0, 1000).subscribe(
       message => {
@@ -442,7 +653,10 @@ export class AlertNoticeComponent implements OnInit {
   onManageRuleModalCancel() {
     this.isManageRuleModalVisible = false;
   }
-
+  onManageTemplateModalCancel() {
+    this.isManageTemplateModalVisible = false;
+    this.isShowTemplateModalVisible = false;
+  }
   updateNoticeRule(noticeRule: NoticeRule) {
     this.ruleTableLoading = true;
     const updateNoticeRule$ = this.noticeRuleSvc
@@ -469,11 +683,43 @@ export class AlertNoticeComponent implements OnInit {
         }
       );
   }
+  // updateNoticeTemplate(noticeTemplate: NoticeTemplate) {
+  //   this.templateTableLoading = true;
+  //   const updateNoticeTemplate$ = this.noticeTemplateSvc
+  //     .editNoticeTemplate(noticeTemplate)
+  //     .pipe(
+  //       finalize(() => {
+  //         updateNoticeTemplate$.unsubscribe();
+  //         this.templateTableLoading = false;
+  //       })
+  //     )
+  //     .subscribe(
+  //       message => {
+  //         if (message.code === 0) {
+  //           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+  //         } else {
+  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+  //         }
+  //         this.loadRulesTable();
+  //         this.templateTableLoading = false;
+  //       },
+  //       error => {
+  //         this.templateTableLoading = false;
+  //         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+  //       }
+  //     );
+  // }
 
   onManageRuleModalOk() {
     this.receiversOption.forEach(option => {
       if (option.value == this.rule.receiverId) {
         this.rule.receiverName = option.label;
+      }
+    });
+    // 加上templatemodel
+    this.templatesOption.forEach(option => {
+      if (option.value == this.rule.templateId) {
+        this.rule.templateName = option.label;
       }
     });
     this.rule.tags = [];
@@ -491,14 +737,6 @@ export class AlertNoticeComponent implements OnInit {
     });
     if (this.rule.priorities != undefined) {
       this.rule.priorities = this.rule.priorities.filter(item => item != null && item != 9);
-    }
-    if (this.isLimit) {
-      this.rule.days = this.dayCheckOptions
-        .filter(item => item.checked)
-        .map(item => item.value)
-        .concat();
-    } else {
-      this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
     }
     this.isManageRuleModalOkLoading = true;
     if (this.isManageRuleModalAdd) {
@@ -539,6 +777,57 @@ export class AlertNoticeComponent implements OnInit {
               this.isManageRuleModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadRulesTable();
+            } else {
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+          }
+        );
+    }
+  }
+  onManageTemplateModalOk() {
+
+    this.isManageTemplateModalOkLoading = true;
+    if (this.isManageTemplateModalAdd) {
+      const modalOk$ = this.noticeTemplateSvc
+        .newNoticeTemplate(this.template)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageTemplateModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageTemplateModalVisible = false;
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
+              this.loadTemplatesTable();
+            } else {
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+            }
+          },
+          error => {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+          }
+        );
+    } else {
+      const modalOk$ = this.noticeTemplateSvc
+        .editNoticeTemplate(this.template)
+        .pipe(
+          finalize(() => {
+            modalOk$.unsubscribe();
+            this.isManageTemplateModalOkLoading = false;
+          })
+        )
+        .subscribe(
+          message => {
+            if (message.code === 0) {
+              this.isManageTemplateModalVisible = false;
+              this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+              this.loadTemplatesTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }

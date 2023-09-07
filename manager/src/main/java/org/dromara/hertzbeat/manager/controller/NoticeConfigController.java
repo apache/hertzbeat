@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.controller;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 
 /**
  * Message Notification Configuration API
@@ -101,6 +103,55 @@ public class NoticeConfigController {
         return ResponseEntity.ok(message);
     }
 
+    //###############################################################
+    @PostMapping(path = "/template")
+    @Operation(summary = "Add a notification template", description = "新增一个通知模板")
+    public ResponseEntity<Message<Void>> addNewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
+
+        noticeConfigService.addNoticeTemplate(noticeTemplate);
+        return ResponseEntity.ok(new Message<>("Add success"));
+    }
+
+    @PutMapping(path = "/template")
+    @Operation(summary = "Modify existing notification template information", description = "修改已存在的通知模板信息")
+    public ResponseEntity<Message<Void>> editNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
+        noticeConfigService.editNoticeTemplate(noticeTemplate);
+        return ResponseEntity.ok(new Message<>("Edit success"));
+    }
+
+    @DeleteMapping(path = "/template/{id}")
+    @Operation(summary = "Delete existing notification template information", description = "删除已存在的通知模板信息")
+    public ResponseEntity<Message<Void>> deleteNoticeTemplate(
+            @Parameter(description = "en: Notification template ID,zh: 通知模板ID", example = "6565463543") @PathVariable("id") final Long templateId) {
+        // Returns success if it does not exist or if the deletion is successful
+        // todo 不存在或删除成功都返回成功
+        NoticeTemplate noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
+        if (noticeTemplate == null) {
+            return ResponseEntity.ok(new Message<>("The specified notification template could not be queried, please check whether the parameters are correct"));
+        }
+        noticeConfigService.deleteNoticeTemplate(templateId);
+        return ResponseEntity.ok(new Message<>("Delete success"));
+    }
+
+    @GetMapping(path = "/templates")
+    @Operation(summary = "Get a list of message notification templates based on query filter items",
+            description = "根据查询过滤项获取消息通知模板列表")
+    public ResponseEntity<Message<List<NoticeTemplate>>> getTemplates(
+            @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
+
+        Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (name != null && !"".equals(name)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                predicate = criteriaBuilder.and(predicateName);
+            }
+            return predicate;
+        };
+        List<NoticeTemplate> receiverPage = noticeConfigService.getNoticeTemplates(specification);
+        Message<List<NoticeTemplate>> message = new Message<>(receiverPage);
+        return ResponseEntity.ok(message);
+    }
+
     @PostMapping(path = "/rule")
     @Operation(summary = "Add a notification policy", description = "新增一个通知策略")
     public ResponseEntity<Message<Void>> addNewNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
@@ -150,7 +201,13 @@ public class NoticeConfigController {
     @PostMapping(path = "/receiver/send-test-msg")
     @Operation(summary = "Send test msg to receiver", description = "给指定接收人发送测试消息")
     public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
-        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
+        Byte type=noticeReceiver.getType();
+        NoticeTemplate noticeTemplate=null;
+        if(type!=10L){
+            noticeTemplate=noticeConfigService.getNoticeTemplatesById(Long.valueOf(type));
+        }
+
+        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver,noticeTemplate);
         if (sendFlag) {
             return ResponseEntity.ok(new Message<>());
         }

@@ -1,11 +1,11 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.util.JsonUtil;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
@@ -17,13 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
  * WeChat app alert notify impl
  * @author hdd
+ * @create 2023/04/04
  */
 @Component
 @RequiredArgsConstructor
@@ -53,7 +52,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final RestTemplate restTemplate;
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         String corpId = receiver.getCorpId();
         Integer agentId = receiver.getAgentId();
         String appSecret = receiver.getAppSecret();
@@ -63,7 +62,7 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.TextDTO textDTO = new WeChatAppDTO.TextDTO();
-                textDTO.setContent(generateContent(alert));
+                textDTO.setContent(JSON.toJSONString(alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
                         .msgType(DEFAULT_TYPE)
@@ -75,8 +74,8 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 HttpEntity<WeChatAppDTO> weChatAppEntity = new HttpEntity<>(weChatAppDTO, headers);
                 ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppEntity, WeChatAppReq.class);
                 if (Objects.nonNull(response.getBody()) && !Objects.equals(response.getBody().getErrCode(), 0)) {
-                    log.warn("Send Enterprise WeChat App Error: {}", response.getBody().getErrMsg());
-                    throw new AlertNoticeException("Http StatusCode " + response.getStatusCode() + " Error: " + response.getBody().getErrMsg());
+                    log.warn("Send Enterprise WeChat App Error: {} Failed: {}", receiver.getHookUrl(), response.getBody().getErrMsg());
+                    throw new AlertNoticeException("Http StatusCode " + response.getStatusCode());
                 }
             }
         } catch (Exception e) {
@@ -87,15 +86,6 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Override
     public byte type() {
         return 10;
-    }
-
-
-    private String generateContent(Alert alert){
-        Map<String,Object> contentMap = new HashMap<>(8);
-        contentMap.put("alertDefineId",alert.getAlertDefineId());
-        contentMap.put("content",alert.getContent());
-        contentMap.put("monitorName",alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
-        return JsonUtil.toJson(contentMap);
     }
 
 }

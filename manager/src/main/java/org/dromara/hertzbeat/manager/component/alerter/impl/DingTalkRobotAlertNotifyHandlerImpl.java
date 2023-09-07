@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +37,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
             MarkdownDTO markdownDTO = new MarkdownDTO();
-            markdownDTO.setText(renderContent(alert));
+            markdownDTO.setText(renderContent(noticeTemplate,alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
@@ -77,6 +78,7 @@ public class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHand
     @Override
     protected String templateName() {
         return "alertNotifyDingTalkRobot";
+
     }
 
     /**

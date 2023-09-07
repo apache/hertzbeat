@@ -17,7 +17,11 @@
 
 package org.dromara.hertzbeat.manager.service;
 
+import freemarker.template.TemplateException;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+
+import java.io.IOException;
 
 /**
  * Email delivery service  邮箱发送服务
@@ -35,5 +39,5 @@ public interface MailService {
      * @param alert Alarm data element information  告警数据元信息
      * @return content of email                邮件内容
      */
-    String buildAlertHtmlTemplate(Alert alert);
+    String buildAlertHtmlTemplate(Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException;
 }

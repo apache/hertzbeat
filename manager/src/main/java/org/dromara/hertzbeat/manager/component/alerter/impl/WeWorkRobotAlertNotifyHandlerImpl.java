@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +40,11 @@ import org.springframework.stereotype.Component;
 final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
             WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-            markdownDTO.setContent(renderContent(alert));
+            markdownDTO.setContent(renderContent(noticeTemplate,alert));
             weWorkWebHookDTO.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

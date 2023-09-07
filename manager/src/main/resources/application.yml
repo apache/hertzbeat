@@ -69,18 +69,31 @@ spring:
     activate:
       on-profile: prod
 
+  #  datasource:
+  #    driver-class-name: org.h2.Driver
+  #    username: sa
+  #    password: 123456
+  #    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+  #    hikari:
+  #      max-lifetime: 120000
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
-    hikari:
-      max-lifetime: 120000
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/demo
+    username: root
+    password:
 
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
-
+    open-in-view: true
+  sql:
+    init:
+      username: root
+      password:
+      platform: mysql
+      data-locations: classpath:data.sql
+      mode: always
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:

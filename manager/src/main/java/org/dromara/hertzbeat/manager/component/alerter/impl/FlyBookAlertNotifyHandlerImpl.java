@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +41,10 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
             Content content = new Content();
@@ -56,7 +57,7 @@ public class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImp
             List<FlyBookContent> contents1 = new ArrayList<>();
             FlyBookContent flyBookContent = new FlyBookContent();
             flyBookContent.setTag("text");
-            flyBookContent.setText(renderContent(alert));
+            flyBookContent.setText(renderContent(noticeTemplate,alert));
             contents1.add(flyBookContent);
             FlyBookContent bookContent = new FlyBookContent();
             bookContent.setTag("a");

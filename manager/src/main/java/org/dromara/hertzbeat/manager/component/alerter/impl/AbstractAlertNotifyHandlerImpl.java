@@ -17,22 +17,27 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.TemplateException;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
-import org.dromara.hertzbeat.common.util.CommonUtil;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.springframework.context.event.EventListener;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -40,10 +45,9 @@ import java.util.ResourceBundle;
  * @version 2.1
  * Created by Musk.Chen on 2023/1/16
  */
-@Slf4j
-public abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
+abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
-    protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    protected final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Resource
@@ -55,27 +59,48 @@ public abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandl
     @Resource
     protected AlerterProperties alerterProperties;
 
-    protected String renderContent(Alert alert) {
+
+    protected String renderContent(NoticeTemplate noticeTemplate,Alert alert) throws TemplateException, IOException {
         Context context = new Context();
-        context.setVariable("title", "[" + bundle.getString("alerter.notify.title") + "]");
+
+        StringTemplateLoader stringLoader = new StringTemplateLoader();
+        String freemarkerTemplate= noticeTemplate.getTemplateContent();
+        String firstTemplate = "firstTemplate";
+
+
+        stringLoader.putTemplate(firstTemplate, freemarkerTemplate);
+        Configuration cfg = new Configuration();
+        cfg.setTemplateLoader(stringLoader);
+        freemarker.template.Template template1 = cfg.getTemplate(firstTemplate, Locale.CHINESE);
+
+        Map<String, String> model = new HashMap<>();
+        model.put("title",  bundle.getString("alerter.notify.title"));
+
         if (alert.getTags() != null) {
             alert.getTags().forEach(context::setVariable);
         }
-        context.setVariable("monitorIdLabel", bundle.getString("alerter.notify.monitorId"));
-        context.setVariable("monitorNameLabel", bundle.getString("alerter.notify.monitorName"));
-        context.setVariable("targetLabel", bundle.getString("alerter.notify.target"));
-        context.setVariable("target", alert.getTarget());
+        if (alert.getTags()!=null&&alert.getTags().get("monitorId")!=null){
+            model.put("monitorId",alert.getTags().get("monitorId"));
 
-        context.setVariable("priorityLabel", bundle.getString("alerter.notify.priority"));
-        context.setVariable("priority", bundle.getString("alerter.priority." + alert.getPriority()));
+        }
+        if (alert.getTags()!=null&&alert.getTags().get("monitorName")!=null){
+            model.put("monitorName",alert.getTags().get("monitorName"));
 
-        context.setVariable("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
-        context.setVariable("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        }
+        model.put("monitorIdLabel",  bundle.getString("alerter.notify.monitorId"));
+        model.put("monitorNameLabel",  bundle.getString("alerter.notify.monitorName"));
+        model.put("target",  alert.getTarget());
+        model.put("targetLabel",   bundle.getString("alerter.notify.target"));
+        model.put("priorityLabel",  bundle.getString("alerter.notify.priority"));
+        model.put("priority",   bundle.getString("alerter.priority." + alert.getPriority()));
+        model.put("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
+        model.put("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastTriggerTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        model.put("contentLabel", bundle.getString("alerter.notify.content"));
+        model.put("content", alert.getContent());
 
-        context.setVariable("contentLabel", bundle.getString("alerter.notify.content"));
-        context.setVariable("content", alert.getContent());
 
-        return CommonUtil.removeBlankLine(templateEngine.process(templateName(), context));
+        String template = FreeMarkerTemplateUtils.processTemplateIntoString(template1, model);
+        return  template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }
 
     /**
@@ -85,10 +110,5 @@ public abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandl
      * @return Thymeleaf模板名称
      */
     protected abstract String templateName();
-    
-    @EventListener(SystemConfigChangeEvent.class)
-    public void onEvent(SystemConfigChangeEvent event) {
-        log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
-        this.bundle = ResourceBundleUtil.getBundle("alerter");
-    }
+
 }
