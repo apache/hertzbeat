@@ -10,6 +10,8 @@
 
 > An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.   
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
@@ -41,7 +43,7 @@
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
 > We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
 ----
@@ -164,9 +166,15 @@ Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)
 
 ##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose  
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
+
+##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+
+Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+
+Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
 
@@ -360,6 +368,9 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChenXiangxxxxx"><img src="https://avatars.githubusercontent.com/u/90089594?v=4?s=100" width="100px;" alt="ChenXiangxxxxx"/><br /><sub><b>ChenXiangxxxxx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ChenXiangxxxxx" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Mr-zhou315"><img src="https://avatars.githubusercontent.com/u/10276100?v=4?s=100" width="100px;" alt="Mr.zhou"/><br /><sub><b>Mr.zhou</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Mr-zhou315" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/XimfengYao"><img src="https://avatars.githubusercontent.com/u/17541537?v=4?s=100" width="100px;" alt="姚贤丰"/><br /><sub><b>姚贤丰</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=XimfengYao" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LINGLUOJUN"><img src="https://avatars.githubusercontent.com/u/16778977?v=4?s=100" width="100px;" alt="lingluojun"/><br /><sub><b>lingluojun</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LINGLUOJUN" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.luelueking.com"><img src="https://avatars.githubusercontent.com/u/93204032?v=4?s=100" width="100px;" alt="1ue"/><br /><sub><b>1ue</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luelueking" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.jimmyqiao.top"><img src="https://avatars.githubusercontent.com/u/67301054?v=4?s=100" width="100px;" alt="qyaaaa"/><br /><sub><b>qyaaaa</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=qyaaaa" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

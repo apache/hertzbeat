@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控 <br><span class='help_module_span'>⚠️注意：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
-  en-US: "HertzBeat monitors Docker through general performance indicators such as containers, status, <br><span class='help_module_span'>⚠️Note: In order to monitor container information of Docker, you need to enable the port so that the collection request can obtain the corresponding information.<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
+  en-US: "HertzBeat monitors Docker through general performance metrics such as containers, status, <br><span class='help_module_span'>⚠️Note: In order to monitor container information of Docker, you need to enable the port so that the collection request can obtain the corresponding information.<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
   zh-TW: HertzBeat對Docker容器的通用性能指標（system、containers、stats）進行採集監控<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Docker中的容器資訊，您需要打開埠，讓採集請求獲取到對應的資訊，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C '>點擊查看開啟步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/docker/
@@ -75,10 +75,10 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    # specific monitoring indicators in the indicator group
+    # specific monitoring metrics in the metric group
     # 指标组中的具体监控指标
     fields:
-      # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+      # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: name
         type: 1
@@ -154,7 +154,7 @@ metrics:
       # Whether to enable ssl/tls, that is, http or https, the default is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability indicator monitoring
+      # response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
 
@@ -164,10 +164,10 @@ metrics:
     # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
-    # specific monitoring indicators in the indicator group
+    # specific monitoring metrics in the metric group
     # 指标组中的具体监控指标
     fields:
-      # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+      # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: id
         type: 1
@@ -216,7 +216,7 @@ metrics:
       # Whether to enable ssl/tls, that is, http or https, the default is false
       # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability indicator monitoring
+      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$.*'
@@ -281,7 +281,7 @@ metrics:
       ssl: ^_^ssl^_^
       params:
         stream: false
-      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability indicator monitoring
+      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: jsonPath
       parseScript: '$'

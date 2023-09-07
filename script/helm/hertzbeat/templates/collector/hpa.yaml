@@ -1,0 +1,28 @@
+{{- if .Values.collector.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "hertzbeat.collector" . }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "hertzbeat.collector" . }}
+  minReplicas: {{ .Values.collector.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.collector.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.collector.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.collector.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.collector.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.collector.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

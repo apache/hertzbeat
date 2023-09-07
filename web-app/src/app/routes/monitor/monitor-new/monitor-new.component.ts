@@ -340,5 +340,10 @@ export class MonitorNewComponent implements OnInit {
       this.checkedTags.delete(tag);
     }
   }
+
+  getNumber(rangeString: string, index: number): number | undefined {
+    const rangeArray = JSON.parse(rangeString);
+    return rangeArray[index];
+  }
   // end tag model
 }

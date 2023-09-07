@@ -1,0 +1,29 @@
+{{- if .Values.tsdb.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "hertzbeat.tsdb" . }}
+  annotations:
+  {{- range $key, $value := .Values.tsdb.persistence.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- if eq .Values.tsdb.persistence.resourcePolicy "keep" }}
+    helm.sh/resource-policy: keep
+  {{- end }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+    component: tsdb
+spec:
+  accessModes: 
+    - {{ .Values.tsdb.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.tsdb.persistence.size }}
+  {{- if .Values.tsdb.persistence.storageClass }}
+    {{- if eq "-" .Values.tsdb.persistence.storageClass }}
+  storageClassName: ""
+    {{- else }}
+  storageClassName: {{ .Values.tsdb.persistence.storageClass }}
+    {{- end }}
+  {{- end }}
+{{- end }}
