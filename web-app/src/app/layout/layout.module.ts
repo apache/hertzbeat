@@ -41,6 +41,9 @@ const HEADER_COMPONENTS = [
 
 // passport
 import { LayoutPassportComponent } from './passport/passport.component';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
@@ -62,7 +65,10 @@ const PASSPORT = [LayoutPassportComponent];
     NzSpinModule,
     NzBadgeModule,
     NzAvatarModule,
-    NzIconModule
+    NzIconModule,
+    NzModalModule,
+    NzTagModule,
+    NzDividerModule
   ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
   exports: [...COMPONENTS, ...PASSPORT]
