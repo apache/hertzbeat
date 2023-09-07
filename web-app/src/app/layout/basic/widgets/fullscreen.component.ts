@@ -4,7 +4,7 @@ import screenfull from 'screenfull';
 @Component({
   selector: 'header-fullscreen',
   template: `
-    <i nz-icon [nzType]="status ? 'fullscreen-exit' : 'fullscreen'"></i>
+    <i nz-icon class="mr-sm" [nzType]="status ? 'fullscreen-exit' : 'fullscreen'"></i>
     {{ (status ? 'menu.fullscreen.exit' : 'menu.fullscreen') | i18n }}
   `,
   host: {
