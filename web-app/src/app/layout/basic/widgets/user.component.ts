@@ -80,7 +80,7 @@ import { CONSTS } from '../../../shared/consts';
           <a href="//github.com/dromara/hertzbeat/issues" target="_blank"> {{ 'about.issue' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="fork"></span>
-          <a href="//github.com/dromara/hertzbeat/issues" target="_blank"> {{ 'about.pr' | i18n }} </a>
+          <a href="//github.com/dromara/hertzbeat/pulls" target="_blank"> {{ 'about.pr' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="message"></span>
           <a href="//discord.com/invite/Fb6M73htGr" target="_blank"> {{ 'about.discuss' | i18n }} </a>
