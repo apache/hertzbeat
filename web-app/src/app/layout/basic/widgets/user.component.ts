@@ -126,6 +126,6 @@ export class HeaderUserComponent {
 
   showAndCloseAboutModal() {
     this.isAboutModalVisible = true;
-    setTimeout(() => (this.isAboutModalVisible = false), 6000);
+    setTimeout(() => (this.isAboutModalVisible = false), 12000);
   }
 }
