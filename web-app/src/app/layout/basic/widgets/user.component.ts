@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { SettingsService, User } from '@delon/theme';
 
 import { LocalStorageService } from '../../../service/local-storage.service';
-import {CONSTS} from "../../../shared/consts";
+import { CONSTS } from '../../../shared/consts';
 
 @Component({
   selector: 'header-user',
@@ -94,7 +94,7 @@ import {CONSTS} from "../../../shared/consts";
       </div>
     </nz-modal>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class HeaderUserComponent {
   isAboutModalVisible = false;
@@ -104,7 +104,12 @@ export class HeaderUserComponent {
     return this.settings.user;
   }
 
-  constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {}
+  constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {
+    // @ts-ignore
+    if (router.getCurrentNavigation()?.previousNavigation?.finalUrl.toString() === '/passport/login') {
+      this.showAndCloseAboutModal();
+    }
+  }
 
   logout(): void {
     this.localStorageSvc.clear();
@@ -117,5 +122,10 @@ export class HeaderUserComponent {
 
   disAboutModal() {
     this.isAboutModalVisible = false;
+  }
+
+  showAndCloseAboutModal() {
+    this.isAboutModalVisible = true;
+    setTimeout(() => (this.isAboutModalVisible = false), 6000);
   }
 }
