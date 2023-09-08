@@ -1,6 +1,6 @@
 <app-help-massage-show
-  [help_massage_content]="'tag.help' | i18n"
-  [guild_link]="'tag.help.link' | i18n"
+  [help_massage_content]="'collector.help' | i18n"
+  [guild_link]="'collector.help.link' | i18n"
   [module_name]="'menu.extras.collector'"
   [icon_name]="'cluster'"
 ></app-help-massage-show>
@@ -11,9 +11,19 @@
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
 
+  <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
+    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+    {{ 'collector.online' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
+    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+    {{ 'collector.offline' | i18n }}
+  </button>
+
   <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
-    {{ 'tag.delete' | i18n }}
+    {{ 'collector.delete' | i18n }}
   </button>
 
   <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadCollectorsTable()" class="mobile-hide">
@@ -24,7 +34,7 @@
     style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
-    [placeholder]="'tag.search' | i18n"
+    [placeholder]="'collector.name' | i18n"
     nzSize="default"
     (keyup.enter)="loadCollectorsTable()"
     [(ngModel)]="search"
@@ -49,12 +59,14 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.color' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'collector' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.task' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.pinned' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.dispatched' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%">{{ 'collector.start-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -66,25 +78,69 @@
         (nzCheckedChange)="onItemChecked(data.collector.name, $event)"
       ></td>
       <td nzAlign="center">{{ data.collector.name }}</td>
+      <td nzAlign="center">
+        <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+          <span [style]="'font-size: x-large; font-weight: bolder;' + (data.collector.status == 0 ? 'color: green' : 'color: red')">
+            {{ data.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+          </span>
+        </div>
+      </td>
+      <td nzAlign="center">
+        <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+          <span style="font-size: x-large; font-weight: bolder; color: white">
+            {{ data.pinMonitorNum + data.dispatchMonitorNum }}
+          </span>
+        </div>
+      </td>
+      <td nzAlign="center">
+        <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+          <span style="font-size: x-large; font-weight: bolder; color: white">
+            {{ data.pinMonitorNum }}
+          </span>
+        </div>
+      </td>
+      <td nzAlign="center">
+        <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+          <span style="font-size: x-large; font-weight: bolder; color: white">
+            {{ data.dispatchMonitorNum }}
+          </span>
+        </div>
+      </td>
       <td nzAlign="center">{{ data.collector.ip }}</td>
-      <td nzAlign="center">{{ data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td>
+        {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
+      </td>
       <td nzAlign="center">
         <button
+          *ngIf="data.collector.status == 1"
+          [disabled]="data.collector.name == 'main-default-collector'"
           nz-button
           nzType="primary"
           (click)="onGoOnlineOneCollector(data.collector.name)"
           nz-tooltip
-          [nzTooltipTitle]="'tag.edit' | i18n"
+          [nzTooltipTitle]="'collector.online' | i18n"
         >
-          <i nz-icon nzType="edit" nzTheme="outline"></i>
+          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
         </button>
         <button
+          *ngIf="data.collector.status == 0"
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          (click)="onGoOfflineOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.offline' | i18n"
+        >
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          [disabled]="data.collector.name == 'main-default-collector'"
           nz-button
           nzType="primary"
           nzDanger
           (click)="onDeleteOneCollector(data.collector.name)"
           nz-tooltip
-          [nzTooltipTitle]="'tag.delete' | i18n"
+          [nzTooltipTitle]="'collector.delete' | i18n"
         >
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>

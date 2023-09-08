@@ -84,7 +84,7 @@ export class CollectorComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
+      nzTitle: this.i18nSvc.fanyi('collector.confirm.online-batch'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
@@ -100,7 +100,7 @@ export class CollectorComponent implements OnInit {
       return;
     }
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
+      nzTitle: this.i18nSvc.fanyi('collector.confirm.offline-batch'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
@@ -128,7 +128,7 @@ export class CollectorComponent implements OnInit {
     let collectors = new Set<string>();
     collectors.add(collector);
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzTitle: this.i18nSvc.fanyi('collector.confirm.online'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
@@ -142,7 +142,7 @@ export class CollectorComponent implements OnInit {
     let collectors = new Set<string>();
     collectors.add(collector);
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzTitle: this.i18nSvc.fanyi('collector.confirm.offline'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
@@ -179,17 +179,17 @@ export class CollectorComponent implements OnInit {
       message => {
         onlineCollectors$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.operate-success'), '');
           this.loadCollectorsTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.operate-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         onlineCollectors$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.operate-fail'), error.msg);
       }
     );
   }
@@ -200,17 +200,17 @@ export class CollectorComponent implements OnInit {
       message => {
         offlineCollectors$.unsubscribe();
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.operate-success'), '');
           this.loadCollectorsTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.operate-fail'), message.msg);
         }
       },
       error => {
         this.tableLoading = false;
         offlineCollectors$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.operate-fail'), error.msg);
       }
     );
   }
