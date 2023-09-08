@@ -37,6 +37,7 @@
     },
     "extras": {
       "": "更多",
+      "collector": "采集集群",
       "tags": "标签管理",
       "define": "监控模版",
       "help": "帮助中心",
@@ -204,9 +205,7 @@
   "alert.center.time.tip": "此告警期间统计触发 {{times}} 次告警",
   "alert.center.first-time": "开始",
   "alert.center.last-time": "最新",
-  "alert.center.notify.no-delete": "未选中任何待删除项!",
   "alert.center.confirm.delete": "请确认是否删除!",
-  "alert.center.confirm.delete-batch": "请确认是否批量删除!",
   "alert.center.confirm.clear-all": "请确认是否清空所有告警记录!",
   "alert.center.notify.no-mark": "未选中任何待标记项!",
   "alert.center.confirm.mark-done-batch": "请确认是否批量标记已处理!",

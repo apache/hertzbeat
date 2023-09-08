@@ -37,6 +37,7 @@
     },
     "extras": {
       "": "More",
+      "collector": "Collector Cluster",
       "tags": "Tags Manage",
       "define": "Monitor Template",
       "help": "Help Center",
@@ -204,9 +205,7 @@
   "alert.center.time.tip": "Alerts were triggered {{times}} times during this alert period",
   "alert.center.first-time": "Start Time",
   "alert.center.last-time": "Latest Time",
-  "alert.center.notify.no-delete": "No items selected for deletion!",
   "alert.center.confirm.delete": "Please confirm whether to delete!",
-  "alert.center.confirm.delete-batch": "Please confirm whether to delete in batch!",
   "alert.center.confirm.clear-all": "Please confirm whether to clear all alerts!",
   "alert.center.notify.no-mark": "No items selected for mark!",
   "alert.center.confirm.mark-done-batch": "Please confirm whether to mark processed in batch!",
