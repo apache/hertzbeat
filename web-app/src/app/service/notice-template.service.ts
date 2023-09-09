@@ -3,8 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
-import {NoticeTemplate} from "../pojo/NoticeTemplate";
-import {NoticeRule} from "../pojo/NoticeRule";
+import { NoticeRule } from '../pojo/NoticeRule';
+import { NoticeTemplate } from '../pojo/NoticeTemplate';
 
 const notice_template_uri = '/notice/template';
 const notice_templates_uri = '/notice/templates';
@@ -16,7 +16,6 @@ export class NoticeTemplateService {
   constructor(private http: HttpClient) {}
 
   public newNoticeTemplate(body: NoticeTemplate): Observable<Message<any>> {
-
     return this.http.post<Message<any>>(notice_template_uri, body);
   }
 

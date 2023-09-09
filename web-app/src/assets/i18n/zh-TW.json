@@ -282,6 +282,7 @@
   "alert.applier.type.discord": "Discord",
   "alert.applier.type.weChatApp": "企業微信應用",
   "alert.applier.type.smn": "華為雲SMN",
+  "alert.applier.type.serverchan": "ServerChan",
   "alert.notice.rule": "告警通知策略",
   "alert.notice.rule.new": "新增通知策略",
   "alert.notice.rule.edit": "編輯通知策略",

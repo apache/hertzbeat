@@ -54,6 +54,14 @@ ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
+insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (12,'serverchanExample',12,now(),now(),'#### [${title}]
+##### **${targetLabel}** : ${target}
+<#if (monitorId??)>##### **${monitorIdLabel}** : ${monitorId} </#if>
+<#if (monitorName??)>##### **${monitorNameLabel}** : ${monitorName} </#if>
+##### **${priorityLabel}** : ${priority}
+##### **${triggerTimeLabel}** : ${triggerTime}
+##### **${contentLabel}** : ${content}');
+
 insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (1,'emailExample',1,now(),now(),'<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>

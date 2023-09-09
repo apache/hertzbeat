@@ -278,6 +278,7 @@
   "alert.applier.type.discord": "Discord",
   "alert.applier.type.weChatApp": "企业微信应用",
   "alert.applier.type.smn": "华为云SMN",
+  "alert.applier.type.serverchan": "Server酱(ServerChan)",
   "alert.notice.type.smn-projectId": "项目ID",
   "alert.notice.type.smn-region": "地域",
   "alert.notice.type.smn-topicUrn": "TopicUrn",

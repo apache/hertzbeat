@@ -283,6 +283,7 @@
   "alert.applier.type.discord": "Discord",
   "alert.applier.type.weChatApp": "WeChatApp",
   "alert.applier.type.smn": "HuaWei Cloud SMN",
+  "alert.applier.type.serverchan": "ServerChan",
   "alert.notice.rule": "Alert Notice Policy",
   "alert.notice.rule.new": "New Notice Policy",
   "alert.notice.rule.edit": "Edit Notice Policy",

@@ -50,8 +50,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Resource
-    protected TemplateEngine templateEngine;
 
     @Resource
     protected RestTemplate restTemplate;
@@ -65,26 +63,26 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         String freemarkerTemplate= noticeTemplate.getTemplateContent();
-        String firstTemplate = "firstTemplate";
-
-
-        stringLoader.putTemplate(firstTemplate, freemarkerTemplate);
+        String templateName = "freemakerTemplate";
+        stringLoader.putTemplate(templateName, freemarkerTemplate);
         Configuration cfg = new Configuration();
         cfg.setTemplateLoader(stringLoader);
-        freemarker.template.Template template1 = cfg.getTemplate(firstTemplate, Locale.CHINESE);
+        freemarker.template.Template templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
 
-        Map<String, String> model = new HashMap<>();
+        Map<String, String> model = new HashMap<>(16);
         model.put("title",  bundle.getString("alerter.notify.title"));
 
         if (alert.getTags() != null) {
             alert.getTags().forEach(context::setVariable);
         }
-        if (alert.getTags()!=null&&alert.getTags().get("monitorId")!=null){
-            model.put("monitorId",alert.getTags().get("monitorId"));
+        String monitorId=alert.getTags().get("monitorId");
+        String monitorName=alert.getTags().get("monitorName");
+        if (alert.getTags()!=null&&monitorId!=null){
+            model.put("monitorId",monitorId);
 
         }
-        if (alert.getTags()!=null&&alert.getTags().get("monitorName")!=null){
-            model.put("monitorName",alert.getTags().get("monitorName"));
+        if (alert.getTags()!=null&&monitorName!=null){
+            model.put("monitorName",monitorName);
 
         }
         model.put("monitorIdLabel",  bundle.getString("alerter.notify.monitorId"));
@@ -99,9 +97,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("content", alert.getContent());
 
 
-        String template = FreeMarkerTemplateUtils.processTemplateIntoString(template1, model);
+        String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
         return  template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }
+
 
     /**
      * Get the Thymeleaf template name

@@ -103,11 +103,10 @@ public class NoticeConfigController {
         return ResponseEntity.ok(message);
     }
 
-    //###############################################################
+
     @PostMapping(path = "/template")
     @Operation(summary = "Add a notification template", description = "新增一个通知模板")
     public ResponseEntity<Message<Void>> addNewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
-
         noticeConfigService.addNoticeTemplate(noticeTemplate);
         return ResponseEntity.ok(new Message<>("Add success"));
     }
@@ -201,13 +200,7 @@ public class NoticeConfigController {
     @PostMapping(path = "/receiver/send-test-msg")
     @Operation(summary = "Send test msg to receiver", description = "给指定接收人发送测试消息")
     public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
-        Byte type=noticeReceiver.getType();
-        NoticeTemplate noticeTemplate=null;
-        if(type!=10L){
-            noticeTemplate=noticeConfigService.getNoticeTemplatesById(Long.valueOf(type));
-        }
-
-        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver,noticeTemplate);
+        boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
         if (sendFlag) {
             return ResponseEntity.ok(new Message<>());
         }

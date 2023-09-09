@@ -209,15 +209,7 @@ public interface NoticeConfigService {
      * @param noticeReceiver recipient information  接收人信息
      * @return true send success | false send fail
      */
-
-    boolean sendTestMsg(NoticeReceiver noticeReceiver,NoticeTemplate noticeTemplate);
-    /**
-     * According to the alarm information matching all notification policies, filter out the recipients and templates who need to be notified
-     * 根据告警信息与所有通知策略匹配，过滤出需要通知的接收人以及对应通知模板
-     *
-     * @param alert Alarm information       告警信息
-     * @return <Receiver,Template>    <接收人,通知模板>
-     */
+    boolean sendTestMsg(NoticeReceiver noticeReceiver);
 
 
 

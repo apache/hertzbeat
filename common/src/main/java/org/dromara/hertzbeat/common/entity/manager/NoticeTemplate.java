@@ -38,8 +38,9 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * Notification template entity
- * 通知模板
+ * Notification strategy entity
+ * 通知策略
+ * @author eden4701
  *
  */
 @Entity

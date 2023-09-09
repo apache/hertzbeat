@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-
-import {NoticeTemplateService} from "./notice-template.service";
+import { NoticeTemplateService } from './notice-template.service';
 
 describe('NoticeTemplateService', () => {
   let service: NoticeTemplateService;

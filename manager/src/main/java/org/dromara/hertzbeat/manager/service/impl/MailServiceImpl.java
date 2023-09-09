@@ -71,7 +71,7 @@ public class MailServiceImpl implements MailService {
         Configuration cfg = new Configuration();
         cfg.setTemplateLoader(stringLoader);
         freemarker.template.Template templateMail = cfg.getTemplate(mailTemplate, Locale.CHINESE);
-        Map<String, String> model = new HashMap<>();
+        Map<String, String> model = new HashMap<>(16);
         model.put("nameTitle",  bundle.getString("alerter.notify.title"));
         model.put("nameMonitorId",  bundle.getString("alerter.notify.monitorId"));
         model.put("nameMonitorName",  bundle.getString("alerter.notify.monitorName"));

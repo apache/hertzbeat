@@ -336,7 +336,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public boolean sendTestMsg(NoticeReceiver noticeReceiver,NoticeTemplate noticeTemplate) {
+    public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
         Alert alert = new Alert();
         alert.setTarget(ALERT_TEST_TARGET);
         alert.setContent(ALERT_TEST_CONTENT);
@@ -344,6 +344,8 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setFirstAlarmTime(System.currentTimeMillis());
         alert.setLastAlarmTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
+        Byte type=noticeReceiver.getType();
+        NoticeTemplate noticeTemplate=getNoticeTemplatesById(Long.valueOf(type));;
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver,noticeTemplate, alert);
     }
 

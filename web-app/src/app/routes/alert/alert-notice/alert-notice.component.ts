@@ -7,12 +7,11 @@ import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { NoticeRule, TagItem } from '../../../pojo/NoticeRule';
-import {NoticeTemplate} from "../../../pojo/NoticeTemplate";
+import { NoticeTemplate } from '../../../pojo/NoticeTemplate';
 import { NoticeReceiverService } from '../../../service/notice-receiver.service';
-import { NoticeTemplateService } from '../../../service/notice-template.service';
 import { NoticeRuleService } from '../../../service/notice-rule.service';
+import { NoticeTemplateService } from '../../../service/notice-template.service';
 import { TagService } from '../../../service/tag.service';
-
 
 @Component({
   selector: 'app-alert-notice',
@@ -73,7 +72,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
-  loadTemplatesTable(){
+  loadTemplatesTable() {
     this.templateTableLoading = true;
     let templatesInit$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
       message => {
@@ -91,7 +90,6 @@ export class AlertNoticeComponent implements OnInit {
         templatesInit$.unsubscribe();
       }
     );
-
   }
   loadRulesTable() {
     this.ruleTableLoading = true;
@@ -320,8 +318,6 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
 
-
-
   isManageTemplateModalVisible: boolean = false;
   isManageTemplateModalAdd: boolean = true;
   isManageTemplateModalOkLoading: boolean = false;
@@ -338,15 +334,10 @@ export class AlertNoticeComponent implements OnInit {
     this.template = template;
     this.isManageTemplateModalVisible = true;
     this.isManageTemplateModalAdd = false;
-
-
   }
   onShowOneNoticeTemplate(template: NoticeTemplate) {
     this.template = template;
-    this.isShowTemplateModalVisible=true;
-
-
-
+    this.isShowTemplateModalVisible = true;
   }
 
   // start 新增或修改通知策略弹出框
@@ -413,7 +404,6 @@ export class AlertNoticeComponent implements OnInit {
       .concat();
   }
 
-
   onNoticeRuleLimitChange(limit: boolean) {
     if (!limit) {
       this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
@@ -424,10 +414,8 @@ export class AlertNoticeComponent implements OnInit {
         .concat();
     }
   }
-  loadReciverType(reciverId:number){
-
+  loadReciverType(reciverId: number) {
     return 5;
-
   }
   loadReceiversOption() {
     let receiverOption$ = this.noticeReceiverSvc.getReceivers().subscribe(
@@ -448,7 +436,7 @@ export class AlertNoticeComponent implements OnInit {
                 case 2:
                   label = `${label}WebHook`;
                   break;
-                case 10:
+                case 3:
                   label = `${label}WeChat`;
                   break;
                 case 4:
@@ -464,13 +452,19 @@ export class AlertNoticeComponent implements OnInit {
                   label = `${label}TelegramBot`;
                   break;
                 case 8:
-                  label = `${label}Slack`;
+                  label = `${label}SlackWebHook`;
                   break;
                 case 9:
-                  label = `${label}Discord`;
+                  label = `${label}Discord Bot`;
+                  break;
+                case 10:
+                  label = `${label}weChatApp`;
                   break;
                 case 11:
-                  label = `${label}SMN`;
+                  label = `${label}smn`;
+                  break;
+                case 12:
+                  label = `${label}ServerChan`;
                   break;
               }
               this.receiversOption.push({
@@ -490,60 +484,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
-  loadTemplatesByReciverTypeOption(receiverType: number) {
-    let templateOption$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
-      message => {
-        if (message.code === 0) {
-          let data = message.data;
-          this.templatesOption = [];
-          if (data != undefined) {
-            data.forEach(item => {
-              if(item.type == receiverType){
-                let label = `${item.name}-`;
-                switch (item.type) {
-                  case 0:
-                    label = `${label}Phone`;
-                    break;
-                  case 1:
-                    label = `${label}Email`;
-                    break;
-                  case 2:
-                    label = `${label}WebHook`;
-                    break;
-                  case 3:
-                    label = `${label}WeChat`;
-                    break;
-                  case 4:
-                    label = `${label}WeWork`;
-                    break;
-                  case 5:
-                    label = `${label}DingDing`;
-                    break;
-                  case 6:
-                    label = `${label}FeiShu`;
-                    break;
-                  case 7:
-                    label = `${label}TelegramBot`;
-                    break;
-                }
-                this.templatesOption.push({
-                  value: item.id,
-                  label: label
-                });}
 
-            });
-          }
-        } else {
-          console.warn(message.msg);
-        }
-        templateOption$.unsubscribe();
-      },
-      error => {
-        console.error(error.msg);
-        templateOption$.unsubscribe();
-      }
-    );
-  }
   loadTemplatesOption() {
     let templateOption$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
       message => {
@@ -563,7 +504,7 @@ export class AlertNoticeComponent implements OnInit {
                 case 2:
                   label = `${label}WebHook`;
                   break;
-                case 10:
+                case 3:
                   label = `${label}WeChat`;
                   break;
                 case 4:
@@ -579,20 +520,25 @@ export class AlertNoticeComponent implements OnInit {
                   label = `${label}TelegramBot`;
                   break;
                 case 8:
-                  label = `${label}Slack`;
+                  label = `${label}SlackWebHook`;
                   break;
                 case 9:
-                  label = `${label}Discord`;
+                  label = `${label}Discord Bot`;
+                  break;
+                case 10:
+                  label = `${label}weChatApp`;
                   break;
                 case 11:
-                  label = `${label}SMN`;
+                  label = `${label}smn`;
+                  break;
+                case 12:
+                  label = `${label}ServerChan`;
                   break;
               }
               this.templatesOption.push({
                 value: item.id,
                 label: label
               });
-
             });
           }
         } else {
@@ -683,32 +629,6 @@ export class AlertNoticeComponent implements OnInit {
         }
       );
   }
-  // updateNoticeTemplate(noticeTemplate: NoticeTemplate) {
-  //   this.templateTableLoading = true;
-  //   const updateNoticeTemplate$ = this.noticeTemplateSvc
-  //     .editNoticeTemplate(noticeTemplate)
-  //     .pipe(
-  //       finalize(() => {
-  //         updateNoticeTemplate$.unsubscribe();
-  //         this.templateTableLoading = false;
-  //       })
-  //     )
-  //     .subscribe(
-  //       message => {
-  //         if (message.code === 0) {
-  //           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-  //         } else {
-  //           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
-  //         }
-  //         this.loadRulesTable();
-  //         this.templateTableLoading = false;
-  //       },
-  //       error => {
-  //         this.templateTableLoading = false;
-  //         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
-  //       }
-  //     );
-  // }
 
   onManageRuleModalOk() {
     this.receiversOption.forEach(option => {
@@ -788,7 +708,6 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
   onManageTemplateModalOk() {
-
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
       const modalOk$ = this.noticeTemplateSvc
