@@ -369,6 +369,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="http://www.luelueking.com"><img src="https://avatars.githubusercontent.com/u/93204032?v=4?s=100" width="100px;" alt="1ue"/><br /><sub><b>1ue</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=luelueking" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.jimmyqiao.top"><img src="https://avatars.githubusercontent.com/u/67301054?v=4?s=100" width="100px;" alt="qyaaaa"/><br /><sub><b>qyaaaa</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=qyaaaa" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://novohit.top"><img src="https://avatars.githubusercontent.com/u/101090395?v=4?s=100" width="100px;" alt="novohit"/><br /><sub><b>novohit</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=novohit" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
