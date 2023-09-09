@@ -80,28 +80,28 @@
       <td nzAlign="center">{{ data.collector.name }}</td>
       <td nzAlign="center">
         <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-          <span [style]="'font-size: x-large; font-weight: bolder;' + (data.collector.status == 0 ? 'color: green' : 'color: red')">
+          <span [style]="'font-size: large; font-weight: bolder;' + (data.collector.status == 0 ? 'color: green' : 'color: red')">
             {{ data.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
           </span>
         </div>
       </td>
       <td nzAlign="center">
         <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-          <span style="font-size: x-large; font-weight: bolder; color: white">
+          <span style="font-size: large; font-weight: bolder; color: white">
             {{ data.pinMonitorNum + data.dispatchMonitorNum }}
           </span>
         </div>
       </td>
       <td nzAlign="center">
         <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-          <span style="font-size: x-large; font-weight: bolder; color: white">
+          <span style="font-size: large; font-weight: bolder; color: white">
             {{ data.pinMonitorNum }}
           </span>
         </div>
       </td>
       <td nzAlign="center">
         <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-          <span style="font-size: x-large; font-weight: bolder; color: white">
+          <span style="font-size: large; font-weight: bolder; color: white">
             {{ data.dispatchMonitorNum }}
           </span>
         </div>
