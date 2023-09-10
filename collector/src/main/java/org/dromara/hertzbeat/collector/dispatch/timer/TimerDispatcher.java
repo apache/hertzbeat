@@ -17,22 +17,26 @@
 
 package org.dromara.hertzbeat.collector.dispatch.timer;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * job timer dispatcher
  * @author tomsun28
- *
  */
 @Component
-public class TimerDispatcher implements TimerDispatch {
+@Slf4j
+public class TimerDispatcher implements TimerDispatch, DisposableBean {
 
     /**
      * time round schedule
@@ -55,7 +59,12 @@ public class TimerDispatcher implements TimerDispatch {
      * jobId - listener
      */
     private final Map<Long, CollectResponseEventListener> eventListeners;
-
+    
+    /**
+     * is dispatcher online running
+     */
+    private final AtomicBoolean started;
+    
     public TimerDispatcher() {
         this.wheelTimer = new HashedWheelTimer(r -> {
             Thread ret = new Thread(r, "wheelTimer");
@@ -64,11 +73,16 @@ public class TimerDispatcher implements TimerDispatch {
         }, 1, TimeUnit.SECONDS, 512);
         this.currentCyclicTaskMap = new ConcurrentHashMap<>(64);
         this.currentTempTaskMap = new ConcurrentHashMap<>(8);
-        eventListeners = new ConcurrentHashMap<>(8);
+        this.eventListeners = new ConcurrentHashMap<>(8);
+        this.started = new AtomicBoolean(true);
     }
 
     @Override
     public void addJob(Job addJob, CollectResponseEventListener eventListener) {
+        if (!this.started.get()) {
+            log.warn("Collector is offline, can not dispatch collect jobs.");
+            return;
+        }
         WheelTimerTask timerJob = new WheelTimerTask(addJob);
         if (addJob.isCyclic()) {
             Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
@@ -82,6 +96,10 @@ public class TimerDispatcher implements TimerDispatch {
 
     @Override
     public void cyclicJob(WheelTimerTask timerTask, long interval, TimeUnit timeUnit) {
+        if (!this.started.get()) {
+            log.warn("Collector is offline, can not dispatch collect jobs.");
+            return;
+        }
         Long jobId = timerTask.getJob().getId();
         // 判断此周期性job是否已经被取消
         if (currentCyclicTaskMap.containsKey(jobId)) {
@@ -106,12 +124,23 @@ public class TimerDispatcher implements TimerDispatch {
     }
     
     @Override
-    public void clearJobs() {
+    public void goOnline() {
+        currentCyclicTaskMap.forEach((key, value) -> value.cancel());
+        currentCyclicTaskMap.clear();
+        currentTempTaskMap.forEach((key, value) -> value.cancel());
+        currentTempTaskMap.clear();
+        started.set(true);
+    }
+    
+    @Override
+    public void goOffline() {
+        started.set(false);
         currentCyclicTaskMap.forEach((key, value) -> value.cancel());
         currentCyclicTaskMap.clear();
         currentTempTaskMap.forEach((key, value) -> value.cancel());
         currentTempTaskMap.clear();
     }
+    
     
     @Override
     public void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps) {
@@ -120,5 +149,10 @@ public class TimerDispatcher implements TimerDispatch {
         if (eventListener != null) {
             eventListener.response(metricsDataTemps);
         }
+    }
+    
+    @Override
+    public void destroy() throws Exception {
+        this.wheelTimer.stop();
     }
 }

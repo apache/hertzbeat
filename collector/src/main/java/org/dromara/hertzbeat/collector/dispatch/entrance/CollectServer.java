@@ -7,6 +7,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.CollectOneTimeDataProcessor;
+import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoCloseProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
@@ -61,6 +62,7 @@ public class CollectServer {
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new GoOfflineProcessor());
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new GoOnlineProcessor());
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_CLOSE, new GoCloseProcessor(this));
     }
 
     public void shutdown() {

@@ -62,9 +62,14 @@ public interface TimerDispatch {
     void deleteJob(long jobId, boolean isCyclic);
     
     /**
-     * clear existed jobs
+     * job dispatcher go online
      */
-    void clearJobs();
+    void goOnline();
+    
+    /**
+     * job dispatcher go offline
+     */
+    void goOffline();
 
     /**
      * 一次性同步采集任务采集结果通知监听器

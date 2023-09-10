@@ -32,6 +32,7 @@ import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -40,11 +41,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Indicator group collection task and response data scheduler
@@ -54,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Component
 @Slf4j
-public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatch {
+public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatch, DisposableBean {
 
     /**
      * Metric group collection task timeout value
@@ -63,7 +61,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private static final long DURATION_TIME = 240_000L;
     /**
      * trigger sub task max num
-     * 触发子任务最大数量
+     * 触发子任务最大数量``````````````
      */
     private static final int MAX_SUB_TASK_NUM = 50;
     private static final Gson GSON = new Gson();
@@ -94,10 +92,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
 
     private final WorkerPool workerPool;
 
-    private final AtomicBoolean started = new AtomicBoolean(false);
-
-    private final Lock lock = new ReentrantLock();
-
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
                             TimerDispatch timerDispatch,
                             CommonDataQueue commonDataQueue,
@@ -115,17 +109,11 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             thread.setDaemon(true);
             return thread;
         });
-
         this.start();
     }
 
     public void start() {
-        lock.lock();
         try {
-            if (started.get()) {
-                return;
-            }
-
             // Pull the indicator group collection task from the task queue and put it into the thread pool for execution
             // 从任务队列拉取指标组采集任务放入线程池执行
             poolExecutor.execute(() -> {
@@ -148,7 +136,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                                 jobRequestQueue.addJob(metricsCollect);
                             }
                         } catch (InterruptedException ignored) {
+                            log.info("[Dispatcher]-metrics-task-dispatcher has been interrupt when sleep to close.");
+                            Thread.currentThread().interrupt();
                         }
+                    } catch (InterruptedException interruptedException) {
+                        log.info("[Dispatcher]-metrics-task-dispatcher has been interrupt to close.");
+                        Thread.currentThread().interrupt();
                     } catch (Exception e) {
                         log.error("[Dispatcher]-{}.", e.getMessage(), e);
                     }
@@ -184,29 +177,16 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             }
                         }
                         Thread.sleep(20000);
+                    } catch (InterruptedException interruptedException) {
+                        log.info("[Dispatcher]-metrics-task-monitor has been interrupt to close.");
+                        Thread.currentThread().interrupt();
                     } catch (Exception e) {
-                        log.error("[Monitor]-{}.", e.getMessage(), e);
+                        log.error("[Task Monitor]-{}.", e.getMessage(), e);
                     }
                 }
             });
-
-            started.set(true);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void shutdown() {
-        lock.lock();
-        try {
-            if (!this.started.get()) {
-                return;
-            }
-            this.poolExecutor.shutdownNow();
-            this.timerDispatch.clearJobs();
-            started.set(false);
-        } finally {
-            lock.unlock();
+        } catch (Exception e) {
+            log.error("Common Dispatcher error: {}.", e.getMessage(), e);
         }
     }
 
@@ -373,7 +353,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         return mapList;
     }
-
+    
+    @Override
+    public void destroy() throws Exception {
+        if (poolExecutor != null) {
+            poolExecutor.shutdownNow();
+        }
+    }
+    
     @Data
     @AllArgsConstructor
     private static class MetricsTime {

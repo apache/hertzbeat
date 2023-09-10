@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.remoting.netty;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,13 +35,14 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import io.netty.handler.timeout.IdleState;
-import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
+import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.remoting.RemotingClient;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
+
+import java.util.concurrent.ThreadFactory;
 
 /**
  * netty client
@@ -68,9 +70,16 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-
         this.threadPool.execute(() -> {
-            this.workerGroup = new NioEventLoopGroup();
+            ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                                                  .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                      log.error("NettyClientWorker has uncaughtException.");
+                                                      log.error(throwable.getMessage(), throwable);
+                                                  })
+                                                  .setDaemon(true)
+                                                  .setNameFormat("netty-client-worker-%d")
+                                                  .build();
+            this.workerGroup = new NioEventLoopGroup(threadFactory);
             this.bootstrap.group(workerGroup)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.nettyClientConfig.getConnectTimeoutMillis())
                     .channel(NioSocketChannel.class)
@@ -83,7 +92,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
             this.channel = null;
             boolean first = true;
-            while (first || this.channel == null || !this.channel.isActive()) {
+            while (SpringContextHolder.isActive() && (first || this.channel == null || !this.channel.isActive())) {
                 first = false;
                 try {
                     this.channel = this.bootstrap

@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.remoting.netty;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -39,8 +40,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.timeout.IdleState;
-import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
@@ -49,6 +48,7 @@ import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * netty server
@@ -77,13 +77,28 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
         this.threadPool.execute(() -> {
             int port = this.nettyServerConfig.getPort();
-
+            ThreadFactory bossThreadFactory = new ThreadFactoryBuilder()
+                                                      .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                          log.error("NettyServerBoss has uncaughtException.");
+                                                          log.error(throwable.getMessage(), throwable);
+                                                      })
+                                                      .setDaemon(true)
+                                                      .setNameFormat("netty-server-boss-%d")
+                                                      .build();
+            ThreadFactory workerThreadFactory = new ThreadFactoryBuilder()
+                                                        .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                            log.error("NettyServerWorker has uncaughtException.");
+                                                            log.error(throwable.getMessage(), throwable);
+                                                        })
+                                                        .setDaemon(true)
+                                                        .setNameFormat("netty-server-worker-%d")
+                                                        .build();
             if (this.useEpoll()) {
-                bossGroup = new EpollEventLoopGroup(1);
-                workerGroup = new EpollEventLoopGroup();
+                bossGroup = new EpollEventLoopGroup(bossThreadFactory);
+                workerGroup = new EpollEventLoopGroup(workerThreadFactory);
             } else {
-                bossGroup = new NioEventLoopGroup(1);
-                workerGroup = new NioEventLoopGroup();
+                bossGroup = new NioEventLoopGroup(bossThreadFactory);
+                workerGroup = new NioEventLoopGroup(workerThreadFactory);
             }
 
             try {
