@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.collector.dispatch;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
@@ -104,6 +105,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             thread.setDaemon(true);
             return thread;
         });
+        //增加线程池延迟10秒钟优雅停机
+        MoreExecutors.addDelayedShutdownHook(poolExecutor, 10, TimeUnit.SECONDS);
         // Pull the indicator group collection task from the task queue and put it into the thread pool for execution
         // 从任务队列拉取指标组采集任务放入线程池执行
         poolExecutor.execute(() -> {
