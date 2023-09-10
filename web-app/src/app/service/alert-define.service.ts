@@ -61,4 +61,21 @@ export class AlertDefineService {
     const options = { params: httpParams };
     return this.http.get<Message<Page<AlertDefine>>>(alert_defines_uri, options);
   }
+
+  public getAlertDefinesByName(pageIndex: number, pageSize: number, app: string): Observable<Message<Page<AlertDefine>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+
+    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      sort: 'id',
+      order: 'desc',
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      app: app
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<AlertDefine>>>(`${alert_defines_uri}/app`, options);
+  }
 }

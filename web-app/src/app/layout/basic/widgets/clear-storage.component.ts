@@ -7,7 +7,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 @Component({
   selector: 'header-clear-storage',
   template: `
-    <i nz-icon nzType="tool"></i>
+    <i nz-icon class="mr-sm" nzType="tool"></i>
     {{ 'menu.clear.local.storage' | i18n }}
   `,
   host: {

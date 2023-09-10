@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { SettingsService, User } from '@delon/theme';
+import { Component, Inject } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
 import { CONSTS } from 'src/app/shared/consts';
@@ -48,7 +49,7 @@ import { CONSTS } from 'src/app/shared/consts';
               <header-clear-storage></header-clear-storage>
             </div>
             <div nz-menu-item routerLink="/setting/tags">
-              <i nz-icon nzType="tag"></i>
+              <i nz-icon nzType="tag" class="mr-sm"></i>
               <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
             </div>
             <div nz-menu-item>
@@ -65,7 +66,7 @@ import { CONSTS } from 'src/app/shared/consts';
           <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="avatar"></nz-avatar>
           <div class="alain-default__aside-user-info">
             <strong>{{ user.name }}</strong>
-            <p class="mb0">{{ 'app.role.admin' | i18n }}</p>
+            <p class="mb0">{{ role }}</p>
           </div>
         </div>
       </ng-template>
@@ -109,5 +110,15 @@ export class LayoutBasicComponent {
     return this.settings.user;
   }
 
-  constructor(private settings: SettingsService) {}
+  get role(): string {
+    let userTmp = this.settings.user;
+    if (userTmp == undefined || userTmp.role == undefined) {
+      return this.i18nSvc.fanyi('app.role.admin');
+    } else {
+      let roles: string[] = JSON.parse(userTmp.role);
+      return roles.length > 0 ? roles[0] : '';
+    }
+  }
+
+  constructor(private settings: SettingsService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 }

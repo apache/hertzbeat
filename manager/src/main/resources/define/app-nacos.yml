@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 Nacos 注册配置中心的通用指标进行测量监控。<br>您可以点击 “<i>新建 Nacos注册配置中心</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors Nacos Server through general performance indicator. You could click the "<i>New Nacos Server</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  en-US: Hertzbeat monitors Nacos Server through general performance metric. You could click the "<i>New Nacos Server</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對Nacos注册配寘中心的通用名額進行量測監控。<br>您可以點擊“<i>新建Nacos注册配寘中心</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/nacos
