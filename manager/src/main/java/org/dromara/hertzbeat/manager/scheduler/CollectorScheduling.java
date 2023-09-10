@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.manager.scheduler;
 
-import io.netty.channel.Channel;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**

@@ -173,6 +173,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                                 log.error("assigning job {} content is null.", addingJobId);
                                 continue;
                             }
+                            addedJobIds.add(addingJobId);
                             collectJobService.addAsyncCollectJob(job);
                         }
                         assignJobs.addAssignJobs(addedJobIds);
@@ -191,6 +192,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                                 log.error("assigning job {} content is null.", addingJobId);
                                 continue;
                             }
+                            addedJobIds.add(addingJobId);
                             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
                                     .setMsg(JsonUtil.toJson(job))

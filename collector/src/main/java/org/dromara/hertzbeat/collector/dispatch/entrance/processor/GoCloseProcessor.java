@@ -29,6 +29,7 @@ public class GoCloseProcessor implements NettyRemotingProcessor {
         this.collectServer.shutdown();
         SpringApplication.exit(SpringContextHolder.getApplicationContext(), () -> 0);
         SpringContextHolder.shutdown();
+        // todo shutdown all 还有非 daemon 线程导致进程未停
         return null;
     }
 }

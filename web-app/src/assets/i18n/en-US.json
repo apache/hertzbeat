@@ -501,7 +501,7 @@
   "collector": "Collector",
   "collector.name": "Collector Name",
   "collector.status": "Online Status",
-  "collector.task": "Number of Tasks",
+  "collector.task": "Total Number of Tasks",
   "collector.start-time": "Start Time",
   "collector.ip": "IP Address",
   "collector.node": "Node Name",
