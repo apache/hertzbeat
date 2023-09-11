@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.collector.collect.mq;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -77,14 +78,13 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         Runtime runtime = Runtime.getRuntime();
         int corePoolSize = Math.max(8, runtime.availableProcessors());
         int maximumPoolSize = Math.max(16, runtime.availableProcessors());
-        ThreadFactory threadFactory = new ThreadFactory() {
-            private final AtomicLong threadIndex = new AtomicLong(0);
-
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                return new Thread(r, "RocketMQCollectGroup_" + this.threadIndex.incrementAndGet());
-            }
-        };
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                                              .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                  log.error("RocketMQCollectGroup has uncaughtException.");
+                                                  log.error(throwable.getMessage(), throwable); })
+                                              .setDaemon(true)
+                                              .setNameFormat("rocketMQ-collector-%d")
+                                              .build();
         this.executorService = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(5000), threadFactory, new ThreadPoolExecutor.DiscardOldestPolicy());
     }
