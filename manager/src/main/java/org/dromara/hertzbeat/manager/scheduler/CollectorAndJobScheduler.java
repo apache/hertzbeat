@@ -74,7 +74,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     @Autowired
     private ParamDao paramDao;
 
-    private org.dromara.hertzbeat.manager.netty.ManageServer manageServer;
+    private ManageServer manageServer;
 
     @Override
     public void collectorGoOnline(String identity) {

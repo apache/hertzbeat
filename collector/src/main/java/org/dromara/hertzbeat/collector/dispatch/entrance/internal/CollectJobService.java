@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.Channel;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
@@ -38,7 +39,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collection job management provides api interface
@@ -58,7 +61,9 @@ public class CollectJobService {
     
     private String collectorIdentity = null;
     
-    private volatile Channel collectorChannel = null;
+    private final AtomicReference<Channel> collectorChannelRef = new AtomicReference<>();
+    
+    private ScheduledExecutorService scheduledExecutor;
     
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
@@ -154,7 +159,7 @@ public class CollectJobService {
      * @param channel message channel
      */
     public void collectorGoOnline(Channel channel) {
-        collectorChannel = channel;
+        collectorChannelRef.set(channel);
         CollectorInfo collectorInfo = CollectorInfo.builder()
                                               .name(collectorIdentity)
                                               .ip(IpDomainUtil.getLocalhostIp())
@@ -168,17 +173,26 @@ public class CollectJobService {
                                              .build();
         channel.writeAndFlush(message);
         // start a thread to send heartbeat to cluster server periodically
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            if (collectorChannel.isActive()) {
-                ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                                       .setIdentity(collectorIdentity)
-                                                       .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                                       .build();
-                collectorChannel.writeAndFlush(heartbeat);
-                log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
-            }
-        }, 5, 5, TimeUnit.SECONDS);
+        if (scheduledExecutor == null) {
+            ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                                                  .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                      log.error("HeartBeat Scheduler has uncaughtException.");
+                                                      log.error(throwable.getMessage(), throwable); })
+                                                  .setDaemon(true)
+                                                  .setNameFormat("heartbeat-worker-%d")
+                                                  .build();
+            scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+            scheduledExecutor.scheduleAtFixedRate(() -> {
+                if (collectorChannelRef.get().isActive()) {
+                    ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                                                           .setIdentity(collectorIdentity)
+                                                           .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                                           .build();
+                    collectorChannelRef.get().writeAndFlush(heartbeat);
+                    log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+                }
+            }, 5, 5, TimeUnit.SECONDS);   
+        }
     }
     
     /**
@@ -192,6 +206,6 @@ public class CollectJobService {
                                                .setMsg(data)
                                                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
                                                .build();
-        collectorChannel.writeAndFlush(heartbeat);
+        collectorChannelRef.get().writeAndFlush(heartbeat);
     }
 }

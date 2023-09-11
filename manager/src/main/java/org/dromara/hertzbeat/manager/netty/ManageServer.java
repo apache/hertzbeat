@@ -114,9 +114,9 @@ public class ManageServer {
     public void closeChannel(final String identity) {
         Channel channel = this.getChannel(identity);
         if (channel != null) {
+            this.collectorAndJobScheduler.collectorGoOffline(identity);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build();
             this.remotingServer.sendMsg(channel, message);
-            this.collectorAndJobScheduler.collectorGoOffline(identity);
             this.clientChannelTable.remove(identity);
             log.info("close collect client success, identity: {}", identity);
         }

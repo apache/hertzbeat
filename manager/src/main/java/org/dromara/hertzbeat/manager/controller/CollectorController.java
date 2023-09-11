@@ -54,6 +54,7 @@ public class CollectorController {
 
     @Autowired
     private CollectorService collectorService;
+    
     @Autowired
     private ManageServer manageServer;
 
@@ -110,9 +111,7 @@ public class CollectorController {
     public ResponseEntity<Message<Void>> deleteCollector(
             @Parameter(description = "collector name | 采集器名称", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
-        if (collectors != null) {
-            collectors.forEach(collector ->  this.manageServer.closeChannel(collector));
-        }
+        this.collectorService.deleteRegisteredCollector(collectors);
         return ResponseEntity.ok(new Message<>("Delete success"));
     }
 
