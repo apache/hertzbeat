@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.common.config;
 
 import com.googlecode.aviator.AviatorEvaluator;
+import com.googlecode.aviator.exception.UnsupportedFeatureException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -95,5 +96,22 @@ class AviatorConfigurationTest {
         env.put("k7", "[LOG detected system error");
         Boolean res13 = (Boolean) AviatorEvaluator.compile(expr10).execute(env);
         Assertions.assertFalse(res13);
+    }
+
+    @Test
+    void testRCE() {
+        // test if 'new' syntax is disabled to prevent RCE
+        Assertions.assertThrows(UnsupportedFeatureException.class, () -> {
+            String expr1 = "let d = new java.util.Date();\n" +
+                    "p(type(d));\n" +
+                    "p(d);";
+            AviatorEvaluator.compile(expr1, true).execute();
+        });
+        // test allowed features
+        String expr2 = "let a = 0;\n" +
+                "if (\"#{a}\" == \"0\") { a = -1; }\n" +
+                "a == -1";
+        Boolean result = (Boolean) AviatorEvaluator.compile(expr2, true).execute();
+        Assertions.assertTrue(result);
     }
 }
