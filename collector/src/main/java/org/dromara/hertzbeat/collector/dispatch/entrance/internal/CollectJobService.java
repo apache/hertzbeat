@@ -46,30 +46,30 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Collection job management provides api interface
  * 采集job管理提供api接口
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Service
 @Slf4j
 public class CollectJobService {
 
     private static final String COLLECTOR_STR = "-collector";
-    
+
     private final TimerDispatch timerDispatch;
-    
+
     private final WorkerPool workerPool;
-    
+
     private String collectorIdentity = null;
-    
+
     private final AtomicReference<Channel> collectorChannelRef = new AtomicReference<>();
-    
+
     private ScheduledExecutorService scheduledExecutor;
-    
+
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
-        if (properties != null && properties.getEntrance() != null 
-                    && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
+        if (properties != null && properties.getEntrance() != null
+                && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
             String collectorName = properties.getEntrance().getNetty().getIdentity();
             if (StringUtils.hasText(collectorName)) {
                 collectorIdentity = collectorName;
@@ -80,7 +80,7 @@ public class CollectJobService {
             }
         }
     }
-    
+
     /**
      * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
@@ -108,12 +108,12 @@ public class CollectJobService {
         }
         return metricsData;
     }
-    
+
     /**
      * Execute a one-time collection task and send the collected data response
      *
      * @param oneTimeJob Collect task details  采集任务详情
-     * @param channel channel 
+     * @param channel    channel
      */
     public void collectSyncJobData(Job oneTimeJob, Channel channel) {
         workerPool.executeJob(() -> {
@@ -127,8 +127,8 @@ public class CollectJobService {
             }
             String response = JsonUtil.toJson(jsons);
             channel.writeAndFlush(ClusterMsg.Message.newBuilder()
-                                          .setMsg(response)
-                                          .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build()); 
+                    .setMsg(response)
+                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build());
         });
     }
 
@@ -153,59 +153,62 @@ public class CollectJobService {
             timerDispatch.deleteJob(jobId, true);
         }
     }
-    
+
     /**
-     * collector online 
+     * collector online
+     *
      * @param channel message channel
      */
     public void collectorGoOnline(Channel channel) {
         collectorChannelRef.set(channel);
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                                              .name(collectorIdentity)
-                                              .ip(IpDomainUtil.getLocalhostIp())
-                                              // todo more info
-                                              .build();
+                .name(collectorIdentity)
+                .ip(IpDomainUtil.getLocalhostIp())
+                // todo more info
+                .build();
         String msg = JsonUtil.toJson(collectorInfo);
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                             .setIdentity(collectorIdentity)
-                                             .setType(ClusterMsg.MessageType.GO_ONLINE)
-                                             .setMsg(msg)
-                                             .build();
+                .setIdentity(collectorIdentity)
+                .setType(ClusterMsg.MessageType.GO_ONLINE)
+                .setMsg(msg)
+                .build();
         channel.writeAndFlush(message);
         // start a thread to send heartbeat to cluster server periodically
         if (scheduledExecutor == null) {
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                                                  .setUncaughtExceptionHandler((thread, throwable) -> {
-                                                      log.error("HeartBeat Scheduler has uncaughtException.");
-                                                      log.error(throwable.getMessage(), throwable); })
-                                                  .setDaemon(true)
-                                                  .setNameFormat("heartbeat-worker-%d")
-                                                  .build();
+                    .setUncaughtExceptionHandler((thread, throwable) -> {
+                        log.error("HeartBeat Scheduler has uncaughtException.");
+                        log.error(throwable.getMessage(), throwable);
+                    })
+                    .setDaemon(true)
+                    .setNameFormat("heartbeat-worker-%d")
+                    .build();
             scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
             scheduledExecutor.scheduleAtFixedRate(() -> {
                 if (collectorChannelRef.get().isActive()) {
                     ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                                           .setIdentity(collectorIdentity)
-                                                           .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                                           .build();
+                            .setIdentity(collectorIdentity)
+                            .setType(ClusterMsg.MessageType.HEARTBEAT)
+                            .build();
                     collectorChannelRef.get().writeAndFlush(heartbeat);
                     log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
                 }
-            }, 5, 5, TimeUnit.SECONDS);   
+            }, 5, 5, TimeUnit.SECONDS);
         }
     }
-    
+
     /**
      * send async collect response data
+     *
      * @param metricsData collect data
      */
     public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
         String data = ProtoJsonUtil.toJsonStr(metricsData);
         ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                               .setIdentity(collectorIdentity)
-                                               .setMsg(data)
-                                               .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
-                                               .build();
+                .setIdentity(collectorIdentity)
+                .setMsg(data)
+                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
+                .build();
         collectorChannelRef.get().writeAndFlush(heartbeat);
     }
 }

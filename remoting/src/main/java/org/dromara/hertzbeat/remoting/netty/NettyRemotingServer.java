@@ -78,21 +78,21 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         this.threadPool.execute(() -> {
             int port = this.nettyServerConfig.getPort();
             ThreadFactory bossThreadFactory = new ThreadFactoryBuilder()
-                                                      .setUncaughtExceptionHandler((thread, throwable) -> {
-                                                          log.error("NettyServerBoss has uncaughtException.");
-                                                          log.error(throwable.getMessage(), throwable);
-                                                      })
-                                                      .setDaemon(true)
-                                                      .setNameFormat("netty-server-boss-%d")
-                                                      .build();
+                    .setUncaughtExceptionHandler((thread, throwable) -> {
+                        log.error("NettyServerBoss has uncaughtException.");
+                        log.error(throwable.getMessage(), throwable);
+                    })
+                    .setDaemon(true)
+                    .setNameFormat("netty-server-boss-%d")
+                    .build();
             ThreadFactory workerThreadFactory = new ThreadFactoryBuilder()
-                                                        .setUncaughtExceptionHandler((thread, throwable) -> {
-                                                            log.error("NettyServerWorker has uncaughtException.");
-                                                            log.error(throwable.getMessage(), throwable);
-                                                        })
-                                                        .setDaemon(true)
-                                                        .setNameFormat("netty-server-worker-%d")
-                                                        .build();
+                    .setUncaughtExceptionHandler((thread, throwable) -> {
+                        log.error("NettyServerWorker has uncaughtException.");
+                        log.error(throwable.getMessage(), throwable);
+                    })
+                    .setDaemon(true)
+                    .setNameFormat("netty-server-worker-%d")
+                    .build();
             if (this.useEpoll()) {
                 bossGroup = new EpollEventLoopGroup(bossThreadFactory);
                 workerGroup = new EpollEventLoopGroup(workerThreadFactory);

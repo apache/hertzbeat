@@ -72,13 +72,13 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     public void start() {
         this.threadPool.execute(() -> {
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                                                  .setUncaughtExceptionHandler((thread, throwable) -> {
-                                                      log.error("NettyClientWorker has uncaughtException.");
-                                                      log.error(throwable.getMessage(), throwable);
-                                                  })
-                                                  .setDaemon(true)
-                                                  .setNameFormat("netty-client-worker-%d")
-                                                  .build();
+                    .setUncaughtExceptionHandler((thread, throwable) -> {
+                        log.error("NettyClientWorker has uncaughtException.");
+                        log.error(throwable.getMessage(), throwable);
+                    })
+                    .setDaemon(true)
+                    .setNameFormat("netty-client-worker-%d")
+                    .build();
             this.workerGroup = new NioEventLoopGroup(threadFactory);
             this.bootstrap.group(workerGroup)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.nettyClientConfig.getConnectTimeoutMillis())
