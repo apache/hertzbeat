@@ -2,8 +2,8 @@ package org.dromara.hertzbeat.collector.dispatch.entrance.processor;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
-import org.dromara.hertzbeat.common.entity.message.RemotingMsg;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -24,7 +24,7 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())
                 .setDirection(ClusterMsg.Direction.RESPONSE)
-                .setMsg(RemotingMsg.SUCCESS)
+                .setMsg(String.valueOf(CommonConstants.SUCCESS_CODE))
                 .build();
     }
 }

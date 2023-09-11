@@ -14,7 +14,6 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.entity.message.RemotingMsg;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
@@ -225,7 +224,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 .setIdentity(identity)
                 .build();
         ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !RemotingMsg.SUCCESS.equals(response.getMsg())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
             return false;
         }
         log.info("send offline collector message to {} success", identity);
@@ -241,7 +240,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 .setIdentity(identity)
                 .build();
         ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !RemotingMsg.SUCCESS.equals(response.getMsg())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
             return false;
         }
         log.info("send online collector message to {} success", identity);
