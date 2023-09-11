@@ -23,7 +23,7 @@ public class GoCloseProcessor implements NettyRemotingProcessor {
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         if (this.timerDispatch == null) {
-            this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);   
+            this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         this.timerDispatch.goOffline();
         this.collectServer.shutdown();

@@ -100,8 +100,7 @@ public class CollectorController {
             @Parameter(description = "collector name", example = "demo-collector") 
             @RequestParam(required = false) List<String> collectors) {
         if (collectors != null) {
-            collectors.forEach(collector ->
-                                       this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
+            collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
         }
         return ResponseEntity.ok(new Message<>("Offline success"));
     }

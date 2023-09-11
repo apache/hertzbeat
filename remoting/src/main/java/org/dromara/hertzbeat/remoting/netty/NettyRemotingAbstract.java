@@ -97,7 +97,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     protected void sendMsgImpl(final Channel channel, final ClusterMsg.Message request) {
         channel.writeAndFlush(request).addListener(future -> {
             if (!future.isSuccess()) {
-                log.warn("failed to send request message to server. address: {}, ", channel.remoteAddress(), future.cause());
+                log.warn("send request message failed. address: {}, ", channel.remoteAddress(), future.cause());
             }
         });
     }
@@ -111,16 +111,16 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             channel.writeAndFlush(request).addListener(future -> {
                 if (!future.isSuccess()) {
                     responseTable.remove(identity);
-                    log.warn("failed to send request message to server. address: {}, ", channel.remoteAddress(), future.cause());
+                    log.warn("send request message failed. request: {}, address: {}, ", request, channel.remoteAddress(), future.cause());
                 }
             });
             ClusterMsg.Message response = responseFuture.waitResponse(timeoutMillis);
             if (response == null) {
-                log.warn("get response message from server is null");
+                log.warn("get response message failed, message is null");
             }
             return response;
         } catch (InterruptedException e) {
-            log.warn("failed to get response message from server, ", e);
+            log.warn("get response message failed, ", e);
         } finally {
             responseTable.remove(identity);
         }

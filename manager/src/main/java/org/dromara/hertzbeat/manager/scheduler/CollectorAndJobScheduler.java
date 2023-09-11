@@ -14,6 +14,7 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.entity.message.RemotingMsg;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
@@ -194,6 +195,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                             }
                             addedJobIds.add(addingJobId);
                             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                                    .setDirection(ClusterMsg.Direction.REQUEST)
                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
                                     .setMsg(JsonUtil.toJson(job))
                                     .build();
@@ -217,9 +219,13 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Override
     public boolean offlineCollector(String identity) {
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_OFFLINE).build();
-        boolean result = this.manageServer.sendMsg(identity, message);
-        if (!result) {
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setType(ClusterMsg.MessageType.GO_OFFLINE)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setIdentity(identity)
+                .build();
+        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !RemotingMsg.SUCCESS.equals(response.getMsg())) {
             return false;
         }
         log.info("send offline collector message to {} success", identity);
@@ -229,9 +235,13 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Override
     public boolean onlineCollector(String identity) {
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_ONLINE).build();
-        boolean result = this.manageServer.sendMsg(identity, message);
-        if (!result) {
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setType(ClusterMsg.MessageType.GO_ONLINE)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setIdentity(identity)
+                .build();
+        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !RemotingMsg.SUCCESS.equals(response.getMsg())) {
             return false;
         }
         log.info("send online collector message to {} success", identity);
@@ -260,6 +270,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
             boolean result = this.manageServer.sendMsg(node.getName(), message);
@@ -302,6 +313,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
             boolean result = this.manageServer.sendMsg(node.getName(), message);
@@ -344,6 +356,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
@@ -367,6 +380,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
@@ -395,11 +409,13 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(modifyJob))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
             ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(List.of(preJobId)))
                     .build();
             this.manageServer.sendMsg(node.getName(), deleteMessage);
@@ -429,11 +445,13 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(modifyJob))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
             ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(List.of(preJobId)))
                     .build();
             this.manageServer.sendMsg(node.getName(), deleteMessage);
@@ -455,6 +473,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             } else {
                 ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
                         .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                        .setDirection(ClusterMsg.Direction.REQUEST)
                         .setMsg(JsonUtil.toJson(List.of(jobId)))
                         .build();
                 this.manageServer.sendMsg(node.getName(), deleteMessage);

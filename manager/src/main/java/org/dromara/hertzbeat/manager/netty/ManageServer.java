@@ -136,6 +136,14 @@ public class ManageServer {
         return false;
     }
 
+    public ClusterMsg.Message sendMsgSync(final String identityId, final ClusterMsg.Message message) {
+        Channel channel = this.getChannel(identityId);
+        if (channel != null) {
+            return this.remotingServer.sendMsgSync(channel, message, 3000);
+        }
+        return null;
+    }
+
     public class ManageNettyEventListener implements NettyEventListener {
 
         @Override

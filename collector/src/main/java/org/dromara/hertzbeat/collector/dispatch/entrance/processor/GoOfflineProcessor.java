@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.collector.dispatch.entrance.processor;
 import io.netty.channel.ChannelHandlerContext;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
+import org.dromara.hertzbeat.common.entity.message.RemotingMsg;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -20,6 +21,10 @@ public class GoOfflineProcessor implements NettyRemotingProcessor {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         timerDispatch.goOffline();
-        return null;
+        return ClusterMsg.Message.newBuilder()
+                .setIdentity(message.getIdentity())
+                .setDirection(ClusterMsg.Direction.RESPONSE)
+                .setMsg(RemotingMsg.SUCCESS)
+                .build();
     }
 }
