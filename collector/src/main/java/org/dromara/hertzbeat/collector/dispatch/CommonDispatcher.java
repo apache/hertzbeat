@@ -19,6 +19,10 @@ package org.dromara.hertzbeat.collector.dispatch;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.collector.dispatch.timer.WheelTimerTask;
@@ -43,6 +47,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Indicator group collection task and response data scheduler
@@ -61,7 +67,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private static final long DURATION_TIME = 240_000L;
     /**
      * trigger sub task max num
-     * 触发子任务最大数量``````````````
+     * 触发子任务最大数量
      */
     private static final int MAX_SUB_TASK_NUM = 50;
     private static final Gson GSON = new Gson();
@@ -84,7 +90,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * Metric group task and start time mapping map
      * 指标组任务与开始时间映射map
      */
-    private Map<String, MetricsTime> metricsTimeoutMonitorMap;
+    private final Map<String, MetricsTime> metricsTimeoutMonitorMap;
 
     private final List<UnitConvert> unitConvertList;
 
@@ -263,31 +269,33 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // 当前级别指标组执行完成，开始执行下一级别的指标组
                 // use pre collect metrics data to replace next metrics config params
                 List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
-                metricsSet.forEach(metricItem -> {
-                    if (configmapList != null && !configmapList.isEmpty() && CollectUtil.containCryPlaceholder(GSON.toJsonTree(metricItem))) {
-                        int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
-                        AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
-                        AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
-                        for (int index = 0; index < subTaskNum; index++) {
-                            Map<String, Configmap> configmap = configmapList.get(index);
-                            JsonElement metricJson = GSON.toJsonTree(metricItem);
-                            CollectUtil.replaceCryPlaceholder(metricJson, configmap);
-                            Metrics metric = GSON.fromJson(metricJson, Metrics.class);
-                            metric.setSubTaskNum(subTaskNumAtomic);
-                            metric.setSubTaskId(index);
-                            metric.setSubTaskDataRef(metricsDataReference);
-                            MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
-                            jobRequestQueue.addJob(metricsCollect);
-                            metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
-                                    new MetricsTime(System.currentTimeMillis(), metric, timeout));
-                        }
-                    } else {
+                for (Metrics metricItem : metricsSet) {
+                    if (CollectionUtils.isEmpty(configmapList) || CollectUtil.notContainCryPlaceholder(GSON.toJsonTree(metricItem))) {
                         MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, unitConvertList);
                         jobRequestQueue.addJob(metricsCollect);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
                                 new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
+                        continue;
                     }
-                });
+
+                    int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
+                    AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
+                    AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
+                    for (int index = 0; index < subTaskNum; index++) {
+                        Map<String, Configmap> configmap = configmapList.get(index);
+                        JsonElement metricJson = GSON.toJsonTree(metricItem);
+                        CollectUtil.replaceCryPlaceholder(metricJson, configmap);
+                        Metrics metric = GSON.fromJson(metricJson, Metrics.class);
+                        metric.setSubTaskNum(subTaskNumAtomic);
+                        metric.setSubTaskId(index);
+                        metric.setSubTaskDataRef(metricsDataReference);
+                        MetricsCollect metricsCollect = new MetricsCollect(metric, timeout, this, unitConvertList);
+                        jobRequestQueue.addJob(metricsCollect);
+                        metricsTimeoutMonitorMap.put(job.getId() + "-" + metric.getName() + "-sub-" + index,
+                                new MetricsTime(System.currentTimeMillis(), metric, timeout));
+                    }
+
+                }
             } else {
                 // The list of indicator groups at the current execution level has not been fully executed.
                 // It needs to wait for the execution of other indicator groups of the same level to complete the execution and enter the next level for execution.
