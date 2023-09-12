@@ -63,10 +63,10 @@ public class AlertReport {
     private Integer reportType;
 
     @Schema(title = "Alarm tag information", description = "告警标签信息((monitorId:xxx,monitorName:xxx))",
-            example = "{key1:value1}", accessMode = READ_WRITE)
+            example = "{\"key1\":\"value1\"}", accessMode = READ_WRITE)
     private Map<String, String> labels;
 
-    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example = "{key1:value1}"
+    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example ="{\"key1\":\"value1\"}"
             , accessMode = READ_WRITE)
     private Map<String, String> annotations;
 
