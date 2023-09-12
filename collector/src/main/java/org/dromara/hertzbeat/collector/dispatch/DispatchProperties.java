@@ -219,9 +219,9 @@ public class DispatchProperties {
             private String identity;
             
             /**
-             * connect cluster master ip
+             * connect cluster master host
              */
-            private String managerIp;
+            private String managerHost;
             
             /**
              * connect cluster master port
@@ -244,12 +244,12 @@ public class DispatchProperties {
                 this.identity = identity;
             }
             
-            public String getManagerIp() {
-                return managerIp;
+            public String getManagerHost() {
+                return managerHost;
             }
             
-            public void setManagerIp(String managerIp) {
-                this.managerIp = managerIp;
+            public void setManagerHost(String managerHost) {
+                this.managerHost = managerHost;
             }
             
             public int getManagerPort() {

@@ -64,7 +64,7 @@ sidebar_label: 安装包方式部署
            netty:
              enabled: true
              identity: ${IDENTITY:}
-             manager-ip: ${MANAGER_IP:127.0.0.1}
+             manager-ip: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
    - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`

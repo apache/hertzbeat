@@ -1,8 +1,14 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
+import com.usthe.sureness.util.JsonWebTokenUtil;
+import com.usthe.sureness.util.Md5Util;
+import org.dromara.hertzbeat.common.cache.CacheFactory;
+import org.dromara.hertzbeat.common.cache.ICacheService;
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.common.entity.manager.IdentityToken;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
+import org.dromara.hertzbeat.manager.dao.IdentityTokenDao;
 import org.dromara.hertzbeat.manager.netty.ManageServer;
 import org.dromara.hertzbeat.manager.scheduler.AssignJobs;
 import org.dromara.hertzbeat.manager.scheduler.ConsistentHash;
@@ -15,8 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * collector service impl
@@ -34,6 +39,9 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Autowired
     private ManageServer manageServer; 
+    
+    @Autowired
+    private IdentityTokenDao identityTokenDao;
     
     @Override
     @Transactional(readOnly = true)
@@ -63,5 +71,25 @@ public class CollectorServiceImpl implements CollectorService {
             this.manageServer.closeChannel(collector);
             this.collectorDao.deleteCollectorByName(collector);
         });
+    }
+
+    @Override
+    public boolean hasCollector(String collector) {
+        return this.collectorDao.findCollectorByName(collector).isPresent();
+    }
+
+    @Override
+    public String issueCollectorToken(String collector) {
+        Map<String, Object> customClaimMap = Collections.singletonMap("collector", collector);
+        String jwt = JsonWebTokenUtil.issueJwt(collector, null, customClaimMap);
+        String token = Md5Util.md5(jwt);
+        IdentityToken identityToken = IdentityToken.builder()
+                .note("auto-generate-" + collector)
+                .token(token).jwt(jwt).issueTime(System.currentTimeMillis()).expireTime(null)
+                .build();
+        ICacheService<String, Object> cacheService = CacheFactory.getIdentityTokenCache();
+        cacheService.put(token, identityToken);
+        identityTokenDao.save(identityToken);
+        return token;
     }
 }

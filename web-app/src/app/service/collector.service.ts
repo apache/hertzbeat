@@ -66,4 +66,8 @@ export class CollectorService {
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(`${collector_uri}`, options);
   }
+
+  public generateCollectorIdentity(collector: string): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${collector_uri}/generate/${collector}`, null);
+  }
 }

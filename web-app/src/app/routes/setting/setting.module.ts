@@ -18,6 +18,8 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
+import {ClipboardModule} from "@angular/cdk/clipboard";
+import {NzBadgeModule} from "ng-zorro-antd/badge";
 
 const COMPONENTS: Array<Type<void>> = [
   SettingTagsComponent,
@@ -41,7 +43,9 @@ const COMPONENTS: Array<Type<void>> = [
     ColorPickerModule,
     NzTagModule,
     NzLayoutModule,
-    NzCodeEditorModule
+    NzCodeEditorModule,
+    ClipboardModule,
+    NzBadgeModule
   ],
   declarations: COMPONENTS
 })

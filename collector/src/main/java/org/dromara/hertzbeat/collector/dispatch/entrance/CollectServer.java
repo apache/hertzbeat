@@ -41,8 +41,8 @@ public class CollectServer {
             throw new IllegalArgumentException("please config dispatch entrance netty props");
         }
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
-        if (nettyProperties.getManagerIp() == null || nettyProperties.getManagerPort() == 0) {
-            throw new IllegalArgumentException("please config dispatch entrance netty master ip and port");
+        if (nettyProperties.getManagerHost() == null || nettyProperties.getManagerPort() == 0) {
+            throw new IllegalArgumentException("please config dispatch entrance netty master host and port");
         }
         this.collectJobService = collectJobService;
 
@@ -53,7 +53,7 @@ public class CollectServer {
     private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
-        nettyClientConfig.setServerIp(nettyProperties.getManagerIp());
+        nettyClientConfig.setServerIp(nettyProperties.getManagerHost());
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 

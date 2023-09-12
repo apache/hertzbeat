@@ -20,9 +20,11 @@ package org.dromara.hertzbeat.manager.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import org.dromara.hertzbeat.manager.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +32,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -112,6 +112,28 @@ public class CollectorController {
             @RequestParam(required = false) List<String> collectors) {
         this.collectorService.deleteRegisteredCollector(collectors);
         return ResponseEntity.ok(new Message<>("Delete success"));
+    }
+
+    @PostMapping("/generate/{collector}")
+    @Operation(summary = "Generate deploy collector info")
+    public ResponseEntity<Message<Map<String, String>>> generateCollectorDeployInfo(
+            @Parameter(description = "collector name", example = "demo-collector")
+            @PathVariable() String collector) {
+        if (this.collectorService.hasCollector(collector)) {
+            return ResponseEntity.ok(Message.<Map<String, String>>builder()
+                    .code(CommonConstants.FAIL_CODE).msg("There already has same collector name.")
+                    .build());
+        }
+        String token = this.collectorService.issueCollectorToken(collector);
+        String host = IpDomainUtil.getLocalhostIp();
+        Map<String, String> maps = new HashMap<>(6);
+        maps.put("identity", token);
+        maps.put("host", host);
+        Message<Map<String, String>> result = Message.<Map<String, String>>builder()
+                .data(maps)
+                .msg("Generate success")
+                .build();
+        return ResponseEntity.ok(result);
     }
 
 }
