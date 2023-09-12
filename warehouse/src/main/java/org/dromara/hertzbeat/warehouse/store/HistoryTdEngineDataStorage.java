@@ -258,6 +258,9 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             ResultSet resultSet = statement.executeQuery(selectSql);
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
+                if (ts == null) {
+                    continue;
+                }
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
                     instanceValue = "";
