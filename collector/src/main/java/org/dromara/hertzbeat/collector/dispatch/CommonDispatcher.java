@@ -33,9 +33,6 @@ import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
@@ -47,8 +44,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Indicator group collection task and response data scheduler
@@ -108,6 +103,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         this.timerDispatch = timerDispatch;
         this.unitConvertList = unitConvertList;
         this.workerPool = workerPool;
+        this.metricsTimeoutMonitorMap = new ConcurrentHashMap<>(16);
         poolExecutor = new ThreadPoolExecutor(2, 2, 1,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(), r -> {
@@ -155,7 +151,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             });
             // Monitoring indicator group collection task execution t
             // 监控指标组采集任务执行时间
-            metricsTimeoutMonitorMap = new ConcurrentHashMap<>(128);
             poolExecutor.execute(() -> {
                 Thread.currentThread().setName("metrics-task-monitor");
                 while (!Thread.currentThread().isInterrupted()) {
