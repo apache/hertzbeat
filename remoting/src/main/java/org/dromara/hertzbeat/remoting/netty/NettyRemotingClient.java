@@ -92,7 +92,8 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
             this.channel = null;
             boolean first = true;
-            while (SpringContextHolder.isActive() && (first || this.channel == null || !this.channel.isActive())) {
+            while (!Thread.currentThread().isInterrupted() 
+                    && (first || this.channel == null || !this.channel.isActive())) {
                 first = false;
                 try {
                     this.channel = this.bootstrap
@@ -101,6 +102,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     this.channel.closeFuture().sync();
                 } catch (InterruptedException ignored) {
                     log.info("client shutdown now!");
+                    Thread.currentThread().interrupt();
                 } catch (Exception e2) {
                     log.error("client connect to server error: {}. try after 10s.", e2.getMessage());
                     try {
