@@ -70,7 +70,7 @@ public class CollectorController {
         }
         Specification<Collector> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -78,7 +78,7 @@ public class CollectorController {
         };
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         Page<CollectorSummary> receivers = collectorService.getCollectors(specification, pageRequest);
-        Message<Page<CollectorSummary>> message = new Message<>(receivers);
+        Message<Page<CollectorSummary>> message = Message.success(receivers);
         return ResponseEntity.ok(message);
     }
 
