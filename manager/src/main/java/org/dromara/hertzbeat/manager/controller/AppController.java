@@ -17,16 +17,15 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.common.entity.job.Job;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
-import org.dromara.hertzbeat.manager.pojo.dto.MonitorDefineDto;
-import org.dromara.hertzbeat.manager.service.AppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.entity.job.Job;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
+import org.dromara.hertzbeat.manager.pojo.dto.MonitorDefineDto;
+import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,13 +33,15 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Locale;
+
+import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitoring Type Management API
  * 监控类型管理API
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Tag(name = "Monitor Type Manage API | 监控类型管理API")
 @RestController
@@ -55,7 +56,7 @@ public class AppController {
     public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase());
-        return ResponseEntity.ok(new Message<>(paramDefines));
+        return ResponseEntity.ok(Message.success(paramDefines));
     }
 
     @GetMapping(path = "/{app}/define")
@@ -63,7 +64,7 @@ public class AppController {
     public ResponseEntity<Message<Job>> queryAppDefine(
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         Job define = appService.getAppDefine(app.toLowerCase());
-        return ResponseEntity.ok(new Message<>(define));
+        return ResponseEntity.ok(Message.success(define));
     }
 
     @GetMapping(path = "/{app}/define/yml")
@@ -71,7 +72,7 @@ public class AppController {
     public ResponseEntity<Message<String>> queryAppDefineYml(
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         String defineContent = appService.getMonitorDefineFileContent(app);
-        return ResponseEntity.ok(Message.<String>builder().data(defineContent).build());
+        return ResponseEntity.ok(Message.success(defineContent));
     }
 
     @DeleteMapping(path = "/{app}/define/yml")
@@ -81,11 +82,9 @@ public class AppController {
         try {
             appService.deleteMonitorDefine(app);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.<Void>builder()
-                    .code(CommonConstants.FAIL_CODE)
-                    .msg(e.getMessage()).build());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, e.getMessage()));
         }
-        return ResponseEntity.ok(Message.<Void>builder().build());
+        return ResponseEntity.ok(Message.success());
     }
 
     @PostMapping(path = "/define/yml")
@@ -94,24 +93,20 @@ public class AppController {
         try {
             appService.applyMonitorDefineYml(defineDto.getDefine(), false);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.<Void>builder()
-                            .code(CommonConstants.FAIL_CODE)
-                            .msg(e.getMessage()).build());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, e.getMessage()));
         }
-        return ResponseEntity.ok(Message.<Void>builder().build());
+        return ResponseEntity.ok(Message.success());
     }
-    
+
     @PutMapping(path = "/define/yml")
     @Operation(summary = "Update monitoring type define yml", description = "更新监控类型的定义YML")
     public ResponseEntity<Message<Void>> updateAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
             appService.applyMonitorDefineYml(defineDto.getDefine(), true);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.<Void>builder()
-                                             .code(CommonConstants.FAIL_CODE)
-                                             .msg(e.getMessage()).build());
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, e.getMessage()));
         }
-        return ResponseEntity.ok(Message.<Void>builder().build());
+        return ResponseEntity.ok(Message.success());
     }
 
     @GetMapping(path = "/hierarchy")
@@ -120,7 +115,7 @@ public class AppController {
             @Parameter(description = "en: language type,zh: 语言类型",
                     example = "zh-CN")
             @RequestParam(name = "lang", required = false) String lang) {
-        if (lang == null || "".equals(lang)) {
+        if (lang == null || lang.isEmpty()) {
             lang = "zh-CN";
         }
         if (lang.contains(Locale.ENGLISH.getLanguage())) {
@@ -131,6 +126,6 @@ public class AppController {
             lang = "en-US";
         }
         List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
-        return ResponseEntity.ok(new Message<>(appHierarchies));
+        return ResponseEntity.ok(Message.success(appHierarchies));
     }
 }

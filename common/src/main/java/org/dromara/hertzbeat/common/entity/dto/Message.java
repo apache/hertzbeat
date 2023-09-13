@@ -18,28 +18,22 @@
 package org.dromara.hertzbeat.common.entity.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import static org.dromara.hertzbeat.common.constants.CommonConstants.SUCCESS_CODE;
 
 /**
  * Unified message structure definition for front and back ends
- *
+ * <p>
  * {
- *   data:{....},
- *   msg: message,
- *   code: 3432
+ * data:{....},
+ * msg: message,
+ * code: 3432
  * }
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @Schema(description = "公共消息包装")
 public class Message<T> {
 
@@ -61,16 +55,35 @@ public class Message<T> {
     @Schema(title = "携带编码")
     private byte code = SUCCESS_CODE;
 
-    public Message(String msg) {
+    public static <T> Message<T> success() {
+        return new Message<>();
+    }
+
+    public static <T> Message<T> success(String msg) {
+        return new Message<>(msg);
+    }
+
+    public static <T> Message<T> fail(byte code, String msg) {
+        return new Message<>(code, msg);
+    }
+
+    public static <T> Message<T> success(T data) {
+        return new Message<>(data);
+    }
+
+    private Message() {
+    }
+
+    private Message(String msg) {
         this.msg = msg;
     }
 
-    public Message(byte code, String msg) {
+    private Message(byte code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
-    public Message(T data) {
+    private Message(T data) {
         this.data = data;
     }
 }
