@@ -17,13 +17,12 @@
 
 package org.dromara.hertzbeat.manager.support;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +35,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Objects;
+
+import static org.dromara.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * controller exception handler
@@ -50,49 +51,53 @@ public class GlobalExceptionHandler {
 
     /**
      * 处理探测失败
+     *
      * @param exception 探测异常
      * @return response
      */
     @ExceptionHandler(MonitorDetectException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorDetectException(MonitorDetectException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(CommonConstants.DETECT_FAILED_CODE).build();
+        Message<Void> message = Message.fail(DETECT_FAILED_CODE, exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
     /**
      * 处理数据库操作异常
+     *
      * @param exception 探测异常
      * @return response
      */
     @ExceptionHandler(MonitorDatabaseException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorDatabaseException(MonitorDatabaseException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(CommonConstants.MONITOR_CONFLICT_CODE).build();
+        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, exception.getMessage());
         return ResponseEntity.ok(message);
     }
 
     /**
      * 处理参数错误的失败
+     *
      * @param exception 参数异常
      * @return response
      */
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleIllegalArgumentException(IllegalArgumentException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(CommonConstants.PARAM_INVALID_CODE).build();
+        Message<Void> message = Message.fail(PARAM_INVALID_CODE, exception.getMessage());
         return ResponseEntity.ok(message);
     }
 
     @ExceptionHandler(AlertNoticeException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleAlertNoticeException(AlertNoticeException noticeException) {
-        Message<Void> message = Message.<Void>builder().msg(noticeException.getMessage()).code(CommonConstants.FAIL_CODE).build();
+        Message<Void> message = Message.fail(FAIL_CODE, noticeException.getMessage());
         return ResponseEntity.ok(message);
     }
 
     /**
      * 处理请求参数错误的失败, 请求参数json映射body时出错
+     *
      * @param exception 参数映射body异常
      * @return response
      */
@@ -104,10 +109,10 @@ public class GlobalExceptionHandler {
             if (msg == null) {
                 msg = exception.getMessage();
             }
-            Message<Void> message = Message.<Void>builder().msg(msg).code(CommonConstants.PARAM_INVALID_CODE).build();
+            Message<Void> message = Message.fail(PARAM_INVALID_CODE, msg);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         } catch (Exception e) {
-            Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(CommonConstants.PARAM_INVALID_CODE).build();
+            Message<Void> message = Message.fail(PARAM_INVALID_CODE, exception.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
         }
     }
@@ -116,6 +121,7 @@ public class GlobalExceptionHandler {
     /**
      * handler the exception thrown for data input verify
      * valid注解校验框架校验异常统一处理
+     *
      * @param e data input verify exception
      * @return response
      */
@@ -124,7 +130,7 @@ public class GlobalExceptionHandler {
     ResponseEntity<Message<Void>> handleInputValidException(Exception e) {
         StringBuffer errorMessage = new StringBuffer();
         if (e instanceof MethodArgumentNotValidException) {
-            MethodArgumentNotValidException exception = (MethodArgumentNotValidException)e;
+            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
                     String field = Objects.requireNonNull(error.getCodes())[0];
@@ -134,7 +140,7 @@ public class GlobalExceptionHandler {
                 }
             });
         } else if (e instanceof BindException) {
-            BindException exception = (BindException)e;
+            BindException exception = (BindException) e;
             exception.getAllErrors().forEach(error ->
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR));
         }
@@ -145,13 +151,14 @@ public class GlobalExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("[input argument not valid happen]-{}", errorMsg, e);
         }
-        Message<Void> message = Message.<Void>builder().msg(errorMsg).code(CommonConstants.PARAM_INVALID_CODE).build();
+        Message<Void> message = Message.fail(PARAM_INVALID_CODE, errorMsg);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
 
     /**
      * handler the exception thrown for datastore error
+     *
      * @param exception datastore exception
      * @return response
      */
@@ -163,12 +170,13 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.warn("[database error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(CommonConstants.MONITOR_CONFLICT_CODE).build();
+        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
     /**
      * handle Request method not supported
+     *
      * @param exception Request method not supported
      * @return response
      */
@@ -180,12 +188,13 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.info("[monitor]-[Request method not supported]-{}", errorMessage);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).build();
+        Message<Void> message = Message.success(errorMessage);
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(message);
     }
 
     /**
      * handler the exception thrown for unCatch and unKnown
+     *
      * @param exception UnknownException
      * @return response
      */
@@ -197,19 +206,20 @@ public class GlobalExceptionHandler {
             errorMessage = exception.getMessage();
         }
         log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
-        Message<Void> message = Message.<Void>builder().msg(errorMessage).code(CommonConstants.MONITOR_CONFLICT_CODE).build();
+        Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
     /**
      * 处理监控指标传参异常
+     *
      * @param exception 指标参数异常
      * @return
      */
     @ExceptionHandler(MonitorMetricsException.class)
     @ResponseBody
     ResponseEntity<Message<Void>> handleMonitorMetricsException(MonitorMetricsException exception) {
-        Message<Void> message = Message.<Void>builder().msg(exception.getMessage()).code(CommonConstants.PARAM_INVALID_CODE).build();
+        Message<Void> message = Message.fail(PARAM_INVALID_CODE, exception.getMessage());
         return ResponseEntity.ok(message);
     }
 

@@ -54,6 +54,6 @@ public class MetricsController {
             Map<String, Integer> queueInfo = ((InMemoryCommonDataQueue) commonDataQueue).getQueueSizeMetricsInfo();
             metricsInfo.putAll(queueInfo);
         }
-        return ResponseEntity.ok(new Message<>(metricsInfo));
+        return ResponseEntity.ok(Message.success(metricsInfo));
     }
 }

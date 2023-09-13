@@ -49,7 +49,7 @@ public class SummaryController {
     @Operation(summary = "Query all application category monitoring statistics", description = "查询所有应用类别监控统计信息")
     public ResponseEntity<Message<Dashboard>> appMonitors() {
         List<AppCount> appsCount = monitorService.getAllAppMonitorsCount();
-        Message<Dashboard> message = new Message<>(new Dashboard(appsCount));
+        Message<Dashboard> message = Message.success(new Dashboard(appsCount));
         return ResponseEntity.ok(message);
     }
 }

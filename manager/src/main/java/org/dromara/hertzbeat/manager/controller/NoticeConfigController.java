@@ -17,30 +17,23 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
 import java.util.List;
 
+import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -61,14 +54,14 @@ public class NoticeConfigController {
     @Operation(summary = "Add a recipient", description = "新增一个接收人")
     public ResponseEntity<Message<Void>> addNewNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         noticeConfigService.addReceiver(noticeReceiver);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping(path = "/receiver")
     @Operation(summary = "Modify existing recipient information", description = "修改已存在的接收人信息")
     public ResponseEntity<Message<Void>> editNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         noticeConfigService.editReceiver(noticeReceiver);
-        return ResponseEntity.ok(new Message<>("Edit success"));
+        return ResponseEntity.ok(Message.success("Edit success"));
     }
 
     @DeleteMapping(path = "/receiver/{id}")
@@ -77,10 +70,10 @@ public class NoticeConfigController {
             @Parameter(description = "en: Recipient ID,zh: 接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
         NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
         if (noticeReceiver == null) {
-            return ResponseEntity.ok(new Message<>("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
+            return ResponseEntity.ok(Message.success("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
         }
         noticeConfigService.deleteReceiver(receiverId);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @GetMapping(path = "/receivers")
@@ -90,14 +83,14 @@ public class NoticeConfigController {
             @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
             return predicate;
         };
         List<NoticeReceiver> receivers = noticeConfigService.getNoticeReceivers(specification);
-        Message<List<NoticeReceiver>> message = new Message<>(receivers);
+        Message<List<NoticeReceiver>> message = Message.success(receivers);
         return ResponseEntity.ok(message);
     }
 
@@ -105,14 +98,14 @@ public class NoticeConfigController {
     @Operation(summary = "Add a notification policy", description = "新增一个通知策略")
     public ResponseEntity<Message<Void>> addNewNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
         noticeConfigService.addNoticeRule(noticeRule);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping(path = "/rule")
     @Operation(summary = "Modify existing notification policy information", description = "修改已存在的通知策略信息")
     public ResponseEntity<Message<Void>> editNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
         noticeConfigService.editNoticeRule(noticeRule);
-        return ResponseEntity.ok(new Message<>("Edit success"));
+        return ResponseEntity.ok(Message.success("Edit success"));
     }
 
     @DeleteMapping(path = "/rule/{id}")
@@ -123,10 +116,10 @@ public class NoticeConfigController {
         // todo 不存在或删除成功都返回成功
         NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
         if (noticeRule == null) {
-            return ResponseEntity.ok(new Message<>("The specified notification rule could not be queried, please check whether the parameters are correct"));
+            return ResponseEntity.ok(Message.success("The specified notification rule could not be queried, please check whether the parameters are correct"));
         }
         noticeConfigService.deleteNoticeRule(ruleId);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @GetMapping(path = "/rules")
@@ -136,14 +129,14 @@ public class NoticeConfigController {
             @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
             return predicate;
         };
         List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(specification);
-        Message<List<NoticeRule>> message = new Message<>(receiverPage);
+        Message<List<NoticeRule>> message = Message.success(receiverPage);
         return ResponseEntity.ok(message);
     }
 
@@ -152,12 +145,8 @@ public class NoticeConfigController {
     public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
         if (sendFlag) {
-            return ResponseEntity.ok(new Message<>());
+            return ResponseEntity.ok(Message.success());
         }
-        Message<Void> message = Message.<Void>builder()
-                .msg("Notify service not available, please check config!")
-                .code(CommonConstants.FAIL_CODE)
-                .build();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.fail(FAIL_CODE, "Notify service not available, please check config!"));
     }
 }

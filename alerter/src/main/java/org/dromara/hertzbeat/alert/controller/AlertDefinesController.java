@@ -71,7 +71,7 @@ public class AlertDefinesController {
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
@@ -87,9 +87,8 @@ public class AlertDefinesController {
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification,pageRequest);
-        Message<Page<AlertDefine>> message = new Message<>(alertDefinePage);
-        return ResponseEntity.ok(message);
+        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
+        return ResponseEntity.ok(Message.success(alertDefinePage));
     }
 
     @DeleteMapping
@@ -101,8 +100,7 @@ public class AlertDefinesController {
         if (ids != null && !ids.isEmpty()) {
             alertDefineService.deleteAlertDefines(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
     @GetMapping("/app")
@@ -136,9 +134,8 @@ public class AlertDefinesController {
         // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification,pageRequest);
-        Message<Page<AlertDefine>> message = new Message<>(alertDefinePage);
-        return ResponseEntity.ok(message);
+        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
+        return ResponseEntity.ok(Message.success(alertDefinePage));
     }
 
 }
