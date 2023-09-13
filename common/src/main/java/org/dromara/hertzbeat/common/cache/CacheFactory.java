@@ -36,7 +36,7 @@ public class CacheFactory {
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
     
     private static final ICacheService<String, Object> IDENTITY_TOKEN_CACHE =
-            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
+            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1000), false);
     
     /**
      * 获取notice模块的cache

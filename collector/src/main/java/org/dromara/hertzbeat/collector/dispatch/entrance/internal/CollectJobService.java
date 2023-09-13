@@ -70,9 +70,9 @@ public class CollectJobService {
         this.workerPool = workerPool;
         if (properties != null && properties.getEntrance() != null
                 && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
-            String collectorName = properties.getEntrance().getNetty().getIdentity();
-            if (StringUtils.hasText(collectorName)) {
-                collectorIdentity = collectorName;
+            String identityToken = properties.getEntrance().getNetty().getIdentity();
+            if (StringUtils.hasText(identityToken)) {
+                collectorIdentity = identityToken;
             } else {
                 String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
                 log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);

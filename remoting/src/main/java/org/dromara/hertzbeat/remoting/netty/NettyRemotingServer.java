@@ -140,6 +140,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         // idle state
         pipeline.addLast(new IdleStateHandler(0, 0, 30));
         pipeline.addLast(new NettyServerHandler());
+        // todo clear thread local
     }
 
     @Override
