@@ -91,7 +91,7 @@ public class CollectorController {
             collectors.forEach(collector ->
                                        this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
         }
-        return ResponseEntity.ok(new Message<>("Online success"));
+        return ResponseEntity.ok(Message.success("Online success"));
     }
 
     @PutMapping("/offline")
@@ -102,7 +102,7 @@ public class CollectorController {
         if (collectors != null) {
             collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
         }
-        return ResponseEntity.ok(new Message<>("Offline success"));
+        return ResponseEntity.ok(Message.success("Offline success"));
     }
 
     @DeleteMapping
@@ -111,7 +111,7 @@ public class CollectorController {
             @Parameter(description = "collector name | 采集器名称", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
         this.collectorService.deleteRegisteredCollector(collectors);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
 }
