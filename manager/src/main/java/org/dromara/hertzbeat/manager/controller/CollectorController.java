@@ -119,19 +119,13 @@ public class CollectorController {
             @Parameter(description = "collector name", example = "demo-collector")
             @PathVariable() String collector) {
         if (this.collectorService.hasCollector(collector)) {
-            return ResponseEntity.ok(Message.<Map<String, String>>builder()
-                    .code(CommonConstants.FAIL_CODE).msg("There already has same collector name.")
-                    .build());
+            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, "There already has same collector name."));
         }
         String host = IpDomainUtil.getLocalhostIp();
         Map<String, String> maps = new HashMap<>(6);
         maps.put("identity", collector);
         maps.put("host", host);
-        Message<Map<String, String>> result = Message.<Map<String, String>>builder()
-                .data(maps)
-                .msg("Generate success")
-                .build();
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(Message.success(maps));
     }
 
 }
