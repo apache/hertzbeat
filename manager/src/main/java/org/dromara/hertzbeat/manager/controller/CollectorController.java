@@ -55,7 +55,7 @@ public class CollectorController {
     @Autowired
     private CollectorService collectorService;
     
-    @Autowired
+    @Autowired(required = false)
     private ManageServer manageServer;
 
     @GetMapping
