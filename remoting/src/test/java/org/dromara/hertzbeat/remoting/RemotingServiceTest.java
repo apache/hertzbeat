@@ -52,9 +52,10 @@ public class RemotingServiceTest {
     }
 
     @AfterEach
-    public void shutdown() {
+    public void shutdown() throws InterruptedException {
         this.remotingClient.shutdown();
         this.remotingServer.shutdown();
+        Thread.sleep(30000);
     }
 
     @Test
