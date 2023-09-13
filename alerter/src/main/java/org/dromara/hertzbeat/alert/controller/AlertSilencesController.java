@@ -78,7 +78,7 @@ public class AlertSilencesController {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification,pageRequest);
-        Message<Page<AlertSilence>> message = new Message<>(alertSilencePage);
+        Message<Page<AlertSilence>> message = Message.success(alertSilencePage);
         return ResponseEntity.ok(message);
     }
 
@@ -91,7 +91,7 @@ public class AlertSilencesController {
         if (ids != null && !ids.isEmpty()) {
             alertSilenceService.deleteAlertSilences(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
