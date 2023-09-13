@@ -15,7 +15,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * collector service impl
@@ -31,8 +32,8 @@ public class CollectorServiceImpl implements CollectorService {
     @Autowired
     private ConsistentHash consistentHash;
     
-    @Autowired
-    private ManageServer manageServer;
+    @Autowired(required = false)
+    private ManageServer manageServer; 
     
     @Override
     @Transactional(readOnly = true)
