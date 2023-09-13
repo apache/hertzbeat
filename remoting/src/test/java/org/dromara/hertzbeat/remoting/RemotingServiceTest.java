@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * test NettyRemotingClient and NettyRemotingServer
  */
@@ -25,19 +23,19 @@ public class RemotingServiceTest {
 
     private RemotingClient remotingClient;
 
-    public RemotingServer createRemotingServer() {
+    public RemotingServer createRemotingServer(int port) {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
-        nettyServerConfig.setPort(1157);
+        nettyServerConfig.setPort(port);
         // todo test NettyEventListener
         RemotingServer server = new NettyRemotingServer(nettyServerConfig, null, threadPool);
         server.start();
         return server;
     }
 
-    public RemotingClient createRemotingClient() {
+    public RemotingClient createRemotingClient(int port) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         nettyClientConfig.setServerIp("localhost");
-        nettyClientConfig.setServerPort(1157);
+        nettyClientConfig.setServerPort(port);
         RemotingClient client = new NettyRemotingClient(nettyClientConfig, null, threadPool);
         client.start();
         return client;
@@ -45,17 +43,18 @@ public class RemotingServiceTest {
 
     @BeforeEach
     public void setUp() throws InterruptedException {
-        this.remotingServer = createRemotingServer();
-        this.remotingClient = createRemotingClient();
+        int port = (int) (Math.random() * 10000);
+        remotingServer = createRemotingServer(port);
+        Thread.sleep(1000);
+        remotingClient = createRemotingClient(port);
         // todo waiting server and client start, 替换为更优雅的方式
-        Thread.sleep(3000);
+        Thread.sleep(1000);
     }
 
     @AfterEach
-    public void shutdown() throws InterruptedException {
+    public void shutdown() {
         this.remotingClient.shutdown();
         this.remotingServer.shutdown();
-        Thread.sleep(30000);
     }
 
     @Test
