@@ -512,7 +512,7 @@
   "collector.delete": "Delete Collector",
   "collector.deploy": "Deploy Collector",
   "collector.deploy.identity": "Collector's Token (IDENTITY)",
-  "collector.deploy.identity.tip": "Please note that this token is only displayed once, please keep it properly.",
+  "collector.deploy.identity.tip": "Please note that this token is unique, please keep it properly.",
   "collector.deploy.ok": "Generate Token and Deployment Commands",
   "collector.deploy.close": "Close - I Have Saved The Token",
   "collector.deploy.docker": "Deploy via Docker",

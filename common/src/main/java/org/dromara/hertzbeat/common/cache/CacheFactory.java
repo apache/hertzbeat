@@ -35,9 +35,6 @@ public class CacheFactory {
     private static final ICacheService<String, Object> ALERT_CONVERGE_CACHE =
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
     
-    private static final ICacheService<String, Object> IDENTITY_TOKEN_CACHE =
-            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1000), false);
-    
     /**
      * 获取notice模块的cache
      * @return caffeine cache
@@ -60,13 +57,5 @@ public class CacheFactory {
      */
     public static ICacheService<String, Object> getAlertConvergeCache() {
         return ALERT_CONVERGE_CACHE;
-    }
-
-    /**
-     * get identity token cache
-     * @return identity token cache
-     */
-    public static ICacheService<String, Object> getIdentityTokenCache() {
-        return IDENTITY_TOKEN_CACHE;
     }
 }

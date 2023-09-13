@@ -35,11 +35,4 @@ public interface CollectorService {
      * @return return true if it has
      */
     boolean hasCollector(String collector);
-
-    /**
-     * issue identity token for collector
-     * @param collector collector
-     * @return token
-     */
-    String issueCollectorToken(String collector);
 }

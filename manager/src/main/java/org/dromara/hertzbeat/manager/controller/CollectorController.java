@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,10 +123,9 @@ public class CollectorController {
                     .code(CommonConstants.FAIL_CODE).msg("There already has same collector name.")
                     .build());
         }
-        String token = this.collectorService.issueCollectorToken(collector);
         String host = IpDomainUtil.getLocalhostIp();
         Map<String, String> maps = new HashMap<>(6);
-        maps.put("identity", token);
+        maps.put("identity", collector);
         maps.put("host", host);
         Message<Map<String, String>> result = Message.<Map<String, String>>builder()
                 .data(maps)

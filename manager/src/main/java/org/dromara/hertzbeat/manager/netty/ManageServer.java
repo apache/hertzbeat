@@ -1,13 +1,8 @@
 package org.dromara.hertzbeat.manager.netty;
 
 import com.google.common.collect.Lists;
-import com.usthe.sureness.util.JsonWebTokenUtil;
-import io.jsonwebtoken.Claims;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
-import org.dromara.hertzbeat.common.entity.manager.IdentityToken;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
 import org.dromara.hertzbeat.manager.netty.process.CollectCyclicDataResponseProcessor;
@@ -23,7 +18,6 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,23 +60,6 @@ public class ManageServer {
 
         // register hook
         this.remotingServer.registerHook(Lists.newArrayList((ctx, message) -> {
-            String identity = message.getIdentity();
-            ICacheService<String, Object> cacheService = CacheFactory.getIdentityTokenCache();
-            Object identityTokenObject = cacheService.get(identity);
-            if (identityTokenObject != null) {
-                try {
-                    // parse collector identity name from identity token
-                    IdentityToken identityToken = (IdentityToken) identityTokenObject;
-                    String jwt = identityToken.getJwt();
-                    Claims claims = JsonWebTokenUtil.parseJwt(jwt);
-                    String collectorIdentity = claims.get("collector", String.class);
-                    if (StringUtils.hasText(collectorIdentity)) {
-                        ThreadLocalContextHolder.bindIdentity(collectorIdentity);   
-                    }
-                } catch (Exception e) {
-                    log.warn(e.getMessage());
-                }
-            }
             ManageServer.this.clientChannelTable.put(message.getIdentity(), ctx.channel());
         }));
 

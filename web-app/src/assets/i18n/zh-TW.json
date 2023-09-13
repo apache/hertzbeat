@@ -507,7 +507,7 @@
   "collector.delete": "刪除採集器",
   "collector.deploy": "部署採集器",
   "collector.deploy.identity": "採集器令牌(IDENTITY)",
-  "collector.deploy.identity.tip": "請注意此令牌只展現一次，請妥善保存。",
+  "collector.deploy.identity.tip": "請注意此令牌對應採集器的唯一性，請妥善保存。",
   "collector.deploy.ok": "生成令牌和部署命令",
   "collector.deploy.close": "關閉頁面-我已保存令牌",
   "collector.deploy.docker": "通過 Docker 方式部署",
