@@ -42,8 +42,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Converge the batch API for alarms
  * 收敛告警批量API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Alert Converge Batch API | 告警收敛管理API")
 @RestController
@@ -66,7 +66,7 @@ public class AlertConvergesController {
         Specification<AlertConverge> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
@@ -77,9 +77,8 @@ public class AlertConvergesController {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertConverge> alertConvergePage = alertConvergeService.getAlertConverges(specification,pageRequest);
-        Message<Page<AlertConverge>> message = new Message<>(alertConvergePage);
-        return ResponseEntity.ok(message);
+        Page<AlertConverge> alertConvergePage = alertConvergeService.getAlertConverges(specification, pageRequest);
+        return ResponseEntity.ok(Message.success(alertConvergePage));
     }
 
     @DeleteMapping
@@ -91,8 +90,7 @@ public class AlertConvergesController {
         if (ids != null && !ids.isEmpty()) {
             alertConvergeService.deleteAlertConverges(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
 }

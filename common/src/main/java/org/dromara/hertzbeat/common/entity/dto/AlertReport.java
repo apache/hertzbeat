@@ -50,7 +50,7 @@ public class AlertReport {
     private Integer alertDuration;
 
     @Schema(title = "Time when the log service receives the alarm message", description = "日志服务接收到告警消息的时间",
-            example = "1648889320", accessMode = READ_WRITE)
+            example = "1694589491000", accessMode = READ_WRITE)
     private long alertTime;
 
     @Schema(title = "Alarm priority. 0: high emergency alarm red 1: medium critical serious alarm Orange 2: low warning warning alarm yellow",
@@ -63,10 +63,10 @@ public class AlertReport {
     private Integer reportType;
 
     @Schema(title = "Alarm tag information", description = "告警标签信息((monitorId:xxx,monitorName:xxx))",
-            example = "{key1:value1}", accessMode = READ_WRITE)
+            example = "{\"key1\":\"value1\"}", accessMode = READ_WRITE)
     private Map<String, String> labels;
 
-    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example = "{key1:value1}"
+    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example ="{\"key1\":\"value1\"}"
             , accessMode = READ_WRITE)
     private Map<String, String> annotations;
 
