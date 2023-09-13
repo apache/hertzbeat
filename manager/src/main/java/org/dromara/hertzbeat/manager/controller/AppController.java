@@ -48,6 +48,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
+    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader"};
+    
     @Autowired
     private AppService appService;
 
@@ -91,6 +93,13 @@ public class AppController {
     @Operation(summary = "Add new monitoring type define yml", description = "新增监控类型的定义YML")
     public ResponseEntity<Message<Void>> newAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
+            for (String riskyToken : RISKY_STR_ARR) {
+                if (defineDto.getDefine().contains(riskyToken)) {
+                    return ResponseEntity.ok(Message.<Void>builder()
+                            .code(CommonConstants.FAIL_CODE)
+                            .msg("can not has malicious remote script").build());
+                }   
+            }
             appService.applyMonitorDefineYml(defineDto.getDefine(), false);
         } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, e.getMessage()));
@@ -102,6 +111,13 @@ public class AppController {
     @Operation(summary = "Update monitoring type define yml", description = "更新监控类型的定义YML")
     public ResponseEntity<Message<Void>> updateAppDefineYml(@Valid @RequestBody MonitorDefineDto defineDto) {
         try {
+            for (String riskyToken : RISKY_STR_ARR) {
+                if (defineDto.getDefine().contains(riskyToken)) {
+                    return ResponseEntity.ok(Message.<Void>builder()
+                            .code(CommonConstants.FAIL_CODE)
+                            .msg("can not has malicious remote script").build());
+                }
+            }
             appService.applyMonitorDefineYml(defineDto.getDefine(), true);
         } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, e.getMessage()));
