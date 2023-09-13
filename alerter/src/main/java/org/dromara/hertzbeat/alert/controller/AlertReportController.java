@@ -25,20 +25,20 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/api/alerts/report", produces = {APPLICATION_JSON_VALUE})
 public class AlertReportController {
-    
+
     @Autowired
     AlertConvertTenCloudServiceImpl alertConvertTenCloudService;
-    
+
     @Autowired
     private AlertService alertService;
-    
+
     @PostMapping("/tencloud")
     @Operation(summary = "Interface for reporting external alarm information of tencloud ｜ 对外上报告警信息 接口",
             description = "对外 新增一个腾讯云告警")
     public ResponseEntity<Message<Void>> addNewAlertReportTencent(@Valid @RequestBody String alertReport) {
         AlertReport convert = alertConvertTenCloudService.convert(alertReport);
         alertService.addNewAlertReport(convert);
-        return ResponseEntity.ok(new Message<>("Add report success"));
+        return ResponseEntity.ok(Message.success("Add report success"));
     }
     
     @PostMapping
@@ -47,6 +47,6 @@ public class AlertReportController {
     public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
         // 校验请求数据 TODO
         alertService.addNewAlertReport(alertReport);
-        return ResponseEntity.ok(new Message<>("Add report success"));
+        return ResponseEntity.ok(Message.success("Add report success"));
     }
 }

@@ -35,8 +35,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm Converge management API
  * 告警收敛管理API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Alert Converge API | 告警收敛管理API")
 @RestController
@@ -51,7 +51,7 @@ public class AlertConvergeController {
     public ResponseEntity<Message<Void>> addNewAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
         alertConvergeService.validate(alertConverge, false);
         alertConvergeService.addAlertConverge(alertConverge);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
@@ -59,7 +59,7 @@ public class AlertConvergeController {
     public ResponseEntity<Message<Void>> modifyAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
         alertConvergeService.validate(alertConverge, true);
         alertConvergeService.modifyAlertConverge(alertConverge);
-        return ResponseEntity.ok(new Message<>("Modify success"));
+        return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
@@ -68,13 +68,11 @@ public class AlertConvergeController {
     public ResponseEntity<Message<AlertConverge>> getAlertConverge(
             @Parameter(description = "Alarm Converge ID ｜ 告警收敛ID", example = "6565463543") @PathVariable("id") long id) {
         AlertConverge alertConverge = alertConvergeService.getAlertConverge(id);
-        Message.MessageBuilder<AlertConverge> messageBuilder = Message.builder();
         if (alertConverge == null) {
-            messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("AlertConverge not exist.");
+            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertConverge not exist."));
         } else {
-            messageBuilder.data(alertConverge);
+            return ResponseEntity.ok(Message.success(alertConverge));
         }
-        return ResponseEntity.ok(messageBuilder.build());
     }
 
 }
