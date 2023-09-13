@@ -36,8 +36,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm Silence management API
  * 告警静默管理API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Alert Silence API | 告警静默管理API")
 @RestController
@@ -52,7 +52,7 @@ public class AlertSilenceController {
     public ResponseEntity<Message<Void>> addNewAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
         alertSilenceService.validate(alertSilence, false);
         alertSilenceService.addAlertSilence(alertSilence);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
@@ -60,7 +60,7 @@ public class AlertSilenceController {
     public ResponseEntity<Message<Void>> modifyAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
         alertSilenceService.validate(alertSilence, true);
         alertSilenceService.modifyAlertSilence(alertSilence);
-        return ResponseEntity.ok(new Message<>("Modify success"));
+        return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
@@ -69,13 +69,11 @@ public class AlertSilenceController {
     public ResponseEntity<Message<AlertSilence>> getAlertSilence(
             @Parameter(description = "Alarm Silence ID ｜ 告警静默ID", example = "6565463543") @PathVariable("id") long id) {
         AlertSilence alertSilence = alertSilenceService.getAlertSilence(id);
-        Message.MessageBuilder<AlertSilence> messageBuilder = Message.builder();
         if (alertSilence == null) {
-            messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("AlertSilence not exist.");
+            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."));
         } else {
-            messageBuilder.data(alertSilence);
+            return ResponseEntity.ok(Message.success(alertSilence));
         }
-        return ResponseEntity.ok(messageBuilder.build());
     }
 
 }

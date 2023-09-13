@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.LoginDto;
@@ -41,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.dromara.hertzbeat.common.constants.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -48,7 +48,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 认证注册TOKEN管理API
  *
  * @author tomsun28
- *
  */
 @Tag(name = "Auth Manage API | 认证注册TOKEN管理API")
 @RestController()
@@ -70,23 +69,17 @@ public class AccountController {
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
-            Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")
-                    .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-            return ResponseEntity.ok(message);
+            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户密码错误"));
         } else {
             String password = loginDto.getCredential();
             if (account.getSalt() != null) {
                 password = Md5Util.md5(password + account.getSalt());
             }
             if (!account.getPassword().equals(password)) {
-                Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户密码错误")
-                        .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-                return ResponseEntity.ok(message);
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户密码错误"));
             }
             if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
-                Message<Map<String, String>> message = Message.<Map<String, String>>builder().msg("账户过期或被锁定")
-                        .code(CommonConstants.MONITOR_LOGIN_FAILED_CODE).build();
-                return ResponseEntity.ok(message);
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户过期或被锁定"));
             }
         }
         // Get the roles the user has - rbac
@@ -100,7 +93,7 @@ public class AccountController {
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
         resp.put("role", JsonUtil.toJson(roles));
-        return ResponseEntity.ok(new Message<>(resp));
+        return ResponseEntity.ok(Message.success(resp));
     }
 
     @GetMapping("/refresh/{refreshToken}")
@@ -113,22 +106,23 @@ public class AccountController {
             String userId = String.valueOf(claims.getSubject());
             boolean isRefresh = claims.get("refresh", Boolean.class);
             if (userId == null || !isRefresh) {
-                return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "非法的刷新TOKEN"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "非法的刷新TOKEN"));
             }
             SurenessAccount account = accountProvider.loadAccount(userId);
             if (account == null) {
-                return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "TOKEN对应的账户不存在"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "TOKEN对应的账户不存在"));
             }
             List<String> roles = account.getOwnRoles();
             String issueToken = issueToken(userId, roles, PERIOD_TIME);
             String issueRefresh = issueToken(userId, roles, PERIOD_TIME << 5);
             RefreshTokenResponse response = new RefreshTokenResponse(issueToken, issueRefresh);
-            return ResponseEntity.ok(new Message<>(response));
+            return ResponseEntity.ok(Message.success(response));
         } catch (Exception e) {
             log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
-            return ResponseEntity.ok(new Message<>(CommonConstants.MONITOR_LOGIN_FAILED_CODE, "刷新TOKEN过期或错误"));
+            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "刷新TOKEN过期或错误"));
         }
     }
+
     private String issueToken(String userId, List<String> roles, long expirationMillis) {
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
