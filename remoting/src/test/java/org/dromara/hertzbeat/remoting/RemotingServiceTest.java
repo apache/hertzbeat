@@ -43,7 +43,7 @@ public class RemotingServiceTest {
 
     @BeforeEach
     public void setUp() throws InterruptedException {
-        int port = (int) (Math.random() * 10000);
+        int port = 10000 + (int) (Math.random() * 10000);
         remotingServer = createRemotingServer(port);
         Thread.sleep(1000);
         remotingClient = createRemotingClient(port);
