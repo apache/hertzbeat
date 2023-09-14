@@ -20,7 +20,7 @@ public class CollectOneTimeDataProcessor implements NettyRemotingProcessor {
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         Job oneTimeJob = JsonUtil.fromJson(message.getMsg(), Job.class);
-        collectServer.getCollectJobService().collectSyncJobData(oneTimeJob, ctx.channel());
+        collectServer.getCollectJobService().collectSyncOneTimeJobData(oneTimeJob);
         return null;
     }
 }

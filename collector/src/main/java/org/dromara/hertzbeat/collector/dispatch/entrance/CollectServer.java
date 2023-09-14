@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.collector.dispatch.entrance;
 
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
@@ -11,14 +12,22 @@ import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoCloseProces
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
+import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
+import org.dromara.hertzbeat.common.util.IpDomainUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.remoting.RemotingClient;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 import org.dromara.hertzbeat.remoting.netty.NettyClientConfig;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 /**
  * collect server
@@ -33,6 +42,8 @@ public class CollectServer {
 
     private RemotingClient remotingClient;
 
+    private ScheduledExecutorService scheduledExecutor;
+
     public CollectServer(final CollectJobService collectJobService,
                          final DispatchProperties properties,
                          final CommonThreadPool threadPool) {
@@ -45,6 +56,7 @@ public class CollectServer {
             throw new IllegalArgumentException("please config dispatch entrance netty master ip and port");
         }
         this.collectJobService = collectJobService;
+        this.collectJobService.setCollectServer(this);
 
         this.init(properties, threadPool);
         this.remotingClient.start();
@@ -66,6 +78,8 @@ public class CollectServer {
     }
 
     public void shutdown() {
+        this.scheduledExecutor.shutdownNow();
+
         this.remotingClient.shutdown();
     }
 
@@ -73,11 +87,53 @@ public class CollectServer {
         return collectJobService;
     }
 
+    public void sendMsg(final ClusterMsg.Message message) {
+        this.remotingClient.sendMsg(message);
+    }
+
     public class CollectNettyEventListener implements NettyEventListener {
 
         @Override
         public void onChannelActive(Channel channel) {
-            CollectServer.this.collectJobService.collectorGoOnline(channel);
+            String identity = CollectServer.this.collectJobService.getCollectorIdentity();
+            CollectorInfo collectorInfo = CollectorInfo.builder()
+                    .name(identity)
+                    .ip(IpDomainUtil.getLocalhostIp())
+                    // todo more info
+                    .build();
+            // send online message
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setIdentity(identity)
+                    .setType(ClusterMsg.MessageType.GO_ONLINE)
+                    .setMsg(JsonUtil.toJson(collectorInfo))
+                    .build();
+            CollectServer.this.sendMsg(message);
+
+            if (scheduledExecutor == null) {
+                ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                        .setUncaughtExceptionHandler((thread, throwable) -> {
+                            log.error("HeartBeat Scheduler has uncaughtException.");
+                            log.error(throwable.getMessage(), throwable);
+                        })
+                        .setDaemon(true)
+                        .setNameFormat("heartbeat-worker-%d")
+                        .build();
+                scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+                // schedule send heartbeat message
+                scheduledExecutor.scheduleAtFixedRate(() -> {
+                    ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                            .setIdentity(identity)
+                            .setType(ClusterMsg.MessageType.HEARTBEAT)
+                            .build();
+                    CollectServer.this.sendMsg(heartbeat);
+                    log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+                }, 5, 5, TimeUnit.SECONDS);
+            }
+        }
+
+        @Override
+        public void onChannelIdle(Channel channel) {
+            log.info("handle idle event triggered. collector is going offline.");
         }
     }
 }
