@@ -74,7 +74,7 @@ public class AppController {
     public ResponseEntity<Message<String>> queryAppDefineYml(
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         String defineContent = appService.getMonitorDefineFileContent(app);
-        return ResponseEntity.ok(Message.success(defineContent));
+        return ResponseEntity.ok(Message.successWithData(defineContent));
     }
 
     @DeleteMapping(path = "/{app}/define/yml")
@@ -95,9 +95,7 @@ public class AppController {
         try {
             for (String riskyToken : RISKY_STR_ARR) {
                 if (defineDto.getDefine().contains(riskyToken)) {
-                    return ResponseEntity.ok(Message.<Void>builder()
-                            .code(CommonConstants.FAIL_CODE)
-                            .msg("can not has malicious remote script").build());
+                    return ResponseEntity.ok(Message.fail(FAIL_CODE, "can not has malicious remote script"));
                 }   
             }
             appService.applyMonitorDefineYml(defineDto.getDefine(), false);
@@ -113,9 +111,7 @@ public class AppController {
         try {
             for (String riskyToken : RISKY_STR_ARR) {
                 if (defineDto.getDefine().contains(riskyToken)) {
-                    return ResponseEntity.ok(Message.<Void>builder()
-                            .code(CommonConstants.FAIL_CODE)
-                            .msg("can not has malicious remote script").build());
+                    return ResponseEntity.ok(Message.fail(FAIL_CODE, "can not has malicious remote script"));
                 }
             }
             appService.applyMonitorDefineYml(defineDto.getDefine(), true);

@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.collector.collect.mq;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -77,14 +78,14 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         Runtime runtime = Runtime.getRuntime();
         int corePoolSize = Math.max(8, runtime.availableProcessors());
         int maximumPoolSize = Math.max(16, runtime.availableProcessors());
-        ThreadFactory threadFactory = new ThreadFactory() {
-            private final AtomicLong threadIndex = new AtomicLong(0);
-
-            @Override
-            public Thread newThread(@NotNull Runnable r) {
-                return new Thread(r, "RocketMQCollectGroup_" + this.threadIndex.incrementAndGet());
-            }
-        };
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("RocketMQCollectGroup has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("rocketMQ-collector-%d")
+                .build();
         this.executorService = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(5000), threadFactory, new ThreadPoolExecutor.DiscardOldestPolicy());
     }
@@ -131,6 +132,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集前置条件, 入参判断
+     *
      * @param metrics 数据指标
      */
     private void preCheck(Metrics metrics) {
@@ -144,6 +146,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 创建DefaultMQAdminExt实体类; 这里有个小问题, 是否需要每次都重新创建
+     *
      * @param metrics 数据指标
      * @return DefaultMQAdminExt
      */
@@ -162,7 +165,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集rocketmq数据
-     * @param mqAdminExt rocketmq提供的远程调用类
+     *
+     * @param mqAdminExt          rocketmq提供的远程调用类
      * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
@@ -174,7 +178,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集rocketmq的集群数据
-     * @param mqAdminExt rocketmq提供的远程调用类
+     *
+     * @param mqAdminExt          rocketmq提供的远程调用类
      * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
@@ -244,7 +249,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集rocketmq的消费者数据
-     * @param mqAdminExt rocketmq提供的远程调用类
+     *
+     * @param mqAdminExt          rocketmq提供的远程调用类
      * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
@@ -273,8 +279,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                         ConsumeStats consumeStats = null;
                         try {
                             consumeStats = mqAdminExt.examineConsumeStats(consumerGroup);
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             log.warn("examineConsumeStats exception to consumerGroup {}, response [{}]", consumerGroup, e.getMessage());
                         }
                         if (consumeStats != null) {
@@ -285,8 +290,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                         ConsumerConnection consumerConnection = null;
                         try {
                             consumerConnection = mqAdminExt.examineConsumerConnectionInfo(consumerGroup);
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             log.warn("examineConsumeStats exception to consumerGroup {}, response [{}]", consumerGroup, e.getMessage());
                         }
                         if (consumerConnection != null) {
@@ -312,8 +316,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     *
-     * @param mqAdminExt rocketmq提供的远程调用类
+     * @param mqAdminExt          rocketmq提供的远程调用类
      * @param rocketmqCollectData rocketmq数据采集类
      * @throws Exception 远程调用异常
      */
@@ -343,10 +346,11 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * 采集数据填充到builder
+     *
      * @param rocketmqCollectData rocketmq数据采集类
-     * @param builder metrics data builder
-     * @param aliasFields 字段别名
-     * @param parseScript JSON的base path
+     * @param builder             metrics data builder
+     * @param aliasFields         字段别名
+     * @param parseScript         JSON的base path
      */
     private void fillBuilder(RocketmqCollectData rocketmqCollectData, CollectRep.MetricsData.Builder builder, List<String> aliasFields, String parseScript) {
         String dataJson = JSONObject.toJSONString(rocketmqCollectData);

@@ -60,6 +60,16 @@ public interface TimerDispatch {
      *                 是否是周期性任务,true是, false为临时性任务
      */
     void deleteJob(long jobId, boolean isCyclic);
+    
+    /**
+     * job dispatcher go online
+     */
+    void goOnline();
+    
+    /**
+     * job dispatcher go offline
+     */
+    void goOffline();
 
     /**
      * 一次性同步采集任务采集结果通知监听器

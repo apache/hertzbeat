@@ -11,6 +11,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ColorPickerModule } from 'ngx-color-picker';
 
+import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
@@ -23,7 +24,8 @@ const COMPONENTS: Array<Type<void>> = [
   DefineComponent,
   SettingsComponent,
   MessageServerComponent,
-  SystemConfigComponent
+  SystemConfigComponent,
+  CollectorComponent
 ];
 
 @NgModule({

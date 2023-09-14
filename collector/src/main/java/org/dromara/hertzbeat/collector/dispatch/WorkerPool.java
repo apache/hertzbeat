@@ -31,9 +31,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection task worker thread pool
  * 采集任务工作线程池
- *
- *
- *
  */
 @Component
 @Slf4j

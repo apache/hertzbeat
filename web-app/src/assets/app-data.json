@@ -128,6 +128,12 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "collector",
+          "i18n": "menu.extras.collector",
+          "icon": "anticon-cluster",
+          "link": "/setting/collector"
+        },
+        {
           "text": "tags",
           "i18n": "menu.extras.tags",
           "icon": "anticon-tags",

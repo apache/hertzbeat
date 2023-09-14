@@ -142,6 +142,5 @@ public class AssignJobs {
             log.warn("assign jobs is not empty, maybe there are jobs not assigned");
             jobs.clear();
         }
-        jobs = null;
     }
 }

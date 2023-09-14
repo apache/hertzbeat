@@ -68,3 +68,8 @@ warehouse:
     memory:
       enabled: true
       init-size: 1024
+
+scheduler:
+  server:
+    enabled: true
+    port: 1158

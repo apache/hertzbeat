@@ -23,7 +23,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.annotation.PostConstruct;
 
@@ -34,7 +33,6 @@ import javax.annotation.PostConstruct;
 
 @SpringBootApplication(exclude = MailSenderAutoConfiguration.class)
 @EnableJpaAuditing
-@EnableScheduling
 @EnableJpaRepositories(basePackages = {"org.dromara.hertzbeat"})
 @EntityScan(basePackages = {"org.dromara.hertzbeat"})
 public class Manager {

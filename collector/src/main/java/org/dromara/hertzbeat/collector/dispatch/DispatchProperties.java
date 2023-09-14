@@ -23,9 +23,6 @@ import org.springframework.stereotype.Component;
 /**
  * Schedule Distribution Task Configuration Properties
  * 调度分发任务配置属性
- *
- *
- *
  */
 @Component
 @ConfigurationProperties(prefix = "collector.dispatch")

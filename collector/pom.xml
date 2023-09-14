@@ -51,6 +51,11 @@
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
+        <!-- remoting -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-remoting</artifactId>
+        </dependency>
         <!-- validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

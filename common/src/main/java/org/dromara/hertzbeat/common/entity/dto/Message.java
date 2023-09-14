@@ -71,6 +71,10 @@ public class Message<T> {
         return new Message<>(data);
     }
 
+    public static <T> Message<T> successWithData(T data) {
+        return new Message<>(data);
+    }
+
     private Message() {
     }
 
