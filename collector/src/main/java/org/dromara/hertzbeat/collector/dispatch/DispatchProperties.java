@@ -217,6 +217,13 @@ public class DispatchProperties {
              * default is the host name
              */
             private String identity;
+
+            /**
+             * this collector mode
+             * public: for public network, support cluster
+             * private: for private network, support cloud-edge
+             */
+            private String mode;
             
             /**
              * connect cluster master host
@@ -243,7 +250,15 @@ public class DispatchProperties {
             public void setIdentity(String identity) {
                 this.identity = identity;
             }
-            
+
+            public String getMode() {
+                return mode;
+            }
+
+            public void setMode(String mode) {
+                this.mode = mode;
+            }
+
             public String getManagerHost() {
                 return managerHost;
             }

@@ -64,14 +64,15 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="16%">{{ 'collector' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'collector.status' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'collector.task' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'collector.pinned' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'collector.dispatched' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'collector' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.mode' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.task' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.pinned' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.dispatched' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
-      <th nzAlign="center" nzWidth="13%">{{ 'collector.start-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -86,6 +87,11 @@
       <td nzAlign="center">
         <nz-tag [nzColor]="data.collector.status == 0 ? 'processing' : 'red'">
           {{ data.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag [nzColor]="data.collector.mode == 'private' ? 'warning' : 'success'">
+          {{ data.collector.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
         </nz-tag>
       </td>
       <td nzAlign="center">

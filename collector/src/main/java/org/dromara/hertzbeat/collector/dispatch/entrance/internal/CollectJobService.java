@@ -54,6 +54,8 @@ public class CollectJobService {
     private final WorkerPool workerPool;
 
     private String collectorIdentity = null;
+    
+    private String mode = null;
 
     private CollectServer collectServer;
 
@@ -62,6 +64,7 @@ public class CollectJobService {
         this.workerPool = workerPool;
         if (properties != null && properties.getEntrance() != null
                 && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
+            mode = properties.getEntrance().getNetty().getMode();
             String collectorName = properties.getEntrance().getNetty().getIdentity();
             if (StringUtils.hasText(collectorName)) {
                 collectorIdentity = collectorName;
@@ -166,6 +169,10 @@ public class CollectJobService {
 
     public String getCollectorIdentity() {
         return collectorIdentity;
+    }
+    
+    public String getCollectorMode() {
+        return mode;
     }
 
     public void setCollectServer(CollectServer collectServer) {

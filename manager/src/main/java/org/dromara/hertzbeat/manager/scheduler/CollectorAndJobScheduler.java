@@ -84,6 +84,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             CollectorInfo collectorInfo = new CollectorInfo();
             collectorInfo.setIp(collector.getIp());
             collectorInfo.setName(collector.getName());
+            collectorInfo.setMode(collector.getMode());
             this.collectorGoOnline(identity, collectorInfo);
         }
     }
@@ -99,12 +100,15 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             }
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
             collector.setIp(collectorInfo.getIp());
+            collector.setMode(collectorInfo.getMode());
         } else {
             collector = Collector.builder().name(identity).ip(collectorInfo.getIp())
+                    .mode(collectorInfo.getMode())
                     .status(CommonConstants.COLLECTOR_STATUS_ONLINE).build();
         }
         collectorDao.save(collector);
-        ConsistentHash.Node node = new ConsistentHash.Node(identity, collectorInfo.getIp(), System.currentTimeMillis(), null);
+        ConsistentHash.Node node = new ConsistentHash.Node(identity, collectorInfo.getMode(), 
+                collectorInfo.getIp(), System.currentTimeMillis(), null);
         consistentHash.addNode(node);
         reBalanceCollectorAssignJobs();
         // 读取数据库此collector下的固定采集任务并下发

@@ -323,6 +323,7 @@ CREATE TABLE  hzb_collector
     name         varchar(255)     not null comment 'collector identity name',
     ip           varchar(255)     not null comment 'collector ip',
     status       tinyint          not null default 0 comment 'collector status: 0-online 1-offline',
+    mode         varchar(100)     comment 'collector mode: public private',
     creator      varchar(100)     comment 'creator',
     modifier     varchar(100)     comment 'modifier',
     gmt_create   timestamp        default current_timestamp comment 'create time',

@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.manager.scheduler;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,40 +53,43 @@ public class ConsistentHash {
      * @param newNode 节点
      */
     public void addNode(Node newNode) {
-        byte virtualNodeNum = newNode.quality == null ? VIRTUAL_NODE_DEFAULT_SIZE : newNode.quality;
-        for (byte i = 0; i < virtualNodeNum; i++) {
-            int virtualHashKey = hash(newNode.name + i);
-            hashCircle.put(virtualHashKey, newNode);
-            newNode.addVirtualNodeJobs(virtualHashKey, new HashSet<>());
-            Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherEntry(virtualHashKey);
-            if (higherVirtualNode == null) {
-                higherVirtualNode = hashCircle.firstEntry();
-            }
-            // 将路由到 higherVirtualNode 虚拟节点的任务重新分配
-            // 任务不是在原虚拟节点 就是在新虚拟节点
-            Integer higherVirtualNodeKey = higherVirtualNode.getKey();
-            Node higherNode = higherVirtualNode.getValue();
-            Set<Long[]> dispatchJobs = higherNode.clearVirtualNodeJobs(higherVirtualNodeKey);
-            if (dispatchJobs != null && !dispatchJobs.isEmpty()) {
-                Set<Long[]> reDispatchJobs = new HashSet<>(dispatchJobs.size());
-                Iterator<Long[]> iterator = dispatchJobs.iterator();
-                while (iterator.hasNext()) {
-                    Long[] jobHash = iterator.next();
-                    int dispatchHash = jobHash[1].intValue();
-                    if (dispatchHash <= virtualHashKey) {
-                        reDispatchJobs.add(jobHash);
-                        iterator.remove();
+        // when mode is cluster public, need reBalance dispatch jobs. else not when is cloud-edge private
+        if (!CommonConstants.MODE_PRIVATE.equals(newNode.mode)) {
+            byte virtualNodeNum = newNode.quality == null ? VIRTUAL_NODE_DEFAULT_SIZE : newNode.quality;
+            for (byte i = 0; i < virtualNodeNum; i++) {
+                int virtualHashKey = hash(newNode.name + i);
+                hashCircle.put(virtualHashKey, newNode);
+                newNode.addVirtualNodeJobs(virtualHashKey, new HashSet<>());
+                Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherEntry(virtualHashKey);
+                if (higherVirtualNode == null) {
+                    higherVirtualNode = hashCircle.firstEntry();
+                }
+                // 将路由到 higherVirtualNode 虚拟节点的任务重新分配
+                // 任务不是在原虚拟节点 就是在新虚拟节点
+                Integer higherVirtualNodeKey = higherVirtualNode.getKey();
+                Node higherNode = higherVirtualNode.getValue();
+                Set<Long[]> dispatchJobs = higherNode.clearVirtualNodeJobs(higherVirtualNodeKey);
+                if (dispatchJobs != null && !dispatchJobs.isEmpty()) {
+                    Set<Long[]> reDispatchJobs = new HashSet<>(dispatchJobs.size());
+                    Iterator<Long[]> iterator = dispatchJobs.iterator();
+                    while (iterator.hasNext()) {
+                        Long[] jobHash = iterator.next();
+                        int dispatchHash = jobHash[1].intValue();
+                        if (dispatchHash <= virtualHashKey) {
+                            reDispatchJobs.add(jobHash);
+                            iterator.remove();
+                        }
+                    }
+                    higherNode.virtualNodeMap.put(higherVirtualNodeKey, dispatchJobs);
+                    Set<Long> jobIds = reDispatchJobs.stream().map(item -> item[0]).collect(Collectors.toSet());
+                    newNode.addVirtualNodeJobs(virtualHashKey, reDispatchJobs);
+                    if (higherNode != newNode) {
+                        higherNode.assignJobs.removeAssignJobs(jobIds);
+                        higherNode.assignJobs.addRemovingJobs(jobIds);
+                        newNode.assignJobs.addAddingJobs(jobIds);
                     }
                 }
-                higherNode.virtualNodeMap.put(higherVirtualNodeKey, dispatchJobs);
-                Set<Long> jobIds = reDispatchJobs.stream().map(item -> item[0]).collect(Collectors.toSet());
-                newNode.addVirtualNodeJobs(virtualHashKey, reDispatchJobs);
-                if (higherNode != newNode) {
-                    higherNode.assignJobs.removeAssignJobs(jobIds);
-                    higherNode.assignJobs.addRemovingJobs(jobIds);
-                    newNode.assignJobs.addAddingJobs(jobIds);
-                }
-            }
+            }   
         }
         existNodeMap.put(newNode.name, newNode);
         if (!dispatchJobCache.isEmpty()) {
@@ -314,6 +318,10 @@ public class ConsistentHash {
         @Getter
         private final String name;
         /**
+         * collector mode: public or private
+         */
+        private final String mode;
+        /**
          * ip
          */
         private final String ip;
@@ -337,8 +345,9 @@ public class ConsistentHash {
          */
         private Map<Integer, Set<Long[]>> virtualNodeMap;
 
-        public Node(String name, String ip, long uptime, Byte quality) {
+        public Node(String name, String mode, String ip, long uptime, Byte quality) {
             this.name = name;
+            this.mode = mode;
             this.ip = ip;
             this.uptime = uptime;
             this.quality = quality;

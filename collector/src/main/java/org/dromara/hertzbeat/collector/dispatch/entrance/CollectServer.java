@@ -96,9 +96,11 @@ public class CollectServer {
         @Override
         public void onChannelActive(Channel channel) {
             String identity = CollectServer.this.collectJobService.getCollectorIdentity();
+            String mode = CollectServer.this.collectJobService.getCollectorMode();
             CollectorInfo collectorInfo = CollectorInfo.builder()
                     .name(identity)
                     .ip(IpDomainUtil.getLocalhostIp())
+                    .mode(mode)
                     // todo more info
                     .build();
             // send online message

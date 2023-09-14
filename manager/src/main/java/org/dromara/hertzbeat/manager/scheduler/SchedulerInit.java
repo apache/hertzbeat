@@ -27,50 +27,52 @@ import java.util.stream.Collectors;
 
 /**
  * scheduler init
+ *
  * @author tom
  */
 @Configuration
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
-    
+
     @Autowired
     private CollectorScheduling collectorScheduling;
-    
+
     @Autowired
     private CollectJobScheduling collectJobScheduling;
-   
+
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
-    
+
     @Autowired
     private AppService appService;
-    
+
     @Autowired
     private MonitorDao monitorDao;
-    
+
     @Autowired
     private ParamDao paramDao;
-    
+
     @Autowired
     private CollectorDao collectorDao;
-    
+
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-    
+
     @Override
     public void run(String... args) throws Exception {
         // init pre collector status
         List<Collector> collectors = collectorDao.findAll().stream()
-                                             .peek(item -> item.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE))
-                                             .collect(Collectors.toList());
+                .peek(item -> item.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE))
+                .collect(Collectors.toList());
         collectorDao.saveAll(collectors);
         // insert default consistent node
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                                              .name(CommonConstants.MAIN_COLLECTOR_NODE)
-                                              .ip(MAIN_COLLECTOR_NODE_IP)
-                                              .build();
+                .name(CommonConstants.MAIN_COLLECTOR_NODE)
+                .ip(MAIN_COLLECTOR_NODE_IP)
+                .mode(CommonConstants.MODE_PUBLIC)
+                .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte)0, (byte)4));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte) 0, (byte) 4));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
         Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
                 Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
@@ -85,11 +87,11 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
-                                                     .map(param -> new Configmap(param.getField(), param.getValue(),
-                                                             param.getType())).collect(Collectors.toList());
+                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                                param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                                                              .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                                                              .collect(Collectors.toList());
+                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .collect(Collectors.toList());
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         // todo type
@@ -103,7 +105,7 @@ public class SchedulerInit implements CommandLineRunner {
                 if (StringUtils.hasText(collector)) {
                     jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
                 } else {
-                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine);   
+                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
                 }
                 monitor.setJobId(jobId);
                 monitorDao.save(monitor);
