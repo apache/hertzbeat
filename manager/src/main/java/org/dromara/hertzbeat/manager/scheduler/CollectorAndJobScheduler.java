@@ -1,6 +1,5 @@
 package org.dromara.hertzbeat.manager.scheduler;
 
-import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
@@ -21,9 +20,9 @@ import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
+import org.dromara.hertzbeat.manager.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -37,46 +36,45 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * collector service 
+ * collector service
+ *
  * @author tom
  */
 @Component
 @AutoConfigureAfter(value = {SchedulerProperties.class})
 @Slf4j
-public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling, CommandLineRunner {
-    
-    private final Map<String, Channel> collectorChannelMap = new ConcurrentHashMap<>(16);
-    
+public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling {
+
     private final Map<Long, Job> jobContentCache = new ConcurrentHashMap<>(16);
-    
+
     private final Map<Long, CollectResponseEventListener> eventListeners = new ConcurrentHashMap<>(16);
-    
+
     @Autowired
     private CollectorDao collectorDao;
-    
+
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-    
+
     @Autowired
-    private ConsistentHash consistentHash; 
-    
+    private ConsistentHash consistentHash;
+
     @Autowired
     private CollectJobService collectJobService;
-    
+
     @Autowired
     private AppService appService;
-    
+
     @Autowired
     private MonitorDao monitorDao;
-    
+
     @Autowired
     private ParamDao paramDao;
+
+    private ManageServer manageServer;
 
     @Override
     public void collectorGoOnline(String identity) {
@@ -103,7 +101,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             collector.setIp(collectorInfo.getIp());
         } else {
             collector = Collector.builder().name(identity).ip(collectorInfo.getIp())
-                                .status(CommonConstants.COLLECTOR_STATUS_ONLINE).build();
+                    .status(CommonConstants.COLLECTOR_STATUS_ONLINE).build();
         }
         collectorDao.save(collector);
         ConsistentHash.Node node = new ConsistentHash.Node(identity, collectorInfo.getIp(), System.currentTimeMillis(), null);
@@ -124,11 +122,11 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     appDefine.setTimestamp(System.currentTimeMillis());
                     List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                     List<Configmap> configmaps = params.stream()
-                                                         .map(param -> new Configmap(param.getField(), param.getValue(),
-                                                                 param.getType())).collect(Collectors.toList());
+                            .map(param -> new Configmap(param.getField(), param.getValue(),
+                                    param.getType())).collect(Collectors.toList());
                     List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                                                                  .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                                                                  .collect(Collectors.toList());
+                            .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                            .collect(Collectors.toList());
                     paramDefaultValue.forEach(defaultVar -> {
                         if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                             // todo type
@@ -146,7 +144,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             }
         }
     }
-    
+
     @Override
     public void collectorGoOffline(String identity) {
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
@@ -159,7 +157,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             reBalanceCollectorAssignJobs();
         }
     }
-    
+
     @Override
     public void reBalanceCollectorAssignJobs() {
         consistentHash.getAllNodes().entrySet().parallelStream().forEach(entry -> {
@@ -175,6 +173,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                                 log.error("assigning job {} content is null.", addingJobId);
                                 continue;
                             }
+                            addedJobIds.add(addingJobId);
                             collectJobService.addAsyncCollectJob(job);
                         }
                         assignJobs.addAssignJobs(addedJobIds);
@@ -185,50 +184,68 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                         assignJobs.clearRemovingJobs();
                     }
                 } else {
-                    Channel channel = collectorChannelMap.get(collectorName);
-                    if (channel == null || !channel.isActive()) {
-                        collectorChannelMap.remove(collectorName);
-                        log.error("channel: {} offline now, can not assign jobs.", collectorName);
-                    } else {
-                        if (!assignJobs.getAddingJobs().isEmpty()) {
-                            Set<Long> addedJobIds = new HashSet<>(8);
-                            for (Long addingJobId : assignJobs.getAddingJobs()) {
-                                Job job = jobContentCache.get(addingJobId);
-                                if (job == null) {
-                                    log.error("assigning job {} content is null.", addingJobId);
-                                    continue;
-                                }
-                                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                                                     .setMsg(JsonUtil.toJson(job))
-                                                                     .build();
-                                channel.writeAndFlush(message);
+                    if (!assignJobs.getAddingJobs().isEmpty()) {
+                        Set<Long> addedJobIds = new HashSet<>(8);
+                        for (Long addingJobId : assignJobs.getAddingJobs()) {
+                            Job job = jobContentCache.get(addingJobId);
+                            if (job == null) {
+                                log.error("assigning job {} content is null.", addingJobId);
+                                continue;
                             }
-                            assignJobs.addAssignJobs(addedJobIds);
-                            assignJobs.removeAddingJobs(addedJobIds);
-                        }
-                        if (!assignJobs.getRemovingJobs().isEmpty()) {
+                            addedJobIds.add(addingJobId);
                             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                                 .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                                                 .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
-                                                                 .build();
-                            channel.writeAndFlush(message);
-                            assignJobs.clearRemovingJobs();
+                                    .setDirection(ClusterMsg.Direction.REQUEST)
+                                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                                    .setMsg(JsonUtil.toJson(job))
+                                    .build();
+                            this.manageServer.sendMsg(collectorName, message);
                         }
-                    }   
+                        assignJobs.addAssignJobs(addedJobIds);
+                        assignJobs.removeAddingJobs(addedJobIds);
+                    }
+                    if (!assignJobs.getRemovingJobs().isEmpty()) {
+                        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                                .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                                .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
+                                .build();
+                        this.manageServer.sendMsg(collectorName, message);
+                        assignJobs.clearRemovingJobs();
+                    }
                 }
             }
         });
     }
-    
+
     @Override
-    public void holdCollectorChannel(String identity, Channel channel) {
-        this.collectorChannelMap.put(identity, channel);
+    public boolean offlineCollector(String identity) {
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setType(ClusterMsg.MessageType.GO_OFFLINE)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setIdentity(identity)
+                .build();
+        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
+            return false;
+        }
+        log.info("send offline collector message to {} success", identity);
+        this.collectorGoOffline(identity);
+        return true;
     }
 
     @Override
-    public boolean isCollectorChannelExist(String identity) {
-        return this.collectorChannelMap.get(identity) != null;
+    public boolean onlineCollector(String identity) {
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setType(ClusterMsg.MessageType.GO_ONLINE)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setIdentity(identity)
+                .build();
+        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
+            return false;
+        }
+        log.info("send online collector message to {} success", identity);
+        this.collectorGoOnline(identity);
+        return true;
     }
 
     @Override
@@ -239,22 +256,25 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         if (node == null) {
             log.error("there is no collector online to assign job.");
             CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                                                         .setCode(CollectRep.Code.FAIL)
-                                                         .setMsg("no collector online to assign job")
-                                                         .build();
+                    .setCode(CollectRep.Code.FAIL)
+                    .setMsg("no collector online to assign job")
+                    .build();
             return Collections.singletonList(metricsData);
         }
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job {}.", node.getName(), job.getId());
-                return metricsData;
-            } else {
-                CountDownLatch countDownLatch = new CountDownLatch(1);
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(job))
+                    .build();
+            boolean result = this.manageServer.sendMsg(node.getName(), message);
+
+            if (result) {
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
                     @Override
                     public void response(List<CollectRep.MetricsData> responseMetrics) {
@@ -264,43 +284,39 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                         countDownLatch.countDown();
                     }
                 };
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
-                                                     .setMsg(JsonUtil.toJson(job))
-                                                     .build();
-                channel.writeAndFlush(message);
                 eventListeners.put(job.getMonitorId(), listener);
-                try {
-                    countDownLatch.await(120, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    log.info("The sync task runs for 120 seconds with no response and returns");
-                }
-                return metricsData;
             }
+            try {
+                countDownLatch.await(120, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                log.info("The sync task runs for 120 seconds with no response and returns");
+            }
+            return metricsData;
         }
     }
-    
+
     @Override
     public List<CollectRep.MetricsData> collectSyncJobData(Job job, String collector) {
         ConsistentHash.Node node = consistentHash.getNode(collector);
         if (node == null) {
             log.error("there is no collector online to assign job.");
             CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                                                         .setCode(CollectRep.Code.FAIL)
-                                                         .setMsg("the collector is offline and cannot assign job")
-                                                         .build();
+                    .setCode(CollectRep.Code.FAIL)
+                    .setMsg("the collector is offline and cannot assign job")
+                    .build();
             return Collections.singletonList(metricsData);
         }
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job {}.", node.getName(), job.getId());
-                return metricsData;
-            } else {
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(job))
+                    .build();
+            boolean result = this.manageServer.sendMsg(node.getName(), message);
+            if (result) {
                 CountDownLatch countDownLatch = new CountDownLatch(1);
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
                     @Override
@@ -311,22 +327,17 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                         countDownLatch.countDown();
                     }
                 };
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
-                                                     .setMsg(JsonUtil.toJson(job))
-                                                     .build();
-                channel.writeAndFlush(message);
                 eventListeners.put(job.getMonitorId(), listener);
                 try {
                     countDownLatch.await(120, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.info("The sync task runs for 120 seconds with no response and returns");
                 }
-                return metricsData;
             }
+            return metricsData;
         }
     }
-    
+
     @Override
     public long addAsyncCollectJob(Job job) {
         long jobId = SnowFlakeIdGenerator.generateId();
@@ -342,21 +353,16 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job monitor {}.", node.getName(), jobId);
-            } else {
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                                     .setMsg(JsonUtil.toJson(job))
-                                                     .build();
-                channel.writeAndFlush(message);
-            }    
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(job))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), message);
         }
         return jobId;
     }
-    
+
     @Override
     public long addAsyncCollectJob(Job job, String collector) {
         long jobId = SnowFlakeIdGenerator.generateId();
@@ -371,21 +377,16 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job {}.", node.getName(), jobId);
-            } else {
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                                     .setMsg(JsonUtil.toJson(job))
-                                                     .build();
-                channel.writeAndFlush(message);
-            }   
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(job))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), message);
         }
         return jobId;
     }
-    
+
     @Override
     public long updateAsyncCollectJob(Job modifyJob) {
         // delete and add
@@ -405,26 +406,22 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             collectJobService.addAsyncCollectJob(modifyJob);
             collectJobService.cancelAsyncCollectJob(preJobId);
         } else {
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job {}.", node.getName(), newJobId);
-            } else {
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                                     .setMsg(JsonUtil.toJson(modifyJob))
-                                                     .build();
-                channel.writeAndFlush(message);
-                ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                                                           .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                                           .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                                                           .build();
-                channel.writeAndFlush(deleteMessage);
-            }   
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(modifyJob))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), message);
+            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), deleteMessage);
         }
         return newJobId;
     }
-    
+
     @Override
     public long updateAsyncCollectJob(Job modifyJob, String collector) {
         // delete and add
@@ -440,58 +437,49 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         }
         node.getAssignJobs().removePinnedJob(preJobId);
         node.getAssignJobs().addPinnedJob(newJobId);
-        
+
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             collectJobService.addAsyncCollectJob(modifyJob);
             collectJobService.cancelAsyncCollectJob(preJobId);
         } else {
-            Channel channel = collectorChannelMap.get(node.getName());
-            if (channel == null || !channel.isActive()) {
-                collectorChannelMap.remove(node.getName());
-                log.error("channel: {} offline now, can not assign job {}.", node.getName(), newJobId);
-            } else {
-                ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                                     .setMsg(JsonUtil.toJson(modifyJob))
-                                                     .build();
-                channel.writeAndFlush(message);
-                ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                                                           .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                                           .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                                                           .build();
-                channel.writeAndFlush(deleteMessage);
-            }   
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(modifyJob))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), message);
+            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
+                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
+                    .build();
+            this.manageServer.sendMsg(node.getName(), deleteMessage);
         }
         return newJobId;
     }
-    
+
     @Override
     public void cancelAsyncCollectJob(Long jobId) {
-        consistentHash.getAllNodes().entrySet().stream().filter( entry -> {
+        consistentHash.getAllNodes().entrySet().stream().filter(entry -> {
             ConsistentHash.Node node = entry.getValue();
             AssignJobs assignJobs = node.getAssignJobs();
             return assignJobs.getPinnedJobs().contains(jobId)
-                                        || assignJobs.getJobs().contains(jobId) || assignJobs.getAddingJobs().contains(jobId);
+                    || assignJobs.getJobs().contains(jobId) || assignJobs.getAddingJobs().contains(jobId);
         }).findFirst().ifPresent(entry -> {
             ConsistentHash.Node node = entry.getValue();
             if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
                 collectJobService.cancelAsyncCollectJob(jobId);
             } else {
-                Channel channel = collectorChannelMap.get(node.getName());
-                if (channel == null || !channel.isActive()) {
-                    collectorChannelMap.remove(node.getName());
-                    log.error("channel: {} offline now, can not cancel job {}.", node.getName(), jobId);
-                } else {
-                    ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                                                               .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                                               .setMsg(JsonUtil.toJson(List.of(jobId)))
-                                                               .build();
-                    channel.writeAndFlush(deleteMessage);
-                }   
+                ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
+                        .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                        .setDirection(ClusterMsg.Direction.REQUEST)
+                        .setMsg(JsonUtil.toJson(List.of(jobId)))
+                        .build();
+                this.manageServer.sendMsg(node.getName(), deleteMessage);
             }
         });
     }
-    
+
     @Override
     public void collectSyncJobResponse(List<CollectRep.MetricsData> metricsDataList) {
         if (metricsDataList.isEmpty()) {
@@ -504,19 +492,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             eventListener.response(metricsDataList);
         }
     }
-    
-    @Override
-    public void run(String... args) throws Exception {
-        // start detect not active channel client
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            collectorChannelMap.forEach((collector, channel) -> {
-                if (!channel.isActive()) {
-                    channel.closeFuture();
-                    collectorChannelMap.remove(collector);
-                    collectorGoOffline(collector);
-                }
-            });
-            }, 10, 3, TimeUnit.SECONDS);
+
+    public void setManageServer(ManageServer manageServer) {
+        this.manageServer = manageServer;
     }
+
 }

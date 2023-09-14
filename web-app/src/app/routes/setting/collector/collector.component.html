@@ -1,0 +1,144 @@
+<app-help-massage-show
+  [help_massage_content]="'collector.help' | i18n"
+  [guild_link]="'collector.help.link' | i18n"
+  [module_name]="'menu.extras.collector'"
+  [icon_name]="'cluster'"
+></app-help-massage-show>
+<nz-divider></nz-divider>
+
+<div style="margin-bottom: 20px">
+  <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+
+  <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
+    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+    {{ 'collector.online' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
+    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+    {{ 'collector.offline' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    {{ 'collector.delete' | i18n }}
+  </button>
+
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadCollectorsTable()" class="mobile-hide">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    class="mobile-hide"
+    style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
+    nz-input
+    type="text"
+    [placeholder]="'collector.name' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadCollectorsTable()"
+    [(ngModel)]="search"
+  />
+</div>
+
+<nz-table
+  #fixedTable
+  [nzData]="collectors"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="16%">{{ 'collector' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.task' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.pinned' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'collector.dispatched' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%">{{ 'collector.start-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td
+        nzAlign="center"
+        nzLeft
+        [nzChecked]="checkedCollectors.has(data.collector.name)"
+        (nzCheckedChange)="onItemChecked(data.collector.name, $event)"
+      ></td>
+      <td nzAlign="center">{{ data.collector.name }}</td>
+      <td nzAlign="center">
+        <nz-tag [nzColor]="data.collector.status == 0 ? 'processing' : 'red'">
+          {{ data.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.pinMonitorNum + data.dispatchMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.pinMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.dispatchMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">{{ data.collector.ip }}</td>
+      <td>
+        {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
+      </td>
+      <td nzAlign="center">
+        <button
+          *ngIf="data.collector.status == 1"
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          (click)="onGoOnlineOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.online' | i18n"
+        >
+          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          *ngIf="data.collector.status == 0"
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          (click)="onGoOfflineOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.offline' | i18n"
+        >
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          nzDanger
+          (click)="onDeleteOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.delete' | i18n"
+        >
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>

@@ -92,7 +92,7 @@ public class ConsistentHash {
             Iterator<DispatchJob> iterator = dispatchJobCache.iterator();
             while (iterator.hasNext()) {
                 DispatchJob dispatchJob = iterator.next();
-                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId);
+                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
                 iterator.remove();
             }
         }
@@ -148,7 +148,7 @@ public class ConsistentHash {
             Iterator<DispatchJob> iterator = dispatchJobCache.iterator();
             while (iterator.hasNext()) {
                 DispatchJob dispatchJob = iterator.next();
-                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId);
+                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
                 iterator.remove();
             }
         }
@@ -193,7 +193,7 @@ public class ConsistentHash {
             return null;
         }
         int dispatchHash = hash(dispatchKey);
-        return dispatchJob(dispatchHash, jobId);
+        return dispatchJob(dispatchHash, jobId, true);
     }
     
     /**
@@ -216,9 +216,10 @@ public class ConsistentHash {
      *
      * @param dispatchHash 采集任务路由hash
      * @param jobId jobId
+     * @param isFlushed is has flush this job or wait to dispatch 此任务是否已被下发调度还是等待后续下发
      * @return 采集器节点
      */
-    public Node dispatchJob(Integer dispatchHash, Long jobId) {
+    public Node dispatchJob(Integer dispatchHash, Long jobId, boolean isFlushed) {
         if (dispatchHash == null || hashCircle == null || hashCircle.isEmpty()) {
             log.warn("There is no available collector registered. Cache the job.");
             dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
@@ -231,7 +232,7 @@ public class ConsistentHash {
         int virtualKey = ceilEntry.getKey();
         Node curNode = ceilEntry.getValue();
 
-        curNode.addJob(virtualKey, dispatchHash, jobId);
+        curNode.addJob(virtualKey, dispatchHash, jobId, isFlushed);
         return curNode;
     }
     
@@ -345,7 +346,7 @@ public class ConsistentHash {
             virtualNodeMap = new ConcurrentHashMap<>(VIRTUAL_NODE_DEFAULT_SIZE);
         }
 
-        private synchronized void addJob(Integer virtualNodeKey, Integer dispatchHash, Long jobId) {
+        private synchronized void addJob(Integer virtualNodeKey, Integer dispatchHash, Long jobId, boolean isFlushed) {
             if (virtualNodeMap == null) {
                 virtualNodeMap = new ConcurrentHashMap<>(VIRTUAL_NODE_DEFAULT_SIZE);
             }
@@ -354,7 +355,11 @@ public class ConsistentHash {
             }
             Set<Long[]> virtualNodeJob = virtualNodeMap.computeIfAbsent(virtualNodeKey, k -> new HashSet<>(16));
             virtualNodeJob.add(new Long[]{jobId, dispatchHash.longValue()});
-            assignJobs.addAssignJob(jobId);
+            if (isFlushed) {
+                assignJobs.addAssignJob(jobId);   
+            } else {
+                assignJobs.addAddingJob(jobId);
+            }
         }
 
         /**

@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.warehouse.store;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.entity.warehouse.History;
@@ -29,7 +30,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.criteria.Predicate;
@@ -39,6 +39,9 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,41 +65,51 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 		this.jpaProperties = properties.getStore().getJpa();
 		this.serverAvailable = true;
 		this.historyDao = historyDao;
+        expiredDataCleaner();
 	}
-
-	@Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
+    
 	public void expiredDataCleaner() {
-		log.warn("[jpa-metrics-store]-start running expired data cleaner." +
-				"Please use time series db instead of jpa for better performance");
-		String expireTimeStr = jpaProperties.getExpireTime();
-		long expireTime = 0;
-		try {
-			if (NumberUtils.isParsable(expireTimeStr)) {
-				expireTime = NumberUtils.toLong(expireTimeStr);
-				expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000;
-			} else {
-				TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
-				ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-				expireTime = dateTime.toEpochSecond() * 1000;
-			}
-		} catch (Exception e) {
-			log.error("expiredDataCleaner time error: {}. use default expire time to clean: 1h", e.getMessage());
-			ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(1));
-			expireTime = dateTime.toEpochSecond() * 1000;
-		}
-		try {
-			int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
-			log.info("[jpa-metrics-store]-delete {} rows.", rows);
-			long total = historyDao.count();
-			if (total > jpaProperties.getMaxHistoryRecordNum()) {
-				rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
-				log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
-			}
-		} catch (Exception e) {
-			log.error("expiredDataCleaner database error: {}.", e.getMessage());
-			log.error("try to truncate table hzb_history. Please use time series db instead of jpa for better performance.");
-			historyDao.truncateTable();
-		}
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                                              .setUncaughtExceptionHandler((thread, throwable) -> {
+                                                  log.error("Jpa metrics store has uncaughtException.");
+                                                  log.error(throwable.getMessage(), throwable); })
+                                              .setDaemon(true)
+                                              .setNameFormat("jpa-metrics-cleaner-%d")
+                                              .build();
+        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        scheduledExecutor.scheduleAtFixedRate(() -> {
+            log.warn("[jpa-metrics-store]-start running expired data cleaner." +
+                             "Please use time series db instead of jpa for better performance");
+            String expireTimeStr = jpaProperties.getExpireTime();
+            long expireTime = 0;
+            try {
+                if (NumberUtils.isParsable(expireTimeStr)) {
+                    expireTime = NumberUtils.toLong(expireTimeStr);
+                    expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000;
+                } else {
+                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
+                    ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                    expireTime = dateTime.toEpochSecond() * 1000;
+                }
+            } catch (Exception e) {
+                log.error("expiredDataCleaner time error: {}. use default expire time to clean: 1h", e.getMessage());
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(1));
+                expireTime = dateTime.toEpochSecond() * 1000;
+            }
+            try {
+                int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
+                log.info("[jpa-metrics-store]-delete {} rows.", rows);
+                long total = historyDao.count();
+                if (total > jpaProperties.getMaxHistoryRecordNum()) {
+                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
+                    log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
+                }
+            } catch (Exception e) {
+                log.error("expiredDataCleaner database error: {}.", e.getMessage());
+                log.error("try to truncate table hzb_history. Please use time series db instead of jpa for better performance.");
+                historyDao.truncateTable();
+            }
+        }, 5, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
