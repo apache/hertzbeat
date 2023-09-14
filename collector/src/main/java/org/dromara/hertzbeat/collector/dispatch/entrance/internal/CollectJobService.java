@@ -18,6 +18,8 @@
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
 import io.netty.channel.Channel;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
@@ -27,14 +29,13 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import org.dromara.hertzbeat.common.util.JsonUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,39 +44,43 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection job management provides api interface
  * 采集job管理提供api接口
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Service
 @Slf4j
 public class CollectJobService {
 
     private static final String COLLECTOR_STR = "-collector";
-    
+
     private final TimerDispatch timerDispatch;
-    
+
     private final WorkerPool workerPool;
-    
+
     private String collectorIdentity = null;
-    
+
     private volatile Channel collectorChannel = null;
-    
+
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
-        if (properties != null && properties.getEntrance() != null 
-                    && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
-            String collectorName = properties.getEntrance().getNetty().getIdentity();
-            if (StringUtils.hasText(collectorName)) {
-                collectorIdentity = collectorName;
-            } else {
-                String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
-                log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
-                collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
-            }
+
+        Optional<DispatchProperties.EntranceProperties.NettyProperties> nettyEnableOpt = Optional
+                .ofNullable(properties)
+                .map(DispatchProperties::getEntrance)
+                .map(DispatchProperties.EntranceProperties::getNetty)
+                .filter(DispatchProperties.EntranceProperties.NettyProperties::isEnabled);
+        if (nettyEnableOpt.isEmpty()) {
+            return;
         }
+        nettyEnableOpt.filter(ele -> StringUtils.isNotBlank(ele.getIdentity()))
+                .ifPresentOrElse(ele -> collectorIdentity = ele.getIdentity(), () -> {
+                    String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                    log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
+                    collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                });
     }
-    
+
     /**
      * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
@@ -103,12 +108,12 @@ public class CollectJobService {
         }
         return metricsData;
     }
-    
+
     /**
      * Execute a one-time collection task and send the collected data response
      *
      * @param oneTimeJob Collect task details  采集任务详情
-     * @param channel channel 
+     * @param channel    channel
      */
     public void collectSyncJobData(Job oneTimeJob, Channel channel) {
         workerPool.executeJob(() -> {
@@ -122,8 +127,8 @@ public class CollectJobService {
             }
             String response = JsonUtil.toJson(jsons);
             channel.writeAndFlush(ClusterMsg.Message.newBuilder()
-                                          .setMsg(response)
-                                          .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build()); 
+                    .setMsg(response)
+                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build());
         });
     }
 
@@ -148,50 +153,52 @@ public class CollectJobService {
             timerDispatch.deleteJob(jobId, true);
         }
     }
-    
+
     /**
-     * collector online 
+     * collector online
+     *
      * @param channel message channel
      */
     public void collectorGoOnline(Channel channel) {
         collectorChannel = channel;
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                                              .name(collectorIdentity)
-                                              .ip(IpDomainUtil.getLocalhostIp())
-                                              // todo more info
-                                              .build();
+                .name(collectorIdentity)
+                .ip(IpDomainUtil.getLocalhostIp())
+                // todo more info
+                .build();
         String msg = JsonUtil.toJson(collectorInfo);
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                             .setIdentity(collectorIdentity)
-                                             .setType(ClusterMsg.MessageType.GO_ONLINE)
-                                             .setMsg(msg)
-                                             .build();
+                .setIdentity(collectorIdentity)
+                .setType(ClusterMsg.MessageType.GO_ONLINE)
+                .setMsg(msg)
+                .build();
         channel.writeAndFlush(message);
         // start a thread to send heartbeat to cluster server periodically
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutor.scheduleAtFixedRate(() -> {
             if (collectorChannel.isActive()) {
                 ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                                       .setIdentity(collectorIdentity)
-                                                       .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                                       .build();
+                        .setIdentity(collectorIdentity)
+                        .setType(ClusterMsg.MessageType.HEARTBEAT)
+                        .build();
                 collectorChannel.writeAndFlush(heartbeat);
-                log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
+                log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
             }
         }, 5, 5, TimeUnit.SECONDS);
     }
-    
+
     /**
      * send async collect response data
+     *
      * @param metricsData collect data
      */
     public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
         String data = ProtoJsonUtil.toJsonStr(metricsData);
         ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                               .setIdentity(collectorIdentity)
-                                               .setMsg(data)
-                                               .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
-                                               .build();
+                .setIdentity(collectorIdentity)
+                .setMsg(data)
+                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
+                .build();
         collectorChannel.writeAndFlush(heartbeat);
     }
 }
