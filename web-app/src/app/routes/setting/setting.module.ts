@@ -1,5 +1,7 @@
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
@@ -18,8 +20,6 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
-import {ClipboardModule} from "@angular/cdk/clipboard";
-import {NzBadgeModule} from "ng-zorro-antd/badge";
 
 const COMPONENTS: Array<Type<void>> = [
   SettingTagsComponent,
