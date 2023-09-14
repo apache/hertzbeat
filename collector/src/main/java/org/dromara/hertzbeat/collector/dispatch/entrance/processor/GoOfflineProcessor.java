@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.collector.dispatch.entrance.processor;
 
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
@@ -11,6 +12,7 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
  * handle collector offline message
  * 注: 这里不关闭与Manager的连接, 只是关闭采集功能
  */
+@Slf4j
 public class GoOfflineProcessor implements NettyRemotingProcessor {
     
     private TimerDispatch timerDispatch;
@@ -21,6 +23,7 @@ public class GoOfflineProcessor implements NettyRemotingProcessor {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         timerDispatch.goOffline();
+        log.info("receive offline message and handle success");
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())
                 .setDirection(ClusterMsg.Direction.RESPONSE)

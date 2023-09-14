@@ -38,7 +38,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
-import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.remoting.RemotingClient;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 

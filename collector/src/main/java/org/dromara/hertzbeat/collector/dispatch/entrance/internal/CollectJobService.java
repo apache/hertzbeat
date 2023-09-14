@@ -17,12 +17,10 @@
 
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.channel.Channel;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
+import org.dromara.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
-import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -37,11 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collection job management provides api interface
@@ -61,18 +55,16 @@ public class CollectJobService {
 
     private String collectorIdentity = null;
 
-    private final AtomicReference<Channel> collectorChannelRef = new AtomicReference<>();
-
-    private ScheduledExecutorService scheduledExecutor;
+    private CollectServer collectServer;
 
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
         if (properties != null && properties.getEntrance() != null
                 && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
-            String identityToken = properties.getEntrance().getNetty().getIdentity();
-            if (StringUtils.hasText(identityToken)) {
-                collectorIdentity = identityToken;
+            String collectorName = properties.getEntrance().getNetty().getIdentity();
+            if (StringUtils.hasText(collectorName)) {
+                collectorIdentity = collectorName;
             } else {
                 String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
                 log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
@@ -113,9 +105,8 @@ public class CollectJobService {
      * Execute a one-time collection task and send the collected data response
      *
      * @param oneTimeJob Collect task details  采集任务详情
-     * @param channel    channel
      */
-    public void collectSyncJobData(Job oneTimeJob, Channel channel) {
+    public void collectSyncOneTimeJobData(Job oneTimeJob) {
         workerPool.executeJob(() -> {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
             List<String> jsons = new ArrayList<>(metricsDataList.size());
@@ -126,9 +117,12 @@ public class CollectJobService {
                 }
             }
             String response = JsonUtil.toJson(jsons);
-            channel.writeAndFlush(ClusterMsg.Message.newBuilder()
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setMsg(response)
-                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA).build());
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
+                    .build();
+            this.collectServer.sendMsg(message);
         });
     }
 
@@ -155,60 +149,26 @@ public class CollectJobService {
     }
 
     /**
-     * collector online
-     *
-     * @param channel message channel
-     */
-    public void collectorGoOnline(Channel channel) {
-        collectorChannelRef.set(channel);
-        CollectorInfo collectorInfo = CollectorInfo.builder()
-                .name(collectorIdentity)
-                .ip(IpDomainUtil.getLocalhostIp())
-                // todo more info
-                .build();
-        String msg = JsonUtil.toJson(collectorInfo);
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setIdentity(collectorIdentity)
-                .setType(ClusterMsg.MessageType.GO_ONLINE)
-                .setMsg(msg)
-                .build();
-        channel.writeAndFlush(message);
-        // start a thread to send heartbeat to cluster server periodically
-        if (scheduledExecutor == null) {
-            ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                    .setUncaughtExceptionHandler((thread, throwable) -> {
-                        log.error("HeartBeat Scheduler has uncaughtException.");
-                        log.error(throwable.getMessage(), throwable);
-                    })
-                    .setDaemon(true)
-                    .setNameFormat("heartbeat-worker-%d")
-                    .build();
-            scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            scheduledExecutor.scheduleAtFixedRate(() -> {
-                if (collectorChannelRef.get().isActive()) {
-                    ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                            .setIdentity(collectorIdentity)
-                            .setType(ClusterMsg.MessageType.HEARTBEAT)
-                            .build();
-                    collectorChannelRef.get().writeAndFlush(heartbeat);
-                    log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
-                }
-            }, 5, 5, TimeUnit.SECONDS);
-        }
-    }
-
-    /**
      * send async collect response data
      *
      * @param metricsData collect data
      */
     public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
         String data = ProtoJsonUtil.toJsonStr(metricsData);
-        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setIdentity(collectorIdentity)
                 .setMsg(data)
+                .setDirection(ClusterMsg.Direction.REQUEST)
                 .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
                 .build();
-        collectorChannelRef.get().writeAndFlush(heartbeat);
+        this.collectServer.sendMsg(message);
+    }
+
+    public String getCollectorIdentity() {
+        return collectorIdentity;
+    }
+
+    public void setCollectServer(CollectServer collectServer) {
+        this.collectServer = collectServer;
     }
 }

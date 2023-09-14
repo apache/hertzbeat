@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.manager.netty;
 
 import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
@@ -14,6 +15,7 @@ import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
+import org.dromara.hertzbeat.remoting.netty.NettyHook;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -59,8 +61,11 @@ public class ManageServer {
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
 
         // register hook
-        this.remotingServer.registerHook(Lists.newArrayList((ctx, message) -> {
-            ManageServer.this.clientChannelTable.put(message.getIdentity(), ctx.channel());
+        this.remotingServer.registerHook(Lists.newArrayList(new NettyHook() {
+            @Override
+            public void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+                ManageServer.this.clientChannelTable.put(message.getIdentity(), ctx.channel());
+            }
         }));
 
         // register processor
