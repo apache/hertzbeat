@@ -69,6 +69,9 @@ public class SpringContextHolder implements ApplicationContextAware {
     }
     
     public static boolean isActive() {
+        if (configurableApplicationContext == null) {
+            return false;
+        }
         return configurableApplicationContext.isActive();
     }
 

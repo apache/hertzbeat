@@ -55,7 +55,7 @@ public class CollectorController {
     @Autowired
     private CollectorService collectorService;
     
-    @Autowired
+    @Autowired(required = false)
     private ManageServer manageServer;
 
     @GetMapping
@@ -70,7 +70,7 @@ public class CollectorController {
         }
         Specification<Collector> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -78,7 +78,7 @@ public class CollectorController {
         };
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         Page<CollectorSummary> receivers = collectorService.getCollectors(specification, pageRequest);
-        Message<Page<CollectorSummary>> message = new Message<>(receivers);
+        Message<Page<CollectorSummary>> message = Message.success(receivers);
         return ResponseEntity.ok(message);
     }
 
@@ -91,7 +91,7 @@ public class CollectorController {
             collectors.forEach(collector ->
                                        this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
         }
-        return ResponseEntity.ok(new Message<>("Online success"));
+        return ResponseEntity.ok(Message.success("Online success"));
     }
 
     @PutMapping("/offline")
@@ -102,7 +102,7 @@ public class CollectorController {
         if (collectors != null) {
             collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
         }
-        return ResponseEntity.ok(new Message<>("Offline success"));
+        return ResponseEntity.ok(Message.success("Offline success"));
     }
 
     @DeleteMapping
@@ -111,7 +111,7 @@ public class CollectorController {
             @Parameter(description = "collector name | 采集器名称", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
         this.collectorService.deleteRegisteredCollector(collectors);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
 }

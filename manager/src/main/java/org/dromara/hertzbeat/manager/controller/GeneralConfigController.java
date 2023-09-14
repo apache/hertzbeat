@@ -22,7 +22,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 告警发送端配置API
  *
  * @author zqr10159
- *
  */
 @RestController
 @RequestMapping(value = "/api/config", produces = {APPLICATION_JSON_VALUE})
@@ -30,14 +29,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 public class GeneralConfigController {
     private Map<String, GeneralConfigService> configServiceMap;
-    
+
     public GeneralConfigController(List<GeneralConfigService> generalConfigServices) {
         configServiceMap = new HashMap<>(8);
         if (generalConfigServices != null) {
             generalConfigServices.forEach(config -> configServiceMap.put(config.type(), config));
         }
     }
-    
+
     @PostMapping(path = "/{type}")
     @Operation(summary = "Save the sender config", description = "保存公共配置")
     public ResponseEntity<Message<String>> saveOrUpdateConfig(
@@ -49,18 +48,18 @@ public class GeneralConfigController {
             throw new IllegalArgumentException("Not supported this config type: " + type);
         }
         configService.saveConfig(config);
-        return ResponseEntity.ok(new Message<>("Update config success"));
+        return ResponseEntity.ok(Message.success("Update config success"));
     }
 
     @GetMapping(path = "/{type}")
     @Operation(summary = "Get the sender config", description = "获取发送端配置")
     public ResponseEntity<Message<Object>> getConfig(
             @Parameter(description = "Config Type", example = "email")
-            @PathVariable("type") @NotNull final String type){
+            @PathVariable("type") @NotNull final String type) {
         GeneralConfigService configService = configServiceMap.get(type);
         if (configService == null) {
             throw new IllegalArgumentException("Not supported this config type: " + type);
         }
-        return ResponseEntity.ok(new Message<>(configService.getConfig()));
+        return ResponseEntity.ok(Message.success(configService.getConfig()));
     }
 }

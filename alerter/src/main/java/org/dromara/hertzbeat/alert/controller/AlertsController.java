@@ -90,7 +90,7 @@ public class AlertsController {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
             }
-            if (content != null && !"".equals(content)) {
+            if (content != null && !content.isEmpty()) {
                 Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
                 andList.add(predicateContent);
             }
@@ -100,7 +100,7 @@ public class AlertsController {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Alert> alertPage = alertService.getAlerts(specification, pageRequest);
-        Message<Page<Alert>> message = new Message<>(alertPage);
+        Message<Page<Alert>> message = Message.success(alertPage);
         return ResponseEntity.ok(message);
     }
 
@@ -111,7 +111,7 @@ public class AlertsController {
         if (ids != null && !ids.isEmpty()) {
             alertService.deleteAlerts(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -119,7 +119,7 @@ public class AlertsController {
     @Operation(summary = "Delete alarms in batches", description = "清空所有告警信息")
     public ResponseEntity<Message<Void>> clearAllAlerts() {
         alertService.clearAlerts();
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -131,7 +131,7 @@ public class AlertsController {
         if (ids != null && status != null && !ids.isEmpty()) {
             alertService.editAlertStatus(status, ids);
         }
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -139,7 +139,7 @@ public class AlertsController {
     @Operation(summary = "Get alarm statistics", description = "获取告警统计信息")
     public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
         AlertSummary alertSummary = alertService.getAlertsSummary();
-        Message<AlertSummary> message = new Message<>(alertSummary);
+        Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
     

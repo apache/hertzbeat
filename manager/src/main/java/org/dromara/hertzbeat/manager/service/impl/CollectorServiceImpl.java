@@ -32,7 +32,7 @@ public class CollectorServiceImpl implements CollectorService {
     @Autowired
     private ConsistentHash consistentHash;
     
-    @Autowired
+    @Autowired(required = false)
     private ManageServer manageServer; 
     
     @Override
