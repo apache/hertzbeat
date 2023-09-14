@@ -46,7 +46,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 6. Deploy collector clusters
     - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
     - Need `java jdk11` Environment
-    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-host`, hertzbeat `manager-port`
       ```yaml
       collector:
         dispatch:
@@ -54,7 +54,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
             netty:
               enabled: true
               identity: ${IDENTITY:}
-              manager-ip: ${MANAGER_HOST:127.0.0.1}
+              manager-host: ${MANAGER_HOST:127.0.0.1}
               manager-port: ${MANAGER_PORT:1158}
       ```
     - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`

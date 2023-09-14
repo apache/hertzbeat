@@ -300,7 +300,7 @@ export class CollectorComponent implements OnInit {
               `      netty:\n` +
               `        enabled: true\n` +
               `        identity: ${this.identity}\n` +
-              `        manager-ip: ${this.managerHost}\n` +
+              `        manager-host: ${this.managerHost}\n` +
               `        manager-port: 1158\n\n` +
               `${this.i18nSvc.fanyi('collector.deploy.package.help.3')}\n`;
           } else {

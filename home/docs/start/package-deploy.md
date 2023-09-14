@@ -58,7 +58,7 @@ In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user
 
    - Download and unzip the collector release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - Also need to install `java jdk11` environment like above.
-   - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+   - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-host`, hertzbeat `manager-port`
      ```yaml
      collector:
        dispatch:
@@ -66,7 +66,7 @@ In `startup.bat`, modify `javaw` to the path of `java11`, such as `C:\Users\user
            netty:
              enabled: true
              identity: ${IDENTITY:}
-             manager-ip: ${MANAGER_HOST:127.0.0.1}
+             manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
