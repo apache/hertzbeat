@@ -40,9 +40,6 @@ import java.util.stream.Collectors;
 /**
  * Index group collection
  * 指标组采集
- *
- * @author tomsun28
- *
  */
 @Slf4j
 @Data

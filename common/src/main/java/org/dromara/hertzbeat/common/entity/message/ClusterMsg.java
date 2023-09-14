@@ -87,6 +87,14 @@ public final class ClusterMsg {
          * <code>RESPONSE_CYCLIC_TASK_DATA = 7;</code>
          */
         RESPONSE_CYCLIC_TASK_DATA(7),
+        /**
+         * <pre>
+         * collector go close to master
+         * </pre>
+         *
+         * <code>GO_CLOSE = 8;</code>
+         */
+        GO_CLOSE(8),
         UNRECOGNIZED(-1),
         ;
         
@@ -154,6 +162,14 @@ public final class ClusterMsg {
          * <code>RESPONSE_CYCLIC_TASK_DATA = 7;</code>
          */
         public static final int RESPONSE_CYCLIC_TASK_DATA_VALUE = 7;
+        /**
+         * <pre>
+         * collector go close to master
+         * </pre>
+         *
+         * <code>GO_CLOSE = 8;</code>
+         */
+        public static final int GO_CLOSE_VALUE = 8;
         
         
         public final int getNumber() {
@@ -196,6 +212,8 @@ public final class ClusterMsg {
                     return RESPONSE_ONE_TIME_TASK_DATA;
                 case 7:
                     return RESPONSE_CYCLIC_TASK_DATA;
+                case 8:
+                    return GO_CLOSE;
                 default:
                     return null;
             }
@@ -256,6 +274,136 @@ public final class ClusterMsg {
         // @@protoc_insertion_point(enum_scope:org.dromara.hertzbeat.common.entity.message.MessageType)
     }
     
+    /**
+     * Protobuf enum {@code org.dromara.hertzbeat.common.entity.message.Direction}
+     */
+    public enum Direction
+            implements com.google.protobuf.ProtocolMessageEnum {
+        /**
+         * <pre>
+         * request message
+         * </pre>
+         *
+         * <code>REQUEST = 0;</code>
+         */
+        REQUEST(0),
+        /**
+         * <pre>
+         * request response
+         * </pre>
+         *
+         * <code>RESPONSE = 1;</code>
+         */
+        RESPONSE(1),
+        UNRECOGNIZED(-1),
+        ;
+        
+        /**
+         * <pre>
+         * request message
+         * </pre>
+         *
+         * <code>REQUEST = 0;</code>
+         */
+        public static final int REQUEST_VALUE = 0;
+        /**
+         * <pre>
+         * request response
+         * </pre>
+         *
+         * <code>RESPONSE = 1;</code>
+         */
+        public static final int RESPONSE_VALUE = 1;
+        
+        
+        public final int getNumber() {
+            if (this == UNRECOGNIZED) {
+                throw new IllegalArgumentException(
+                        "Can't get the number of an unknown enum value.");
+            }
+            return value;
+        }
+        
+        /**
+         * @param value The numeric wire value of the corresponding enum entry.
+         * @return The enum associated with the given numeric wire value.
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @Deprecated
+        public static Direction valueOf(int value) {
+            return forNumber(value);
+        }
+        
+        /**
+         * @param value The numeric wire value of the corresponding enum entry.
+         * @return The enum associated with the given numeric wire value.
+         */
+        public static Direction forNumber(int value) {
+            switch (value) {
+                case 0:
+                    return REQUEST;
+                case 1:
+                    return RESPONSE;
+                default:
+                    return null;
+            }
+        }
+        
+        public static com.google.protobuf.Internal.EnumLiteMap<Direction>
+        internalGetValueMap() {
+            return internalValueMap;
+        }
+        
+        private static final com.google.protobuf.Internal.EnumLiteMap<
+                                                                             Direction> internalValueMap =
+                new com.google.protobuf.Internal.EnumLiteMap<Direction>() {
+                    public Direction findValueByNumber(int number) {
+                        return Direction.forNumber(number);
+                    }
+                };
+        
+        public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+            if (this == UNRECOGNIZED) {
+                throw new IllegalStateException(
+                        "Can't get the descriptor of an unrecognized enum value.");
+            }
+            return getDescriptor().getValues().get(ordinal());
+        }
+        
+        public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+            return getDescriptor();
+        }
+        
+        public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+            return ClusterMsg.getDescriptor().getEnumTypes().get(1);
+        }
+        
+        private static final Direction[] VALUES = values();
+        
+        public static Direction valueOf(
+                com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+            if (desc.getType() != getDescriptor()) {
+                throw new IllegalArgumentException(
+                        "EnumValueDescriptor is not for this type.");
+            }
+            if (desc.getIndex() == -1) {
+                return UNRECOGNIZED;
+            }
+            return VALUES[desc.getIndex()];
+        }
+        
+        private final int value;
+        
+        private Direction(int value) {
+            this.value = value;
+        }
+        
+        // @@protoc_insertion_point(enum_scope:org.dromara.hertzbeat.common.entity.message.Direction)
+    }
+    
     public interface MessageOrBuilder extends
             // @@protoc_insertion_point(interface_extends:org.dromara.hertzbeat.common.entity.message.Message)
                     com.google.protobuf.MessageOrBuilder {
@@ -285,10 +433,32 @@ public final class ClusterMsg {
         
         /**
          * <pre>
+         * message direction
+         * </pre>
+         *
+         * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+         *
+         * @return The enum numeric value on the wire for direction.
+         */
+        int getDirectionValue();
+        
+        /**
+         * <pre>
+         * message direction
+         * </pre>
+         *
+         * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+         *
+         * @return The direction.
+         */
+        Direction getDirection();
+        
+        /**
+         * <pre>
          * message type
          * </pre>
          *
-         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
          *
          * @return The enum numeric value on the wire for type.
          */
@@ -299,7 +469,7 @@ public final class ClusterMsg {
          * message type
          * </pre>
          *
-         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
          *
          * @return The type.
          */
@@ -310,7 +480,7 @@ public final class ClusterMsg {
          * message content
          * </pre>
          *
-         * <code>string msg = 3;</code>
+         * <code>string msg = 4;</code>
          *
          * @return The msg.
          */
@@ -321,7 +491,7 @@ public final class ClusterMsg {
          * message content
          * </pre>
          *
-         * <code>string msg = 3;</code>
+         * <code>string msg = 4;</code>
          *
          * @return The bytes for msg.
          */
@@ -345,6 +515,7 @@ public final class ClusterMsg {
         
         private Message() {
             identity_ = "";
+            direction_ = 0;
             type_ = 0;
             msg_ = "";
         }
@@ -389,10 +560,16 @@ public final class ClusterMsg {
                         case 16: {
                             int rawValue = input.readEnum();
                             
+                            direction_ = rawValue;
+                            break;
+                        }
+                        case 24: {
+                            int rawValue = input.readEnum();
+                            
                             type_ = rawValue;
                             break;
                         }
-                        case 26: {
+                        case 34: {
                             String s = input.readStringRequireUtf8();
                             
                             msg_ = s;
@@ -483,7 +660,40 @@ public final class ClusterMsg {
             }
         }
         
-        public static final int TYPE_FIELD_NUMBER = 2;
+        public static final int DIRECTION_FIELD_NUMBER = 2;
+        private int direction_;
+        
+        /**
+         * <pre>
+         * message direction
+         * </pre>
+         *
+         * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+         *
+         * @return The enum numeric value on the wire for direction.
+         */
+        @Override
+        public int getDirectionValue() {
+            return direction_;
+        }
+        
+        /**
+         * <pre>
+         * message direction
+         * </pre>
+         *
+         * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+         *
+         * @return The direction.
+         */
+        @Override
+        public Direction getDirection() {
+            @SuppressWarnings("deprecation")
+            Direction result = Direction.valueOf(direction_);
+            return result == null ? Direction.UNRECOGNIZED : result;
+        }
+        
+        public static final int TYPE_FIELD_NUMBER = 3;
         private int type_;
         
         /**
@@ -491,7 +701,7 @@ public final class ClusterMsg {
          * message type
          * </pre>
          *
-         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
          *
          * @return The enum numeric value on the wire for type.
          */
@@ -505,7 +715,7 @@ public final class ClusterMsg {
          * message type
          * </pre>
          *
-         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+         * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
          *
          * @return The type.
          */
@@ -516,7 +726,7 @@ public final class ClusterMsg {
             return result == null ? MessageType.UNRECOGNIZED : result;
         }
         
-        public static final int MSG_FIELD_NUMBER = 3;
+        public static final int MSG_FIELD_NUMBER = 4;
         private volatile Object msg_;
         
         /**
@@ -524,7 +734,7 @@ public final class ClusterMsg {
          * message content
          * </pre>
          *
-         * <code>string msg = 3;</code>
+         * <code>string msg = 4;</code>
          *
          * @return The msg.
          */
@@ -547,7 +757,7 @@ public final class ClusterMsg {
          * message content
          * </pre>
          *
-         * <code>string msg = 3;</code>
+         * <code>string msg = 4;</code>
          *
          * @return The bytes for msg.
          */
@@ -584,11 +794,14 @@ public final class ClusterMsg {
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identity_)) {
                 com.google.protobuf.GeneratedMessageV3.writeString(output, 1, identity_);
             }
+            if (direction_ != Direction.REQUEST.getNumber()) {
+                output.writeEnum(2, direction_);
+            }
             if (type_ != MessageType.HEARTBEAT.getNumber()) {
-                output.writeEnum(2, type_);
+                output.writeEnum(3, type_);
             }
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msg_)) {
-                com.google.protobuf.GeneratedMessageV3.writeString(output, 3, msg_);
+                com.google.protobuf.GeneratedMessageV3.writeString(output, 4, msg_);
             }
             unknownFields.writeTo(output);
         }
@@ -602,12 +815,16 @@ public final class ClusterMsg {
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identity_)) {
                 size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, identity_);
             }
+            if (direction_ != Direction.REQUEST.getNumber()) {
+                size += com.google.protobuf.CodedOutputStream
+                                .computeEnumSize(2, direction_);
+            }
             if (type_ != MessageType.HEARTBEAT.getNumber()) {
                 size += com.google.protobuf.CodedOutputStream
-                                .computeEnumSize(2, type_);
+                                .computeEnumSize(3, type_);
             }
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msg_)) {
-                size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, msg_);
+                size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, msg_);
             }
             size += unknownFields.getSerializedSize();
             memoizedSize = size;
@@ -626,6 +843,7 @@ public final class ClusterMsg {
             
             if (!getIdentity()
                          .equals(other.getIdentity())) return false;
+            if (direction_ != other.direction_) return false;
             if (type_ != other.type_) return false;
             if (!getMsg()
                          .equals(other.getMsg())) return false;
@@ -642,6 +860,8 @@ public final class ClusterMsg {
             hash = (19 * hash) + getDescriptor().hashCode();
             hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
             hash = (53 * hash) + getIdentity().hashCode();
+            hash = (37 * hash) + DIRECTION_FIELD_NUMBER;
+            hash = (53 * hash) + direction_;
             hash = (37 * hash) + TYPE_FIELD_NUMBER;
             hash = (53 * hash) + type_;
             hash = (37 * hash) + MSG_FIELD_NUMBER;
@@ -800,6 +1020,8 @@ public final class ClusterMsg {
                 super.clear();
                 identity_ = "";
                 
+                direction_ = 0;
+                
                 type_ = 0;
                 
                 msg_ = "";
@@ -831,6 +1053,7 @@ public final class ClusterMsg {
             public Message buildPartial() {
                 Message result = new Message(this);
                 result.identity_ = identity_;
+                result.direction_ = direction_;
                 result.type_ = type_;
                 result.msg_ = msg_;
                 onBuilt();
@@ -890,6 +1113,9 @@ public final class ClusterMsg {
                 if (!other.getIdentity().isEmpty()) {
                     identity_ = other.identity_;
                     onChanged();
+                }
+                if (other.direction_ != 0) {
+                    setDirectionValue(other.getDirectionValue());
                 }
                 if (other.type_ != 0) {
                     setTypeValue(other.getTypeValue());
@@ -1033,6 +1259,91 @@ public final class ClusterMsg {
                 return this;
             }
             
+            private int direction_ = 0;
+            
+            /**
+             * <pre>
+             * message direction
+             * </pre>
+             *
+             * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+             *
+             * @return The enum numeric value on the wire for direction.
+             */
+            @Override
+            public int getDirectionValue() {
+                return direction_;
+            }
+            
+            /**
+             * <pre>
+             * message direction
+             * </pre>
+             *
+             * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+             *
+             * @param value The enum numeric value on the wire for direction to set.
+             * @return This builder for chaining.
+             */
+            public Builder setDirectionValue(int value) {
+                
+                direction_ = value;
+                onChanged();
+                return this;
+            }
+            
+            /**
+             * <pre>
+             * message direction
+             * </pre>
+             *
+             * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+             *
+             * @return The direction.
+             */
+            @Override
+            public Direction getDirection() {
+                @SuppressWarnings("deprecation")
+                Direction result = Direction.valueOf(direction_);
+                return result == null ? Direction.UNRECOGNIZED : result;
+            }
+            
+            /**
+             * <pre>
+             * message direction
+             * </pre>
+             *
+             * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+             *
+             * @param value The direction to set.
+             * @return This builder for chaining.
+             */
+            public Builder setDirection(Direction value) {
+                if (value == null) {
+                    throw new NullPointerException();
+                }
+                
+                direction_ = value.getNumber();
+                onChanged();
+                return this;
+            }
+            
+            /**
+             * <pre>
+             * message direction
+             * </pre>
+             *
+             * <code>.org.dromara.hertzbeat.common.entity.message.Direction direction = 2;</code>
+             *
+             * @return This builder for chaining.
+             */
+            public Builder clearDirection() {
+                
+                direction_ = 0;
+                onChanged();
+                return this;
+            }
+            
             private int type_ = 0;
             
             /**
@@ -1040,7 +1351,7 @@ public final class ClusterMsg {
              * message type
              * </pre>
              *
-             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
              *
              * @return The enum numeric value on the wire for type.
              */
@@ -1054,7 +1365,7 @@ public final class ClusterMsg {
              * message type
              * </pre>
              *
-             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
              *
              * @param value The enum numeric value on the wire for type to set.
              * @return This builder for chaining.
@@ -1071,7 +1382,7 @@ public final class ClusterMsg {
              * message type
              * </pre>
              *
-             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
              *
              * @return The type.
              */
@@ -1087,7 +1398,7 @@ public final class ClusterMsg {
              * message type
              * </pre>
              *
-             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
              *
              * @param value The type to set.
              * @return This builder for chaining.
@@ -1107,7 +1418,7 @@ public final class ClusterMsg {
              * message type
              * </pre>
              *
-             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 2;</code>
+             * <code>.org.dromara.hertzbeat.common.entity.message.MessageType type = 3;</code>
              *
              * @return This builder for chaining.
              */
@@ -1125,7 +1436,7 @@ public final class ClusterMsg {
              * message content
              * </pre>
              *
-             * <code>string msg = 3;</code>
+             * <code>string msg = 4;</code>
              *
              * @return The msg.
              */
@@ -1147,7 +1458,7 @@ public final class ClusterMsg {
              * message content
              * </pre>
              *
-             * <code>string msg = 3;</code>
+             * <code>string msg = 4;</code>
              *
              * @return The bytes for msg.
              */
@@ -1170,7 +1481,7 @@ public final class ClusterMsg {
              * message content
              * </pre>
              *
-             * <code>string msg = 3;</code>
+             * <code>string msg = 4;</code>
              *
              * @param value The msg to set.
              * @return This builder for chaining.
@@ -1191,7 +1502,7 @@ public final class ClusterMsg {
              * message content
              * </pre>
              *
-             * <code>string msg = 3;</code>
+             * <code>string msg = 4;</code>
              *
              * @return This builder for chaining.
              */
@@ -1207,7 +1518,7 @@ public final class ClusterMsg {
              * message content
              * </pre>
              *
-             * <code>string msg = 3;</code>
+             * <code>string msg = 4;</code>
              *
              * @param value The bytes for msg to set.
              * @return This builder for chaining.
@@ -1295,15 +1606,18 @@ public final class ClusterMsg {
     static {
         String[] descriptorData = {
                 "\n\021cluster_msg.proto\022+org.dromara.hertzbe" +
-                        "at.common.entity.message\"p\n\007Message\022\020\n\010i" +
-                        "dentity\030\001 \001(\t\022F\n\004type\030\002 \001(\01628.org.dromar" +
-                        "a.hertzbeat.common.entity.message.Messag" +
-                        "eType\022\013\n\003msg\030\003 \001(\t*\303\001\n\013MessageType\022\r\n\tHE" +
-                        "ARTBEAT\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002" +
-                        "\022\025\n\021ISSUE_CYCLIC_TASK\020\003\022\026\n\022DELETE_CYCLIC" +
-                        "_TASK\020\004\022\027\n\023ISSUE_ONE_TIME_TASK\020\005\022\037\n\033RESP" +
-                        "ONSE_ONE_TIME_TASK_DATA\020\006\022\035\n\031RESPONSE_CY" +
-                        "CLIC_TASK_DATA\020\007b\006proto3"
+                        "at.common.entity.message\"\273\001\n\007Message\022\020\n\010" +
+                        "identity\030\001 \001(\t\022I\n\tdirection\030\002 \001(\01626.org." +
+                        "dromara.hertzbeat.common.entity.message." +
+                        "Direction\022F\n\004type\030\003 \001(\01628.org.dromara.he" +
+                        "rtzbeat.common.entity.message.MessageTyp" +
+                        "e\022\013\n\003msg\030\004 \001(\t*\321\001\n\013MessageType\022\r\n\tHEARTB" +
+                        "EAT\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002\022\025\n\021" +
+                        "ISSUE_CYCLIC_TASK\020\003\022\026\n\022DELETE_CYCLIC_TAS" +
+                        "K\020\004\022\027\n\023ISSUE_ONE_TIME_TASK\020\005\022\037\n\033RESPONSE" +
+                        "_ONE_TIME_TASK_DATA\020\006\022\035\n\031RESPONSE_CYCLIC" +
+                        "_TASK_DATA\020\007\022\014\n\010GO_CLOSE\020\010*&\n\tDirection\022" +
+                        "\013\n\007REQUEST\020\000\022\014\n\010RESPONSE\020\001b\006proto3"
         };
         descriptor = com.google.protobuf.Descriptors.FileDescriptor
                              .internalBuildGeneratedFileFrom(descriptorData,
@@ -1314,7 +1628,7 @@ public final class ClusterMsg {
         internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable = new
                                                                                                          com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
                 internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor,
-                new String[]{"Identity", "Type", "Msg",});
+                new String[]{"Identity", "Direction", "Type", "Msg",});
     }
     
     // @@protoc_insertion_point(outer_class_scope)
