@@ -80,7 +80,8 @@
       <td
         nzAlign="center"
         nzLeft
-        [nzChecked]="checkedCollectors.has(data.collector.name)"
+        [nzDisabled]="data.collector.name == 'main-default-collector'"
+        [nzChecked]="data.collector.name != 'main-default-collector' && checkedCollectors.has(data.collector.name)"
         (nzCheckedChange)="onItemChecked(data.collector.name, $event)"
       ></td>
       <td nzAlign="center">{{ data.collector.name }}</td>
