@@ -56,7 +56,7 @@ sidebar_label: 安装包方式部署
 7. 部署采集器集群(可选)
    - 下载解压采集器安装包`hertzbeat-collector-xx.zip`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - 也需要如上步骤一样提前安装`java jdk11`环境
-   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `manager-host` `manager-port`
+   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
        dispatch:
@@ -64,6 +64,7 @@ sidebar_label: 安装包方式部署
            netty:
              enabled: true
              identity: ${IDENTITY:}
+             mode: ${MODE:public}
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```

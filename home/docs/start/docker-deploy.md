@@ -78,6 +78,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 ```shell 
 $ docker run -d \
     -e IDENTITY=custom-collector-name \
+    -e MODE=public \
     -e MANAGER_HOST=127.0.0.1 \
     -e MANAGER_PORT=1158 \
     --name hertzbeat-collector tancloud/hertzbeat-collector
@@ -86,6 +87,7 @@ $ docker run -d \
    This command starts a running HertzBeat-Collector container.
    - `docker run -d` : Run a container in the background via Docker
    - `-e IDENTITY=custom-collector-name`  : (optional) Set the collector unique identity name. Attention the clusters collector name must unique.
+   - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
    - `-e MANAGER_HOST=127.0.0.1` : Important⚠️ Set the main hertzbeat server ip.
    - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
