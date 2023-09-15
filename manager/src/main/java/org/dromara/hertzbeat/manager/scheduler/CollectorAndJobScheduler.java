@@ -117,6 +117,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             Optional<Monitor> monitorOptional = monitorDao.findById(bind.getMonitorId());
             if (monitorOptional.isPresent()) {
                 Monitor monitor = monitorOptional.get();
+                if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+                    continue;
+                }
                 try {
                     // 构造采集任务Job实体
                     Job appDefine = appService.getAppDefine(monitor.getApp());
@@ -408,7 +411,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         }
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             collectJobService.addAsyncCollectJob(modifyJob);
-            collectJobService.cancelAsyncCollectJob(preJobId);
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
@@ -416,13 +418,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setMsg(JsonUtil.toJson(modifyJob))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
-            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), deleteMessage);
         }
+        cancelAsyncCollectJob(preJobId);
         return newJobId;
     }
 
@@ -439,12 +436,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             log.error("there is no collector name: {} online to assign job.", collector);
             return newJobId;
         }
-        node.getAssignJobs().removePinnedJob(preJobId);
         node.getAssignJobs().addPinnedJob(newJobId);
-
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
             collectJobService.addAsyncCollectJob(modifyJob);
-            collectJobService.cancelAsyncCollectJob(preJobId);
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
@@ -452,36 +446,30 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setMsg(JsonUtil.toJson(modifyJob))
                     .build();
             this.manageServer.sendMsg(node.getName(), message);
-            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), deleteMessage);
         }
+        cancelAsyncCollectJob(preJobId);
         return newJobId;
     }
 
     @Override
     public void cancelAsyncCollectJob(Long jobId) {
-        consistentHash.getAllNodes().entrySet().stream().filter(entry -> {
-            ConsistentHash.Node node = entry.getValue();
+        for (ConsistentHash.Node node : consistentHash.getAllNodes().values()) {
             AssignJobs assignJobs = node.getAssignJobs();
-            return assignJobs.getPinnedJobs().contains(jobId)
-                    || assignJobs.getJobs().contains(jobId) || assignJobs.getAddingJobs().contains(jobId);
-        }).findFirst().ifPresent(entry -> {
-            ConsistentHash.Node node = entry.getValue();
-            if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
-                collectJobService.cancelAsyncCollectJob(jobId);
-            } else {
-                ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                        .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                        .setDirection(ClusterMsg.Direction.REQUEST)
-                        .setMsg(JsonUtil.toJson(List.of(jobId)))
-                        .build();
-                this.manageServer.sendMsg(node.getName(), deleteMessage);
+            if (assignJobs.getPinnedJobs().remove(jobId)
+                    || assignJobs.getJobs().remove(jobId) || assignJobs.getAddingJobs().remove(jobId)) {
+                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+                    collectJobService.cancelAsyncCollectJob(jobId);
+                } else {
+                    ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
+                            .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                            .setDirection(ClusterMsg.Direction.REQUEST)
+                            .setMsg(JsonUtil.toJson(List.of(jobId)))
+                            .build();
+                    this.manageServer.sendMsg(node.getName(), deleteMessage);
+                }
+                break;
             }
-        });
+        }
     }
 
     @Override
