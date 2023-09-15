@@ -5,13 +5,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -59,7 +53,7 @@ public class ConsistentHash {
             for (byte i = 0; i < virtualNodeNum; i++) {
                 int virtualHashKey = hash(newNode.name + i);
                 hashCircle.put(virtualHashKey, newNode);
-                newNode.addVirtualNodeJobs(virtualHashKey, new HashSet<>());
+                newNode.addVirtualNodeJobs(virtualHashKey, ConcurrentHashMap.newKeySet(16));
                 Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherEntry(virtualHashKey);
                 if (higherVirtualNode == null) {
                     higherVirtualNode = hashCircle.firstEntry();
@@ -70,7 +64,7 @@ public class ConsistentHash {
                 Node higherNode = higherVirtualNode.getValue();
                 Set<Long[]> dispatchJobs = higherNode.clearVirtualNodeJobs(higherVirtualNodeKey);
                 if (dispatchJobs != null && !dispatchJobs.isEmpty()) {
-                    Set<Long[]> reDispatchJobs = new HashSet<>(dispatchJobs.size());
+                    Set<Long[]> reDispatchJobs = ConcurrentHashMap.newKeySet(dispatchJobs.size());
                     Iterator<Long[]> iterator = dispatchJobs.iterator();
                     while (iterator.hasNext()) {
                         Long[] jobHash = iterator.next();
@@ -362,7 +356,7 @@ public class ConsistentHash {
             if (assignJobs == null) {
                 assignJobs = new AssignJobs();
             }
-            Set<Long[]> virtualNodeJob = virtualNodeMap.computeIfAbsent(virtualNodeKey, k -> new HashSet<>(16));
+            Set<Long[]> virtualNodeJob = virtualNodeMap.computeIfAbsent(virtualNodeKey, k -> ConcurrentHashMap.newKeySet(16));
             virtualNodeJob.add(new Long[]{jobId, dispatchHash.longValue()});
             if (isFlushed) {
                 assignJobs.addAssignJob(jobId);   
@@ -381,7 +375,7 @@ public class ConsistentHash {
                 return null;
             }
             Set<Long[]> virtualNodeJobs = virtualNodeMap.remove(virtualNodeKey);
-            virtualNodeMap.put(virtualNodeKey, new HashSet<>(16));
+            virtualNodeMap.put(virtualNodeKey, ConcurrentHashMap.newKeySet(16));
             return virtualNodeJobs;
         }
 
@@ -397,6 +391,19 @@ public class ConsistentHash {
                 reDispatchJobs.addAll(virtualNodeJobs);
             }
             virtualNodeMap.put(virtualHashKey, reDispatchJobs);
+        }
+        
+        public void removeVirtualNodeJob(Long jobId) {
+            if (jobId == null || virtualNodeMap == null) {
+                return;
+            }
+            for (Set<Long[]> jobSet : virtualNodeMap.values()) {
+                Optional<Long[]> optional = jobSet.stream().filter(item -> Objects.equals(item[0], jobId)).findFirst();
+                if (optional.isPresent()) {
+                    jobSet.remove(optional.get());
+                    break;
+                }
+            }
         }
 
         public AssignJobs getAssignJobs() {
