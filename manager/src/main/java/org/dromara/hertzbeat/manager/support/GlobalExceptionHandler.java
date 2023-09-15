@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.manager.support;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.support.exception.CommonException;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -75,6 +76,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.ok(message);
     }
 
+    /**
+     * handle common exception
+     *
+     * @param exception common
+     * @return response
+     */
+    @ExceptionHandler(CommonException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleCommonException(CommonException exception) {
+        Message<Void> message = Message.fail(FAIL_CODE, exception.getMessage());
+        return ResponseEntity.ok(message);
+    }
+    
     /**
      * 处理参数错误的失败
      *
