@@ -21,6 +21,7 @@ import java.util.Objects;
 
 /**
  * WeChat app alert notify impl
+ *
  * @author hdd
  * @create 2023/04/04
  */

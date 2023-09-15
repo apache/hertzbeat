@@ -31,6 +31,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
@@ -40,8 +41,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Notification strategy entity
  * 通知策略
- * @author eden4701
  *
+ * @author eden4701
  */
 @Entity
 @Table(name = "hzb_notice_template")
@@ -64,7 +65,7 @@ public class NoticeTemplate {
             description = "模板名称",
             example = "dispatch-1", accessMode = READ_WRITE)
     @Length(max = 100)
-    @NotNull
+    @NotBlank
     private String name;
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
@@ -73,6 +74,13 @@ public class NoticeTemplate {
     @Min(0)
     @NotNull
     private Byte type;
+
+    @Schema(title = "Is it a preset template: true- preset template false- custom template.",
+            description = "是否为预设模板: true-预设模板 false-自定义模板",
+            accessMode = READ_WRITE)
+    @NotNull
+    private Boolean presetTemplate;
+
 
     @Schema(title = "Template content",
             description = "模板内容",
@@ -84,8 +92,8 @@ public class NoticeTemplate {
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
     @Length(max = 100000)
-    @NotNull
-    @Column(name="template_content",columnDefinition = "MEDIUMTEXT")
+    @NotBlank
+    @Column(name = "template_content", columnDefinition = "MEDIUMTEXT")
     private String templateContent;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)

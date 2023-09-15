@@ -38,7 +38,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -47,11 +46,9 @@ import java.util.ResourceBundle;
 final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final JavaMailSender javaMailSender;
     private final MailService mailService;
-
+    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Value("${spring.mail.username}")
     private String emailFromUser;
-
-    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
@@ -65,7 +62,7 @@ final class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
             //Build email templates 构建邮件模版
-            String process = mailService.buildAlertHtmlTemplate(alert,noticeTemplate);
+            String process = mailService.buildAlertHtmlTemplate(alert, noticeTemplate);
             //Set Email Content Template 设置邮件内容模版
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);

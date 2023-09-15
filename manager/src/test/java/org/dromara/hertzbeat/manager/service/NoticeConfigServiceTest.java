@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.manager.service;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.assertj.core.util.Maps;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
@@ -12,7 +13,6 @@ import org.dromara.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
 import org.dromara.hertzbeat.manager.dao.NoticeTemplateDao;
 import org.dromara.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
-import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,10 +27,7 @@ import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Test case for {@link NoticeConfigService}
@@ -38,18 +35,16 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class NoticeConfigServiceTest {
 
-    @InjectMocks
-    private NoticeConfigServiceImpl noticeConfigService;
-
     @Mock
     NoticeReceiverDao noticeReceiverDao;
     @Mock
     NoticeTemplateDao noticeTemplateDao;
     @Mock
     NoticeRuleDao noticeRuleDao;
-
     @Mock
     DispatcherAlarm dispatcherAlarm;
+    @InjectMocks
+    private NoticeConfigServiceImpl noticeConfigService;
 
     @BeforeEach
     void setUp() {
@@ -96,6 +91,7 @@ class NoticeConfigServiceTest {
         noticeConfigService.deleteReceiver(receiverId);
         verify(noticeReceiverDao, times(1)).deleteById(receiverId);
     }
+
     @Test
     void addTemplate() {
         final NoticeTemplate noticeTemplate = mock(NoticeTemplate.class);
@@ -116,6 +112,7 @@ class NoticeConfigServiceTest {
         noticeConfigService.deleteNoticeTemplate(templateId);
         verify(noticeTemplateDao, times(1)).deleteById(templateId);
     }
+
     @Test
     void addNoticeRule() {
         final NoticeRule noticeRule = mock(NoticeRule.class);
@@ -201,11 +198,12 @@ class NoticeConfigServiceTest {
         noticeConfigService.getNoticeRulesById(receiverId);
         verify(noticeRuleDao, times(1)).getReferenceById(receiverId);
     }
+
     @Test
     void getNoticeTemplateById() {
         final Long templateId = 343432325L;
         noticeConfigService.getNoticeTemplatesById(templateId);
-        verify(noticeTemplateDao, times(1)).getReferenceById(templateId);
+        verify(noticeTemplateDao, times(1)).findById(templateId);
     }
 
     @Test
@@ -213,6 +211,6 @@ class NoticeConfigServiceTest {
         final NoticeReceiver noticeReceiver = mock(NoticeReceiver.class);
         final NoticeTemplate noticeTemplate = null;
         noticeConfigService.sendTestMsg(noticeReceiver);
-        verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver),eq(noticeTemplate), any(Alert.class));
+        verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver), eq(noticeTemplate), any(Alert.class));
     }
 }

@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHand
                     .withTopicUrn(receiver.getSmnTopicUrn());
             var body = new PublishMessageRequestBody()
                     .withSubject(bundle.getString("alerter.notify.title"))
-                    .withMessage(renderContent(noticeTemplate,alert));
+                    .withMessage(renderContent(noticeTemplate, alert));
             request.withBody(body);
             var response = smnClient.publishMessage(request);
             log.debug("huaweiCloud smn alert response: {}", response);

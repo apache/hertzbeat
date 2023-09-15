@@ -17,34 +17,38 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.dromara.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.manager.dao.NoticeTemplateDao;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
 /**
  * 消息通知配置实现
  *
  * @author tom
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -115,6 +119,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         noticeRuleDao.deleteById(ruleId);
         clearNoticeRulesCache();
     }
+
     @Override
     @SuppressWarnings("unchecked")
     public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
@@ -235,12 +240,15 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
         return filterReceivers;
     }
-    public NoticeReceiver getOneReciverByIdInFilterRule(List<Long> ids){
+
+    public NoticeReceiver getOneReciverByIdInFilterRule(List<Long> ids) {
         return noticeReceiverDao.findAllById(ids).get(0);
     }
-    public NoticeTemplate getOneTemplateByIdInFilterRule(List<Long> ids){
+
+    public NoticeTemplate getOneTemplateByIdInFilterRule(List<Long> ids) {
         return noticeTemplateDao.findAllById(ids).get(0);
     }
+
     public List<Long> getTemplateIdFilterRule(Alert alert) {
         // use cache
         ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
@@ -331,8 +339,13 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public NoticeTemplate getNoticeTemplatesById(Long templateId) {
-        return noticeTemplateDao.getReferenceById(templateId);
+    public Optional<NoticeTemplate> getNoticeTemplatesById(Long templateId) {
+        return noticeTemplateDao.findById(templateId);
+    }
+
+    @Override
+    public NoticeTemplate findNoticeTemplateByTypeAndDefault(Byte type, Boolean defaultTemplate) {
+        return noticeTemplateDao.findNoticeTemplateByTypeAndPresetTemplate(type, defaultTemplate);
     }
 
     @Override
@@ -344,9 +357,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setFirstAlarmTime(System.currentTimeMillis());
         alert.setLastAlarmTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
-        Byte type=noticeReceiver.getType();
-        NoticeTemplate noticeTemplate=getNoticeTemplatesById(Long.valueOf(type));;
-        return dispatcherAlarm.sendNoticeMsg(noticeReceiver,noticeTemplate, alert);
+        Byte type = noticeReceiver.getType();
+        Boolean defaultTemplate = true;
+        NoticeTemplate noticeTemplate = findNoticeTemplateByTypeAndDefault(type, defaultTemplate);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, noticeTemplate, alert);
     }
 
     private void clearNoticeRulesCache() {

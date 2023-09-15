@@ -1,4 +1,6 @@
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (4,'weworkExample',4,now(),now(),'[${title}]
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (4, 'weworkExample', 4, true, now(), now(), '[${title}]
 ${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
@@ -6,7 +8,9 @@ ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (5,'dingdingExample',5,now(),now(),'#### [${title}]
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (5, 'dingdingExample', 5, true, now(), now(), '#### [${title}]
 ##### **${targetLabel}** : ${target}
 <#if (monitorId??)>##### **${monitorIdLabel}** : ${monitorId} </#if>
 <#if (monitorName??)>##### **${monitorNameLabel}** : ${monitorName} </#if>
@@ -14,14 +18,18 @@ insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_upda
 ##### **${triggerTimeLabel}** : ${triggerTime}
 ##### **${contentLabel}** : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (6,'feishuExample',6,now(),now(),'${targetLabel} : ${target}
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (6, 'feishuExample', 6, true, now(), now(), '${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
 ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (7,'telegramExample',7,now(),now(),'[${title}]
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (7, 'telegramExample', 7, true, now(), now(), '[${title}]
 ${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
@@ -30,7 +38,9 @@ ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (8,'slackExample',8,now(),now(),'*[${title}]*
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (8, 'slackExample', 8, true, now(), now(), '*[${title}]*
 ${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
@@ -38,7 +48,9 @@ ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (9,'discordExample',9,now(),now(),'${targetLabel} : ${target}
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (9, 'discordExample', 9, true, now(), now(), '${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
 ${priorityLabel} : ${priority}
@@ -46,7 +58,9 @@ ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (11,'smnExample',11,now(),now(),'[${title}]
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (11, 'smnExample', 11, true, now(), now(), '[${title}]
 ${targetLabel} : ${target}
 <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
@@ -54,7 +68,9 @@ ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
 ${contentLabel} : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (12,'serverchanExample',12,now(),now(),'#### [${title}]
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (12, 'serverchanExample', 12, true, now(), now(), '#### [${title}]
 ##### **${targetLabel}** : ${target}
 <#if (monitorId??)>##### **${monitorIdLabel}** : ${monitorId} </#if>
 <#if (monitorName??)>##### **${monitorNameLabel}** : ${monitorName} </#if>
@@ -62,7 +78,9 @@ insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_upda
 ##### **${triggerTimeLabel}** : ${triggerTime}
 ##### **${contentLabel}** : ${content}');
 
-insert IGNORE into hzb_notice_template(`id`,`name`,`type`,`gmt_create`,`gmt_update`,`template_content`) values (1,'emailExample',1,now(),now(),'<!DOCTYPE html>
+insert IGNORE into hzb_notice_template(`id`, `name`, `type`, `preset_template`, `gmt_create`, `gmt_update`,
+                                       `template_content`)
+values (1, 'emailExample', 1, true, now(), now(), '<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">

@@ -28,7 +28,6 @@ import java.io.IOException;
  *
  * @author 花城
  * @version 1.0
- *
  */
 public interface MailService {
 
@@ -36,11 +35,11 @@ public interface MailService {
      * Build an alert email template
      * 构建告警邮件模版
      *
-     * @param alert Alarm data element information  告警数据元信息
+     * @param alert          Alarm data element information  告警数据元信息
      * @param noticeTemplate NoticeTemplate information  模板信息
-     * @throws IOException IOException information  IO异常
-     * @throws TemplateException Freemarker TemplateException information  Freemarker模板异常
      * @return content of email                邮件内容
+     * @throws IOException       IOException information  IO异常
+     * @throws TemplateException Freemarker TemplateException information  Freemarker模板异常
      */
     String buildAlertHtmlTemplate(Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException;
 }

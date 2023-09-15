@@ -19,6 +19,46 @@ import { TagService } from '../../../service/tag.service';
   styles: []
 })
 export class AlertNoticeComponent implements OnInit {
+  receivers!: NoticeReceiver[];
+  receiverTableLoading: boolean = true;
+  templates!: NoticeTemplate[];
+  templateTableLoading: boolean = true;
+  rules!: NoticeRule[];
+  ruleTableLoading: boolean = true;
+  loading = false;
+  code: string = '';
+  originalCode: string = '';
+  // start 新增或修改通知接收人弹出框
+  isManageReceiverModalVisible: boolean = false;
+  isManageReceiverModalAdd: boolean = true;
+  isManageReceiverModalOkLoading: boolean = false;
+  isSendTestButtonLoading: boolean = false;
+  receiver!: NoticeReceiver;
+  isManageTemplateModalVisible: boolean = false;
+  isManageTemplateModalAdd: boolean = true;
+  isManageTemplateModalOkLoading: boolean = false;
+  isShowTemplateModalVisible: boolean = false;
+  template: NoticeTemplate = new NoticeTemplate();
+  templatesOption: any[] = [];
+  isManageRuleModalVisible = false;
+  isManageRuleModalAdd: boolean = true;
+  isManageRuleModalOkLoading: boolean = false;
+  rule: NoticeRule = new NoticeRule();
+  receiversOption: any[] = [];
+  searchTag!: string;
+  tagsOption: any[] = [];
+  filterTags: string[] = [];
+  isLimit: boolean = false;
+  dayCheckOptions = [
+    { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.1'), value: 1, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.2'), value: 2, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.3'), value: 3, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.4'), value: 4, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.5'), value: 5, checked: true },
+    { label: this.i18nSvc.fanyi('common.week.6'), value: 6, checked: true }
+  ];
+
   constructor(
     private notifySvc: NzNotificationService,
     private noticeReceiverSvc: NoticeReceiverService,
@@ -29,26 +69,20 @@ export class AlertNoticeComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  receivers!: NoticeReceiver[];
-  receiverTableLoading: boolean = true;
-  templates!: NoticeTemplate[];
-  templateTableLoading: boolean = true;
-  rules!: NoticeRule[];
-  ruleTableLoading: boolean = true;
-  loading = false;
-  code: string = '';
-  originalCode: string = '';
   ngOnInit(): void {
     this.loadReceiversTable();
     this.loadRulesTable();
     this.loadTemplatesTable();
   }
+
   syncReceiver() {
     this.loadReceiversTable();
   }
+
   syncTemplate() {
     this.loadTemplatesTable();
   }
+
   syncRule() {
     this.loadRulesTable();
   }
@@ -72,6 +106,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+
   loadTemplatesTable() {
     this.templateTableLoading = true;
     let templatesInit$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
@@ -91,6 +126,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+
   loadRulesTable() {
     this.ruleTableLoading = true;
     let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(
@@ -157,6 +193,7 @@ export class AlertNoticeComponent implements OnInit {
       nzOnOk: () => this.deleteOneNoticeRule(ruleId)
     });
   }
+
   onDeleteOneNoticeTemplate(templateId: number) {
     this.modal.confirm({
       nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
@@ -168,6 +205,9 @@ export class AlertNoticeComponent implements OnInit {
       nzOnOk: () => this.deleteOneNoticeTemplate(templateId)
     });
   }
+
+  // start 新增或修改通知策略弹出框
+
   deleteOneNoticeTemplate(templateId: number) {
     const deleteTemplate$ = this.noticeTemplateSvc
       .deleteNoticeTemplate(templateId)
@@ -214,18 +254,12 @@ export class AlertNoticeComponent implements OnInit {
       );
   }
 
-  // start 新增或修改通知接收人弹出框
-  isManageReceiverModalVisible: boolean = false;
-  isManageReceiverModalAdd: boolean = true;
-  isManageReceiverModalOkLoading: boolean = false;
-  isSendTestButtonLoading: boolean = false;
-  receiver!: NoticeReceiver;
-
   onNewNoticeReceiver() {
     this.receiver = new NoticeReceiver();
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = true;
   }
+
   onEditOneNoticeReceiver(receiver: NoticeReceiver) {
     this.receiver = receiver;
     this.isManageReceiverModalVisible = true;
@@ -261,6 +295,7 @@ export class AlertNoticeComponent implements OnInit {
   onManageReceiverModalCancel() {
     this.isManageReceiverModalVisible = false;
   }
+
   onManageReceiverModalOk() {
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {
@@ -318,12 +353,6 @@ export class AlertNoticeComponent implements OnInit {
     }
   }
 
-  isManageTemplateModalVisible: boolean = false;
-  isManageTemplateModalAdd: boolean = true;
-  isManageTemplateModalOkLoading: boolean = false;
-  isShowTemplateModalVisible: boolean = false;
-  template: NoticeTemplate = new NoticeTemplate();
-  templatesOption: any[] = [];
   onNewNoticeTemplate() {
     this.template = new NoticeTemplate();
     this.isManageTemplateModalVisible = true;
@@ -335,31 +364,11 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageTemplateModalVisible = true;
     this.isManageTemplateModalAdd = false;
   }
+
   onShowOneNoticeTemplate(template: NoticeTemplate) {
     this.template = template;
     this.isShowTemplateModalVisible = true;
   }
-
-  // start 新增或修改通知策略弹出框
-
-  isManageRuleModalVisible = false;
-  isManageRuleModalAdd: boolean = true;
-  isManageRuleModalOkLoading: boolean = false;
-  rule: NoticeRule = new NoticeRule();
-  receiversOption: any[] = [];
-  searchTag!: string;
-  tagsOption: any[] = [];
-  filterTags: string[] = [];
-  isLimit: boolean = false;
-  dayCheckOptions = [
-    { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.1'), value: 1, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.2'), value: 2, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.3'), value: 3, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.4'), value: 4, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.5'), value: 5, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.6'), value: 6, checked: true }
-  ];
 
   onNewNoticeRule() {
     this.rule = new NoticeRule();
@@ -414,9 +423,11 @@ export class AlertNoticeComponent implements OnInit {
         .concat();
     }
   }
+
   loadReciverType(reciverId: number) {
     return 5;
   }
+
   loadReceiversOption() {
     let receiverOption$ = this.noticeReceiverSvc.getReceivers().subscribe(
       message => {
@@ -552,6 +563,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     );
   }
+
   loadTagsOption() {
     let tagsInit$ = this.tagService.loadTags(this.searchTag, undefined, 0, 1000).subscribe(
       message => {
@@ -599,10 +611,12 @@ export class AlertNoticeComponent implements OnInit {
   onManageRuleModalCancel() {
     this.isManageRuleModalVisible = false;
   }
+
   onManageTemplateModalCancel() {
     this.isManageTemplateModalVisible = false;
     this.isShowTemplateModalVisible = false;
   }
+
   updateNoticeRule(noticeRule: NoticeRule) {
     this.ruleTableLoading = true;
     const updateNoticeRule$ = this.noticeRuleSvc
@@ -707,9 +721,11 @@ export class AlertNoticeComponent implements OnInit {
         );
     }
   }
+
   onManageTemplateModalOk() {
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
+      this.template.presetTemplate = false;
       const modalOk$ = this.noticeTemplateSvc
         .newNoticeTemplate(this.template)
         .pipe(

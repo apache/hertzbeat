@@ -9,14 +9,16 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+
 /**
  * Server酱发送
+ *
  * @author zqr10159
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl{
+public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     /**
      * 发送报警通知
      *
@@ -29,11 +31,11 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         try {
             ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto serverChanWebHookDto = new ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto();
             serverChanWebHookDto.setTitle(bundle.getString("alerter.notify.title"));
-            serverChanWebHookDto.setDesp(renderContent(noticeTemplate,alert));
+            serverChanWebHookDto.setDesp(renderContent(noticeTemplate, alert));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
-            String webHookUrl = String.format(alerterProperties.getServerChanNotifyUrl(),receiver.getServerChanToken());
+            String webHookUrl = String.format(alerterProperties.getServerChanNotifyUrl(), receiver.getServerChanToken());
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             System.out.println(responseEntity);

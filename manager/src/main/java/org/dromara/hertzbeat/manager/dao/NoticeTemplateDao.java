@@ -23,9 +23,18 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * NoticeTemplate数据库操作
- * @author Eden
  *
+ * @author Eden
  */
 public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
+    /**
+     * 通过模板类型和预设模板标识查找通知模板
+     *
+     * @param type            Byte type 模板类型
+     * @param defaultTemplate Boolean defaultTemplate 预设模板标识
+     * @return 通知模板
+     */
+    NoticeTemplate findNoticeTemplateByTypeAndPresetTemplate(Byte type, Boolean defaultTemplate);
+
 
 }

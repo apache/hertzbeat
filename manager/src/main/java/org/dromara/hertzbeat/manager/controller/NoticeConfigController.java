@@ -17,30 +17,24 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -48,8 +42,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Message Notification Configuration API
  * 消息通知配置API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Notification Config API | 消息通知配置API")
 @RestController()
@@ -124,7 +118,7 @@ public class NoticeConfigController {
             @Parameter(description = "en: Notification template ID,zh: 通知模板ID", example = "6565463543") @PathVariable("id") final Long templateId) {
         // Returns success if it does not exist or if the deletion is successful
         // todo 不存在或删除成功都返回成功
-        NoticeTemplate noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
+        Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
         if (noticeTemplate == null) {
             return ResponseEntity.ok(new Message<>("The specified notification template could not be queried, please check whether the parameters are correct"));
         }

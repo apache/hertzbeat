@@ -17,13 +17,13 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,6 @@ import org.springframework.stereotype.Component;
  * 通过钉钉机器人发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -44,7 +43,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         try {
             DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
             MarkdownDTO markdownDTO = new MarkdownDTO();
-            markdownDTO.setText(renderContent(noticeTemplate,alert));
+            markdownDTO.setText(renderContent(noticeTemplate, alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
@@ -86,7 +85,6 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
      *
      * @author 花城
      * @version 1.0
-     *
      */
     @Data
     private static class DingTalkWebHookDto {

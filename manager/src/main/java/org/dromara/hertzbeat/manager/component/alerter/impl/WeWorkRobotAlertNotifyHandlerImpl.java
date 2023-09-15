@@ -17,13 +17,13 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,6 @@ import org.springframework.stereotype.Component;
  * 通过企业微信发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -44,7 +43,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         try {
             WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
             WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-            markdownDTO.setContent(renderContent(noticeTemplate,alert));
+            markdownDTO.setContent(renderContent(noticeTemplate, alert));
             weWorkWebHookDTO.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

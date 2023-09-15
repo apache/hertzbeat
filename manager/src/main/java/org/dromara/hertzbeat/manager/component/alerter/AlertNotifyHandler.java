@@ -24,16 +24,15 @@ import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 public interface AlertNotifyHandler {
 
     /**
      * 发送报警通知
      *
-     * @param receiver Notification configuration information   通知配置信息
+     * @param receiver       Notification configuration information   通知配置信息
      * @param noticeTemplate Notification configuration information   通知配置信息
-     * @param alert    Alarm information                        告警信息
+     * @param alert          Alarm information                        告警信息
      * @throws AlertNoticeException when send receiver error
      */
     void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException;
