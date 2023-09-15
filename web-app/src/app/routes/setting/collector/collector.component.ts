@@ -299,6 +299,7 @@ export class CollectorComponent implements OnInit {
               `    entrance:\n` +
               `      netty:\n` +
               `        enabled: true\n` +
+              `        mode: public\n` +
               `        identity: ${this.identity}\n` +
               `        manager-host: ${this.managerHost}\n` +
               `        manager-port: 1158\n\n` +
