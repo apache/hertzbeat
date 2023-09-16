@@ -21,6 +21,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
 import org.dromara.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -53,7 +54,7 @@ public class CollectJobService {
 
     private final WorkerPool workerPool;
 
-    private String collectorIdentity = null;
+    private final String collectorIdentity;
     
     private String mode = null;
 
@@ -73,6 +74,8 @@ public class CollectJobService {
                 log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
                 collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
             }
+        } else {
+            collectorIdentity = CommonConstants.MAIN_COLLECTOR_NODE;
         }
     }
 

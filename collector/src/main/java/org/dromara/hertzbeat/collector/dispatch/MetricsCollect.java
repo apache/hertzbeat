@@ -50,6 +50,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     private static final long WARN_DISPATCH_TIME = 100;
     /**
+     * collector identity
+     */
+    protected String collectorIdentity;
+    /**
      * Monitor ID
      * 监控ID
      */
@@ -99,10 +103,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     public MetricsCollect(Metrics metrics, Timeout timeout,
                           CollectDataDispatch collectDataDispatch,
+                          String collectorIdentity,
                           List<UnitConvert> unitConvertList) {
         this.newTime = System.currentTimeMillis();
         this.timeout = timeout;
         this.metrics = metrics;
+        this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         this.monitorId = job.getMonitorId();
@@ -124,6 +130,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.startTime = System.currentTimeMillis();
         setNewThreadName(monitorId, app, startTime, metrics);
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
+        response.setIdentity(collectorIdentity);
         response.setApp(app);
         response.setId(monitorId);
         response.setMetrics(metrics.getName());
