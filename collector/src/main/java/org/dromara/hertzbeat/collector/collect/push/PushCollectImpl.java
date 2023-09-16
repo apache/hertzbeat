@@ -26,6 +26,8 @@ import org.dromara.hertzbeat.common.util.IpDomainUtil;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -69,7 +71,7 @@ public class PushCollectImpl extends AbstractCollect {
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
-            parseResponse(builder, resp);
+            parseResponse(builder, resp, metrics);
 
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
@@ -132,7 +134,7 @@ public class PushCollectImpl extends AbstractCollect {
         return requestBuilder.build();
     }
 
-    private void parseResponse(CollectRep.MetricsData.Builder builder, String resp) {
+    private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
 //        Map<String, Object> jsonMap = JsonUtil.fromJson(resp, new TypeReference<Map<String, Object>>() {
 //        });
 //        if (jsonMap == null) {
@@ -144,9 +146,13 @@ public class PushCollectImpl extends AbstractCollect {
             throw new NullPointerException("parse result is null");
         }
         //TODO: 由于collectRep里只有一个时间字段，没办法保存每一条记录被push的时间
-        for (PushMetricsDto.Metrics metrics : pushMetricsDto.getMetricsList()) {
+        for (PushMetricsDto.Metrics pushMetrics : pushMetricsDto.getMetricsList()) {
+            List<String> metricColumn = new ArrayList<>();
+            for (Metrics.Field field:metric.getFields()) {
+                metricColumn.add(pushMetrics.getMetrics().get(field.getField()));
+            }
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder()
-                    .addAllColumns(metrics.getMetrics());
+                    .addAllColumns(metricColumn);
             builder.addValues(valueRowBuilder.build());
         }
     }

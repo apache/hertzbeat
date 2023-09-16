@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * push metrics dto
@@ -31,6 +32,6 @@ public class PushMetricsDto {
     public static class Metrics {
         private long monitorId;
         private Long time;
-        private List<String> metrics;
+        private Map<String, String> metrics;
     }
 }

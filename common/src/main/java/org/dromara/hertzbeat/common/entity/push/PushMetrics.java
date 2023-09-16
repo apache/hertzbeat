@@ -14,7 +14,7 @@ import javax.persistence.*;
  * @author vinci
  */
 @Entity
-@Table(name = "hzb_pushmetrics", indexes = {
+@Table(name = "hzb_push_metrics", indexes = {
         @Index(name = "push_query_index", columnList = "monitorId"),
         @Index(name = "push_query_index", columnList = "time")
 })

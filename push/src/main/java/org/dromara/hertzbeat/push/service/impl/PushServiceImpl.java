@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -60,7 +61,7 @@ public class PushServiceImpl implements PushService {
             PushMetricsDto.Metrics.MetricsBuilder builder = PushMetricsDto.Metrics.builder()
                     .monitorId(p.getMonitorId())
                     .time(p.getTime())
-                    .metrics(JsonUtil.fromJson(p.getMetrics(), new TypeReference<List<String>>() {
+                    .metrics(JsonUtil.fromJson(p.getMetrics(), new TypeReference<Map<String, String>>() {
                     }));
             pushMetricsDto.getMetricsList().add(builder.build());
         }
