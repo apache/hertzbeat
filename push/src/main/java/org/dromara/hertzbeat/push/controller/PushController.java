@@ -29,7 +29,7 @@ public class PushController {
     @Operation(summary = "Push metric data to hertzbeat", description = "推送监控数据到hertzbeat")
     public ResponseEntity<Message<Void>> pushMetrics(@RequestBody PushMetricsDto pushMetricsDto) {
         pushService.pushMetricsData(pushMetricsDto);
-        return ResponseEntity.ok(new Message<>("Push success"));
+        return ResponseEntity.ok(Message.success("Push success"));
     }
 
     @GetMapping()
@@ -38,6 +38,6 @@ public class PushController {
             @Parameter(description = "监控id", example = "6565463543") @RequestParam("id") final Long id,
             @Parameter(description = "上一次拉取的时间", example = "6565463543") @RequestParam("time") final Long time) {
         PushMetricsDto pushMetricsDto = pushService.getPushMetricData(id, time);
-        return ResponseEntity.ok(new Message<>(pushMetricsDto));
+        return ResponseEntity.ok(Message.success(pushMetricsDto));
     }
 }
