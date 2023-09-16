@@ -179,6 +179,19 @@
             [valueAlias]="paramDefine.valueAlias ? paramDefine.valueAlias : 'Value'"
           ></app-key-value-input>
         </nz-form-control>
+
+        <nz-form-label *ngIf="paramDefine.type === 'metrics-field'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+        >{{ paramDefine.name }}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'metrics-field'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-metrics-field-input
+            [(value)]="params[i].value"
+            [id]="paramDefine.field"
+            [FieldAlias]="'Field'"
+            [UnitAlias]="'Unit'"
+            [TypeAlias]="'Type'"
+          ></app-metrics-field-input>
+        </nz-form-control>
       </nz-form-item>
 
       <nz-collapse [nzGhost]="true">
