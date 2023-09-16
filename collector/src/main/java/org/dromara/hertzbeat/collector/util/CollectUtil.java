@@ -19,10 +19,11 @@ package org.dromara.hertzbeat.collector.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
-import org.dromara.hertzbeat.common.entity.job.Configmap;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
+import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -33,8 +34,8 @@ import java.util.regex.Pattern;
 
 /**
  * 采集器工具类
- * @author tom
  *
+ * @author tom
  */
 @Slf4j
 public class CollectUtil {
@@ -47,10 +48,11 @@ public class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REX = "\\^o\\^";
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
-    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%","G", "g", "M", "m", "K", "k", "B", "b");
+    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
 
     /**
      * 关键字匹配计数
+     *
      * @param content 内容
      * @param keyword 关键字
      * @return 匹配次数
@@ -137,6 +139,7 @@ public class CollectUtil {
 
     /**
      * get timeout integer
+     *
      * @param timeout timeout str
      * @return timeout
      */
@@ -146,7 +149,8 @@ public class CollectUtil {
 
     /**
      * get timeout integer or default value
-     * @param timeout timeout str
+     *
+     * @param timeout        timeout str
      * @param defaultTimeout default timeout
      * @return timeout
      */
@@ -164,8 +168,8 @@ public class CollectUtil {
     /**
      * assert prom field
      */
-    public static Boolean assertPromRequireField(String aliasField){
-        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)){
+    public static Boolean assertPromRequireField(String aliasField) {
+        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)) {
             return true;
         }
         return false;
@@ -174,12 +178,17 @@ public class CollectUtil {
 
     /**
      * is contains cryPlaceholder -_-
+     *
      * @param jsonElement json element
      * @return return true when contains
      */
     public static boolean containCryPlaceholder(JsonElement jsonElement) {
         String jsonStr = jsonElement.toString();
         return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).find();
+    }
+
+    public static boolean notContainCryPlaceholder(JsonElement jsonElement) {
+        return !containCryPlaceholder(jsonElement);
     }
 
     /**
@@ -290,7 +299,8 @@ public class CollectUtil {
                     Configmap param = configmap.get(key);
                     if (param != null && param.getType() == CommonConstants.PARAM_TYPE_MAP) {
                         String jsonValue = (String) param.getValue();
-                        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+                        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {
+                        };
                         Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
@@ -378,7 +388,7 @@ public class CollectUtil {
                                 index++;
                             }
                         } else {
-                            jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));   
+                            jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
                         }
                     }
                 } else {
@@ -394,5 +404,15 @@ public class CollectUtil {
         uri = uri.replaceAll(" ", "%20");
         // todo more special
         return uri;
+    }
+    
+
+    public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
+
+        //TODO: 有两个Field？
+        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
+        });
+        //TODO: validate
+        metrics.setFields(pushFieldList);
     }
 }

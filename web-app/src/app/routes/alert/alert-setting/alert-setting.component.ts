@@ -37,7 +37,7 @@ export class AlertSettingComponent implements OnInit {
     private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
-
+  app!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -46,7 +46,6 @@ export class AlertSettingComponent implements OnInit {
   checkedDefineIds = new Set<number>();
 
   appHierarchies!: any[];
-
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // 查询监控层级
@@ -653,5 +652,43 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
   }
+  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
+    if (cascadeValues.length !== 3) {
+      return currentMetrics;
+    }
+    // sort the cascadeValues[2] to first
+    return currentMetrics.sort((a, b) => {
+      if (a.value !== cascadeValues[2]) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+  }
   // end 告警定义与监控关联model
+  //查询告警阈值
+  onFilterSearchAlertDefinesByName() {
+    this.tableLoading = true;
+    let filter$ = this.alertDefineSvc.getAlertDefinesByName(this.pageIndex - 1, this.pageSize, this.app).subscribe(
+      message => {
+        filter$.unsubscribe();
+        this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedDefineIds.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.defines = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        this.tableLoading = false;
+        filter$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
+  }
 }

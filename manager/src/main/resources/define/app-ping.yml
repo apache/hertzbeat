@@ -31,7 +31,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 以 ms 为指标单位，对端 HOST 地址进行 PING 操作，判断其连通性。您可以点击“<i>新建 PING 连通性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses 'ms' as the indicator unit to PING the end HOST address and determines the connectivity. You could click the "Add API " button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  en-US: HertzBeat uses 'ms' as the metric unit to PING the end HOST address and determines the connectivity. You could click the "Add API " button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat以ms為名額組織，對端HOST地址進行PING操作，判斷其連通性。 您可以點擊“<i>新建PING連通性</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/ping
@@ -76,11 +76,14 @@ params:
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
-  # First monitoring indicator group "cpu"
+  # First monitoring metric group "cpu"
   # 第一个监控指标组 cpu
-  # Note: The built-in monitoring indicators include (responseTime - response time)
+  # Note: The built-in monitoring metrics include (responseTime - response time)
   # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: summary
+    i18n:
+      zh-CN: 概要
+      en-US: Summary
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
@@ -93,6 +96,9 @@ metrics:
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: ResponseTime
     # Monitoring and collection protocols eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: icmp

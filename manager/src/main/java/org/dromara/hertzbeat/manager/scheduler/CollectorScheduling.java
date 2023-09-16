@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.manager.scheduler;
 
-import io.netty.channel.Channel;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**
@@ -51,16 +50,16 @@ public interface CollectorScheduling {
     void reBalanceCollectorAssignJobs();
     
     /**
-     * hold and update collector message channel map
-     * @param identity collector identity name
-     * @param channel message channel
-     */
-    void holdCollectorChannel(String identity, Channel channel);
-
-    /**
-     * judge collector message channel exist
+     * offline collector(stop collector collect operation)
      * @param identity collector identity name
      * @return true/false
      */
-    boolean isCollectorChannelExist(String identity);
+    boolean offlineCollector(String identity);
+
+    /**
+     * online collector(start collector collect operation)
+     * @param identity collector identity name
+     * @return true/false
+     */
+    boolean onlineCollector(String identity);
 }

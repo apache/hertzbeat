@@ -1,16 +1,16 @@
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
-import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { throwError } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, ParamMap} from '@angular/router';
+import {I18NService} from '@core';
+import {ALAIN_I18N_TOKEN} from '@delon/theme';
+import {NzNotificationService} from 'ng-zorro-antd/notification';
+import {throwError} from 'rxjs';
+import {finalize, switchMap} from 'rxjs/operators';
 
-import { Message } from '../../../pojo/Message';
-import { Monitor } from '../../../pojo/Monitor';
-import { Param } from '../../../pojo/Param';
-import { AppDefineService } from '../../../service/app-define.service';
-import { MonitorService } from '../../../service/monitor.service';
+import {Message} from '../../../pojo/Message';
+import {Monitor} from '../../../pojo/Monitor';
+import {Param} from '../../../pojo/Param';
+import {AppDefineService} from '../../../service/app-define.service';
+import {MonitorService} from '../../../service/monitor.service';
 
 @Component({
   selector: 'app-monitor-detail',
@@ -25,7 +25,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     private appDefineSvc: AppDefineService,
     private cdr: ChangeDetectorRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
-  ) {}
+  ) {
+  }
+
   isSpinning: boolean = false;
   monitorId!: number;
   app!: string;
@@ -57,7 +59,11 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
             // 查询过滤出此监控下可计算聚合的数字指标
-            return this.appDefineSvc.getAppDefine(this.app);
+            if (this.app == "push") {
+              return this.appDefineSvc.getPushDefine(this.monitorId);
+            } else {
+              return this.appDefineSvc.getAppDefine(this.app);
+            }
           } else {
             // 不提供历史图表服务
             return throwError(message.msg);

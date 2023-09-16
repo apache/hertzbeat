@@ -17,6 +17,10 @@
 
 package org.dromara.hertzbeat.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.manager.pojo.dto.MonitorDto;
@@ -58,7 +62,7 @@ public class MonitorController {
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
         monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
@@ -71,7 +75,7 @@ public class MonitorController {
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
         monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        return ResponseEntity.ok(new Message<>("Modify success"));
+        return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
@@ -81,13 +85,11 @@ public class MonitorController {
         // Get monitoring information
         // 获取监控信息
         MonitorDto monitorDto = monitorService.getMonitorDto(id);
-        Message.MessageBuilder<MonitorDto> messageBuilder = Message.builder();
         if (monitorDto == null) {
-            messageBuilder.code(CommonConstants.MONITOR_NOT_EXIST_CODE).msg("Monitor not exist.");
+            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "Monitor not exist."));
         } else {
-            messageBuilder.data(monitorDto);
+            return ResponseEntity.ok(Message.success(monitorDto));
         }
-        return ResponseEntity.ok(messageBuilder.build());
     }
 
     @DeleteMapping(path = "/{id}")
@@ -97,10 +99,10 @@ public class MonitorController {
         // delete monitor 删除监控
         Monitor monitor = monitorService.getMonitor(id);
         if (monitor == null) {
-            return ResponseEntity.ok(new Message<>("The specified monitoring was not queried, please check whether the parameters are correct"));
+            return ResponseEntity.ok(Message.success("The specified monitoring was not queried, please check whether the parameters are correct"));
         }
         monitorService.deleteMonitor(id);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @PostMapping(path = "/detect")
@@ -108,7 +110,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        return ResponseEntity.ok(new Message<>("Detect success."));
+        return ResponseEntity.ok(Message.success("Detect success."));
     }
 
     @PostMapping("/optional")
@@ -119,7 +121,7 @@ public class MonitorController {
             monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         }
         monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @GetMapping(value = {"/metric/{app}", "/metric"})
@@ -127,7 +129,7 @@ public class MonitorController {
     public ResponseEntity<Message<List<String>>> getMonitorMetrics(
             @PathVariable(value = "app", required = false) String app) {
         List<String> metricNames = monitorService.getMonitorMetrics(app);
-        return ResponseEntity.ok(new Message<>(metricNames));
+        return ResponseEntity.ok(Message.success(metricNames));
     }
 
 }

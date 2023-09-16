@@ -26,9 +26,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * queue of jobs to run
  * 待运行的job队列
- *
- * @author tomsun28
- *
  */
 @Component
 @Slf4j

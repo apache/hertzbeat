@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>点击查看具体步骤</a>。</span>
-  en-US: "HertzBeat collects and monitors SpringBoot through general performance indicator(health, environment, threads, memory_used) that exposed by the SpringBoot2.0 Actuator. <br><span class='help_module_span'>⚠️Note: You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>"
+  en-US: "HertzBeat collects and monitors SpringBoot through general performance metric(health, environment, threads, memory_used) that exposed by the SpringBoot2.0 Actuator. <br><span class='help_module_span'>⚠️Note: You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>"
   zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控SpringBoot中的資訊，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>點擊查看具體步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/springboot2
@@ -151,7 +151,7 @@ metrics:
   # 监控指标组 - environment
   - name: environment
     priority: 1
-    # The specific monitoring indicators in the metric group.
+    # The specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
@@ -168,7 +168,7 @@ metrics:
         type: 1
       - field: jvm_version
         type: 1
-    # Indicator alias list, used to identify indicators in query results
+    # metric alias list, used to identify metrics in query results
     # 指标别名列表，用于在查询结果中识别指标
     aliasFields:
       - $.activeProfiles[0]
@@ -219,7 +219,7 @@ metrics:
     # Whether to display the metric group in the query result, the default is true
     # 是否在查询结果中显示指标组,默认为true
     visible: false
-    # The specific monitoring indicators in the metric group.
+    # The specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     priority: 2
     fields:
