@@ -6,7 +6,7 @@ import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.dromara.hertzbeat.common.support.exception.CommonException;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.scheduler.AssignJobs;
 import org.dromara.hertzbeat.manager.scheduler.ConsistentHash;
 import org.dromara.hertzbeat.manager.service.CollectorService;

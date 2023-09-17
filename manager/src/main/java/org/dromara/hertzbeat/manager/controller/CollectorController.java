@@ -25,7 +25,7 @@ import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

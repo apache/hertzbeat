@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.manager.netty.process;
+package org.dromara.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;

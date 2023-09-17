@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.manager.netty;
+package org.dromara.hertzbeat.manager.scheduler.netty;
 
 import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
@@ -6,11 +6,11 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
-import org.dromara.hertzbeat.manager.netty.process.CollectCyclicDataResponseProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectOneTimeDataResponseProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectorOfflineProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectorOnlineProcessor;
-import org.dromara.hertzbeat.manager.netty.process.HeartbeatProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectOneTimeDataResponseProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectorOfflineProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectorOnlineProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.HeartbeatProcessor;
 import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;

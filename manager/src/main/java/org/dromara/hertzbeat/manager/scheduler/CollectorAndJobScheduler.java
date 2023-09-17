@@ -20,7 +20,7 @@ import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
