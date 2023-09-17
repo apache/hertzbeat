@@ -184,7 +184,7 @@ CREATE TABLE  hzb_alert_silence
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
--- Table structure for hzb_alert_silence
+-- Table structure for hzb_alert_converge
 -- ----------------------------
 DROP TABLE IF EXISTS  hzb_alert_converge ;
 CREATE TABLE  hzb_alert_converge
@@ -341,6 +341,8 @@ CREATE TABLE  hzb_collector_monitor_bind
     id           bigint           not null auto_increment comment '主键ID',
     collector    varchar(255)     not null comment 'collector ID',
     monitor_id   bigint           not null comment 'monitor ID',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),

@@ -256,7 +256,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             app = yaml.loadAs(ymlContent, Job.class);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new IllegalArgumentException("parse yml define error: " + e.getMessage());
+            throw new IllegalArgumentException("parse yml error: " + e.getMessage());
         }
         // app params verify
         verifyDefineAppContent(app, isModify);

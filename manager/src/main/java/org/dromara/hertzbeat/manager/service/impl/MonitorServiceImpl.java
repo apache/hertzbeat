@@ -514,7 +514,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setTimestamp(System.currentTimeMillis());
             if (params != null) {
                 List<Configmap> configmaps = params.stream().map(param ->
-                                                                         new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
             }
             long newJobId;
