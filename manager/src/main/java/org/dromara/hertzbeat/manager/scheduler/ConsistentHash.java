@@ -87,11 +87,10 @@ public class ConsistentHash {
         }
         existNodeMap.put(newNode.name, newNode);
         if (!dispatchJobCache.isEmpty()) {
-            Iterator<DispatchJob> iterator = dispatchJobCache.iterator();
-            while (iterator.hasNext()) {
-                DispatchJob dispatchJob = iterator.next();
+            int size = dispatchJobCache.size();
+            for (int index = 0; index < size; index++) {
+                DispatchJob dispatchJob = dispatchJobCache.remove(0);
                 dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
-                iterator.remove();
             }
         }
     }
@@ -117,7 +116,7 @@ public class ConsistentHash {
             if (higherVirtualEntry == null) {
                 higherVirtualEntry = hashCircle.firstEntry();
             }
-            if (higherVirtualEntry.getValue() == deletedNode) {
+            if (higherVirtualEntry == null || higherVirtualEntry.getValue() == deletedNode) {
                 higherVirtualEntry = null;
             }
             // jobId
@@ -143,11 +142,10 @@ public class ConsistentHash {
         }
         deletedNode.destroy();
         if (!dispatchJobCache.isEmpty()) {
-            Iterator<DispatchJob> iterator = dispatchJobCache.iterator();
-            while (iterator.hasNext()) {
-                DispatchJob dispatchJob = iterator.next();
+            int size = dispatchJobCache.size();
+            for (int index = 0; index < size; index++) {
+                DispatchJob dispatchJob = dispatchJobCache.remove(0);
                 dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
-                iterator.remove();
             }
         }
         return deletedNode;
