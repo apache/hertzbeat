@@ -54,6 +54,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     protected String collectorIdentity;
     /**
+     * Tenant ID
+     */
+    protected long tenantId;
+    /**
      * Monitor ID
      * 监控ID
      */
@@ -112,6 +116,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         this.monitorId = job.getMonitorId();
+        this.tenantId = job.getTenantId();
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
@@ -130,9 +135,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.startTime = System.currentTimeMillis();
         setNewThreadName(monitorId, app, startTime, metrics);
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
-        response.setIdentity(collectorIdentity);
         response.setApp(app);
         response.setId(monitorId);
+        response.setTenantId(tenantId);
         response.setMetrics(metrics.getName());
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类

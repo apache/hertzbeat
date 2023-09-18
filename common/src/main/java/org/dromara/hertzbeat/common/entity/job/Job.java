@@ -57,6 +57,10 @@ public class Job {
      */
     private long id;
     /**
+     * Tenant id
+     */
+    private long tenantId = 0;
+    /**
      * Monitoring ID Application ID
      * 监控ID 应用ID
      */

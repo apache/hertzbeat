@@ -169,8 +169,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                                 // Metric group collection timeout      指标组采集超时
                                 WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                                 CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                                        .setIdentity(collectorIdentity)
                                         .setId(timerJob.getJob().getMonitorId())
+                                        .setTenantId(timerJob.getJob().getTenantId())
                                         .setApp(timerJob.getJob().getApp())
                                         .setMetrics(metricsTime.getMetrics().getName())
                                         .setPriority(metricsTime.getMetrics().getPriority())

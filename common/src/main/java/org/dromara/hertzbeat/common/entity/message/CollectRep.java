@@ -226,37 +226,25 @@ public final class CollectRep {
 
         /**
          * <pre>
-         * collector identity
-         * </pre>
-         *
-         * <code>string identity = 1;</code>
-         *
-         * @return The identity.
-         */
-        String getIdentity();
-
-        /**
-         * <pre>
-         * collector identity
-         * </pre>
-         *
-         * <code>string identity = 1;</code>
-         *
-         * @return The bytes for identity.
-         */
-        com.google.protobuf.ByteString
-        getIdentityBytes();
-
-        /**
-         * <pre>
          * 监控的ID
          * </pre>
          *
-         * <code>uint64 id = 2;</code>
+         * <code>uint64 id = 1;</code>
          *
          * @return The id.
          */
         long getId();
+
+        /**
+         * <pre>
+         * 所属租户ID
+         * </pre>
+         *
+         * <code>uint64 tenantId = 2;</code>
+         *
+         * @return The tenantId.
+         */
+        long getTenantId();
 
         /**
          * <pre>
@@ -483,7 +471,6 @@ public final class CollectRep {
         }
 
         private MetricsData() {
-            identity_ = "";
             app_ = "";
             metrics_ = "";
             code_ = 0;
@@ -524,15 +511,14 @@ public final class CollectRep {
                         case 0:
                             done = true;
                             break;
-                        case 10: {
-                            String s = input.readStringRequireUtf8();
+                        case 8: {
 
-                            identity_ = s;
+                            id_ = input.readUInt64();
                             break;
                         }
                         case 16: {
 
-                            id_ = input.readUInt64();
+                            tenantId_ = input.readUInt64();
                             break;
                         }
                         case 26: {
@@ -628,57 +614,7 @@ public final class CollectRep {
                             MetricsData.class, Builder.class);
         }
 
-        public static final int IDENTITY_FIELD_NUMBER = 1;
-        private volatile Object identity_;
-
-        /**
-         * <pre>
-         * collector identity
-         * </pre>
-         *
-         * <code>string identity = 1;</code>
-         *
-         * @return The identity.
-         */
-        @Override
-        public String getIdentity() {
-            Object ref = identity_;
-            if (ref instanceof String) {
-                return (String) ref;
-            } else {
-                com.google.protobuf.ByteString bs =
-                        (com.google.protobuf.ByteString) ref;
-                String s = bs.toStringUtf8();
-                identity_ = s;
-                return s;
-            }
-        }
-
-        /**
-         * <pre>
-         * collector identity
-         * </pre>
-         *
-         * <code>string identity = 1;</code>
-         *
-         * @return The bytes for identity.
-         */
-        @Override
-        public com.google.protobuf.ByteString
-        getIdentityBytes() {
-            Object ref = identity_;
-            if (ref instanceof String) {
-                com.google.protobuf.ByteString b =
-                        com.google.protobuf.ByteString.copyFromUtf8(
-                                (String) ref);
-                identity_ = b;
-                return b;
-            } else {
-                return (com.google.protobuf.ByteString) ref;
-            }
-        }
-
-        public static final int ID_FIELD_NUMBER = 2;
+        public static final int ID_FIELD_NUMBER = 1;
         private long id_;
 
         /**
@@ -686,13 +622,30 @@ public final class CollectRep {
          * 监控的ID
          * </pre>
          *
-         * <code>uint64 id = 2;</code>
+         * <code>uint64 id = 1;</code>
          *
          * @return The id.
          */
         @Override
         public long getId() {
             return id_;
+        }
+
+        public static final int TENANTID_FIELD_NUMBER = 2;
+        private long tenantId_;
+
+        /**
+         * <pre>
+         * 所属租户ID
+         * </pre>
+         *
+         * <code>uint64 tenantId = 2;</code>
+         *
+         * @return The tenantId.
+         */
+        @Override
+        public long getTenantId() {
+            return tenantId_;
         }
 
         public static final int APP_FIELD_NUMBER = 3;
@@ -1057,11 +1010,11 @@ public final class CollectRep {
         @Override
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                 throws java.io.IOException {
-            if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identity_)) {
-                com.google.protobuf.GeneratedMessageV3.writeString(output, 1, identity_);
-            }
             if (id_ != 0L) {
-                output.writeUInt64(2, id_);
+                output.writeUInt64(1, id_);
+            }
+            if (tenantId_ != 0L) {
+                output.writeUInt64(2, tenantId_);
             }
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(app_)) {
                 com.google.protobuf.GeneratedMessageV3.writeString(output, 3, app_);
@@ -1096,12 +1049,13 @@ public final class CollectRep {
             if (size != -1) return size;
 
             size = 0;
-            if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identity_)) {
-                size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, identity_);
-            }
             if (id_ != 0L) {
                 size += com.google.protobuf.CodedOutputStream
-                        .computeUInt64Size(2, id_);
+                        .computeUInt64Size(1, id_);
+            }
+            if (tenantId_ != 0L) {
+                size += com.google.protobuf.CodedOutputStream
+                        .computeUInt64Size(2, tenantId_);
             }
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(app_)) {
                 size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, app_);
@@ -1147,10 +1101,10 @@ public final class CollectRep {
             }
             MetricsData other = (MetricsData) obj;
 
-            if (!getIdentity()
-                    .equals(other.getIdentity())) return false;
             if (getId()
                     != other.getId()) return false;
+            if (getTenantId()
+                    != other.getTenantId()) return false;
             if (!getApp()
                     .equals(other.getApp())) return false;
             if (!getMetrics()
@@ -1177,11 +1131,12 @@ public final class CollectRep {
             }
             int hash = 41;
             hash = (19 * hash) + getDescriptor().hashCode();
-            hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
-            hash = (53 * hash) + getIdentity().hashCode();
             hash = (37 * hash) + ID_FIELD_NUMBER;
             hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
                     getId());
+            hash = (37 * hash) + TENANTID_FIELD_NUMBER;
+            hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+                    getTenantId());
             hash = (37 * hash) + APP_FIELD_NUMBER;
             hash = (53 * hash) + getApp().hashCode();
             hash = (37 * hash) + METRICS_FIELD_NUMBER;
@@ -1357,9 +1312,9 @@ public final class CollectRep {
             @Override
             public Builder clear() {
                 super.clear();
-                identity_ = "";
-
                 id_ = 0L;
+
+                tenantId_ = 0L;
 
                 app_ = "";
 
@@ -1412,8 +1367,8 @@ public final class CollectRep {
             public MetricsData buildPartial() {
                 MetricsData result = new MetricsData(this);
                 int from_bitField0_ = bitField0_;
-                result.identity_ = identity_;
                 result.id_ = id_;
+                result.tenantId_ = tenantId_;
                 result.app_ = app_;
                 result.metrics_ = metrics_;
                 result.priority_ = priority_;
@@ -1492,12 +1447,11 @@ public final class CollectRep {
 
             public Builder mergeFrom(MetricsData other) {
                 if (other == MetricsData.getDefaultInstance()) return this;
-                if (!other.getIdentity().isEmpty()) {
-                    identity_ = other.identity_;
-                    onChanged();
-                }
                 if (other.getId() != 0L) {
                     setId(other.getId());
+                }
+                if (other.getTenantId() != 0L) {
+                    setTenantId(other.getTenantId());
                 }
                 if (!other.getApp().isEmpty()) {
                     app_ = other.app_;
@@ -1603,112 +1557,6 @@ public final class CollectRep {
 
             private int bitField0_;
 
-            private Object identity_ = "";
-
-            /**
-             * <pre>
-             * collector identity
-             * </pre>
-             *
-             * <code>string identity = 1;</code>
-             *
-             * @return The identity.
-             */
-            public String getIdentity() {
-                Object ref = identity_;
-                if (!(ref instanceof String)) {
-                    com.google.protobuf.ByteString bs =
-                            (com.google.protobuf.ByteString) ref;
-                    String s = bs.toStringUtf8();
-                    identity_ = s;
-                    return s;
-                } else {
-                    return (String) ref;
-                }
-            }
-
-            /**
-             * <pre>
-             * collector identity
-             * </pre>
-             *
-             * <code>string identity = 1;</code>
-             *
-             * @return The bytes for identity.
-             */
-            public com.google.protobuf.ByteString
-            getIdentityBytes() {
-                Object ref = identity_;
-                if (ref instanceof String) {
-                    com.google.protobuf.ByteString b =
-                            com.google.protobuf.ByteString.copyFromUtf8(
-                                    (String) ref);
-                    identity_ = b;
-                    return b;
-                } else {
-                    return (com.google.protobuf.ByteString) ref;
-                }
-            }
-
-            /**
-             * <pre>
-             * collector identity
-             * </pre>
-             *
-             * <code>string identity = 1;</code>
-             *
-             * @param value The identity to set.
-             * @return This builder for chaining.
-             */
-            public Builder setIdentity(
-                    String value) {
-                if (value == null) {
-                    throw new NullPointerException();
-                }
-
-                identity_ = value;
-                onChanged();
-                return this;
-            }
-
-            /**
-             * <pre>
-             * collector identity
-             * </pre>
-             *
-             * <code>string identity = 1;</code>
-             *
-             * @return This builder for chaining.
-             */
-            public Builder clearIdentity() {
-
-                identity_ = getDefaultInstance().getIdentity();
-                onChanged();
-                return this;
-            }
-
-            /**
-             * <pre>
-             * collector identity
-             * </pre>
-             *
-             * <code>string identity = 1;</code>
-             *
-             * @param value The bytes for identity to set.
-             * @return This builder for chaining.
-             */
-            public Builder setIdentityBytes(
-                    com.google.protobuf.ByteString value) {
-                if (value == null) {
-                    throw new NullPointerException();
-                }
-                checkByteStringIsUtf8(value);
-
-                identity_ = value;
-                onChanged();
-                return this;
-            }
-
             private long id_;
 
             /**
@@ -1716,7 +1564,7 @@ public final class CollectRep {
              * 监控的ID
              * </pre>
              *
-             * <code>uint64 id = 2;</code>
+             * <code>uint64 id = 1;</code>
              *
              * @return The id.
              */
@@ -1730,7 +1578,7 @@ public final class CollectRep {
              * 监控的ID
              * </pre>
              *
-             * <code>uint64 id = 2;</code>
+             * <code>uint64 id = 1;</code>
              *
              * @param value The id to set.
              * @return This builder for chaining.
@@ -1747,13 +1595,62 @@ public final class CollectRep {
              * 监控的ID
              * </pre>
              *
-             * <code>uint64 id = 2;</code>
+             * <code>uint64 id = 1;</code>
              *
              * @return This builder for chaining.
              */
             public Builder clearId() {
 
                 id_ = 0L;
+                onChanged();
+                return this;
+            }
+
+            private long tenantId_;
+
+            /**
+             * <pre>
+             * 所属租户ID
+             * </pre>
+             *
+             * <code>uint64 tenantId = 2;</code>
+             *
+             * @return The tenantId.
+             */
+            @Override
+            public long getTenantId() {
+                return tenantId_;
+            }
+
+            /**
+             * <pre>
+             * 所属租户ID
+             * </pre>
+             *
+             * <code>uint64 tenantId = 2;</code>
+             *
+             * @param value The tenantId to set.
+             * @return This builder for chaining.
+             */
+            public Builder setTenantId(long value) {
+
+                tenantId_ = value;
+                onChanged();
+                return this;
+            }
+
+            /**
+             * <pre>
+             * 所属租户ID
+             * </pre>
+             *
+             * <code>uint64 tenantId = 2;</code>
+             *
+             * @return This builder for chaining.
+             */
+            public Builder clearTenantId() {
+
+                tenantId_ = 0L;
                 onChanged();
                 return this;
             }
@@ -4942,7 +4839,7 @@ public final class CollectRep {
         String[] descriptorData = {
                 "\n\021collect_rep.proto\022+org.dromara.hertzbe" +
                         "at.common.entity.message\"\302\002\n\013MetricsData" +
-                        "\022\020\n\010identity\030\001 \001(\t\022\n\n\002id\030\002 \001(\004\022\013\n\003app\030\003 " +
+                        "\022\n\n\002id\030\001 \001(\004\022\020\n\010tenantId\030\002 \001(\004\022\013\n\003app\030\003 " +
                         "\001(\t\022\017\n\007metrics\030\004 \001(\t\022\020\n\010priority\030\005 \001(\r\022\014" +
                         "\n\004time\030\006 \001(\004\022?\n\004code\030\007 \001(\01621.org.dromara" +
                         ".hertzbeat.common.entity.message.Code\022\013\n" +
@@ -4965,7 +4862,7 @@ public final class CollectRep {
         internal_static_org_dromara_hertzbeat_common_entity_message_MetricsData_fieldAccessorTable = new
                 com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
                 internal_static_org_dromara_hertzbeat_common_entity_message_MetricsData_descriptor,
-                new String[]{"Identity", "Id", "App", "Metrics", "Priority", "Time", "Code", "Msg", "Fields", "Values",});
+                new String[]{"Id", "TenantId", "App", "Metrics", "Priority", "Time", "Code", "Msg", "Fields", "Values",});
         internal_static_org_dromara_hertzbeat_common_entity_message_Field_descriptor =
                 getDescriptor().getMessageTypes().get(1);
         internal_static_org_dromara_hertzbeat_common_entity_message_Field_fieldAccessorTable = new

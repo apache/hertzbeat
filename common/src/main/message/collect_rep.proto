@@ -20,10 +20,10 @@ package org.dromara.hertzbeat.common.entity.message;
 
 message MetricsData
 {
-    // collector identity
-    string identity = 1;
     // 监控的ID
-    uint64 id = 2;
+    uint64 id = 1;
+    // 所属租户ID
+    uint64 tenantId = 2;
     // 监控的类型 eg: linux | mysql | jvm
     string app = 3;
     // 监控采集的指标集合 eg: cpu | memory | health
