@@ -24,7 +24,7 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
         boolean isChannelExist = this.manageServer.isChannelExist(identity);
         if (!isChannelExist) {
             log.info("the collector {} has reconnected and to go online.", identity);
-            this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(identity);
+            this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(identity, null);
         }
         if (log.isDebugEnabled()) {
             log.debug("server receive collector heartbeat");
