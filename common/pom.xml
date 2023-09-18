@@ -94,8 +94,9 @@
         </dependency>
         <!-- sms -->
         <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-sms</artifactId>
+            <groupId>org.dromara.sms4j</groupId>
+            <artifactId>sms4j-spring-boot-starter</artifactId>
+            <version>3.0.0</version>
         </dependency>
         <!-- caffeine-->
         <dependency>
