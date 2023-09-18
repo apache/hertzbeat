@@ -667,7 +667,11 @@ public class MonitorServiceImpl implements MonitorService {
                 });
                 appDefine.setConfigmap(configmaps);
                 // Issue collection tasks       下发采集任务
-                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine);
+                Optional<CollectorMonitorBind> bindOptional = 
+                        collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
+                long newJobId = bindOptional.map(bind -> 
+                        collectJobScheduling.addAsyncCollectJob(appDefine, bind.getCollector()))
+                        .orElseGet(() -> collectJobScheduling.addAsyncCollectJob(appDefine));
                 monitor.setJobId(newJobId);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
