@@ -172,6 +172,13 @@
             <artifactId>rocketmq-tools</artifactId>
             <version>4.9.4</version>
         </dependency>
+        <!--提供@NotNull-->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     
     <profiles>

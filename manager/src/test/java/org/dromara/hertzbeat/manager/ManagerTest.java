@@ -22,7 +22,6 @@ import org.dromara.hertzbeat.common.config.AviatorConfiguration;
 import org.dromara.hertzbeat.common.config.CommonConfig;
 import org.dromara.hertzbeat.common.config.CommonProperties;
 import org.dromara.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
-import org.dromara.hertzbeat.common.service.TencentSmsClient;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
@@ -36,7 +35,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 import javax.annotation.Resource;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -81,8 +79,6 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(CommonConfig.class));
         assertNotNull(ctx.getBean(AviatorConfiguration.class));
         assertNotNull(ctx.getBean(InMemoryCommonDataQueue.class));
-        // condition on common.sms.tencent.app-id
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClient.class));
         assertNotNull(ctx.getBean(SpringContextHolder.class));
 
         // test warehouse module

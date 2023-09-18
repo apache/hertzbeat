@@ -17,15 +17,17 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.service.TencentSmsClient;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.dromara.sms4j.api.SmsBlend;
+import org.dromara.sms4j.api.entity.SmsResponse;
+import org.dromara.sms4j.core.factory.SmsFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -33,15 +35,12 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("common.sms.tencent.app-id")
+@ConditionalOnProperty("sms.config-type")
 public class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
-
-    private final TencentSmsClient tencentSmsClient;
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
@@ -49,15 +48,22 @@ public class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
     public void send(NoticeReceiver receiver, Alert alert) {
         // SMS notification 短信通知
         try {
+            SmsBlend smsBlend = SmsFactory.getSmsBlend();
             String monitorName = null;
             if (alert.getTags() != null) {
                 monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
             }
-            String[] params = new String[3];
-            params[0] = monitorName == null ? alert.getTarget() : monitorName;
-            params[1] = bundle.getString("alerter.priority." + alert.getPriority());
-            params[2] = alert.getContent();
-            tencentSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+            String phone = receiver.getPhone();
+            StringBuilder strBuilder = new StringBuilder();
+            String params1 = monitorName == null ? alert.getTarget() : monitorName;
+            String params2 = bundle.getString("alerter.priority." + alert.getPriority());
+            String params3 = alert.getContent();
+            strBuilder.append(params1).append("&").
+                    append(params2).append("&").
+                    append(params3);
+            // value是参数,按顺序
+            SmsResponse smsResponse = smsBlend.sendMessage(phone, strBuilder.toString());
+            log.info(smsResponse.toString());
         } catch (Exception e) {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
         }
