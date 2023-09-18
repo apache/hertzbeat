@@ -268,7 +268,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -279,7 +279,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            boolean result = this.manageServer.sendMsg(node.getName(), message);
+            boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
 
             if (result) {
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
@@ -313,7 +313,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -322,7 +322,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            boolean result = this.manageServer.sendMsg(node.getName(), message);
+            boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
             if (result) {
                 CountDownLatch countDownLatch = new CountDownLatch(1);
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
@@ -357,7 +357,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             log.error("there is no collector online to assign job.");
             return jobId;
         }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
@@ -365,7 +365,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            this.manageServer.sendMsg(node.getName(), message);
+            this.manageServer.sendMsg(node.getIdentity(), message);
         }
         return jobId;
     }
@@ -381,7 +381,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             return jobId;
         }
         node.getAssignJobs().addPinnedJob(jobId);
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
@@ -389,7 +389,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            this.manageServer.sendMsg(node.getName(), message);
+            this.manageServer.sendMsg(node.getIdentity(), message);
         }
         return jobId;
     }
@@ -421,7 +421,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             if (assignJobs.getPinnedJobs().remove(jobId)
                     || assignJobs.getJobs().remove(jobId) || assignJobs.getAddingJobs().remove(jobId)) {
                 node.removeVirtualNodeJob(jobId);
-                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
                     collectJobService.cancelAsyncCollectJob(jobId);
                 } else {
                     ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
@@ -429,7 +429,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                             .setDirection(ClusterMsg.Direction.REQUEST)
                             .setMsg(JsonUtil.toJson(List.of(jobId)))
                             .build();
-                    this.manageServer.sendMsg(node.getName(), deleteMessage);
+                    this.manageServer.sendMsg(node.getIdentity(), deleteMessage);
                 }
                 break;
             }

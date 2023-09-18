@@ -51,7 +51,7 @@ public class ConsistentHash {
         if (!CommonConstants.MODE_PRIVATE.equals(newNode.mode)) {
             byte virtualNodeNum = newNode.quality == null ? VIRTUAL_NODE_DEFAULT_SIZE : newNode.quality;
             for (byte i = 0; i < virtualNodeNum; i++) {
-                int virtualHashKey = hash(newNode.name + i);
+                int virtualHashKey = hash(newNode.identity + i);
                 hashCircle.put(virtualHashKey, newNode);
                 newNode.addVirtualNodeJobs(virtualHashKey, ConcurrentHashMap.newKeySet(16));
                 Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherEntry(virtualHashKey);
@@ -85,7 +85,7 @@ public class ConsistentHash {
                 }
             }   
         }
-        existNodeMap.put(newNode.name, newNode);
+        existNodeMap.put(newNode.identity, newNode);
         if (!dispatchJobCache.isEmpty()) {
             int size = dispatchJobCache.size();
             for (int index = 0; index < size; index++) {
@@ -305,10 +305,10 @@ public class ConsistentHash {
      */
     public static class Node {
         /**
-         * 即采集器ID,采集器租约ID
+         * 采集器唯一标识
          */
         @Getter
-        private final String name;
+        private final String identity;
         /**
          * collector mode: public or private
          */
@@ -337,8 +337,8 @@ public class ConsistentHash {
          */
         private Map<Integer, Set<Long[]>> virtualNodeMap;
 
-        public Node(String name, String mode, String ip, long uptime, Byte quality) {
-            this.name = name;
+        public Node(String identity, String mode, String ip, long uptime, Byte quality) {
+            this.identity = identity;
             this.mode = mode;
             this.ip = ip;
             this.uptime = uptime;
