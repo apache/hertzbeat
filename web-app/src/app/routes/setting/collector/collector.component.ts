@@ -256,6 +256,7 @@ export class CollectorComponent implements OnInit {
   }
 
   onDeployCollectorClose() {
+    this.collector = '';
     this.isDeployCollectorModalVisible = false;
   }
 
