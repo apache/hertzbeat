@@ -78,7 +78,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
             Map<String, Object> consumerConfig = new HashMap<>(4);
             consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
-            consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "10");
+            consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "50");
             consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
             // 15 minute
             consumerConfig.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "900000");
