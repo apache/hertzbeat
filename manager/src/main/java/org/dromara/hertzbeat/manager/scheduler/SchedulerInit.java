@@ -101,12 +101,7 @@ public class SchedulerInit implements CommandLineRunner {
                 });
                 appDefine.setConfigmap(configmaps);
                 String collector = monitorIdCollectorMap.get(monitor.getId());
-                long jobId;
-                if (StringUtils.hasText(collector)) {
-                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-                } else {
-                    jobId = collectJobScheduling.addAsyncCollectJob(appDefine);
-                }
+                long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(jobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {
