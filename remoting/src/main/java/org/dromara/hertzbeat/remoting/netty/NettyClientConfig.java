@@ -25,7 +25,7 @@ import lombok.Data;
 @Data
 public class NettyClientConfig {
 
-    private String serverIp;
+    private String serverHost;
 
     private int serverPort;
 

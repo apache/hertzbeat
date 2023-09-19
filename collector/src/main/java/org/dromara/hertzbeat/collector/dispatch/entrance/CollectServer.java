@@ -60,7 +60,7 @@ public class CollectServer {
     private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
-        nettyClientConfig.setServerIp(nettyProperties.getManagerHost());
+        nettyClientConfig.setServerHost(nettyProperties.getManagerHost());
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
