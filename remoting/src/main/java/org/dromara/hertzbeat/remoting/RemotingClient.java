@@ -40,7 +40,7 @@ public interface RemotingClient extends RemotingService {
     void sendMsg(final ClusterMsg.Message request);
 
     /**
-     * send message to server and receive server message
+     * send message to server and sync waiting receive server message
      * @param request request message
      * @param timeoutMillis timeout millis
      * @return response message
