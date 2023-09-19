@@ -217,7 +217,7 @@ public class ConsistentHash {
      */
     public Node dispatchJob(Integer dispatchHash, Long jobId, boolean isFlushed) {
         if (dispatchHash == null || hashCircle == null || hashCircle.isEmpty()) {
-            log.warn("There is no available collector registered. Cache the job.");
+            log.warn("There is no available collector registered. Cache the job {}.", jobId);
             dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
             return null;
         }
