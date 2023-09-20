@@ -17,7 +17,10 @@ import org.dromara.hertzbeat.remoting.RemotingClient;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 import org.dromara.hertzbeat.remoting.netty.NettyClientConfig;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingClient;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
@@ -29,10 +32,11 @@ import java.util.concurrent.TimeUnit;
  * collect server
  */
 @Component
+@Order(value = Ordered.LOWEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j
-public class CollectServer {
+public class CollectServer implements CommandLineRunner {
 
     private final CollectJobService collectJobService;
 
@@ -57,9 +61,7 @@ public class CollectServer {
         this.collectJobService = collectJobService;
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
-
         this.init(properties, threadPool);
-        this.remotingClient.start();
     }
 
     private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
@@ -90,6 +92,11 @@ public class CollectServer {
 
     public void sendMsg(final ClusterMsg.Message message) {
         this.remotingClient.sendMsg(message);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        this.remotingClient.start();
     }
 
     public class CollectNettyEventListener implements NettyEventListener {
