@@ -103,11 +103,11 @@ export class AlertCenterComponent implements OnInit {
 
   onDeleteAlerts() {
     if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('alert.center.notify.no-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.delete-batch'),
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,

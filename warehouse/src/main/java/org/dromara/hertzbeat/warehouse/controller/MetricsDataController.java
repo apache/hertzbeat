@@ -50,7 +50,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * 指标数据查询接口
  *
  * @author tom
- *
  */
 @RestController
 @RequestMapping(produces = {APPLICATION_JSON_VALUE})
@@ -77,9 +76,9 @@ public class MetricsDataController {
             available = historyDataStorages.stream().anyMatch(AbstractHistoryDataStorage::isServerAvailable);
         }
         if (available) {
-            return ResponseEntity.ok(Message.<Void>builder().build());
+            return ResponseEntity.ok(Message.success());
         } else {
-            return ResponseEntity.ok(new Message<>(FAIL_CODE, "Service not available!"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Service not available!"));
         }
     }
 
@@ -102,11 +101,11 @@ public class MetricsDataController {
                     }
                 }).orElse(null);
         if (realTimeDataStorage == null) {
-            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "real time store not available"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
         CollectRep.MetricsData storageData = realTimeDataStorage.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
-            return ResponseEntity.ok().body(new Message<>("query metrics data is empty"));
+            return ResponseEntity.ok(Message.success("query metrics data is empty"));
         }
         {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
@@ -122,11 +121,11 @@ public class MetricsDataController {
             List<ValueRow> valueRows = storageData.getValuesList().stream().map(redisValueRow ->
                     ValueRow.builder().instance(redisValueRow.getInstance())
                             .values(redisValueRow.getColumnsList().stream()
-                                            .map(origin -> CommonConstants.NULL_VALUE.equals(origin) ? new Value()
-                                                                   : new Value(origin)).collect(Collectors.toList()))
+                                    .map(origin -> CommonConstants.NULL_VALUE.equals(origin) ? new Value()
+                                            : new Value(origin)).collect(Collectors.toList()))
                             .build()).collect(Collectors.toList());
             dataBuilder.valueRows(valueRows);
-            return ResponseEntity.ok().body(new Message<>(dataBuilder.build()));
+            return ResponseEntity.ok(Message.success(dataBuilder.build()));
         }
     }
 
@@ -155,7 +154,7 @@ public class MetricsDataController {
                     }
                 }).orElse(null);
         if (historyDataStorage == null) {
-            return ResponseEntity.ok().body(new Message<>(FAIL_CODE, "time series database not available"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
         }
         String[] names = metricFull.split("\\.");
         if (names.length != METRIC_FULL_LENGTH) {
@@ -177,6 +176,6 @@ public class MetricsDataController {
                 .id(monitorId).metric(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
-        return ResponseEntity.ok().body(new Message<>(historyData));
+        return ResponseEntity.ok(Message.success(historyData));
     }
 }

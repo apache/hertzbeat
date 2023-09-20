@@ -25,9 +25,6 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 /**
  * Collection data scheduler interface
  * 采集数据调度器接口
- *
- * @author tomsun28
- *
  */
 public interface CollectDataDispatch {
 

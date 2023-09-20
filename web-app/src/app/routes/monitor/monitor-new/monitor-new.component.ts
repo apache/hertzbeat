@@ -342,6 +342,9 @@ export class MonitorNewComponent implements OnInit {
   }
 
   getNumber(rangeString: string, index: number): number | undefined {
+    if (rangeString == undefined || rangeString == '' || rangeString.length <= index) {
+      return undefined;
+    }
     const rangeArray = JSON.parse(rangeString);
     return rangeArray[index];
   }
