@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * @author tom
  */
 @Component
-@AutoConfigureAfter(value = {SchedulerProperties.class, SchedulerInit.class})
+@AutoConfigureAfter(value = {SchedulerProperties.class})
 @Slf4j
 public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling {
 

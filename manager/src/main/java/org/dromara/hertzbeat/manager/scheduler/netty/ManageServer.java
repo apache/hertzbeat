@@ -18,7 +18,10 @@ import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 import org.dromara.hertzbeat.remoting.netty.NettyHook;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -31,10 +34,11 @@ import java.util.concurrent.TimeUnit;
  * manage server
  */
 @Component
+@Order(value = Ordered.LOWEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "scheduler.server",
         name = "enabled", havingValue = "true")
 @Slf4j
-public class ManageServer {
+public class ManageServer implements CommandLineRunner {
 
     private final CollectorAndJobScheduler collectorAndJobScheduler;
 
@@ -49,9 +53,7 @@ public class ManageServer {
                         final CommonThreadPool threadPool) {
         this.collectorAndJobScheduler = collectorAndJobScheduler;
         this.collectorAndJobScheduler.setManageServer(this);
-
         this.init(schedulerProperties, threadPool);
-        this.start();
     }
 
     private void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
@@ -142,6 +144,11 @@ public class ManageServer {
             return this.remotingServer.sendMsgSync(channel, message, 3000);
         }
         return null;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        this.start();
     }
 
     public class ManageNettyEventListener implements NettyEventListener {
