@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.dromara.hertzbeat.collector.dispatch.entrance.processor.*;
+import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
@@ -35,11 +36,14 @@ public class CollectServer {
 
     private final CollectJobService collectJobService;
 
+    private final TimerDispatch timerDispatch;
+
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
 
     public CollectServer(final CollectJobService collectJobService,
+                         final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
                          final CommonThreadPool threadPool) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
@@ -51,6 +55,7 @@ public class CollectServer {
             throw new IllegalArgumentException("please config dispatch entrance netty master host and port");
         }
         this.collectJobService = collectJobService;
+        this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
 
         this.init(properties, threadPool);
@@ -99,6 +104,7 @@ public class CollectServer {
                     .mode(mode)
                     // todo more info
                     .build();
+            timerDispatch.goOnline();
             // send online message
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setIdentity(identity)
