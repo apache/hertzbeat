@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
@@ -26,6 +27,9 @@ public class GoCloseProcessor implements NettyRemotingProcessor {
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
+        }
+        if (message.getMsg().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
+            log.error(message.getMsg());
         }
         this.timerDispatch.goOffline();
         this.collectServer.shutdown();
