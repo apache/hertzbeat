@@ -185,7 +185,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
 
         @Override
-        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             NettyRemotingServer.this.channelIdle(ctx, evt);
         }
     }

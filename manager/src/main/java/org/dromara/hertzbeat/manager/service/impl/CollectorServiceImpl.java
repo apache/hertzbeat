@@ -2,8 +2,11 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
+import org.dromara.hertzbeat.common.support.exception.CommonException;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.scheduler.AssignJobs;
 import org.dromara.hertzbeat.manager.scheduler.ConsistentHash;
 import org.dromara.hertzbeat.manager.service.CollectorService;
@@ -28,12 +31,15 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Autowired
     private CollectorDao collectorDao;
+
+    @Autowired
+    private CollectorMonitorBindDao collectorMonitorBindDao;
     
     @Autowired
     private ConsistentHash consistentHash;
     
     @Autowired(required = false)
-    private ManageServer manageServer; 
+    private ManageServer manageServer;
     
     @Override
     @Transactional(readOnly = true)
@@ -59,9 +65,21 @@ public class CollectorServiceImpl implements CollectorService {
         if (collectors == null || collectors.isEmpty()) {
             return;
         }
+        // Determine whether there are fixed tasks on the collector
+        collectors.forEach(collector -> {
+            List<CollectorMonitorBind> binds = this.collectorMonitorBindDao.findCollectorMonitorBindsByCollector(collector);
+            if (!binds.isEmpty()) {
+                throw new CommonException("The collector " + collector + " has pinned tasks that cannot be deleted.");
+            }
+        });
         collectors.forEach(collector -> {
             this.manageServer.closeChannel(collector);
             this.collectorDao.deleteCollectorByName(collector);
         });
+    }
+
+    @Override
+    public boolean hasCollector(String collector) {
+        return this.collectorDao.findCollectorByName(collector).isPresent();
     }
 }

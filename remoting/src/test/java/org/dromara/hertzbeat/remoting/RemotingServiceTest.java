@@ -34,7 +34,7 @@ public class RemotingServiceTest {
 
     public RemotingClient createRemotingClient(int port) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
-        nettyClientConfig.setServerIp("localhost");
+        nettyClientConfig.setServerHost("localhost");
         nettyClientConfig.setServerPort(port);
         RemotingClient client = new NettyRemotingClient(nettyClientConfig, null, threadPool);
         client.start();
