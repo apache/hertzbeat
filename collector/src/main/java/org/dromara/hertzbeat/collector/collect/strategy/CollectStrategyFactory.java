@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 @Configuration
-@Order(value = Ordered.HIGHEST_PRECEDENCE)
+@Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 public class CollectStrategyFactory implements CommandLineRunner {
 
     /**

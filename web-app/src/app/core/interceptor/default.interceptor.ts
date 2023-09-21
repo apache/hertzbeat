@@ -150,7 +150,6 @@ export class DefaultInterceptor implements HttpInterceptor {
   private toLogin(): void {
     if (!this.notified) {
       this.notified = true;
-      this.notification.error(`未登录或登录已过期，请重新登录。`, ``);
       this.goTo('/passport/login');
     }
   }

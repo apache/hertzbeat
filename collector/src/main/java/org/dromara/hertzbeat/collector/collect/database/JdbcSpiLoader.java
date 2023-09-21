@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.collector.collect.database;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-@Order(value = 0)
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
 public class JdbcSpiLoader implements CommandLineRunner {
 
 

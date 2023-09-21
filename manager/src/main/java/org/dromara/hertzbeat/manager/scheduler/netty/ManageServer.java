@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.manager.netty;
+package org.dromara.hertzbeat.manager.scheduler.netty;
 
 import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
@@ -6,11 +6,11 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
-import org.dromara.hertzbeat.manager.netty.process.CollectCyclicDataResponseProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectOneTimeDataResponseProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectorOfflineProcessor;
-import org.dromara.hertzbeat.manager.netty.process.CollectorOnlineProcessor;
-import org.dromara.hertzbeat.manager.netty.process.HeartbeatProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectOneTimeDataResponseProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectorOfflineProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.CollectorOnlineProcessor;
+import org.dromara.hertzbeat.manager.scheduler.netty.process.HeartbeatProcessor;
 import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;
@@ -18,7 +18,10 @@ import org.dromara.hertzbeat.remoting.event.NettyEventListener;
 import org.dromara.hertzbeat.remoting.netty.NettyHook;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -31,10 +34,11 @@ import java.util.concurrent.TimeUnit;
  * manage server
  */
 @Component
+@Order(value = Ordered.LOWEST_PRECEDENCE)
 @ConditionalOnProperty(prefix = "scheduler.server",
         name = "enabled", havingValue = "true")
 @Slf4j
-public class ManageServer {
+public class ManageServer implements CommandLineRunner {
 
     private final CollectorAndJobScheduler collectorAndJobScheduler;
 
@@ -49,9 +53,7 @@ public class ManageServer {
                         final CommonThreadPool threadPool) {
         this.collectorAndJobScheduler = collectorAndJobScheduler;
         this.collectorAndJobScheduler.setManageServer(this);
-
         this.init(schedulerProperties, threadPool);
-        this.start();
     }
 
     private void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
@@ -142,6 +144,11 @@ public class ManageServer {
             return this.remotingServer.sendMsgSync(channel, message, 3000);
         }
         return null;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        this.start();
     }
 
     public class ManageNettyEventListener implements NettyEventListener {

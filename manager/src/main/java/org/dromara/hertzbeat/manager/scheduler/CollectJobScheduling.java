@@ -53,15 +53,6 @@ public interface CollectJobScheduling {
      * 下发周期性异步采集任务
      *
      * @param job Collect task details      采集任务详情
-     * @return long Job ID      任务ID
-     */
-    long addAsyncCollectJob(Job job);
-    
-    /**
-     * Issue periodic asynchronous collection tasks
-     * 下发周期性异步采集任务
-     *
-     * @param job Collect task details      采集任务详情
      * @param collector collector identity name
      * @return long Job ID      任务ID
      */

@@ -15,19 +15,13 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.remoting.netty;
-
-import lombok.Data;
+package org.dromara.hertzbeat.common.support.exception;
 
 /**
- * netty client config
+ * common exception
  */
-@Data
-public class NettyClientConfig {
-
-    private String serverHost;
-
-    private int serverPort;
-
-    private int connectTimeoutMillis = 10000;
+public class CommonException extends RuntimeException {
+    public CommonException(String message) {
+        super(message);
+    }
 }

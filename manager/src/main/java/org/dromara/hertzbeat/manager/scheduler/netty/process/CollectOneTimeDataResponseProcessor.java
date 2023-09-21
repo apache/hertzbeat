@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.manager.netty.process;
+package org.dromara.hertzbeat.manager.scheduler.netty.process;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.channel.ChannelHandlerContext;
@@ -7,7 +7,7 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 import java.util.ArrayList;

@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-@Order(value = 1)
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
@@ -256,7 +257,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             app = yaml.loadAs(ymlContent, Job.class);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new IllegalArgumentException("parse yml define error: " + e.getMessage());
+            throw new IllegalArgumentException("parse yml error: " + e.getMessage());
         }
         // app params verify
         verifyDefineAppContent(app, isModify);

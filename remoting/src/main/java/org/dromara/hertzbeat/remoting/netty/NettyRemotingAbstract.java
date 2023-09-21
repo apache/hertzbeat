@@ -127,13 +127,13 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         return null;
     }
 
-    protected void channelActive(ChannelHandlerContext ctx) {
+    protected void channelActive(ChannelHandlerContext ctx) throws Exception {
         if (this.nettyEventListener != null && ctx.channel().isActive()) {
             this.nettyEventListener.onChannelActive(ctx.channel());
         }
     }
 
-    protected void channelIdle(ChannelHandlerContext ctx, Object evt) {
+    protected void channelIdle(ChannelHandlerContext ctx, Object evt) throws Exception {
         IdleStateEvent event = (IdleStateEvent) evt;
         if (this.nettyEventListener != null && event.state() == IdleState.ALL_IDLE) {
             ctx.channel().closeFuture();

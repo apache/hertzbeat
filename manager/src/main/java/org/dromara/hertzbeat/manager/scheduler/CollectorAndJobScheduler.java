@@ -20,7 +20,7 @@ import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.dao.ParamDao;
-import org.dromara.hertzbeat.manager.netty.ManageServer;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -77,18 +77,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     private ManageServer manageServer;
 
     @Override
-    public void collectorGoOnline(String identity) {
-        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        if (collectorOptional.isPresent()) {
-            Collector collector = collectorOptional.get();
-            CollectorInfo collectorInfo = new CollectorInfo();
-            collectorInfo.setIp(collector.getIp());
-            collectorInfo.setName(collector.getName());
-            this.collectorGoOnline(identity, collectorInfo);
-        }
-    }
-
-    @Override
     public void collectorGoOnline(String identity, CollectorInfo collectorInfo) {
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
         Collector collector;
@@ -98,13 +86,22 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 return;
             }
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
-            collector.setIp(collectorInfo.getIp());
+            if (collectorInfo != null) {
+                collector.setIp(collectorInfo.getIp());
+                collector.setMode(collectorInfo.getMode());   
+            }
         } else {
+            if (collectorInfo == null) {
+                log.error("collectorInfo can not null when collector not existed");
+                return;
+            }
             collector = Collector.builder().name(identity).ip(collectorInfo.getIp())
+                    .mode(collectorInfo.getMode())
                     .status(CommonConstants.COLLECTOR_STATUS_ONLINE).build();
         }
         collectorDao.save(collector);
-        ConsistentHash.Node node = new ConsistentHash.Node(identity, collectorInfo.getIp(), System.currentTimeMillis(), null);
+        ConsistentHash.Node node = new ConsistentHash.Node(identity, collector.getMode(),
+                collector.getIp(), System.currentTimeMillis(), null);
         consistentHash.addNode(node);
         reBalanceCollectorAssignJobs();
         // 读取数据库此collector下的固定采集任务并下发
@@ -113,6 +110,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             Optional<Monitor> monitorOptional = monitorDao.findById(bind.getMonitorId());
             if (monitorOptional.isPresent()) {
                 Monitor monitor = monitorOptional.get();
+                if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+                    continue;
+                }
                 try {
                     // 构造采集任务Job实体
                     Job appDefine = appService.getAppDefine(monitor.getApp());
@@ -205,6 +205,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     }
                     if (!assignJobs.getRemovingJobs().isEmpty()) {
                         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                                .setDirection(ClusterMsg.Direction.REQUEST)
                                 .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
                                 .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
                                 .build();
@@ -234,6 +235,11 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Override
     public boolean onlineCollector(String identity) {
+        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
+        if (collectorOptional.isEmpty()) {
+            return false;
+        }
+        Collector collector = collectorOptional.get();
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.GO_ONLINE)
                 .setDirection(ClusterMsg.Direction.REQUEST)
@@ -244,7 +250,12 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             return false;
         }
         log.info("send online collector message to {} success", identity);
-        this.collectorGoOnline(identity);
+        CollectorInfo collectorInfo = CollectorInfo.builder()
+                .name(collector.getName())
+                .ip(collector.getIp())
+                .mode(collector.getMode())
+                .build();
+        this.collectorGoOnline(identity, collectorInfo);
         return true;
     }
 
@@ -261,7 +272,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -272,7 +283,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            boolean result = this.manageServer.sendMsg(node.getName(), message);
+            boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
 
             if (result) {
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
@@ -306,7 +317,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -315,7 +326,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            boolean result = this.manageServer.sendMsg(node.getName(), message);
+            boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
             if (result) {
                 CountDownLatch countDownLatch = new CountDownLatch(1);
                 CollectResponseEventListener listener = new CollectResponseEventListener() {
@@ -339,42 +350,28 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     }
 
     @Override
-    public long addAsyncCollectJob(Job job) {
-        long jobId = SnowFlakeIdGenerator.generateId();
-        job.setId(jobId);
-        jobContentCache.put(jobId, job);
-        // todo dispatchKey ip+port or id
-        String dispatchKey = String.valueOf(job.getMonitorId());
-        ConsistentHash.Node node = consistentHash.dispatchJob(dispatchKey, jobId);
-        if (node == null) {
-            log.error("there is no collector online to assign job.");
-            return jobId;
-        }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
-            collectJobService.addAsyncCollectJob(job);
-        } else {
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(job))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), message);
-        }
-        return jobId;
-    }
-
-    @Override
     public long addAsyncCollectJob(Job job, String collector) {
         long jobId = SnowFlakeIdGenerator.generateId();
         job.setId(jobId);
         jobContentCache.put(jobId, job);
-        ConsistentHash.Node node = consistentHash.getNode(collector);
-        if (node == null) {
-            log.error("there is no collector name: {} online to assign job.", collector);
-            return jobId;
+        ConsistentHash.Node node;
+        if (collector == null) {
+            // todo dispatchKey ip+port or id
+            String dispatchKey = String.valueOf(job.getMonitorId());
+            node = consistentHash.dispatchJob(dispatchKey, jobId);
+            if (node == null) {
+                log.error("there is no collector online to assign job.");
+                return jobId;
+            }
+        } else {
+            node = consistentHash.getNode(collector);
+            if (node == null) {
+                log.error("there is no collector name: {} online to assign job.", collector);
+                return jobId;
+            }
         }
         node.getAssignJobs().addPinnedJob(jobId);
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
+        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
@@ -382,7 +379,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setMsg(JsonUtil.toJson(job))
                     .build();
-            this.manageServer.sendMsg(node.getName(), message);
+            this.manageServer.sendMsg(node.getIdentity(), message);
         }
         return jobId;
     }
@@ -391,34 +388,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     public long updateAsyncCollectJob(Job modifyJob) {
         // delete and add
         long preJobId = modifyJob.getId();
-        long newJobId = SnowFlakeIdGenerator.generateId();
-        modifyJob.setId(newJobId);
+        long newJobId = addAsyncCollectJob(modifyJob, null);
         jobContentCache.remove(preJobId);
-        jobContentCache.put(newJobId, modifyJob);
-        // todo dispatchKey ip+port or id
-        String dispatchKey = String.valueOf(modifyJob.getMonitorId());
-        ConsistentHash.Node node = consistentHash.dispatchJob(dispatchKey, newJobId);
-        if (node == null) {
-            log.error("there is no collector online to assign job.");
-            return newJobId;
-        }
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
-            collectJobService.addAsyncCollectJob(modifyJob);
-            collectJobService.cancelAsyncCollectJob(preJobId);
-        } else {
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(modifyJob))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), message);
-            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), deleteMessage);
-        }
+        cancelAsyncCollectJob(preJobId);
         return newJobId;
     }
 
@@ -426,58 +398,32 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     public long updateAsyncCollectJob(Job modifyJob, String collector) {
         // delete and add
         long preJobId = modifyJob.getId();
-        long newJobId = SnowFlakeIdGenerator.generateId();
-        modifyJob.setId(newJobId);
+        long newJobId = addAsyncCollectJob(modifyJob, collector);
         jobContentCache.remove(preJobId);
-        jobContentCache.put(newJobId, modifyJob);
-        ConsistentHash.Node node = consistentHash.getNode(collector);
-        if (node == null) {
-            log.error("there is no collector name: {} online to assign job.", collector);
-            return newJobId;
-        }
-        node.getAssignJobs().removePinnedJob(preJobId);
-        node.getAssignJobs().addPinnedJob(newJobId);
-
-        if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
-            collectJobService.addAsyncCollectJob(modifyJob);
-            collectJobService.cancelAsyncCollectJob(preJobId);
-        } else {
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(modifyJob))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), message);
-            ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(List.of(preJobId)))
-                    .build();
-            this.manageServer.sendMsg(node.getName(), deleteMessage);
-        }
+        cancelAsyncCollectJob(preJobId);
         return newJobId;
     }
 
     @Override
     public void cancelAsyncCollectJob(Long jobId) {
-        consistentHash.getAllNodes().entrySet().stream().filter(entry -> {
-            ConsistentHash.Node node = entry.getValue();
+        for (ConsistentHash.Node node : consistentHash.getAllNodes().values()) {
             AssignJobs assignJobs = node.getAssignJobs();
-            return assignJobs.getPinnedJobs().contains(jobId)
-                    || assignJobs.getJobs().contains(jobId) || assignJobs.getAddingJobs().contains(jobId);
-        }).findFirst().ifPresent(entry -> {
-            ConsistentHash.Node node = entry.getValue();
-            if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getName())) {
-                collectJobService.cancelAsyncCollectJob(jobId);
-            } else {
-                ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                        .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                        .setDirection(ClusterMsg.Direction.REQUEST)
-                        .setMsg(JsonUtil.toJson(List.of(jobId)))
-                        .build();
-                this.manageServer.sendMsg(node.getName(), deleteMessage);
+            if (assignJobs.getPinnedJobs().remove(jobId)
+                    || assignJobs.getJobs().remove(jobId) || assignJobs.getAddingJobs().remove(jobId)) {
+                node.removeVirtualNodeJob(jobId);
+                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
+                    collectJobService.cancelAsyncCollectJob(jobId);
+                } else {
+                    ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
+                            .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                            .setDirection(ClusterMsg.Direction.REQUEST)
+                            .setMsg(JsonUtil.toJson(List.of(jobId)))
+                            .build();
+                    this.manageServer.sendMsg(node.getIdentity(), deleteMessage);
+                }
+                break;
             }
-        });
+        }
     }
 
     @Override

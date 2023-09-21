@@ -1,5 +1,7 @@
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
@@ -41,7 +43,9 @@ const COMPONENTS: Array<Type<void>> = [
     ColorPickerModule,
     NzTagModule,
     NzLayoutModule,
-    NzCodeEditorModule
+    NzCodeEditorModule,
+    ClipboardModule,
+    NzBadgeModule
   ],
   declarations: COMPONENTS
 })
