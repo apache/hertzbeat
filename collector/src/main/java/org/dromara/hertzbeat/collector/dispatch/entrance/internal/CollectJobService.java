@@ -21,6 +21,7 @@ import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
 import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
 import org.dromara.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -53,23 +54,27 @@ public class CollectJobService {
 
     private final WorkerPool workerPool;
 
-    private String collectorIdentity = null;
+    private final String collectorIdentity;
+    
+    private String mode = null;
 
     private CollectServer collectServer;
 
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
-        if (properties != null && properties.getEntrance() != null
-                && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
+        if (properties != null && properties.getEntrance() != null && properties.getEntrance().getNetty() != null
+                && properties.getEntrance().getNetty().isEnabled()) {
+            mode = properties.getEntrance().getNetty().getMode();
             String collectorName = properties.getEntrance().getNetty().getIdentity();
             if (StringUtils.hasText(collectorName)) {
                 collectorIdentity = collectorName;
             } else {
-                String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
-                log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
                 collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                log.info("user not config this collector identity, use [host name - host ip] default: {}.", collectorIdentity);
             }
+        } else {
+            collectorIdentity = CommonConstants.MAIN_COLLECTOR_NODE;
         }
     }
 
@@ -166,6 +171,10 @@ public class CollectJobService {
 
     public String getCollectorIdentity() {
         return collectorIdentity;
+    }
+    
+    public String getCollectorMode() {
+        return mode;
     }
 
     public void setCollectServer(CollectServer collectServer) {

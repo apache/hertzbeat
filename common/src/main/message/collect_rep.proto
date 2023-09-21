@@ -22,22 +22,24 @@ message MetricsData
 {
     // 监控的ID
     uint64 id = 1;
+    // 所属租户ID
+    uint64 tenantId = 2;
     // 监控的类型 eg: linux | mysql | jvm
-    string app = 2;
+    string app = 3;
     // 监控采集的指标集合 eg: cpu | memory | health
-    string metrics = 3;
+    string metrics = 4;
     // 监控采集指标集合的采集优先级>=0
-    uint32 priority = 4;
+    uint32 priority = 5;
     // 采集时间
-    uint64 time = 5;
+    uint64 time = 6;
     // 采集响应码
-    Code code = 6;
+    Code code = 7;
     // 采集响应信息
-    string msg = 7;
+    string msg = 8;
     // 采集指标名
-    repeated Field fields = 8;
+    repeated Field fields = 9;
     // 采集指标值集合(fields作为字段名称与ValueRow映射)
-    repeated ValueRow values = 9;
+    repeated ValueRow values = 10;
 }
 
 message Field

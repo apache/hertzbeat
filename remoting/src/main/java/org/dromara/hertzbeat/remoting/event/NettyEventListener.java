@@ -20,13 +20,21 @@ package org.dromara.hertzbeat.remoting.event;
 import io.netty.channel.Channel;
 
 /**
- * listen NettyEvent, then handle something
+ * interface some method from ChannelInboundHandler
  */
 public interface NettyEventListener {
 
-    default void onChannelActive(final Channel channel) {
+    /**
+     * do something when channel active
+     * @param channel netty channel
+     */
+    default void onChannelActive(final Channel channel) throws Exception {
     }
 
-    default void onChannelIdle(final Channel channel) {
+    /**
+     * do something when channel idle
+     * @param channel netty channel
+     */
+    default void onChannelIdle(final Channel channel) throws Exception {
     }
 }

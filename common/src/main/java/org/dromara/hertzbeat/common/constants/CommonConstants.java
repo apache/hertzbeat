@@ -306,4 +306,14 @@ public interface CommonConstants {
      * ignore label
      */
     String IGNORE = "ignore";
+
+    /**
+     * collector mode public
+     */
+    String MODE_PUBLIC = "public";
+
+    /**
+     * collector mode private
+     */
+    String MODE_PRIVATE = "private";
 }

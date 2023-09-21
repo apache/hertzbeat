@@ -17,7 +17,7 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'common.button.delete' | i18n }}
   </button>
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchAlertDefinesByName()">
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertDefineTable()">
     {{ 'common.search' | i18n }}
   </button>
   <input
@@ -26,8 +26,8 @@
     type="text"
     [placeholder]="'alert.setting.target' | i18n"
     nzSize="default"
-    (keyup.enter)="onFilterSearchAlertDefinesByName()"
-    [(ngModel)]="app"
+    (keyup.enter)="loadAlertDefineTable()"
+    [(ngModel)]="search"
   />
 </div>
 <div nz-col [nzXs]="{ span: 24 }" class="mobile-hide"> </div>

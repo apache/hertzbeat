@@ -96,7 +96,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                 first = false;
                 try {
                     this.channel = this.bootstrap
-                            .connect(this.nettyClientConfig.getServerIp(), this.nettyClientConfig.getServerPort())
+                            .connect(this.nettyClientConfig.getServerHost(), this.nettyClientConfig.getServerPort())
                             .sync().channel();
                     this.channel.closeFuture().sync();
                 } catch (InterruptedException ignored) {

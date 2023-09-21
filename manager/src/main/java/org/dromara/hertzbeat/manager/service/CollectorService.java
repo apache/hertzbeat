@@ -28,5 +28,11 @@ public interface CollectorService {
      * @param collectors collector
      */
     void deleteRegisteredCollector(List<String> collectors);
-    
+
+    /**
+     * is has the collector name
+     * @param collector collector name
+     * @return return true if it has
+     */
+    boolean hasCollector(String collector);
 }

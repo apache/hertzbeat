@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,6 +63,7 @@ public class AlertDefinesController {
             description = "You can obtain the list of alarm definitions by querying filter items ｜ 根据查询过滤项获取告警定义信息列表")
     public ResponseEntity<Message<Page<AlertDefine>>> getAlertDefines(
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Alarm Definition app ｜ 告警定义名称", example = "6565463543") @RequestParam(required = false) String search,
             @Parameter(description = "Alarm Definition Severity ｜ 告警定义级别", example = "6565463543") @RequestParam(required = false) Byte priority,
             @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
@@ -76,6 +78,23 @@ public class AlertDefinesController {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("app")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("metric")),
+                                "%" + search.toUpperCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("field")),
+                                "%" + search.toUpperCase() + "%"
+                        )
+                );
+                andList.add(predicate);
             }
             if (priority != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
@@ -102,40 +121,5 @@ public class AlertDefinesController {
         }
         return ResponseEntity.ok(Message.success());
     }
-
-    @GetMapping("/app")
-    @Operation(summary = "Example Query the alarm definition list by app｜ 根据名称查询告警定义列表",
-            description = "You can obtain the list of alarm definitions by querying filter items ｜ 根据查询过滤项获取告警定义信息列表")
-    public ResponseEntity<Message<Page<AlertDefine>>> getAlertDefinesByName(
-            @Parameter(description = "Alarm Definition app ｜ 告警定义名称", example = "6565463543") @RequestParam(required = false) String app,
-            @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
-            @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
-            @Parameter(description = "List current page ｜ 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pages ｜ 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-
-        Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
-            if (app != null) {
-                Predicate predicate = criteriaBuilder.or(
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("app")),
-                                "%" + app.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("app")),
-                                "%" + app.toUpperCase() + "%"
-                        )
-                );
-                andList.add(predicate);
-            }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
-        };
-        // 分页是必须的
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
-        return ResponseEntity.ok(Message.success(alertDefinePage));
-    }
-
+    
 }
