@@ -63,16 +63,15 @@ public class CollectJobService {
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
-        if (properties != null && properties.getEntrance() != null
-                && properties.getEntrance().getNetty() != null && properties.getEntrance().getNetty().isEnabled()) {
+        if (properties != null && properties.getEntrance() != null && properties.getEntrance().getNetty() != null
+                && properties.getEntrance().getNetty().isEnabled()) {
             mode = properties.getEntrance().getNetty().getMode();
             String collectorName = properties.getEntrance().getNetty().getIdentity();
             if (StringUtils.hasText(collectorName)) {
                 collectorIdentity = collectorName;
             } else {
-                String identity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
-                log.info("user not config this collector identity, use [host name - host ip] default: {}.", identity);
                 collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                log.info("user not config this collector identity, use [host name - host ip] default: {}.", collectorIdentity);
             }
         } else {
             collectorIdentity = CommonConstants.MAIN_COLLECTOR_NODE;
