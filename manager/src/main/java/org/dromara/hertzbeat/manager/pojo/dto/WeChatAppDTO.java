@@ -31,7 +31,7 @@ public class WeChatAppDTO {
     private String toTag;
 
     @JsonProperty(value = "msgtype")
-    private String msgType = MARKDOWN;
+    private String msgType;
 
     @JsonProperty(value = "agentid")
     private Integer agentId;
