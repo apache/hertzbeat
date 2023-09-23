@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'app-metrics-field-input',
@@ -6,8 +6,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
   styleUrls: ['./metrics-field-input.component.less']
 })
 export class MetricsFieldInputComponent implements OnInit {
-  constructor() {
-  }
+  constructor() {}
 
   @Input() value!: any;
   @Output() readonly valueChange = new EventEmitter<string>();
