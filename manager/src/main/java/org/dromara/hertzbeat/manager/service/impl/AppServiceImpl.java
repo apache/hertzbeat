@@ -17,17 +17,21 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
+import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.service.AppService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -59,7 +63,6 @@ import java.util.stream.Collectors;
  * 暂时将监控配置和参数配置存放内存 之后存入数据库
  *
  * @author tomsun28
- *
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -67,9 +70,12 @@ import java.util.stream.Collectors;
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
     private static final String JAVA_PATH_SEPARATOR = "/";
-    
+
     @Autowired
     private MonitorDao monitorDao;
+
+    @Autowired
+    private ParamDao paramDao;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
@@ -84,6 +90,37 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Job getPushDefine(Long monitorId) throws IllegalArgumentException {
+//        if (!StringUtils.hasText(app)) {
+//            throw new IllegalArgumentException("The app can not null.");
+//        }
+//        Job appDefine = appDefines.get(app.toLowerCase());
+//        if (appDefine == null) {
+//            throw new IllegalArgumentException("The app " + app + " not support.");
+//        }
+//        return appDefine.clone();
+        Job appDefine = appDefines.get("push");
+        if (appDefine == null) {
+            throw new IllegalArgumentException("The push collector not support.");
+        }
+        List<Metrics> metrics = appDefine.getMetrics();
+        List<Metrics> metricsTmp = new ArrayList<>();
+        for (Metrics metric : metrics) {
+            if (metric.getName().equals("all")) {
+                List<Param> params = paramDao.findParamsByMonitorId(monitorId);
+                List<Configmap> configmaps = params.stream()
+                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                                param.getType())).collect(Collectors.toList());
+                Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
+                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
+                metricsTmp.add(metric);
+            }
+        }
+        appDefine.setMetrics(metricsTmp);
+        return appDefine;
     }
 
     @Override
@@ -108,7 +145,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             }
             metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
         } else {
-            appDefines.forEach((k,v)->{
+            appDefines.forEach((k, v) -> {
                 metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
             });
         }
@@ -149,6 +186,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 String i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
                 if (i18nMetricsName != null) {
                     i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName(), i18nMetricsName);
+                }
+                if (metrics.getFields() == null) {
+                    continue;
                 }
                 for (Metrics.Field field : metrics.getFields()) {
                     Map<String, String> fieldI18nName = field.getI18n();
@@ -237,7 +277,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     } catch (Exception e) {
                         log.error(e.getMessage());
                     }
-                }   
+                }
             }
         }
         log.info("load {} define app yml in file: {}", app, defineAppPath);

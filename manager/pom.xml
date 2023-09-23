@@ -64,6 +64,13 @@
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <!-- push -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-push</artifactId>
+            <version>1.0</version>
         </dependency>
         <!-- spring -->
         <dependency>

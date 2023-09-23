@@ -18,13 +18,13 @@
 package org.dromara.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.job.protocol.*;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * 监控采集的指标集合详情 eg: cpu | memory | health
  *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor
@@ -163,6 +162,10 @@ public class Metrics {
      * Monitoring configuration information using the public rocketmq protocol 使用公共的rocketmq协议的监控配置信息
      */
     private RocketmqProtocol rocketmq;
+    /**
+     * Monitoring configuration information using push style 使用push方式推送的监控配置信息
+     */
+    private PushProtocol push;
 
     /**
      * collector use - Temporarily store subTask indicator group response data
@@ -187,6 +190,7 @@ public class Metrics {
 
     /**
      * is has subTask
+     *
      * @return true - has
      */
     public boolean isHasSubTask() {
@@ -195,6 +199,7 @@ public class Metrics {
 
     /**
      * consume subTask
+     *
      * @param metricsData response data
      * @return is last task?
      */

@@ -33,7 +33,7 @@ spring:
   config:
     activate:
       on-profile: cluster
-      
+
 collector:
   dispatch:
     entrance:
@@ -43,6 +43,10 @@ collector:
         mode: ${MODE:public}
         manager-host: ${MANAGER_HOST:}${MANAGER_IP:}
         manager-port: ${MANAGER_PORT:1158}
+
+push:
+  uri: "127.0.0.1:1157"
+
 
 common:
   queue:

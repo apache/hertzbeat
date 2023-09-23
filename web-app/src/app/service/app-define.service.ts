@@ -1,9 +1,9 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
 
-import { Message } from '../pojo/Message';
-import { ParamDefine } from '../pojo/ParamDefine';
+import {Message} from '../pojo/Message';
+import {ParamDefine} from '../pojo/ParamDefine';
 
 const app_hierarchy = '/apps/hierarchy';
 
@@ -11,7 +11,8 @@ const app_hierarchy = '/apps/hierarchy';
   providedIn: 'root'
 })
 export class AppDefineService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   public getAppParamsDefine(app: string | undefined | null): Observable<Message<ParamDefine[]>> {
     if (app === null || app === undefined) {
@@ -19,6 +20,13 @@ export class AppDefineService {
     }
     const paramDefineUri = `/apps/${app}/params`;
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
+  }
+
+  public getPushDefine(monitorId: number | undefined | null): Observable<Message<any>> {
+    if (monitorId === null || monitorId === undefined) {
+      console.log('getPushDefine monitorIdcan not null');
+    }
+    return this.http.get<Message<any>>(`/apps/${monitorId}/pushdefine`);
   }
 
   public getAppDefine(app: string | undefined | null): Observable<Message<any>> {
@@ -61,7 +69,7 @@ export class AppDefineService {
       lang = 'en_US';
     }
     let httpParams = new HttpParams().append('lang', lang);
-    const options = { params: httpParams };
+    const options = {params: httpParams};
     return this.http.get<Message<any>>(app_hierarchy, options);
   }
 }
