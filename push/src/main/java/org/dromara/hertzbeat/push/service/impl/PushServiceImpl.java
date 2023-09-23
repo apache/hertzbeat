@@ -30,15 +30,26 @@ public class PushServiceImpl implements PushService {
     @Autowired
     private PushMetricsDao metricsDao;
 
-    private Map<Long, Long> monitorIdCache; // key: monitorId, value: time stamp of last query
+    private final Map<Long, Long> monitorIdCache; // key: monitorId, value: time stamp of last query
 
-    private final long cacheTimeout = 5000; // ms
+    private static final long cacheTimeout = 5000; // ms
 
-    private Map<Long, PushMetricsDto.Metrics> lastPushMetrics;
+    private final Map<Long, PushMetricsDto.Metrics> lastPushMetrics;
+
+    private static final long deleteMetricsPeriod = 1000 * 60 * 60 * 12;
+
+    private static final long deleteBeforeTime = deleteMetricsPeriod / 2;
 
     PushServiceImpl(){
         monitorIdCache = new HashMap<>();
         lastPushMetrics = new HashMap<>();
+
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                metricsDao.deleteAllByTimeBefore(System.currentTimeMillis() - deleteBeforeTime);
+            }
+        }, 0, deleteMetricsPeriod);
     }
 
     @Override
