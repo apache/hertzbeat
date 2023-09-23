@@ -39,12 +39,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class PushCollectImpl extends AbstractCollect {
 
-    // private static Map<Long, Long> timeMap = new ConcurrentHashMap<>();
+    private static Map<Long, Long> timeMap = new ConcurrentHashMap<>();
 
     // ms
-    private final static Integer timeout = 3000;
+    private static final Integer timeout = 3000;
 
-    private final static Integer SUCCESS_CODE = 200;
+    private static final Integer SUCCESS_CODE = 200;
+
+    // 第一次采集多久之前的数据，其实没有办法确定，因为无法确定上次何时采集，难以避免重启后重复采集的现象，默认30s
+    private static final Integer firstCollectInterval = 30000;
 
     public PushCollectImpl() {
     }
@@ -52,15 +55,15 @@ public class PushCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
-//        long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
 
-//        Long time = timeMap.getOrDefault(appId, startTime - 31 * 1000);
-//        timeMap.put(appId, startTime);
+        Long time = timeMap.getOrDefault(appId, startTime - firstCollectInterval);
+        timeMap.put(appId, startTime);
 
         HttpContext httpContext = createHttpContext(pushProtocol);
-        HttpUriRequest request = createHttpRequest(pushProtocol, appId);
+        HttpUriRequest request = createHttpRequest(pushProtocol, appId, time);
 
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
@@ -95,7 +98,7 @@ public class PushCollectImpl extends AbstractCollect {
         return httpClientContext;
     }
 
-    private HttpUriRequest createHttpRequest(PushProtocol pushProtocol, Long monitorId) {
+    private HttpUriRequest createHttpRequest(PushProtocol pushProtocol, Long monitorId, Long startTime) {
         RequestBuilder requestBuilder = RequestBuilder.get();
 
 
@@ -116,8 +119,8 @@ public class PushCollectImpl extends AbstractCollect {
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
 
         requestBuilder.addParameter("id", String.valueOf(monitorId));
-//        requestBuilder.addParameter("time", String.valueOf(startTime));
-//        timeMap.put(monitorId, startTime);
+        requestBuilder.addParameter("time", String.valueOf(startTime));
+        timeMap.put(monitorId, startTime);
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
 
 

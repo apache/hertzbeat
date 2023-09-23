@@ -30,15 +30,15 @@ public class PushServiceImpl implements PushService {
     @Autowired
     private PushMetricsDao metricsDao;
 
-    private Map<Long, Long> monitorIdCache;
+    private Map<Long, Long> monitorIdCache; // key: monitorId, value: time stamp of last query
 
     private final long cacheTimeout = 5000; // ms
 
-    private Map<Long, PushMetricsDto.Metrics> lastestPushMetrics;
+    private Map<Long, PushMetricsDto.Metrics> lastPushMetrics;
 
     PushServiceImpl(){
         monitorIdCache = new HashMap<>();
-        lastestPushMetrics = new HashMap<>();
+        lastPushMetrics = new HashMap<>();
     }
 
     @Override
@@ -59,10 +59,11 @@ public class PushServiceImpl implements PushService {
 
             PushMetrics pushMetrics = PushMetrics.builder()
                     .monitorId(metrics.getMonitorId())
-//                    .time(metrics.getTime() == null ? System.currentTimeMillis() : metrics.getTime())
+                    // user-controlled time settings not required in current logic
+                    // .time(metrics.getTime() == null ? System.currentTimeMillis() : metrics.getTime())
                     .time(System.currentTimeMillis())
                     .metrics(JsonUtil.toJson(metrics.getMetrics())).build();
-            lastestPushMetrics.put(monitorId, metrics);
+            lastPushMetrics.put(monitorId, metrics);
             pushMetricsList.add(pushMetrics);
         }
 
@@ -71,11 +72,11 @@ public class PushServiceImpl implements PushService {
     }
 
     @Override
-    public PushMetricsDto getPushMetricData(final Long monitorId) {//, final Long time) {
+    public PushMetricsDto getPushMetricData(final Long monitorId, final Long time) {
         PushMetricsDto.Metrics metrics;
         PushMetricsDto pushMetricsDto = new PushMetricsDto();
-        if (lastestPushMetrics.containsKey(monitorId)) {
-            metrics = lastestPushMetrics.get(monitorId);
+        if (lastPushMetrics.containsKey(monitorId)) {
+            metrics = lastPushMetrics.get(monitorId);
         }
         else {
             try {
@@ -83,12 +84,15 @@ public class PushServiceImpl implements PushService {
                 Map<String, String> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<Map<String, String>>() {
                 });
                 metrics = PushMetricsDto.Metrics.builder().metrics(jsonMap).build();
-                lastestPushMetrics.put(monitorId, metrics);
+                lastPushMetrics.put(monitorId, metrics);
             }
             catch (Exception e) {
-                log.error("no metrics found, {}.", e.getMessage(), e);
-                return pushMetricsDto;
+                log.error("no metrics found, monitor id: {}, {}, {}", monitorId, e.getMessage(), e);
+                return null;
             }
+        }
+        if (time > metrics.getTime()) {
+            return null;
         }
         pushMetricsDto.getMetricsList().add(metrics);
         // 目前先不删除

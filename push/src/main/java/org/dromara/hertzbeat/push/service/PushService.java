@@ -12,5 +12,5 @@ import org.springframework.stereotype.Service;
 public interface PushService {
     void pushMetricsData(PushMetricsDto pushMetricsData);
 
-    PushMetricsDto getPushMetricData(final Long id);//, final Long time);
+    PushMetricsDto getPushMetricData(final Long monitorId, final Long time);
 }
