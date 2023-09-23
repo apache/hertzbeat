@@ -12,10 +12,7 @@ import org.dromara.hertzbeat.push.service.PushService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * push service impl
@@ -30,6 +27,12 @@ public class PushServiceImpl implements PushService {
 
     @Autowired
     private PushMetricsDao metricsDao;
+
+    private Map<Long, PushMetricsDto> lastestPushMetrics;
+
+    PushServiceImpl(){
+        lastestPushMetrics = new HashMap<>();
+    }
 
     @Override
     public void pushMetricsData(PushMetricsDto pushMetricsDto) throws RuntimeException {
