@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -102,14 +103,14 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 //            throw new IllegalArgumentException("The app " + app + " not support.");
 //        }
 //        return appDefine.clone();
-        Job appDefine = appDefines.get("push");
+        Job appDefine = appDefines.get(DispatchConstants.PROTOCOL_PUSH);
         if (appDefine == null) {
             throw new IllegalArgumentException("The push collector not support.");
         }
         List<Metrics> metrics = appDefine.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>();
         for (Metrics metric : metrics) {
-            if (metric.getName().equals("push")) {
+            if (metric.getName().equals("metrics")) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getValue(),

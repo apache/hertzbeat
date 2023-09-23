@@ -44,6 +44,8 @@ public class PushCollectImpl extends AbstractCollect {
     // ms
     private final static Integer timeout = 3000;
 
+    private final static Integer SUCCESS_CODE = 200;
+
     public PushCollectImpl() {
     }
 
@@ -63,7 +65,7 @@ public class PushCollectImpl extends AbstractCollect {
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
+            if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
