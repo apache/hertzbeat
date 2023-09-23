@@ -72,6 +72,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     private static final String JAVA_PATH_SEPARATOR = "/";
 
+    private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
+
     @Autowired
     private MonitorDao monitorDao;
 
@@ -110,7 +112,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         List<Metrics> metrics = appDefine.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>();
         for (Metrics metric : metrics) {
-            if (metric.getName().equals("metrics")) {
+            if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getValue(),
