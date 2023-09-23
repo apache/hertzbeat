@@ -66,7 +66,7 @@ public class ManageServer implements CommandLineRunner {
         this.remotingServer.registerHook(Lists.newArrayList(new NettyHook() {
             @Override
             public void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-                ManageServer.this.clientChannelTable.put(message.getIdentity(), ctx.channel());
+                // do something before processor list
             }
         }));
 
@@ -84,13 +84,17 @@ public class ManageServer implements CommandLineRunner {
         this.remotingServer.start();
 
         this.channelSchedule.scheduleAtFixedRate(() -> {
-            ManageServer.this.clientChannelTable.forEach((collector, channel) -> {
-                if (!channel.isActive()) {
-                    channel.closeFuture();
-                    ManageServer.this.clientChannelTable.remove(collector);
-                    ManageServer.this.collectorAndJobScheduler.collectorGoOffline(collector);
-                }
-            });
+            try {
+                this.clientChannelTable.forEach((collector, channel) -> {
+                    if (!channel.isActive()) {
+                        channel.closeFuture();
+                        this.clientChannelTable.remove(collector);
+                        this.collectorAndJobScheduler.collectorGoOffline(collector);
+                    }
+                });   
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }, 10, 3, TimeUnit.SECONDS);
     }
 
@@ -111,6 +115,14 @@ public class ManageServer implements CommandLineRunner {
             log.error("client {} offline now", identity);
         }
         return channel;
+    }
+
+    public void addChannel(final String identity, Channel channel) {
+        Channel preChannel = this.clientChannelTable.get(identity);
+        if (preChannel != null && channel.isActive()) {
+            preChannel.close();
+        }
+        this.clientChannelTable.put(identity, channel);
     }
 
     public void closeChannel(final String identity) {
@@ -165,6 +177,7 @@ public class ManageServer implements CommandLineRunner {
             if (identity != null) {
                 ManageServer.this.clientChannelTable.remove(identity);
                 ManageServer.this.collectorAndJobScheduler.collectorGoOffline(identity);
+                channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
             }
         }
