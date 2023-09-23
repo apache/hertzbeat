@@ -138,7 +138,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast(new ProtobufEncoder());
         // idle state
-        pipeline.addLast(new IdleStateHandler(0, 0, 100));
+        pipeline.addLast(new IdleStateHandler(0, 0, nettyServerConfig.getIdleStateEventTriggerTime()));
         pipeline.addLast(new NettyServerHandler());
     }
 

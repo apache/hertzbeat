@@ -56,6 +56,7 @@ public class ManageServer implements CommandLineRunner {
     private void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
+        nettyServerConfig.setIdleStateEventTriggerTime(schedulerProperties.getServer().getIdleStateEventTriggerTime());
         NettyEventListener nettyEventListener = new ManageNettyEventListener();
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
         
