@@ -316,4 +316,9 @@ public interface CommonConstants {
      * collector mode private
      */
     String MODE_PRIVATE = "private";
+
+    /**
+     * collector auth failed message
+     */
+    String COLLECTOR_AUTH_FAILED = "Auth Failed";
 }
