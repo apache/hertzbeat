@@ -1,8 +1,6 @@
 package org.dromara.hertzbeat.manager.scheduler.netty;
 
-import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
@@ -15,7 +13,6 @@ import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
-import org.dromara.hertzbeat.remoting.netty.NettyHook;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.boot.CommandLineRunner;
@@ -61,15 +58,7 @@ public class ManageServer implements CommandLineRunner {
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
         NettyEventListener nettyEventListener = new ManageNettyEventListener();
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
-
-        // register hook
-        this.remotingServer.registerHook(Lists.newArrayList(new NettyHook() {
-            @Override
-            public void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-                // do something before processor list
-            }
-        }));
-
+        
         // register processor
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
