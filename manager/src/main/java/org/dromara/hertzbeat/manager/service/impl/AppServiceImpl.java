@@ -109,7 +109,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         List<Metrics> metrics = appDefine.getMetrics();
         List<Metrics> metricsTmp = new ArrayList<>();
         for (Metrics metric : metrics) {
-            if (metric.getName().equals("all")) {
+            if (metric.getName().equals("push")) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getValue(),

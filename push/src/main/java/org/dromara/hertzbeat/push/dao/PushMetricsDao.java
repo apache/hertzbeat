@@ -11,5 +11,5 @@ import java.util.List;
  * @author vinci
  */
 public interface PushMetricsDao extends JpaRepository<PushMetrics, Long> {
-    List<PushMetrics> findByMonitorIdEqualsAndTimeGreaterThanEqual(Long monitorId, Long time);
+    PushMetrics findFirstByMonitorIdOrderByTimeDesc(Long monitorId);
 }

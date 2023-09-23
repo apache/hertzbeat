@@ -81,7 +81,7 @@ public class Job {
      */
     private Map<String, String> help;
     /**
-     * The monitor help link 
+     * The monitor help link
      */
     private Map<String, String> helpLink;
     /**
@@ -240,6 +240,6 @@ public class Job {
     @Override
     public Job clone() {
         // deep clone   深度克隆
-        return JsonUtil.fromJson(JsonUtil.toJson(this), Job.class);
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
     }
 }

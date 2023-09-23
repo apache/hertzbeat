@@ -20,6 +20,6 @@ import java.util.List;
 public class PushProtocol {
     private String host;
     private String port;
-    private String uri;
+    private String uri = "/api/push";
     private List<Field> fields;
 }

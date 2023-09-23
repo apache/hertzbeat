@@ -22,11 +22,24 @@ export class MetricsFieldInputComponent implements OnInit {
   fields: any[] = [];
 
   ngOnInit(): void {
-    this.fields.push({
-      field: '',
-      unit: '',
-      type: ''
-    })
+    if (this.value == undefined) {
+      this.fields.push({
+        field: '',
+        unit: '',
+        type: ''
+      });
+    } else {
+      this.value = JSON.parse(this.value);
+    }
+    if (this.value) {
+      for (let item of this.value) {
+        this.fields.push({
+          field: item.field,
+          unit: item.unit,
+          type: item.type
+        });
+      }
+    }
   }
 
   addNew(e?: MouseEvent) {
@@ -50,7 +63,7 @@ export class MetricsFieldInputComponent implements OnInit {
   }
 
   onChange() {
-    this.value = this.fields
+    this.value = this.fields;
     this.valueChange.emit(JSON.stringify(this.value));
   }
 }

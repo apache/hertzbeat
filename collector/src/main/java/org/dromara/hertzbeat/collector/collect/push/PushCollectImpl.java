@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class PushCollectImpl extends AbstractCollect {
 
-    private static Map<Long, Long> timeMap = new ConcurrentHashMap<>();
+    // private static Map<Long, Long> timeMap = new ConcurrentHashMap<>();
 
     // ms
     private final static Integer timeout = 3000;
@@ -50,16 +50,15 @@ public class PushCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
-        long startTime = System.currentTimeMillis();
+//        long startTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
 
-        // TODO 第一次获取15s数据
-        Long time = timeMap.getOrDefault(appId, startTime - 31 * 1000);
-        timeMap.put(appId, startTime);
+//        Long time = timeMap.getOrDefault(appId, startTime - 31 * 1000);
+//        timeMap.put(appId, startTime);
 
         HttpContext httpContext = createHttpContext(pushProtocol);
-        HttpUriRequest request = createHttpRequest(pushProtocol, time, appId);
+        HttpUriRequest request = createHttpRequest(pushProtocol, appId);
 
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
@@ -94,7 +93,7 @@ public class PushCollectImpl extends AbstractCollect {
         return httpClientContext;
     }
 
-    private HttpUriRequest createHttpRequest(PushProtocol pushProtocol, Long startTime, Long monitorId) {
+    private HttpUriRequest createHttpRequest(PushProtocol pushProtocol, Long monitorId) {
         RequestBuilder requestBuilder = RequestBuilder.get();
 
 
@@ -115,8 +114,8 @@ public class PushCollectImpl extends AbstractCollect {
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
 
         requestBuilder.addParameter("id", String.valueOf(monitorId));
-        requestBuilder.addParameter("time", String.valueOf(startTime));
-        timeMap.put(monitorId, startTime);
+//        requestBuilder.addParameter("time", String.valueOf(startTime));
+//        timeMap.put(monitorId, startTime);
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
 
 
@@ -140,20 +139,24 @@ public class PushCollectImpl extends AbstractCollect {
 //        if (jsonMap == null) {
 //            throw new NullPointerException("parse result is null");
 //        }
-        PushMetricsDto pushMetricsDto = JsonUtil.fromJson(resp, new TypeReference<Message<PushMetricsDto>>() {
-        }).getData();
-        if (pushMetricsDto == null) {
+        Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<Message<PushMetricsDto>>() {
+        });
+        if (msg == null) {
             throw new NullPointerException("parse result is null");
         }
-        //TODO: 由于collectRep里只有一个时间字段，没办法保存每一条记录被push的时间
+        PushMetricsDto pushMetricsDto = msg.getData();
+        if (pushMetricsDto == null || pushMetricsDto.getMetricsList() == null) {
+            throw new NullPointerException("parse result is null");
+        }
         for (PushMetricsDto.Metrics pushMetrics : pushMetricsDto.getMetricsList()) {
             List<String> metricColumn = new ArrayList<>();
-            for (Metrics.Field field:metric.getFields()) {
+            for (Metrics.Field field : metric.getFields()) {
                 metricColumn.add(pushMetrics.getMetrics().get(field.getField()));
             }
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder()
                     .addAllColumns(metricColumn);
             builder.addValues(valueRowBuilder.build());
         }
+        builder.setTime(System.currentTimeMillis());
     }
 }

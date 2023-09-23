@@ -409,10 +409,8 @@ public class CollectUtil {
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
-        //TODO: 有两个Field？
         List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
         });
-        //TODO: validate
         metrics.setFields(pushFieldList);
     }
 }

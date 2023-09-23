@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.push.service.impl;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.dromara.hertzbeat.common.entity.push.PushMetrics;
 import org.dromara.hertzbeat.common.entity.push.PushMetricsDto;
@@ -19,6 +20,7 @@ import java.util.*;
  *
  * @author vinci
  */
+@Slf4j
 @Service
 public class PushServiceImpl implements PushService {
 
@@ -28,47 +30,69 @@ public class PushServiceImpl implements PushService {
     @Autowired
     private PushMetricsDao metricsDao;
 
-    private Map<Long, PushMetricsDto> lastestPushMetrics;
+    private Map<Long, Long> monitorIdCache;
+
+    private final long cacheTimeout = 5000; // ms
+
+    private Map<Long, PushMetricsDto.Metrics> lastestPushMetrics;
 
     PushServiceImpl(){
+        monitorIdCache = new HashMap<>();
         lastestPushMetrics = new HashMap<>();
     }
 
     @Override
     public void pushMetricsData(PushMetricsDto pushMetricsDto) throws RuntimeException {
         List<PushMetrics> pushMetricsList = new ArrayList<>();
-        // TODO: 改成只取不同的monitorId
+        long curTime = System.currentTimeMillis();
         for (PushMetricsDto.Metrics metrics : pushMetricsDto.getMetricsList()) {
             long monitorId = metrics.getMonitorId();
-            Optional<Monitor> queryOption = monitorDao.findById(monitorId);
-            if (queryOption.isEmpty()) {
-                throw new IllegalArgumentException("The Monitor " + monitorId + " not exists");
+
+            if (!monitorIdCache.containsKey(monitorId) && (monitorIdCache.containsKey(monitorId) && curTime > monitorIdCache.get(monitorId) + cacheTimeout)) {
+                Optional<Monitor> queryOption = monitorDao.findById(monitorId);
+                if (queryOption.isEmpty()) {
+                    monitorIdCache.remove(monitorId);
+                    continue;
+                }
+                monitorIdCache.put(monitorId, curTime);
             }
-            PushMetrics.PushMetricsBuilder pushMetricsBuilder = PushMetrics.builder()
+
+            PushMetrics pushMetrics = PushMetrics.builder()
                     .monitorId(metrics.getMonitorId())
-                    .time(metrics.getTime() == null ? System.currentTimeMillis() : metrics.getTime())
-                    .metrics(JsonUtil.toJson(metrics.getMetrics()));
-            pushMetricsList.add(pushMetricsBuilder.build());
+//                    .time(metrics.getTime() == null ? System.currentTimeMillis() : metrics.getTime())
+                    .time(System.currentTimeMillis())
+                    .metrics(JsonUtil.toJson(metrics.getMetrics())).build();
+            lastestPushMetrics.put(monitorId, metrics);
+            pushMetricsList.add(pushMetrics);
         }
 
         metricsDao.saveAll(pushMetricsList);
+
     }
 
     @Override
-    public PushMetricsDto getPushMetricData(final Long monitorId, final Long time) {
-        List<PushMetrics> pushMetricsList = metricsDao.findByMonitorIdEqualsAndTimeGreaterThanEqual(monitorId, time);
+    public PushMetricsDto getPushMetricData(final Long monitorId) {//, final Long time) {
+        PushMetricsDto.Metrics metrics;
         PushMetricsDto pushMetricsDto = new PushMetricsDto();
-        List<Long> toBeDelMetricsId = new ArrayList<>();
-        for (PushMetrics p : pushMetricsList) {
-            toBeDelMetricsId.add(p.getId());
-            PushMetricsDto.Metrics.MetricsBuilder builder = PushMetricsDto.Metrics.builder()
-                    .monitorId(p.getMonitorId())
-                    .time(p.getTime())
-                    .metrics(JsonUtil.fromJson(p.getMetrics(), new TypeReference<Map<String, String>>() {
-                    }));
-            pushMetricsDto.getMetricsList().add(builder.build());
+        if (lastestPushMetrics.containsKey(monitorId)) {
+            metrics = lastestPushMetrics.get(monitorId);
         }
-        metricsDao.deleteAllById(toBeDelMetricsId);
+        else {
+            try {
+                PushMetrics pushMetrics = metricsDao.findFirstByMonitorIdOrderByTimeDesc(monitorId);
+                Map<String, String> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<Map<String, String>>() {
+                });
+                metrics = PushMetricsDto.Metrics.builder().metrics(jsonMap).build();
+                lastestPushMetrics.put(monitorId, metrics);
+            }
+            catch (Exception e) {
+                log.error("no metrics found, {}.", e.getMessage(), e);
+                return pushMetricsDto;
+            }
+        }
+        pushMetricsDto.getMetricsList().add(metrics);
+        // 目前先不删除
+        // metricsDao.deleteAllById(toBeDelMetricsId);
         return pushMetricsDto;
     }
 
