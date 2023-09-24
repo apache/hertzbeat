@@ -449,7 +449,7 @@
   "app.lock": "解除鎖定",
   "app.lock.placeholder": "輸入任意解鎖",
   "app.passport.desc": "易用友好的開源實時監控系統",
-  "app.passport.welcome": "歡迎使用TanCloud監控雲服務",
+  "app.passport.welcome": "點選探索 TanCloud 監控雲端服務",
   "app.login.message-need-identifier": "請輸入用戶名",
   "app.login.message-need-credential": "請輸入密碼",
   "app.login.message-invalid-credentials": "賬戶或密碼錯誤",

@@ -15,7 +15,7 @@ export class LayoutPassportComponent implements OnInit {
   links = [
     {
       title: this.i18nSvc.fanyi('app.passport.welcome'),
-      href: 'https://tancloud.cn'
+      href: 'https://console.tancloud.cn'
     }
   ];
 

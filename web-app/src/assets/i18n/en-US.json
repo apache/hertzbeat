@@ -454,7 +454,7 @@
   "app.lock": "Unlock",
   "app.lock.placeholder": "Enter Any To Unlock",
   "app.passport.desc": "An Open Source Real-Time Monitoring System",
-  "app.passport.welcome": "Welcome To Explore TanCloud - Monitoring Cloud Service",
+  "app.passport.welcome": "Click To Explore HertzBeat Monitoring Cloud",
   "app.login.message-need-identifier": "Please enter your username",
   "app.login.message-need-credential": "Please enter password",
   "app.login.message-invalid-credentials": "Invalid username or password",
