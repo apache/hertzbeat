@@ -132,12 +132,17 @@ public class CollectServer implements CommandLineRunner {
                 scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
                 // schedule send heartbeat message
                 scheduledExecutor.scheduleAtFixedRate(() -> {
-                    ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                            .setIdentity(identity)
-                            .setType(ClusterMsg.MessageType.HEARTBEAT)
-                            .build();
-                    CollectServer.this.sendMsg(heartbeat);
-                    log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+                    try {
+                        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                                .setIdentity(identity)
+                                .setDirection(ClusterMsg.Direction.REQUEST)
+                                .setType(ClusterMsg.MessageType.HEARTBEAT)
+                                .build();
+                        CollectServer.this.sendMsg(heartbeat);
+                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
+                    } catch (Exception e) {
+                        log.error("schedule send heartbeat to server error.{}", e.getMessage());
+                    }
                 }, 5, 5, TimeUnit.SECONDS);
             }
         }

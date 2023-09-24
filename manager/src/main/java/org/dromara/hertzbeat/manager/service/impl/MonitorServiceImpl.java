@@ -563,6 +563,7 @@ public class MonitorServiceImpl implements MonitorService {
             paramDao.deleteParamsByMonitorId(id);
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
+            collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(id);
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
@@ -581,6 +582,7 @@ public class MonitorServiceImpl implements MonitorService {
             for (Monitor monitor : monitors) {
                 // delete tag 删除监控对应的标签
                 tagService.deleteMonitorSystemTags(monitor);
+                collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
