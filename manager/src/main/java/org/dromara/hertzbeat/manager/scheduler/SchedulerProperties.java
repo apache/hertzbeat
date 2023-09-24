@@ -26,6 +26,13 @@ public class SchedulerProperties {
         private boolean enabled = true;
         
         private int port = 1158;
+
+        /**
+         * an IdleStateEvent whose state is IdleState.ALL_IDLE will be triggered when neither read nor write 
+         * was performed for the specified period of time.
+         * unit: s
+         */
+        private int idleStateEventTriggerTime = 100;
         
         public boolean isEnabled() {
             return enabled;
@@ -41,6 +48,14 @@ public class SchedulerProperties {
         
         public void setPort(int port) {
             this.port = port;
+        }
+
+        public int getIdleStateEventTriggerTime() {
+            return idleStateEventTriggerTime;
+        }
+
+        public void setIdleStateEventTriggerTime(int idleStateEventTriggerTime) {
+            this.idleStateEventTriggerTime = idleStateEventTriggerTime;
         }
     }
     
