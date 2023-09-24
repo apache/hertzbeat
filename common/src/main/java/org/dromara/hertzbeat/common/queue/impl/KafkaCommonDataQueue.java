@@ -202,6 +202,9 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
         CollectRep.MetricsData realTimeMetricsData = metricsDataToRealTimeStorageQueue.poll();
+        if (realTimeMetricsData != null) {
+            return realTimeMetricsData;
+        }
         lock4.lockInterruptibly();
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));
