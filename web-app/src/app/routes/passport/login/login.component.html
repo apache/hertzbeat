@@ -1,4 +1,4 @@
-<div style="background-color: whitesmoke; padding: 20px; border-radius: 6px">
+<div style="background-color: #efebe7; padding: 20px; border-radius: 6px; box-shadow: 7px 5px #B421CC;">
   <form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
     <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
       <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
@@ -29,7 +29,7 @@
         </nz-form-item>
       </nz-tab>
       <nz-tab [nzTitle]="'app.login.explore.cloud' | i18n">
-        <div style="margin-top: 10%; margin-bottom: 10%; text-align: center">
+        <div style="margin-top: 20%; margin-bottom: 20%; text-align: center">
           <a href="https://console.tancloud.cn/" target="_blank">
             <div class="hoverClass" style="border-radius: 4px; background-color: #3f51b5; padding: 6px; color: white">
               {{ 'app.login.explore.cloud.detail' | i18n }}
