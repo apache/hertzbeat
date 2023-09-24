@@ -1,8 +1,6 @@
 package org.dromara.hertzbeat.manager.scheduler.netty;
 
-import com.google.common.collect.Lists;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.support.CommonThreadPool;
@@ -15,7 +13,6 @@ import org.dromara.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
 import org.dromara.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.dromara.hertzbeat.remoting.RemotingServer;
 import org.dromara.hertzbeat.remoting.event.NettyEventListener;
-import org.dromara.hertzbeat.remoting.netty.NettyHook;
 import org.dromara.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.dromara.hertzbeat.remoting.netty.NettyServerConfig;
 import org.springframework.boot.CommandLineRunner;
@@ -59,17 +56,10 @@ public class ManageServer implements CommandLineRunner {
     private void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
+        nettyServerConfig.setIdleStateEventTriggerTime(schedulerProperties.getServer().getIdleStateEventTriggerTime());
         NettyEventListener nettyEventListener = new ManageNettyEventListener();
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
-
-        // register hook
-        this.remotingServer.registerHook(Lists.newArrayList(new NettyHook() {
-            @Override
-            public void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-                ManageServer.this.clientChannelTable.put(message.getIdentity(), ctx.channel());
-            }
-        }));
-
+        
         // register processor
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
@@ -84,13 +74,17 @@ public class ManageServer implements CommandLineRunner {
         this.remotingServer.start();
 
         this.channelSchedule.scheduleAtFixedRate(() -> {
-            ManageServer.this.clientChannelTable.forEach((collector, channel) -> {
-                if (!channel.isActive()) {
-                    channel.closeFuture();
-                    ManageServer.this.clientChannelTable.remove(collector);
-                    ManageServer.this.collectorAndJobScheduler.collectorGoOffline(collector);
-                }
-            });
+            try {
+                this.clientChannelTable.forEach((collector, channel) -> {
+                    if (!channel.isActive()) {
+                        channel.closeFuture();
+                        this.clientChannelTable.remove(collector);
+                        this.collectorAndJobScheduler.collectorGoOffline(collector);
+                    }
+                });   
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }, 10, 3, TimeUnit.SECONDS);
     }
 
@@ -111,6 +105,14 @@ public class ManageServer implements CommandLineRunner {
             log.error("client {} offline now", identity);
         }
         return channel;
+    }
+
+    public void addChannel(final String identity, Channel channel) {
+        Channel preChannel = this.clientChannelTable.get(identity);
+        if (preChannel != null && channel.isActive()) {
+            preChannel.close();
+        }
+        this.clientChannelTable.put(identity, channel);
     }
 
     public void closeChannel(final String identity) {
@@ -165,6 +167,7 @@ public class ManageServer implements CommandLineRunner {
             if (identity != null) {
                 ManageServer.this.clientChannelTable.remove(identity);
                 ManageServer.this.collectorAndJobScheduler.collectorGoOffline(identity);
+                channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
             }
         }
