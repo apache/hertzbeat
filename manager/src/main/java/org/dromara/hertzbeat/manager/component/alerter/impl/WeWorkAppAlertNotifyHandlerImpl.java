@@ -6,7 +6,6 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
@@ -28,7 +27,7 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     /**
      * send weChat app message url
@@ -45,11 +44,6 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
      */
     private static final String DEFAULT_ALL = "@all";
 
-    /**
-     * send message type
-     */
-    private static final String DEFAULT_TYPE = "text";
-
     private final RestTemplate restTemplate;
 
     @Override
@@ -62,13 +56,13 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
             ResponseEntity<WeChatAppReq> entityResponse = restTemplate.getForEntity(String.format(SECRET_URL, corpId, appSecret), WeChatAppReq.class);
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
-                WeChatAppDTO.TextDTO textDTO = new WeChatAppDTO.TextDTO();
-                textDTO.setContent(generateContent(alert));
+                WeChatAppDTO.MarkdownDTO markdown = new WeChatAppDTO.MarkdownDTO();
+                markdown.setContent(renderContent(alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
-                        .msgType(DEFAULT_TYPE)
+                        .msgType(WeChatAppDTO.MARKDOWN)
+                        .markdown(markdown)
                         .agentId(agentId)
-                        .text(textDTO)
                         .build();
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -98,4 +92,8 @@ public class WeChatAppAlertNotifyHandlerImpl implements AlertNotifyHandler {
         return JsonUtil.toJson(contentMap);
     }
 
+    @Override
+    protected String templateName() {
+        return "alertNotifyWeWorkApp";
+    }
 }

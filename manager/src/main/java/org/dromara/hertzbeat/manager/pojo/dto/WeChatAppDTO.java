@@ -9,13 +9,17 @@ import lombok.NoArgsConstructor;
 /**
  * WeChatAppDTO
  *
- * @create 2023/04/05
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class WeChatAppDTO {
+
+    /**
+     * markdown格式
+     */
+    public static final String MARKDOWN = "markdown";
 
     @JsonProperty(value = "touser")
     private String toUser;
@@ -32,9 +36,23 @@ public class WeChatAppDTO {
     @JsonProperty(value = "agentid")
     private Integer agentId;
 
-
+    /**
+     * text message
+     */
     private TextDTO text;
 
+    /**
+     * markdown消息
+     */
+    private MarkdownDTO markdown;
+
+    @Data
+    public static class MarkdownDTO {
+        /**
+         * 消息内容
+         */
+        private String content;
+    }
 
     @Data
     public static class TextDTO {
