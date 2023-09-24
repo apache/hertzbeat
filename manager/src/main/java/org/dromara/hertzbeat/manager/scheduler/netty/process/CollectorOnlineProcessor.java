@@ -24,6 +24,7 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go online.", collector);
         CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
+        this.manageServer.addChannel(collector, ctx.channel());
         this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(collector, collectorInfo);
         return null;
     }
