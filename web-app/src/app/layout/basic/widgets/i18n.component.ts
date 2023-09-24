@@ -12,7 +12,15 @@ import { BooleanInput, InputBoolean } from '@delon/util/decorator';
       {{ 'menu.lang' | i18n }}
       <i nz-icon nzType="down"></i>
     </div>
-    <i *ngIf="!showLangText" nz-dropdown [nzDropdownMenu]="langMenu" nzPlacement="bottomRight" nz-icon nzType="global"></i>
+    <span
+      style="font-size: 25px; color: #b421cc"
+      *ngIf="!showLangText"
+      nz-dropdown
+      [nzDropdownMenu]="langMenu"
+      nzPlacement="bottomRight"
+      nz-icon
+      nzType="global"
+    ></span>
     <nz-dropdown-menu #langMenu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item class="mr-sm" *ngFor="let item of langs" [nzSelected]="item.code === curLangCode" (click)="change(item.code)">
