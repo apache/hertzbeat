@@ -27,4 +27,6 @@ public class NettyServerConfig {
 
     private Integer port;
 
+    private Integer idleStateEventTriggerTime = 100;
+
 }

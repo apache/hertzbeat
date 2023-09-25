@@ -1,9 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
+import { finalize } from 'rxjs/operators';
 
 import { CollectorSummary } from '../../../pojo/CollectorSummary';
 import { CollectorService } from '../../../service/collector.service';
@@ -16,6 +18,7 @@ export class CollectorComponent implements OnInit {
   constructor(
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
+    private messageSvc: NzMessageService,
     private collectorService: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -238,4 +241,82 @@ export class CollectorComponent implements OnInit {
     this.loadCollectorsTable();
   }
   // end: 列表多选分页逻辑
+
+  // start deploy collector model
+  isDeployCollectorModalVisible = false;
+  isDeployCollectorModalOkLoading = false;
+  collector!: string;
+  identity!: string;
+  managerHost: string = '127.0.0.1';
+  dockerShell!: string;
+  packageShell!: string;
+  onDeployCollector() {
+    this.isDeployCollectorModalVisible = true;
+    this.identity = '';
+  }
+
+  onDeployCollectorClose() {
+    this.collector = '';
+    this.isDeployCollectorModalVisible = false;
+  }
+
+  onDeployCollectorModalOk() {
+    if (this.collector == '' || this.collector == undefined) {
+      return;
+    }
+    this.isDeployCollectorModalOkLoading = true;
+    this.collector = this.collector.trim();
+    const modalOk$ = this.collectorService
+      .generateCollectorIdentity(this.collector)
+      .pipe(
+        finalize(() => {
+          modalOk$.unsubscribe();
+          this.isDeployCollectorModalOkLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.identity = message.data.identity;
+            this.managerHost = message.data.host;
+            this.dockerShell =
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help')}\n \n` +
+              `$ docker run -d \\\n` +
+              `    -e IDENTITY=${this.identity} \\\n` +
+              `    -e MANAGER_HOST=${this.managerHost} \\\n` +
+              `    --name hertzbeat-collector tancloud/hertzbeat-collector` +
+              `\n \n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.1')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.2')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.3')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.4')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.5')}\n`;
+            this.packageShell =
+              `${this.i18nSvc.fanyi('collector.deploy.package.help')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.package.help.1')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.package.help.2')}\n \n` +
+              `collector:\n` +
+              `  dispatch:\n` +
+              `    entrance:\n` +
+              `      netty:\n` +
+              `        enabled: true\n` +
+              `        mode: public\n` +
+              `        identity: ${this.identity}\n` +
+              `        manager-host: ${this.managerHost}\n` +
+              `        manager-port: 1158\n\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.package.help.3')}\n`;
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
+        }
+      );
+  }
+
+  notifyCopySuccess() {
+    this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
+  }
+  // end 新增修改告警定义model
 }

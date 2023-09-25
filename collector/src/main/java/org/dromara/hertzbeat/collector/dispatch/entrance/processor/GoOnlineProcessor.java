@@ -23,7 +23,7 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         timerDispatch.goOnline();
-        log.info("receive online message and close success");
+        log.info("receive online message and handle success");
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())
                 .setDirection(ClusterMsg.Direction.RESPONSE)

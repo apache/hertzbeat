@@ -138,7 +138,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
         pipeline.addLast(new ProtobufEncoder());
         // idle state
-        pipeline.addLast(new IdleStateHandler(0, 0, 30));
+        pipeline.addLast(new IdleStateHandler(0, 0, nettyServerConfig.getIdleStateEventTriggerTime()));
         pipeline.addLast(new NettyServerHandler());
     }
 
@@ -185,7 +185,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
 
         @Override
-        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             NettyRemotingServer.this.channelIdle(ctx, evt);
         }
     }

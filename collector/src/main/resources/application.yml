@@ -40,7 +40,8 @@ collector:
       netty:
         enabled: true
         identity: ${IDENTITY:}
-        manager-ip: ${MANAGER_IP:127.0.0.1}
+        mode: ${MODE:public}
+        manager-host: ${MANAGER_HOST:}${MANAGER_IP:}
         manager-port: ${MANAGER_PORT:1158}
 
 common:

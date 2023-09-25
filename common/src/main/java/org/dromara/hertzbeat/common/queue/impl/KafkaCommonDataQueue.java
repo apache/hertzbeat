@@ -69,17 +69,19 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     
     private void initDataQueue(){
         try {
-            Map<String, Object> producerConfig = new HashMap<String, Object>(3);
+            Map<String, Object> producerConfig = new HashMap<>(3);
             producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
             producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerConfig.put(ProducerConfig.RETRIES_CONFIG, 3);
             metricsDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new KafkaMetricsDataSerializer());
             alertDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new AlertSerializer());
 
-            Map<String, Object> consumerConfig = new HashMap<String, Object>(4);
-            consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,kafka.getServers());
-            consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1");
+            Map<String, Object> consumerConfig = new HashMap<>(4);
+            consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
+            consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "50");
             consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+            // 15 minute
+            consumerConfig.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "900000");
             consumerConfig.put("group.id", "default-consumer");
 
             Map<String, Object> alertConsumerConfig = new HashMap<>(consumerConfig);
@@ -200,6 +202,9 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
         CollectRep.MetricsData realTimeMetricsData = metricsDataToRealTimeStorageQueue.poll();
+        if (realTimeMetricsData != null) {
+            return realTimeMetricsData;
+        }
         lock4.lockInterruptibly();
         try {
             ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));

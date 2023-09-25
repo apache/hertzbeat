@@ -50,7 +50,11 @@ public class CacheFactory {
     public static ICacheService<String, Object> getAlertSilenceCache() {
         return ALERT_SILENCE_CACHE;
     }
-    
+
+    /**
+     * get alert converge cache
+     * @return converge cache
+     */
     public static ICacheService<String, Object> getAlertConvergeCache() {
         return ALERT_CONVERGE_CACHE;
     }

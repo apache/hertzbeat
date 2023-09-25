@@ -6,7 +6,7 @@ metadata:
     {{- include "hertzbeat.labels" . | nindent 4 }}
 data:
   IDENTITY: ""
-  MANAGER_IP: "{{ include "hertzbeat.manager.host" . }}"
+  MANAGER_HOST: "{{ include "hertzbeat.manager.host" . }}"
   MANAGER_PORT: "1158"
   application.yml: |+
     server:
@@ -34,7 +34,7 @@ data:
           netty:
             enabled: true
             identity: ${IDENTITY:}
-            manager-ip: ${MANAGER_IP:127.0.0.1}
+            manager-host: ${MANAGER_HOST:127.0.0.1}
             manager-port: ${MANAGER_PORT:1158}
     
     common:

@@ -106,7 +106,8 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 ```shell 
 $ docker run -d \
     -e IDENTITY=custom-collector-name \
-    -e MANAGER_IP=127.0.0.1 \
+    -e MODE=public \
+    -e MANAGER_HOST=127.0.0.1 \
     -e MANAGER_PORT=1158 \
     --name hertzbeat-collector tancloud/hertzbeat-collector
 ```
@@ -114,7 +115,8 @@ $ docker run -d \
    这条命令启动一个运行HertzBeat采集器的Docker容器，并直连上了HertzBeat主服务节点。 
    - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
    - `-e IDENTITY=custom-collector-name`  : (可选) 设置采集器的唯一标识名称。⚠️注意多采集器时采集器名称需保证唯一性。  
-   - `-e MANAGER_IP=127.0.0.1` : 重要⚠️ 设置连接的主HertzBeat服务地址IP。
+   - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
+   - `-e MANAGER_HOST=127.0.0.1` : 重要⚠️ 设置连接的主HertzBeat服务地址IP。
    - `-e MANAGER_PORT=1158` :  (可选) 设置连接的主HertzBeat服务地址端口，默认 1158.
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
    - `--name hertzbeat-collector` : 命名容器名称 hertzbeat-collector
