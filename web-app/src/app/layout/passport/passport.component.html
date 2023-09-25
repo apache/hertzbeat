@@ -1,6 +1,6 @@
-<div class="container">
+<div class="container" style="height: 100vh">
   <header-i18n showLangText="false" class="langs"></header-i18n>
-  <div class="wrap">
+  <div class="wrap" style="display: flex; flex-direction: column">
     <div class="top">
       <div class="head">
         <img class="logo" src="./assets/brand.svg" alt="" />
@@ -38,7 +38,7 @@
         <router-outlet></router-outlet>
       </div>
     </div>
-    <global-footer style="border-top: 1px solid #d692e3; min-height: 120px; margin-top: 10%">
+    <global-footer style="border-top: 1px solid #d692e3; margin-top: auto">
       <div style="margin-top: 30px">
         HertzBeat {{ version }}<br />
         Copyright &copy; 2021-{{ currentYear }}
