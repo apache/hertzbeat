@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { SettingsService, User } from '@delon/theme';
 
 import { LocalStorageService } from '../../../service/local-storage.service';
-import { CONSTS } from '../../../shared/consts';
+import { CONSTANTS } from '../../../shared/constants';
 
 @Component({
   selector: 'header-user',
@@ -98,7 +98,7 @@ import { CONSTS } from '../../../shared/consts';
 })
 export class HeaderUserComponent {
   isAboutModalVisible = false;
-  version = CONSTS.VERSION;
+  version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();
   get user(): User {
     return this.settings.user;
@@ -126,6 +126,6 @@ export class HeaderUserComponent {
 
   showAndCloseAboutModal() {
     this.isAboutModalVisible = true;
-    setTimeout(() => (this.isAboutModalVisible = false), 12000);
+    setTimeout(() => (this.isAboutModalVisible = false), 20000);
   }
 }
