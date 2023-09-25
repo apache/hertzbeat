@@ -39,7 +39,9 @@ collector:
     entrance:
       netty:
         enabled: true
+        # Config the collector unique identity name.
         identity: ${IDENTITY:}
+        # Config the running mode(public or private), public cluster or private cloud-edge.
         mode: ${MODE:public}
         manager-host: ${MANAGER_HOST:}${MANAGER_IP:}
         manager-port: ${MANAGER_PORT:1158}
