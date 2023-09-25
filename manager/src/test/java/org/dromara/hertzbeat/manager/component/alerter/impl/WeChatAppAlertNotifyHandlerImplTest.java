@@ -24,7 +24,7 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
 
 
     @Resource
-    private WeChatAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
+    private WeWorkAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
 
 
     @Test
