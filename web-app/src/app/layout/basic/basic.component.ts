@@ -3,7 +3,8 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
-import { CONSTS } from 'src/app/shared/consts';
+
+import { CONSTANTS } from '../../shared/constants';
 
 @Component({
   selector: 'layout-basic',
@@ -104,7 +105,7 @@ export class LayoutBasicComponent {
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
-  version = CONSTS.VERSION;
+  version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();
   get user(): User {
     return this.settings.user;

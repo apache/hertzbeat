@@ -28,7 +28,7 @@
 
 **官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
-**云服务: [tancloud.cn](https://tancloud.cn)**
+**云服务: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">介绍</font>
 
