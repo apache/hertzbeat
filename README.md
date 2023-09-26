@@ -28,7 +28,7 @@
 
 **Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
-**Cloud: [tancloud.cn](https://tancloud.cn)**
+**Cloud: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">Introduction</font>
 

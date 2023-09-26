@@ -88,7 +88,7 @@ git push origin a-feature-branch
 
 另外，我们的项目有比较规范和严格的 CI 检查流程，在提交 PR 之后会触发 CI，请注意是否通过 CI 检查。
 
-最后，Committer 可以将 PR 合并入DEV主分支。
+最后，Committer 可以将 PR 合并入 master 主分支。
 
 ### 代码被合并后
 

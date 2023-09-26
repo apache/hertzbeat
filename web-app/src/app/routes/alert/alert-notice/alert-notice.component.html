@@ -539,30 +539,40 @@
         <nz-form-label [nzRequired]="receiver.type === 4" [nzSpan]="7" nzFor="wechatId">{{
           'alert.notice.type.wework-key' | i18n
         }}</nz-form-label>
+
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.wechatId" [required]="receiver.type === 4" name="wechatId" nz-input type="text" />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item *ngIf="receiver.type === 5">
-        <nz-form-label [nzRequired]="receiver.type === 5" [nzSpan]="7" nzFor="accessToken">{{
-          'alert.notice.type.access-token' | i18n
-        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.wechatId"
+            (ngModelChange)="onSplitTokenStr(4)"
+            nz-input
+            [required]="receiver.type === 4"
+            name="wechatId"
+            type="text"
+          />
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.accessToken" [required]="receiver.type === 5" name="accessToken" nz-input type="text" />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item *ngIf="receiver.type === 6">
-        <nz-form-label [nzRequired]="receiver.type === 6" [nzSpan]="7" nzFor="wechatId">{{
-          'alert.notice.type.fei-shu-key' | i18n
-        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.accessToken"
+            (ngModelChange)="onSplitTokenStr(5)"
+            nz-input
+            [required]="receiver.type === 5"
+            name="accessToken"
+            type="text"
+          />
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.wechatId" [required]="receiver.type === 6" name="wechatId" nz-input type="text" />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item *ngIf="receiver.type === 7">
-        <nz-form-label [nzRequired]="receiver.type === 7" [nzSpan]="7" nzFor="tgBotToken">{{
-          'alert.notice.type.telegram-bot-token' | i18n
-        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.wechatId"
+            (ngModelChange)="onSplitTokenStr(6)"
+            nz-input
+            [required]="receiver.type === 6"
+            name="wechatId"
+            type="text"
+          />
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.tgBotToken" [required]="receiver.type === 7" name="tgBotToken" nz-input type="text" />
         </nz-form-control>

@@ -280,21 +280,23 @@ export class CollectorComponent implements OnInit {
             this.identity = message.data.identity;
             this.managerHost = message.data.host;
             this.dockerShell =
-              `${this.i18nSvc.fanyi('collector.deploy.docker.help')}\n \n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help')}\n` +
               `$ docker run -d \\\n` +
               `    -e IDENTITY=${this.identity} \\\n` +
               `    -e MANAGER_HOST=${this.managerHost} \\\n` +
+              `    -e MODE=public \\\n` +
               `    --name hertzbeat-collector tancloud/hertzbeat-collector` +
-              `\n \n` +
+              `\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.1')}\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.2')}\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.3')}\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.4')}\n` +
-              `${this.i18nSvc.fanyi('collector.deploy.docker.help.5')}\n`;
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.5')}\n` +
+              `${this.i18nSvc.fanyi('collector.deploy.docker.help.6')}\n`;
             this.packageShell =
               `${this.i18nSvc.fanyi('collector.deploy.package.help')}\n` +
               `${this.i18nSvc.fanyi('collector.deploy.package.help.1')}\n` +
-              `${this.i18nSvc.fanyi('collector.deploy.package.help.2')}\n \n` +
+              `${this.i18nSvc.fanyi('collector.deploy.package.help.2')}\n` +
               `collector:\n` +
               `  dispatch:\n` +
               `    entrance:\n` +
@@ -303,7 +305,7 @@ export class CollectorComponent implements OnInit {
               `        mode: public\n` +
               `        identity: ${this.identity}\n` +
               `        manager-host: ${this.managerHost}\n` +
-              `        manager-port: 1158\n\n` +
+              `        manager-port: 1158\n` +
               `${this.i18nSvc.fanyi('collector.deploy.package.help.3')}\n`;
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
