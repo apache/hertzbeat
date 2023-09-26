@@ -254,14 +254,6 @@ export class AlertNoticeComponent implements OnInit {
       );
   }
 
-
-  // start 新增或修改通知接收人弹出框
-  isManageReceiverModalVisible: boolean = false;
-  isManageReceiverModalAdd: boolean = true;
-  isManageReceiverModalOkLoading: boolean = false;
-  isSendTestButtonLoading: boolean = false;
-  receiver!: NoticeReceiver;
-
   onSplitTokenStr(type: number) {
     let index = -1;
     switch (this.receiver?.type) {
