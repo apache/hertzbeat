@@ -151,7 +151,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 - Kubernetes, Docker
 - Huawei Switch, HPE Switch, TP-LINK Switch, Cisco Switch
 - and more for your custom monitoring.
-- Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook`.
+- Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook` `ServerChan`.
 
 ----
 
