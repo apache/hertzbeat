@@ -8,8 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
+![hertzBeat](/img/home/0.png)
 
 ### What is HertzBeat?
 
@@ -90,10 +89,10 @@ By the way, let me say that open source does not mean free. If you modify the lo
 3. Deploy collector clusters
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
