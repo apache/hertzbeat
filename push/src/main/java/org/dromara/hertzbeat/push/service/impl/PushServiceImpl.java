@@ -67,6 +67,7 @@ public class PushServiceImpl implements PushService {
         long curTime = System.currentTimeMillis();
         for (PushMetricsDto.Metrics metrics : pushMetricsDto.getMetricsList()) {
             long monitorId = metrics.getMonitorId();
+            metrics.setTime(curTime);
 
             if (!monitorIdCache.containsKey(monitorId) && (monitorIdCache.containsKey(monitorId) && curTime > monitorIdCache.get(monitorId) + cacheTimeout)) {
                 Optional<Monitor> queryOption = monitorDao.findById(monitorId);
@@ -79,9 +80,7 @@ public class PushServiceImpl implements PushService {
 
             PushMetrics pushMetrics = PushMetrics.builder()
                     .monitorId(metrics.getMonitorId())
-                    // user-controlled time settings not required in current logic
-                    // .time(metrics.getTime() == null ? System.currentTimeMillis() : metrics.getTime())
-                    .time(System.currentTimeMillis())
+                    .time(curTime)
                     .metrics(JsonUtil.toJson(metrics.getMetrics())).build();
             lastPushMetrics.put(monitorId, metrics);
             pushMetricsList.add(pushMetrics);

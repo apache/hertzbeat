@@ -55,12 +55,12 @@ public class PushCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
-        long startTime = System.currentTimeMillis();
+        long curTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
 
-        Long time = timeMap.getOrDefault(appId, startTime - firstCollectInterval);
-        timeMap.put(appId, startTime);
+        Long time = timeMap.getOrDefault(appId, curTime - firstCollectInterval);
+        timeMap.put(appId, curTime);
 
         HttpContext httpContext = createHttpContext(pushProtocol);
         HttpUriRequest request = createHttpRequest(pushProtocol, appId, time);
@@ -120,7 +120,6 @@ public class PushCollectImpl extends AbstractCollect {
 
         requestBuilder.addParameter("id", String.valueOf(monitorId));
         requestBuilder.addParameter("time", String.valueOf(startTime));
-        timeMap.put(monitorId, startTime);
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
 
 
