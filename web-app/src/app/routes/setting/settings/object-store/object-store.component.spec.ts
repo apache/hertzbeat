@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ObjectStoreComponent } from './object-store.component';
 
-describe('SystemConfigComponent', () => {
+describe('ObjectStoreComponent', () => {
   let component: ObjectStoreComponent;
   let fixture: ComponentFixture<ObjectStoreComponent>;
 
