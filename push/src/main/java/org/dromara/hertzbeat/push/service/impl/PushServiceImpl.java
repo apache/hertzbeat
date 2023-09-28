@@ -12,6 +12,7 @@ import org.dromara.hertzbeat.push.dao.PushMonitorDao;
 import org.dromara.hertzbeat.push.service.PushService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -47,9 +48,17 @@ public class PushServiceImpl implements PushService {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                metricsDao.deleteAllByTimeBefore(System.currentTimeMillis() - deleteBeforeTime);
+                try{
+                    deletePeriodically();
+                }catch (Exception e) {
+                    log.error("periodical deletion failed. {}", e.getMessage());
+                }
             }
-        }, 0, deleteMetricsPeriod);
+        }, 1000, deleteMetricsPeriod);
+    }
+
+    public void deletePeriodically(){
+        metricsDao.deleteAllByTimeBefore(System.currentTimeMillis() - deleteBeforeTime);
     }
 
     @Override
@@ -92,18 +101,21 @@ public class PushServiceImpl implements PushService {
         else {
             try {
                 PushMetrics pushMetrics = metricsDao.findFirstByMonitorIdOrderByTimeDesc(monitorId);
+                if (pushMetrics == null || pushMetrics.getMetrics() == null) {
+                    return pushMetricsDto;
+                }
                 Map<String, String> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<Map<String, String>>() {
                 });
-                metrics = PushMetricsDto.Metrics.builder().metrics(jsonMap).build();
+                metrics = PushMetricsDto.Metrics.builder().monitorId(monitorId).metrics(jsonMap).time(pushMetrics.getTime()).build();
                 lastPushMetrics.put(monitorId, metrics);
             }
             catch (Exception e) {
                 log.error("no metrics found, monitor id: {}, {}, {}", monitorId, e.getMessage(), e);
-                return null;
+                return pushMetricsDto;
             }
         }
         if (time > metrics.getTime()) {
-            return null;
+            return pushMetricsDto;
         }
         pushMetricsDto.getMetricsList().add(metrics);
         // 目前先不删除
