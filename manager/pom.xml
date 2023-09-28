@@ -61,6 +61,11 @@
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-collector</artifactId>
         </dependency>
+        <!-- remoting -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-remoting</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

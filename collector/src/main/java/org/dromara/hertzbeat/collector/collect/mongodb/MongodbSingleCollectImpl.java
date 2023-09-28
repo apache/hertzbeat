@@ -112,6 +112,9 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                     document = (Document) document.get(metricsParts[i]);
                 }
             }
+            if (document == null) {
+                throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand()  + " is null.");
+            }
             fillBuilder(metrics, valueRowBuilder, document);
             builder.addValues(valueRowBuilder.build());
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
@@ -137,7 +140,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     private void fillBuilder(Metrics metrics, CollectRep.ValueRow.Builder valueRowBuilder, Document document) {
         metrics.getAliasFields().forEach(it -> {
             if (document.containsKey(it)) {
-                Object fieldValue =document.get(it);
+                Object fieldValue = document.get(it);
                 if (fieldValue == null) {
                     valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                 } else {

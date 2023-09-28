@@ -306,4 +306,19 @@ public interface CommonConstants {
      * ignore label
      */
     String IGNORE = "ignore";
+
+    /**
+     * collector mode public
+     */
+    String MODE_PUBLIC = "public";
+
+    /**
+     * collector mode private
+     */
+    String MODE_PRIVATE = "private";
+
+    /**
+     * collector auth failed message
+     */
+    String COLLECTOR_AUTH_FAILED = "Auth Failed";
 }

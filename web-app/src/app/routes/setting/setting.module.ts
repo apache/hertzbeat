@@ -1,5 +1,7 @@
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
@@ -11,6 +13,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ColorPickerModule } from 'ngx-color-picker';
 
+import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
@@ -25,7 +28,8 @@ const COMPONENTS: Array<Type<void>> = [
   SettingsComponent,
   MessageServerComponent,
   SystemConfigComponent,
-  ObjectStoreComponent
+  ObjectStoreComponent,
+  CollectorComponent
 ];
 
 @NgModule({
@@ -41,7 +45,9 @@ const COMPONENTS: Array<Type<void>> = [
     ColorPickerModule,
     NzTagModule,
     NzLayoutModule,
-    NzCodeEditorModule
+    NzCodeEditorModule,
+    ClipboardModule,
+    NzBadgeModule
   ],
   declarations: COMPONENTS
 })

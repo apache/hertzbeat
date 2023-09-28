@@ -99,7 +99,7 @@ module.exports = {
             },
             {
               label: 'kanban',
-              href: 'https://github.com/dromara/hertzbeat/projects/1',
+              href: 'https://github.com/orgs/dromara/projects/6',
             },
             {
               label: 'design',

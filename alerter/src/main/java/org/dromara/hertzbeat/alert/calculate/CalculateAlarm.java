@@ -309,6 +309,7 @@ public class CalculateAlarm {
     }
 
     private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
+        // TODO CACHE getMonitorBindAlertAvaDefine
         AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
         if (avaAlertDefine == null) {
             return;

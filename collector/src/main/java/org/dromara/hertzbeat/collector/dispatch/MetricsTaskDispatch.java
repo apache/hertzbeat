@@ -22,9 +22,6 @@ import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 /**
  * Metric group collection task scheduler interface
  * 指标组采集任务调度器接口
- *
- * @author tomsun28
- *
  */
 public interface MetricsTaskDispatch {
 

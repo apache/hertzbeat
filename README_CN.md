@@ -28,7 +28,7 @@
 
 **官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
-**云服务: [tancloud.cn](https://tancloud.cn)**
+**云服务: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">介绍</font>
 
@@ -118,10 +118,11 @@
 3. 部署采集器集群
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
 ```
    - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-   - `-e MANAGER_IP=127.0.0.1` : 配置连接主HertaBeat服务的对外IP。
+   - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
+   - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertaBeat服务的对外IP。
    - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
@@ -136,7 +137,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAG
 6. 部署采集器集群
    - 下载采集器安装包`hertzbeat-collector-xx.zip`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - 需要提前已安装`java jdk11`环境 
-   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `manager-ip` `manager-port`
+   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
        dispatch:
@@ -144,7 +145,8 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAG
            netty:
              enabled: true
              identity: ${IDENTITY:}
-             manager-ip: ${MANAGER_IP:127.0.0.1}
+             mode: ${MODE:public}
+             manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
    - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`

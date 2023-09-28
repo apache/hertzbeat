@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
 import { SettingsComponent } from './settings/settings.component';
@@ -10,6 +11,7 @@ import {ObjectStoreComponent} from "./settings/object-store/object-store.compone
 
 const routes: Routes = [
   { path: 'tags', component: SettingTagsComponent },
+  { path: 'collector', component: CollectorComponent },
   { path: 'define', component: DefineComponent, data: { titleI18n: 'menu.extras.define' } },
   {
     path: 'settings',
