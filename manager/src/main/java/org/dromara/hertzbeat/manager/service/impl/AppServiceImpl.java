@@ -300,13 +300,17 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
      * @param objectStoreConfig 文件服务配置
      */
     private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
-        switch (objectStoreConfig.getType()) {
-            case OBS:
-                appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                break;
-            case FILE:
-            default:
-                appDefineStore = new LocalFileAppDefineStoreImpl();
+        if (objectStoreConfig == null) {
+            appDefineStore = new LocalFileAppDefineStoreImpl();
+        } else {
+            switch (objectStoreConfig.getType()) {
+                case OBS:
+                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
+                    break;
+                case FILE:
+                default:
+                    appDefineStore = new LocalFileAppDefineStoreImpl();
+            }
         }
         var success = appDefineStore.loadAppDefines();
         if (!success) {
