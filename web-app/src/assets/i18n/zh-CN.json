@@ -487,7 +487,7 @@
   "define.new.code": "# 请在此通过编写YML内容来定义新的监控类型, 参考文档: https://hertzbeat.com/docs/advanced/extend-point ",
   "define.save-apply.no-code": "监控类型定义内容不能为空。",
   "define.save-apply.confirm": "请确认是否保存修改并应用此监控类型定义? 这会影响到您的监控内容。",
-  "settings.server": "消息服务器配置",
+  "settings.server": "消息服务配置",
   "settings.server.email": "邮件服务器",
   "settings.server.email.setting": "配置邮件服务器",
   "settings.server.sms": "短信服务器",

@@ -1,5 +1,5 @@
 export class ObjectStore<T> {
-  type!: ObjectStoreType;
+  type: ObjectStoreType = ObjectStoreType.FILE;
   config!: T;
   appDefineStoreType!: ObjectStoreType;
 }
