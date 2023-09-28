@@ -27,10 +27,13 @@ import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
+import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.service.ObjectStoreService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -64,7 +67,6 @@ import static java.util.Objects.isNull;
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
-    private static final String JAVA_PATH_SEPARATOR = "/";
     private static final Yaml YAML = new Yaml();
 
     @Resource
@@ -284,7 +286,21 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         var objectStoreConfig = objectStoreConfigService.getConfig();
-        switch (objectStoreConfig.getAppDefineStoreType()) {
+        refreshStore(objectStoreConfig);
+    }
+
+    @EventListener
+    void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
+        refreshStore(event.getConfig());
+    }
+
+    /**
+     * 刷新配置存储
+     *
+     * @param objectStoreConfig 文件服务配置
+     */
+    private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
+        switch (objectStoreConfig.getType()) {
             case OBS:
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();
                 break;
@@ -444,9 +460,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             var objectStoreService = getObjectStoreService();
             objectStoreService.list("define")
                     .forEach(it -> {
-                        var app = YAML.loadAs(it.getInputStream(), Job.class);
-                        if (app != null) {
-                            appDefines.put(app.getApp().toLowerCase(), app);
+                        if (it.getInputStream() != null) {
+                            var app = YAML.loadAs(it.getInputStream(), Job.class);
+                            if (app != null) {
+                                appDefines.put(app.getApp().toLowerCase(), app);
+                            }
                         }
                     });
             return false;
@@ -471,7 +489,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public void save(String app, String ymlContent) {
             var objectStoreService = getObjectStoreService();
-            var defineAppPath = "define/app-" + app + ".yml";
+            var defineAppPath = "define";
             objectStoreService.upload(defineAppPath, "app-" + app + ".yml", IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
         }
 

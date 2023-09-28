@@ -6,9 +6,11 @@ import com.obs.services.ObsClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
+import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -16,8 +18,6 @@ import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Type;
-
-import static java.util.Objects.nonNull;
 
 /**
  * 文件存储配置服务
@@ -28,9 +28,14 @@ import static java.util.Objects.nonNull;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 @Service
-public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ObjectStoreDTO<T>> implements CommandLineRunner {
+public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ObjectStoreDTO<T>> implements InitializingBean {
     @Resource
-    private ConfigurableListableBeanFactory beanFactory;
+    private DefaultListableBeanFactory beanFactory;
+
+    @Resource
+    private ApplicationContext ctx;
+
+    private static final String BEAN_NAME = "ObjectStoreService";
 
     /**
      * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
@@ -68,6 +73,7 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
                 break;
             // case other object store service
         }
+        ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
     }
 
     /**
@@ -82,17 +88,15 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
 
         var obsClient = new ObsClient(obsConfig.getAccessKey(), obsConfig.getSecretKey(), obsConfig.getEndpoint());
 
-        beanFactory.registerSingleton("ObjectStoreService", new ObsObjectStoreServiceImpl(obsClient, obsConfig.getBucketName(), obsConfig.getSavePath()));
+        beanFactory.destroySingleton(BEAN_NAME);
+        beanFactory.registerSingleton(BEAN_NAME, new ObsObjectStoreServiceImpl(obsClient, obsConfig.getBucketName(), obsConfig.getSavePath()));
 
         log.info("obs store service init success.");
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void afterPropertiesSet() throws Exception {
         // 初始化文件存储
-        var config = getConfig();
-        if (nonNull(config)) {
-            initObs(config);
-        }
+        handler(getConfig());
     }
 }

@@ -4,7 +4,7 @@ import {NzNotificationService} from 'ng-zorro-antd/notification';
 import {finalize} from 'rxjs/operators';
 
 import {GeneralConfigService} from '../../../../service/general-config.service';
-import {ObjectStore, ObjectStoreType} from "../../../../pojo/ObjectStore";
+import {ObjectStore, ObjectStoreType, ObsConfig} from "../../../../pojo/ObjectStore";
 
 const key = "oss"
 
@@ -46,7 +46,7 @@ export class ObjectStoreComponent implements OnInit {
           if (message.data) {
             this.config = message.data;
           } else {
-            this.config = new ObjectStore<any>();
+            this.config = new ObjectStore();
           }
         } else {
           console.warn(message.msg);
@@ -83,6 +83,18 @@ export class ObjectStoreComponent implements OnInit {
           // this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
+  }
+
+  onChange = () => {
+    console.log(this.config)
+    switch (this.config.type) {
+      case ObjectStoreType.FILE:
+        this.config.config = {}
+        break
+      case ObjectStoreType.OBS:
+        this.config.config = new ObsConfig()
+        break
+    }
   }
 
   protected readonly ObjectStore = ObjectStore;

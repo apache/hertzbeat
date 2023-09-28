@@ -2,7 +2,6 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import com.obs.services.ObsClient;
 import com.obs.services.model.ListObjectsRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.manager.pojo.dto.FileDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -20,27 +19,36 @@ import java.util.stream.Collectors;
  * Created by gcdd1993 on 2023/9/13
  */
 @Slf4j
-@RequiredArgsConstructor
 public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     private final ObsClient obsClient;
     private final String bucketName;
     private final String rootPath;
 
+    public ObsObjectStoreServiceImpl(ObsClient obsClient, String bucketName, String rootPath) {
+        this.obsClient = obsClient;
+        this.bucketName = bucketName;
+        if (rootPath.startsWith("/")) {
+            this.rootPath = rootPath.substring(1);
+        } else {
+            this.rootPath = rootPath;
+        }
+    }
+
     @Override
     public boolean upload(String relativePath, String fileName, InputStream is) {
-        var objectName = rootPath + "/" + relativePath + "/" + fileName;
-        var response = obsClient.putObject(bucketName, objectName, is);
+        var objectKey = rootPath + "/" + relativePath + "/" + fileName;
+        var response = obsClient.putObject(bucketName, objectKey, is);
         return Objects.equals(response.getStatusCode(), 200);
     }
 
     @Override
     public FileDTO download(String relativePath) {
-        var objectName = rootPath + "/" + relativePath;
+        var objectKey = rootPath + "/" + relativePath;
         try {
-            var obsObject = obsClient.getObject(bucketName, objectName);
+            var obsObject = obsClient.getObject(bucketName, objectKey);
             return new FileDTO(relativePath, obsObject.getObjectContent());
         } catch (Exception ex) {
-            log.error("download file from obs error {}", objectName, ex);
+            log.warn("download file from obs error {}", objectKey);
             return null;
         }
     }

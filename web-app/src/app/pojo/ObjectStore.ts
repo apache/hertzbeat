@@ -7,6 +7,11 @@ export class ObjectStore<T> {
 export enum ObjectStoreType {
 
   /**
+   * 本地文件
+   */
+  FILE = "FILE",
+
+  /**
    * <a href="https://support.huaweicloud.com/obs/index.html">华为云OBS</a>
    */
   OBS = "OBS"
@@ -17,5 +22,5 @@ export class ObsConfig {
   secretKey!: string;
   bucketName!: string;
   endpoint!: string;
-  savePath?: string
+  savePath: string = "/hertzbeat"
 }

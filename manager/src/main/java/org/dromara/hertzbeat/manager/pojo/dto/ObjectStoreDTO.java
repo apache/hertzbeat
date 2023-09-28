@@ -28,11 +28,6 @@ public class ObjectStoreDTO<T> {
     private T config;
 
     /**
-     * 采集任务配置存储方式
-     */
-    private Type appDefineStoreType = Type.FILE;
-
-    /**
      * 文件存储服务类型
      */
     public enum Type {
