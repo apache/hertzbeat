@@ -289,8 +289,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         refreshStore(objectStoreConfig);
     }
 
-    @EventListener
-    void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
+    @EventListener(ObjectStoreConfigChangeEvent.class)
+    public void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
         refreshStore(event.getConfig());
     }
 
