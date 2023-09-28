@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.manager.service.impl;
 import com.obs.services.ObsClient;
 import com.obs.services.model.ListObjectsRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.SignConstants;
 import org.dromara.hertzbeat.manager.pojo.dto.FileDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.dromara.hertzbeat.manager.service.ObjectStoreService;
@@ -27,7 +28,7 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     public ObsObjectStoreServiceImpl(ObsClient obsClient, String bucketName, String rootPath) {
         this.obsClient = obsClient;
         this.bucketName = bucketName;
-        if (rootPath.startsWith("/")) {
+        if (rootPath.startsWith(SignConstants.RIGHT_DASH)) {
             this.rootPath = rootPath.substring(1);
         } else {
             this.rootPath = rootPath;
@@ -69,7 +70,7 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     }
 
     private String getObjectKey(String filePath) {
-        return rootPath + "/" + filePath;
+        return rootPath + SignConstants.RIGHT_DASH + filePath;
     }
 
 }

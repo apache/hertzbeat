@@ -1,12 +1,12 @@
-import {DOCUMENT} from '@angular/common';
-import {ChangeDetectorRef, Component, Inject, OnInit} from '@angular/core';
-import {NzNotificationService} from 'ng-zorro-antd/notification';
-import {finalize} from 'rxjs/operators';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { finalize } from 'rxjs/operators';
 
-import {GeneralConfigService} from '../../../../service/general-config.service';
-import {ObjectStore, ObjectStoreType, ObsConfig} from "../../../../pojo/ObjectStore";
+import { ObjectStore, ObjectStoreType, ObsConfig } from '../../../../pojo/ObjectStore';
+import { GeneralConfigService } from '../../../../service/general-config.service';
 
-const key = "oss"
+const key = 'oss';
 
 @Component({
   selector: 'app-object-store',
@@ -18,9 +18,8 @@ export class ObjectStoreComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private notifySvc: NzNotificationService,
     private configService: GeneralConfigService,
-    @Inject(DOCUMENT) private doc: any,
-  ) {
-  }
+    @Inject(DOCUMENT) private doc: any
+  ) {}
 
   loading = true;
   config!: ObjectStore<any>;
@@ -86,16 +85,16 @@ export class ObjectStoreComponent implements OnInit {
   }
 
   onChange = () => {
-    console.log(this.config)
+    console.log(this.config);
     switch (this.config.type) {
       case ObjectStoreType.FILE:
-        this.config.config = {}
-        break
+        this.config.config = {};
+        break;
       case ObjectStoreType.OBS:
-        this.config.config = new ObsConfig()
-        break
+        this.config.config = new ObsConfig();
+        break;
     }
-  }
+  };
 
   protected readonly ObjectStore = ObjectStore;
   protected readonly ObjectStoreType = ObjectStoreType;
