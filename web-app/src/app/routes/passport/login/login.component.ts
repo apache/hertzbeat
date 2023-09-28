@@ -146,4 +146,6 @@ export class UserLoginComponent implements OnDestroy {
       clearInterval(this.interval$);
     }
   }
+
+  protected readonly window = window;
 }

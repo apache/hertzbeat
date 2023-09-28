@@ -369,8 +369,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 log.error("there is no collector name: {} online to assign job.", collector);
                 return jobId;
             }
+            node.getAssignJobs().addPinnedJob(jobId);
         }
-        node.getAssignJobs().addPinnedJob(jobId);
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {

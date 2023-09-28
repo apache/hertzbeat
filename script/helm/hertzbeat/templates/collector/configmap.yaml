@@ -34,6 +34,7 @@ data:
           netty:
             enabled: true
             identity: ${IDENTITY:}
+            mode: ${MODE:public}
             manager-host: ${MANAGER_HOST:127.0.0.1}
             manager-port: ${MANAGER_PORT:1158}
     

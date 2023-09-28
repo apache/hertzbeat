@@ -1,31 +1,43 @@
-<form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
-  <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
-    <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
-      <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
-      <nz-form-item>
-        <nz-form-control [nzErrorTip]="'app.login.message-need-identifier' | i18n">
-          <nz-input-group nzSize="large" nzPrefixIcon="user">
-            <input nz-input formControlName="userName" [placeholder]="'app.login.message-need-identifier' | i18n" />
-          </nz-input-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-control [nzErrorTip]="'app.login.message-need-credential' | i18n">
-          <nz-input-group nzSize="large" nzPrefixIcon="lock">
-            <input nz-input type="password" formControlName="password" [placeholder]="'app.login.message-need-credential' | i18n" />
-          </nz-input-group>
-        </nz-form-control>
-      </nz-form-item>
-    </nz-tab>
-  </nz-tabset>
-  <nz-form-item>
-    <nz-col [nzSpan]="12">
-      <label nz-checkbox formControlName="remember">{{ 'app.login.remember-me' | i18n }}</label>
-    </nz-col>
-  </nz-form-item>
-  <nz-form-item>
-    <button nz-button type="submit" nzType="primary" nzSize="large" [nzLoading]="loading" nzBlock>
-      {{ 'app.login.login' | i18n }}
-    </button>
-  </nz-form-item>
-</form>
+<div style="background-color: snow; padding: 20px; border-radius: 6px; box-shadow: 7px 5px #b421cc">
+  <form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
+    <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
+      <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
+        <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
+        <nz-form-item>
+          <nz-form-control [nzErrorTip]="'app.login.message-need-identifier' | i18n">
+            <nz-input-group nzSize="large" nzPrefixIcon="user">
+              <input nz-input formControlName="userName" [placeholder]="'app.login.message-need-identifier' | i18n" />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-control [nzErrorTip]="'app.login.message-need-credential' | i18n">
+            <nz-input-group nzSize="large" nzPrefixIcon="lock">
+              <input nz-input type="password" formControlName="password" [placeholder]="'app.login.message-need-credential' | i18n" />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-col [nzSpan]="12">
+            <label nz-checkbox formControlName="remember">{{ 'app.login.remember-me' | i18n }}</label>
+          </nz-col>
+        </nz-form-item>
+        <nz-form-item>
+          <button nz-button type="submit" nzType="primary" nzSize="large" [nzLoading]="loading" nzBlock>
+            {{ 'app.login.login' | i18n }}
+          </button>
+        </nz-form-item>
+      </nz-tab>
+      <nz-tab [nzTitle]="'app.login.explore.cloud' | i18n">
+        <div style="margin-top: 20%; margin-bottom: 20%; text-align: center">
+          <a href="https://console.tancloud.cn/" target="_blank">
+            <div class="hoverClass" style="border-radius: 4px; background-color: #3f51b5; padding: 6px; color: white">
+              {{ 'app.login.explore.cloud.detail' | i18n }}
+              <span nz-icon nzType="global" nzTheme="outline"></span>
+            </div>
+          </a>
+        </div>
+      </nz-tab>
+    </nz-tabset>
+  </form>
+</div>

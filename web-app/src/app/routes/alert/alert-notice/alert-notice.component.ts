@@ -160,6 +160,36 @@ export class AlertNoticeComponent implements OnInit {
   isSendTestButtonLoading: boolean = false;
   receiver!: NoticeReceiver;
 
+  onSplitTokenStr(type: number) {
+    let index = -1;
+    switch (this.receiver?.type) {
+      case 4:
+        if (this.receiver?.wechatId) {
+          index = this.receiver.wechatId.indexOf('key=');
+          if (index > 0) {
+            this.receiver.wechatId = this.receiver.wechatId.substring(index + 4);
+          }
+        }
+        break;
+      case 5:
+        if (this.receiver?.accessToken) {
+          index = this.receiver.accessToken.indexOf('access_token=');
+          if (index > 0) {
+            this.receiver.accessToken = this.receiver.accessToken.substring(index + 13);
+          }
+        }
+        break;
+      case 6:
+        if (this.receiver?.wechatId) {
+          index = this.receiver.wechatId.indexOf('hook');
+          if (index > 0) {
+            this.receiver.wechatId = this.receiver.wechatId.substring(index + 5);
+          }
+        }
+        break;
+    }
+  }
+
   onNewNoticeReceiver() {
     this.receiver = new NoticeReceiver();
     this.isManageReceiverModalVisible = true;
