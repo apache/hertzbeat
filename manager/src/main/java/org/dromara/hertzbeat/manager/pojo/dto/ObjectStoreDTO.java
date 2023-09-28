@@ -53,7 +53,7 @@ public class ObjectStoreDTO<T> {
         /**
          * 保存路径
          */
-        private String savePath = "/hertzbeat";
+        private String savePath = "hertzbeat";
     }
 
 }

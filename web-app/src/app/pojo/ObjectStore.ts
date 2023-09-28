@@ -22,5 +22,5 @@ export class ObsConfig {
   secretKey!: string;
   bucketName!: string;
   endpoint!: string;
-  savePath: string = "/hertzbeat"
+  savePath: string = "hertzbeat"
 }
