@@ -35,18 +35,18 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     }
 
     @Override
-    public boolean upload(String relativePath, String fileName, InputStream is) {
-        var objectKey = rootPath + "/" + relativePath + "/" + fileName;
+    public boolean upload(String filePath, InputStream is) {
+        var objectKey = getObjectKey(filePath);
         var response = obsClient.putObject(bucketName, objectKey, is);
         return Objects.equals(response.getStatusCode(), 200);
     }
 
     @Override
-    public FileDTO download(String relativePath) {
-        var objectKey = rootPath + "/" + relativePath;
+    public FileDTO download(String filePath) {
+        var objectKey = getObjectKey(filePath);
         try {
             var obsObject = obsClient.getObject(bucketName, objectKey);
-            return new FileDTO(relativePath, obsObject.getObjectContent());
+            return new FileDTO(filePath, obsObject.getObjectContent());
         } catch (Exception ex) {
             log.warn("download file from obs error {}", objectKey);
             return null;
@@ -55,9 +55,8 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
 
     @Override
     public List<FileDTO> list(String dir) {
-        var path = rootPath + "/" + dir;
         var request = new ListObjectsRequest(bucketName);
-        request.setPrefix(path);
+        request.setPrefix(getObjectKey(dir));
         return obsClient.listObjects(request).getObjects()
                 .stream()
                 .map(it -> new FileDTO(it.getObjectKey(), it.getObjectContent()))
@@ -67,6 +66,10 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     @Override
     public ObjectStoreDTO.Type type() {
         return ObjectStoreDTO.Type.OBS;
+    }
+
+    private String getObjectKey(String filePath) {
+        return rootPath + "/" + filePath;
     }
 
 }

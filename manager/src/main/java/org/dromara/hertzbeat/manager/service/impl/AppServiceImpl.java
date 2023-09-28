@@ -473,8 +473,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public String loadAppDefine(String app) {
             var objectStoreService = getObjectStoreService();
-            var defineAppPath = "define/app-" + app + ".yml";
-            var file = objectStoreService.download(defineAppPath);
+            var file = objectStoreService.download(getDefineAppPath(app));
             if (isNull(file)) {
                 return null;
             }
@@ -489,12 +488,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public void save(String app, String ymlContent) {
             var objectStoreService = getObjectStoreService();
-            var defineAppPath = "define";
-            objectStoreService.upload(defineAppPath, "app-" + app + ".yml", IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
+            objectStoreService.upload(getDefineAppPath(app), IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
         }
 
         private ObjectStoreService getObjectStoreService() {
             return SpringContextHolder.getBean(ObsObjectStoreServiceImpl.class);
+        }
+
+        private String getDefineAppPath(String app) {
+            return "define/app-" + app + ".yml";
         }
 
     }

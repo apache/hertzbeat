@@ -17,19 +17,18 @@ public interface ObjectStoreService {
     /**
      * 保存文件
      *
-     * @param relativePath 相对路径，例如：/hertzbeat
-     * @param fileName     文件名，例如：xxx.json
-     * @param is           文件流
+     * @param filePath 文件路径，例如：hertzbeat/111.json
+     * @param is       文件流
      */
-    boolean upload(String relativePath, String fileName, InputStream is);
+    boolean upload(String filePath, InputStream is);
 
     /**
      * 读取文件
      *
-     * @param relativePath 相对路径，例如：/hertzbeat/xxx.json
+     * @param filePath 文件路径，例如：hertzbeat/111.json
      * @return 文件
      */
-    FileDTO download(String relativePath);
+    FileDTO download(String filePath);
 
     /**
      * 列举文件
