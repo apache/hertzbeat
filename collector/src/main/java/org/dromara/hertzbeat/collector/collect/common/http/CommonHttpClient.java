@@ -54,37 +54,37 @@ public class CommonHttpClient {
     /**
      * 此连接池所能提供的最大连接数
      */
-    private final static int MAX_TOTAL_CONNECTIONS = 50000;
+    private static final int MAX_TOTAL_CONNECTIONS = 50000;
 
     /**
      * 每个路由所能分配的最大连接数
      */
-    private final static int MAX_PER_ROUTE_CONNECTIONS = 80;
+    private static final int MAX_PER_ROUTE_CONNECTIONS = 80;
 
     /**
      * 从连接池中获取连接的默认超时时间 4秒
      */
-    private final static int REQUIRE_CONNECT_TIMEOUT = 4000;
+    private static final int REQUIRE_CONNECT_TIMEOUT = 4000;
 
     /**
      * 双端建立连接超时时间 4秒
      */
-    private final static int CONNECT_TIMEOUT = 4000;
+    private static final int CONNECT_TIMEOUT = 4000;
 
     /**
      * socketReadTimeout 响应tcp报文的最大间隔超时时间
      */
-    private final static int SOCKET_TIMEOUT = 60000;
+    private static final int SOCKET_TIMEOUT = 60000;
 
     /**
      * 空闲连接免检的有效时间，被重用的空闲连接若超过此时间，需检查此连接的可用性
      */
-    private final static int INACTIVITY_VALIDATED_TIME = 10000;
+    private static final int INACTIVITY_VALIDATED_TIME = 10000;
 
     /**
      * ssl版本
      */
-    private final static String[] SUPPORTED_SSL = {"TLSv1","TLSv1.1","TLSv1.2","SSLv3"};
+    private static final String[] SUPPORTED_SSL = {"TLSv1","TLSv1.1","TLSv1.2","SSLv3"};
 
     static {
         try {

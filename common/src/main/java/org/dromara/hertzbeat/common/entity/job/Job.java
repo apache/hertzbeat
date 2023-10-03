@@ -19,23 +19,16 @@ package org.dromara.hertzbeat.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +36,6 @@ import java.util.stream.Collectors;
  * 采集任务详情
  *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor
@@ -89,7 +81,7 @@ public class Job {
      */
     private Map<String, String> help;
     /**
-     * The monitor help link 
+     * The monitor help link
      */
     private Map<String, String> helpLink;
     /**
@@ -165,7 +157,7 @@ public class Job {
                 .peek(metric -> {
                     // Determine whether to configure aliasFields If not, configure the default
                     // 判断是否配置aliasFields 没有则配置默认
-                    if (metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) {
+                    if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
                         metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
                     // Set the default indicator group execution priority, if not filled, the default last priority
@@ -248,6 +240,6 @@ public class Job {
     @Override
     public Job clone() {
         // deep clone   深度克隆
-        return JsonUtil.fromJson(JsonUtil.toJson(this), Job.class);
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
     }
 }
