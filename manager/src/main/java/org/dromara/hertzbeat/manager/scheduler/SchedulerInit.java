@@ -1,15 +1,13 @@
 package org.dromara.hertzbeat.manager.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
-import org.dromara.hertzbeat.common.entity.manager.Collector;
-import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.entity.manager.Param;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.manager.*;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
@@ -22,6 +20,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,30 +35,30 @@ import java.util.stream.Collectors;
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
-
+    
     @Autowired
     private CollectorScheduling collectorScheduling;
-
+    
     @Autowired
     private CollectJobScheduling collectJobScheduling;
-
+   
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
-
+    
     @Autowired
     private AppService appService;
-
+    
     @Autowired
     private MonitorDao monitorDao;
-
+    
     @Autowired
     private ParamDao paramDao;
-
+    
     @Autowired
     private CollectorDao collectorDao;
-
+    
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-
+    
     @Override
     public void run(String... args) throws Exception {
         // init pre collector status
@@ -69,10 +68,9 @@ public class SchedulerInit implements CommandLineRunner {
         collectorDao.saveAll(collectors);
         // insert default consistent node
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                .name(CommonConstants.MAIN_COLLECTOR_NODE)
-                .ip(MAIN_COLLECTOR_NODE_IP)
-                .mode(CommonConstants.MODE_PUBLIC)
-                .build();
+                                              .name(CommonConstants.MAIN_COLLECTOR_NODE)
+                                              .ip(MAIN_COLLECTOR_NODE_IP)
+                                              .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(Arrays.asList((byte) 0, (byte) 4));

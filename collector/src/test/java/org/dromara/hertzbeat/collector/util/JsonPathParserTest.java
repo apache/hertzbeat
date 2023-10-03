@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class JsonPathParserTest {
 
     private static final String JSON_ARRAY = "[{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]";
-    public final static String JSON_OBJECT =
+    public static final String JSON_OBJECT =
             "{ \"store\": {\n" +
                     "    \"book\": [ \n" +
                     "      { \"category\": \"reference\",\n" +
