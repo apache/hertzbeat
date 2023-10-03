@@ -18,8 +18,8 @@
 package org.dromara.hertzbeat.manager.service;
 
 import org.dromara.hertzbeat.common.entity.job.Job;
-import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,6 @@ import java.util.Map;
 /**
  * Monitoring Type Management Interface
  * 监控类型管理接口
- *
  *
  *
  */
@@ -42,6 +41,8 @@ public interface AppService {
      */
     List<ParamDefine> getAppParamDefines(String app);
 
+    Job getPushDefine(Long monitorId);
+
     /**
      * Get monitor structure definition based on monitor type name
      * 根据监控类型名称获取监控结构定义
@@ -55,6 +56,7 @@ public interface AppService {
 
     /**
      * 获取app定义的指标
+     *
      * @param app 监控类型
      * @return 指标
      */
@@ -81,12 +83,14 @@ public interface AppService {
 
     /**
      * Get all app define
+     *
      * @return defines
      */
     Map<String, Job> getAllAppDefines();
 
     /**
      * app define file content str
+     *
      * @param app app
      * @return file content
      */
@@ -96,12 +100,13 @@ public interface AppService {
      * update and apply app define yml
      *
      * @param ymlContent yml content
-     * @param isModify is modified?
+     * @param isModify   is modified?
      */
     void applyMonitorDefineYml(String ymlContent, boolean isModify);
 
     /**
      * delete monitor define yml
+     *
      * @param app app
      */
     void deleteMonitorDefine(String app);

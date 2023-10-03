@@ -19,15 +19,17 @@ package org.dromara.hertzbeat.collector.dispatch.timer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.dispatch.MetricsTaskDispatch;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.AesUtil;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,6 @@ import java.util.stream.Collectors;
 /**
  * Timer Task implementation
  * TimerTask实现
- *
  *
  *
  */
@@ -85,6 +86,9 @@ public class WheelTimerTask implements TimerTask {
             JsonElement jsonElement = GSON.toJsonTree(metric);
             CollectUtil.replaceSmilingPlaceholder(jsonElement, configmap);
             metric = GSON.fromJson(jsonElement, Metrics.class);
+            if (job.getApp().equals(DispatchConstants.PROTOCOL_PUSH)) {
+                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
+            }
             metricsTmp.add(metric);
         }
         job.setMetrics(metricsTmp);
