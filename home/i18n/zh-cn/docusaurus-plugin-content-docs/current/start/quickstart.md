@@ -70,7 +70,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 ```
 - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
 - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-- `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertaBeat服务的对外IP。
+- `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
 - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy) 

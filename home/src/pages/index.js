@@ -133,6 +133,12 @@ function Home() {
                 <SwiperSlide>
                   <img
                       style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      src={useBaseUrl('/img/home/0.png')}
+                  />
+                </SwiperSlide>
+                <SwiperSlide>
+                  <img
+                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
                       src={useBaseUrl('/img/home/1.png')}
                   />
                 </SwiperSlide>
