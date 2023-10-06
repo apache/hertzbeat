@@ -49,7 +49,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class AppController {
 
     private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader"};
-    
+
     @Autowired
     private AppService appService;
 
@@ -59,6 +59,14 @@ public class AppController {
             @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("app") final String app) {
         List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase());
         return ResponseEntity.ok(Message.success(paramDefines));
+    }
+
+    @GetMapping(path = "/{monitorId}/pushdefine")
+    @Operation(summary = "The definition structure of the specified monitoring type according to the push query", description = "根据monitorId查询push类型的定义结构")
+    public ResponseEntity<Message<Job>> queryPushDefine(
+            @Parameter(description = "en: Monitoring type name,zh: 监控类型名称", example = "api") @PathVariable("monitorId") final Long monitorId) {
+        Job define = appService.getPushDefine(monitorId);
+        return ResponseEntity.ok(Message.success(define));
     }
 
     @GetMapping(path = "/{app}/define")
@@ -96,7 +104,7 @@ public class AppController {
             for (String riskyToken : RISKY_STR_ARR) {
                 if (defineDto.getDefine().contains(riskyToken)) {
                     return ResponseEntity.ok(Message.fail(FAIL_CODE, "can not has malicious remote script"));
-                }   
+                }
             }
             appService.applyMonitorDefineYml(defineDto.getDefine(), false);
         } catch (Exception e) {
