@@ -416,6 +416,7 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 - [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
+- [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 
 
 ##### Sponsor     
