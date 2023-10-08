@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
+import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
@@ -26,6 +27,11 @@ const routes: Routes = [
         path: 'config',
         component: SystemConfigComponent,
         data: { titleI18n: 'settings.system-config' }
+      },
+      {
+        path: 'object-store',
+        component: ObjectStoreComponent,
+        data: { titleI18n: 'settings.object-store' }
       }
     ]
   }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 提供通用配置Service的抽象实现，实现了增删查改等操作。
  *
  * <p>Abstract implementation of GeneralConfigService, providing CRUD operations for configurations.</p>
+ *
  * @author zqr10159
  */
 @Slf4j
@@ -26,7 +27,7 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
      *
      * @param generalConfigDao 配置Dao对象
-     * @param objectMapper JSON工具类对象
+     * @param objectMapper     JSON工具类对象
      */
     protected AbstractGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         this.generalConfigDao = generalConfigDao;
