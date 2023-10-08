@@ -33,7 +33,7 @@ systemctl daemon-reload
 systemctl restart docker 
 ```
 
-**注意：记得在服务器中台打开 `2375` 端口号。**
+**注意：记得在服务器中打开 `2375` 端口号。**
 
 **3、如果上述方法不行则：**
 
