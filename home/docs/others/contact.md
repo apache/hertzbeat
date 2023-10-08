@@ -9,6 +9,17 @@ sidebar_label: Discussion
 [GITHUB ISSUES](https://github.com/dromara/hertzbeat/issues)   
 [GITEE ISSUES](https://gitee.com/dromara/hertzbeat/issues)  
 
+[Gitter Channel](https://gitter.im/hertzbeat/community)
+
+[Chat On Discord](https://discord.gg/Fb6M73htGr)
+
+[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+
+[Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+
+[Bilibili B站](https://space.bilibili.com/430192869)
+
+
 ##### Github Discussion
 
 Welcome to Discuss in [Github Discussion](https://github.com/dromara/hertzbeat/discussions)

@@ -1332,6 +1332,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "rbsrcy",
+      "name": "zhuoshangyi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4798540?v=4",
+      "profile": "https://github.com/rbsrcy",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ruanliang-hualun",
+      "name": "ruanliang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65543716?v=4",
+      "profile": "https://github.com/ruanliang-hualun",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
