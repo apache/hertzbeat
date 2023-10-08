@@ -448,6 +448,7 @@ public class MonitorServiceImpl implements MonitorService {
                                         + param.getValue() + " is invalid checkbox value");
                             }
                             break;
+                        case "metrics-field":
                         case "key-value":
                             if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {
                             }) == null) {

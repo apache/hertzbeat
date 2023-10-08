@@ -20,12 +20,20 @@ package org.dromara.hertzbeat.manager.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.common.entity.manager.Param;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
+import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -69,11 +77,16 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     private static final Yaml YAML = new Yaml();
 
+    private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
+
     @Resource
     private MonitorDao monitorDao;
 
     @Resource
     private ObjectStoreConfigServiceImpl objectStoreConfigService;
+
+    @Resource
+    private ParamDao paramDao;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
 
@@ -91,6 +104,37 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Job getPushDefine(Long monitorId) throws IllegalArgumentException {
+//        if (!StringUtils.hasText(app)) {
+//            throw new IllegalArgumentException("The app can not null.");
+//        }
+//        Job appDefine = appDefines.get(app.toLowerCase());
+//        if (appDefine == null) {
+//            throw new IllegalArgumentException("The app " + app + " not support.");
+//        }
+//        return appDefine.clone();
+        Job appDefine = appDefines.get(DispatchConstants.PROTOCOL_PUSH);
+        if (appDefine == null) {
+            throw new IllegalArgumentException("The push collector not support.");
+        }
+        List<Metrics> metrics = appDefine.getMetrics();
+        List<Metrics> metricsTmp = new ArrayList<>();
+        for (Metrics metric : metrics) {
+            if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
+                List<Param> params = paramDao.findParamsByMonitorId(monitorId);
+                List<Configmap> configmaps = params.stream()
+                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                                param.getType())).collect(Collectors.toList());
+                Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
+                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
+                metricsTmp.add(metric);
+            }
+        }
+        appDefine.setMetrics(metricsTmp);
+        return appDefine;
     }
 
     @Override
@@ -155,6 +199,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 var i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
                 if (i18nMetricsName != null) {
                     i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName(), i18nMetricsName);
+                }
+                if (metrics.getFields() == null) {
+                    continue;
                 }
                 for (var field : metrics.getFields()) {
                     var fieldI18nName = field.getI18n();
