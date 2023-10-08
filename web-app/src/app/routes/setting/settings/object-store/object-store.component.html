@@ -1,0 +1,104 @@
+<nz-spin [nzSpinning]="loading">
+  <div nz-row *ngIf="config">
+    <div nz-col nzSpan="12">
+      <form nz-form #objectStoreForm="ngForm" (submit)="onSaveObjectStore()">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="8" nzFor="config.type" nzRequired="true">{{ 'settings.object-store.type' | i18n }}</nz-form-label>
+          <nz-select
+            [(ngModel)]="config.type"
+            [ngModelOptions]="{ standalone: true }"
+            style="text-align: center; font-weight: bolder"
+            [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
+            (ngModelChange)="onChange()"
+          >
+            <nz-option [nzValue]="ObjectStoreType.FILE" [nzLabel]="'settings.object-store.type.file' | i18n"></nz-option>
+            <nz-option [nzValue]="ObjectStoreType.OBS" [nzLabel]="'settings.object-store.type.obs' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-item>
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+          <nz-form-label [nzSpan]="6" nzFor="obs.accessKey" nzRequired="true">{{
+            'settings.object-store.obs.accessKey' | i18n
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="config.config.accessKey"
+              placeholder="{{ 'settings.object-store.obs.accessKey.placeholder' | i18n }}"
+              nz-input
+              required
+              name="accessKey"
+              type="text"
+              id="accessKey"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+          <nz-form-label [nzSpan]="6" nzFor="obs.secretKey" nzRequired="true">{{
+            'settings.object-store.obs.secretKey' | i18n
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="config.config.secretKey"
+              placeholder="{{ 'settings.object-store.obs.secretKey.placeholder' | i18n }}"
+              nz-input
+              required
+              name="secretKey"
+              type="text"
+              id="secretKey"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+          <nz-form-label [nzSpan]="6" nzFor="obs.bucketName" nzRequired="true">{{
+            'settings.object-store.obs.bucketName' | i18n
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="config.config.bucketName"
+              placeholder="{{ 'settings.object-store.obs.bucketName.placeholder' | i18n }}"
+              nz-input
+              required
+              name="bucketName"
+              type="text"
+              id="bucketName"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+          <nz-form-label [nzSpan]="6" nzFor="obs.endpoint" nzRequired="true">{{
+            'settings.object-store.obs.endpoint' | i18n
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="config.config.endpoint"
+              placeholder="{{ 'settings.object-store.obs.endpoint.placeholder' | i18n }}"
+              nz-input
+              required
+              name="endpoint"
+              type="text"
+              id="endpoint"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+          <nz-form-label [nzSpan]="6" nzFor="obs.savePath" nzRequired="true">{{
+            'settings.object-store.obs.savePath' | i18n
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="config.config.savePath"
+              placeholder="{{ 'settings.object-store.obs.savePath.placeholder' | i18n }}"
+              nz-input
+              required
+              name="savePath"
+              type="text"
+              id="savePath"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <button nz-button nzType="primary">{{ 'settings.system-config.ok' | i18n }}</button>
+        </nz-form-item>
+      </form>
+    </div>
+  </div>
+</nz-spin>
