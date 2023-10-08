@@ -17,6 +17,7 @@ import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
+import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { SettingTagsComponent } from './tags/tags.component';
@@ -27,6 +28,7 @@ const COMPONENTS: Array<Type<void>> = [
   SettingsComponent,
   MessageServerComponent,
   SystemConfigComponent,
+  ObjectStoreComponent,
   CollectorComponent
 ];
 

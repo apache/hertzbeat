@@ -36,7 +36,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 import javax.annotation.Resource;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
