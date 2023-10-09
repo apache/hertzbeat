@@ -300,6 +300,9 @@ metrics:
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+    units:
+      - CurrentThreadUserTime=NS->S
+      - CurrentThreadCpuTime=NS->S
     protocol: jmx
     jmx:
       host: ^_^host^_^
