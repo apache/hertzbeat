@@ -15,16 +15,8 @@
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
-![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
-![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
-![hertzbeat](https://img.shields.io/badge/monitor-network-red)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 **Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
 
@@ -48,9 +40,9 @@
 
 ----
 
-[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)   
+[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/)   
 
-[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/) 
+[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/) 
 
 ----
 
@@ -376,6 +368,8 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://novohit.top"><img src="https://avatars.githubusercontent.com/u/101090395?v=4?s=100" width="100px;" alt="novohit"/><br /><sub><b>novohit</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=novohit" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rbsrcy"><img src="https://avatars.githubusercontent.com/u/4798540?v=4?s=100" width="100px;" alt="zhuoshangyi"/><br /><sub><b>zhuoshangyi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=rbsrcy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ruanliang-hualun"><img src="https://avatars.githubusercontent.com/u/65543716?v=4?s=100" width="100px;" alt="ruanliang"/><br /><sub><b>ruanliang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ruanliang-hualun" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
@@ -397,9 +391,17 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
+[Chat On Discord](https://discord.gg/Fb6M73htGr)
+
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[User Club](https://support.qq.com/products/379369)   
+[User Club](https://support.qq.com/products/379369)
+
+[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+
+[Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+
+[Bilibili B站](https://space.bilibili.com/430192869)
 
 ##### Public        
 
@@ -416,6 +418,7 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 - [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
+- [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 
 
 ##### Sponsor     
