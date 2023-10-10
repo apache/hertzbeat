@@ -53,8 +53,11 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             long monitorId = Long.parseLong(monitorIdStr);
             Monitor monitor = monitorService.getMonitor(monitorId);
             if (monitor == null) {
-                log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
+                log.warn("Dispatch alarm the monitorId: {} not existed, ignored. target: {}.", monitorId, alert.getTarget());
                 return;
+            }
+            if (!tags.containsKey(CommonConstants.TAG_MONITOR_NAME)) {
+                tags.put(CommonConstants.TAG_MONITOR_NAME, monitor.getName());
             }
             if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
                 // When monitoring is not managed, ignore and silence its alarm messages
