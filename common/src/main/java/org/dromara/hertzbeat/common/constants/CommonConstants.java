@@ -248,6 +248,11 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
+     * 内忧标签: policyId 告警阈值规则ID
+     */
+    String TAG_POLICY_ID = "policyId";
+
+    /**
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
@@ -304,6 +309,7 @@ public interface CommonConstants {
     
     /**
      * ignore label
+     * 处理未配置恢复告警，但需要使用恢复告警变更监控状态的情况
      */
     String IGNORE = "ignore";
 
