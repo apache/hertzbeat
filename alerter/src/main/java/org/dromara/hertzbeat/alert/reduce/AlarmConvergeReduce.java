@@ -43,6 +43,22 @@ public class AlarmConvergeReduce {
         if (currentAlert.getTags() != null && currentAlert.getTags().containsKey(CommonConstants.IGNORE)) {
             return true;
         }
+        if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+            // restored alert
+            int alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL)
+                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
+                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+            converageAlertMap.remove(alertHash);
+            alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
+                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+            converageAlertMap.remove(alertHash);
+            alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
+                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
+                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+            converageAlertMap.remove(alertHash);
+            return true;
+        }
         ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
         List<AlertConverge> alertConvergeList = (List<AlertConverge>) convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE);
         if (alertConvergeList == null) {
