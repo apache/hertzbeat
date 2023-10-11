@@ -62,7 +62,7 @@
 
     <!--这个logger的设置是：举例在org.springframework包下面的所有输出日志必须级别level在info及以上级别才会被输出！-->
     <!--这样可以避免输出一些spring框架的许多常见debug信息!-->
-    <logger name="org.springframework" level="info" />
+    <logger name="org.springframework" level="info"/>
     <logger name="org.json" level="error"/>
     <logger name="io.netty" level="info"/>
     <logger name="org.slf4j" level="info"/>
@@ -82,6 +82,19 @@
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>
+        <!-- north log -->
+        <Logger name="com.obs.services.AbstractClient" level="OFF"
+                additivity="false">
+        </Logger>
+
+        <!-- south log -->
+        <Logger name="com.obs.services.internal.RestStorageService" level="OFF"
+                additivity="false">
+        </Logger>
+        <!-- access log -->
+        <Logger name="com.obs.log.AccessLogger" level="OFF"
+                additivity="false">
+        </Logger>
     </springProfile>
 
     <!-- 开发环境配置 -->

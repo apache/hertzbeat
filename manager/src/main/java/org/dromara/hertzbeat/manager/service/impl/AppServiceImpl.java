@@ -17,40 +17,47 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.common.entity.manager.Param;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
+import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.dromara.hertzbeat.manager.service.AppService;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.dromara.hertzbeat.manager.service.MonitorService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.dromara.hertzbeat.manager.service.ObjectStoreService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.isNull;
 
 /**
  * Monitoring Type Management Implementation
@@ -59,26 +66,36 @@ import java.util.stream.Collectors;
  * 暂时将监控配置和参数配置存放内存 之后存入数据库
  *
  * @author tomsun28
- *
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
-    private static final String JAVA_PATH_SEPARATOR = "/";
-    
-    @Autowired
+    private static final Yaml YAML = new Yaml();
+
+    private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
+
+    @Resource
     private MonitorDao monitorDao;
 
+    @Resource
+    private ObjectStoreConfigServiceImpl objectStoreConfigService;
+
+    @Resource
+    private ParamDao paramDao;
+
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
+
+    private AppDefineStore appDefineStore;
+    private final AppDefineStore jarAppDefineStore = new JarAppDefineStoreImpl();
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
         if (!StringUtils.hasText(app)) {
             return Collections.emptyList();
         }
-        Job appDefine = appDefines.get(app.toLowerCase());
+        var appDefine = appDefines.get(app.toLowerCase());
         if (appDefine != null && appDefine.getParams() != null) {
             return appDefine.getParams();
         } else {
@@ -87,11 +104,42 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
+    public Job getPushDefine(Long monitorId) throws IllegalArgumentException {
+//        if (!StringUtils.hasText(app)) {
+//            throw new IllegalArgumentException("The app can not null.");
+//        }
+//        Job appDefine = appDefines.get(app.toLowerCase());
+//        if (appDefine == null) {
+//            throw new IllegalArgumentException("The app " + app + " not support.");
+//        }
+//        return appDefine.clone();
+        Job appDefine = appDefines.get(DispatchConstants.PROTOCOL_PUSH);
+        if (appDefine == null) {
+            throw new IllegalArgumentException("The push collector not support.");
+        }
+        List<Metrics> metrics = appDefine.getMetrics();
+        List<Metrics> metricsTmp = new ArrayList<>();
+        for (Metrics metric : metrics) {
+            if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
+                List<Param> params = paramDao.findParamsByMonitorId(monitorId);
+                List<Configmap> configmaps = params.stream()
+                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                                param.getType())).collect(Collectors.toList());
+                Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
+                CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
+                metricsTmp.add(metric);
+            }
+        }
+        appDefine.setMetrics(metricsTmp);
+        return appDefine;
+    }
+
+    @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
         if (!StringUtils.hasText(app)) {
             throw new IllegalArgumentException("The app can not null.");
         }
-        Job appDefine = appDefines.get(app.toLowerCase());
+        var appDefine = appDefines.get(app.toLowerCase());
         if (appDefine == null) {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
@@ -102,15 +150,14 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
         if (StringUtils.hasLength(app)) {
-            Job appDefine = appDefines.get(app.toLowerCase());
+            var appDefine = appDefines.get(app.toLowerCase());
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
             metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
         } else {
-            appDefines.forEach((k,v)->{
-                metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
-            });
+            appDefines.forEach((k, v) ->
+                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList())));
         }
         return metricNames;
     }
@@ -119,40 +166,43 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(128);
-        for (Job job : appDefines.values()) {
-            Map<String, String> name = job.getName();
-            String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
+        for (var job : appDefines.values()) {
+            var name = job.getName();
+            var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
             if (i18nName != null) {
                 i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
-            Map<String, String> help = job.getHelp();
-            String i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
+            var help = job.getHelp();
+            var i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
             if (i18nHelp != null) {
                 i18nMap.put("monitor.app." + job.getApp() + ".help", i18nHelp);
             }
 
-            Map<String, String> helpLink = job.getHelpLink();
-            String i18nHelpLink = CommonUtil.getLangMappingValueFromI18nMap(lang, helpLink);
+            var helpLink = job.getHelpLink();
+            var i18nHelpLink = CommonUtil.getLangMappingValueFromI18nMap(lang, helpLink);
             if (i18nHelpLink != null) {
                 i18nMap.put("monitor.app." + job.getApp() + ".helpLink", i18nHelpLink);
             }
 
-            for (ParamDefine paramDefine : job.getParams()) {
-                Map<String, String> paramDefineName = paramDefine.getName();
-                String i18nParamName = CommonUtil.getLangMappingValueFromI18nMap(lang, paramDefineName);
+            for (var paramDefine : job.getParams()) {
+                var paramDefineName = paramDefine.getName();
+                var i18nParamName = CommonUtil.getLangMappingValueFromI18nMap(lang, paramDefineName);
                 if (i18nParamName != null) {
                     i18nMap.put("monitor.app." + job.getApp() + ".param." + paramDefine.getField(), i18nParamName);
                 }
             }
-            for (Metrics metrics : job.getMetrics()) {
-                Map<String, String> metricsI18nName = metrics.getI18n();
-                String i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
+            for (var metrics : job.getMetrics()) {
+                var metricsI18nName = metrics.getI18n();
+                var i18nMetricsName = CommonUtil.getLangMappingValueFromI18nMap(lang, metricsI18nName);
                 if (i18nMetricsName != null) {
                     i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName(), i18nMetricsName);
                 }
-                for (Metrics.Field field : metrics.getFields()) {
-                    Map<String, String> fieldI18nName = field.getI18n();
-                    String i18nMetricName = CommonUtil.getLangMappingValueFromI18nMap(lang, fieldI18nName);
+                if (metrics.getFields() == null) {
+                    continue;
+                }
+                for (var field : metrics.getFields()) {
+                    var fieldI18nName = field.getI18n();
+                    var i18nMetricName = CommonUtil.getLangMappingValueFromI18nMap(lang, fieldI18nName);
                     if (i18nMetricName != null) {
                         i18nMap.put("monitor.app." + job.getApp() + ".metrics." + metrics.getName() + ".metric." + field.getField(), i18nMetricName);
                     }
@@ -165,30 +215,30 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         List<Hierarchy> hierarchies = new LinkedList<>();
-        for (Job job : appDefines.values()) {
-            Hierarchy hierarchyApp = new Hierarchy();
+        for (var job : appDefines.values()) {
+            var hierarchyApp = new Hierarchy();
             hierarchyApp.setCategory(job.getCategory());
             hierarchyApp.setValue(job.getApp());
-            Map<String, String> nameMap = job.getName();
+            var nameMap = job.getName();
             if (nameMap != null && !nameMap.isEmpty()) {
-                String i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
+                var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
                 if (i18nName != null) {
                     hierarchyApp.setLabel(i18nName);
                 }
             }
             List<Hierarchy> hierarchyMetricList = new LinkedList<>();
             if (job.getMetrics() != null) {
-                for (Metrics metrics : job.getMetrics()) {
-                    Hierarchy hierarchyMetric = new Hierarchy();
+                for (var metrics : job.getMetrics()) {
+                    var hierarchyMetric = new Hierarchy();
                     hierarchyMetric.setValue(metrics.getName());
-                    String metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
+                    var metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
                     hierarchyMetric.setLabel(metricsI18nName != null ? metricsI18nName : metrics.getName());
                     List<Hierarchy> hierarchyFieldList = new LinkedList<>();
                     if (metrics.getFields() != null) {
-                        for (Metrics.Field field : metrics.getFields()) {
-                            Hierarchy hierarchyField = new Hierarchy();
+                        for (var field : metrics.getFields()) {
+                            var hierarchyField = new Hierarchy();
                             hierarchyField.setValue(field.getField());
-                            String metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
+                            var metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
                             hierarchyField.setLabel(metricI18nName != null ? metricI18nName : field.getField());
                             hierarchyField.setIsLeaf(true);
                             // for metric
@@ -215,43 +265,19 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public String getMonitorDefineFileContent(String app) {
-        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
-        String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-        File defineAppFile = new File(defineAppPath);
-        if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-            URL resourceUrl = this.getClass().getResource(JAVA_PATH_SEPARATOR);
-            if (resourceUrl != null) {
-                classpath = resourceUrl.getPath();
-                defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-                defineAppFile = new File(defineAppPath);
-                if (!defineAppFile.exists() || !defineAppFile.isFile()) {
-                    try {
-                        // load define app yml in jar
-                        log.info("load define app yml in internal jar");
-                        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                        Resource resource = resolver.getResource("classpath:define/" + app + ".yml");
-                        InputStream inputStream = resource.getInputStream();
-                        String content = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-                        inputStream.close();
-                        return content;
-                    } catch (Exception e) {
-                        log.error(e.getMessage());
-                    }
-                }   
-            }
+        var appDefine = appDefineStore.loadAppDefine(app);
+        if (isNull(appDefine)) {
+            appDefine = jarAppDefineStore.loadAppDefine(app);
         }
-        log.info("load {} define app yml in file: {}", app, defineAppPath);
-        try {
-            return FileUtils.readFileToString(defineAppFile, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        if (isNull(appDefine)) {
+            throw new IllegalArgumentException("can not find " + app + " define yml");
         }
-        throw new IllegalArgumentException("can not find " + app + " define yml");
+        return appDefine;
     }
 
     @Override
     public void applyMonitorDefineYml(String ymlContent, boolean isModify) {
-        Yaml yaml = new Yaml();
+        var yaml = new Yaml();
         Job app;
         try {
             app = yaml.loadAs(ymlContent, Job.class);
@@ -261,15 +287,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
         // app params verify
         verifyDefineAppContent(app, isModify);
-        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
-        String defineAppPath = classpath + "define" + File.separator + "app-" + app.getApp() + ".yml";
-        File defineAppFile = new File(defineAppPath);
-        try {
-            FileUtils.writeStringToFile(defineAppFile, ymlContent, StandardCharsets.UTF_8, false);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
-        }
+        appDefineStore.save(app.getApp(), ymlContent);
         appDefines.put(app.getApp().toLowerCase(), app);
         // bug  当模板 app-redis.yml被修改，比如 增加指标组，删除指标，当前的job中，持有的缓存 metrics实例，
         // 解决 ：模板修改后，同类型模板的所有监控实例 ，在监控状态中，需要重新下发任务
@@ -282,10 +300,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         Assert.notNull(app.getCategory(), "monitoring template require attributes category");
         Assert.notEmpty(app.getName(), "monitoring template require attributes name");
         Assert.notEmpty(app.getParams(), "monitoring template require attributes params");
-        boolean hasParamHost = app.getParams().stream().anyMatch(item -> "host".equals(item.getField()));
+        var hasParamHost = app.getParams().stream().anyMatch(item -> "host".equals(item.getField()));
         Assert.isTrue(hasParamHost, "monitoring template attributes params must have param host");
         Assert.notEmpty(app.getMetrics(), "monitoring template require attributes metrics");
-        boolean hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
+        var hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
         Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
         if (!isModify) {
             Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
@@ -296,13 +314,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public void deleteMonitorDefine(String app) {
         // if app has monitors now, delete failed
-        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(app);
+        var monitors = monitorDao.findMonitorsByAppEquals(app);
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
-        String classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
-        String defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-        File defineAppFile = new File(defineAppPath);
+        var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+        var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+        var defineAppFile = new File(defineAppPath);
         if (defineAppFile.exists() && defineAppFile.isFile()) {
             defineAppFile.delete();
         }
@@ -311,64 +329,136 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        boolean loadFromFile = true;
-        // 读取监控定义配置加载到内存中 define/*.yml
-        Yaml yaml = new Yaml();
-        URL rootUrl = this.getClass().getClassLoader().getResource("");
-        String defineAppPath = null;
-        File directory = null;
-        if (rootUrl == null) {
-            loadFromFile = false;
+        var objectStoreConfig = objectStoreConfigService.getConfig();
+        refreshStore(objectStoreConfig);
+    }
+
+    @EventListener(ObjectStoreConfigChangeEvent.class)
+    public void onObjectStoreConfigChange(ObjectStoreConfigChangeEvent event) {
+        refreshStore(event.getConfig());
+    }
+
+    /**
+     * 刷新配置存储
+     *
+     * @param objectStoreConfig 文件服务配置
+     */
+    private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
+        if (objectStoreConfig == null) {
+            appDefineStore = new LocalFileAppDefineStoreImpl();
         } else {
-            String classpath = rootUrl.getPath();
-            defineAppPath = classpath + "define";
-            directory = new File(defineAppPath);
-            if (!directory.exists() || directory.listFiles() == null) {
-                rootUrl = this.getClass().getResource(File.separator);
-                if (rootUrl == null) {
-                    loadFromFile = false;
-                } else {
-                    classpath = rootUrl.getPath();
-                    defineAppPath = classpath + "define";
-                    directory = new File(defineAppPath);
-                    if (!directory.exists() || directory.listFiles() == null) {
-                        loadFromFile = false;
-                    }
-                }
+            switch (objectStoreConfig.getType()) {
+                case OBS:
+                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
+                    break;
+                case FILE:
+                default:
+                    appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
-        if (!loadFromFile) {
+        var success = appDefineStore.loadAppDefines();
+        if (!success) {
+            new JarAppDefineStoreImpl().loadAppDefines();
+        }
+    }
+
+    private interface AppDefineStore {
+
+        /**
+         * 加载所有采集任务配置
+         */
+        boolean loadAppDefines();
+
+        /**
+         * 加载某个采集任务配置
+         *
+         * @param app 应用名称
+         * @return 采集任务配置文本
+         */
+        String loadAppDefine(String app);
+
+        void save(String app, String ymlContent);
+
+    }
+
+    private class JarAppDefineStoreImpl implements AppDefineStore {
+
+        @Override
+        public boolean loadAppDefines() {
             try {
                 log.info("load define app yml in internal jar");
-                ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-                Resource[] resources = resolver.getResources("classpath:define/*.yml");
-                for (Resource resource : resources) {
-                    try {
-                        InputStream inputStream = resource.getInputStream();
-                        Job app = yaml.loadAs(inputStream, Job.class);
+                var resolver = new PathMatchingResourcePatternResolver();
+                var resources = resolver.getResources("classpath:define/*.yml");
+                for (var resource : resources) {
+                    try (var inputStream = resource.getInputStream()) {
+                        var app = YAML.loadAs(inputStream, Job.class);
                         appDefines.put(app.getApp().toLowerCase(), app);
-                        inputStream.close();
-                    } catch (Exception e) {
+                    } catch (IOException e) {
                         log.error(e.getMessage(), e);
                         log.error("Ignore this template file: {}.", resource.getFilename());
                     }
                 }
-            } catch (Exception e) {
+                return true;
+            } catch (IOException e) {
                 log.error("define app yml not exist");
-                throw e;
+                return false;
             }
         }
-        if (loadFromFile && directory.listFiles() != null) {
+
+        @Override
+        public String loadAppDefine(String app) {
+            // load define app yml in jar
+            log.info("load define app yml in internal jar");
+            var resolver = new PathMatchingResourcePatternResolver();
+            var resource = resolver.getResource("classpath:define/app-" + app + ".yml");
+            try (var inputStream = resource.getInputStream()) {
+                return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        public void save(String app, String ymlContent) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
+    private class LocalFileAppDefineStoreImpl implements AppDefineStore {
+
+        @Override
+        public boolean loadAppDefines() {
+            var rootUrl = this.getClass().getClassLoader().getResource("");
+            if (rootUrl == null) {
+                return false;
+            }
+            var classpath = rootUrl.getPath();
+            var defineAppPath = classpath + "define";
+            var directory = new File(defineAppPath);
+            if (!directory.exists() || directory.listFiles() == null) {
+                rootUrl = this.getClass().getResource(File.separator);
+                if (rootUrl == null) {
+                    return false;
+                }
+                classpath = rootUrl.getPath();
+                defineAppPath = classpath + "define";
+                directory = new File(defineAppPath);
+                if (!directory.exists() || directory.listFiles() == null) {
+                    return false;
+                }
+            }
             log.info("load define path {}", defineAppPath);
-            for (File appFile : Objects.requireNonNull(directory.listFiles())) {
+            for (var appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
                     if (appFile.isHidden()
                             || (!appFile.getName().endsWith("yml") && !appFile.getName().endsWith("yaml"))) {
                         log.error("Ignore this template file: {}.", appFile.getName());
                         continue;
                     }
-                    try (FileInputStream fileInputStream = new FileInputStream(appFile)) {
-                        Job app = yaml.loadAs(fileInputStream, Job.class);
+                    try (var fileInputStream = new FileInputStream(appFile)) {
+                        var app = YAML.loadAs(fileInputStream, Job.class);
                         if (app != null) {
                             appDefines.put(app.getApp().toLowerCase(), app);
                         }
@@ -378,6 +468,85 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     }
                 }
             }
+            return true;
+        }
+
+        @Override
+        public String loadAppDefine(String app) {
+            var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+            var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+            var defineAppFile = new File(defineAppPath);
+            if (defineAppFile.exists() && defineAppFile.isFile()) {
+                log.info("load {} define app yml in file: {}", app, defineAppPath);
+                try {
+                    return FileUtils.readFileToString(defineAppFile, StandardCharsets.UTF_8);
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public void save(String app, String ymlContent) {
+            var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+            var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+            var defineAppFile = new File(defineAppPath);
+            try {
+                FileUtils.writeStringToFile(defineAppFile, ymlContent, StandardCharsets.UTF_8, false);
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
+            }
         }
     }
+
+    private class ObjectStoreAppDefineStoreImpl implements AppDefineStore {
+
+        @Override
+        public boolean loadAppDefines() {
+            var objectStoreService = getObjectStoreService();
+            objectStoreService.list("define")
+                    .forEach(it -> {
+                        if (it.getInputStream() != null) {
+                            var app = YAML.loadAs(it.getInputStream(), Job.class);
+                            if (app != null) {
+                                appDefines.put(app.getApp().toLowerCase(), app);
+                            }
+                        }
+                    });
+            return false;
+        }
+
+        @Override
+        public String loadAppDefine(String app) {
+            var objectStoreService = getObjectStoreService();
+            var file = objectStoreService.download(getDefineAppPath(app));
+            if (isNull(file)) {
+                return null;
+            }
+            try {
+                return IOUtils.toString(file.getInputStream(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.error("load app define from object store service error", e);
+                return null;
+            }
+        }
+
+        @Override
+        public void save(String app, String ymlContent) {
+            var objectStoreService = getObjectStoreService();
+            objectStoreService.upload(getDefineAppPath(app), IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
+        }
+
+        private ObjectStoreService getObjectStoreService() {
+            return SpringContextHolder.getBean(ObsObjectStoreServiceImpl.class);
+        }
+
+        private String getDefineAppPath(String app) {
+            return "define/app-" + app + ".yml";
+        }
+
+    }
+
 }

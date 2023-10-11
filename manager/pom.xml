@@ -37,6 +37,7 @@
         <warehouse.version>1.0</warehouse.version>
         <easy-poi.version>4.3.0</easy-poi.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
+        <huawei.obs.version>3.23.5</huawei.obs.version>
     </properties>
 
     <dependencies>
@@ -64,6 +65,11 @@
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
+        </dependency>
+        <!-- push -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-push</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -143,6 +149,11 @@
             <groupId>com.huaweicloud.sdk</groupId>
             <artifactId>huaweicloud-sdk-smn</artifactId>
             <version>${huawei.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.huaweicloud</groupId>
+            <artifactId>esdk-obs-java</artifactId>
+            <version>${huawei.obs.version}</version>
         </dependency>
     </dependencies>
 

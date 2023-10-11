@@ -76,6 +76,10 @@ public interface DispatchConstants {
      * protocol rocketmq
      */
     String PROTOCOL_ROCKETMQ = "rocketmq";
+    /**
+     * protocol push
+     */
+    String PROTOCOL_PUSH = "push";
     // Protocol type related - end
     // 协议类型相关 - end //
 
