@@ -248,7 +248,7 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
-     * 内忧标签: policyId 告警阈值规则ID
+     * 内有标签: policyId 告警阈值规则ID
      */
     String TAG_POLICY_ID = "policyId";
 
