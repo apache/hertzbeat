@@ -277,27 +277,6 @@ metrics:
         hrStorageUsed: 1.3.6.1.2.1.25.2.3.1.6
         hrStorageAllocationUnits: 1.3.6.1.2.1.25.2.3.1.4
 
-  - name: disk
-    priority: 2
-    fields:
-      - field: dskPath
-        type: 1
-      - field: dskDevice
-        type: 1
-      - field: dskTotal
-        type: 1
-    protocol: snmp
-    snmp:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      timeout: ^_^timeout^_^
-      community: ^_^community^_^
-      version: ^_^version^_^
-      oids:
-        dskPath: 1.3.6.1.4.1.2021.9.1.2
-        dskDevice: 1.3.6.1.4.1.2021.9.1.3
-        dskTotal: 1.3.6.1.4.1.2021.9.1.6
-
   - name: network
     priority: 3
     fields:
