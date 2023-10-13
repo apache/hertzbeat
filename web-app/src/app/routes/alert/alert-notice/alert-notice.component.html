@@ -134,6 +134,7 @@
       </tbody>
     </nz-table>
   </nz-tab>
+  <!--  自定义通知模板 -->
   <nz-tab [nzTitle]="'alert.notice.template' | i18n">
     <div style="margin-bottom: 20px">
       <button (click)="syncTemplate()" nz-button nzType="primary">
@@ -147,7 +148,7 @@
     </div>
     <nz-table
       #templateFixedTable
-      [nzData]="templates"
+      [nzData]="templates.concat(defaultTemplates)"
       [nzLoading]="templateTableLoading"
       [nzScroll]="{ x: '1240px', y: '100%' }"
       nzFrontPagination="false"
@@ -166,45 +167,88 @@
             <span>{{ data.name }}</span>
           </td>
           <td nzAlign="center">
-            <nz-tag *ngIf="data.type == 0" nzColor="orange">
-              <span>{{ 'alert.applier.type.sms' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 1" nzColor="orange">
-              <span>{{ 'alert.applier.type.email' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 2" nzColor="orange">
-              <span>WebHook</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 3" nzColor="orange">
-              <span>{{ 'alert.applier.type.wechat' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 4" nzColor="orange">
-              <span>{{ 'alert.applier.type.wework' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 5" nzColor="orange">
-              <span>{{ 'alert.applier.type.ding' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 6" nzColor="orange">
-              <span>{{ 'alert.applier.type.fei-shu' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 7" nzColor="orange">
-              <span>{{ 'alert.applier.type.telegram' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 8" nzColor="orange">
-              <span>{{ 'alert.applier.type.slack' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 9" nzColor="orange">
-              <span>{{ 'alert.applier.type.discord' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 10" nzColor="orange">
-              <span>{{ 'alert.applier.type.weChatApp' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 11" nzColor="orange">
-              <span>{{ 'alert.applier.type.smn' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="data.type == 12" nzColor="orange">
-              <span>{{ 'alert.applier.type.serverchan' | i18n }}</span>
-            </nz-tag>
+            <span *ngIf="data.presetTemplate == false">
+              <nz-tag *ngIf="data.type == 0" nzColor="orange">
+                <span>{{ 'alert.applier.type.sms' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 1" nzColor="orange">
+                <span>{{ 'alert.applier.type.email' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 2" nzColor="orange">
+                <span>WebHook</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 3" nzColor="orange">
+                <span>{{ 'alert.applier.type.wechat' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 4" nzColor="orange">
+                <span>{{ 'alert.applier.type.wework' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 5" nzColor="orange">
+                <span>{{ 'alert.applier.type.ding' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 6" nzColor="orange">
+                <span>{{ 'alert.applier.type.fei-shu' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 7" nzColor="orange">
+                <span>{{ 'alert.applier.type.telegram' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 8" nzColor="orange">
+                <span>{{ 'alert.applier.type.slack' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 9" nzColor="orange">
+                <span>{{ 'alert.applier.type.discord' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 10" nzColor="orange">
+                <span>{{ 'alert.applier.type.weChatApp' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 11" nzColor="orange">
+                <span>{{ 'alert.applier.type.smn' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 12" nzColor="orange">
+                <span>{{ 'alert.applier.type.serverchan' | i18n }}</span>
+              </nz-tag>
+            </span>
+            <span *ngIf="data.presetTemplate == true">
+              <nz-tag *ngIf="data.name == 'sms'" nzColor="orange">
+                <span>{{ 'alert.applier.type.sms' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'mailAlarm'" nzColor="orange">
+                <span>{{ 'alert.applier.type.email' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'WebHook'" nzColor="orange">
+                <span>WebHook</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'wechat'" nzColor="orange">
+                <span>{{ 'alert.applier.type.wechat' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyWeWorkRobot'" nzColor="orange">
+                <span>{{ 'alert.applier.type.wework' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyDingTalkRobot'" nzColor="orange">
+                <span>{{ 'alert.applier.type.ding' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyFlyBook'" nzColor="orange">
+                <span>{{ 'alert.applier.type.fei-shu' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyTelegramBot'" nzColor="orange">
+                <span>{{ 'alert.applier.type.telegram' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifySlack'" nzColor="orange">
+                <span>{{ 'alert.applier.type.slack' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyDiscordBot'" nzColor="orange">
+                <span>{{ 'alert.applier.type.discord' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyWeWorkApp'" nzColor="orange">
+                <span>{{ 'alert.applier.type.weChatApp' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifySmn'" nzColor="orange">
+                <span>{{ 'alert.applier.type.smn' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.name == 'alertNotifyServerChan'" nzColor="orange">
+                <span>{{ 'alert.applier.type.serverchan' | i18n }}</span>
+              </nz-tag>
+            </span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -238,16 +282,6 @@
                 nzType="primary"
               >
                 <i nz-icon nzTheme="outline" nzType="question-circle"></i>
-              </button>
-              <button
-                (click)="onDeleteOneNoticeTemplate(data.id)"
-                [nzTooltipTitle]="'alert.notice.template.delete' | i18n"
-                nz-button
-                nz-tooltip
-                nzDanger
-                nzType="primary"
-              >
-                <i nz-icon nzTheme="outline" nzType="delete"></i>
               </button>
             </span>
           </td>
@@ -367,8 +401,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzFor="templates" nzRequired="true" nzSpan="7">{{ 'alert.notice.template' | i18n }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
+        <nz-form-label nzFor="templates" nzRequired="false" nzSpan="7">{{ 'alert.notice.template' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
           <nz-select
             (nzOpenChange)="loadTemplatesOption()"
             [(ngModel)]="rule.templateId"

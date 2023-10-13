@@ -33,6 +33,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -55,6 +56,8 @@ public class MailServiceImpl implements MailService {
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Override
     public String buildAlertHtmlTemplate(final Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException {
+        freemarker.template.Template templateMail=null;
+        Configuration cfg = new Configuration();
         String monitorId = null;
         String monitorName = null;
         if (alert.getTags() != null) {
@@ -64,13 +67,6 @@ public class MailServiceImpl implements MailService {
         monitorId = monitorId == null? "External Alarm, No ID" : monitorId;
         monitorName = monitorName == null? "External Alarm, No Name" : monitorName;
         // Introduce thymeleaf context parameters to render pages
-        StringTemplateLoader stringLoader = new StringTemplateLoader();
-        String freemarkerTemplate= noticeTemplate.getTemplateContent();
-        String mailTemplate = "mailTemplate";
-        stringLoader.putTemplate(mailTemplate, freemarkerTemplate);
-        Configuration cfg = new Configuration();
-        cfg.setTemplateLoader(stringLoader);
-        freemarker.template.Template templateMail = cfg.getTemplate(mailTemplate, Locale.CHINESE);
         Map<String, String> model = new HashMap<>(16);
         model.put("nameTitle",  bundle.getString("alerter.notify.title"));
         model.put("nameMonitorId",  bundle.getString("alerter.notify.monitorId"));
@@ -89,6 +85,19 @@ public class MailServiceImpl implements MailService {
         model.put("lastTriggerTime",triggerTime);
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
+        if(noticeTemplate==null){
+            String path = this.getClass().getResource("/").getPath();
+            cfg.setDirectoryForTemplateLoading(new File(path+"templates/"));
+            cfg.setDefaultEncoding("utf-8");
+            templateMail = cfg.getTemplate("mailAlarm.html");
+        }
+        else {
+            StringTemplateLoader stringLoader = new StringTemplateLoader();
+            String templateName = "mailTemplate";
+            stringLoader.putTemplate(templateName, noticeTemplate.getTemplateContent());
+            cfg.setTemplateLoader(stringLoader);
+            templateMail= cfg.getTemplate(templateName, Locale.CHINESE);
+        }
         String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateMail, model);
         return template;
     }

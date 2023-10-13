@@ -1,7 +1,7 @@
-<font color="info">[(${title})]</font>
-[(${targetLabel})] : <font color="info">[(${target})]</font>
-[# th:if="${monitorId != null}"][(${monitorIdLabel})] : [(${monitorId})][/]
-[# th:if="${monitorName != null}"][(${monitorNameLabel})] : [(${monitorName})][/]
-[(${priorityLabel})] : <font color="warning">[(${priority})]</font>
-[(${triggerTimeLabel})] : [(${triggerTime})]
-[(${contentLabel})] : [(${content})]
+[${title}]
+${targetLabel} : ${target}
+<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+${priorityLabel} : ${priority}
+${triggerTimeLabel} : ${triggerTime}
+${contentLabel} : ${content}

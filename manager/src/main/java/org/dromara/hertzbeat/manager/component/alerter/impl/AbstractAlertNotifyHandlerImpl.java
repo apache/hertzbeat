@@ -30,6 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -56,21 +57,14 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
-        Context context = new Context();
 
         StringTemplateLoader stringLoader = new StringTemplateLoader();
-        String freemarkerTemplate = noticeTemplate.getTemplateContent();
-        String templateName = "freemakerTemplate";
-        stringLoader.putTemplate(templateName, freemarkerTemplate);
+        freemarker.template.Template templateRes=null;
         Configuration cfg = new Configuration();
-        cfg.setTemplateLoader(stringLoader);
-        freemarker.template.Template templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
-
         Map<String, String> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
         if (alert.getTags() != null) {
-            alert.getTags().forEach(context::setVariable);
             String monitorId = alert.getTags().get("monitorId");
             if (monitorId != null) {
                 model.put("monitorId", monitorId);
@@ -91,8 +85,18 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
         model.put("contentLabel", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
-
-
+        if(noticeTemplate==null){
+            String path = this.getClass().getResource("/").getPath();
+            cfg.setDirectoryForTemplateLoading(new File(path+"templates/"));
+            cfg.setDefaultEncoding("utf-8");
+            templateRes = cfg.getTemplate(templateName()+".txt");
+        }
+        else {
+            String templateName = "freemakerTemplate";
+            stringLoader.putTemplate(templateName, noticeTemplate.getTemplateContent());
+            cfg.setTemplateLoader(stringLoader);
+            templateRes= cfg.getTemplate(templateName, Locale.CHINESE);
+        }
         String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
         return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }

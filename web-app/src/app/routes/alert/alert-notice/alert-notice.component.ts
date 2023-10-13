@@ -21,7 +21,8 @@ import { TagService } from '../../../service/tag.service';
 export class AlertNoticeComponent implements OnInit {
   receivers!: NoticeReceiver[];
   receiverTableLoading: boolean = true;
-  templates!: NoticeTemplate[];
+  templates: NoticeTemplate[] = [];
+  defaultTemplates: NoticeTemplate[] = [];
   templateTableLoading: boolean = true;
   rules!: NoticeRule[];
   ruleTableLoading: boolean = true;
@@ -114,6 +115,7 @@ export class AlertNoticeComponent implements OnInit {
         this.templateTableLoading = false;
         if (message.code === 0) {
           this.templates = message.data;
+          // this.templates=this.templates.concat(this.defaultTemplates);
         } else {
           console.warn(message.msg);
         }
@@ -123,6 +125,22 @@ export class AlertNoticeComponent implements OnInit {
         console.error(error.msg);
         this.templateTableLoading = false;
         templatesInit$.unsubscribe();
+      }
+    );
+    let defalutTemplatesInit$ = this.noticeTemplateSvc.getDefaultNoticeTemplates().subscribe(
+      message => {
+        this.templateTableLoading = false;
+        if (message.code === 0) {
+          this.defaultTemplates = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+        defalutTemplatesInit$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        this.templateTableLoading = false;
+        defalutTemplatesInit$.unsubscribe();
       }
     );
   }

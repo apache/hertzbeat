@@ -140,8 +140,14 @@ public class DispatcherAlarm implements InitializingBean {
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
             for (int i = 0; i < receivers.size(); i++) {
                 try {
-                    sendNoticeMsg(getOneReciverById(receivers.subList(i, i + 1)),
-                            getOneTemplateById(templates.subList(i, i + 1)), alert);
+                    if((templates.subList(i, i + 1)).get(0)==null){
+                        sendNoticeMsg(getOneReciverById(receivers.subList(i, i + 1)),
+                                null, alert);
+                    }
+                    else {
+                        sendNoticeMsg(getOneReciverById(receivers.subList(i, i + 1)),
+                                getOneTemplateById(templates.subList(i, i + 1)), alert);
+                    }
                 } catch (AlertNoticeException e) {
                     log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                 }

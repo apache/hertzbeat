@@ -83,7 +83,6 @@ public class NoticeRule {
     @Schema(title = "Template ID",
             description = "模板ID",
             example = "4324324", accessMode = READ_WRITE)
-    @NotNull
     private Long templateId;
 
     @Schema(title = "Template identification",

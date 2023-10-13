@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { List } from 'echarts';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
@@ -8,7 +9,7 @@ import { NoticeTemplate } from '../pojo/NoticeTemplate';
 
 const notice_template_uri = '/notice/template';
 const notice_templates_uri = '/notice/templates';
-const notice_templates_by_type_uri = '/notice/templates/type';
+const default_notice_templates_uri = '/notice/default_templates';
 @Injectable({
   providedIn: 'root'
 })
@@ -30,7 +31,7 @@ export class NoticeTemplateService {
   public getNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
     return this.http.get<Message<NoticeTemplate[]>>(notice_templates_uri);
   }
-  // public getNoticeTemplatesByType(body: NoticeTemplate): Observable<Message<NoticeTemplate[]>> {
-  //   return this.http.get<Message<NoticeTemplate[]>>(notice_templates_by_type_uri,templateType);
-  // }
+  public getDefaultNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
+    return this.http.get<Message<NoticeTemplate[]>>(default_notice_templates_uri);
+  }
 }
