@@ -23,7 +23,6 @@ import org.dromara.hertzbeat.common.entity.alerter.Alert;
  * 报警持久化
  *
  *
- *
  */
 public interface AlertStoreHandler {
 

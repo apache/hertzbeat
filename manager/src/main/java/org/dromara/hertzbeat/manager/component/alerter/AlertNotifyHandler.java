@@ -19,10 +19,10 @@ package org.dromara.hertzbeat.manager.component.alerter;
 
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 
 /**
- *
  *
  */
 public interface AlertNotifyHandler {
@@ -30,11 +30,12 @@ public interface AlertNotifyHandler {
     /**
      * 发送报警通知
      *
-     * @param receiver Notification configuration information   通知配置信息
-     * @param alert    Alarm information                        告警信息
+     * @param receiver       Notification configuration information   通知配置信息
+     * @param noticeTemplate Notification configuration information   通知配置信息
+     * @param alert          Alarm information                        告警信息
      * @throws AlertNoticeException when send receiver error
      */
-    void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException;
+    void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException;
 
     /**
      * 通知类型

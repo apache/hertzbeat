@@ -15,24 +15,26 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.component.alerter.impl;
+package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
+ * NoticeTemplate数据库操作
+ *
  *
  */
-final class WeChatAlertNotifyHandlerImpl implements AlertNotifyHandler {
-    @Override
-    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
-        // todo
-    }
+public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
+    /**
+     * 通过模板类型和预设模板标识查找通知模板
+     *
+     * @param type            Byte type 模板类型
+     * @param defaultTemplate Boolean defaultTemplate 预设模板标识
+     * @return 通知模板
+     */
+    NoticeTemplate findNoticeTemplateByTypeAndPresetTemplate(Byte type, Boolean defaultTemplate);
 
-    @Override
-    public byte type() {
-        return 3;
-    }
+
 }

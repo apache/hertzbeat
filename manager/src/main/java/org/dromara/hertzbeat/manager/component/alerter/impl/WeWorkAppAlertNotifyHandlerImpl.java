@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
@@ -47,7 +48,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     private final RestTemplate restTemplate;
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate,Alert alert) throws AlertNoticeException {
         String corpId = receiver.getCorpId();
         Integer agentId = receiver.getAgentId();
         String appSecret = receiver.getAppSecret();
@@ -57,7 +58,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.MarkdownDTO markdown = new WeChatAppDTO.MarkdownDTO();
-                markdown.setContent(renderContent(alert));
+                markdown.setContent(renderContent(noticeTemplate,alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
                         .msgType(WeChatAppDTO.MARKDOWN)

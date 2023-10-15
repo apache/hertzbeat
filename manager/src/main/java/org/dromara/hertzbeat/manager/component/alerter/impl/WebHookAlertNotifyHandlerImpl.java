@@ -17,28 +17,28 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 /**
  *
- *
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
+final class WebHookAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final RestTemplate restTemplate;
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

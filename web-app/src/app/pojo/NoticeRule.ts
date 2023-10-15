@@ -3,6 +3,8 @@ export class NoticeRule {
   name!: string;
   receiverId!: number;
   receiverName!: string;
+  templateId!: number;
+  templateName!: string;
   enable: boolean = true;
   // 是否转发所有
   filterAll: boolean = true;

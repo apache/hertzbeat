@@ -17,14 +17,14 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.manager.component.alerter.AlertStoreHandler;
-import org.dromara.hertzbeat.manager.service.MonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.manager.component.alerter.AlertStoreHandler;
+import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.stereotype.Component;
 
@@ -40,11 +40,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
-    
+
     private final MonitorService monitorService;
-    
+
     private final AlertService alertService;
-    
+
     @Override
     public void store(Alert alert) {
         Map<String, String> tags = alert.getTags();
