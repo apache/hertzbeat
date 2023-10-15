@@ -15,22 +15,26 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.component.alerter;
+package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * 报警持久化
+ * NoticeTemplate数据库操作
  *
- * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
+ * @author Eden
  */
-public interface AlertStoreHandler {
-
+public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
     /**
-     * 持久化报警记录
-     * 需在持久化的同时对alert的标签信息tags关联赋值
+     * 通过模板类型和预设模板标识查找通知模板
      *
-     * @param alert 报警
+     * @param type            Byte type 模板类型
+     * @param defaultTemplate Boolean defaultTemplate 预设模板标识
+     * @return 通知模板
      */
-    void store(Alert alert);
+    NoticeTemplate findNoticeTemplateByTypeAndPresetTemplate(Byte type, Boolean defaultTemplate);
+
+
 }
