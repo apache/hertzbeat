@@ -20,14 +20,16 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.AlerterProperties;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.springframework.context.event.EventListener;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
-import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -39,16 +41,16 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
 /**
  * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
  * @version 2.1
  * Created by Musk.Chen on 2023/1/16
  */
+@Slf4j
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    protected final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Resource
     protected RestTemplate restTemplate;
 
@@ -110,4 +112,12 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
      */
     protected abstract String templateName();
 
+    @EventListener(SystemConfigChangeEvent.class)
+    public void onEvent(SystemConfigChangeEvent event) {
+        log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
+        this.bundle = ResourceBundleUtil.getBundle("alerter");
+    }
+
 }
+
+
