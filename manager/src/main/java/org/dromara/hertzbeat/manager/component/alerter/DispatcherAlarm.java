@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
@@ -92,23 +93,15 @@ public class DispatcherAlarm implements InitializingBean {
         return false;
     }
 
-    private List<Long> matchReceiverIdByNoticeRules(Alert alert) {
-        return noticeConfigService.getReceiverIdFilterRule(alert);
+    private NoticeReceiver getOneReceiverById(Long id) {
+        return noticeConfigService.getOneReceiverById(id);
     }
 
-    private List<Long> matchTemplateIdByNoticeRules(Alert alert) {
-        return noticeConfigService.getTemplateIdFilterRule(alert);
+    private NoticeTemplate getOneTemplateById(Long id) {
+        return noticeConfigService.getOneTemplateById(id);
     }
 
-    private NoticeReceiver getOneReciverById(List<Long> ids) {
-        return noticeConfigService.getOneReciverByIdInFilterRule(ids);
-    }
-
-    private NoticeTemplate getOneTemplateById(List<Long> ids) {
-        return noticeConfigService.getOneTemplateByIdInFilterRule(ids);
-    }
-
-    private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
+    private List<NoticeRule> matchNoticeRulesByAlert(Alert alert) {
         return noticeConfigService.getReceiverFilterRule(alert);
     }
 
@@ -135,24 +128,23 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            List<Long> receivers = matchReceiverIdByNoticeRules(alert);
-            List<Long> templates = matchTemplateIdByNoticeRules(alert);
+            List<NoticeRule> noticeRules = matchNoticeRulesByAlert(alert);
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
-            for (int i = 0; i < receivers.size(); i++) {
-                try {
-                    if((templates.subList(i, i + 1)).get(0)==null){
-                        sendNoticeMsg(getOneReciverById(receivers.subList(i, i + 1)),
-                                null, alert);
+            if (noticeRules != null) {
+                for (NoticeRule rule : noticeRules) {
+                    try {
+                        if (rule.getTemplateId() == null) {
+                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
+                                    null, alert);
+                        } else {
+                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
+                                    getOneTemplateById(rule.getTemplateId()), alert);
+                        }
+                    } catch (AlertNoticeException e) {
+                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                     }
-                    else {
-                        sendNoticeMsg(getOneReciverById(receivers.subList(i, i + 1)),
-                                getOneTemplateById(templates.subList(i, i + 1)), alert);
-                    }
-                } catch (AlertNoticeException e) {
-                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
                 }
             }
-
         }
     }
 
