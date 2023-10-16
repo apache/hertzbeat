@@ -33,7 +33,6 @@ import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +51,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-@NoRepositoryBean
 public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     private static final String ALERT_TEST_TARGET = "Test Target";
@@ -64,8 +62,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
+    
     @Autowired
     private NoticeTemplateDao noticeTemplateDao;
+    
     @Autowired
     @Lazy
     private DispatcherAlarm dispatcherAlarm;
@@ -180,12 +180,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     public NoticeReceiver getOneReceiverById(Long id) {
-        return noticeReceiverDao.getReferenceById(id);
+        return noticeReceiverDao.findById(id).orElse(null);
     }
 
     @Override
     public NoticeTemplate getOneTemplateById(Long id) {
-        return noticeTemplateDao.getReferenceById(id);
+        return noticeTemplateDao.findById(id).orElse(null);
     }
 
 
