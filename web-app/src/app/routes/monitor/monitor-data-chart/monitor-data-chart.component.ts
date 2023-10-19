@@ -197,7 +197,7 @@ export class MonitorDataChartComponent implements OnInit {
     };
     if (this.unit != undefined || this.unit != null) {
       // @ts-ignore
-      this.lineHistoryTheme.title?.subtext = `${this.i18nSvc.fanyi('monitors.detail.chart.unit')}  ${this.unit}`;
+      this.lineHistoryTheme.title.subtext = `${this.i18nSvc.fanyi('monitors.detail.chart.unit')}  ${this.unit}`;
     }
     this.loadData();
   }
