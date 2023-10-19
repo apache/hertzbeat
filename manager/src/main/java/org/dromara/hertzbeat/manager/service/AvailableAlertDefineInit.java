@@ -10,7 +10,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,8 +34,8 @@ public class AvailableAlertDefineInit implements CommandLineRunner {
 		Set<String> apps = appService.getAllAppDefines().keySet();
 		for (String app : apps) {
 			try {
-				Optional<AlertDefine> optional = alertDefineDao.queryAlertDefineByAppAndMetricAndField(app, CommonConstants.AVAILABILITY, null);
-				if (optional.isEmpty()) {
+				List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetricAndField(app, CommonConstants.AVAILABILITY, null);
+				if (defines.isEmpty()) {
 					AlertDefine alertDefine = AlertDefine.builder()
 							.app(app)
 							.metric(CommonConstants.AVAILABILITY)

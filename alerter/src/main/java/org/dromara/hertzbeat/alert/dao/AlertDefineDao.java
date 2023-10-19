@@ -24,7 +24,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -57,7 +56,7 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @param field field
      * @return alert define
      */
-    Optional<AlertDefine> queryAlertDefineByAppAndMetricAndField(String app, String metric, String field);
+    List<AlertDefine> queryAlertDefineByAppAndMetricAndField(String app, String metric, String field);
 
     /**
      * Query the alarm definition list associated with the monitoring ID

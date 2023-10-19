@@ -33,7 +33,6 @@ import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +41,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -53,7 +51,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-@NoRepositoryBean
 public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     private static final String ALERT_TEST_TARGET = "Test Target";
@@ -65,8 +62,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
+    
     @Autowired
     private NoticeTemplateDao noticeTemplateDao;
+    
     @Autowired
     @Lazy
     private DispatcherAlarm dispatcherAlarm;
@@ -122,7 +121,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
+    public List<NoticeRule> getReceiverFilterRule(Alert alert) {
         // use cache
         ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
@@ -133,7 +132,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
-        Set<Long> filterReceivers = rules.stream()
+        return rules.stream()
                 .filter(rule -> {
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
@@ -176,137 +175,17 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
                     }
                     return true;
                 })
-                .map(NoticeRule::getReceiverId)
-                .collect(Collectors.toSet());
-        return noticeReceiverDao.findAllById(filterReceivers);
-    }
-
-    public List<Long> getReceiverIdFilterRule(Alert alert) {
-        // use cache
-        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
-        List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
-        if (rules == null) {
-            rules = noticeRuleDao.findNoticeRulesByEnableTrue();
-            noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
-        }
-
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
-        List<Long> filterReceivers = rules.stream()
-                .filter(rule -> {
-                    LocalDateTime nowDate = LocalDateTime.now();
-                    // filter day
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
-                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (!dayMatch) {
-                            return false;
-                        }
-                    }
-                    // filter time
-                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
-                        LocalTime nowTime = nowDate.toLocalTime();
-
-                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
-                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
-                            return false;
-                        }
-                    }
-
-                    if (rule.isFilterAll()) {
-                        return true;
-                    }
-                    // filter priorities
-                    if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
-                        boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                        if (!priorityMatch) {
-                            return false;
-                        }
-                    }
-                    // filter tags
-                    if (rule.getTags() != null && !rule.getTags().isEmpty()) {
-                        return rule.getTags().stream().anyMatch(tagItem -> {
-                            if (!alert.getTags().containsKey(tagItem.getName())) {
-                                return false;
-                            }
-                            String alertTagValue = alert.getTags().get(tagItem.getName());
-                            return Objects.equals(tagItem.getValue(), alertTagValue);
-                        });
-                    }
-                    return true;
-                })
-                .map(NoticeRule::getReceiverId)
                 .collect(Collectors.toList());
-
-        return filterReceivers;
     }
 
-    public NoticeReceiver getOneReciverByIdInFilterRule(List<Long> ids) {
-        return noticeReceiverDao.findAllById(ids).get(0);
+    @Override
+    public NoticeReceiver getOneReceiverById(Long id) {
+        return noticeReceiverDao.findById(id).orElse(null);
     }
 
-    public NoticeTemplate getOneTemplateByIdInFilterRule(List<Long> ids) {
-        return noticeTemplateDao.findAllById(ids).get(0);
-    }
-
-    public List<Long> getTemplateIdFilterRule(Alert alert) {
-        // use cache
-        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
-        List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
-        if (rules == null) {
-            rules = noticeRuleDao.findNoticeRulesByEnableTrue();
-            noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
-        }
-
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
-        List<Long> filterTemplates = rules.stream()
-                .filter(rule -> {
-                    LocalDateTime nowDate = LocalDateTime.now();
-                    // filter day
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
-                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (!dayMatch) {
-                            return false;
-                        }
-                    }
-                    // filter time
-                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
-                        LocalTime nowTime = nowDate.toLocalTime();
-
-                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
-                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
-                            return false;
-                        }
-                    }
-
-                    if (rule.isFilterAll()) {
-                        return true;
-                    }
-                    // filter priorities
-                    if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
-                        boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                        if (!priorityMatch) {
-                            return false;
-                        }
-                    }
-                    // filter tags
-                    if (rule.getTags() != null && !rule.getTags().isEmpty()) {
-                        return rule.getTags().stream().anyMatch(tagItem -> {
-                            if (!alert.getTags().containsKey(tagItem.getName())) {
-                                return false;
-                            }
-                            String alertTagValue = alert.getTags().get(tagItem.getName());
-                            return Objects.equals(tagItem.getValue(), alertTagValue);
-                        });
-                    }
-                    return true;
-                })
-                .map(NoticeRule::getTemplateId)
-                .collect(Collectors.toList());
-        return filterTemplates;
-
+    @Override
+    public NoticeTemplate getOneTemplateById(Long id) {
+        return noticeTemplateDao.findById(id).orElse(null);
     }
 
 
