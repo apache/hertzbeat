@@ -8038,7 +8038,7 @@ ng-zorro-antd@^15.1.0:
     date-fns "^2.16.1"
     tslib "^2.3.0"
 
-ngx-color-picker@^12.0.1:
+ngx-color-picker@~12.0.1:
   version "12.0.1"
   resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-12.0.1.tgz#bb3159fd685dfd23505e5a27300fa32bb42ebce8"
   integrity sha512-ODLePeqN7dnhTmjHGJrxFHaEXb3o2vH4n8qUzkUAIFmz5vOOxCCEYY4/bg+5VK62PonaK7j0fFf8AjnwrqhFHQ==
@@ -8052,12 +8052,12 @@ ngx-countdown@^15.0.0:
   dependencies:
     tslib "^2.3.0"
 
-ngx-echarts@^v7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-7.1.0.tgz#74732fbb0338e89234e3a72c067295c9b79fd098"
-  integrity sha512-6YuvBpcfb/rJIfebpzxwarO5I1cb0MaEbdYu1twd13fV6IG1XMgMnN7bROwECKfrMFqR6WfyCBBtSqpe0ExvXw==
+ngx-echarts@~15.0.3:
+  version "15.0.3"
+  resolved "https://registry.yarnpkg.com/ngx-echarts/-/ngx-echarts-15.0.3.tgz#94d5aec97cd64c2de772b343d48fe96d16b4a643"
+  integrity sha512-WK8nqRkzF23cjUerTpct0RLoJ1zOIxFZ0mxtASp781zv1KPZzfdD9bPEzUMTv4N/1lWfR7x3odAj2AElvFS8tg==
   dependencies:
-    tslib "^2.0.0"
+    tslib "^2.3.0"
 
 nice-napi@^1.0.2:
   version "1.0.2"
