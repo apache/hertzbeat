@@ -38,10 +38,10 @@ Even small corrections to typos are very welcome :)
 
 - Front-web start   
 
-1. Need `nodejs npm angular-cli` environment
+1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 16.10.0`
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
-4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npmmirror.com`
+4. Install angular-cli globally: `yarn global add @angular/cli@15`
 5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
 6. Browser access to localhost:4200 to start   
 
@@ -182,10 +182,10 @@ Public WeChat: `tancloudtech`
 
 - 前端启动
 
-1. 需要`nodejs npm angular-cli`环境
+1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 16.10.0`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@14 --registry=https://registry.npmmirror.com`
+4. 全局安装angular-cli `yarn global add @angular/cli@15`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 6. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat
 
