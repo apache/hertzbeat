@@ -138,11 +138,6 @@ public class PushCollectImpl extends AbstractCollect {
     }
 
     private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
-//        Map<String, Object> jsonMap = JsonUtil.fromJson(resp, new TypeReference<Map<String, Object>>() {
-//        });
-//        if (jsonMap == null) {
-//            throw new NullPointerException("parse result is null");
-//        }
         Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<Message<PushMetricsDto>>() {
         });
         if (msg == null) {
@@ -153,13 +148,19 @@ public class PushCollectImpl extends AbstractCollect {
             throw new NullPointerException("parse result is null");
         }
         for (PushMetricsDto.Metrics pushMetrics : pushMetricsDto.getMetricsList()) {
-            List<String> metricColumn = new ArrayList<>();
-            for (Metrics.Field field : metric.getFields()) {
-                metricColumn.add(pushMetrics.getMetrics().get(field.getField()));
+            List<CollectRep.ValueRow> rows = new ArrayList<>();
+            for (Map<String, String> metrics : pushMetrics.getMetrics()) {
+                List<String> metricColumn = new ArrayList<>();
+                for (Metrics.Field field : metric.getFields()) {
+                    metricColumn.add(metrics.get(field.getField()));
+                }
+                CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder()
+                        .addAllColumns(metricColumn).build();
+                rows.add(valueRow);
             }
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder()
-                    .addAllColumns(metricColumn);
-            builder.addValues(valueRowBuilder.build());
+
+
+            builder.addAllValues(rows);
         }
         builder.setTime(System.currentTimeMillis());
     }

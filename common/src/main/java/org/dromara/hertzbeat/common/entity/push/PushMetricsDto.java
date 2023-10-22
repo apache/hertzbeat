@@ -32,6 +32,6 @@ public class PushMetricsDto {
     public static class Metrics {
         private long monitorId;
         private Long time;
-        private Map<String, String> metrics;
+        private List<Map<String, String>> metrics;
     }
 }
