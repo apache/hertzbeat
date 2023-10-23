@@ -9,20 +9,26 @@ HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据�
 **升级前您需要保存备份好数据库的数据文件** 
 
 
-### For Docker Deploy
+### Docker部署方式的升级
 
-1. 若使用内置默认 H2 数据库 
+1. 若使用了自定义监控模版
+   - 需要备份 `docker cp hertzbeat:/opt/hertzbeat/define ./define` 当前运行 docker 容器里面的 `/opt/hertzbeat/define` 目录到当前主机下
+   - `docker cp hertzbeat:/opt/hertzbeat/define ./define`
+   - 然后在后续升级启动 docker 容器的时候需要挂载上这个 define 目录，`-v $(pwd)/define:/opt/hertzbeat/define`
+   - `-v $(pwd)/define:/opt/hertzbeat/define`
+   
+2. 若使用内置默认 H2 数据库 
    - 需挂载或备份 `-v $(pwd)/data:/opt/hertzbeat/data` 容器内的数据库文件目录 `/opt/hertzbeat/data`
    - 停止并删除容器，删除本地 HertzBeat docker 镜像，拉取新版本镜像
    - 参考 [Docker安装HertzBeat](docker-deploy) 使用新镜像创建新的容器，注意需要将数据库文件目录挂载 `-v $(pwd)/data:/opt/hertzbeat/data`
 
-2. 若使用外置关系型数据库 Mysql, PostgreSQL
+3. 若使用外置关系型数据库 Mysql, PostgreSQL
    - 无需挂载备份容器内的数据库文件目录
    - 停止并删除容器，删除本地 HertzBeat docker 镜像，拉取新版本镜像
    - 参考 [Docker安装HertzBeat](docker-deploy) 使用新镜像创建新的容器，`application.yml`配置数据库连接即可
 
 
-### For Package Deploy
+### 安装包部署方式的升级
 
 1. 若使用内置默认 H2 数据库
    - 备份安装包下的数据库文件目录 `/opt/hertzbeat/data` 
