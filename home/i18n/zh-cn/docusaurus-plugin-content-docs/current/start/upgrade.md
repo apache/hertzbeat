@@ -4,9 +4,17 @@ title: HertzBeat 新版本更新指引
 sidebar_label: 版本更新指引     
 ---
 
-HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据库内, 采集指标数据存储在 TDengine, IotDB 等时序数据库内。  
+**HertzBeat 的发布版本列表**
 
-**升级前您需要保存备份好数据库的数据文件** 
+- [Github Release](https://github.com/dromara/hertzbeat/releases)
+- [Gitee Release](https://gitee.com/dromara/hertzbeat/releases)
+- [DockerHub Release](https://hub.docker.com/r/tancloud/hertzbeat/tags)
+- [Docker quay.io Release](https://quay.io/repository/tancloud/hertzbeat?tab=tags)
+
+HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据库内, 采集指标数据存储在 TDengine, IotDB 等时序数据库内。
+
+**升级前您需要保存备份好数据库的数据文件和监控模版文件**
+
 
 
 ### Docker部署方式的升级
