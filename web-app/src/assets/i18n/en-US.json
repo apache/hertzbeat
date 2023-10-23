@@ -591,6 +591,7 @@
   "about.pr": "Contribution",
   "about.discuss": "Discussion",
   "about.doc": "Document",
+  "about.upgrade": "Upgrade Guide",
   "about.star": "Star",
   "validation.email.required": "Please enter your email!",
   "validation.email.wrong-format": "The email address is in the wrong format!",
