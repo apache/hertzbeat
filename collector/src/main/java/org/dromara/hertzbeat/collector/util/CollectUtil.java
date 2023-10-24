@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 public class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
+    private static final int HEX_STR_WIDTH = 2;
     private static final String SMILING_PLACEHOLDER = "^_^";
     private static final String SMILING_PLACEHOLDER_REX = "\\^_\\^";
     private static final String SMILING_PLACEHOLDER_REGEX = "(\\^_\\^)(\\w|-|$|\\.)+(\\^_\\^)";
@@ -425,12 +426,12 @@ public class CollectUtil {
         if (null == hexString || "".equals(hexString.trim())) {
             return null;
         }
-        byte[] bytes = new byte[hexString.length() / 2];
+        byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
         // 16进制字符串
         String hex;
-        for (int i = 0; i < hexString.length() / 2; i++) {
+        for (int i = 0; i < hexString.length() / HEX_STR_WIDTH; i++) {
             // 每次截取2位
-            hex = hexString.substring(i * 2, i * 2 + 2);
+            hex = hexString.substring(i * HEX_STR_WIDTH, i * HEX_STR_WIDTH + HEX_STR_WIDTH);
             // 16进制 --> 十进制
             bytes[i] = (byte) Integer.parseInt(hex, 16);
         }
