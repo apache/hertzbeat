@@ -80,6 +80,13 @@
           "items": [
             "advanced/extend-snmp"
           ]
+        },
+        {
+          "type": "category",
+          "label": "push",
+          "items": [
+            "advanced/extend-push"
+          ]
         }
       ]
     },

@@ -18,13 +18,15 @@
 package org.dromara.hertzbeat.manager.component.alerter;
 
 import com.google.common.collect.Maps;
-import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.AlerterWorkerPool;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.common.queue.CommonDataQueue;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
@@ -37,7 +39,6 @@ import java.util.Map;
  * 告警信息入库分发
  *
  * @author tom
- *
  */
 @Component
 @Slf4j
@@ -79,20 +80,28 @@ public class DispatcherAlarm implements InitializingBean {
      * @param alert    alert msg
      * @return send success or failed
      */
-    public boolean sendNoticeMsg(NoticeReceiver receiver, Alert alert) {
+    public boolean sendNoticeMsg(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         if (receiver == null || receiver.getType() == null) {
             log.warn("DispatcherAlarm-sendNoticeMsg params is empty alert:[{}], receiver:[{}]", alert, receiver);
             return false;
         }
         byte type = receiver.getType();
         if (alertNotifyHandlerMap.containsKey(type)) {
-            alertNotifyHandlerMap.get(type).send(receiver, alert);
+            alertNotifyHandlerMap.get(type).send(receiver, noticeTemplate, alert);
             return true;
         }
         return false;
     }
 
-    private List<NoticeReceiver> matchReceiverByNoticeRules(Alert alert) {
+    private NoticeReceiver getOneReceiverById(Long id) {
+        return noticeConfigService.getOneReceiverById(id);
+    }
+
+    private NoticeTemplate getOneTemplateById(Long id) {
+        return noticeConfigService.getOneTemplateById(id);
+    }
+
+    private List<NoticeRule> matchNoticeRulesByAlert(Alert alert) {
         return noticeConfigService.getReceiverFilterRule(alert);
     }
 
@@ -119,14 +128,21 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            // Forward configured email WeChat webhook
-            List<NoticeReceiver> receivers = matchReceiverByNoticeRules(alert);
+            List<NoticeRule> noticeRules = matchNoticeRulesByAlert(alert);
             // todo Send notification here temporarily single thread     发送通知这里暂时单线程
-            for (NoticeReceiver receiver : receivers) {
-                try {
-                    sendNoticeMsg(receiver, alert);
-                } catch (AlertNoticeException e) {
-                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+            if (noticeRules != null) {
+                for (NoticeRule rule : noticeRules) {
+                    try {
+                        if (rule.getTemplateId() == null) {
+                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
+                                    null, alert);
+                        } else {
+                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
+                                    getOneTemplateById(rule.getTemplateId()), alert);
+                        }
+                    } catch (AlertNoticeException e) {
+                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                    }
                 }
             }
         }

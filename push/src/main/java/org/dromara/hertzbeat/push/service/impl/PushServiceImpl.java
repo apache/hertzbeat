@@ -69,7 +69,7 @@ public class PushServiceImpl implements PushService {
             long monitorId = metrics.getMonitorId();
             metrics.setTime(curTime);
 
-            if (!monitorIdCache.containsKey(monitorId) && (monitorIdCache.containsKey(monitorId) && curTime > monitorIdCache.get(monitorId) + cacheTimeout)) {
+            if (!monitorIdCache.containsKey(monitorId) || (monitorIdCache.containsKey(monitorId) && curTime > monitorIdCache.get(monitorId) + cacheTimeout)) {
                 Optional<Monitor> queryOption = monitorDao.findById(monitorId);
                 if (queryOption.isEmpty()) {
                     monitorIdCache.remove(monitorId);
@@ -103,7 +103,7 @@ public class PushServiceImpl implements PushService {
                 if (pushMetrics == null || pushMetrics.getMetrics() == null) {
                     return pushMetricsDto;
                 }
-                Map<String, String> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<Map<String, String>>() {
+                List<Map<String, String>> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<List<Map<String, String>>>() {
                 });
                 metrics = PushMetricsDto.Metrics.builder().monitorId(monitorId).metrics(jsonMap).time(pushMetrics.getTime()).build();
                 lastPushMetrics.put(monitorId, metrics);
@@ -114,11 +114,10 @@ public class PushServiceImpl implements PushService {
             }
         }
         if (time > metrics.getTime()) {
+            // return void because time param is invalid
             return pushMetricsDto;
         }
         pushMetricsDto.getMetricsList().add(metrics);
-        // 目前先不删除
-        // metricsDao.deleteAllById(toBeDelMetricsId);
         return pushMetricsDto;
     }
 

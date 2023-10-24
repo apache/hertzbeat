@@ -319,6 +319,9 @@ metrics:
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+    units:
+      - CurrentThreadUserTime=NS->S
+      - CurrentThreadCpuTime=NS->S
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 用于监控的协议, 比如: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx

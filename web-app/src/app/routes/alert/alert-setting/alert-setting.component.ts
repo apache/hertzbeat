@@ -429,14 +429,15 @@ export class AlertSettingComponent implements OnInit {
     this.define.metric = this.cascadeValues[1];
     if (this.cascadeValues.length == 3) {
       this.define.field = this.cascadeValues[2];
+      if (!this.isExpr) {
+        let expr = this.calculateAlertRuleExpr();
+        if (expr != '') {
+          this.define.expr = expr;
+        }
+      }
     } else {
       this.define.expr = '';
-    }
-    if (!this.isExpr) {
-      let expr = this.calculateAlertRuleExpr();
-      if (expr != '') {
-        this.define.expr = expr;
-      }
+      this.define.field = '';
     }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc

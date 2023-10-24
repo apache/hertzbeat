@@ -33,7 +33,6 @@
 <nz-layout>
   <nz-sider *ngIf="showBasic" class="mobile-hide" nzWidth="19%" nzTheme="light">
     <nz-card
-      nzHoverable
       style="width: 100%; height: 100%"
       [nzBordered]="true"
       [nzTitle]="monitor_basic_card_title"
@@ -167,7 +166,7 @@
 </ng-template>
 
 <ng-template #monitor_basic_card_extra>
-  <a nz-icon nzType="close-circle" nzTheme="outline" (click)="showBasicStatus(false)"></a>
+  <a nz-icon nzType="edit" nzTheme="outline" [routerLink]="['/monitors/' + monitorId + '/edit']"></a>
 </ng-template>
 
 <ng-template #tab_extra_template>

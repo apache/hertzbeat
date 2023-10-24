@@ -87,6 +87,9 @@ import { CONSTANTS } from '../../../shared/constants';
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="read"></span>
           <a href="https://hertzbeat.com/docs/" target="_blank"> {{ 'about.doc' | i18n }} </a>
+          <nz-divider nzType="vertical"></nz-divider>
+          <span nz-icon nzType="cloud-download"></span>
+          <a href="https://hertzbeat.com/docs/start/upgrade" target="_blank"> {{ 'about.upgrade' | i18n }} </a>
           <a style="float: right" href="//github.com/dromara/hertzbeat" target="_blank"> {{ 'about.star' | i18n }} </a>
           <span style="float: right" nz-icon nzType="star" nzTheme="twotone"></span>
           <nz-divider style="float: right" nzType="vertical"></nz-divider>

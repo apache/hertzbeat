@@ -17,17 +17,19 @@
 
 package org.dromara.hertzbeat.manager.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.dromara.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.manager.dao.NoticeTemplateDao;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.domain.Specification;
@@ -38,14 +40,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * 消息通知配置实现
  *
  * @author tom
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -61,14 +62,23 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
-
+    
+    @Autowired
+    private NoticeTemplateDao noticeTemplateDao;
+    
     @Autowired
     @Lazy
     private DispatcherAlarm dispatcherAlarm;
 
+
     @Override
     public List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification) {
         return noticeReceiverDao.findAll(specification);
+    }
+
+    @Override
+    public List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification) {
+        return noticeTemplateDao.findAll(specification);
     }
 
     @Override
@@ -111,7 +121,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<NoticeReceiver> getReceiverFilterRule(Alert alert) {
+    public List<NoticeRule> getReceiverFilterRule(Alert alert) {
         // use cache
         ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
@@ -122,7 +132,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
-        Set<Long> filterReceivers = rules.stream()
+        return rules.stream()
                 .filter(rule -> {
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
@@ -165,10 +175,19 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
                     }
                     return true;
                 })
-                .map(NoticeRule::getReceiverId)
-                .collect(Collectors.toSet());
-        return noticeReceiverDao.findAllById(filterReceivers);
+                .collect(Collectors.toList());
     }
+
+    @Override
+    public NoticeReceiver getOneReceiverById(Long id) {
+        return noticeReceiverDao.findById(id).orElse(null);
+    }
+
+    @Override
+    public NoticeTemplate getOneTemplateById(Long id) {
+        return noticeTemplateDao.findById(id).orElse(null);
+    }
+
 
     @Override
     public NoticeReceiver getReceiverById(Long receiverId) {
@@ -181,6 +200,34 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
+    public void addNoticeTemplate(NoticeTemplate noticeTemplate) {
+        noticeTemplateDao.save(noticeTemplate);
+        clearNoticeRulesCache();
+    }
+
+    @Override
+    public void editNoticeTemplate(NoticeTemplate noticeTemplate) {
+        noticeTemplateDao.save(noticeTemplate);
+        clearNoticeRulesCache();
+    }
+
+    @Override
+    public void deleteNoticeTemplate(Long templateId) {
+        noticeTemplateDao.deleteById(templateId);
+        clearNoticeRulesCache();
+    }
+
+    @Override
+    public Optional<NoticeTemplate> getNoticeTemplatesById(Long templateId) {
+        return noticeTemplateDao.findById(templateId);
+    }
+
+    @Override
+    public NoticeTemplate findNoticeTemplateByTypeAndDefault(Byte type, Boolean defaultTemplate) {
+        return noticeTemplateDao.findNoticeTemplateByTypeAndPresetTemplate(type, defaultTemplate);
+    }
+
+    @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
         Alert alert = new Alert();
         alert.setTarget(ALERT_TEST_TARGET);
@@ -189,7 +236,10 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setFirstAlarmTime(System.currentTimeMillis());
         alert.setLastAlarmTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
-        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, alert);
+        Byte type = noticeReceiver.getType();
+        Boolean defaultTemplate = true;
+        NoticeTemplate noticeTemplate = findNoticeTemplateByTypeAndDefault(type, defaultTemplate);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, noticeTemplate, alert);
     }
 
     private void clearNoticeRulesCache() {
