@@ -164,6 +164,8 @@ public class AlertServiceImpl implements AlertService {
                 .tags(alertReport.getLabels())
                 .target(alertReport.getAlertName())
                 .triggerTimes(1)
+                .firstAlarmTime(alertReport.getAlertTime())
+                .lastAlarmTime(alertReport.getAlertTime())
                 .gmtCreate(dateTime)
                 .gmtUpdate(dateTime)
                 .build();
