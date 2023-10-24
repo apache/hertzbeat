@@ -29,7 +29,7 @@ name:
 help:
   zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控 <br><span class='help_module_span'>⚠️注意：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
   en-US: "HertzBeat monitors Docker through general performance metrics such as containers, status, <br><span class='help_module_span'>⚠️Note: In order to monitor container information of Docker, you need to enable the port so that the collection request can obtain the corresponding information.<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat對Docker容器的通用性能指標（system、containers、stats）進行採集監控<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Docker中的容器資訊，您需要打開埠，讓採集請求獲取到對應的資訊，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C '>點擊查看開啟步驟</a>。</span>
+  zh-TW: HertzBeat對Docker容器的通用性能指標（system、containers、stats）進行採集監控<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Docker中的容器指標，您需要打開埠，讓採集請求獲取到對應的指標，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C '>點擊查看開啟步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/docker/
   en-US: https://hertzbeat.com/docs/help/docker/

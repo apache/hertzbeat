@@ -423,7 +423,7 @@ public class CollectUtil {
      */
     public static byte[] fromHexString(String hexString) {
         if (null == hexString || "".equals(hexString.trim())) {
-            return new byte[0];
+            return null;
         }
         byte[] bytes = new byte[hexString.length() / 2];
         // 16进制字符串

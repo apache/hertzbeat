@@ -29,6 +29,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * udp探测协议采集实现
@@ -37,10 +38,8 @@ import java.net.*;
  */
 @Slf4j
 public class UdpCollectImpl extends AbstractCollect {
-
     
-    private static final String SNMP = "snmp";
-    private static final String SNMP_HEX_CONTENT = "30250201010409636f6d6d756e697479a015020419e502ff020100020100300730050601290500";
+    private static final byte[] HELLO = "hello".getBytes(StandardCharsets.UTF_8);
     
     public UdpCollectImpl() {
     }
@@ -60,14 +59,13 @@ public class UdpCollectImpl extends AbstractCollect {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(timeout);
             String content = udpProtocol.getContent();
-            if (SNMP.equalsIgnoreCase(udpProtocol.getProtocol())) {
-                content = SNMP_HEX_CONTENT;
-            }
             byte[] buffer = CollectUtil.fromHexString(content);
+            buffer = buffer == null ? HELLO : buffer;
             SocketAddress socketAddress = new InetSocketAddress(udpProtocol.getHost(), Integer.parseInt(udpProtocol.getPort()));
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, socketAddress);
-            socket.send(packet);
-            DatagramPacket response = new DatagramPacket(buffer, buffer.length);
+            DatagramPacket request = new DatagramPacket(buffer, buffer.length, socketAddress);
+            socket.send(request);
+            byte[] responseBuffer = new byte[1];
+            DatagramPacket response = new DatagramPacket(responseBuffer, responseBuffer.length);
             socket.receive(response);
             long responseTime = System.currentTimeMillis() - startTime;
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -84,6 +82,11 @@ public class UdpCollectImpl extends AbstractCollect {
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Peer connect failed: " + errorMsg);
+        } catch (PortUnreachableException portUnreachableException) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(portUnreachableException);
+            log.info(errorMsg);
+            builder.setCode(CollectRep.Code.UN_AVAILABLE);
+            builder.setMsg("Peer port unreachable");
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);

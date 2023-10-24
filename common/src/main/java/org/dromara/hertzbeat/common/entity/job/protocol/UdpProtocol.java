@@ -48,11 +48,6 @@ public class UdpProtocol {
     private String timeout;
     
     /**
-     * 具体上层协议类型 snmp 
-     */
-    private String protocol;
-    
-    /**
      * 自定义协议数据包 hexString 16进制字符串
      */
     private String content;
