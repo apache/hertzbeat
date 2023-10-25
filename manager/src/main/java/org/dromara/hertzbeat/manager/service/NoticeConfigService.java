@@ -42,7 +42,6 @@ public interface NoticeConfigService {
      * @return Search result    查询结果
      */
     List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification);
-//    Map<NoticeReceiver,NoticeTemplate> getNoticeReceiversAndTemplate(Specification<NoticeReceiver> specification);
 
     /**
      * Dynamic conditional query
@@ -117,43 +116,25 @@ public interface NoticeConfigService {
      * @param alert Alarm information       告警信息
      * @return Receiver     接收人
      */
-    List<NoticeReceiver> getReceiverFilterRule(Alert alert);
+    List<NoticeRule> getReceiverFilterRule(Alert alert);
 
     /**
-     * According to the alarm information matching all notification policies, filter out the recipients' ID who need to be notified
-     * 根据告警信息与所有通知策略匹配，过滤出需要通知的接收人ID
+     * Query the recipient information according to the recipient ID 
+     * 根据接收人ID查询接收人信息
      *
-     * @param alert Alarm information       告警信息
-     * @return Receiver ID     接收人
-     */
-    List<Long> getReceiverIdFilterRule(Alert alert);
-
-    /**
-     * According to the alarm information matching all notification policies, filter out the templates' ID
-     * 根据告警信息与所有通知策略匹配，过滤出需要通知模板ID
-     *
-     * @param alert Alarm information       告警信息
-     * @return Template ID     通知模板
-     */
-    List<Long> getTemplateIdFilterRule(Alert alert);
-
-    /**
-     * Query the recipient information according to the recipient ID List
-     * 根据接收人ID列表查询接收人信息
-     *
-     * @param ids Reciver ID List     接收人ID列表
+     * @param id Receiver ID     接收人ID
      * @return Receiver     接收人
      */
-    NoticeReceiver getOneReciverByIdInFilterRule(List<Long> ids);
+    NoticeReceiver getOneReceiverById(Long id);
 
     /**
-     * Query the template information according to the template ID List
-     * 根据通知模板ID列表查询模板信息
+     * Query the template information according to the template ID
+     * 根据通知模板ID查询模板信息
      *
-     * @param ids Template ID List      接收人ID列表
+     * @param id Template ID List      接收人ID
      * @return Template     通知模板
      */
-    NoticeTemplate getOneTemplateByIdInFilterRule(List<Long> ids);
+    NoticeTemplate getOneTemplateById(Long id);
 
     /**
      * Query recipient information based on recipient ID (primary key Id)
@@ -208,16 +189,14 @@ public interface NoticeConfigService {
     Optional<NoticeTemplate> getNoticeTemplatesById(Long templateId);
 
     /**
-     * Query specific notification templates according to the template type and default
-     * 根据模板类型和预设模板标识查询具体通知规则
+     * Query specific notification templates according to the template type
+     * 根据模板类型查询具体模版
      *
      * @param type            Template type     模板类型
-     * @param defaultTemplate Preset template identification     预设模板标识
      * @return Notification Template Entity    通知模板实体
      */
-    NoticeTemplate findNoticeTemplateByTypeAndDefault(Byte type, Boolean defaultTemplate);
-
-
+    NoticeTemplate getDefaultNoticeTemplateByType(Byte type);
+    
     /**
      * alert Send test message
      * 告警 发送测试消息

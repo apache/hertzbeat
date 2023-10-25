@@ -153,8 +153,17 @@
   "cli": {
     "packageManager": "yarn",
     "schematicCollections": [
-      "@schematics/angular", "hertzbeat-web-app"
+      "@schematics/angular",
+      "hertzbeat-web-app"
     ],
     "analytics": false
+  },
+  "schematics": {
+    "@angular-eslint/schematics:application": {
+      "setParserOptionsProject": true
+    },
+    "@angular-eslint/schematics:library": {
+      "setParserOptionsProject": true
+    }
   }
 }

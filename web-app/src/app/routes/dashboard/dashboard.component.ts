@@ -387,12 +387,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   alertsEchartsInstance!: any;
   alertsLoading: boolean = true;
 
-  refreshAlerts(): void {
-    this.alertsEChartOption = this.alertsTheme;
-    this.cdr.detectChanges();
-    this.alertsLoading = false;
-  }
-
   // start 告警处理率
   alertsDealEChartOption!: EChartsOption;
   alertsDealTheme!: EChartsOption;
@@ -479,6 +473,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           console.warn(message.msg);
         }
         alertSummaryInit$.unsubscribe();
+        this.alertsLoading = false;
+        this.alertsDealLoading = false;
       },
       error => {
         alertSummaryInit$.unsubscribe();

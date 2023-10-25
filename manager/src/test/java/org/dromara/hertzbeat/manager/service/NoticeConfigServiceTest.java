@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -180,9 +181,8 @@ class NoticeConfigServiceTest {
         lenient().when(alert.getPriority()).thenReturn(priority);
         lenient().when(alert.getTags()).thenReturn(tagsMap);
 
-        noticeConfigService.getReceiverFilterRule(alert);
-        final Set<Long> sets = Sets.newHashSet(1L, 4L);
-        verify(noticeReceiverDao, times(1)).findAllById(sets);
+        List<NoticeRule> ruleList = noticeConfigService.getReceiverFilterRule(alert);
+        assertEquals(2, ruleList.size());
     }
 
     @Test
