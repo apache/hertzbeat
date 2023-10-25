@@ -163,6 +163,7 @@
   "alert.setting.target.instance": "所屬行實例",
   "alert.setting.target.system_value_row_count": "系統-指標值行數量",
   "alert.setting.operator": "支持操作符函數",
+  "alert.setting.search": "搜尋閾值",
   "alert.silence.new": "新增靜默策略",
   "alert.silence.edit": "編輯靜默策略",
   "alert.silence.delete": "刪除靜默策略",

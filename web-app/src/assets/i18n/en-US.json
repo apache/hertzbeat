@@ -164,6 +164,7 @@
   "alert.setting.target.instance": "Instance of the row",
   "alert.setting.target.system_value_row_count": "System-Metrics value row count",
   "alert.setting.operator": "Supported operator functions",
+  "alert.setting.search": "Search Threshold",
   "alert.silence.new": "New Silence Strategy",
   "alert.silence.edit": "Edit Silence Strategy",
   "alert.silence.delete": "Delete Silence Strategy",
