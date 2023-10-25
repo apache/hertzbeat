@@ -145,6 +145,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     }
 
     @Override
+    public boolean isStart() {
+        return this.channel != null && this.channel.isActive();
+    }
+
+    @Override
     public void sendMsg(final ClusterMsg.Message request) {
         this.sendMsgImpl(this.channel, request);
     }
