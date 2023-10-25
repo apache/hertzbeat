@@ -229,7 +229,7 @@
   "alert.notice.template.delete": "Delete Template",
   "alert.notice.template.name": "Template Name",
   "alert.notice.template.example": "Template Example",
-  "alert.notice.template.supplier": "Supplier Name",
+  "alert.notice.template.type": "Notice Type",
   "alert.notice.template.content": "Template Content",
   "alert.notice.receiver": "Message Receiver",
   "alert.notice.receiver.new": "New Receiver",
