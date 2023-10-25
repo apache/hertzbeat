@@ -32,4 +32,9 @@ public interface RemotingService {
      */
     void shutdown();
 
+    /**
+     * test use
+     * @return is server start
+     */
+    boolean isStart();
 }
