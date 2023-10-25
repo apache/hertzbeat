@@ -22,7 +22,6 @@ export class AlertNoticeComponent implements OnInit {
   receivers!: NoticeReceiver[];
   receiverTableLoading: boolean = true;
   templates: NoticeTemplate[] = [];
-  defaultTemplates: NoticeTemplate[] = [];
   templateTableLoading: boolean = true;
   rules!: NoticeRule[];
   ruleTableLoading: boolean = true;
@@ -125,22 +124,6 @@ export class AlertNoticeComponent implements OnInit {
         console.error(error.msg);
         this.templateTableLoading = false;
         templatesInit$.unsubscribe();
-      }
-    );
-    let defalutTemplatesInit$ = this.noticeTemplateSvc.getDefaultNoticeTemplates().subscribe(
-      message => {
-        this.templateTableLoading = false;
-        if (message.code === 0) {
-          this.defaultTemplates = message.data;
-        } else {
-          console.warn(message.msg);
-        }
-        defalutTemplatesInit$.unsubscribe();
-      },
-      error => {
-        console.error(error.msg);
-        this.templateTableLoading = false;
-        defalutTemplatesInit$.unsubscribe();
       }
     );
   }
@@ -773,7 +756,7 @@ export class AlertNoticeComponent implements OnInit {
   onManageTemplateModalOk() {
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
-      this.template.presetTemplate = false;
+      this.template.preset = false;
       const modalOk$ = this.noticeTemplateSvc
         .newNoticeTemplate(this.template)
         .pipe(

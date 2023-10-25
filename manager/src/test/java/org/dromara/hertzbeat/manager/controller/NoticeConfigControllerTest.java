@@ -78,7 +78,7 @@ class NoticeConfigControllerTest {
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
-        template.setTemplateContent("[${title}]\n" +
+        template.setContent("[${title}]\n" +
                 "${targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +

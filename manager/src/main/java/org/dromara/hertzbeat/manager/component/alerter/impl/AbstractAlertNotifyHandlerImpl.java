@@ -27,12 +27,12 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
+import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.context.event.EventListener;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -54,16 +54,17 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Resource
     protected RestTemplate restTemplate;
-
     @Resource
     protected AlerterProperties alerterProperties;
+    @Resource
+    protected NoticeConfigService noticeConfigService;
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
 
         StringTemplateLoader stringLoader = new StringTemplateLoader();
-        freemarker.template.Template templateRes = null;
-        Configuration cfg = new Configuration();
+        freemarker.template.Template templateRes;
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         Map<String, String> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
@@ -89,16 +90,16 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("contentLabel", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
         if (noticeTemplate == null) {
-            String path = this.getClass().getResource("/").getPath();
-            cfg.setDirectoryForTemplateLoading(new File(path + "templates/"));
-            cfg.setDefaultEncoding("utf-8");
-            templateRes = cfg.getTemplate(templateName() + ".txt");
-        } else {
-            String templateName = "freemakerTemplate";
-            stringLoader.putTemplate(templateName, noticeTemplate.getTemplateContent());
-            cfg.setTemplateLoader(stringLoader);
-            templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
+            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(type());
         }
+        if (noticeTemplate == null) {
+            log.error("{} does not have mapping default notice template. type: {}.", templateName(), type());
+            throw new NullPointerException(type() + " does not have mapping default notice template");
+        }
+        String templateName = "freeMakerTemplate";
+        stringLoader.putTemplate(templateName, noticeTemplate.getContent());
+        cfg.setTemplateLoader(stringLoader);
+        templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
         String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
         return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }

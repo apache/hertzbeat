@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
@@ -31,16 +32,24 @@ import org.dromara.hertzbeat.manager.dao.NoticeRuleDao;
 import org.dromara.hertzbeat.manager.dao.NoticeTemplateDao;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,14 +58,17 @@ import java.util.stream.Collectors;
  * @author tom
  */
 @Service
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class NoticeConfigServiceImpl implements NoticeConfigService {
+public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLineRunner {
 
     private static final String ALERT_TEST_TARGET = "Test Target";
 
     private static final String ALERT_TEST_CONTENT = "test send msg! \n This is the test data. It is proved that it can be received successfully";
 
+    private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
+    
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
@@ -78,7 +90,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
 
     @Override
     public List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification) {
-        return noticeTemplateDao.findAll(specification);
+        List<NoticeTemplate> defaultTemplates = new LinkedList<>(PRESET_TEMPLATE.values());
+        defaultTemplates.addAll(noticeTemplateDao.findAll(specification));
+        return defaultTemplates;
     }
 
     @Override
@@ -223,8 +237,11 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
     }
 
     @Override
-    public NoticeTemplate findNoticeTemplateByTypeAndDefault(Byte type, Boolean defaultTemplate) {
-        return noticeTemplateDao.findNoticeTemplateByTypeAndPresetTemplate(type, defaultTemplate);
+    public NoticeTemplate getDefaultNoticeTemplateByType(Byte type) {
+        if (type == null) {
+            return null;
+        }
+        return PRESET_TEMPLATE.get(type);
     }
 
     @Override
@@ -236,14 +253,51 @@ public class NoticeConfigServiceImpl implements NoticeConfigService {
         alert.setFirstAlarmTime(System.currentTimeMillis());
         alert.setLastAlarmTime(System.currentTimeMillis());
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
-        Byte type = noticeReceiver.getType();
-        Boolean defaultTemplate = true;
-        NoticeTemplate noticeTemplate = findNoticeTemplateByTypeAndDefault(type, defaultTemplate);
-        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, noticeTemplate, alert);
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, alert);
     }
 
     private void clearNoticeRulesCache() {
         ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         noticeCache.remove(CommonConstants.CACHE_NOTICE_RULE);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        try {
+            log.info("load default notice template in internal jar");
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources("classpath:templates/*.*");
+            for (Resource resource : resources) {
+                if (resource.getFilename() == null || (!resource.getFilename().endsWith("txt") && !resource.getFilename().endsWith("html"))) {
+                    log.warn("Ignore the template file {}.", resource.getFilename());
+                    continue;
+                }
+                try (InputStream inputStream = resource.getInputStream()) {
+                    byte[] bytes = new byte[inputStream.available()];
+                    inputStream.read(bytes);
+                    String content = new String(bytes, StandardCharsets.UTF_8);
+                    NoticeTemplate template = new NoticeTemplate();
+                    String name = resource.getFilename().replace(".txt", "").replace(".html", "");
+                    String[] names = name.split("-");
+                    if (names.length != 2) {
+                        log.warn("Ignore the template file {}.", resource.getFilename());
+                        continue;
+                    }
+                    byte type = Byte.parseByte(names[0]);
+                    name = names[1];
+                    template.setName(name);
+                    template.setType(type);
+                    template.setPreset(true);
+                    template.setContent(content);
+                    template.setGmtUpdate(LocalDateTime.now());
+                    PRESET_TEMPLATE.put(template.getType(), template);
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                    log.error("Ignore this template file: {}.", resource.getFilename());
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 }
