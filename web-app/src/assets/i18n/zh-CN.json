@@ -229,7 +229,7 @@
   "alert.notice.template.delete": "删除通知模板",
   "alert.notice.template.name": "模板名称",
   "alert.notice.template.example": "模板示例",
-  "alert.notice.template.supplier": "供应商名称",
+  "alert.notice.template.type": "通知方式",
   "alert.notice.template.content": "通知模板内容",
   "alert.notice.receiver": "消息接收人",
   "alert.notice.receiver.new": "新增接收人",

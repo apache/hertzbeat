@@ -40,7 +40,7 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         var noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("DiscordBot");
-        noticeTemplate.setTemplateContent("${targetLabel} : ${target}\n" +
+        noticeTemplate.setContent("${targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
                 "${priorityLabel} : ${priority}\n" +
