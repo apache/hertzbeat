@@ -24,7 +24,6 @@ import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.dromara.hertzbeat.common.util.Pair;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,13 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
@@ -171,7 +164,7 @@ public class NoticeConfigController {
         // Returns success if it does not exist or if the deletion is successful
         // todo 不存在或删除成功都返回成功
         Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
-        if (noticeTemplate == null) {
+        if (noticeTemplate.isEmpty()) {
             return ResponseEntity.ok(Message.success("The specified notification template could not be queried, please check whether the parameters are correct"));
         }
         noticeConfigService.deleteNoticeTemplate(templateId);
@@ -182,7 +175,7 @@ public class NoticeConfigController {
     @Operation(summary = "Get a list of message notification templates based on query filter items",
             description = "根据查询过滤项获取消息通知模板列表")
     public ResponseEntity<Message<List<NoticeTemplate>>> getTemplates(
-            @Parameter(description = "en: Template name,zh: 模板名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
+            @Parameter(description = "Template name | 模板名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
 
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
@@ -194,30 +187,6 @@ public class NoticeConfigController {
         };
         List<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(specification);
         Message<List<NoticeTemplate>> message = Message.success(templatePage);
-        return ResponseEntity.ok(message);
-    }
-
-    @GetMapping(path = "/default_templates")
-    @Operation(summary = "Get a list of message notification templates based on query filter items",
-            description = "根据查询过滤项获取预设消息通知模板列表")
-    public ResponseEntity<Message<List<NoticeTemplate> >> getDefaultTemplates(
-            @Parameter(description = "en: Template name,zh: 模板名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) throws IOException {
-        List<NoticeTemplate> defaultTemplatePage=new ArrayList<>();
-        Long intitId=1000L;
-        String path="manager/src/main/resources/templates/";
-        File file = new File(path);
-        String[] fs=file.list();
-        for(String f:fs){
-            NoticeTemplate tmp=new NoticeTemplate();
-            tmp.setId(intitId);
-            tmp.setName(f.replace(".txt", "").replace(".html", ""));
-            tmp.setPresetTemplate(true);
-            tmp.setTemplateContent(Files.readString(Paths.get(path+f)));
-            intitId++;
-            defaultTemplatePage.add(tmp);
-        }
-
-        Message<List<NoticeTemplate> > message = Message.success(defaultTemplatePage);
         return ResponseEntity.ok(message);
     }
 

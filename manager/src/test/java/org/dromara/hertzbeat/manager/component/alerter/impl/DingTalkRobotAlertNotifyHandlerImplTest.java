@@ -36,7 +36,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
         NoticeTemplate noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("dingding");
-        noticeTemplate.setTemplateContent("#### [${title}]\n" +
+        noticeTemplate.setContent("#### [${title}]\n" +
                 "##### **${targetLabel}** : ${target}\n" +
                 "<#if (monitorId??)>##### **${monitorIdLabel}** : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>##### **${monitorNameLabel}** : ${monitorName} </#if>\n" +

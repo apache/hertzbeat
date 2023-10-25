@@ -75,7 +75,7 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         var noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("HuaWeiCloud");
-        noticeTemplate.setTemplateContent("[${title}]\n" +
+        noticeTemplate.setContent("[${title}]\n" +
                 "${targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +

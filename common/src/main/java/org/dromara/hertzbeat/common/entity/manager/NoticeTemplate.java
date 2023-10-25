@@ -39,8 +39,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * Notification strategy entity
- * 通知策略
+ * Notification template entity
+ * 通知模版
  *
  *
  */
@@ -78,9 +78,8 @@ public class NoticeTemplate {
     @Schema(title = "Is it a preset template: true- preset template false- custom template.",
             description = "是否为预设模板: true-预设模板 false-自定义模板",
             accessMode = READ_WRITE)
-    @NotNull
-    private Boolean presetTemplate;
-
+    @Column(columnDefinition = "boolean default false")
+    private boolean preset = false;
 
     @Schema(title = "Template content",
             description = "模板内容",
@@ -93,8 +92,8 @@ public class NoticeTemplate {
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
     @Length(max = 100000)
     @NotBlank
-    @Column(name = "template_content", columnDefinition = "MEDIUMTEXT")
-    private String templateContent;
+    @Column(name = "content", columnDefinition = "MEDIUMTEXT")
+    private String content;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
