@@ -48,7 +48,7 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
         NoticeTemplate noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("WeChatApp");
-        noticeTemplate.setTemplateContent("");
+        noticeTemplate.setContent("");
         Map<String, String> map = new HashMap<>();
         map.put(CommonConstants.TAG_MONITOR_ID, "Mock monitor id");
         map.put(CommonConstants.TAG_MONITOR_NAME, "Mock monitor name");

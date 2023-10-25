@@ -42,7 +42,6 @@ public interface NoticeConfigService {
      * @return Search result    查询结果
      */
     List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification);
-//    Map<NoticeReceiver,NoticeTemplate> getNoticeReceiversAndTemplate(Specification<NoticeReceiver> specification);
 
     /**
      * Dynamic conditional query
@@ -190,16 +189,14 @@ public interface NoticeConfigService {
     Optional<NoticeTemplate> getNoticeTemplatesById(Long templateId);
 
     /**
-     * Query specific notification templates according to the template type and default
-     * 根据模板类型和预设模板标识查询具体通知规则
+     * Query specific notification templates according to the template type
+     * 根据模板类型查询具体模版
      *
      * @param type            Template type     模板类型
-     * @param defaultTemplate Preset template identification     预设模板标识
      * @return Notification Template Entity    通知模板实体
      */
-    NoticeTemplate findNoticeTemplateByTypeAndDefault(Byte type, Boolean defaultTemplate);
-
-
+    NoticeTemplate getDefaultNoticeTemplateByType(Byte type);
+    
     /**
      * alert Send test message
      * 告警 发送测试消息
