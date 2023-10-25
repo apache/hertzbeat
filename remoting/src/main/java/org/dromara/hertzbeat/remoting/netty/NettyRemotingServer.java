@@ -64,6 +64,8 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private EventLoopGroup workerGroup;
 
+    private Channel channel = null;
+
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
                                final NettyEventListener nettyEventListener,
                                final CommonThreadPool threadPool) {
@@ -114,7 +116,8 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                                 NettyRemotingServer.this.initChannel(channel);
                             }
                         });
-                b.bind(port).sync().channel().closeFuture().sync();
+                channel = b.bind(port).sync().channel();
+                channel.closeFuture().sync();
             } catch (InterruptedException ignored) {
                 log.info("server shutdown now!");
             } catch (Exception e) {
@@ -125,6 +128,11 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 workerGroup.shutdownGracefully();
             }
         });
+    }
+
+    @Override
+    public boolean isStart() {
+        return this.channel != null && this.channel.isActive();
     }
 
     private void initChannel(final SocketChannel channel) {

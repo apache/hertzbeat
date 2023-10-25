@@ -44,11 +44,34 @@ public class RemotingServiceTest {
     @BeforeEach
     public void setUp() throws InterruptedException {
         int port = 10000 + (int) (Math.random() * 10000);
+
         remotingServer = createRemotingServer(port);
-        Thread.sleep(1000);
+        // await remotingServer start
+        int count = 5;
+        while (count-- > 0) {
+            Thread.sleep(1000);
+            if (remotingServer.isStart()) {
+                break;
+            }
+        }
+
+        if (count < 0) {
+            throw new RuntimeException("remoting server start error");
+        }
+
         remotingClient = createRemotingClient(port);
-        // todo waiting server and client start, 替换为更优雅的方式
-        Thread.sleep(1000);
+        // await remotingClient start
+        count = 5;
+        while (count-- > 0) {
+            Thread.sleep(1000);
+            if (remotingClient.isStart()) {
+                break;
+            }
+        }
+
+        if (count < 0) {
+            throw new RuntimeException("remoting client start error");
+        }
     }
 
     @AfterEach
