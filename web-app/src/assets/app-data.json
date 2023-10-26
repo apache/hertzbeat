@@ -79,7 +79,7 @@
           "key": "custom",
           "text": "自定义",
           "i18n": "menu.monitor.custom",
-          "icon": "anticon-robot"
+          "icon": "anticon-project"
         }
       ]
     },

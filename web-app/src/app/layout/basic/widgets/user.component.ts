@@ -34,7 +34,7 @@ import { CONSTANTS } from '../../../shared/constants';
       [nzFooter]="null"
       (nzOnCancel)="disAboutModal()"
       nzClosable="false"
-      nzWidth="44%"
+      nzWidth="48%"
     >
       <div *nzModalContent class="-inner-content">
         <div style="text-align: center">

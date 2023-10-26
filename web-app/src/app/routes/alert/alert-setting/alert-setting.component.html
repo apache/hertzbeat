@@ -24,13 +24,12 @@
     style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
     nz-input
     type="text"
-    [placeholder]="'alert.setting.target' | i18n"
+    [placeholder]="'alert.setting.search' | i18n"
     nzSize="default"
     (keyup.enter)="loadAlertDefineTable()"
     [(ngModel)]="search"
   />
 </div>
-<div nz-col [nzXs]="{ span: 24 }" class="mobile-hide"> </div>
 
 <nz-table
   #fixedTable
