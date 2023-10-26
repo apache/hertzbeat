@@ -1,0 +1,6 @@
+${targetLabel} : ${target}
+<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+${priorityLabel} : ${priority}
+${triggerTimeLabel} : ${triggerTime}
+${contentLabel} : ${content}
