@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 public class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
+    private static final int HEX_STR_WIDTH = 2;
     private static final String SMILING_PLACEHOLDER = "^_^";
     private static final String SMILING_PLACEHOLDER_REX = "\\^_\\^";
     private static final String SMILING_PLACEHOLDER_REGEX = "(\\^_\\^)(\\w|-|$|\\.)+(\\^_\\^)";
@@ -412,5 +413,28 @@ public class CollectUtil {
         List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
         });
         metrics.setFields(pushFieldList);
+    }
+
+    /**
+     * 将16进制字符串转换为byte[]
+     * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500
+     * 16进制字符串不区分大小写，返回的数组相同
+     * @param hexString 16进制字符串
+     * @return byte[]
+     */
+    public static byte[] fromHexString(String hexString) {
+        if (null == hexString || "".equals(hexString.trim())) {
+            return null;
+        }
+        byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
+        // 16进制字符串
+        String hex;
+        for (int i = 0; i < hexString.length() / HEX_STR_WIDTH; i++) {
+            // 每次截取2位
+            hex = hexString.substring(i * HEX_STR_WIDTH, i * HEX_STR_WIDTH + HEX_STR_WIDTH);
+            // 16进制 --> 十进制
+            bytes[i] = (byte) Integer.parseInt(hex, 16);
+        }
+        return bytes;
     }
 }

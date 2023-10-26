@@ -119,10 +119,10 @@ public class Metrics {
      */
     private TelnetProtocol telnet;
     /**
-     * Use tcp or ucp implemented by socket for service port detection configuration information
-     * 使用socket实现的tcp或ucp进行服务端口探测配置信息
+     * Use udp implemented by socket for service port detection configuration information
+     * 使用socket实现的udp进行服务端口探测配置信息
      */
-    private TcpUdpProtocol tcpUdp;
+    private UdpProtocol udp;
     /**
      * Database configuration information implemented using the public jdbc specification
      * 使用公共的jdbc规范实现的数据库配置信息
