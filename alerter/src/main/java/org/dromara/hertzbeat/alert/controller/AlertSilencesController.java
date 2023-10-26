@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -58,6 +59,7 @@ public class AlertSilencesController {
             description = "You can obtain the list of alarm silence by querying filter items ｜ 根据查询过滤项获取告警静默信息列表")
     public ResponseEntity<Message<Page<AlertSilence>>> getAlertSilences(
             @Parameter(description = "Alarm Silence ID ｜ 告警静默ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Search Name ｜ 模糊查询-名称", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page ｜ 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
@@ -71,6 +73,15 @@ public class AlertSilencesController {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("name")),
+                                "%" + search.toLowerCase() + "%"
+                        )
+                );
+                andList.add(predicate);
             }
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));

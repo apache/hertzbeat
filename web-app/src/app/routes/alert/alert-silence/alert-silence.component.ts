@@ -29,6 +29,7 @@ export class AlertSilenceComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  search!: string;
   silences!: AlertSilence[];
   tableLoading: boolean = true;
   checkedSilenceIds = new Set<number>();
@@ -43,7 +44,7 @@ export class AlertSilenceComponent implements OnInit {
 
   loadAlertSilenceTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertSilenceService.getAlertSilences(this.pageIndex - 1, this.pageSize).subscribe(
+    let alertDefineInit$ = this.alertSilenceService.getAlertSilences(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
