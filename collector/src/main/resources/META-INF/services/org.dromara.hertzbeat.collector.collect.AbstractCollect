@@ -10,4 +10,5 @@ org.dromara.hertzbeat.collector.collect.ssh.SshCollectImpl
 org.dromara.hertzbeat.collector.collect.telnet.TelnetCollectImpl
 org.dromara.hertzbeat.collector.collect.ftp.FtpCollectImpl
 org.dromara.hertzbeat.collector.collect.mq.RocketmqSingleCollectImpl
+org.dromara.hertzbeat.collector.collect.udp.UdpCollectImpl
 org.dromara.hertzbeat.collector.collect.push.PushCollectImpl

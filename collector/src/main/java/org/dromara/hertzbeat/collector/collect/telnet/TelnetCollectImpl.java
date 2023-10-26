@@ -87,7 +87,7 @@ public class TelnetCollectImpl extends AbstractCollect {
                 builder.addValues(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-                builder.setMsg("对端连接失败，Timeout " + timeout + "ms");
+                builder.setMsg("Peer connect failed，Timeout " + timeout + "ms");
                 return;
             }
             telnetClient.disconnect();
@@ -100,7 +100,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer connection failed: " + errorMsg);
+            builder.setMsg("Peer connect failed: " + errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn(errorMsg, e);

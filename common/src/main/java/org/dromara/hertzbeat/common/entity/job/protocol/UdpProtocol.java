@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 使用socket实现的tcp或ucp进行服务端口可用性探测
+ * 使用socket实现的udp进行服务端口可用性探测
  *
  *
  */
@@ -31,17 +31,24 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TcpUdpProtocol {
-    /**
-     * 具体协议类型 tcp, udp
-     */
-    private String protocol;
+public class UdpProtocol {
     /**
      * 对端主机ip或域名
      */
     private String host;
+    
     /**
      * 端口号
      */
-    private Integer port;
+    private String port;
+
+    /**
+     * 超时时间
+     */
+    private String timeout;
+    
+    /**
+     * 自定义协议数据包 hexString 16进制字符串
+     */
+    private String content;
 }

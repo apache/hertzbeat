@@ -29,7 +29,7 @@ name:
 help:
   zh-CN: HertzBeat 对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>⚠️注意：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看获取步骤</a>。</span>
   en-US: "HertzBeat monitors kubernetes through general performance metrics such as nodes, namespaces and pods. <br><span class='help_module_span'>⚠️Note: In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat對kubernetes的通用性能指標（nodes、namespaces、pods、services）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Kubernetes中的資訊，則需要獲取到可訪問Api Server的授權TOKEN，讓採集請求獲取到對應的資訊，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看獲取步驟</a>。</span>
+  zh-TW: HertzBeat對kubernetes的通用性能指標（nodes、namespaces、pods、services）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Kubernetes中的指標，則需要獲取到可訪問Api Server的授權TOKEN，讓採集請求獲取到對應的指標，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看獲取步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/kubernetes
   en-US: https://hertzbeat.com/docs/help/kubernetes
