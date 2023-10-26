@@ -36,7 +36,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         NoticeTemplate noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("FlyBook");
-        noticeTemplate.setTemplateContent("{targetLabel} : ${target}\n" +
+        noticeTemplate.setContent("{targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
                 "${priorityLabel} : ${priority}\n" +

@@ -22,7 +22,6 @@ export class AlertNoticeComponent implements OnInit {
   receivers!: NoticeReceiver[];
   receiverTableLoading: boolean = true;
   templates: NoticeTemplate[] = [];
-  defaultTemplates: NoticeTemplate[] = [];
   templateTableLoading: boolean = true;
   rules!: NoticeRule[];
   ruleTableLoading: boolean = true;
@@ -45,6 +44,7 @@ export class AlertNoticeComponent implements OnInit {
   isManageRuleModalAdd: boolean = true;
   isManageRuleModalOkLoading: boolean = false;
   rule: NoticeRule = new NoticeRule();
+  switchReceiver!: NoticeReceiver;
   receiversOption: any[] = [];
   searchTag!: string;
   tagsOption: any[] = [];
@@ -125,22 +125,6 @@ export class AlertNoticeComponent implements OnInit {
         console.error(error.msg);
         this.templateTableLoading = false;
         templatesInit$.unsubscribe();
-      }
-    );
-    let defalutTemplatesInit$ = this.noticeTemplateSvc.getDefaultNoticeTemplates().subscribe(
-      message => {
-        this.templateTableLoading = false;
-        if (message.code === 0) {
-          this.defaultTemplates = message.data;
-        } else {
-          console.warn(message.msg);
-        }
-        defalutTemplatesInit$.unsubscribe();
-      },
-      error => {
-        console.error(error.msg);
-        this.templateTableLoading = false;
-        defalutTemplatesInit$.unsubscribe();
       }
     );
   }
@@ -420,6 +404,11 @@ export class AlertNoticeComponent implements OnInit {
 
   onNewNoticeRule() {
     this.rule = new NoticeRule();
+    this.rule.templateId = -1;
+    this.templatesOption.push({
+      value: -1,
+      label: this.i18nSvc.fanyi('alert.notice.template.preset.true')
+    });
     this.isLimit = false;
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = true;
@@ -427,17 +416,27 @@ export class AlertNoticeComponent implements OnInit {
 
   onEditOneNoticeRule(rule: NoticeRule) {
     this.rule = rule;
-    if (this.rule.days == null || this.rule.days.length == 7) {
-      this.isLimit = false;
-    } else {
-      this.isLimit = true;
-    }
+    this.isLimit = !(this.rule.days == null || this.rule.days.length == 7);
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
+    this.receiversOption = [];
     this.receiversOption.push({
       value: rule.receiverId,
       label: rule.receiverName
     });
+    this.templatesOption = [];
+    if (this.rule.templateId && this.rule.templateName) {
+      this.templatesOption.push({
+        value: rule.templateId,
+        label: rule.templateName
+      });
+    } else {
+      this.rule.templateId = -1;
+      this.templatesOption.push({
+        value: -1,
+        label: this.i18nSvc.fanyi('alert.notice.template.preset.true')
+      });
+    }
     this.filterTags = [];
     if (rule.tags != undefined) {
       rule.tags.forEach(item => {
@@ -466,14 +465,19 @@ export class AlertNoticeComponent implements OnInit {
       this.rule.days = this.dayCheckOptions.map(item => item.value).concat();
     } else {
       this.rule.days = this.dayCheckOptions
-        .filter(item => item.checked == true)
+        .filter(item => item.checked)
         .map(item => item.value)
         .concat();
     }
   }
 
-  loadReciverType(reciverId: number) {
-    return 5;
+  onSwitchReceiver() {
+    this.receiversOption.forEach(option => {
+      if (option.value == this.rule.receiverId) {
+        this.switchReceiver = option.receiver;
+      }
+    });
+    this.rule.templateId = -1;
   }
 
   loadReceiversOption() {
@@ -528,7 +532,8 @@ export class AlertNoticeComponent implements OnInit {
               }
               this.receiversOption.push({
                 value: item.id,
-                label: label
+                label: label,
+                receiver: item
               });
             });
           }
@@ -551,53 +556,21 @@ export class AlertNoticeComponent implements OnInit {
           let data = message.data;
           this.templatesOption = [];
           if (data != undefined) {
+            let index = -1;
             data.forEach(item => {
-              let label = `${item.name}-`;
-              switch (item.type) {
-                case 0:
-                  label = `${label}Phone`;
-                  break;
-                case 1:
-                  label = `${label}Email`;
-                  break;
-                case 2:
-                  label = `${label}WebHook`;
-                  break;
-                case 3:
-                  label = `${label}WeChat`;
-                  break;
-                case 4:
-                  label = `${label}WeWork`;
-                  break;
-                case 5:
-                  label = `${label}DingDing`;
-                  break;
-                case 6:
-                  label = `${label}FeiShu`;
-                  break;
-                case 7:
-                  label = `${label}TelegramBot`;
-                  break;
-                case 8:
-                  label = `${label}SlackWebHook`;
-                  break;
-                case 9:
-                  label = `${label}Discord Bot`;
-                  break;
-                case 10:
-                  label = `${label}weChatApp`;
-                  break;
-                case 11:
-                  label = `${label}smn`;
-                  break;
-                case 12:
-                  label = `${label}ServerChan`;
-                  break;
+              if (this.switchReceiver) {
+                if (this.switchReceiver.type == item.type) {
+                  this.templatesOption.push({
+                    value: item.id == null ? -1 : item.id,
+                    label: item.id == null ? this.i18nSvc.fanyi('alert.notice.template.preset.true') : item.name
+                  });
+                }
+              } else {
+                this.templatesOption.push({
+                  value: item.id == null ? index-- : item.id,
+                  label: item.name
+                });
               }
-              this.templatesOption.push({
-                value: item.id,
-                label: label
-              });
             });
           }
         } else {
@@ -698,12 +671,17 @@ export class AlertNoticeComponent implements OnInit {
         this.rule.receiverName = option.label;
       }
     });
-    // 加上templatemodel
-    this.templatesOption.forEach(option => {
-      if (option.value == this.rule.templateId) {
-        this.rule.templateName = option.label;
-      }
-    });
+    // template model
+    if (this.rule.templateId != null && this.rule.templateId >= 0) {
+      this.templatesOption.forEach(option => {
+        if (option.value == this.rule.templateId) {
+          this.rule.templateName = option.label;
+        }
+      });
+    } else {
+      this.rule.templateId = null;
+      this.rule.templateName = null;
+    }
     this.rule.tags = [];
     this.filterTags.forEach(tag => {
       let tmp: string[] = tag.split(':');
@@ -773,7 +751,7 @@ export class AlertNoticeComponent implements OnInit {
   onManageTemplateModalOk() {
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
-      this.template.presetTemplate = false;
+      this.template.preset = false;
       const modalOk$ = this.noticeTemplateSvc
         .newNoticeTemplate(this.template)
         .pipe(

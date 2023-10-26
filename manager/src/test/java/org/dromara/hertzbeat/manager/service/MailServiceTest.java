@@ -6,26 +6,21 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.service.impl.MailServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 
 /**
  * Test case for {@link MailService}
@@ -59,7 +54,7 @@ class MailServiceTest {
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         noticeTemplate.setId(1L);
         noticeTemplate.setName("test");
-        noticeTemplate.setTemplateContent("result");
+        noticeTemplate.setContent("result");
 
         assertEquals("result", mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
         assertNotNull(mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
