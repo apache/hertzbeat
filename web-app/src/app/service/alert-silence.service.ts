@@ -38,7 +38,7 @@ export class AlertSilenceService {
     return this.http.delete<Message<any>>(alert_silences_uri, options);
   }
 
-  public getAlertSilences(pageIndex: number, pageSize: number): Observable<Message<Page<AlertSilence>>> {
+  public getAlertSilences(search: string, pageIndex: number, pageSize: number): Observable<Message<Page<AlertSilence>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
@@ -49,6 +49,9 @@ export class AlertSilenceService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (search != undefined && search.trim() != '') {
+      httpParams = httpParams.append('search', search.trim());
+    }
     const options = { params: httpParams };
     return this.http.get<Message<Page<AlertSilence>>>(alert_silences_uri, options);
   }

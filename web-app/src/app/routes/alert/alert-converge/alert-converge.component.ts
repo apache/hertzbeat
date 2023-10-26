@@ -29,6 +29,7 @@ export class AlertConvergeComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  search!: string;
   converges!: AlertConverge[];
   tableLoading: boolean = true;
   checkedConvergeIds = new Set<number>();
@@ -43,7 +44,7 @@ export class AlertConvergeComponent implements OnInit {
 
   loadAlertConvergeTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertConvergeService.getAlertConverges(this.pageIndex - 1, this.pageSize).subscribe(
+    let alertDefineInit$ = this.alertConvergeService.getAlertConverges(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;

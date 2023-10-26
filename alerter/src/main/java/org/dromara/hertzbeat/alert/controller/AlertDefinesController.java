@@ -63,7 +63,7 @@ public class AlertDefinesController {
             description = "You can obtain the list of alarm definitions by querying filter items ｜ 根据查询过滤项获取告警定义信息列表")
     public ResponseEntity<Message<Page<AlertDefine>>> getAlertDefines(
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Alarm Definition app ｜ 告警定义名称", example = "6565463543") @RequestParam(required = false) String search,
+            @Parameter(description = "Search-Target Expr Template ｜ 模糊查询-指标对象 表达式 通知模版", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Alarm Definition Severity ｜ 告警定义级别", example = "6565463543") @RequestParam(required = false) Byte priority,
             @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
@@ -87,11 +87,19 @@ public class AlertDefinesController {
                         ),
                         criteriaBuilder.like(
                                 criteriaBuilder.lower(root.get("metric")),
-                                "%" + search.toUpperCase() + "%"
+                                "%" + search.toLowerCase() + "%"
                         ),
                         criteriaBuilder.like(
                                 criteriaBuilder.lower(root.get("field")),
-                                "%" + search.toUpperCase() + "%"
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("expr")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("template")),
+                                "%" + search.toLowerCase() + "%"
                         )
                 );
                 andList.add(predicate);
