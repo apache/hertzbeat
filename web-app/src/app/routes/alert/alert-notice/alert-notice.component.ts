@@ -556,6 +556,7 @@ export class AlertNoticeComponent implements OnInit {
           let data = message.data;
           this.templatesOption = [];
           if (data != undefined) {
+            let index = -1;
             data.forEach(item => {
               if (this.switchReceiver) {
                 if (this.switchReceiver.type == item.type) {
@@ -564,6 +565,11 @@ export class AlertNoticeComponent implements OnInit {
                     label: item.id == null ? this.i18nSvc.fanyi('alert.notice.template.preset.true') : item.name
                   });
                 }
+              } else {
+                this.templatesOption.push({
+                  value: item.id == null ? index-- : item.id,
+                  label: item.name
+                });
               }
             });
           }
@@ -666,7 +672,7 @@ export class AlertNoticeComponent implements OnInit {
       }
     });
     // template model
-    if (this.rule.templateId != -1) {
+    if (this.rule.templateId != null && this.rule.templateId >= 0) {
       this.templatesOption.forEach(option => {
         if (option.value == this.rule.templateId) {
           this.rule.templateName = option.label;
