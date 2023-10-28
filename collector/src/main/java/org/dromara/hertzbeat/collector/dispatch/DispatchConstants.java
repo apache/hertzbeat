@@ -36,6 +36,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_TELNET = "telnet";
     /**
+     * protocol udp
+     */
+    String PROTOCOL_UDP = "udp";
+    /**
      * protocol jdbc
      */
     String PROTOCOL_JDBC = "jdbc";
@@ -47,15 +51,10 @@ public interface DispatchConstants {
      * protocol redis
      */
     String PROTOCOL_REDIS = "redis";
-
     /**
      * protocol mongodb
      */
     String PROTOCOL_MONGODB = "mongodb";
-    /**
-     * protocol
-     */
-    String PROTOCOL_DM = "dm";
     /**
      * protocol jmx
      */

@@ -18,6 +18,18 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.silence.delete' | i18n }}
   </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertSilenceTable()">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
+    nz-input
+    type="text"
+    [placeholder]="'alert.silence.name' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadAlertSilenceTable()"
+    [(ngModel)]="search"
+  />
 </div>
 
 <nz-table

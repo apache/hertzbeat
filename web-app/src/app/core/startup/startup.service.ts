@@ -60,7 +60,7 @@ export class StartupService {
         // Application information: including site name, description, year
         this.settingService.setApp(appData.app);
         // https://ng-alain.com/theme/settings/zh
-        this.settingService.setLayout('collapsed', true);
+        // this.settingService.setLayout('collapsed', true);
         // ACL: Set the permissions to full, https://ng-alain.com/acl/getting-started
         this.aclService.setFull(true);
         // Menu data, https://ng-alain.com/theme/menu

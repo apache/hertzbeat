@@ -18,17 +18,17 @@
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
-app: port
+app: udp_port
 # 监控类型国际化名称
 name:
-  zh-CN: 端口可用性
-  en-US: PORT TELNET
+  zh-CN: UDP端口可用性
+  en-US: UDP PORT
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 通过判断对端服务中暴露的TCP端口是否可用，进而判断对端服务是否可用。同时以ms为指标，对响应时间等指标进行监测。您可以点击“<i>新建 端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat determines whether the exposed tcp ports in the peer service are available, thereby determining whether the peer service is available. Simultaneously monitoring response time and other metrics using ms as metric unit. You could click the "<i>New port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat 通過判斷對端服務中暴露的TCP端口是否可用，進而判斷對端服務是否可用。 同時以ms為指标，對回應時間等指标進行監測。 您可以點擊“<i>新建埠可用性</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: UDP是面向无连接的传输层协议，其端口可用性状态我们通过在应用层发送请求报文获得响应来判断，配置信息我们需要填充能使对端响应的应用层16进制报文内容。建议使用wireshark抓包来获取发送报文内容。<br>您可以点击“<i>新建 UDP端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: UDP is a connectionless transport layer protocol. We can judge its port availability status by sending a request message at the application layer and getting a response. We need to input the application layer hexadecimal message content that enables the peer to respond. Suggest using wireshark to capture packets to obtain the send package content. <br>You could click the "<i>New UDP Port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: UDP是面向無連接的傳輸層協議，其連接埠可用性狀態我們透過在應用層發送請求封包獲得回應來判斷，設定指標我們需要填充能使對端回應的應用層16進位封包 內容。建議使用wireshark抓包來取得報文內容。<br>您可以點選“<i>新 UDP連接埠可用性</i>”並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/port
   en-US: https://hertzbeat.com/docs/help/port
@@ -66,17 +66,17 @@ params:
     # required-true or false
     # 是否是必输项 true-必填 false-可选
     required: true
-    # default value 80
-    # 默认值 80
-    defaultValue: 80
+    # default value 81
+    # 默认值 81
+    defaultValue: 81
   # field-param field key
   # field-字段名称标识符
   - field: timeout
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 连接超时时间(ms)
-      en-US: Connect Timeout(ms)
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: number
@@ -89,6 +89,15 @@ params:
     # default value 6000
     # 默认值 6000
     defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
+  - field: content
+    name:
+      zh-CN: 发送报文内容(16进制串)
+      en-US: Send Package Content(HexString)
+    type: text
+    placeholder: 3025020101040
+    required: false
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
@@ -109,10 +118,10 @@ metrics:
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: telnet
+    protocol: udp
     # Specific collection configuration when protocol is telnet protocol
     # 当protocol为telnet协议时具体的采集配置
-    telnet:
+    udp:
       # telnet host
       # 远程登录主机
       host: ^_^host^_^
@@ -122,3 +131,6 @@ metrics:
       # timeout
       # 超时时间
       timeout: ^_^timeout^_^
+      # protocol content
+      # udp 上层协议的16进制报文内容
+      content: ^_^content^_^
