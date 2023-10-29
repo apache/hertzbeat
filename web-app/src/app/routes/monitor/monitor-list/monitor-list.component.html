@@ -74,14 +74,14 @@
       [(ngModel)]="filterContent"
     />
     <input
-          style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
-          nz-input
-          type="text"
-          [placeholder]="'monitors.search.tag' | i18n"
-          nzSize="default"
-          (keyup.enter)="onFilterSearchMonitors()"
-          [(ngModel)]="tag"
-        />
+      style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+      nz-input
+      type="text"
+      [placeholder]="'monitors.search.tag' | i18n"
+      nzSize="default"
+      (keyup.enter)="onFilterSearchMonitors()"
+      [(ngModel)]="tag"
+    />
     <nz-select
       style="margin-right: 10px; float: right"
       nzAllowClear
