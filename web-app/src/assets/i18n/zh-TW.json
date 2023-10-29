@@ -353,6 +353,7 @@
   "monitors.import": "導入監控",
   "monitors.search.placeholder": "搜索監控",
   "monitors.search.filter": "監控狀態",
+  "monitors.search.tag": "標籤篩選",
   "monitors.total": "總量",
   "monitors.advanced": "高級設置",
   "monitors.advanced.tip": "設置高級可選參數",
