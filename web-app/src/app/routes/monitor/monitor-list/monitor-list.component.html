@@ -65,7 +65,7 @@
       {{ 'common.search' | i18n }}
     </button>
     <input
-      style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
+      style="margin-right: 5px; float: right; width: 180px; border-radius: 9px; text-align: center"
       nz-input
       type="text"
       [placeholder]="'monitors.search.placeholder' | i18n"
@@ -73,6 +73,15 @@
       (keyup.enter)="onFilterSearchMonitors()"
       [(ngModel)]="filterContent"
     />
+    <input
+          style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+          nz-input
+          type="text"
+          [placeholder]="'monitors.search.tag' | i18n"
+          nzSize="default"
+          (keyup.enter)="onFilterSearchMonitors()"
+          [(ngModel)]="tag"
+        />
     <nz-select
       style="margin-right: 10px; float: right"
       nzAllowClear
@@ -84,6 +93,7 @@
       <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
       <nz-option [nzLabel]="'monitor.status.un-manage' | i18n" nzValue="0"></nz-option>
     </nz-select>
+
   </div>
 </div>
 
