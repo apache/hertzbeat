@@ -354,6 +354,7 @@
   "monitors.import": "导入监控",
   "monitors.search.placeholder": "搜索监控",
   "monitors.search.filter": "监控状态",
+  "monitors.search.tag": "标签筛选",
   "monitors.total": "总量",
   "monitors.advanced": "高级设置",
   "monitors.advanced.tip": "设置高级可选参数",
