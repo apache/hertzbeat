@@ -45,7 +45,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -113,7 +112,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     props.put("mail.smtp.ssl.enable", sslEnable);
                 }
             } catch (Exception e) {
-                log.error("Type not found {}",e.getMessage());
+                log.error("Type not found {}", e.getMessage());
             }
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -124,7 +123,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
             //Build email templates 构建邮件模版
-            String process = mailService.buildAlertHtmlTemplate(alert,noticeTemplate);
+            String process = mailService.buildAlertHtmlTemplate(alert, noticeTemplate);
             //Set Email Content Template 设置邮件内容模版
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
