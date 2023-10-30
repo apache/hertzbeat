@@ -60,6 +60,4 @@ public abstract class AbstractPrometheusParse {
                     builder);
         }
     }
-
-
 }

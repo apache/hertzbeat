@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Map;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
@@ -41,12 +42,15 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 public class AlertReport {
 
     @Schema(title = "Alert record saas index ID")
+    @NotBlank(message = "AlertID cannot be blank")
     private String alertId;
 
     @Schema(title = "Alert Name")
+    @NotBlank(message = "alertName cannot be blank")
     private String alertName;
 
     @Schema(title = "Alarm evaluation interval")
+    @NotBlank(message = "alertDuration cannot be blank")
     private Integer alertDuration;
 
     @Schema(title = "Time when the log service receives the alarm message", description = "日志服务接收到告警消息的时间",

@@ -99,10 +99,12 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds) {
         // todo checks whether the alarm definition and monitoring exist
         // todo 校验此告警定义和监控是否存在
-
-        // Delete all associations of this alarm
-        // 先删除此告警的所有关联
-        alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
+        List<AlertDefineMonitorBind> alertDefineBindsByAlertDefineIdEquals = alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertId);
+        if (alertDefineBindsByAlertDefineIdEquals != null ) {
+            // Delete all associations of this alarm
+            // 先删除此告警的所有关联
+            alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
+        }
         // Save the associated
         // 保存关联
         alertDefineBindDao.saveAll(alertDefineBinds);

@@ -72,6 +72,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -98,12 +99,11 @@ public class HttpCollectImpl extends AbstractCollect {
     
     public HttpCollectImpl() {
     }
-    
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long appId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 校验参数
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -113,50 +113,38 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
-        try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
+             InputStream is = response.getEntity().getContent()) {
+
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                // 状态码不在successCodes中的状态码为失败
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
             }
-            // 在successCodes中的状态码成功
-            // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
-            // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
-            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            // 根据不同的解析方式解析
-            if (resp == null || "".equals(resp)) {
-                log.info("http response entity is empty, status: {}.", statusCode);
-            }
             Long responseTime = System.currentTimeMillis() - startTime;
             String parseType = metrics.getHttp().getParseType();
-            try {
-                if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
-                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
-                    parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
-                    parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
-                    parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
-                } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
-                    parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
-                    parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
-                    parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
-                } else {
-                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                }
-            } catch (Exception e) {
-                log.info("parse error: {}.", e.getMessage(), e);
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("parse response data error:" + e.getMessage());
+            if (is == null){
+                return;
+            }
+            if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
+                parseResponseByDefault(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+            } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
+                parseResponseByJsonPath(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+            } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
+                parseResponseByPromQl(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder);
+            } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
+                parseResponseByPrometheusExporter(is.toString(), metrics.getAliasFields(), builder);
+            } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
+                parseResponseByXmlPath(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder);
+            } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
+                parseResponseByWebsite(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+            } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
+                parseResponseBySiteMap(is.toString(), metrics.getAliasFields(), builder);
+            } else {
+                parseResponseByDefault(is.toString(), metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
@@ -164,25 +152,21 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
-            // 对端不可达
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
             builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
-            // 对端连接失败
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (IOException e4) {
-            // 其它IO异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
-            // 其它异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
@@ -193,7 +177,8 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
     }
-    
+
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;

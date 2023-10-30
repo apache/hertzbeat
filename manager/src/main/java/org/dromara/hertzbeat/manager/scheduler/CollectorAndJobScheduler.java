@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -163,59 +164,75 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         consistentHash.getAllNodes().entrySet().parallelStream().forEach(entry -> {
             String collectorName = entry.getKey();
             AssignJobs assignJobs = entry.getValue().getAssignJobs();
-            if (assignJobs != null) {
-                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
-                    if (!assignJobs.getAddingJobs().isEmpty()) {
-                        Set<Long> addedJobIds = new HashSet<>(8);
-                        for (Long addingJobId : assignJobs.getAddingJobs()) {
-                            Job job = jobContentCache.get(addingJobId);
-                            if (job == null) {
-                                log.error("assigning job {} content is null.", addingJobId);
-                                continue;
-                            }
-                            addedJobIds.add(addingJobId);
-                            collectJobService.addAsyncCollectJob(job);
-                        }
-                        assignJobs.addAssignJobs(addedJobIds);
-                        assignJobs.removeAddingJobs(addedJobIds);
-                    }
-                    if (!assignJobs.getRemovingJobs().isEmpty()) {
-                        assignJobs.getRemovingJobs().forEach(jobId -> collectJobService.cancelAsyncCollectJob(jobId));
-                        assignJobs.clearRemovingJobs();
-                    }
-                } else {
-                    if (!assignJobs.getAddingJobs().isEmpty()) {
-                        Set<Long> addedJobIds = new HashSet<>(8);
-                        for (Long addingJobId : assignJobs.getAddingJobs()) {
-                            Job job = jobContentCache.get(addingJobId);
-                            if (job == null) {
-                                log.error("assigning job {} content is null.", addingJobId);
-                                continue;
-                            }
-                            addedJobIds.add(addingJobId);
-                            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                    .setDirection(ClusterMsg.Direction.REQUEST)
-                                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                    .setMsg(JsonUtil.toJson(job))
-                                    .build();
-                            this.manageServer.sendMsg(collectorName, message);
-                        }
-                        assignJobs.addAssignJobs(addedJobIds);
-                        assignJobs.removeAddingJobs(addedJobIds);
-                    }
-                    if (!assignJobs.getRemovingJobs().isEmpty()) {
-                        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
-                                .build();
-                        this.manageServer.sendMsg(collectorName, message);
-                        assignJobs.clearRemovingJobs();
-                    }
-                }
+
+            if (assignJobs == null) return;
+
+            if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
+                processMainCollectorJobs(assignJobs);
+            } else {
+                processOtherCollectorJobs(assignJobs, collectorName);
             }
         });
     }
+
+    private void processMainCollectorJobs(AssignJobs assignJobs) {
+        Set<Long> addedJobIds = handleAddingJobs(assignJobs, this::addAsyncCollectJobForMain);
+        assignJobs.removeAddingJobs(addedJobIds);
+
+        handleRemovingJobs(assignJobs, jobId -> collectJobService.cancelAsyncCollectJob(jobId));
+    }
+
+    private void processOtherCollectorJobs(AssignJobs assignJobs, String collectorName) {
+        Set<Long> addedJobIds = handleAddingJobs(assignJobs, jobId -> sendIssueCyclicTaskMessage(jobId, collectorName));
+        assignJobs.removeAddingJobs(addedJobIds);
+
+        handleRemovingJobs(assignJobs, jobId -> sendDeleteCyclicTaskMessage(jobId, collectorName));
+    }
+
+    private Set<Long> handleAddingJobs(AssignJobs assignJobs, Consumer<Long> jobHandler) {
+        Set<Long> addedJobIds = new HashSet<>(8);
+        for (Long addingJobId : assignJobs.getAddingJobs()) {
+            Job job = jobContentCache.get(addingJobId);
+            if (job == null) {
+                log.error("assigning job {} content is null.", addingJobId);
+                continue;
+            }
+            addedJobIds.add(addingJobId);
+            jobHandler.accept(addingJobId);
+        }
+        assignJobs.addAssignJobs(addedJobIds);
+        return addedJobIds;
+    }
+
+    private void handleRemovingJobs(AssignJobs assignJobs, Consumer<Long> jobHandler) {
+        assignJobs.getRemovingJobs().forEach(jobHandler);
+        assignJobs.clearRemovingJobs();
+    }
+
+    private void addAsyncCollectJobForMain(Long jobId) {
+        Job job = jobContentCache.get(jobId);
+        collectJobService.addAsyncCollectJob(job);
+    }
+
+    private void sendIssueCyclicTaskMessage(Long jobId, String collectorName) {
+        Job job = jobContentCache.get(jobId);
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                .setMsg(JsonUtil.toJson(job))
+                .build();
+        this.manageServer.sendMsg(collectorName, message);
+    }
+
+    private void sendDeleteCyclicTaskMessage(Long jobId, String collectorName) {
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                .setMsg(JsonUtil.toJson(jobId))
+                .build();
+        this.manageServer.sendMsg(collectorName, message);
+    }
+
 
     @Override
     public boolean offlineCollector(String identity) {
