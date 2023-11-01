@@ -6,7 +6,7 @@ sidebar_label: 企业版
 
 :::tip
 **开源不等同于免费，如果您基于HertzBeat二次开发修改了[logo，名称，版权](https://github.com/dromara/hertzbeat/blob/master/NOTICE)等，请找我们授权，否则会有[法律风险](legal)。**     
-**请清清白白做人，我们必追诉破坏开源并因此获利的团队个人的全部违法所得，也欢迎给我们[提供侵权线索](legal)。**   
+**干干净净做人，我们必追诉破坏开源并因此获利的团队个人的全部违法所得，也欢迎给我们[提供侵权线索](legal)。**   
 :::
 
 --- 
