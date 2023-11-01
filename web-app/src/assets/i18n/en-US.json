@@ -353,6 +353,7 @@
   "monitors.import": "Import Monitor",
   "monitors.search.placeholder": "Search Monitor",
   "monitors.search.filter": "Monitor Status",
+  "monitors.search.tag": "Tag Filter",
   "monitors.total": "Total",
   "monitors.advanced": "Advanced",
   "monitors.advanced.tip": "Setting Advanced Param",
