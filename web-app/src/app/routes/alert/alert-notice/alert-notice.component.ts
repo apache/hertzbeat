@@ -521,10 +521,10 @@ export class AlertNoticeComponent implements OnInit {
                   label = `${label}Discord Bot`;
                   break;
                 case 10:
-                  label = `${label}weChatApp`;
+                  label = `${label}WeChatApp`;
                   break;
                 case 11:
-                  label = `${label}smn`;
+                  label = `${label}SMN`;
                   break;
                 case 12:
                   label = `${label}ServerChan`;

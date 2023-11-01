@@ -63,11 +63,6 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         return 9;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyDiscordBot";
-    }
-
     @Data
     @Builder
     private static class DiscordNotifyDTO {

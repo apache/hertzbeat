@@ -1,0 +1,15 @@
+{
+  "alarmId": ${alarmId},
+  "target": "${target}",
+  <#if (thresholdId??)>"thresholdId": ${thresholdId},</#if>
+  "priority": ${priorityValue},
+  "content": "${content}",
+  "status": ${status},
+  "times": ${times},
+  "triggerTime": "${triggerTime}",
+  "tags": {
+    <#list tags as key,value>
+      "${key}": "${value}",
+    </#list>  
+  }
+}
