@@ -25,7 +25,6 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.service.TencentSmsClient;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
-import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -39,7 +38,7 @@ import java.util.ResourceBundle;
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty("common.sms.tencent.app-id")
-final class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
+final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     private final TencentSmsClient tencentSmsClient;
 

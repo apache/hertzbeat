@@ -81,11 +81,6 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
         return 8;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifySlack";
-    }
-
     @Data
     @Builder
     private static class SlackNotifyDTO {

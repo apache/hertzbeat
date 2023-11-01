@@ -85,9 +85,4 @@ final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHand
     public byte type() {
         return 11;
     }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifySmn";
-    }
 }

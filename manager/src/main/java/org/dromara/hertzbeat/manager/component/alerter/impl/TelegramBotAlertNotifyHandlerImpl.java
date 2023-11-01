@@ -81,11 +81,6 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         return 7;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyTelegramBot";
-    }
-
     @Data
     @Builder
     private static class TelegramBotNotifyDTO {
