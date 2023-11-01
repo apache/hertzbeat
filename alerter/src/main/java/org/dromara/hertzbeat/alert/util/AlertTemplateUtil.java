@@ -40,14 +40,17 @@ public class AlertTemplateUtil {
     private static final Pattern PATTERN = Pattern.compile("\\$\\{(\\w+)\\}");
 
     public static String render(String template, Map<String, Object> replaceData) {
-        if (template == null) {
-            return null;  
+        if (template == null || replaceData == null) {
+            return null;
         }
         try {
             Matcher matcher = PATTERN.matcher(template);
             StringBuffer buffer = new StringBuffer();
             while (matcher.find()) {
                 Object objectValue = replaceData.getOrDefault(matcher.group(1), "NullValue");
+                if (objectValue == null){
+                    return null;
+                }
                 String value = objectValue.toString();
                 matcher.appendReplacement(buffer, value);
             }
