@@ -261,7 +261,7 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
-            tags.put(CommonConstants.TAG_POLICY_ID, String.valueOf(define.getId()));
+            tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(define.getId()));
             if (!CollectionUtils.isEmpty(define.getTags())) {
                 for (TagItem tagItem : define.getTags()) {
                     fieldValueMap.put(tagItem.getName(), tagItem.getValue());
@@ -270,7 +270,6 @@ public class CalculateAlarm {
             }
             Alert alert = Alert.builder()
                                   .tags(tags)
-                                  .alertDefineId(define.getId())
                                   .priority(define.getPriority())
                                   .status(ALERT_STATUS_CODE_PENDING)
                                   .target(app + "." + metrics + "." + define.getField())
@@ -320,7 +319,7 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
-            tags.put(CommonConstants.TAG_POLICY_ID, String.valueOf(avaAlertDefine.getId()));
+            tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(avaAlertDefine.getId()));
             tags.put("metrics", CommonConstants.AVAILABILITY);
             tags.put("code", metricsData.getCode().name());
             Map<String, Object> valueMap = tags.entrySet().stream()

@@ -60,17 +60,6 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         return 12;
     }
 
-    /**
-     * Get the Thymeleaf template name
-     * 获取Thymeleaf模板名称
-     *
-     * @return Thymeleaf模板名称
-     */
-    @Override
-    protected String templateName() {
-        return "alertNotifyServerChan";
-    }
-
     @Data
     private static class ServerChanWebHookDto {
         private static final String MARKDOWN = "markdown";

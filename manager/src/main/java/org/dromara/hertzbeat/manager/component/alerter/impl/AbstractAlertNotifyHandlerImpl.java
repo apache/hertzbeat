@@ -22,9 +22,11 @@ import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.AlerterProperties;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
@@ -65,35 +67,46 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         freemarker.template.Template templateRes;
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
-        Map<String, String> model = new HashMap<>(16);
+        Map<String, Object> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
         if (alert.getTags() != null) {
-            String monitorId = alert.getTags().get("monitorId");
+            String monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
             if (monitorId != null) {
                 model.put("monitorId", monitorId);
             }
-            String monitorName = alert.getTags().get("monitorName");
+            String monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
             if (monitorName != null) {
                 model.put("monitorName", monitorName);
             }
+            String thresholdId = alert.getTags().get(CommonConstants.TAG_THRESHOLD_ID);
+            if (thresholdId != null) {
+                model.put("thresholdId", thresholdId);
+            }
         }
-
+        
+        model.put("alarmId", alert.getId());
+        model.put("status", alert.getStatus());
         model.put("monitorIdLabel", bundle.getString("alerter.notify.monitorId"));
         model.put("monitorNameLabel", bundle.getString("alerter.notify.monitorName"));
         model.put("target", alert.getTarget());
         model.put("targetLabel", bundle.getString("alerter.notify.target"));
         model.put("priorityLabel", bundle.getString("alerter.notify.priority"));
         model.put("priority", bundle.getString("alerter.priority." + alert.getPriority()));
+        model.put("priorityValue", alert.getPriority());
         model.put("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
         model.put("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        model.put("timesLabel", bundle.getString("alerter.notify.times"));
+        model.put("times", alert.getTimes());
         model.put("contentLabel", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
+        model.put("tagsLabel", bundle.getString("alerter.notify.tags"));
+        model.put("tags", alert.getTags());
         if (noticeTemplate == null) {
             noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(type());
         }
         if (noticeTemplate == null) {
-            log.error("{} does not have mapping default notice template. type: {}.", templateName(), type());
+            log.error("alert does not have mapping default notice template. type: {}.", type());
             throw new NullPointerException(type() + " does not have mapping default notice template");
         }
         String templateName = "freeMakerTemplate";
@@ -103,15 +116,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
         return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }
-
-
-    /**
-     * Get the Thymeleaf template name
-     * 获取Thymeleaf模板名称
-     *
-     * @return Thymeleaf模板名称
-     */
-    protected abstract String templateName();
 
     @EventListener(SystemConfigChangeEvent.class)
     public void onEvent(SystemConfigChangeEvent event) {

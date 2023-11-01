@@ -250,7 +250,7 @@ public interface CommonConstants {
     /**
      * 内有标签: policyId 告警阈值规则ID
      */
-    String TAG_POLICY_ID = "policyId";
+    String TAG_THRESHOLD_ID = "thresholdId";
 
     /**
      * 内有标签: app 监控类型

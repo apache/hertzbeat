@@ -72,9 +72,4 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         return 4;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyWeWorkRobot";
-    }
-
 }

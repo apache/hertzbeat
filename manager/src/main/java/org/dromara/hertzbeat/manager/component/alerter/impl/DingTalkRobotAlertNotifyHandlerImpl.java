@@ -74,12 +74,6 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         return 5;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyDingTalkRobot";
-
-    }
-
     /**
      * 钉钉机器人请求消息体
      *

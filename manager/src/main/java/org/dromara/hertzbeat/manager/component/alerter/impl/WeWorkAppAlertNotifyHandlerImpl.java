@@ -2,11 +2,9 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
 import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
@@ -17,12 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
  * WeChat app alert notify impl
+ *
  *
  */
 @Component
@@ -48,7 +45,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     private final RestTemplate restTemplate;
 
     @Override
-    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate,Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         String corpId = receiver.getCorpId();
         Integer agentId = receiver.getAgentId();
         String appSecret = receiver.getAppSecret();
@@ -58,7 +55,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             if (Objects.nonNull(entityResponse.getBody())) {
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.MarkdownDTO markdown = new WeChatAppDTO.MarkdownDTO();
-                markdown.setContent(renderContent(noticeTemplate,alert));
+                markdown.setContent(renderContent(noticeTemplate, alert));
                 WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
                         .toUser(DEFAULT_ALL)
                         .msgType(WeChatAppDTO.MARKDOWN)
@@ -82,19 +79,5 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     @Override
     public byte type() {
         return 10;
-    }
-
-
-    private String generateContent(Alert alert){
-        Map<String,Object> contentMap = new HashMap<>(8);
-        contentMap.put("alertDefineId",alert.getAlertDefineId());
-        contentMap.put("content",alert.getContent());
-        contentMap.put("monitorName",alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
-        return JsonUtil.toJson(contentMap);
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifyWeWorkApp";
     }
 }
