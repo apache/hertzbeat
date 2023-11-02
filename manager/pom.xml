@@ -185,6 +185,11 @@
                 <artifactId>native-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
+                    <buildArgs>
+                        <arg>
+                            --initialize-at-build-time=org.apache.logging.log4j.LogManager
+                        </arg>
+                    </buildArgs>
                 </configuration>
             </plugin>
             <plugin>
