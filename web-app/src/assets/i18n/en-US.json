@@ -375,7 +375,7 @@
   "monitors.detail.realtime": "Monitor Real-Time Detail",
   "monitors.detail.history": "Monitor Historical Chart Detail",
   "monitors.collect.time": "Collect Time",
-  "monitors.collect.time.tip": "Last collect time",
+  "monitors.collect.time.tip": "Last Collect Time",
   "monitors.detail.chart.zoom": "Zoom In",
   "monitors.detail.chart.back": "Zoom restore",
   "monitors.detail.chart.save": "Save as Image",
