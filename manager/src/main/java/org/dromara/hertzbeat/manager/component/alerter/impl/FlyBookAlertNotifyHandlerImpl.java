@@ -95,11 +95,6 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         return 6;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyFlyBook";
-    }
-
     @Data
     private static class FlyBookWebHookDto {
         private static final String MARKDOWN = "post";
