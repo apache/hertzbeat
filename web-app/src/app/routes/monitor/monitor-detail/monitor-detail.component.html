@@ -33,7 +33,6 @@
 <nz-layout>
   <nz-sider *ngIf="showBasic" class="mobile-hide" nzWidth="19%" nzTheme="light">
     <nz-card
-      nzHoverable
       style="width: 100%; height: 100%"
       [nzBordered]="true"
       [nzTitle]="monitor_basic_card_title"
@@ -81,20 +80,16 @@
         >
         <div nz-col nzSpan="16">
           <nz-tag *ngIf="monitor.status == 0" nzColor="default">
-            <i nz-icon nzType="robot" nzTheme="outline"></i>
+            <i nz-icon nzType="meh" nzTheme="outline"></i>
             <span>{{ 'monitor.status.un-manage' | i18n }}</span>
           </nz-tag>
           <nz-tag *ngIf="monitor.status == 1" nzColor="success">
             <i nz-icon nzType="smile" nzTheme="outline"></i>
             <span>{{ 'monitor.status.available' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor.status == 2" nzColor="warning">
-            <i nz-icon nzType="meh" nzTheme="outline"></i>
-            <span>{{ 'monitor.status.unavailable' | i18n }}</span>
-          </nz-tag>
-          <nz-tag *ngIf="monitor.status == 3" nzColor="error">
+          <nz-tag *ngIf="monitor.status == 2" nzColor="error">
             <i nz-icon nzType="frown" nzTheme="outline"></i>
-            <span>{{ 'monitor.status.unreachable' | i18n }}</span>
+            <span>{{ 'monitor.status.unavailable' | i18n }}</span>
           </nz-tag>
         </div>
       </div>
@@ -167,7 +162,7 @@
 </ng-template>
 
 <ng-template #monitor_basic_card_extra>
-  <a nz-icon nzType="close-circle" nzTheme="outline" (click)="showBasicStatus(false)"></a>
+  <a nz-icon nzType="edit" nzTheme="outline" [routerLink]="['/monitors/' + monitorId + '/edit']"></a>
 </ng-template>
 
 <ng-template #tab_extra_template>

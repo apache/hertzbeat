@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对您的 Linux 操作系统通用性能指标(basic、cpu、memory、disk、interface、disk free)进行采集监控。<br>您可以点击“<i>新建 Linux 操作系统</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors your Linux operating system through general performance indicators such as cpu, disk, interface. You could click the "<i>New Linux</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  en-US: HertzBeat monitors your Linux operating system through general performance metrics such as cpu, disk, interface. You could click the "<i>New Linux</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat對您的Linux作業系統通用性能指標（basic、cpu、memory、disk、interface、disk free）進行採集監控。<br>您可以點擊“<i>新建Linux作業系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/linux
@@ -104,7 +104,7 @@ params:
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: true
-    defaultValue: true
+    defaultValue: false
   # field-param field key
   # field-变量字段标识符
   - field: username

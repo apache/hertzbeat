@@ -54,6 +54,11 @@
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
+        <!-- remoting -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-remoting</artifactId>
+        </dependency>
         <!-- validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -180,15 +185,6 @@
             </activation>
             <build>
                 <finalName>hertzbeat-collector</finalName>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>META-INF/**</include>
-                        </includes>
-                    </resource>
-                </resources>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

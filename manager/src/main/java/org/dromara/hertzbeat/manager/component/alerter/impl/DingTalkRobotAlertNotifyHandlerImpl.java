@@ -17,12 +17,13 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
@@ -31,19 +32,18 @@ import org.springframework.stereotype.Component;
  * 通过钉钉机器人发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
             MarkdownDTO markdownDTO = new MarkdownDTO();
-            markdownDTO.setText(renderContent(alert));
+            markdownDTO.setText(renderContent(noticeTemplate, alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
@@ -74,17 +74,11 @@ public class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHand
         return 5;
     }
 
-    @Override
-    protected String templateName() {
-        return "alertNotifyDingTalkRobot";
-    }
-
     /**
      * 钉钉机器人请求消息体
      *
      * @author 花城
      * @version 1.0
-     *
      */
     @Data
     private static class DingTalkWebHookDto {

@@ -28,8 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletResponse;
-
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +37,6 @@ import java.util.Set;
  * 监控管理服务
  *
  * @author tomsun28
- *
  */
 public interface MonitorService {
 
@@ -47,8 +45,8 @@ public interface MonitorService {
      * Monitoring Availability Probes
      * 监控可用性探测
      *
-     * @param monitor Monitoring entity information    监控实体信息
-     * @param params  Parameter information            参数信息
+     * @param monitor   Monitoring entity information    监控实体信息
+     * @param params    Parameter information            参数信息
      * @param collector collector pinned
      * @throws MonitorDetectException Probe failure throws  探测失败抛出
      */
@@ -57,8 +55,8 @@ public interface MonitorService {
     /**
      * Add monitoring       新增监控
      *
-     * @param monitor Monitoring Entity     监控实体
-     * @param params  Parameter information 参数信息
+     * @param monitor   Monitoring Entity     监控实体
+     * @param params    Parameter information 参数信息
      * @param collector collector pinned
      * @throws RuntimeException Add process exception throw     新增过程异常抛出
      */
@@ -78,8 +76,8 @@ public interface MonitorService {
      * Modify update monitoring
      * 修改更新监控
      *
-     * @param monitor Monitor Entity        监控实体
-     * @param params  Parameter information 参数信息
+     * @param monitor   Monitor Entity        监控实体
+     * @param params    Parameter information 参数信息
      * @param collector collector pinned
      * @throws RuntimeException Exception thrown during modification    修改过程中异常抛出
      */
@@ -217,10 +215,11 @@ public interface MonitorService {
      * @param ids monitor id
      */
     void copyMonitors(List<Long> ids);
-    
-    
+
+
     /**
      * update app collect job by app
+     *
      * @param job job content
      */
     void updateAppCollectJob(Job job);

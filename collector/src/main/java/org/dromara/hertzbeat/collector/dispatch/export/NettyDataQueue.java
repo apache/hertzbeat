@@ -22,14 +22,8 @@ import org.dromara.hertzbeat.collector.dispatch.entrance.internal.CollectJobServ
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.queue.CommonDataQueue;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * for collector instance
@@ -37,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * @author tom
  */
 @Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty")
 @Slf4j
 public class NettyDataQueue implements CommonDataQueue {
     

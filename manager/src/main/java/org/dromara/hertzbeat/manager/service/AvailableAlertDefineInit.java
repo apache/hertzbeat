@@ -6,10 +6,11 @@ import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -18,7 +19,7 @@ import java.util.Set;
  *
  */
 @Service
-@Order(value = 2)
+@Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 @Slf4j
 public class AvailableAlertDefineInit implements CommandLineRunner {
 
@@ -33,8 +34,8 @@ public class AvailableAlertDefineInit implements CommandLineRunner {
 		Set<String> apps = appService.getAllAppDefines().keySet();
 		for (String app : apps) {
 			try {
-				Optional<AlertDefine> optional = alertDefineDao.queryAlertDefineByAppAndMetricAndField(app, CommonConstants.AVAILABILITY, null);
-				if (optional.isEmpty()) {
+				List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetricAndField(app, CommonConstants.AVAILABILITY, null);
+				if (defines.isEmpty()) {
 					AlertDefine alertDefine = AlertDefine.builder()
 							.app(app)
 							.metric(CommonConstants.AVAILABILITY)

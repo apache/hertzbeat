@@ -125,7 +125,8 @@ export class UserLoginComponent implements OnDestroy {
         let user: User = {
           name: this.userName.value,
           avatar: './assets/img/avatar.svg',
-          email: 'administrator'
+          email: 'administrator',
+          role: message.data.role
         };
         this.settingsService.setUser(user);
         // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响
@@ -145,4 +146,6 @@ export class UserLoginComponent implements OnDestroy {
       clearInterval(this.interval$);
     }
   }
+
+  protected readonly window = window;
 }

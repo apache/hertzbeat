@@ -52,7 +52,10 @@ public class Collector {
     @Schema(title = "collector status: 0-online 1-offline")
     @Min(0)
     private byte status;
-	
+
+	@Schema(title = "collector mode: public or private")
+	private String mode;
+
 	@Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom")
 	@CreatedBy
 	private String creator;

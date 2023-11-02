@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标（overview、object_totals、nodes、queues）进行监测。<br><span class='help_module_span'>⚠️注意：HertzBeat 使用 RabbitMQ Management 的 Rest Api 对 RabbitMQ 进行指标数据采集，因此您的 RabbitMQ 环境需要开启 Management 插件，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
-  en-US: "HertzBeat monitors RabbitMQ through the runtime status, nodes, queues and other indicators of message-oriented middleware. <br><span class='help_module_span'>⚠️Note：HertzBeat uses the Rest Api of RabbitMQ Management to collect indicator data for RabbitMQ, so you need to enable Management plug-in component, <a class='help_module_content' href='https://hertzbeat.com/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
+  en-US: "HertzBeat monitors RabbitMQ through the runtime status, nodes, queues and other metrics of message-oriented middleware. <br><span class='help_module_span'>⚠️Note：HertzBeat uses the Rest Api of RabbitMQ Management to collect metric data for RabbitMQ, so you need to enable Management plug-in component, <a class='help_module_content' href='https://hertzbeat.com/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
   zh-TW: HertzBeat對RabbitMQ消息中介軟體的運行狀態，節點，隊列等相關名額（overview、object_totals、nodes、queues）進行監測。<br><span class='help_ module_ span'> ⚠️ 注意：HertzBeat使用RabbitMQ Management的Rest Api對RabbitMQ進行名額資料獲取，囙此您的RabbitMQ環境需要開啟Management挿件，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看開啟步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/rabbitmq
@@ -133,7 +133,7 @@ params:
     required: true
 
 metrics:
-  # Note: The built-in monitoring indicators include (responseTime - response time)
+  # Note: The built-in monitoring metrics include (responseTime - response time)
   # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: overview
     # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel

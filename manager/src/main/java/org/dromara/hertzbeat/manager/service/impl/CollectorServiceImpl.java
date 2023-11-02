@@ -2,7 +2,11 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import org.dromara.hertzbeat.common.entity.dto.CollectorSummary;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
+import org.dromara.hertzbeat.common.entity.manager.CollectorMonitorBind;
+import org.dromara.hertzbeat.common.support.exception.CommonException;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
+import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.dromara.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.dromara.hertzbeat.manager.scheduler.AssignJobs;
 import org.dromara.hertzbeat.manager.scheduler.ConsistentHash;
 import org.dromara.hertzbeat.manager.service.CollectorService;
@@ -12,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,15 +26,23 @@ import java.util.List;
  * @author tom
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class CollectorServiceImpl implements CollectorService {
     
     @Autowired
     private CollectorDao collectorDao;
+
+    @Autowired
+    private CollectorMonitorBindDao collectorMonitorBindDao;
     
     @Autowired
     private ConsistentHash consistentHash;
     
+    @Autowired(required = false)
+    private ManageServer manageServer;
+    
     @Override
+    @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest) {
         Page<Collector> collectors = collectorDao.findAll(specification, pageRequest);
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
@@ -44,5 +57,29 @@ public class CollectorServiceImpl implements CollectorService {
             collectorSummaryList.add(summaryBuilder.build());
         }
         return new PageImpl<>(collectorSummaryList, pageRequest, collectors.getTotalElements());
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteRegisteredCollector(List<String> collectors) {
+        if (collectors == null || collectors.isEmpty()) {
+            return;
+        }
+        // Determine whether there are fixed tasks on the collector
+        collectors.forEach(collector -> {
+            List<CollectorMonitorBind> binds = this.collectorMonitorBindDao.findCollectorMonitorBindsByCollector(collector);
+            if (!binds.isEmpty()) {
+                throw new CommonException("The collector " + collector + " has pinned tasks that cannot be deleted.");
+            }
+        });
+        collectors.forEach(collector -> {
+            this.manageServer.closeChannel(collector);
+            this.collectorDao.deleteCollectorByName(collector);
+        });
+    }
+
+    @Override
+    public boolean hasCollector(String collector) {
+        return this.collectorDao.findCollectorByName(collector).isPresent();
     }
 }

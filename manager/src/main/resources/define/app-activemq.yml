@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX 协议</a>对 Apache ActiveMQ 消息中间件的运行状态，节点，Topic等相关指标（broker、topic、memory pool、class loading、thread）进行监测。<br><span class='help_module_span'>⚠️注意：您需要在 ActiveMQ 开启 JMX 服务。<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/activemq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
-  en-US: "HertzBeat uses <a class='help_module_content' href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'> JMX protocol</a> to monitor the running status, nodes, topics, and other indicators of Apache ActiveMQ message-oriented middleware. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in ActiveMQ. <a class='help_module_content' href='https://hertzbeat.com/docs/help/activemq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
+  en-US: "HertzBeat uses <a class='help_module_content' href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'> JMX protocol</a> to monitor the running status, nodes, topics, and other metrics of Apache ActiveMQ message-oriented middleware. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in ActiveMQ. <a class='help_module_content' href='https://hertzbeat.com/docs/help/activemq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
   zh-TW: HertzBeat使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX 協定</a>對 Apache ActiveMQ 消息中介軟體的運行狀態，節點，Topic 等相關名額（broker、topic、memory pool、class loading、thread）進行監測。<br><span class='help_module_span'> ⚠️注意：您需要在 ActiveMQ 開啟 JMX 服務。<a class='help_module_content' href=' https://hertzbeat.com/zh-cn/docs/help/activemq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看開啟步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/activemq
@@ -367,6 +367,9 @@ metrics:
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+    units:
+      - CurrentThreadUserTime=NS->S
+      - CurrentThreadCpuTime=NS->S
     protocol: jmx
     jmx:
       host: ^_^host^_^

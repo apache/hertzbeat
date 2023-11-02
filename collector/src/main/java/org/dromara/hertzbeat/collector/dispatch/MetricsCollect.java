@@ -19,12 +19,15 @@ package org.dromara.hertzbeat.collector.dispatch;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 import org.dromara.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.dromara.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -40,9 +43,6 @@ import java.util.stream.Collectors;
 /**
  * Index group collection
  * 指标组采集
- *
- * @author tomsun28
- *
  */
 @Slf4j
 @Data
@@ -52,6 +52,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * 调度告警阈值时间 100ms
      */
     private static final long WARN_DISPATCH_TIME = 100;
+    /**
+     * collector identity
+     */
+    protected String collectorIdentity;
+    /**
+     * Tenant ID
+     */
+    protected long tenantId;
     /**
      * Monitor ID
      * 监控ID
@@ -102,13 +110,16 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     public MetricsCollect(Metrics metrics, Timeout timeout,
                           CollectDataDispatch collectDataDispatch,
+                          String collectorIdentity,
                           List<UnitConvert> unitConvertList) {
         this.newTime = System.currentTimeMillis();
         this.timeout = timeout;
         this.metrics = metrics;
+        this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         this.monitorId = job.getMonitorId();
+        this.tenantId = job.getTenantId();
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
@@ -129,6 +140,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app);
         response.setId(monitorId);
+        response.setTenantId(tenantId);
         response.setMetrics(metrics.getName());
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类

@@ -19,15 +19,15 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
-public class WeChatAlertNotifyHandlerImpl implements AlertNotifyHandler {
+final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         // todo
     }
 

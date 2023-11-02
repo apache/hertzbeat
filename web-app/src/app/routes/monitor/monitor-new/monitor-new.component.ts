@@ -124,7 +124,7 @@ export class MonitorNewComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.collectors = message.data.content.map(item => item.collector);
+            this.collectors = message.data.content?.map(item => item.collector);
           } else {
             console.warn(message.msg);
           }
@@ -339,6 +339,14 @@ export class MonitorNewComponent implements OnInit {
     } else {
       this.checkedTags.delete(tag);
     }
+  }
+
+  getNumber(rangeString: string, index: number): number | undefined {
+    if (rangeString == undefined || rangeString == '' || rangeString.length <= index) {
+      return undefined;
+    }
+    const rangeArray = JSON.parse(rangeString);
+    return rangeArray[index];
   }
   // end tag model
 }

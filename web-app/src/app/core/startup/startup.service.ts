@@ -11,6 +11,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
+import { MemoryStorageService } from '../../service/memory-storage.service';
 import { I18NService } from '../i18n/i18n.service';
 /**
  * Used for application startup
@@ -29,7 +30,8 @@ export class StartupService {
     private titleService: TitleService,
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
     private httpClient: HttpClient,
-    private router: Router
+    private router: Router,
+    private storageService: MemoryStorageService
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
     iconSrv.fetchFromIconfont({
@@ -58,7 +60,7 @@ export class StartupService {
         // Application information: including site name, description, year
         this.settingService.setApp(appData.app);
         // https://ng-alain.com/theme/settings/zh
-        this.settingService.setLayout('collapsed', true);
+        // this.settingService.setLayout('collapsed', true);
         // ACL: Set the permissions to full, https://ng-alain.com/acl/getting-started
         this.aclService.setFull(true);
         // Menu data, https://ng-alain.com/theme/menu
@@ -75,6 +77,7 @@ export class StartupService {
             });
           }
         });
+        this.storageService.putData('hierarchy', menuData.data);
         // flush menu
         this.menuService.resume();
         // Can be set page suffix title, https://ng-alain.com/theme/title

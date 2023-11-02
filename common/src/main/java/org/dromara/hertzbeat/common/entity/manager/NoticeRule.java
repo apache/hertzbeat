@@ -80,6 +80,17 @@ public class NoticeRule {
     @NotNull
     private String receiverName;
 
+    @Schema(title = "Template ID",
+            description = "模板ID",
+            example = "4324324", accessMode = READ_WRITE)
+    private Long templateId;
+
+    @Schema(title = "Template identification",
+            description = "通知模板标识",
+            example = "demo", accessMode = READ_WRITE)
+    @Length(max = 100)
+    private String templateName;
+
     @Schema(title = "Whether to enable this policy",
             description = "是否启用此策略",
             example = "true", accessMode = READ_WRITE)

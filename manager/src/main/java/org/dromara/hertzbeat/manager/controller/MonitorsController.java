@@ -33,12 +33,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.servlet.http.HttpServletResponse;
-
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.ListJoin;
+import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,14 +54,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
-	
+
 	private static final byte ALL_MONITOR_STATUS = 9;
-	
+
 	private static final int TAG_LENGTH = 2;
-	
+
 	@Autowired
 	private MonitorService monitorService;
-	
+
 	@GetMapping
 	@Operation(summary = "Obtain a list of monitoring information based on query filter items",
 			description = "根据查询过滤项获取监控信息列表")
@@ -94,7 +93,7 @@ public class MonitorsController {
 				Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
 				andList.add(predicateStatus);
 			}
-			
+
 			if (StringUtils.hasText(tag)) {
 				String[] tagArr = tag.split(":");
 				String tagName = tagArr[0];
@@ -111,7 +110,7 @@ public class MonitorsController {
 			}
 			Predicate[] andPredicates = new Predicate[andList.size()];
 			Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
-			
+
 			List<Predicate> orList = new ArrayList<>();
 			if (StringUtils.hasText(host)) {
 				Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
@@ -123,7 +122,7 @@ public class MonitorsController {
 			}
 			Predicate[] orPredicates = new Predicate[orList.size()];
 			Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
-			
+
 			if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
 				return query.where().getRestriction();
 			} else if (andPredicate.getExpressions().isEmpty()) {
@@ -138,20 +137,20 @@ public class MonitorsController {
 		Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
 		PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
 		Page<Monitor> monitorPage = monitorService.getMonitors(specification, pageRequest);
-		Message<Page<Monitor>> message = new Message<>(monitorPage);
+		Message<Page<Monitor>> message = Message.success(monitorPage);
 		return ResponseEntity.ok(message);
 	}
-	
+
 	@GetMapping(path = "/{app}")
 	@Operation(summary = "Filter all acquired monitoring information lists of the specified monitoring type according to the query",
 			description = "根据查询过滤指定监控类型的所有获取监控信息列表")
 	public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
 			@Parameter(description = "en: Monitoring type,zh: 监控类型", example = "linux") @PathVariable(required = false) final String app) {
 		List<Monitor> monitors = monitorService.getAppMonitors(app);
-		Message<List<Monitor>> message = new Message<>(monitors);
+		Message<List<Monitor>> message = Message.success(monitors);
 		return ResponseEntity.ok(message);
 	}
-	
+
 	@DeleteMapping
 	@Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
 			description = "根据监控ID列表批量删除监控项")
@@ -161,10 +160,10 @@ public class MonitorsController {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.deleteMonitors(new HashSet<>(ids));
 		}
-		Message<Void> message = new Message<>();
+		Message<Void> message = Message.success();
 		return ResponseEntity.ok(message);
 	}
-	
+
 	@DeleteMapping("manage")
 	@Operation(summary = "Unmanaged monitoring items in batches according to the monitoring ID list",
 			description = "根据监控ID列表批量取消纳管监控项")
@@ -174,10 +173,10 @@ public class MonitorsController {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.cancelManageMonitors(new HashSet<>(ids));
 		}
-		Message<Void> message = new Message<>();
+		Message<Void> message = Message.success();
 		return ResponseEntity.ok(message);
 	}
-	
+
 	@GetMapping("manage")
 	@Operation(summary = "Start the managed monitoring items in batches according to the monitoring ID list",
 			description = "根据监控ID列表批量启动纳管监控项")
@@ -187,10 +186,10 @@ public class MonitorsController {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.enableManageMonitors(new HashSet<>(ids));
 		}
-		Message<Void> message = new Message<>();
+		Message<Void> message = Message.success();
 		return ResponseEntity.ok(message);
 	}
-	
+
 	@GetMapping("/export")
 	@Operation(summary = "export monitor config", description = "导出监控配置")
 	public void export(
@@ -199,15 +198,15 @@ public class MonitorsController {
 			HttpServletResponse res) throws Exception {
 		monitorService.export(ids, type, res);
 	}
-	
+
 	@PostMapping("/import")
 	@Operation(summary = "import monitor config", description = "导入监控配置")
 	public ResponseEntity<Message<Void>> export(MultipartFile file) throws Exception {
 		monitorService.importConfig(file);
-		return ResponseEntity.ok(new Message<>("Import success"));
+		return ResponseEntity.ok(Message.success("Import success"));
 	}
-	
-	
+
+
 	@PostMapping("/copy")
 	@Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
 	public ResponseEntity<Message<Void>> duplicateMonitors(
@@ -216,8 +215,8 @@ public class MonitorsController {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.copyMonitors(ids);
 		}
-		return ResponseEntity.ok(new Message<>("copy success"));
+		return ResponseEntity.ok(Message.success("copy success"));
 	}
-	
-	
+
+
 }

@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.dao;
 import org.dromara.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.Optional;
 
@@ -38,4 +39,11 @@ public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecifi
      * @return collector
      */
     Optional<Collector> findCollectorByName(String name);
+    
+    /**
+     * delete collector by name
+     * @param collector collector name
+     */
+    @Modifying
+    void deleteCollectorByName(String collector);
 }

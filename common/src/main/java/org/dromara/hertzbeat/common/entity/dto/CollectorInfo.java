@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -24,6 +25,9 @@ public class CollectorInfo {
     
     @NotNull
     private String ip;
+    
+    @NotNull
+    private String mode = CommonConstants.MODE_PUBLIC;
     
     // todo more
     

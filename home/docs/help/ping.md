@@ -26,3 +26,11 @@ keywords: [open source monitoring tool, open source network monitoring tool, mon
 | ----------- | ----------- | ----------- |
 | responseTime   | ms | Website response time |
 
+
+### Common Problem
+
+1. Ping connectivity monitoring exception when installing hertzbeat for package deployment.  
+   The hertzbeat installed and deployed by the installation package is not available for ping connectivity monitoring, but local direct ping is available 。
+> The deployment of the installation package requires configuring the root permission of the Java virtual machine to start hertzbeat to use ICMP. If the root permission is not enabled, judge whether port 7 of telnet opposite end is opened.    
+> When you install HertzBeat via DockerDocker root is enabled by default. No such problem.   
+> See https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address  

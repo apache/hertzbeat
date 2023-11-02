@@ -14,11 +14,14 @@
 # limitations under the License.
 server:
   port: 1159
+  shutdown: graceful
 spring:
   application:
     name: ${HOSTNAME:@hertzbeat-collector@}${PID}
   profiles:
     active: cluster
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
   jackson:
     default-property-inclusion: ALWAYS
   # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed...
@@ -30,15 +33,22 @@ spring:
   config:
     activate:
       on-profile: cluster
-      
+
 collector:
   dispatch:
     entrance:
       netty:
         enabled: true
+        # Config the collector unique identity name.
         identity: ${IDENTITY:}
-        manager-ip: ${MANAGER_IP:127.0.0.1}
+        # Config the running mode(public or private), public cluster or private cloud-edge.
+        mode: ${MODE:public}
+        manager-host: ${MANAGER_HOST:}${MANAGER_IP:}
         manager-port: ${MANAGER_PORT:1158}
+
+push:
+  uri: "127.0.0.1:1157"
+
 
 common:
   queue:

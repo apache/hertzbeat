@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "hertzbeat.database" . }}"
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+data:
+  TZ: "{{ .Values.database.timezone }}"
+  MYSQL_ROOT_PASSWORD: "{{ .Values.database.rootPassword }}"
+  schema.sql: |+
+    set names utf8mb4;
+    create database if not exists hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;
+    commit;

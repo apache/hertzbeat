@@ -23,7 +23,6 @@ import org.dromara.hertzbeat.common.entity.alerter.Alert;
  * 报警持久化
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 public interface AlertStoreHandler {
 

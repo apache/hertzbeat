@@ -47,7 +47,7 @@
     {{ 'monitor.app.' + app + '.metrics.' + metrics | i18nElse : metrics }}
   </p>
   <div>
-    <a nz-popover [nzPopoverContent]="'Last Collect Time ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
+    <a nz-popover [nzPopoverContent]="('monitors.collect.time.tip' | i18n) + ' ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
       <i nz-icon nzType="field-time" nzTheme="outline"></i
     ></a>
     <i style="font-size: 0.3px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">

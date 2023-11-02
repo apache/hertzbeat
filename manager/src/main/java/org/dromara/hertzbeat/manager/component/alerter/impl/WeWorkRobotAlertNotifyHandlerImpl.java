@@ -17,12 +17,13 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Component;
  * 通过企业微信发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -39,11 +39,11 @@ import org.springframework.stereotype.Component;
 final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
             WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-            markdownDTO.setContent(renderContent(alert));
+            markdownDTO.setContent(renderContent(noticeTemplate, alert));
             weWorkWebHookDTO.setMarkdown(markdownDTO);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,11 +70,6 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public byte type() {
         return 4;
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifyWeWorkRobot";
     }
 
 }

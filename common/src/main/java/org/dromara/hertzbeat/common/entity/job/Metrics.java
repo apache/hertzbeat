@@ -18,13 +18,13 @@
 package org.dromara.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.job.protocol.*;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * 监控采集的指标集合详情 eg: cpu | memory | health
  *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor
@@ -120,10 +119,10 @@ public class Metrics {
      */
     private TelnetProtocol telnet;
     /**
-     * Use tcp or ucp implemented by socket for service port detection configuration information
-     * 使用socket实现的tcp或ucp进行服务端口探测配置信息
+     * Use udp implemented by socket for service port detection configuration information
+     * 使用socket实现的udp进行服务端口探测配置信息
      */
-    private TcpUdpProtocol tcpUdp;
+    private UdpProtocol udp;
     /**
      * Database configuration information implemented using the public jdbc specification
      * 使用公共的jdbc规范实现的数据库配置信息
@@ -163,6 +162,10 @@ public class Metrics {
      * Monitoring configuration information using the public rocketmq protocol 使用公共的rocketmq协议的监控配置信息
      */
     private RocketmqProtocol rocketmq;
+    /**
+     * Monitoring configuration information using push style 使用push方式推送的监控配置信息
+     */
+    private PushProtocol push;
 
     /**
      * collector use - Temporarily store subTask indicator group response data
@@ -187,6 +190,7 @@ public class Metrics {
 
     /**
      * is has subTask
+     *
      * @return true - has
      */
     public boolean isHasSubTask() {
@@ -195,6 +199,7 @@ public class Metrics {
 
     /**
      * consume subTask
+     *
      * @param metricsData response data
      * @return is last task?
      */

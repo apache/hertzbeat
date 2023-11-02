@@ -20,16 +20,17 @@ package org.dromara.hertzbeat.manager.service;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Message notification configuration interface
  * 消息通知配置接口
  *
  * @author tom
- *
  */
 public interface NoticeConfigService {
 
@@ -41,6 +42,15 @@ public interface NoticeConfigService {
      * @return Search result    查询结果
      */
     List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification);
+
+    /**
+     * Dynamic conditional query
+     * 动态条件查询
+     *
+     * @param specification Query conditions    查询条件
+     * @return Search result    查询结果
+     */
+    List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification);
 
     /**
      * Dynamic conditional query
@@ -106,7 +116,25 @@ public interface NoticeConfigService {
      * @param alert Alarm information       告警信息
      * @return Receiver     接收人
      */
-    List<NoticeReceiver> getReceiverFilterRule(Alert alert);
+    List<NoticeRule> getReceiverFilterRule(Alert alert);
+
+    /**
+     * Query the recipient information according to the recipient ID 
+     * 根据接收人ID查询接收人信息
+     *
+     * @param id Receiver ID     接收人ID
+     * @return Receiver     接收人
+     */
+    NoticeReceiver getOneReceiverById(Long id);
+
+    /**
+     * Query the template information according to the template ID
+     * 根据通知模板ID查询模板信息
+     *
+     * @param id Template ID List      接收人ID
+     * @return Template     通知模板
+     */
+    NoticeTemplate getOneTemplateById(Long id);
 
     /**
      * Query recipient information based on recipient ID (primary key Id)
@@ -127,10 +155,56 @@ public interface NoticeConfigService {
     NoticeRule getNoticeRulesById(Long ruleId);
 
     /**
+     * Add a notification template
+     * 新增一个通知接收人
+     *
+     * @param noticeTemplate template information  接收人信息
+     */
+    void addNoticeTemplate(NoticeTemplate noticeTemplate);
+
+    /**
+     * Modify notification templates
+     * 修改通知接收人
+     *
+     * @param noticeTemplate template information  接收人信息
+     */
+    void editNoticeTemplate(NoticeTemplate noticeTemplate);
+
+    /**
+     * Delete template information based on Template ID
+     * 根据通知模板ID删除通知模板信息
+     *
+     * @param templateId Template ID   接收人ID
+     */
+    void deleteNoticeTemplate(Long templateId);
+
+
+    /**
+     * Query specific notification templates according to the template ID (primary key ID)
+     * 根据模板ID(主键ID)查询具体通知规则
+     *
+     * @param templateId Template ID     模板ID(主键ID)
+     * @return Notification Template Entity    通知模板实体
+     */
+    Optional<NoticeTemplate> getNoticeTemplatesById(Long templateId);
+
+    /**
+     * Query specific notification templates according to the template type
+     * 根据模板类型查询具体模版
+     *
+     * @param type            Template type     模板类型
+     * @return Notification Template Entity    通知模板实体
+     */
+    NoticeTemplate getDefaultNoticeTemplateByType(Byte type);
+    
+    /**
      * alert Send test message
      * 告警 发送测试消息
+     *
      * @param noticeReceiver recipient information  接收人信息
      * @return true send success | false send fail
      */
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
+
+
 }

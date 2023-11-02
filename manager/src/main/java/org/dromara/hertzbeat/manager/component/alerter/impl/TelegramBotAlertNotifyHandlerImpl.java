@@ -19,16 +19,18 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information by Telegram Bot
@@ -41,15 +43,16 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+    private final RestTemplate restTemplate;
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
             String url = String.format(alerterProperties.getTelegramBotApiUrl(), receiver.getTgBotToken());
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
-                    .text(renderContent(alert))
+                    .text(renderContent(noticeTemplate, alert))
                     .disableWebPagePreview(true)
                     .build();
             HttpHeaders headers = new HttpHeaders();
@@ -76,11 +79,6 @@ public class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandle
     @Override
     public byte type() {
         return 7;
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifyTelegramBot";
     }
 
     @Data

@@ -74,5 +74,9 @@
   "sidebar.docs.category.snmp": {
     "message": "SNMP Protocol",
     "description": "The label for category snmp in sidebar docs"
+  },
+  "sidebar.docs.link.Install via Helm": {
+    "message": "Install via Helm",
+    "description": "The label for link Install via Helm in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
   }
 }

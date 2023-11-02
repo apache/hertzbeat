@@ -129,8 +129,8 @@
           <nz-input-number
             [(ngModel)]="params[i].value"
             [required]="paramDefine.required"
-            [nzMin]="-1000"
-            [nzMax]="65535"
+            [nzMin]="getNumber(paramDefine.range || '', 0) || -1000"
+            [nzMax]="getNumber(paramDefine.range || '', 1) || 65535"
             [nzStep]="1"
             [nzPlaceHolder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
             [name]="paramDefine.field"
@@ -178,6 +178,23 @@
             [keyAlias]="paramDefine.keyAlias ? paramDefine.keyAlias : 'Name'"
             [valueAlias]="paramDefine.valueAlias ? paramDefine.valueAlias : 'Value'"
           ></app-key-value-input>
+        </nz-form-control>
+
+        <nz-form-label
+          *ngIf="paramDefine.type === 'metrics-field'"
+          nzSpan="7"
+          [nzRequired]="paramDefine.required"
+          [nzFor]="paramDefine.field"
+          >{{ paramDefine.name }}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'metrics-field'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-metrics-field-input
+            [(value)]="params[i].value"
+            [id]="paramDefine.field"
+            [FieldAlias]="'Field'"
+            [UnitAlias]="'Unit'"
+            [TypeAlias]="'Type'"
+          ></app-metrics-field-input>
         </nz-form-control>
       </nz-form-item>
 
@@ -358,7 +375,14 @@
           {{ 'monitor.intervals' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="30" [nzMax]="604800" [nzStep]="60" name="intervals" id="intervals">
+          <nz-input-number
+            [(ngModel)]="monitor.intervals"
+            [nzMin]="monitor.app === 'push' ? 1 : 30"
+            [nzMax]="604800"
+            [nzStep]="monitor.app === 'push' ? 1 : 60"
+            name="intervals"
+            id="intervals"
+          >
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>

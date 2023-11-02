@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -42,8 +43,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Converge the batch API for alarms
  * 收敛告警批量API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Alert Converge Batch API | 告警收敛管理API")
 @RestController
@@ -58,6 +59,7 @@ public class AlertConvergesController {
             description = "You can obtain the list of alarm converge by querying filter items ｜ 根据查询过滤项获取告警收敛信息列表")
     public ResponseEntity<Message<Page<AlertConverge>>> getAlertConverges(
             @Parameter(description = "Alarm Converge ID ｜ 告警收敛ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Search Name ｜ 模糊查询-名称", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page ｜ 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
@@ -66,20 +68,28 @@ public class AlertConvergesController {
         Specification<AlertConverge> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("name")),
+                                "%" + search.toLowerCase() + "%"
+                        )
+                );
+                andList.add(predicate);
             }
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertConverge> alertConvergePage = alertConvergeService.getAlertConverges(specification,pageRequest);
-        Message<Page<AlertConverge>> message = new Message<>(alertConvergePage);
-        return ResponseEntity.ok(message);
+        Page<AlertConverge> alertConvergePage = alertConvergeService.getAlertConverges(specification, pageRequest);
+        return ResponseEntity.ok(Message.success(alertConvergePage));
     }
 
     @DeleteMapping
@@ -91,8 +101,7 @@ public class AlertConvergesController {
         if (ids != null && !ids.isEmpty()) {
             alertConvergeService.deleteAlertConverges(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
 }

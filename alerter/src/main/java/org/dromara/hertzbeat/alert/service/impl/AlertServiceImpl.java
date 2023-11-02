@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
@@ -156,7 +155,8 @@ public class AlertServiceImpl implements AlertService {
         }else{
             sb = new StringBuilder(alertReport.getContent());
         }
-
+        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), 
+                ZoneId.systemDefault());
         return Alert.builder()
                 .content("Alert Center\n" + sb)
                 .priority(alertReport.getPriority().byteValue())
@@ -164,7 +164,10 @@ public class AlertServiceImpl implements AlertService {
                 .tags(alertReport.getLabels())
                 .target(alertReport.getAlertName())
                 .triggerTimes(1)
-                .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneId.systemDefault()))
+                .firstAlarmTime(alertReport.getAlertTime())
+                .lastAlarmTime(alertReport.getAlertTime())
+                .gmtCreate(dateTime)
+                .gmtUpdate(dateTime)
                 .build();
     }
 

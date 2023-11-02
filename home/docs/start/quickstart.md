@@ -28,10 +28,11 @@ sidebar_label: Quick Start
 3. Deploy collector clusters
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-- `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
@@ -44,21 +45,22 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 4. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
 5. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 6. Deploy collector clusters
-    - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-    - Need `java jdk11` Environment
-    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
-      ```yaml
-      collector:
-        dispatch:
-          entrance:
-            netty:
-              enabled: true
-              identity: ${IDENTITY:}
-              manager-ip: ${MANAGER_IP:127.0.0.1}
-              manager-port: ${MANAGER_PORT:1158}
-      ```
-    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
-    - Access `http://localhost:1157` and we will see the registered new collector in dashboard
+   - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - Need `java jdk11` Environment
+   - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
+     ```yaml
+     collector:
+       dispatch:
+         entrance:
+           netty:
+             enabled: true
+             identity: ${IDENTITY:}
+             mode: ${MODE:public}
+             manager-host: ${MANAGER_HOST:127.0.0.1}
+             manager-port: ${MANAGER_PORT:1158}
+     ```
+   - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+   - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)
 
@@ -76,5 +78,11 @@ Detailed steps refer to [CONTRIBUTING](../others/contributing)
 Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
+
+##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+
+Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+
+Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**  
