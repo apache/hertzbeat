@@ -104,7 +104,7 @@ params:
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: true
-    defaultValue: true
+    defaultValue: false
   # field-param field key
   # field-变量字段标识符
   - field: username
