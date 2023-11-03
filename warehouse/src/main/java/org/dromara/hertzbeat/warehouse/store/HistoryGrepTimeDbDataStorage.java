@@ -57,13 +57,13 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	 */
 	private static final String STORAGE_DATABASE = "hertzbeat";
 	private static final String QUERY_HISTORY_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
 	private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
 	private static final String QUERY_INSTANCE_SQL
 			= "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
 	private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-			= "SELECT first, avg ,max, min FROM (SELECT %s as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(%s) as avg, min(%s) as min, max(%s) as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+			= "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
 	private static final String TABLE_NOT_EXIST = "not exist";
 	private static final String DATABASE_NOT_EXIST = "not exist";
 	private GreptimeDB greptimeDb;
@@ -158,7 +158,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
 		List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
-		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
+		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.TimestampMillisecond));
 		List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
 
 		List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
