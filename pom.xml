@@ -51,7 +51,7 @@
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>1.33</snake.yaml.version>
         <kafka-clients.version>3.4.0</kafka-clients.version>
-
+        <netty.version>4.1.100.Final</netty.version>
         <mysql.version>8.0.30</mysql.version>
         <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
@@ -279,7 +279,18 @@
                 <artifactId>commons-collections4</artifactId>
                 <version>${commons-collections4.version}</version>
             </dependency>
-
+            <!-- LOG -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!-- netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

@@ -187,7 +187,40 @@
                     <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
                     <buildArgs>
                         <arg>
-                            --initialize-at-build-time=org.apache.logging.log4j.LogManager
+                            --no-fallback
+                            --initialize-at-build-time=org.slf4j.LoggerFactory
+                            --initialize-at-build-time=io.netty.buffer.ByteBufAllocator
+                            --initialize-at-build-time=io.netty.buffer.PooledUnsafeDirectByteBuf
+                            --initialize-at-build-time=org.apache.logging.log4j.simple.SimpleLogger
+                            --initialize-at-build-time=io.netty.buffer.AbstractReferenceCountedByteBuf
+                            --initialize-at-build-time=org.apache.logging.slf4j.SLF4JLoggerContextFactory
+                            --initialize-at-build-time=io.netty.buffer.ByteBufUtil
+                            --initialize-at-build-time=io.netty.buffer.UnpooledHeapByteBuf
+                            --initialize-at-build-time=org.apache.logging.log4j.util.ProviderUtil
+                            --initialize-at-build-time=org.apache.logging.log4j.spi.AbstractLogger
+                            --initialize-at-build-time=org.apache.logging.log4j.util.PropertiesUtil
+                            --initialize-at-build-time=io.netty.buffer.AbstractPooledDerivedByteBuf
+                            --initialize-at-build-time=io.netty.buffer.UnpooledUnsafeDirectByteBuf
+                            --initialize-at-build-time=io.netty.buffer.PooledByteBufAllocator
+                            --initialize-at-build-time=io.netty.handler.ssl.PemPrivateKey
+                            --initialize-at-build-time=io.netty.channel.DefaultFileRegion
+                            --initialize-at-build-time=io.netty.buffer.UnpooledByteBufAllocator$InstrumentedUnpooledUnsafeDirectByteBuf
+                            --initialize-at-build-time=org.apache.logging.log4j.spi.StandardLevel
+                            --initialize-at-build-time=org.apache.logging.log4j.util.Strings
+                            --initialize-at-build-time=org.apache.logging.log4j.spi.Provider
+                            --initialize-at-build-time=io.netty.buffer.PooledSlicedByteBuf
+                            --initialize-at-build-time=io.netty.handler.ssl.PemValue
+                            --initialize-at-build-time=org.apache.logging.log4j.status.StatusLogger
+                            --initialize-at-build-time=io.netty.util.internal.logging.Log4J2Logger
+                            --initialize-at-build-time=org.apache.logging.log4j.util.OsgiServiceLocator
+                            --initialize-at-build-time=org.apache.logging.log4j.Level
+                            --initialize-at-build-time=org.apache.logging.log4j.util.LoaderUtil
+                            --initialize-at-build-time=io.netty.buffer.PooledByteBuf
+                            --initialize-at-build-time=org.apache.logging.log4j.util.PropertySource$Util
+                            --initialize-at-build-time=org.apache.logging.log4j.spi.ExtendedLoggerWrapper
+                            --report-unsupported-elements-at-runtime
+                            --allow-incomplete-classpath
+                            -H:+ReportExceptionStackTraces
                         </arg>
                     </buildArgs>
                 </configuration>
