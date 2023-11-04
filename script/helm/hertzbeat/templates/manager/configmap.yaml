@@ -128,7 +128,7 @@ data:
           username: root
           password: root
           # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
-          version: V_0_13
+          version: V_1_0
           query-timeout-in-ms: -1
           # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
           # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
