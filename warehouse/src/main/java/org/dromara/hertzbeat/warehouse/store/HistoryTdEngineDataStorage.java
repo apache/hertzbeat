@@ -259,6 +259,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
                 if (ts == null) {
+                    log.error("warehouse tdengine query result timestamp is null, ignore. {}.", selectSql);
                     continue;
                 }
                 String instanceValue = resultSet.getString(2);
