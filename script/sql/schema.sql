@@ -227,7 +227,7 @@ CREATE TABLE  hzb_alert
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
--- Table structure for notice_rule
+-- Table structure for hzb_notice_rule
 -- ----------------------------
 DROP TABLE IF EXISTS  hzb_notice_rule ;
 CREATE TABLE  hzb_notice_rule
@@ -236,6 +236,8 @@ CREATE TABLE  hzb_notice_rule
     name           varchar(100)     not null comment '策略名称',
     receiver_id    bigint           not null comment '消息接收人ID',
     receiver_name  varchar(100)     not null comment '消息接收人标识',
+    template_id    bigint           comment '消息接收人ID',
+    template_name  varchar(100)     comment '消息接收人标识',
     enable         boolean          not null default true comment '是否启用此策略',
     filter_all     boolean          not null default true comment '是否转发所有',
     priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
@@ -243,6 +245,24 @@ CREATE TABLE  hzb_notice_rule
     days           varchar(100)     comment '星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六',
     period_start   timestamp        comment '限制时间段起始:00:00:00',
     period_end     timestamp        comment '限制时间段截止:23:59:59',
+    creator        varchar(100)     comment '创建者',
+    modifier       varchar(100)     comment '最新修改者',
+    gmt_create     timestamp        default current_timestamp comment 'create time',
+    gmt_update     datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_notice_template
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_notice_template ;
+CREATE TABLE  hzb_notice_template
+(
+    id             bigint           not null auto_increment comment '通知模版主键索引ID',
+    name           varchar(100)     not null comment '模版名称',
+    type           tinyint          not null comment '通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人',
+    preset         boolean          default false comment '是否为预设模板: true-预设模板 false-自定义模板',
+    content        varchar(60000)   comment '模板内容',
     creator        varchar(100)     comment '创建者',
     modifier       varchar(100)     comment '最新修改者',
     gmt_create     timestamp        default current_timestamp comment 'create time',

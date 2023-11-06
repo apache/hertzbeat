@@ -45,7 +45,7 @@ public class AlertTemplateUtil {
         }
         try {
             Matcher matcher = PATTERN.matcher(template);
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             while (matcher.find()) {
                 Object objectValue = replaceData.getOrDefault(matcher.group(1), "NullValue");
                 String value = objectValue.toString();
