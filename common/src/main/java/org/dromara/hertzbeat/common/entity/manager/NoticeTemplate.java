@@ -90,9 +90,8 @@ public class NoticeTemplate {
                     "${priorityLabel} : ${priority}\n" +
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
-    @Length(max = 100000)
+    @Length(max = 60000)
     @NotBlank
-    @Column(name = "content", columnDefinition = "MEDIUMTEXT")
     private String content;
 
     @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
