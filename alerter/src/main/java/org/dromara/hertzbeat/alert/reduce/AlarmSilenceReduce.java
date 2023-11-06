@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * silence alarm
@@ -72,26 +73,29 @@ public class AlarmSilenceReduce {
 				LocalDateTime nowDate = LocalDateTime.now();
 				if (alertSilence.getType() == 0) {
 					// once time
-					if (alertSilence.getPeriodStart() != null && alertSilence.getPeriodEnd() != null) {
-						if (nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime())
-								&& nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime())) {
-							int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
-							alertSilence.setTimes(times + 1);
-							alertSilenceDao.save(alertSilence);
-							return false;
-						}
+					boolean startMatch = alertSilence.getPeriodStart() == null ||
+							nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+					boolean endMatch = alertSilence.getPeriodEnd() == null ||
+							nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+					if (startMatch && endMatch) {
+						int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
+						alertSilence.setTimes(times + 1);
+						alertSilenceDao.save(alertSilence);
+						return false;
 					}
 				} else if (alertSilence.getType() == 1) {
 					// cyc time
 					int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
 					if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
 						boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-						if (dayMatch && alertSilence.getPeriodStart() != null && alertSilence.getPeriodEnd() != null ) {
+						if (dayMatch) {
 							LocalTime nowTime = nowDate.toLocalTime();
-							
-							if (nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime())
-									&& nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime())) {
-								int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
+							boolean startMatch = alertSilence.getPeriodStart() == null || 
+									nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime());
+							boolean endMatch = alertSilence.getPeriodEnd() == null ||
+									nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
+							if (startMatch && endMatch) {
+								int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
 								alertSilence.setTimes(times + 1);
 								alertSilenceDao.save(alertSilence);
 								return false;
