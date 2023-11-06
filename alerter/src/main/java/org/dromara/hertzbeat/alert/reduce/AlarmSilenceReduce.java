@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * silence alarm
@@ -77,7 +78,7 @@ public class AlarmSilenceReduce {
 					boolean endMatch = alertSilence.getPeriodEnd() == null ||
 							nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
 					if (startMatch && endMatch) {
-						int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
+						int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
 						alertSilence.setTimes(times + 1);
 						alertSilenceDao.save(alertSilence);
 						return false;
@@ -94,7 +95,7 @@ public class AlarmSilenceReduce {
 							boolean endMatch = alertSilence.getPeriodEnd() == null ||
 									nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
 							if (startMatch && endMatch) {
-								int times = alertSilence.getTimes() == null ? 0 : alertSilence.getTimes();
+								int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
 								alertSilence.setTimes(times + 1);
 								alertSilenceDao.save(alertSilence);
 								return false;
