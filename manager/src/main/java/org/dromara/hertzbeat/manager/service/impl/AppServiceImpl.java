@@ -216,6 +216,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         List<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
+            // todo 暂时先过滤掉push以解决前端问题，待后续设计优化后放开
+            if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
+                continue;
+            }
             var hierarchyApp = new Hierarchy();
             hierarchyApp.setCategory(job.getCategory());
             hierarchyApp.setValue(job.getApp());

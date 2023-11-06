@@ -22,7 +22,6 @@ import org.dromara.hertzbeat.common.cache.CacheFactory;
 import org.dromara.hertzbeat.common.cache.ICacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
@@ -42,11 +41,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -148,6 +145,29 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
         return rules.stream()
                 .filter(rule -> {
+                    if (!rule.isFilterAll()) {
+                        // filter priorities
+                        if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
+                            boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
+                            if (!priorityMatch) {
+                                return false;
+                            }
+                        }
+                        // filter tags
+                        if (rule.getTags() != null && !rule.getTags().isEmpty()) {
+                            boolean tagMatch = rule.getTags().stream().anyMatch(tagItem -> {
+                                if (!alert.getTags().containsKey(tagItem.getName())) {
+                                    return false;
+                                }
+                                String alertTagValue = alert.getTags().get(tagItem.getName());
+                                return Objects.equals(tagItem.getValue(), alertTagValue);
+                            });
+                            if (!tagMatch) {
+                                return false;
+                            }
+                        }
+                    }
+                    
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
                     int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
@@ -158,36 +178,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                         }
                     }
                     // filter time
-                    if (rule.getPeriodStart() != null && rule.getPeriodEnd() != null) {
-                        LocalTime nowTime = nowDate.toLocalTime();
-
-                        if (nowTime.isBefore(rule.getPeriodStart().toLocalTime())
-                                || nowTime.isAfter(rule.getPeriodEnd().toLocalTime())) {
-                            return false;
-                        }
-                    }
-
-                    if (rule.isFilterAll()) {
-                        return true;
-                    }
-                    // filter priorities
-                    if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
-                        boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                        if (!priorityMatch) {
-                            return false;
-                        }
-                    }
-                    // filter tags
-                    if (rule.getTags() != null && !rule.getTags().isEmpty()) {
-                        return rule.getTags().stream().anyMatch(tagItem -> {
-                            if (!alert.getTags().containsKey(tagItem.getName())) {
-                                return false;
-                            }
-                            String alertTagValue = alert.getTags().get(tagItem.getName());
-                            return Objects.equals(tagItem.getValue(), alertTagValue);
-                        });
-                    }
-                    return true;
+                    LocalTime nowTime = nowDate.toLocalTime();
+                    boolean startMatch = rule.getPeriodStart() == null || 
+                            nowTime.isAfter(rule.getPeriodStart().toLocalTime()) ||
+                            (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd()) 
+                                    && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
+                    boolean endMatch = rule.getPeriodEnd() == null ||
+                            nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
+                    return startMatch && endMatch;
                 })
                 .collect(Collectors.toList());
     }
