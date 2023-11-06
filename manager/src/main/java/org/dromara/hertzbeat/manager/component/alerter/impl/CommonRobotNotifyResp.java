@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * common robot http response entity
- * @author tom
  *
+ * @author tom
  */
 @Data
 @AllArgsConstructor

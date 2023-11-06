@@ -1,6 +1,6 @@
 const path = require('path')
 
-const organizationName = 'tomsun28' // Usually your GitHub name.
+const organizationName = 'dromara' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`
@@ -54,7 +54,7 @@ module.exports = {
     announcementBar: {
       id: 'github-star',
       content:
-        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">give us a star on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee please! </a>⭐️⭐️',
+        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">give us a star on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee! </a>⭐️⭐️',
       backgroundColor: '#7228B5',
       textColor: '#fafbfc',
       isCloseable: true,
@@ -99,7 +99,7 @@ module.exports = {
             },
             {
               label: 'kanban',
-              href: 'https://github.com/dromara/hertzbeat/projects/1',
+              href: 'https://github.com/orgs/dromara/projects/6',
             },
             {
               label: 'design',

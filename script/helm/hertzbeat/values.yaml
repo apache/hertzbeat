@@ -74,7 +74,7 @@ tsdb:
     repository: apache/iotdb
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.13.3-node"
+    tag: "1.2.2-standalone"
   timezone: "Asia/Shanghai"
   persistence:
     enabled: true

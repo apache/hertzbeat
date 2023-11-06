@@ -9,7 +9,7 @@ public class Pair<K, V> {
     private K left;
     private final V right;
 
-    private Pair(K left, V right) {
+    public Pair(K left, V right) {
         this.left = left;
         this.right = right;
     }

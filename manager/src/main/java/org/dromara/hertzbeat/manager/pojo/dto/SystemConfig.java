@@ -28,7 +28,7 @@ public class SystemConfig {
      * 系统语言地区
      */
     private String locale;
-    
+
     /**
      * layout ui theme
      */

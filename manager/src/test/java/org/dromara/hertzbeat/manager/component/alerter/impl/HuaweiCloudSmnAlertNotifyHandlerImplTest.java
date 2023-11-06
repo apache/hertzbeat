@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
@@ -71,6 +72,16 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         receiver.setSmnProjectId(smnProjectId);
         receiver.setSmnRegion(smnRegion);
         receiver.setSmnTopicUrn(smnTopicUrn);
+        var noticeTemplate=new NoticeTemplate();
+        noticeTemplate.setId(1L);
+        noticeTemplate.setName("HuaWeiCloud");
+        noticeTemplate.setContent("[${title}]\n" +
+                "${targetLabel} : ${target}\n" +
+                "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
+                "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                "${priorityLabel} : ${priority}\n" +
+                "${triggerTimeLabel} : ${triggerTime}\n" +
+                "${contentLabel} : ${content}");
         var alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
@@ -83,6 +94,6 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        huaweiyunSmnAlertNotifyHandler.send(receiver, alert);
+        huaweiyunSmnAlertNotifyHandler.send(receiver, noticeTemplate,alert);
     }
 }

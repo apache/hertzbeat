@@ -8,8 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
+![hertzBeat](/img/home/0.png)
 
 ### What is HertzBeat?
 
@@ -18,7 +17,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 ### Features
 
 * Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
-* Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
+* Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a few clicks, all at zero learning cost.
 * Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.

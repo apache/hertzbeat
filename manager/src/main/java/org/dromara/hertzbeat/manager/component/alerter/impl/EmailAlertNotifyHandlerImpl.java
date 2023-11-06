@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
@@ -44,7 +45,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -54,19 +54,19 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private final JavaMailSender javaMailSender;
 
     private final MailService mailService;
-    
+
     @Value("${spring.mail.host:smtp.demo.com}")
     private String host;
-    
+
     @Value("${spring.mail.username:demo}")
     private String username;
-    
+
     @Value("${spring.mail.password:demo}")
     private String password;
-    
+
     @Value("${spring.mail.port:465}")
     private Integer port;
-    
+
     @Value("${spring.mail.properties.mail.smtp.ssl.enable:true}")
     private boolean sslEnable = true;
 
@@ -79,7 +79,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
             //获取sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
@@ -98,10 +98,10 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                         sender.setPassword(emailNoticeSenderConfig.getEmailPassword());
                         Properties props = sender.getJavaMailProperties();
                         props.put("mail.smtp.ssl.enable", emailNoticeSenderConfig.isEmailSsl());
-                        fromUsername = emailNoticeSenderConfig.getEmailUsername();  
+                        fromUsername = emailNoticeSenderConfig.getEmailUsername();
                         useDatabase = true;
                     }
-                } 
+                }
                 if (!useDatabase) {
                     // 若数据库未配置则启用yml配置
                     sender.setHost(host);
@@ -112,7 +112,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     props.put("mail.smtp.ssl.enable", sslEnable);
                 }
             } catch (Exception e) {
-                log.error("Type not found {}",e.getMessage());
+                log.error("Type not found {}", e.getMessage());
             }
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -123,7 +123,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
             //Build email templates 构建邮件模版
-            String process = mailService.buildAlertHtmlTemplate(alert);
+            String process = mailService.buildAlertHtmlTemplate(alert, noticeTemplate);
             //Set Email Content Template 设置邮件内容模版
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
@@ -136,7 +136,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     public byte type() {
         return 1;
     }
-    
+
     @EventListener(SystemConfigChangeEvent.class)
     public void onEvent(SystemConfigChangeEvent event) {
         log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());

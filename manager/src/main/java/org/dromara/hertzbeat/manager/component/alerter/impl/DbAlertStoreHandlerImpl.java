@@ -17,14 +17,14 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.Monitor;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.manager.component.alerter.AlertStoreHandler;
-import org.dromara.hertzbeat.manager.service.MonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.alert.service.AlertService;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.Monitor;
+import org.dromara.hertzbeat.manager.component.alerter.AlertStoreHandler;
+import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.stereotype.Component;
 
@@ -40,11 +40,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
-    
+
     private final MonitorService monitorService;
-    
+
     private final AlertService alertService;
-    
+
     @Override
     public void store(Alert alert) {
         Map<String, String> tags = alert.getTags();
@@ -53,8 +53,11 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             long monitorId = Long.parseLong(monitorIdStr);
             Monitor monitor = monitorService.getMonitor(monitorId);
             if (monitor == null) {
-                log.warn("Dispatch alarm the monitorId: {} not existed, ignored.", monitorId);
+                log.warn("Dispatch alarm the monitorId: {} not existed, ignored. target: {}.", monitorId, alert.getTarget());
                 return;
+            }
+            if (!tags.containsKey(CommonConstants.TAG_MONITOR_NAME)) {
+                tags.put(CommonConstants.TAG_MONITOR_NAME, monitor.getName());
             }
             if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
                 // When monitoring is not managed, ignore and silence its alarm messages

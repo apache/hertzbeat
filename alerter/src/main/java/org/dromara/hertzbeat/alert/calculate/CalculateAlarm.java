@@ -224,7 +224,6 @@ public class CalculateAlarm {
         if (notResolvedAlert != null) {
             // Sending an alarm Restore
             Map<String, String> tags = notResolvedAlert.getTags();
-            tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
             String content = this.bundle.getString("alerter.alarm.recover") + " : " + expr;
             Alert resumeAlert = Alert.builder()
                                         .tags(tags)
@@ -262,6 +261,7 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(define.getId()));
             if (!CollectionUtils.isEmpty(define.getTags())) {
                 for (TagItem tagItem : define.getTags()) {
                     fieldValueMap.put(tagItem.getName(), tagItem.getValue());
@@ -270,7 +270,6 @@ public class CalculateAlarm {
             }
             Alert alert = Alert.builder()
                                   .tags(tags)
-                                  .alertDefineId(define.getId())
                                   .priority(define.getPriority())
                                   .status(ALERT_STATUS_CODE_PENDING)
                                   .target(app + "." + metrics + "." + define.getField())
@@ -309,6 +308,7 @@ public class CalculateAlarm {
     }
 
     private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
+        // TODO CACHE getMonitorBindAlertAvaDefine
         AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
         if (avaAlertDefine == null) {
             return;
@@ -319,6 +319,7 @@ public class CalculateAlarm {
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
+            tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(avaAlertDefine.getId()));
             tags.put("metrics", CommonConstants.AVAILABILITY);
             tags.put("code", metricsData.getCode().name());
             Map<String, Object> valueMap = tags.entrySet().stream()
@@ -333,7 +334,7 @@ public class CalculateAlarm {
             if (preAlert == null) {
                 Alert.AlertBuilder alertBuilder = Alert.builder()
                                                           .tags(tags)
-                                                          .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                                                          .priority(avaAlertDefine.getPriority())
                                                           .status(ALERT_STATUS_CODE_PENDING)
                                                           .target(CommonConstants.AVAILABILITY)
                                                           .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
@@ -376,15 +377,9 @@ public class CalculateAlarm {
             Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
             if (notResolvedAlert != null) {
                 // Sending an alarm Restore
-                Map<String, String> tags = new HashMap<>(6);
-                tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
-                tags.put(CommonConstants.TAG_MONITOR_APP, app);
-                tags.put(CommonConstants.TAG_ALARM_TYPE, "recover");
+                Map<String, String> tags = notResolvedAlert.getTags();
                 if (!avaAlertDefine.isRecoverNotice()) {
                     tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
-                }
-                if (notResolvedAlert.getTags() != null) {
-                    tags.putAll(notResolvedAlert.getTags());
                 }
                 String content = this.bundle.getString("alerter.availability.recover");
                 Alert resumeAlert = Alert.builder()

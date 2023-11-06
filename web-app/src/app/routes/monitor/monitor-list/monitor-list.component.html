@@ -65,13 +65,22 @@
       {{ 'common.search' | i18n }}
     </button>
     <input
-      style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
+      style="margin-right: 5px; float: right; width: 180px; border-radius: 9px; text-align: center"
       nz-input
       type="text"
       [placeholder]="'monitors.search.placeholder' | i18n"
       nzSize="default"
       (keyup.enter)="onFilterSearchMonitors()"
       [(ngModel)]="filterContent"
+    />
+    <input
+      style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+      nz-input
+      type="text"
+      [placeholder]="'monitors.search.tag' | i18n"
+      nzSize="default"
+      (keyup.enter)="onFilterSearchMonitors()"
+      [(ngModel)]="tag"
     />
     <nz-select
       style="margin-right: 10px; float: right"
@@ -125,20 +134,16 @@
       </td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.status == 0" nzColor="default">
-          <i nz-icon nzType="robot" nzTheme="outline"></i>
+          <i nz-icon nzType="meh" nzTheme="outline"></i>
           <span>{{ 'monitor.status.un-manage' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 1" nzColor="success">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
           <span>{{ 'monitor.status.available' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 2" nzColor="warning">
-          <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unavailable' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.status == 3" nzColor="error">
+        <nz-tag *ngIf="data.status == 2" nzColor="error">
           <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unreachable' | i18n }}</span>
+          <span>{{ 'monitor.status.unavailable' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center">
@@ -156,7 +161,7 @@
         </button>
       </td>
       <td nzAlign="center">
-        <a routerLink="/setting/define" [queryParams]="{ app: data.app }">
+        <a routerLink="/monitors" [queryParams]="{ app: data.app }">
           <nz-tag nzColor="processing" class="hoverClass">
             <i nz-icon nzType="cloud"></i>
             <span>{{ 'monitor.app.' + data.app | i18n }}</span>

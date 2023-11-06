@@ -1,0 +1,254 @@
+<app-help-massage-show
+  [help_massage_content]="'collector.help' | i18n"
+  [guild_link]="'collector.help.link' | i18n"
+  [module_name]="'menu.extras.collector'"
+  [icon_name]="'cluster'"
+></app-help-massage-show>
+<nz-divider></nz-divider>
+
+<div style="margin-bottom: 20px">
+  <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+
+  <button nz-button nzType="primary" nzDanger (click)="onDeployCollector()">
+    <i nz-icon nzType="deployment-unit" nzTheme="outline"></i>
+    {{ 'collector.deploy' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
+    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+    {{ 'collector.online' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
+    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+    {{ 'collector.offline' | i18n }}
+  </button>
+
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    {{ 'collector.delete' | i18n }}
+  </button>
+
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadCollectorsTable()" class="mobile-hide">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    class="mobile-hide"
+    style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
+    nz-input
+    type="text"
+    [placeholder]="'collector.name' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadCollectorsTable()"
+    [(ngModel)]="search"
+  />
+</div>
+
+<nz-table
+  #fixedTable
+  [nzData]="collectors"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="14%">{{ 'collector' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.mode' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.task' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.pinned' | i18n }}</th>
+      <th nzAlign="center" nzWidth="9%">{{ 'collector.dispatched' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td
+        nzAlign="center"
+        nzLeft
+        [nzDisabled]="data.collector.name == 'main-default-collector'"
+        [nzChecked]="data.collector.name != 'main-default-collector' && checkedCollectors.has(data.collector.name)"
+        (nzCheckedChange)="onItemChecked(data.collector.name, $event)"
+      ></td>
+      <td nzAlign="center">{{ data.collector.name }}</td>
+      <td nzAlign="center">
+        <nz-tag [nzColor]="data.collector.status == 0 ? 'processing' : 'red'">
+          {{ data.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag [nzColor]="data.collector.mode == 'private' ? 'warning' : 'success'">
+          {{ data.collector.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.pinMonitorNum + data.dispatchMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.pinMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          {{ data.dispatchMonitorNum }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">{{ data.collector.ip }}</td>
+      <td nzAlign="center">
+        {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
+      </td>
+      <td nzAlign="center">
+        <button
+          *ngIf="data.collector.status == 1"
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          (click)="onGoOnlineOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.online' | i18n"
+        >
+          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          *ngIf="data.collector.status == 0"
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          (click)="onGoOfflineOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.offline' | i18n"
+        >
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          [disabled]="data.collector.name == 'main-default-collector'"
+          nz-button
+          nzType="primary"
+          nzDanger
+          (click)="onDeleteOneCollector(data.collector.name)"
+          nz-tooltip
+          [nzTooltipTitle]="'collector.delete' | i18n"
+        >
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<nz-modal
+  [(nzVisible)]="isDeployCollectorModalVisible"
+  [nzTitle]="'collector.deploy' | i18n"
+  (nzOnCancel)="onDeployCollectorClose()"
+  nzMaskClosable="false"
+  [nzFooter]="null"
+  nzWidth="45%"
+  [nzOkLoading]="isDeployCollectorModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #deployForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'collector.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="collector"
+            [disabled]="identity != ''"
+            nz-input
+            required
+            name="name"
+            type="text"
+            id="name"
+            [placeholder]="'collector.name.placeholder' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+    <div style="text-align: center">
+      <button
+        (click)="onDeployCollectorModalOk()"
+        [disabled]="identity != ''"
+        [nzLoading]="isDeployCollectorModalOkLoading"
+        nz-button
+        nzType="primary"
+      >
+        {{ 'collector.deploy.ok' | i18n }}
+      </button>
+    </div>
+    <nz-divider></nz-divider>
+    <div *ngIf="identity != ''">
+      <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: medium">
+        {{ 'collector.deploy.identity' | i18n }}
+      </div>
+      <div style="text-align: center; font-weight: lighter; font-size: small">
+        {{ 'collector.deploy.identity.tip' | i18n }}
+      </div>
+      <div style="text-align: center; margin-top: 10px">
+        <button
+          nz-button
+          nzSize="large"
+          nzDanger
+          [cdkCopyToClipboard]="identity"
+          nz-tooltip
+          [nzTooltipTitle]="'common.copy' | i18n"
+          (click)="notifyCopySuccess()"
+        >
+          {{ identity }}
+          <span nz-icon nzType="copy"> </span>
+          <span></span>
+          <span>
+            {{ 'common.copy.button' | i18n }}
+          </span>
+        </button>
+      </div>
+      <nz-divider></nz-divider>
+      <nz-badge nzStatus="processing" style="font-weight: bold" [nzText]="'collector.deploy.docker' | i18n"></nz-badge>
+      <div style="margin: 4px 10px 4px 4px; height: 240px; width: 100%; border-radius: 10px">
+        <nz-code-editor
+          [ngModel]="dockerShell"
+          [nzEditorMode]="'normal'"
+          [nzEditorOption]="{ language: 'shell', theme: 'vs-dark', folding: true }"
+        ></nz-code-editor>
+      </div>
+      <nz-divider></nz-divider>
+      <nz-badge nzStatus="processing" style="font-weight: bold" [nzText]="'collector.deploy.package' | i18n"></nz-badge>
+      <a style="margin-left: 20px" href="https://github.com/dromara/hertzbeat/releases" target="_blank">
+        <span>{{ 'collector.deploy.package.github' | i18n }}</span>
+      </a>
+      <a style="margin-left: 10px" href="https://gitee.com/dromara/hertzbeat/releases" target="_blank">
+        <span>{{ 'collector.deploy.package.gitee' | i18n }}</span>
+      </a>
+      <div style="margin: 4px 10px 4px 4px; height: 260px; width: 100%; border-radius: 10px">
+        <nz-code-editor
+          [ngModel]="packageShell"
+          [nzEditorMode]="'normal'"
+          [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true }"
+        ></nz-code-editor>
+      </div>
+      <nz-divider></nz-divider>
+      <div style="text-align: center; margin-top: 10px">
+        <button nz-button nzDanger (click)="onDeployCollectorClose()">
+          {{ 'collector.deploy.close' | i18n }}
+        </button>
+      </div>
+    </div>
+  </div>
+</nz-modal>

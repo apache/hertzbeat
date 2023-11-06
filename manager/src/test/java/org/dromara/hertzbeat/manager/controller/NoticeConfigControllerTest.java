@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.manager.controller;
 
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.dromara.hertzbeat.common.entity.manager.NoticeRule;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
@@ -51,6 +52,8 @@ class NoticeConfigControllerTest {
         noticeRule.setName("dispatch-1");
         noticeRule.setReceiverId(4324324L);
         noticeRule.setReceiverName("tom");
+        noticeRule.setTemplateId(4324324L);
+        noticeRule.setTemplateName("test");
         noticeRule.setCreator("tom");
         noticeRule.setModifier("tom");
         noticeRule.setTags(tags);
@@ -59,14 +62,32 @@ class NoticeConfigControllerTest {
     }
 
     public NoticeReceiver getNoticeReceiver(){
+
         NoticeReceiver noticeReceiver = new NoticeReceiver();
-         noticeReceiver.setName("tom");
-         noticeReceiver.setPhone("18923435643");
-         noticeReceiver.setEmail("tom@qq.com");
-         noticeReceiver.setHookUrl("https://www.tancloud.cn");
-         noticeReceiver.setType((byte) 1);
+        noticeReceiver.setName("tom");
+        noticeReceiver.setId(5L);
+        noticeReceiver.setAccessToken("c03a568a306f8fd84dab51ff03cf6af6ba676a3be940c904e1df2de34853739d");
+        noticeReceiver.setEmail("2762242004@qq.com");
+        noticeReceiver.setHookUrl("https://www.tancloud.cn");
+        noticeReceiver.setType((byte) 5);
 
         return noticeReceiver;
+
+    }
+    public NoticeTemplate getNoticeTemplate(){
+        NoticeTemplate template = new NoticeTemplate();
+        template.setId(5L);
+        template.setName("Dingding");
+        template.setContent("[${title}]\n" +
+                "${targetLabel} : ${target}\n" +
+                "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
+                "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                "${priorityLabel} : ${priority}\n" +
+                "${triggerTimeLabel} : ${triggerTime}\n" +
+                "${contentLabel} : ${content}");
+        template.setType((byte) 5);
+
+        return template;
 
     }
 
@@ -81,8 +102,8 @@ class NoticeConfigControllerTest {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
         System.out.println(noticeReceiver);
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(noticeReceiver)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))

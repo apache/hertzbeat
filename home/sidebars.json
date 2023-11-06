@@ -24,6 +24,7 @@
           "label": "Install via Helm",
           "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
         },
+        "start/upgrade",
         "start/iotdb-init",
         "start/tdengine-init",
         "start/greptime-init",
@@ -78,6 +79,13 @@
           "label": "snmp",
           "items": [
             "advanced/extend-snmp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "push",
+          "items": [
+            "advanced/extend-push"
           ]
         }
       ]
@@ -186,6 +194,7 @@
       "type": "category",
       "label": "Others",
       "items": [
+        "others/media",
         "others/developer",
         "others/contributing",
         "others/contact",

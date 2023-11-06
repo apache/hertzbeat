@@ -16,6 +16,7 @@ sidebar_label: Common issues
 The hertzbeat installed and deployed by the installation package is not available for ping connectivity monitoring, but local direct ping is available 。     
 > The deployment of the installation package requires configuring the root permission of the Java virtual machine to start hertzbeat to use ICMP. If the root permission is not enabled, judge whether port 7 of telnet opposite end is opened.    
 > When you install HertzBeat via DockerDocker root is enabled by default. No such problem.   
+> See https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address 
 
 4. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.

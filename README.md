@@ -15,20 +15,12 @@
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
-![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
-![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
-![hertzbeat](https://img.shields.io/badge/monitor-network-red)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) | [hertzbeat.com](https://hertzbeat.com)**
+**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
 
-**Cloud: [tancloud.cn](https://tancloud.cn)**
+**Cloud: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">Introduction</font>
 
@@ -37,7 +29,7 @@
 ### Features
 
 * Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, database, os, middleware, cloud-native, network and more.
-* Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a click of a mouse, all at zero learning cost.
+* Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a few clicks, all at zero learning cost.
 * Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
@@ -48,9 +40,9 @@
 
 ----
 
-[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)   
+[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/)   
 
-[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/) 
+[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/) 
 
 ----
 
@@ -121,10 +113,11 @@
 3. Deploy collector clusters 
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-- `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)   
@@ -139,7 +132,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 6. Deploy collector clusters
     - Download the release package `hertzbeat-collector-xx.zip` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
     - Need `java jdk11` Environment
-    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, hertzbeat `manager-ip`, hertzbeat `manager-port`
+    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
       ```yaml
       collector:
         dispatch:
@@ -147,7 +140,8 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
             netty:
               enabled: true
               identity: ${IDENTITY:}
-              manager-ip: ${MANAGER_IP:127.0.0.1}
+              mode: ${MODE:public}
+              manager-host: ${MANAGER_HOST:127.0.0.1}
               manager-port: ${MANAGER_PORT:1158}
       ```
     - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
@@ -374,6 +368,11 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://novohit.top"><img src="https://avatars.githubusercontent.com/u/101090395?v=4?s=100" width="100px;" alt="novohit"/><br /><sub><b>novohit</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=novohit" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rbsrcy"><img src="https://avatars.githubusercontent.com/u/4798540?v=4?s=100" width="100px;" alt="zhuoshangyi"/><br /><sub><b>zhuoshangyi</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=rbsrcy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ruanliang-hualun"><img src="https://avatars.githubusercontent.com/u/65543716?v=4?s=100" width="100px;" alt="ruanliang"/><br /><sub><b>ruanliang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ruanliang-hualun" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=ruanliang-hualun" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Eden4701"><img src="https://avatars.githubusercontent.com/u/68422437?v=4?s=100" width="100px;" alt="Eden4701"/><br /><sub><b>Eden4701</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Eden4701" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/XiaTian688"><img src="https://avatars.githubusercontent.com/u/111830921?v=4?s=100" width="100px;" alt="XiaTian688"/><br /><sub><b>XiaTian688</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=XiaTian688" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/liyin"><img src="https://avatars.githubusercontent.com/u/863169?v=4?s=100" width="100px;" alt="liyinjiang"/><br /><sub><b>liyinjiang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=liyin" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -395,9 +394,17 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
+[Chat On Discord](https://discord.gg/Fb6M73htGr)
+
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[User Club](https://support.qq.com/products/379369)   
+[User Club](https://support.qq.com/products/379369)
+
+[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+
+[Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+
+[Bilibili B站](https://space.bilibili.com/430192869)
 
 ##### Public        
 
@@ -414,6 +421,7 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 - [Hippo4j](https://github.com/opengoofy/hippo4j/) : 强大的动态线程池框架，附带监控报警功能
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
+- [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 
 
 ##### Sponsor     

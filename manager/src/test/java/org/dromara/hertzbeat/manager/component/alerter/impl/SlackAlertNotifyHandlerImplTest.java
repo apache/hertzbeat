@@ -3,6 +3,7 @@ package org.dromara.hertzbeat.manager.component.alerter.impl;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.AbstractSpringIntegrationTest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,16 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         var alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
+        var noticeTemplate=new NoticeTemplate();
+        noticeTemplate.setId(1L);
+        noticeTemplate.setName("Slack");
+        noticeTemplate.setContent("*[${title}]*\n" +
+                "${targetLabel} : ${target}\n" +
+                "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
+                "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                "${priorityLabel} : ${priority}\n" +
+                "${triggerTimeLabel} : ${triggerTime}\n" +
+                "${contentLabel} : ${content}");
         var map = Map.of(
                 CommonConstants.TAG_MONITOR_ID, "Mock monitor id",
                 CommonConstants.TAG_MONITOR_NAME, "Mock monitor name"
@@ -47,6 +58,6 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        slackAlertNotifyHandler.send(receiver, alert);
+        slackAlertNotifyHandler.send(receiver, noticeTemplate,alert);
     }
 }

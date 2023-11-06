@@ -26,31 +26,35 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
     private final Map<String, SmnClient> smnClientMap = new ConcurrentHashMap<>();
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             var smnClient = getSmnClient(receiver);
             var request = new PublishMessageRequest()
                     .withTopicUrn(receiver.getSmnTopicUrn());
             var body = new PublishMessageRequestBody()
                     .withSubject(bundle.getString("alerter.notify.title"))
-                    .withMessage(renderContent(alert));
+                    .withMessage(renderContent(noticeTemplate, alert));
             request.withBody(body);
             var response = smnClient.publishMessage(request);
             log.debug("huaweiCloud smn alert response: {}", response);
@@ -80,10 +84,5 @@ public class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHan
     @Override
     public byte type() {
         return 11;
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifySmn";
     }
 }
