@@ -115,8 +115,10 @@ public class CalculateAlarm {
                     if (metricsData != null) {
                         calculate(metricsData);
                     }
+                } catch (InterruptedException ignored) {
+                    
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error("calculate alarm error: {}.", e.getMessage(), e);
                 }
             }
         };
