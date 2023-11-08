@@ -2,7 +2,6 @@ package org.dromara.hertzbeat.alert.controller;
 
 import org.dromara.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.alert.service.impl.AlertConvertTenCloudServiceImpl;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -29,15 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AlertReportControllerTest {
     
     private MockMvc mockMvc;
-    
-    @InjectMocks
-    private AlertReportController alertReportController;
-    
+
     @Mock
     private AlertService alertService;
     
-    @Mock
-    AlertConvertTenCloudServiceImpl alertConvertTenCloudService;
+    @InjectMocks
+    private AlertReportController alertReportController;
     
     @BeforeEach
     void setUp() {
@@ -46,10 +42,31 @@ class AlertReportControllerTest {
     
     @Test
     void addNewAlertReportTencent() throws Exception {
+        TenCloudAlertReport.AlarmObjInfo alarmObjInfo = new TenCloudAlertReport.AlarmObjInfo();
+        alarmObjInfo.setRegion("广东");
+        alarmObjInfo.setNamespace("广州节点1");
+
+        TenCloudAlertReport.Conditions conditions = new TenCloudAlertReport.Conditions();
+        conditions.setMetricName("xx");
+        conditions.setMetricShowName("xxx");
+        conditions.setCalcType("a");
+        conditions.setCalcValue("aa");
+        conditions.setCalcUnit("aaa");
+        conditions.setCurrentValue("b");
+        conditions.setCalcUnit("bb");
+
+        TenCloudAlertReport.AlarmPolicyInfo alarmPolicyInfo = new TenCloudAlertReport.AlarmPolicyInfo();
+        alarmPolicyInfo.setPolicyTypeCname("x");
+        alarmPolicyInfo.setConditions(conditions);
+
         TenCloudAlertReport report = TenCloudAlertReport.builder()
-                                             .sessionId("xxxxxxxx")
+                                             .sessionId("123")
                                              .alarmStatus("1")
                                              .alarmType("metric")
+                                             .durationTime(2)
+                                             .firstOccurTime("2023-08-14 11:11:11")
+                                             .alarmObjInfo(alarmObjInfo)
+                                             .alarmPolicyInfo(alarmPolicyInfo)
                                              .build();
         mockMvc.perform(
                         MockMvcRequestBuilders
