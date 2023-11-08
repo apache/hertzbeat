@@ -317,8 +317,6 @@ metrics:
         type: 0
       - field: queue_deleted
         type: 0
-      - field: connection_closed
-        type: 0
     units:
       - mem_limit=B->MB
       - mem_used=B->MB

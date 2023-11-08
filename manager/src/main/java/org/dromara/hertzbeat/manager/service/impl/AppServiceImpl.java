@@ -313,6 +313,18 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
         }
+        Set<String> fieldsSet = new HashSet<>(16);
+        for (Metrics metrics : app.getMetrics()) {
+            Assert.notEmpty(metrics.getFields(), "monitoring template metrics fields can not null");
+            fieldsSet.clear();
+            for (Metrics.Field field : metrics.getFields()) {
+                if (fieldsSet.contains(field.getField())) {
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
+                            + field.getField() + " can not duplicated.");
+                }
+                fieldsSet.add(field.getField());
+            }
+        }
     }
 
     @Override
