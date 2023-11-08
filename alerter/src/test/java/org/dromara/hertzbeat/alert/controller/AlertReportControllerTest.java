@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.alert.controller;
 
 import org.dromara.hertzbeat.alert.dto.TenCloudAlertReport;
+import org.dromara.hertzbeat.alert.service.AlertService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AlertReportControllerTest {
     
     private MockMvc mockMvc;
+
+    @Mock
+    private AlertService alertService;
     
     @InjectMocks
     private AlertReportController alertReportController;
