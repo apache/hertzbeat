@@ -2,12 +2,12 @@ package org.dromara.hertzbeat.alert.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Map;
 
 /**
  * @author zqr10159
@@ -16,8 +16,9 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Builder
-public class TenCloudAlertReport implements Serializable {
+public class TenCloudAlertReport extends CloudAlertReportAbstract implements Serializable {
     @JsonProperty("sessionID")
     private String sessionId;
     private String alarmStatus;
@@ -77,6 +78,70 @@ public class TenCloudAlertReport implements Serializable {
         private String periodNum;
         private String alarmNotifyType;
         private long alarmNotifyPeriod;
+    }
+
+    @Override
+    public String getAlertName() {
+        return "TenCloud|腾讯云";
+    }
+
+    @Override
+    public Integer getAlertDuration() {
+        return this.durationTime;
+    }
+
+    @Override
+    public long getAlertTime() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        long occurTime;
+        occurTime = sdf.parse(getFirstOccurTime()).getTime();
+        return occurTime;
+    }
+
+    @Override
+    public Integer getPriority() {
+        return 1;
+    }
+
+    @Override
+    public Integer getReportType() {
+        return 1;
+    }
+
+    @Override
+    public Map<String, String> getLabels() {
+        return Map.of("app", "TenCloud");
+    }
+
+    @Override
+    public Map<String, String> getAnnotations() {
+        return Map.of("app", "TenCloud");
+    }
+
+    @Override
+    public String getContent() {
+        StringBuilder contentBuilder = new StringBuilder();
+       return contentBuilder
+                .append("[")
+                .append("告警对象：地区")
+                .append(getAlarmObjInfo().getRegion()).append("|")
+                .append(getAlarmObjInfo().getNamespace())
+                .append("]")
+                .append("[")
+                .append("告警内容：")
+                .append(getAlarmPolicyInfo().getPolicyTypeCname()).append("|")
+                .append(getAlarmPolicyInfo().getConditions().getMetricShowName()).append("|")
+                .append(getAlarmPolicyInfo().getConditions().getMetricName())
+                .append(getAlarmPolicyInfo().getConditions().getCalcType())
+                .append(getAlarmPolicyInfo().getConditions().getCalcValue())
+                .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
+                .append("]")
+                .append("[")
+                .append("当前数据")
+                .append(getAlarmPolicyInfo().getConditions().getCurrentValue())
+                .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
+                .append("]")
+                .toString();
     }
 
 }
