@@ -121,11 +121,25 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         return Map.of("app", "TenCloud");
     }
 
+    /**
+     * 事务告警
+     */
+    private static final String EVENT = "event";
+
+    /**
+     * 指标告警
+     */
+    private static final String METRIC = "metric";
+
+    /**
+     * 如果后续腾讯云告警类型增多的话，可以将该实体类拆分为一个父类和多个子类，然后在子类实现该方法即可
+     * 由于目前只有两种，暂不进行拆分
+     */
     @Override
     public String getContent() {
         StringBuilder contentBuilder = new StringBuilder();
         // 判断类型
-        if ("event".equals(getAlarmType())) {
+        if (EVENT.equals(getAlarmType())) {
             contentBuilder
                     .append("[")
                     .append("告警状态 | ")
@@ -148,7 +162,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
                     .append("事件告警名称：").append(getAlarmPolicyInfo().getConditions().getEventName())
                     .append(",").append(getAlarmPolicyInfo().getConditions().getEventShowName())
                     .append("]");
-        } else if ("metric".equals(getAlarmType())) {
+        } else if (METRIC.equals(getAlarmType())) {
             contentBuilder
                     .append("[")
                     .append("告警对象：")
