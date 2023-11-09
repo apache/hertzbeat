@@ -244,7 +244,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
-        Map<String, String> tags = new HashMap<>();
+        Map<String, String> tags = new HashMap<>(8);
         tags.put(CommonConstants.TAG_MONITOR_ID, "100");
         tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
         tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
