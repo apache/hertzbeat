@@ -18,7 +18,6 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
@@ -84,8 +83,6 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
-
-    private static final Gson GSON = new Gson();
 
     @Autowired
     private AppService appService;
@@ -734,8 +731,10 @@ public class MonitorServiceImpl implements MonitorService {
 
             monitorOpt.ifPresentOrElse(monitor -> {
                 // deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor = GSON.fromJson(GSON.toJson(monitor), Monitor.class);
-                copyMonitor(newMonitor, params);
+                Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
+                if (newMonitor != null) {
+                    copyMonitor(newMonitor, params);   
+                }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
     }

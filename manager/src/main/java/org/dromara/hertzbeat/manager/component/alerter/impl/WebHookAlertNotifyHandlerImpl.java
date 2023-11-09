@@ -43,6 +43,7 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             String webhookJson = renderContent(noticeTemplate, alert);
+            webhookJson = webhookJson.replace(",\n  }", "\n }");
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
             ResponseEntity<String> entity = restTemplate.postForEntity(receiver.getHookUrl(), alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
