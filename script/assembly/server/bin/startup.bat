@@ -49,7 +49,8 @@ if not exist %LOGS_DIR% (
 )
 
 rem JVM Configuration
-set JAVA_OPTS= -Duser.timezone=Asia/Shanghai
+
+set JAVA_OPTS= -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false
 
 set JAVA_MEM_OPTS= -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%LOGS_DIR%
 
@@ -59,7 +60,18 @@ set LOGGING_CONFIG=-Dlogging.config=%CONF_DIR%\logback-spring.xml
 set CONFIG_FILES= -Dlogging.path=%LOGS_DIR% %LOGGING_CONFIG% -Dspring.config.location=%CONF_DIR%/
 echo Starting the HertzBeat %SERVER_NAME% ...
 
-start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME% >logs\startup.log 2>&1 &
+set INNER_EXE=%DEPLOY_DIR%\java\bin\javaw.exe
+
+if not exist %INNER_EXE% (
+    echo "Use the system environment jdk to start"
+
+    start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME%
+
+) else (
+    echo "Use the inner package jdk to start"
+
+    start %INNER_EXE% %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME%
+)
 
 echo "Service Start Success!"
 for /f "tokens=1-5" %%i in ('netstat -ano^|findstr ":%SERVER_PORT%"') do (
