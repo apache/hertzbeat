@@ -91,6 +91,7 @@ public class NoticeTemplate {
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
     @Length(max = 60000)
+    @Lob
     @NotBlank
     private String content;
 

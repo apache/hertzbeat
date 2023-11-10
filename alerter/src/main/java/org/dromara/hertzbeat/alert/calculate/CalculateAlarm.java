@@ -51,8 +51,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_PENDING;
-import static org.dromara.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_SOLVED;
+import static org.dromara.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
@@ -101,7 +100,12 @@ public class CalculateAlarm {
         List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
-                this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY, Alert.builder().build());
+                HashMap<String, String> tags = new HashMap<>(8);
+                tags.put(TAG_MONITOR_ID, String.valueOf(monitor.getId()));
+                tags.put(TAG_MONITOR_NAME, monitor.getName());
+                tags.put(TAG_MONITOR_APP, monitor.getApp());
+                this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY,
+                        Alert.builder().tags(tags).target(AVAILABILITY).status(UN_AVAILABLE_CODE).build());
             }
         }
         startCalculate();
