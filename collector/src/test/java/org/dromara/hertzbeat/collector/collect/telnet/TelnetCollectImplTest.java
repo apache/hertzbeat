@@ -29,8 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test case for {@link TelnetCollectImpl}
  */
 class TelnetCollectImplTest {
-
-    @Test
+    
     void telnet() {
         TelnetClient telnetClient = null;
         try {

@@ -62,7 +62,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     private static final String ALERT_TEST_TARGET = "Test Target";
 
-    private static final String ALERT_TEST_CONTENT = "test send msg! \n This is the test data. It is proved that it can be received successfully";
+    private static final String ALERT_TEST_CONTENT = "test send msg! \\n This is the test data. It is proved that it can be received successfully";
 
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
     
@@ -244,13 +244,21 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        Map<String, String> tags = new HashMap<>(8);
+        tags.put(CommonConstants.TAG_MONITOR_ID, "100");
+        tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
+        tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
         Alert alert = new Alert();
+        alert.setTags(tags);
+        alert.setId(100L);
         alert.setTarget(ALERT_TEST_TARGET);
+        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         alert.setContent(ALERT_TEST_CONTENT);
-        alert.setTriggerTimes(1);
+        alert.setAlertDefineId(200L);
+        alert.setTimes(2);
+        alert.setStatus((byte) 0);
         alert.setFirstAlarmTime(System.currentTimeMillis());
         alert.setLastAlarmTime(System.currentTimeMillis());
-        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, alert);
     }
 
