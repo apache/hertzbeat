@@ -56,7 +56,7 @@ Have Fun!
 
 > `HertzBeat`'s multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring tool.
 
-**If you like HertzBeat, give us a star on GitHub**
+**If you like HertzBeat, star us on GitHub**
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat

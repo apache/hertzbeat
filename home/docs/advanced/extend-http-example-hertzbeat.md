@@ -232,7 +232,7 @@ metrics:
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please give us a star on GitHub Gitee, thank you very much.  
+If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.  
 
 **github: https://github.com/dromara/hertzbeat**
 
