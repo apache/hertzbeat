@@ -558,7 +558,7 @@
   "collector.deploy.package": "通过 安装包 方式部署",
   "collector.deploy.package.github": "下载安装包-Github",
   "collector.deploy.package.gitee": "下载安装包-Gitee",
-  "collector.deploy.package.help": "# 安装包部署需要您提前安装 JAVA11 环境 https://www.openlogic.com/openjdk-downloads",
+  "collector.deploy.package.help": "# 下载系统环境对应安装包 hertzbeat-collector-xx.tar.gz",
   "collector.deploy.package.help.1": "# 解压并配置文件 hertzbeat-collector/config/application.yml",
   "collector.deploy.package.help.2": "# 替换文件中的 IDENTITY MANAGER_HOST MODE 参数, 如下。",
   "collector.deploy.package.help.3": "# 启动脚本 bin/startup.sh 或者 startup.bat(windows) 来启动采集器进程。",
