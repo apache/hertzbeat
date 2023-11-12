@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 /**
@@ -41,6 +42,13 @@ public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorB
      * @return monitor bind
      */
     List<CollectorMonitorBind> findCollectorMonitorBindsByCollector(String collector);
+
+    /**
+     * find monitor collector bind by monitor ids
+     * @param monitorIds monitor ids
+     * @return binds
+     */
+    List<CollectorMonitorBind> findCollectorMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
     
     /**
      * find bind collector by monitor id

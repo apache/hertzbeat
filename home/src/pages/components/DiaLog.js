@@ -48,7 +48,7 @@ export default function DiaLog() {
             </div>
           }>
           <p style={{lineHeight: 1.5, textAlign: "center"}}>
-            <Translate>If you like HertzBeat, give us a star on GitHub</Translate>
+            <Translate>If you like HertzBeat, star us on GitHub</Translate>
           </p>
           <p style={{lineHeight: 1.5}}>
             <Translate>We will grow better with your support.</Translate>
