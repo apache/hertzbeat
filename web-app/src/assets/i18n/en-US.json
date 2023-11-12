@@ -559,7 +559,7 @@
   "collector.deploy.package": "Deploy via Package",
   "collector.deploy.package.github": "Download From Github",
   "collector.deploy.package.gitee": "Download From Gitee",
-  "collector.deploy.package.help": "# Installation package deployment requires you to install the JAVA11 environment in advance https://www.openlogic.com/openjdk-downloads",
+  "collector.deploy.package.help": "# Download the system corresponding release package hertzbeat-collector-xx.tar.gz",
   "collector.deploy.package.help.1": "# Unzip and configure the file hertzbeat-collector/config/application.yml",
   "collector.deploy.package.help.2": "# Replace the IDENTITY MANAGER_HOST MODE parameters in the file as follows.",
   "collector.deploy.package.help.3": "# Run bin/startup.sh or startup.bat(windows) to start the collector.",
