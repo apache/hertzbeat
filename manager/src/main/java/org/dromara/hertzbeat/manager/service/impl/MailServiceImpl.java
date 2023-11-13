@@ -69,7 +69,7 @@ public class MailServiceImpl implements MailService {
         }
         monitorId = monitorId == null ? "External Alarm, No ID" : monitorId;
         monitorName = monitorName == null ? "External Alarm, No Name" : monitorName;
-        // Introduce thymeleaf context parameters to render pages
+        // Introduce context parameters to render pages
         Map<String, String> model = new HashMap<>(16);
         model.put("nameTitle", bundle.getString("alerter.notify.title"));
         model.put("nameMonitorId", bundle.getString("alerter.notify.monitorId"));

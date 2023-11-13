@@ -26,7 +26,6 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.common.support.event.SystemConfigChangeEvent;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
 import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.dromara.hertzbeat.manager.service.NoticeConfigService;
@@ -63,10 +62,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
-
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         freemarker.template.Template templateRes;
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
+        cfg.setNumberFormat("0");
         Map<String, Object> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
@@ -109,6 +108,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             log.error("alert does not have mapping default notice template. type: {}.", type());
             throw new NullPointerException(type() + " does not have mapping default notice template");
         }
+        // TODO 单实例复用缓存 考虑多线程问题
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);
