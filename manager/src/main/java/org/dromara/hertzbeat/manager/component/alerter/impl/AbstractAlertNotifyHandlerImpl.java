@@ -51,6 +51,7 @@ import java.util.ResourceBundle;
 @Slf4j
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
+    private static final String NUMBER_FORMAT = "0";
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Resource
@@ -65,7 +66,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         freemarker.template.Template templateRes;
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
-        cfg.setNumberFormat("0");
+        cfg.setNumberFormat(NUMBER_FORMAT);
         Map<String, Object> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
