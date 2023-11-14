@@ -3,10 +3,9 @@ package org.dromara.hertzbeat.alert.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import org.dromara.hertzbeat.alert.util.DateUtil;
 
 import java.io.Serializable;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Map;
 
 /**
@@ -66,6 +65,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Conditions {
+        // 指标告警的参数
         private String metricName;
         private String metricShowName;
         private String calcType;
@@ -78,6 +78,12 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private String periodNum;
         private String alarmNotifyType;
         private long alarmNotifyPeriod;
+
+        // 事件告警的参数
+        private String productName;
+        private String productShowName;
+        private String eventName;
+        private String eventShowName;
     }
 
     @Override
@@ -91,11 +97,8 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     }
 
     @Override
-    public long getAlertTime() throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        long occurTime;
-        occurTime = sdf.parse(getFirstOccurTime()).getTime();
-        return occurTime;
+    public long getAlertTime() {
+        return DateUtil.getTimeStampFromFormat(getFirstOccurTime(), "yyyy-MM-dd HH:mm:ss");
     }
 
     @Override
@@ -118,30 +121,71 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         return Map.of("app", "TenCloud");
     }
 
+    /**
+     * 事务告警
+     */
+    private static final String EVENT = "event";
+
+    /**
+     * 指标告警
+     */
+    private static final String METRIC = "metric";
+
+    /**
+     * 如果后续腾讯云告警类型增多的话，可以将该实体类拆分为一个父类和多个子类，然后在子类实现该方法即可
+     * 由于目前只有两种，暂不进行拆分
+     */
     @Override
     public String getContent() {
         StringBuilder contentBuilder = new StringBuilder();
-       return contentBuilder
-                .append("[")
-                .append("告警对象：地区")
-                .append(getAlarmObjInfo().getRegion()).append("|")
-                .append(getAlarmObjInfo().getNamespace())
-                .append("]")
-                .append("[")
-                .append("告警内容：")
-                .append(getAlarmPolicyInfo().getPolicyTypeCname()).append("|")
-                .append(getAlarmPolicyInfo().getConditions().getMetricShowName()).append("|")
-                .append(getAlarmPolicyInfo().getConditions().getMetricName())
-                .append(getAlarmPolicyInfo().getConditions().getCalcType())
-                .append(getAlarmPolicyInfo().getConditions().getCalcValue())
-                .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
-                .append("]")
-                .append("[")
-                .append("当前数据")
-                .append(getAlarmPolicyInfo().getConditions().getCurrentValue())
-                .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
-                .append("]")
-                .toString();
+        // 判断类型
+        if (EVENT.equals(getAlarmType())) {
+            contentBuilder
+                    .append("[")
+                    .append("告警状态 | ")
+                    .append("0".equals(alarmStatus) ? "恢复" : "告警")
+                    .append("]\n")
+                    .append("[")
+                    .append("告警对象信息 | ")
+                    .append(getAlarmObjInfo().getRegion() == null ? "" : "region:" + getAlarmObjInfo().getRegion())
+                    .append(";").append("appId:").append(getAlarmObjInfo().getAppId())
+                    .append(";").append("uni:").append(getAlarmObjInfo().getUin())
+                    .append(";").append("unInstanceId:").append(getAlarmObjInfo().getDimensions().getUnInstanceId())
+                    .append("]\n")
+                    .append("[")
+                    .append("告警策略组信息 | ")
+                    .append("名称：").append(getAlarmPolicyInfo().getPolicyName())
+                    .append(";")
+                    .append("策略类型展示名称：").append(getAlarmPolicyInfo().getConditions().getProductName())
+                    .append(",").append(getAlarmPolicyInfo().getConditions().getProductShowName())
+                    .append(";")
+                    .append("事件告警名称：").append(getAlarmPolicyInfo().getConditions().getEventName())
+                    .append(",").append(getAlarmPolicyInfo().getConditions().getEventShowName())
+                    .append("]");
+        } else if (METRIC.equals(getAlarmType())) {
+            contentBuilder
+                    .append("[")
+                    .append("告警对象：")
+                    .append(getAlarmObjInfo().getRegion() == null ? "" : getAlarmObjInfo().getRegion())
+                    .append(getAlarmObjInfo().getRegion() == null ? "" : "|")
+                    .append(getAlarmObjInfo().getNamespace())
+                    .append("]")
+                    .append("[")
+                    .append("告警内容：")
+                    .append(getAlarmPolicyInfo().getPolicyTypeCname()).append("|")
+                    .append(getAlarmPolicyInfo().getConditions().getMetricShowName()).append("|")
+                    .append(getAlarmPolicyInfo().getConditions().getMetricName())
+                    .append(getAlarmPolicyInfo().getConditions().getCalcType())
+                    .append(getAlarmPolicyInfo().getConditions().getCalcValue())
+                    .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
+                    .append("]")
+                    .append("[")
+                    .append("当前数据")
+                    .append(getAlarmPolicyInfo().getConditions().getCurrentValue())
+                    .append(getAlarmPolicyInfo().getConditions().getCalcUnit())
+                    .append("]");
+        }
+        return contentBuilder.toString();
     }
 
 }
