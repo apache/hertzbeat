@@ -7,46 +7,8 @@ sidebar_label: 快速开始
 ### 🐕 开始使用
 
 - 如果您不想部署而是直接使用，我们提供SAAS监控云服务-TanCloud探云，**[即刻登录注册免费使用](https://console.tancloud.cn)**。
-- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。
+- 如果您是想将HertzBeat部署到本地搭建监控系统，请参考下面的部署文档进行操作。
 
-### 🐵 依赖服务部署(可选)
-
-> HertzBeat依赖于 **关系型数据库** H2(默认已内置无需安装) 或 [Mysql](mysql-change) 和 **时序性数据库** [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选)  
-
-**注意⚠️ 若需要部署时序数据库，IotDB 和 TDengine 任选其一即可！**  
-
-##### 安装Mysql(可选)  
-
-1. docker安装Mysql    
-   `   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`   
-   `-v /opt/data:/var/lib/mysql` - 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录
-2. 创建名称为hertzbeat的数据库    
-   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`    
-3. 在hertzbeat的配置文件`application.yml`配置Mysql数据库替换H2内置数据库连接参数    
-
-详细步骤参考 [使用Mysql替换内置H2数据库](mysql-change)   
-
-##### 安装TDengine(可选) 
-
-1. docker安装TDengine   
-   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:3.0.4.0`
-2. 创建名称为hertzbeat的数据库
-3. 在hertzbeat的配置文件`application.yml`配置tdengine连接   
-
-详细步骤参考 [使用时序数据库TDengine存储指标数据(可选)](tdengine-init)  
-
-##### 安装IotDB(可选)  
-
-1. Docker安装IoTDB 
-
-```shell
-$ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
-    -v /opt/iotdb/data:/iotdb/data \ 
-    --name iotdb \
-    apache/iotdb:0.13.3-node
-```
-
-详细步骤参考 [使用时序数据库IoTDB存储指标数据(可选)](iotdb-init)  
 
 ### 🍞 HertzBeat安装   
 > HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
@@ -77,14 +39,12 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 #### 方式二：通过安装包安装    
 
-1. 下载您系统环境对应的安装包`hertzbeat-xx.zip` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. 需要提前已安装`java jdk11`环境
-3. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
-4. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
-5. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-6. 部署采集器集群
-   - 下载采集器安装包`hertzbeat-collector-xx.zip`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-   - 需要提前已安装`java jdk11`环境
+1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
+3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+5. 部署采集器集群
+   - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
@@ -124,3 +84,42 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 详细步骤参考 [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
+
+### 🐵 依赖服务部署(可选)
+
+> HertzBeat依赖于 **关系型数据库** H2(默认已内置无需安装) 或 [Mysql](mysql-change) 和 **时序性数据库** [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选)
+
+**注意⚠️ 若需要部署时序数据库，IotDB 和 TDengine 任选其一即可！**
+
+##### 安装Mysql(可选)
+
+1. docker安装Mysql    
+   `   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`   
+   `-v /opt/data:/var/lib/mysql` - 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录
+2. 创建名称为hertzbeat的数据库    
+   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
+3. 在hertzbeat的配置文件`application.yml`配置Mysql数据库替换H2内置数据库连接参数
+
+详细步骤参考 [使用Mysql替换内置H2数据库](mysql-change)
+
+##### 安装TDengine(可选)
+
+1. docker安装TDengine   
+   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:3.0.4.0`
+2. 创建名称为hertzbeat的数据库
+3. 在hertzbeat的配置文件`application.yml`配置tdengine连接
+
+详细步骤参考 [使用时序数据库TDengine存储指标数据(可选)](tdengine-init)
+
+##### 安装IotDB(可选)
+
+1. Docker安装IoTDB
+
+```shell
+$ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
+    -v /opt/iotdb/data:/iotdb/data \ 
+    --name iotdb \
+    apache/iotdb:0.13.3-node
+```
+
+详细步骤参考 [使用时序数据库IoTDB存储指标数据(可选)](iotdb-init)  

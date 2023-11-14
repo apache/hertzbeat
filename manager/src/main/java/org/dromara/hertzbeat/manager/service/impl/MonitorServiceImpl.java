@@ -18,7 +18,6 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
@@ -84,8 +83,6 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
-
-    private static final Gson GSON = new Gson();
 
     @Autowired
     private AppService appService;
@@ -734,37 +731,38 @@ public class MonitorServiceImpl implements MonitorService {
 
             monitorOpt.ifPresentOrElse(monitor -> {
                 // deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor = GSON.fromJson(GSON.toJson(monitor), Monitor.class);
-                copyMonitor(newMonitor, params);
+                Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
+                if (newMonitor != null) {
+                    copyMonitor(newMonitor, params);   
+                }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
     }
 
     @Override
     public void updateAppCollectJob(Job job) {
-        List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
-                stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
+                stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
                 .collect(Collectors.toList());
-        if (!availableMonitors.isEmpty()) {
-            for (Monitor monitor : availableMonitors) {
-                Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
-                if (monitor == null || appDefine == null) {
+        List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findCollectorMonitorBindsByMonitorIdIn(
+                monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));
+        Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
+                Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
+        for (Monitor monitor : monitors) {
+            try {
+                Job appDefine = job.clone();
+                if (monitor == null || appDefine == null || monitor.getId() == null || monitor.getJobId() == null) {
+                    log.error("update monitor job error when template modify, define | id | jobId is null. continue");
                     continue;
                 }
-                if (monitor.getId() != null) {
-                    appDefine.setMonitorId(monitor.getId());
-                } else {
-                    continue;
-                }
-                if (monitor.getIntervals() != null) {
-                    appDefine.setInterval(monitor.getIntervals());
-                } else {
-                    continue;
-                }
+                appDefine.setId(monitor.getJobId());
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
+                        param.getValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .collect(Collectors.toList());
@@ -775,10 +773,14 @@ public class MonitorServiceImpl implements MonitorService {
                     }
                 });
                 appDefine.setConfigmap(configmaps);
+                // if is pinned collector
+                String collector = monitorIdCollectorMap.get(monitor.getId());
                 // 下发采集任务
-                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+                long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
-                monitorDao.save(monitor);
+                monitorDao.save(monitor);   
+            } catch (Exception e) {
+                log.error("update monitor job error when template modify: {}.continue", e.getMessage(), e);
             }
         }
     }
