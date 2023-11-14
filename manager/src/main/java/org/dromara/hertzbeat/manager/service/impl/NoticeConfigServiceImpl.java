@@ -250,7 +250,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
         Alert alert = new Alert();
         alert.setTags(tags);
-        alert.setId(100L);
+        alert.setId(1003445L);
         alert.setTarget(ALERT_TEST_TARGET);
         alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
         alert.setContent(ALERT_TEST_CONTENT);
