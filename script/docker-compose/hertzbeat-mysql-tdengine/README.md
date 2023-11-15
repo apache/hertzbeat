@@ -24,20 +24,26 @@
 
 3. Enter tdengine to create hertzbeat database
 
-   `$ docker exec -it compose-tdengine /bin/bash
-   root@tdengine-server:~/TDengine-server-2.4.0.4#`
+   ```shell
+   $ docker exec -it tdengine /bin/bash
+   root@tdengine-server:~/TDengine-server-2.4.0.4#
+   ```
 
    Create a database named hertzbeat After entering the container, execute the taos shell client program.
-
-   `root@tdengine-server:~/TDengine-server-2.4.0.4# taos
+   
+   ```bash
+   root@tdengine-server:~/TDengine-server-2.4.0.4# taos
    Welcome to the TDengine shell from Linux, Client Version: 2.4.0.4
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
-   taos>`
+   taos>
+   ```
 
+   
+   
    Execute the create database command
-
+   
    `taos> show databases;`
-
+   
    `taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;`
 
 ##### Restart the application
