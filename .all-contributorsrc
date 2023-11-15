@@ -1378,6 +1378,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jiashu1024",
+      "name": "ZhangJiashu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67859663?v=4",
+      "profile": "https://github.com/jiashu1024",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
