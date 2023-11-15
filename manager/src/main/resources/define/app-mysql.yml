@@ -892,7 +892,7 @@ metrics:
   - name: slow_sql
     priority: 2
     i18n:
-      zh-CN: 满查询 信息
+      zh-CN: 慢查询 信息
       en-US: Slow Sql Info
     fields:
       - field: id
