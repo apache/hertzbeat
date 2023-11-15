@@ -225,6 +225,9 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/liyin"><img src="https://avatars.githubusercontent.com/u/863169?v=4?s=100" width="100px;" alt="liyinjiang"/><br /><sub><b>liyinjiang</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=liyin" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiashu1024"><img src="https://avatars.githubusercontent.com/u/67859663?v=4?s=100" width="100px;" alt="ZhangJiashu"/><br /><sub><b>ZhangJiashu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jiashu1024" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
