@@ -83,7 +83,7 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标组的指标数据")
+    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标的实时指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @Parameter(description = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,

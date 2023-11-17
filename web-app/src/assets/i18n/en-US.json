@@ -16,7 +16,8 @@
       "mid": "Mid Monitor",
       "cn": "Cloud Native",
       "network": "Network Monitor",
-      "custom": "Custom Monitor"
+      "custom": "Custom Monitor",
+      "prometheus": "Prometheus Task"
     },
     "account": {
       "": "Personal",
@@ -50,8 +51,8 @@
   "monitor": {
     "": "Monitor",
     "availability": "Monitor Availability",
-    "name": "Monitor Name",
-    "name.tip": "Monitor name, the name needs to be unique",
+    "name": "Task Name",
+    "name.tip": "Monitor task name, the name needs to be unique",
     "host": "Monitor Host",
     "host.tip": "The monitored peer IP or domain name",
     "description": "Description",

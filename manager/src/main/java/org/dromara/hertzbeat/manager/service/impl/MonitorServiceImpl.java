@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -48,6 +49,7 @@ import org.dromara.hertzbeat.manager.service.TagService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
+import org.dromara.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
@@ -60,6 +62,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -113,6 +116,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private WarehouseService warehouseService;
 
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
@@ -597,11 +603,17 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setMonitor(monitor);
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
-            Job job = appService.getAppDefine(monitor.getApp());
-            List<String> metrics = job.getMetrics().stream()
-                    .filter(Metrics::isVisible)
-                    .map(Metrics::getName).collect(Collectors.toList());
-            monitorDto.setMetrics(metrics);
+            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())) {
+                List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
+                List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
+                monitorDto.setMetrics(metrics);
+            } else {
+                Job job = appService.getAppDefine(monitor.getApp());
+                List<String> metrics = job.getMetrics().stream()
+                        .filter(Metrics::isVisible)
+                        .map(Metrics::getName).collect(Collectors.toList());
+                monitorDto.setMetrics(metrics);   
+            }
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;

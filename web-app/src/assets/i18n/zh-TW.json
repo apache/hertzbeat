@@ -16,7 +16,8 @@
       "mid": "中間件監控",
       "cn": "雲原生監控",
       "network": "網絡監控",
-      "custom": "自定義監控"
+      "custom": "自定義監控",
+      "prometheus": "Prometheus 任務"
     },
     "account": {
       "": "個人頁",
@@ -50,8 +51,8 @@
   "monitor": {
     "": "監控",
     "availability": "監控可用性",
-    "name": "監控名稱",
-    "name.tip": "標識監控的名稱,名稱需要保證唯一性",
+    "name": "任務名稱",
+    "name.tip": "標識監控任務的名稱,名稱需要保證唯一性",
     "host": "監控Host",
     "host.tip": "被監控的對端IP或域名",
     "description": "描述備注",

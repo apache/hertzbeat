@@ -16,7 +16,8 @@
       "mid": "中间件监控",
       "cn": "云原生监控",
       "network": "网络监控",
-      "custom": "自定义监控"
+      "custom": "自定义监控",
+      "prometheus": "Prometheus 任务"
     },
     "account": {
       "": "个人页",
@@ -50,8 +51,8 @@
   "monitor": {
     "": "监控",
     "availability": "监控可用性",
-    "name": "监控名称",
-    "name.tip": "标识监控的名称,名称需要保证唯一性",
+    "name": "任务名称",
+    "name.tip": "标识监控任务的名称,名称需要保证唯一性",
     "host": "监控Host",
     "host.tip": "被监控的对端IP或域名",
     "description": "描述备注",

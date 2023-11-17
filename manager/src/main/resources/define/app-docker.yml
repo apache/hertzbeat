@@ -42,8 +42,8 @@ params:
     # name - parameter field display name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-field type, style (most map input tag type attribute)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host

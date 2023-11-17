@@ -43,7 +43,7 @@ params:
     # name-参数字段显示名称
     name:
       zh-CN: 服务器Host
-      en-US: Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host

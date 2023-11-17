@@ -14,26 +14,27 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
 category: custom
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
-app: api_code
-# The app api i18n name
-# app api国际化名称
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: prometheus
+# The monitoring i18n name
+# 监控类型国际化名称
 name:
-  zh-CN: API Code
-  en-US: API Code
+  zh-CN: Prometheus任务
+  en-US: Prometheus Task
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 api 返回的状态码进行监控。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對api返回的狀態碼進行監控。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: Prometheus 任务管理，您可以通过此监控支持 Prometheus 协议的应用类型数据，像 Prometheus 监控它们一样方便，并且是可视化页面的操作。<br><span class='help_module_span'>⚠️注意：监控对端需要提供 prometheus metrics 协议的数据接口。</span>
+  en-US: Prometheus task management, you can use this to monitor application that supports the Prometheus protocol, as convenient as Prometheus monitoring them, and it is a visual page operation. <br><span class='help_module_span'> The monitoring peer needs to provide the data interface of the prometheus metrics protocol. </span>
+  zh-TW: Prometheus 任務管理，您可以透過此監控支援 Prometheus 協定的應用程式類型數據，像 Prometheus 監控它們一樣方便，並且是視覺化頁面的操作。 <br><span class='help_module_span'>⚠️注意：監控對端需要提供 prometheus metrics 協定的資料介面。 </span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/api_code
-  en-US: https://hertzbeat.com/docs/help/api_code
-# app api所需输入参数定义(根据定义渲染页面UI)
-# Input params define for app api(render web ui by the definition)
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/prometheus/
+  en-US: https://hertzbeat.com/docs/help/prometheus/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
   # field-变量字段标识符
@@ -47,13 +48,9 @@ params:
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # 是否是必输项 true-必填 false-可选
+    # required-是否是必输项 true-必填 false-可选
     required: true
-    # field-param field key
-    # field-变量字段标识符
   - field: port
-    # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
@@ -63,59 +60,20 @@ params:
     # when type is number, range is required
     # 当type为number时,用range表示范围
     range: '[0,65535]'
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: true
     # default value
-    # 默认值
-    defaultValue: 80
-    # field-param field key
-    # field-变量字段标识
-  - field: method
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 请求方式
-      en-US: Method
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: radio
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
+    defaultValue: 9091
     required: true
-    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
-    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
-    options:
-      - label: GET
-        value: GET
-      - label: POST
-        value: POST
-      - label: PUT
-        value: PUT
-      - label: DELETE
-        value: DELETE
-    # field-param field key
-    # field-变量字段标识
-  - field: uri
-    # name-param field display i18n name
-    # name-参数字段显示名称
+  - field: timeout
     name:
-      zh-CN: 相对路径
-      en-US: URI
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # when type is text, use limit to limit string length
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 200
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
     required: false
-    # 参数输入框提示信息
-    # param field input placeholder
-    placeholder: 'Website uri path(no ip port) EG:/v2/book/bar'
-    # field-param field key
-    # field-变量字段标识
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    defaultValue: 6000
+  # field-变量字段标识
   - field: ssl
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -125,48 +83,8 @@ params:
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: boolean
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: true
-    # field-param field key
-    # field-变量字段标识
-  - field: timeout
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 超时时间(ms)
-      en-US: Timeout(ms)
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: number
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
-    # hide param-true or false
-    # 是否隐藏字段 true or false
     hide: true
     # field-param field key
-    # field-变量字段标识
-  - field: jsonPath
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: JsonPath解析路径
-      en-US: JsonPath
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: true
-    # default value
-    # 默认值
-    defaultValue: $.code
-    # 参数输入框提示信息
-    # param field input placeholder
-    placeholder: 'The jsonPath to parse code field in response data'
-    # field-param field key
-    # field-变量字段标识
   - field: headers
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -179,15 +97,15 @@ params:
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
+    hide: true
     # when type is key-value, use keyAlias to config key alias name
     # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
     keyAlias: Header Name
     # when type is key-value, use valueAlias to config value alias name
     # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
     valueAlias: Header Value
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
+    # field-param field key
+  # field-变量字段标识
   - field: params
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -200,17 +118,15 @@ params:
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
+    hide: true
     # when type is key-value, use keyAlias to config key alias name
     # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
     keyAlias: Param Key
     # when type is key-value, use valueAlias to config value alias name
     # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
     valueAlias: Param Value
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
     # field-param field key
-    # field-变量字段标识
+  # field-变量字段标识
   - field: contentType
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -230,7 +146,7 @@ params:
     # 是否隐藏字段 true or false
     hide: true
     # field-param field key
-    # field-变量字段标识
+  # field-变量字段标识
   - field: payload
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -250,7 +166,7 @@ params:
     # 是否隐藏字段 true or false
     hide: true
     # field-param field key
-    # field-变量字段标识
+  # field-变量字段标识
   - field: authType
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -273,10 +189,8 @@ params:
         value: Basic Auth
       - label: Digest Auth
         value: Digest Auth
-      - label: Bearer Token
-        value: Bearer Token
     # field-param field key
-    # field-变量字段标识
+  # field-变量字段标识
   - field: username
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -296,7 +210,7 @@ params:
     # 是否隐藏字段 true or false
     hide: true
     # field-param field key
-    # field-变量字段标识
+  # field-变量字段标识
   - field: password
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -312,79 +226,46 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
-    # field-param field key
-    # field-变量字段标识
-  - field: token
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 认证Token
-      en-US: Access Token
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
-    # field-param field key
-    # field-变量字段标识
-  - field: keyword
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 关键字计数
-      en-US: Keyword Num
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # 参数输入框提示信息
-    # param field input placeholder
-    placeholder: 'Input Keyword'
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
-    # hide param-true or false
-    # 是否隐藏字段 true or false
-    hide: true
-
+# collect metrics config list
+# 采集指标组配置列表
 metrics:
-  - name: status
+  # metrics - cluster_node_status
+  # 监控指标组 - cluster_node_status
+  - name: auto
+    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
+    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 0
-    fields:
-      - field: responseTime
-        type: 0
-        unit: ms
-      - field: code
-        type: 0
-    aliasFields:
-      - ^_^jsonPath^_^
-      - responseTime
-    calculates:
-      - code=^_^jsonPath^_^
-      - responseTime=responseTime
-    protocol: http
-    http:
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: prometheus
+    # the config content when protocol is http
+    prometheus:
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
+      # http port
       port: ^_^port^_^
-      url: ^_^uri^_^
+      # http path
+      path: '/metrics'
       timeout: ^_^timeout^_^
-      method: ^_^method^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
       ssl: ^_^ssl^_^
+      # http request payload
       payload: ^_^payload^_^
+      # http request header content
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
+      # http request params
       params:
         ^_^params^_^: ^_^params^_^
+      # http auth
       authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
-        bearerTokenToken: ^_^token^_^
-      parseType: jsonPath
-      parseScript: '$'

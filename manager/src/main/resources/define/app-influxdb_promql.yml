@@ -19,8 +19,8 @@ helpLink:
 params:
   - field: host
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     type: host
     required: true
   - field: port
