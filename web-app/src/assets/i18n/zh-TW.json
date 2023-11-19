@@ -53,7 +53,7 @@
     "availability": "監控可用性",
     "name": "任務名稱",
     "name.tip": "標識監控任務的名稱,名稱需要保證唯一性",
-    "host": "監控Host",
+    "host": "目標Host",
     "host.tip": "被監控的對端IP或域名",
     "description": "描述備注",
     "description.tip": "更多標識和描述此監控的備注信息",

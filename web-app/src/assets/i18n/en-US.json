@@ -53,7 +53,7 @@
     "availability": "Monitor Availability",
     "name": "Task Name",
     "name.tip": "Monitor task name, the name needs to be unique",
-    "host": "Monitor Host",
+    "host": "Target Host",
     "host.tip": "The monitored peer IP or domain name",
     "description": "Description",
     "description.tip": "Description and remarks",
