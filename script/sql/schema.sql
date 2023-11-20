@@ -29,12 +29,12 @@ DROP TABLE IF EXISTS  hzb_monitor ;
 CREATE TABLE  hzb_monitor
 (
      id           bigint       not null comment '监控ID',
-     job_id       bigint       comment '监控对应下发的任务ID',
+     job_id       bigint       comment '监控对应下发的采集任务ID',
      name         varchar(100) not null comment '监控的名称',
      app          varchar(100) not null comment '监控的类型:linux,mysql,jvm...',
      host         varchar(100) not null comment '监控的对端host:ipv4,ipv6,域名',
      intervals    int          not null default 600 comment '监控的采集间隔时间,单位秒',
-     status       tinyint      not null default 1 comment '监控状态 0:未监控,1:可用,2:不可用,3:不可达',
+     status       tinyint      not null default 1 comment '任务状态 0:未监控,1:可用,2:不可用',
      description  varchar(255) comment '描述备注信息',
      creator      varchar(100) comment '创建者',
      modifier     varchar(100) comment '最新修改者',

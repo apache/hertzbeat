@@ -105,7 +105,7 @@ CREATE TABLE  tag_monitor_bind
 (
     id           bigint           not null auto_increment comment '主键ID',
     tag_id       bigint           not null comment 'TAG ID',
-    monitor_id   bigint           not null comment '监控ID',
+    monitor_id   bigint           not null comment '监控任务ID',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id),

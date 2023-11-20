@@ -63,7 +63,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     protected long tenantId;
     /**
      * Monitor ID
-     * 监控ID
+     * 监控任务ID
      */
     protected long monitorId;
     /**

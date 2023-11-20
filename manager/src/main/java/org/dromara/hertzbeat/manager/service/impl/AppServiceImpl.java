@@ -327,7 +327,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         appDefineStore.save(app.getApp(), ymlContent);
         appDefines.put(app.getApp().toLowerCase(), app);
         // bug  当模板 app-redis.yml被修改，比如 增加指标组，删除指标，当前的job中，持有的缓存 metrics实例，
-        // 解决 ：模板修改后，同类型模板的所有监控实例 ，在监控状态中，需要重新下发任务
+        // 解决 ：模板修改后，同类型模板的所有监控实例 ，在任务状态中，需要重新下发任务
         SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);
     }
 

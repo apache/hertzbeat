@@ -114,8 +114,8 @@ metricReporterList:
 ```
 [HertzBeat告警通知]
 告警目标对象 : iotdb.cluster_node_status.status
-所属监控ID : 205540620349696
-所属监控名称 : IOTDB_localhost
+所属监控任务ID : 205540620349696
+所属任务名称 : IOTDB_localhost
 告警级别 : 紧急告警
 告警触发时间 : 2023-01-05 22:17:06
 内容详情 : 监控到 IOTDB 节点 127.0.0.1 状态 OFFLINE, 请及时处理。

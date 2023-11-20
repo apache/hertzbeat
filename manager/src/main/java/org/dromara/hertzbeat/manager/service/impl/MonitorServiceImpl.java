@@ -630,7 +630,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Delete corresponding monitoring periodic task
-        // 更新监控状态  删除对应的监控周期性任务
+        // 更新任务状态  删除对应的监控周期性任务
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
@@ -650,7 +650,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void enableManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
-        // 更新监控状态 新增对应的监控周期性任务
+        // 更新任务状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)

@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public class Job {
 
     /**
-     * Task id      任务ID
+     * Task id      采集任务ID
      */
     private long id;
     /**
@@ -54,7 +54,7 @@ public class Job {
     private long tenantId = 0;
     /**
      * Monitoring ID Application ID
-     * 监控ID 应用ID
+     * 监控任务ID 应用ID
      */
     private long monitorId;
     /**

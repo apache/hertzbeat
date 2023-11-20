@@ -159,8 +159,8 @@ management:
 ```
 [HertzBeat告警通知]
 告警目标对象 : springboot2.threads.size
-所属监控ID : 483783444839322
-所属监控名称 : SPRINGBOOT2_localhost
+所属监控任务ID : 483783444839322
+所属任务名称 : SPRINGBOOT2_localhost
 告警级别 : 警告告警
 告警触发时间 : 2023-03-22 21:13:44
 内容详情 : The springboot2 service's runnable state threads num is over 300, now is 444.

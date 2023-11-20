@@ -82,12 +82,7 @@
       (keyup.enter)="onFilterSearchMonitors()"
       [(ngModel)]="tag"
     />
-    <nz-select
-      style="margin-right: 10px; float: right"
-      nzAllowClear
-      [nzPlaceHolder]="'monitors.search.filter' | i18n"
-      [(ngModel)]="filterStatus"
-    >
+    <nz-select style="margin-right: 10px; float: right" nzAllowClear [nzPlaceHolder]="'monitor.status' | i18n" [(ngModel)]="filterStatus">
       <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
       <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
       <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>

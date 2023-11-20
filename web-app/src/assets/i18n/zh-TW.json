@@ -85,7 +85,7 @@
       "fullsite": "全站監控"
     },
     "status": {
-      "": "監控狀態",
+      "": "任務狀態",
       "all": "全部狀態",
       "available": "正常監控",
       "unavailable": "不可用",
@@ -353,7 +353,6 @@
   "monitors.export.use-type": "以 {{type}} 文件格式導出監控",
   "monitors.import": "導入監控",
   "monitors.search.placeholder": "搜索監控",
-  "monitors.search.filter": "監控狀態",
   "monitors.search.tag": "標籤篩選",
   "monitors.total": "總量",
   "monitors.advanced": "高級設置",

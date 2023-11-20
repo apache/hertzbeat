@@ -187,7 +187,7 @@ public class Metrics {
 
     /**
      * collector use - Temporarily store subTask id
-     * collector使用 - 分级任务ID
+     * collector使用 - 分级采集任务ID
      */
     @JsonIgnore
     private transient Integer subTaskId;

@@ -89,7 +89,7 @@
       "fullsite": "全站监控"
     },
     "status": {
-      "": "监控状态",
+      "": "任务状态",
       "all": "全部状态",
       "available": "正常监控",
       "unavailable": "不可用",
@@ -358,7 +358,6 @@
   "monitors.export.use-type": "以 {{type}} 文件格式导出监控",
   "monitors.import": "导入监控",
   "monitors.search.placeholder": "搜索监控",
-  "monitors.search.filter": "监控状态",
   "monitors.search.tag": "标签筛选",
   "monitors.total": "总量",
   "monitors.advanced": "高级设置",
