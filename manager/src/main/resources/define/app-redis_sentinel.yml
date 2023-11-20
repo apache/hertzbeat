@@ -22,7 +22,7 @@ app: redis_sentinel
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Redis Sentinel数据库
+  zh-CN: Redis Sentinel
   en-US: Redis Sentinel
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息

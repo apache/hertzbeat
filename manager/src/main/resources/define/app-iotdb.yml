@@ -22,8 +22,8 @@ app: iotdb
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: IoTDB数据库
-  en-US: IoTDB
+  zh-CN: Apache IoTDB
+  en-US: Apache IoTDB
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:

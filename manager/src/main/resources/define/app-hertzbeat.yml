@@ -20,8 +20,8 @@ category: custom
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat
 name:
-  zh-CN: HertzBeat监控系统
-  en-US: HertzBeat Monitor
+  zh-CN: HertzBeat
+  en-US: HertzBeat
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
