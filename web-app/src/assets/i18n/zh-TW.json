@@ -17,7 +17,11 @@
       "cn": "雲原生監控",
       "network": "網絡監控",
       "custom": "自定義監控",
-      "prometheus": "Prometheus 任務"
+      "prometheus": "Prometheus 任務",
+      "program": "應用程式監控",
+      "webserver": "Web伺服器監控",
+      "cache": "快取監控",
+      "bigdata": "大數據監控"
     },
     "account": {
       "": "個人頁",
@@ -70,7 +74,13 @@
       "db": "數據庫",
       "os": "操作系統",
       "mid": "中間件",
-      "custom": "自定義監控"
+      "cn": "雲原生監控",
+      "network": "網絡監控",
+      "custom": "自定義",
+      "program": "應用程式",
+      "webserver": "Web伺服器",
+      "cache": "快取",
+      "bigdata": "大數據"
     },
     "app": {
       "": "監控類型",

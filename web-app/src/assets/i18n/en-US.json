@@ -17,7 +17,11 @@
       "cn": "Cloud Native",
       "network": "Network Monitor",
       "custom": "Custom Monitor",
-      "prometheus": "Prometheus Task"
+      "prometheus": "Prometheus Task",
+      "program": "Program Monitor",
+      "webserver": "Webserver Monitor",
+      "cache": "Cache Monitor",
+      "bigdata": "Bigdata Monitor"
     },
     "account": {
       "": "Personal",
@@ -70,7 +74,13 @@
       "db": "Database",
       "os": "OS",
       "mid": "Middleware",
-      "custom": "Custom"
+      "cn": "Cloud Native",
+      "network": "Network",
+      "custom": "Custom",
+      "program": "Application",
+      "webserver": "Webserver",
+      "cache": "Cache",
+      "bigdata": "Bigdata"
     },
     "app": {
       "": "Monitor Type",
