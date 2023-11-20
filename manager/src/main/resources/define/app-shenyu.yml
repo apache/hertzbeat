@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-category: mid
+category: bigdata
 app: shenyu
 name:
-  zh-CN: ShenYu网关
-  en-US: ShenYu Gateway
+  zh-CN: Apache ShenYu
+  en-US: Apache ShenYu
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:

@@ -22,7 +22,7 @@ app: nacos
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Nacos注册配置中心
+  zh-CN: Nacos分布式
   en-US: Nacos Server
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息

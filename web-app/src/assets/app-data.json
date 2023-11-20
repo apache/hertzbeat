@@ -36,16 +36,34 @@
           "link": "/monitors"
         },
         {
+          "text": "Prometheus",
+          "i18n": "menu.monitor.prometheus",
+          "icon": "anticon-insert-row-below",
+          "link": "/monitors?app=prometheus"
+        },
+        {
           "key": "service",
           "text": "应用服务",
           "i18n": "menu.monitor.service",
           "icon": "anticon-appstore"
         },
         {
+          "key": "program",
+          "text": "应用程序",
+          "i18n": "menu.monitor.program",
+          "icon": "anticon-code"
+        },
+        {
           "key": "db",
           "text": "数据库",
           "i18n": "menu.monitor.db",
           "icon": "anticon-console-sql"
+        },
+        {
+          "key": "cache",
+          "text": "缓存",
+          "i18n": "menu.monitor.cache",
+          "icon": "anticon-group"
         },
         {
           "key": "os",
@@ -60,6 +78,20 @@
           "hide": false,
           "i18n": "menu.monitor.mid",
           "icon": "anticon-cluster"
+        },
+        {
+          "key": "bigdata",
+          "text": "大数据",
+          "hide": false,
+          "i18n": "menu.monitor.bigdata",
+          "icon": "anticon-dot-chart"
+        },
+        {
+          "key": "webserver",
+          "text": "Web服务器",
+          "hide": false,
+          "i18n": "menu.monitor.webserver",
+          "icon": "anticon-database"
         },
         {
           "key": "cn",
@@ -80,12 +112,6 @@
           "text": "自定义",
           "i18n": "menu.monitor.custom",
           "icon": "anticon-project"
-        },
-        {
-          "text": "Prometheus",
-          "i18n": "menu.monitor.prometheus",
-          "icon": "anticon-insert-row-below",
-          "link": "/monitors?app=prometheus"
         }
       ]
     },

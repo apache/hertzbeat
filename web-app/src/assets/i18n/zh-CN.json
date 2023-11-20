@@ -17,7 +17,11 @@
       "cn": "云原生监控",
       "network": "网络监控",
       "custom": "自定义监控",
-      "prometheus": "Prometheus 任务"
+      "prometheus": "Prometheus 任务",
+      "program": "应用程序监控",
+      "webserver": "Web服务器监控",
+      "cache": "缓存监控",
+      "bigdata": "大数据监控"
     },
     "account": {
       "": "个人页",
