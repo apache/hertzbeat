@@ -24,6 +24,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,8 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
 
-    private final Map<String, CollectRep.MetricsData> metricsDataMap;
-    private static final Integer DEFAULT_INIT_SIZE = 1024;
+    /**
+     * monitorId -> metricsName -> data
+     */
+    private final Map<Long, Map<String, CollectRep.MetricsData>> monitorMetricsDataMap;
+    private static final Integer DEFAULT_INIT_SIZE = 16;
+    private static final Integer METRICS_SIZE = 8;
 
     public RealTimeMemoryDataStorage(WarehouseProperties properties) {
         int initSize = DEFAULT_INIT_SIZE;
@@ -47,19 +53,26 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
                 && properties.getStore().getMemory().getInitSize() != null) {
             initSize = properties.getStore().getMemory().getInitSize();
         }
-        metricsDataMap = new ConcurrentHashMap<>(initSize);
+        monitorMetricsDataMap = new ConcurrentHashMap<>(initSize);
         this.serverAvailable = true;
     }
 
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
-        String hashKey = monitorId + metric;
-        return metricsDataMap.get(hashKey);
+        Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
+        return metricsDataMap.get(metric);
+    }
+
+    @Override
+    public List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId) {
+        Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
+        return new ArrayList<>(metricsDataMap.values());
     }
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        String hashKey = metricsData.getId() + metricsData.getMetrics();
+        Long monitorId = metricsData.getId();
+        String metrics = metricsData.getMetrics();
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
@@ -67,13 +80,14 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
             log.debug("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
-        metricsDataMap.put(hashKey, metricsData);
+        Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
+        metricsDataMap.put(metrics, metricsData);
     }
 
     @Override
     public void destroy() {
-        if (metricsDataMap != null) {
-            metricsDataMap.clear();
+        if (monitorMetricsDataMap != null) {
+            monitorMetricsDataMap.clear();
         }
     }
 }

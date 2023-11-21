@@ -50,7 +50,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 3. 查看检测指标数据
 
-> 在监控列表可以查看监控状态，进监控详情可以查看指标数据图表等。
+> 在监控列表可以查看任务状态，进监控详情可以查看指标数据图表等。
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)

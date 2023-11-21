@@ -66,11 +66,11 @@ public class MonitorsController {
 	@Operation(summary = "Obtain a list of monitoring information based on query filter items",
 			description = "根据查询过滤项获取监控信息列表")
 	public ResponseEntity<Message<Page<Monitor>>> getMonitors(
-			@Parameter(description = "Monitor ID | 监控ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
+			@Parameter(description = "Monitor ID | 监控任务ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
 			@Parameter(description = "Monitor Type | 监控类型", example = "linux") @RequestParam(required = false) final String app,
-			@Parameter(description = "Monitor Name | 监控名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
+			@Parameter(description = "Monitor Name | 任务名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
 			@Parameter(description = "Monitor Host | 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
-			@Parameter(description = "Monitor Status | 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
+			@Parameter(description = "Monitor Status | 任务状态 0:未监控,1:可用,2:不可用,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
 			@Parameter(description = "Sort Field | 排序字段", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
 			@Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
 			@Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
@@ -153,9 +153,9 @@ public class MonitorsController {
 
 	@DeleteMapping
 	@Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
-			description = "根据监控ID列表批量删除监控项")
+			description = "根据监控任务ID列表批量删除监控项")
 	public ResponseEntity<Message<Void>> deleteMonitors(
-			@Parameter(description = "en: Monitoring ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+			@Parameter(description = "Monitoring ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
 	) {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.deleteMonitors(new HashSet<>(ids));
@@ -166,9 +166,9 @@ public class MonitorsController {
 
 	@DeleteMapping("manage")
 	@Operation(summary = "Unmanaged monitoring items in batches according to the monitoring ID list",
-			description = "根据监控ID列表批量取消纳管监控项")
+			description = "根据监控任务ID列表批量取消纳管监控项")
 	public ResponseEntity<Message<Void>> cancelManageMonitors(
-			@Parameter(description = "en: Monitoring ID List,zh: 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+			@Parameter(description = "Monitoring ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
 	) {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.cancelManageMonitors(new HashSet<>(ids));
@@ -179,9 +179,9 @@ public class MonitorsController {
 
 	@GetMapping("manage")
 	@Operation(summary = "Start the managed monitoring items in batches according to the monitoring ID list",
-			description = "根据监控ID列表批量启动纳管监控项")
+			description = "根据监控任务ID列表批量启动纳管监控项")
 	public ResponseEntity<Message<Void>> enableManageMonitors(
-			@Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+			@Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
 	) {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.enableManageMonitors(new HashSet<>(ids));
@@ -193,7 +193,7 @@ public class MonitorsController {
 	@GetMapping("/export")
 	@Operation(summary = "export monitor config", description = "导出监控配置")
 	public void export(
-			@Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids,
+			@Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam List<Long> ids,
 			@Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
 			HttpServletResponse res) throws Exception {
 		monitorService.export(ids, type, res);
@@ -210,7 +210,7 @@ public class MonitorsController {
 	@PostMapping("/copy")
 	@Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
 	public ResponseEntity<Message<Void>> duplicateMonitors(
-			@Parameter(description = "Monitor ID List | 监控ID列表", example = "6565463543") @RequestParam List<Long> ids
+			@Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam List<Long> ids
 	) throws Exception {
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.copyMonitors(ids);

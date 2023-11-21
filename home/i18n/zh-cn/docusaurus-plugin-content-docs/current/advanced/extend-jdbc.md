@@ -65,7 +65,7 @@ SQL响应数据：
 样例：自定义一个名称为example_sql的自定义监控类型，其使用JDBC协议采集指标数据。
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: db
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: example_sql

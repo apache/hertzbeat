@@ -185,7 +185,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-数据库已经存在相同的监控名称
+     * 参数校验-数据库已经存在相同的任务名称
      */
     @Test
     void validateMonitorName() {

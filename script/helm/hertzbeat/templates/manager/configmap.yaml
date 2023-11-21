@@ -139,7 +139,7 @@ data:
         # 存储实时数据方式, 下方只能enabled启用一种方式
         memory:
           enabled: true
-          init-size: 1024
+          init-size: 16
         redis:
           enabled: false
           host: 127.0.0.1

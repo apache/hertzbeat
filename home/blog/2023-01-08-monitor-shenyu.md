@@ -146,8 +146,8 @@ shenyu:
 ```
 [HertzBeat告警通知]
 告警目标对象 : shenyu.process_open_fds.value
-所属监控ID : 205540620349696
-所属监控名称 : SHENYU_localhost
+所属监控任务ID : 205540620349696
+所属任务名称 : SHENYU_localhost
 告警级别 : 警告告警
 告警触发时间 : 2023-01-08 22:17:06
 内容详情 : 请注意⚠️ ShenYu网关打开的文件描述符的数量为 3044 超过3000
