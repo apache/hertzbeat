@@ -37,7 +37,7 @@ import java.util.List;
 @Schema(description = "指标组监控数据")
 public class MetricsData {
 
-    @Schema(title = "监控ID")
+    @Schema(title = "监控任务ID")
     private Long id;
 
     @Schema(title = "监控类型")

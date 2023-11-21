@@ -16,7 +16,12 @@
       "mid": "Mid Monitor",
       "cn": "Cloud Native",
       "network": "Network Monitor",
-      "custom": "Custom Monitor"
+      "custom": "Custom Monitor",
+      "prometheus": "Prometheus Task",
+      "program": "Program Monitor",
+      "webserver": "Webserver Monitor",
+      "cache": "Cache Monitor",
+      "bigdata": "Bigdata Monitor"
     },
     "account": {
       "": "Personal",
@@ -50,9 +55,9 @@
   "monitor": {
     "": "Monitor",
     "availability": "Monitor Availability",
-    "name": "Monitor Name",
-    "name.tip": "Monitor name, the name needs to be unique",
-    "host": "Monitor Host",
+    "name": "Task Name",
+    "name.tip": "Monitor task name, the name needs to be unique",
+    "host": "Target Host",
     "host.tip": "The monitored peer IP or domain name",
     "description": "Description",
     "description.tip": "Description and remarks",
@@ -69,7 +74,13 @@
       "db": "Database",
       "os": "OS",
       "mid": "Middleware",
-      "custom": "Custom"
+      "cn": "Cloud Native",
+      "network": "Network",
+      "custom": "Custom",
+      "program": "Application",
+      "webserver": "Webserver",
+      "cache": "Cache",
+      "bigdata": "Bigdata"
     },
     "app": {
       "": "Monitor Type",
@@ -84,7 +95,7 @@
       "fullsite": "SiteMap Monitor"
     },
     "status": {
-      "": "Monitor Status",
+      "": "Task Status",
       "all": "All Status",
       "available": "Available",
       "unavailable": "UnAvailable",
@@ -352,7 +363,6 @@
   "monitors.export.use-type": "Export monitors in {{type}} file format",
   "monitors.import": "Import Monitor",
   "monitors.search.placeholder": "Search Monitor",
-  "monitors.search.filter": "Monitor Status",
   "monitors.search.tag": "Tag Filter",
   "monitors.total": "Total",
   "monitors.advanced": "Advanced",

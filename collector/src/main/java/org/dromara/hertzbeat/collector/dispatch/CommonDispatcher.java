@@ -211,8 +211,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this, 
                     collectorIdentity, unitConvertList);
             jobRequestQueue.addJob(metricsCollect);
-            metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                    new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+            if (metrics.getPrometheus() != null) {
+                metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+            } else {
+                metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));   
+            }
         });
     }
 
@@ -343,6 +348,38 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // 需等待其它同级别指标组执行完成后进入下一级别执行
             }
         }
+    }
+
+    @Override
+    public void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList) {
+        WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
+        Job job = timerJob.getJob();
+        metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
+        if (job.isCyclic()) {
+            // If it is an asynchronous periodic cyclic task, directly send the collected data of the indicator group to the message middleware
+            // 若是异步的周期性循环任务,直接发送指标组的采集数据到消息中间件
+            metricsDataList.forEach(commonDataQueue::sendMetricsData);
+            // The collection and execution of all index groups of this job are completed.
+            // The periodic task pushes the task to the time wheel again.
+            // First, determine the execution time of the task and the task collection interval.
+            // 此Job所有指标组采集执行完成
+            // 周期性任务再次将任务push到时间轮
+            // 先判断此次任务执行时间与任务采集间隔时间
+            if (timeout.isCancelled()) {
+                return;
+            }
+            long spendTime = System.currentTimeMillis() - job.getDispatchTime();
+            long interval = job.getInterval() - spendTime / 1000;
+            interval = interval <= 0 ? 0 : interval;
+            // Reset Construction Execution Metrics Group View  重置构造执行指标组视图
+            job.constructPriorMetrics();
+            timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
+        } else {
+            // The collection and execution of all indicator groups of this job are completed
+            // and the result listener is notified of the combination of all indicator group data
+            timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
+        }
+        
     }
 
     private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {

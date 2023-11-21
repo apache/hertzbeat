@@ -74,33 +74,21 @@ public interface CommonConstants {
 
     /**
      * Monitoring Status Code: Unmanaged
-     * 监控状态码: 未管理
+     * 任务状态码: 未管理
      */
     byte UN_MANAGE_CODE = 0x00;
 
     /**
      * Monitoring Status Code: Available
-     * 监控状态码: 可用
+     * 任务状态码: 可用
      */
     byte AVAILABLE_CODE = 0x01;
 
     /**
      * Monitoring Status Code: Not Available
-     * 监控状态码: 不可用
+     * 任务状态码: 不可用
      */
     byte UN_AVAILABLE_CODE = 0x02;
-
-    /**
-     * Monitoring Status Code: Unreachable
-     * 监控状态码: 不可达
-     */
-    byte UN_REACHABLE_CODE = 0x03;
-
-    /**
-     * Monitoring Status Code: Pending
-     * 监控状态码: 挂起
-     */
-    byte SUSPENDING_CODE = 0x04;
 
     /**
      * Alarm status: 0 - normal alarm (to be processed)
@@ -238,12 +226,12 @@ public interface CommonConstants {
     byte AUTH_TYPE_GITEE = 5;
 
     /**
-     * 内有标签: monitorId 监控ID
+     * 内有标签: monitorId 监控任务ID
      */
     String TAG_MONITOR_ID = "monitorId";
 
     /**
-     * 内有标签: monitorName 监控名称
+     * 内有标签: monitorName 任务名称
      */
     String TAG_MONITOR_NAME = "monitorName";
 
@@ -309,7 +297,7 @@ public interface CommonConstants {
     
     /**
      * ignore label
-     * 处理未配置恢复告警，但需要使用恢复告警变更监控状态的情况
+     * 处理未配置恢复告警，但需要使用恢复告警变更任务状态的情况
      */
     String IGNORE = "ignore";
 

@@ -70,7 +70,7 @@ public class DataStorageDispatch {
                         }
                     }
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error(e.getMessage(), e);
                 }
             }
         };
@@ -92,7 +92,7 @@ public class DataStorageDispatch {
                         }
                     }
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error(e.getMessage(), e);
                 }
             }
         };

@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public class Job {
 
     /**
-     * Task id      任务ID
+     * Task id      采集任务ID
      */
     private long id;
     /**
@@ -54,13 +54,13 @@ public class Job {
     private long tenantId = 0;
     /**
      * Monitoring ID Application ID
-     * 监控ID 应用ID
+     * 监控任务ID 应用ID
      */
     private long monitorId;
     /**
      * Large categories of monitoring       监控的大类别
      * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-     * service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+     * service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 os-操作系统监控
      */
     private String category;
     /**
