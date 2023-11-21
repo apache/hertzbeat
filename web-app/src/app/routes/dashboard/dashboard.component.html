@@ -292,7 +292,26 @@
 </div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 400px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12, offset: 6 }" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
+    <angular-tag-cloud
+      style="border-radius: 4px"
+      (clicked)="onTagCloudClick($event)"
+      [font]="'italic bold 6px monospace'"
+      [data]="wordCloudData"
+      [width]="1"
+      [height]="1"
+      [step]="2"
+      [strict]="true"
+      [randomizeAngle]="true"
+      [realignOnResize]="true"
+      [delay]="300"
+      [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
+      [overflow]="false"
+      [background]="'white no-repeat fixed center'"
+    >
+    </angular-tag-cloud>
+  </div>
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" style="height: 100%">
     <div
       echarts
       [options]="appsCountEChartOption"
