@@ -3,6 +3,7 @@ import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
 
 // dashboard pages
+import { TagCloudComponent } from 'angular-tag-cloud-module';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -24,7 +25,7 @@ const COMPONENTS: Array<Type<void>> = [
 ];
 
 @NgModule({
-  imports: [SharedModule, RouteRoutingModule, NgxEchartsModule, NzTagModule, NzTimelineModule, SlickCarouselModule],
+  imports: [SharedModule, RouteRoutingModule, NgxEchartsModule, NzTagModule, NzTimelineModule, SlickCarouselModule, TagCloudComponent],
   declarations: COMPONENTS
 })
 export class RoutesModule {}
