@@ -22,6 +22,7 @@ import com.googlecode.aviator.Expression;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
+import org.dromara.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
 import org.dromara.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 import org.dromara.hertzbeat.collector.dispatch.timer.WheelTimerTask;
@@ -62,7 +63,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     protected long tenantId;
     /**
      * Monitor ID
-     * 监控ID
+     * 监控任务ID
      */
     protected long monitorId;
     /**
@@ -141,6 +142,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         response.setApp(app);
         response.setId(monitorId);
         response.setTenantId(tenantId);
+        // for prometheus auto 
+        if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
+            List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
+                    .getInstance().collect(response, metrics);
+            validateResponse(metricsData.stream().findFirst().orElse(null));
+            collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+            return;
+        }
         response.setMetrics(metrics.getName());
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
@@ -400,6 +409,24 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
         }
         return builder.build();
+    }
+
+    private void validateResponse(CollectRep.MetricsData metricsData) {
+        if (metricsData == null) {
+            log.error("[Collect Failed] Response metrics data is null.");
+            return;
+        }
+        long endTime = System.currentTimeMillis();
+        long runningTime = endTime - startTime;
+        long allTime = endTime - newTime;
+        if (startTime - newTime >= WARN_DISPATCH_TIME) {
+            log.warn("[Collector Dispatch Warn, Dispatch Use {}ms.", startTime - newTime);
+        }
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, metricsData.getMsg());
+        } else {
+            log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
+        }
     }
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {

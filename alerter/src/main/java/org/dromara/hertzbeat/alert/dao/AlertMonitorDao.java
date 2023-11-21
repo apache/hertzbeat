@@ -34,16 +34,16 @@ import java.util.List;
 public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
 
     /**
-     * Query the monitoring status of a specified monitoring state ｜ 查询指定监控状态的监控
-     * @param status 监控状态
+     * Query the monitoring status of a specified monitoring state ｜ 查询指定任务状态的监控
+     * @param status 任务状态
      * @return Monitor the list ｜ 监控列表
      */
     List<Monitor> findMonitorsByStatusIn(List<Byte> status);
     
     
     /**
-     * Query the monitoring status of a specified monitoring state ｜ 查询指定监控状态的监控
-     * @param status 监控状态
+     * Query the monitoring status of a specified monitoring state ｜ 查询指定任务状态的监控
+     * @param status 任务状态
      * @return Monitor the list ｜ 监控列表
      */
     List<Monitor> findMonitorsByStatus(Byte status);

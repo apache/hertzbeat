@@ -16,7 +16,12 @@
       "mid": "中间件监控",
       "cn": "云原生监控",
       "network": "网络监控",
-      "custom": "自定义监控"
+      "custom": "自定义监控",
+      "prometheus": "Prometheus 任务",
+      "program": "应用程序监控",
+      "webserver": "Web服务器监控",
+      "cache": "缓存监控",
+      "bigdata": "大数据监控"
     },
     "account": {
       "": "个人页",
@@ -50,9 +55,9 @@
   "monitor": {
     "": "监控",
     "availability": "监控可用性",
-    "name": "监控名称",
-    "name.tip": "标识监控的名称,名称需要保证唯一性",
-    "host": "监控Host",
+    "name": "任务名称",
+    "name.tip": "标识监控任务的名称,名称需要保证唯一性",
+    "host": "目标Host",
     "host.tip": "被监控的对端IP或域名",
     "description": "描述备注",
     "description.tip": "更多标识和描述此监控的备注信息",
@@ -69,7 +74,13 @@
       "db": "数据库",
       "os": "操作系统",
       "mid": "中间件",
-      "custom": "自定义监控"
+      "cn": "云原生",
+      "network": "网络",
+      "custom": "自定义监控",
+      "program": "应用程序",
+      "webserver": "Web服务器",
+      "cache": "缓存",
+      "bigdata": "大数据"
     },
     "app": {
       "": "监控类型",
@@ -84,7 +95,7 @@
       "fullsite": "全站监控"
     },
     "status": {
-      "": "监控状态",
+      "": "任务状态",
       "all": "全部状态",
       "available": "正常监控",
       "unavailable": "不可用",
@@ -353,7 +364,6 @@
   "monitors.export.use-type": "以 {{type}} 文件格式导出监控",
   "monitors.import": "导入监控",
   "monitors.search.placeholder": "搜索监控",
-  "monitors.search.filter": "监控状态",
   "monitors.search.tag": "标签筛选",
   "monitors.total": "总量",
   "monitors.advanced": "高级设置",

@@ -170,8 +170,8 @@ Github: https://github.com/dromara/hertzbeat
 ```
 [HertzBeat告警通知]
 告警目标对象 : linux.cpu.usage
-所属监控ID : 483783444839382
-所属监控名称 : Linux_182.33.34.2
+所属监控任务ID : 483783444839382
+所属任务名称 : Linux_182.33.34.2
 告警级别 : 警告告警
 告警触发时间 : 2023-02-15 21:13:44
 内容详情 : The linux cpu usage is too high. now is 95.

@@ -29,6 +29,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+  slideConfig = {
+    infinite: true,
+    speed: 1200,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    rows: 1,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2.75,
+          slidesToScroll: 3,
+          speed: 4000,
+          infinite: true
+        }
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          speed: 4000,
+          slidesToShow: 0.75,
+          slidesToScroll: 1
+        }
+      }
+    ]
+  };
 
   // start 大类别数量信息
   appCountService: AppCount = new AppCount();
@@ -36,6 +64,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appCountDb: AppCount = new AppCount();
   appCountMid: AppCount = new AppCount();
   appCountCustom: AppCount = new AppCount();
+  appCountProgram: AppCount = new AppCount();
+  appCountCache: AppCount = new AppCount();
+  appCountBigdata: AppCount = new AppCount();
+  appCountWebserver: AppCount = new AppCount();
+  appCountCn: AppCount = new AppCount();
+  appCountNetwork: AppCount = new AppCount();
 
   // start 数量全局概览
   interval$!: any;
@@ -250,7 +284,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.alertsLoading = true;
     this.refresh();
     // https://stackoverflow.com/questions/43908009/why-is-setinterval-in-an-angular-service-only-firing-one-time
-    this.interval$ = setInterval(this.refresh.bind(this), 30000);
+    this.interval$ = setInterval(this.refresh.bind(this), 80000);
     this.pageResize$ = fromEvent(window, 'resize').subscribe(event => {
       this.resizeChart();
     });
@@ -275,6 +309,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     let appCountDb: AppCount = new AppCount();
     let appCountMid: AppCount = new AppCount();
     let appCountCustom: AppCount = new AppCount();
+    let appCountProgram: AppCount = new AppCount();
+    let appCountCache: AppCount = new AppCount();
+    let appCountWebserver: AppCount = new AppCount();
+    let appCountBigdata: AppCount = new AppCount();
+    let appCountCn: AppCount = new AppCount();
+    let appCountNetwork: AppCount = new AppCount();
     let dashboard$ = this.monitorSvc.getAppsMonitorSummary().subscribe(
       message => {
         dashboard$.unsubscribe();
@@ -324,6 +364,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 appCountCustom.unAvailableSize += app.unAvailableSize;
                 appCountCustom.unManageSize += app.unManageSize;
                 break;
+              case 'program':
+                appCountProgram.size += app.size;
+                appCountProgram.availableSize += app.availableSize;
+                appCountProgram.unAvailableSize += app.unAvailableSize;
+                appCountProgram.unManageSize += app.unManageSize;
+                break;
+              case 'bigdata':
+                appCountBigdata.size += app.size;
+                appCountBigdata.availableSize += app.availableSize;
+                appCountBigdata.unAvailableSize += app.unAvailableSize;
+                appCountBigdata.unManageSize += app.unManageSize;
+                break;
+              case 'webserver':
+                appCountWebserver.size += app.size;
+                appCountWebserver.availableSize += app.availableSize;
+                appCountWebserver.unAvailableSize += app.unAvailableSize;
+                appCountWebserver.unManageSize += app.unManageSize;
+                break;
+              case 'cache':
+                appCountCache.size += app.size;
+                appCountCache.availableSize += app.availableSize;
+                appCountCache.unAvailableSize += app.unAvailableSize;
+                appCountCache.unManageSize += app.unManageSize;
+                break;
+              case 'cn':
+                appCountCn.size += app.size;
+                appCountCn.availableSize += app.availableSize;
+                appCountCn.unAvailableSize += app.unAvailableSize;
+                appCountCn.unManageSize += app.unManageSize;
+                break;
+              case 'network':
+                appCountNetwork.size += app.size;
+                appCountNetwork.availableSize += app.availableSize;
+                appCountNetwork.unAvailableSize += app.unAvailableSize;
+                appCountNetwork.unManageSize += app.unManageSize;
+                break;
             }
           });
           this.appCountService = appCountService;
@@ -331,6 +407,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.appCountDb = appCountDb;
           this.appCountMid = appCountMid;
           this.appCountCustom = appCountCustom;
+          this.appCountBigdata = appCountBigdata;
+          this.appCountCache = appCountCache;
+          this.appCountProgram = appCountProgram;
+          this.appCountWebserver = appCountWebserver;
+          this.appCountNetwork = appCountNetwork;
+          this.appCountCn = appCountCn;
           // @ts-ignore
           this.appsCountTheme.series[0].data = [{ value: total, name: this.i18nSvc.fanyi('dashboard.monitors.total') }];
           // @ts-ignore

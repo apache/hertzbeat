@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.lang.NonNull;
 
+import java.util.List;
+
 /**
  * 实时数据存储抽象类
  * @author tom
@@ -52,4 +54,11 @@ public abstract class AbstractRealTimeDataStorage implements DisposableBean {
      * @return metrics data
      */
     public abstract CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
+
+    /**
+     * query real-time last metrics data
+     * @param monitorId monitor id
+     * @return metrics data
+     */
+    public abstract List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId);
 }

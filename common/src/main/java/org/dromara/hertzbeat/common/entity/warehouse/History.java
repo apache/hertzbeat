@@ -36,7 +36,7 @@ public class History {
     @Schema(description = "指标数据历史实体主键索引ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
     private Long monitorId;
 
     @Schema(title = "监控类型 mysql oracle db2")

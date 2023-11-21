@@ -79,6 +79,11 @@ public interface DispatchConstants {
      * protocol push
      */
     String PROTOCOL_PUSH = "push";
+    /**
+     * protocol prometheus
+     */
+    String PROTOCOL_PROMETHEUS = "prometheus";
+    
     // Protocol type related - end
     // 协议类型相关 - end //
 

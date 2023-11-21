@@ -108,8 +108,8 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 ```
 [HertzBeat告警通知]
 告警目标对象 : mysql.cahce.query_cache_hit_rate
-所属监控ID : 205540620394932
-所属监控名称 : Mysql_localhost
+所属监控任务ID : 205540620394932
+所属任务名称 : Mysql_localhost
 告警级别 : 严重告警
 告警触发时间 : 2023-02-11 21:13:44
 内容详情 : mysql db query_cache_hit_rate is too low, now is 20.

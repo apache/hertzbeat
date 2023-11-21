@@ -43,7 +43,7 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
@@ -105,7 +105,7 @@ metrics: ......
 
 ```yaml
 
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
@@ -235,7 +235,7 @@ metrics:
 
 ```yaml
 
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
