@@ -145,7 +145,7 @@ public class CollectJobService {
      * Cancel periodic asynchronous collection tasks
      * 取消周期性异步采集任务
      *
-     * @param jobId Job ID      任务ID
+     * @param jobId Job ID      采集任务ID
      */
     public void cancelAsyncCollectJob(Long jobId) {
         if (jobId != null) {

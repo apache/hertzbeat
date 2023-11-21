@@ -67,11 +67,11 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
                 if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
                     // Availability Alarm Need to change the monitoring status to unavailable
-                    // 可用性告警 需变更监控状态为不可用
+                    // 可用性告警 需变更任务状态为不可用
                     monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
                 } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
                     // If the alarm is restored, the monitoring state needs to be restored
-                    // 若是恢复告警 需对监控状态进行恢复
+                    // 若是恢复告警 需对任务状态进行恢复
                     monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
                 }
             }

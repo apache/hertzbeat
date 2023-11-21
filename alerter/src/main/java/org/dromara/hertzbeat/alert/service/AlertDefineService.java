@@ -69,7 +69,7 @@ public interface AlertDefineService {
     /**
      * Obtain alarm definition information
      * 获取告警定义信息
-     * @param alertId Monitor the ID ｜ 监控ID
+     * @param alertId Monitor the ID ｜ 监控任务ID
      * @return AlertDefine
      * @throws RuntimeException An exception was thrown during the query ｜ 查询过程中异常抛出
      */
@@ -100,8 +100,8 @@ public interface AlertDefineService {
 
     /**
      * Query the alarm definitions that match the specified indicator group associated with the monitoring ID
-     * 查询与此监控ID关联的指定指标组匹配的告警定义
-     * @param monitorId Monitor the ID ｜ 监控ID
+     * 查询与此监控任务ID关联的指定指标组匹配的告警定义
+     * @param monitorId Monitor the ID ｜ 监控任务ID
      * @param app Monitoring type ｜ 监控类型
      * @param metrics Index group ｜ 指标组
      * @return field - define[]
@@ -110,8 +110,8 @@ public interface AlertDefineService {
 
     /**
      * Query the alarm definitions that match the specified indicator group associated with the monitoring ID
-     * 查询与此监控ID关联的可用性告警定义
-     * @param monitorId Monitor the ID ｜ 监控ID
+     * 查询与此监控任务ID关联的可用性告警定义
+     * @param monitorId Monitor the ID ｜ 监控任务ID
      * @param app Monitoring type ｜ 监控类型
      * @param metrics Index group ｜ 指标组
      * @return field - define[]

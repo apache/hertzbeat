@@ -38,7 +38,7 @@ import java.util.Map;
 @Schema(description = "历史单指标数据")
 public class MetricsHistoryData {
 
-    @Schema(title = "监控ID")
+    @Schema(title = "监控任务ID")
     private Long id;
 
     @Schema(title = "监控类型")

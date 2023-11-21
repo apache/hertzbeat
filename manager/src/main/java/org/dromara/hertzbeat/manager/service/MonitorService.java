@@ -87,7 +87,7 @@ public interface MonitorService {
      * Delete Monitor
      * 删除监控
      *
-     * @param id Monitor ID         监控ID
+     * @param id Monitor ID         监控任务ID
      * @throws RuntimeException Exception thrown during deletion    删除过程中异常抛出
      */
     void deleteMonitor(long id) throws RuntimeException;
@@ -96,7 +96,7 @@ public interface MonitorService {
      * Batch delete monitoring
      * 批量删除监控
      *
-     * @param ids Monitoring ID List    监控ID列表
+     * @param ids Monitoring ID List    监控任务ID列表
      * @throws RuntimeException Exception thrown during deletion    删除过程中异常抛出
      */
     void deleteMonitors(Set<Long> ids) throws RuntimeException;
@@ -105,7 +105,7 @@ public interface MonitorService {
      * Get monitoring information
      * 获取监控信息
      *
-     * @param id Monitor ID      监控ID
+     * @param id Monitor ID      监控任务ID
      * @return MonitorDto   Monitor Entity  監控实体
      * @throws RuntimeException Exception thrown during query   查询过程中异常抛出
      */
@@ -123,17 +123,17 @@ public interface MonitorService {
 
     /**
      * Unmanaged monitoring items in batches according to the monitoring ID list
-     * 根据监控ID列表批量取消纳管监控项
+     * 根据监控任务ID列表批量取消纳管监控项
      *
-     * @param ids Monitoring ID List    监控ID列表
+     * @param ids Monitoring ID List    监控任务ID列表
      */
     void cancelManageMonitors(HashSet<Long> ids);
 
     /**
      * Start the managed monitoring items in batches according to the monitoring ID list
-     * 根据监控ID列表批量启动纳管监控项
+     * 根据监控任务ID列表批量启动纳管监控项
      *
-     * @param ids Monitoring ID List    监控ID列表
+     * @param ids Monitoring ID List    监控任务ID列表
      */
     void enableManageMonitors(HashSet<Long> ids);
 
@@ -149,7 +149,7 @@ public interface MonitorService {
      * Query monitoring
      * 查询监控
      *
-     * @param monitorId Monitor ID  监控ID
+     * @param monitorId Monitor ID  监控任务ID
      * @return Monitor information  监控信息
      */
     Monitor getMonitor(Long monitorId);
@@ -158,8 +158,8 @@ public interface MonitorService {
      * Update the status of the specified monitor
      * 更新指定监控的状态
      *
-     * @param monitorId monitorId    监控ID
-     * @param status    monitor status  监控状态
+     * @param monitorId monitorId    监控任务ID
+     * @param status    monitor status  任务状态
      */
     void updateMonitorStatus(Long monitorId, byte status);
 

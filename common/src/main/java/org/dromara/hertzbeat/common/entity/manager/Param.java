@@ -65,9 +65,9 @@ public class Param {
 
     /**
      * Monitor ID
-     * 监控ID
+     * 监控任务ID
      */
-    @Schema(title = "监控ID", example = "875846754543", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "875846754543", accessMode = READ_WRITE)
     private Long monitorId;
 
     /**

@@ -59,7 +59,7 @@ public class TagMonitorBind {
     @Column(name = "tag_id")
     private Long tagId;
 
-    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 

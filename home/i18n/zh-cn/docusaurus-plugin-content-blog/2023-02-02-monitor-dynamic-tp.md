@@ -158,8 +158,8 @@ management:
 ```
 [HertzBeat告警通知]
 告警目标对象 : dynamic_tp.thread_pool_running.run_timeout_count
-所属监控ID : 205540620349493
-所属监控名称 : DynamicTp_localhost
+所属监控任务ID : 205540620349493
+所属任务名称 : DynamicTp_localhost
 告警级别 : 严重告警
 告警触发时间 : 2023-02-02 22:17:06
 内容详情 : DynamicTp has run timeout thread, count is 2

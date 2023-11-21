@@ -63,21 +63,21 @@ public class Monitor {
      * 主键ID
      */
     @Id
-    @Schema(title = "监控ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "监控任务ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     /**
      * Job ID
-     * 监控对应下发的任务ID
+     * 监控对应下发的采集任务ID
      */
-    @Schema(title = "任务ID", example = "43243543543", accessMode = READ_ONLY)
+    @Schema(title = "采集任务ID", example = "43243543543", accessMode = READ_ONLY)
     private Long jobId;
 
     /**
      * Monitor Name
      * 监控的名称
      */
-    @Schema(title = "监控名称", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
+    @Schema(title = "任务名称", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
     @Length(max = 100)
     private String name;
 
@@ -107,10 +107,10 @@ public class Monitor {
     private Integer intervals;
 
     /**
-     * Monitoring status 0: Unmonitored, 1: Available, 2: Unavailable, 3: Unreachable, 4: Suspended
-     * 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起
+     * Monitoring status 0: Unmonitored, 1: Available, 2: Unavailable
+     * 任务状态 0:未监控,1:可用,2:不可用
      */
-    @Schema(title = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起", accessMode = READ_WRITE)
+    @Schema(title = "任务状态 0:未监控,1:可用,2:不可用", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;

@@ -54,7 +54,7 @@ public interface CollectJobScheduling {
      *
      * @param job Collect task details      采集任务详情
      * @param collector collector identity name
-     * @return long Job ID      任务ID
+     * @return long Job ID      采集任务ID
      */
     long addAsyncCollectJob(Job job, String collector);
 
@@ -63,7 +63,7 @@ public interface CollectJobScheduling {
      * 更新已经下发的周期性异步采集任务
      *
      * @param modifyJob Collect task details        采集任务详情
-     * @return long Job ID      新任务ID
+     * @return long Job ID      新采集任务ID
      */
     long updateAsyncCollectJob(Job modifyJob);
     
@@ -73,7 +73,7 @@ public interface CollectJobScheduling {
      *
      * @param modifyJob Collect task details        采集任务详情
      * @param collector collector identity name
-     * @return long Job ID      新任务ID
+     * @return long Job ID      新采集任务ID
      */
     long updateAsyncCollectJob(Job modifyJob, String collector);
 
@@ -81,7 +81,7 @@ public interface CollectJobScheduling {
      * Cancel periodic asynchronous collection tasks
      * 取消周期性异步采集任务
      *
-     * @param jobId Job ID      任务ID
+     * @param jobId Job ID      采集任务ID
      */
     void cancelAsyncCollectJob(Long jobId);
     

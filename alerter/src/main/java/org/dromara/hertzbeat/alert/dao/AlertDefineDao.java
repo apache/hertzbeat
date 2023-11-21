@@ -60,8 +60,8 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
 
     /**
      * Query the alarm definition list associated with the monitoring ID
-     * 根据监控ID查询与之关联的告警定义列表
-     * @param monitorId 监控ID
+     * 根据监控任务ID查询与之关联的告警定义列表
+     * @param monitorId 监控任务ID
      * @param app 监控类型
      * @param metrics 指标组
      * @return Alarm Definition List ｜ 告警定义列表

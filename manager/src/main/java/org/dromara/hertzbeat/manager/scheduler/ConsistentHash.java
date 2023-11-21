@@ -327,12 +327,12 @@ public class ConsistentHash {
          */
         private final Byte quality;
         /**
-         * 使用此采集器的采集任务ID列表
+         * 使用此采集器的采集采集任务ID列表
          * jobId,jobVersion
          */
         private AssignJobs assignJobs;
         /**
-         * 此节点所对应的每个虚拟节点所映射的采集任务ID列表
+         * 此节点所对应的每个虚拟节点所映射的采集采集任务ID列表
          * Long[] [0]-jobId, [1]-dispatchHash
          */
         private Map<Integer, Set<Long[]>> virtualNodeMap;

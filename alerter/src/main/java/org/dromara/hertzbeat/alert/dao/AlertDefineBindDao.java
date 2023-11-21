@@ -42,17 +42,17 @@ public interface AlertDefineBindDao extends JpaRepository<AlertDefineMonitorBind
 
     /**
      * Deleting alarms based on monitoring IDs defines monitoring associations
-     * 根据监控ID删除告警定义监控关联
+     * 根据监控任务ID删除告警定义监控关联
      *
-     * @param monitorId Monitor Id   监控ID
+     * @param monitorId Monitor Id   监控任务ID
      */
     void deleteAlertDefineMonitorBindsByMonitorIdEquals(Long monitorId);
 
     /**
      * Delete alarm definition monitoring association based on monitoring ID list
-     * 根据监控ID列表删除告警定义监控关联
+     * 根据监控任务ID列表删除告警定义监控关联
      *
-     * @param monitorIds Monitoring ID List     监控ID列表
+     * @param monitorIds Monitoring ID List     监控任务ID列表
      */
     void deleteAlertDefineMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
 

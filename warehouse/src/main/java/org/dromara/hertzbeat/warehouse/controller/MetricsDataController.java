@@ -83,7 +83,7 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标组的指标数据")
+    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标的实时指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @Parameter(description = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,
@@ -132,7 +132,7 @@ public class MetricsDataController {
     @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
     @Operation(summary = "查询监控指标组的指定指标的历史数据", description = "查询监控指标组下的指定指标的历史数据")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "监控ID", example = "343254354")
+            @Parameter(description = "监控任务ID", example = "343254354")
             @PathVariable Long monitorId,
             @Parameter(description = "监控指标全路径", example = "linux.cpu.usage")
             @PathVariable() String metricFull,

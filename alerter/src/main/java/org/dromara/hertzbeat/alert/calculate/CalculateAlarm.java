@@ -69,7 +69,7 @@ public class CalculateAlarm {
      * The alarm in the process is triggered
      * 触发中告警信息
      * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
-     * key - monitorId 为监控状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
+     * key - monitorId 为任务状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
     private final Map<String, Alert> triggeredAlertMap;
     /**
@@ -137,7 +137,7 @@ public class CalculateAlarm {
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
         // If the indicator group whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE, the highest severity alarm is generated to monitor the status change
-        // 先判断调度优先级为0的指标组采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警进行监控状态变更
+        // 先判断调度优先级为0的指标组采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警进行任务状态变更
         if (metricsData.getPriority() == 0) {
             handlerAvailableMetrics(monitorId, app, metricsData);
         }
@@ -378,7 +378,7 @@ public class CalculateAlarm {
         } else {
             // Check whether an availability or unreachable alarm is generated before the association monitoring
             // and send a clear alarm to clear the monitoring status
-            // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行监控状态恢复
+            // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行任务状态恢复
             String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
             Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
             if (notResolvedAlert != null) {

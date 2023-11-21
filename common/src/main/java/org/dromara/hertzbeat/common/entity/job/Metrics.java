@@ -91,7 +91,7 @@ public class Metrics {
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields) with the final attribute (fields), and calculate the final attribute (fields) value
      * 公共属性-表达式计算，将前置查询属性(preFields)与最终属性(fields)映射,计算出最终属性(fields)值
      * eg: size = size1 + size2, speed = speedSize
-     * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
+     * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
     private List<String> calculates;
     /**
@@ -166,6 +166,10 @@ public class Metrics {
      * Monitoring configuration information using push style 使用push方式推送的监控配置信息
      */
     private PushProtocol push;
+    /**
+     * Monitoring configuration information using the public prometheus protocol
+     */
+    private PrometheusProtocol prometheus;
 
     /**
      * collector use - Temporarily store subTask indicator group response data
@@ -183,7 +187,7 @@ public class Metrics {
 
     /**
      * collector use - Temporarily store subTask id
-     * collector使用 - 分级任务ID
+     * collector使用 - 分级采集任务ID
      */
     @JsonIgnore
     private transient Integer subTaskId;
@@ -248,6 +252,7 @@ public class Metrics {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @Builder
     public static class Field {
         /**
          * Indicator name

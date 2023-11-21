@@ -62,7 +62,7 @@ public class AlertDefineMonitorBind {
     @Schema(title = "告警定义ID", example = "87432674384", accessMode = READ_WRITE)
     private Long alertDefineId;
 
-    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 

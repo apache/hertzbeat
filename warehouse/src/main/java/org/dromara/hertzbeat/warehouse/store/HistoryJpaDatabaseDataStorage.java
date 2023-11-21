@@ -173,7 +173,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 	/**
 	 * 从数据库获取指标历史数据
 	 *
-	 * @param monitorId 监控ID
+	 * @param monitorId 监控任务ID
 	 * @param app       监控类型
 	 * @param metrics   指标集合名
 	 * @param metric    指标名

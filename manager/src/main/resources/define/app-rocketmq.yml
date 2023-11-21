@@ -16,7 +16,7 @@
 category: mid
 app: rocketmq
 name:
-  zh-CN: RocketMQ
+  zh-CN: RocketMQ消息系统
   en-US: RocketMQ
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
