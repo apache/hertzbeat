@@ -18,8 +18,11 @@ html[data-theme=dark] .hero--primary {
 }
 
 .hero__subtitle {
-    font-size: 2em;
-    max-width: 600px;
+    font-size: 3em;
+    font-weight: bolder;
+    font-family: monospace;
+    color: #d97700;
+    max-width: 900px;
     width: 100%;
     margin: 0 auto;
 }
@@ -27,6 +30,7 @@ html[data-theme=dark] .hero--primary {
 @media (max-width: 400px) {
     .hero__subtitle {
         font-size: 1.3em;
+        font-weight: bolder;
     }
 }
 

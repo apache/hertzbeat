@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestro
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { CloudData } from 'angular-tag-cloud-module';
 import { EChartsOption } from 'echarts';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
@@ -12,6 +13,8 @@ import { CollectorSummary } from '../../pojo/CollectorSummary';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
+import { TagService } from '../../service/tag.service';
+import { formatTagName } from '../../shared/utils/common-util';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,11 +27,84 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private alertSvc: AlertService,
+    private tagSvc: TagService,
     private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+
+  // Tag Word Cloud
+  wordCloudData: CloudData[] = [];
+  defaultWordCloudData: CloudData[] = [
+    { text: 'HertzBeat', weight: 5 },
+    { text: 'Env:Prod', weight: 8 },
+    { text: 'Mysql', weight: 7 },
+    { text: 'Ping', weight: 5 },
+    { text: 'Product', weight: 6 },
+    { text: 'Env:Test', weight: 4 },
+    { text: 'TanCloud', weight: 3 },
+    { text: 'Bigdata', weight: 6 },
+    { text: 'Prod', weight: 4 },
+    { text: 'Dev', weight: 5 },
+    { text: 'Cache', weight: 7 },
+    { text: 'Region:US', weight: 7 },
+    { text: 'Region:CN', weight: 8 },
+    { text: 'Region:UK', weight: 7 },
+    { text: 'Localhost', weight: 6 },
+    { text: 'Cloud', weight: 8 },
+    { text: 'Network', weight: 5 },
+    { text: 'Custom', weight: 6 }
+  ];
+
+  refreshWordCloudContent(): void {
+    let tagsInit$ = this.tagSvc.loadTags(undefined, 1, 0, 10000).subscribe(
+      message => {
+        if (message.code === 0) {
+          let page = message.data;
+          let tags = page.content;
+          if (tags != null && tags.length != 0) {
+            let tmpData: CloudData[] = [];
+            tags.forEach(item => {
+              tmpData.push({
+                text: formatTagName(item),
+                weight: Math.random() * (10 - 5) + 5
+              });
+            });
+            this.wordCloudData = tmpData;
+          } else {
+            this.wordCloudData = this.defaultWordCloudData;
+          }
+          this.cdr.detectChanges();
+        } else {
+          console.warn(message.msg);
+        }
+        tagsInit$.unsubscribe();
+      },
+      error => {
+        tagsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
+  }
+
+  onTagCloudClick(data: CloudData): void {
+    this.router.navigate(['/monitors'], { queryParams: { tag: data.text } });
+  }
+
+  // start 大类别数量信息
+  appCountService: AppCount = new AppCount();
+  appCountOs: AppCount = new AppCount();
+  appCountDb: AppCount = new AppCount();
+  appCountMid: AppCount = new AppCount();
+  appCountCustom: AppCount = new AppCount();
+  appCountProgram: AppCount = new AppCount();
+  appCountCache: AppCount = new AppCount();
+  appCountBigdata: AppCount = new AppCount();
+  appCountWebserver: AppCount = new AppCount();
+  appCountCn: AppCount = new AppCount();
+  appCountNetwork: AppCount = new AppCount();
+
   slideConfig = {
     infinite: true,
     speed: 1200,
@@ -57,19 +133,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     ]
   };
-
-  // start 大类别数量信息
-  appCountService: AppCount = new AppCount();
-  appCountOs: AppCount = new AppCount();
-  appCountDb: AppCount = new AppCount();
-  appCountMid: AppCount = new AppCount();
-  appCountCustom: AppCount = new AppCount();
-  appCountProgram: AppCount = new AppCount();
-  appCountCache: AppCount = new AppCount();
-  appCountBigdata: AppCount = new AppCount();
-  appCountWebserver: AppCount = new AppCount();
-  appCountCn: AppCount = new AppCount();
-  appCountNetwork: AppCount = new AppCount();
 
   // start 数量全局概览
   interval$!: any;
@@ -298,6 +361,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   refresh(): void {
+    this.refreshWordCloudContent();
     this.refreshAppsCount();
     this.refreshAlertContentList();
     this.refreshCollectorContentList();
