@@ -214,6 +214,8 @@ data:
       - /**/*.jpg===get
       - /**/*.svg===get
       - /**/*.json===get
+      - /**/*.woff===get
+      - /**/*.eot===get
       # swagger ui 
       - /swagger-resources/**===get
       - /v2/api-docs===get

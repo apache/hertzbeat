@@ -46,7 +46,7 @@ export class MonitorEditComponent implements OnInit {
   collectors!: Collector[];
   collector: string = '';
   profileForm: FormGroup = new FormGroup({});
-  detected: boolean = true;
+  detected: boolean = false;
   passwordVisible: boolean = false;
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
@@ -74,7 +74,7 @@ export class MonitorEditComponent implements OnInit {
                 this.paramValueMap.set(item.field, item);
               });
             }
-            this.detected = true;
+            this.detected = false;
             if (this.monitor.tags == undefined) {
               this.monitor.tags = [];
             }

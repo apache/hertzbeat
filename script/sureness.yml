@@ -78,6 +78,8 @@ excludedResource:
   - /**/*.jpg===get
   - /**/*.svg===get
   - /**/*.json===get
+  - /**/*.woff===get
+  - /**/*.eot===get
   # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get
