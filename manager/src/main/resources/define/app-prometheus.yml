@@ -63,6 +63,24 @@ params:
     # default value
     defaultValue: 9091
     required: true
+  # field-param field key
+  # field-变量字段标识
+  - field: path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端点路径
+      en-US: Endpoint Path
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Exporter Url Endpoint Path'
+    defaultValue: "/metrics"
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
   - field: timeout
     name:
       zh-CN: 查询超时时间
@@ -125,7 +143,7 @@ params:
     # when type is key-value, use valueAlias to config value alias name
     # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
     valueAlias: Param Value
-    # field-param field key
+  # field-param field key
   # field-变量字段标识
   - field: contentType
     # name-param field display i18n name
@@ -145,7 +163,7 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
-    # field-param field key
+  # field-param field key
   # field-变量字段标识
   - field: payload
     # name-param field display i18n name
@@ -246,7 +264,7 @@ metrics:
       # http port
       port: ^_^port^_^
       # http path
-      path: '/metrics'
+      path: ^_^path^_^
       timeout: ^_^timeout^_^
       # http method: GET POST PUT DELETE PATCH
       method: GET
