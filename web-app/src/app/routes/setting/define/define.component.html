@@ -21,11 +21,35 @@
           >
         </ul>
       </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.program' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['program']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
       <li nz-submenu [nzTitle]="'menu.monitor.db' | i18n">
         <ul>
           <li
             nz-menu-item
             *ngFor="let app of appMenus['db']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.cache' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['cache']; let i = index"
             [nzSelected]="app.selected"
             routerLink="/setting/define"
             [queryParams]="{ app: app.value }"
@@ -50,6 +74,30 @@
           <li
             nz-menu-item
             *ngFor="let app of appMenus['mid']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.bigdata' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['bigdata']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.webserver' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['webserver']; let i = index"
             [nzSelected]="app.selected"
             routerLink="/setting/define"
             [queryParams]="{ app: app.value }"
