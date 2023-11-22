@@ -59,7 +59,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_SQL
             = "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(`ts`), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
+            = "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
 
@@ -241,6 +241,9 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
+        if ("''".equals(instance)) {
+            instance = "";
+        }
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
         log.debug(selectSql);
@@ -334,12 +337,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(instances.size());
         for (String instanceValue : instances) {
-            String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                            metric, metric, metric, metric, table, instanceValue, history);
-            log.debug(selectSql);
             if ("''".equals(instanceValue)) {
                 instanceValue = "";
             }
+            String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
+                            metric, metric, metric, metric, table, instanceValue, history);
+            log.debug(selectSql);
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;
             try {
