@@ -381,7 +381,7 @@
   "monitors.detail.port": "Port",
   "monitors.detail.description": "Desc",
   "monitors.detail.status": "Status",
-  "monitors.detail.basic": "Monitor Basic",
+  "monitors.detail.basic": "Monitoring Basic",
   "monitors.detail.realtime": "Monitor Real-Time Detail",
   "monitors.detail.history": "Monitor Historical Chart Detail",
   "monitors.collect.time": "Collect Time",

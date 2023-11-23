@@ -381,7 +381,7 @@
   "monitors.detail.port": "端口",
   "monitors.detail.description": "描述",
   "monitors.detail.status": "状态",
-  "monitors.detail.basic": "监控基本属性",
+  "monitors.detail.basic": "监控任务信息",
   "monitors.detail.realtime": "监控实时数据详情",
   "monitors.detail.history": "监控历史图表详情",
   "monitors.collect.time": "采集时间",

@@ -380,7 +380,7 @@
   "monitors.detail.port": "端口",
   "monitors.detail.description": "描述",
   "monitors.detail.status": "狀態",
-  "monitors.detail.basic": "監控基本屬性",
+  "monitors.detail.basic": "監控任務信息",
   "monitors.detail.realtime": "監控實時數據詳情",
   "monitors.detail.history": "監控曆史圖表詳情",
   "monitors.collect.time": "采集時間",
