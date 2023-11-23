@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
 public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
+    private static final String INSTANCE_NULL = "''";
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
@@ -241,7 +242,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
-        if ("''".equals(instance)) {
+        if (INSTANCE_NULL.equals(instance)) {
             instance = "";
         }
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
@@ -337,7 +338,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(instances.size());
         for (String instanceValue : instances) {
-            if ("''".equals(instanceValue)) {
+            if (INSTANCE_NULL.equals(instanceValue)) {
                 instanceValue = "";
             }
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
