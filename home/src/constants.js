@@ -114,7 +114,7 @@ export const dromaraFriends = [
   },
   {
     img: 'liteflow_logo.png',
-    remoteImg: 'https://plus.hutool.cn/images/dromara/liteflow.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/liteflow.png',
     alt: 'LiteFlow',
     url: 'https://yomahub.com/liteflow/',
   },
@@ -222,9 +222,75 @@ export const dromaraFriends = [
   },
   {
     img: 'sms_aggregator_logo.png',
-    remoteImg: 'https://wind.kim/logo1.png',
-    alt: 'SMS-Aggregator',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/sms4j.png',
+    alt: 'SMS4J',
     url: 'https://wind.kim',
+  },
+  {
+    img: 'cloudeon.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/cloudeon.png',
+    alt: 'CloudEon',
+    url: 'https://cloudeon.top/',
+  },
+  {
+    img: 'hodor.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/hodor.png',
+    alt: 'Hodor',
+    url: 'https://github.com/dromara/hodor',
+  },
+  {
+    img: 'test-hub.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/test-hub.png',
+    alt: 'TestHub',
+    url: 'http://nsrule.com/',
+  },
+  {
+    img: 'disjob.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/disjob-2.png',
+    alt: 'DisJob',
+    url: 'https://gitee.com/dromara/disjob',
+  },
+  {
+    img: 'Binlog4j.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/Binlog4j.png',
+    alt: 'Binlog4J',
+    url: 'https://gitee.com/dromara/binlog4j',
+  },
+  {
+    img: 'yft-design.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/yft-design.png',
+    alt: 'yft-design',
+    url: 'https://gitee.com/dromara/yft-design',
+  },
+  {
+    img: 'file4j.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/file4j.png',
+    alt: 'file4j',
+    url: 'https://gitee.com/dromara/spring-file-storage',
+  },
+  {
+    img: 'wemq.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/wemq.png',
+    alt: 'WeMQ',
+    url: 'https://wemq.nicholasld.cn/',
+  },
+  {
+    img: 'mayfly-go.png',
+    remoteImg: 'https://oss.dev33.cn/sa-token/link/mayfly-go.png',
+    alt: 'Mayfly-Go',
+    url: 'https://gitee.com/dromara/mayfly-go',
+  },
+  {
+    img: 'akali.svg',
+    remoteImg: 'https://akali.yomahub.com/logo.svg',
+    alt: 'akali',
+    url: 'https://akali.yomahub.com/',
+  },
+  {
+    img: 'dbswitch.png',
+    remoteImg: 'https://dbswitch.gitee.io/docs-site/images/logo.png',
+    alt: 'dbswitch',
+    url: 'https://dbswitch.gitee.io/docs-site/#/',
   }
 ]
 
