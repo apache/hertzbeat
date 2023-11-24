@@ -436,5 +436,13 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 - 感谢 [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
 - 感谢 [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点        
 
+##### Open-Source Project Build From Open-Source
+
+> HertzBeat is built on so many great open source projects, thanks to them! 
+
+- Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...
+- TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...
+
+
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)

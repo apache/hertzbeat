@@ -120,9 +120,9 @@
       "2": "警告告警"
     }
   },
-  "alert.setting.new": "新增阈值",
-  "alert.setting.edit": "編輯阈值",
-  "alert.setting.delete": "刪除阈值",
+  "alert.setting.new": "新增阈值規則",
+  "alert.setting.edit": "編輯阈值規則",
+  "alert.setting.delete": "刪除阈值規則",
   "alert.setting.target": "指標對象",
   "alert.setting.target.place-holder": "請搜索或選擇指標對象",
   "alert.setting.expr": "阈值觸發表達式",
@@ -162,7 +162,7 @@
   "alert.setting.enable.tip": "此告警阈值配置開啓生效或關閉",
   "alert.setting.recover-notice": "恢復通知",
   "alert.setting.recover-notice.tip": "是否在此閾值規則下告警恢復時發送對應的恢復通知",
-  "alert.setting.connect": "告警定義關聯監控",
+  "alert.setting.connect": "閾值規則關聯監控",
   "alert.setting.connect.left": "未關聯監控",
   "alert.setting.connect.right": "已關聯監控",
   "alert.setting.expr.tip": "支持的阈值觸發表達式環境變量與操作符",
