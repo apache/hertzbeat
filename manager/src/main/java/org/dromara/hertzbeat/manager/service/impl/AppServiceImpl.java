@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
-import org.dromara.hertzbeat.common.entity.dto.Field;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
@@ -112,14 +111,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getPushDefine(Long monitorId) throws IllegalArgumentException {
-//        if (!StringUtils.hasText(app)) {
-//            throw new IllegalArgumentException("The app can not null.");
-//        }
-//        Job appDefine = appDefines.get(app.toLowerCase());
-//        if (appDefine == null) {
-//            throw new IllegalArgumentException("The app " + app + " not support.");
-//        }
-//        return appDefine.clone();
         Job appDefine = appDefines.get(DispatchConstants.PROTOCOL_PUSH);
         if (appDefine == null) {
             throw new IllegalArgumentException("The push collector not support.");
