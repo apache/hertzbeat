@@ -111,7 +111,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     slidesToShow: 4,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 1200,
     rows: 1,
     responsive: [
       {
