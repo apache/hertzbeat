@@ -37,6 +37,7 @@ public class JsonOptionListAttributeConverter implements AttributeConverter<List
 
     @Override
     public List<ParamDefine.Option> convertToEntityAttribute(String dbData) {
-        return JsonUtil.fromJson(dbData, new TypeReference<>() {});
+        TypeReference<List<ParamDefine.Option>> typeReference = new TypeReference<>() {};
+        return JsonUtil.fromJson(dbData, typeReference);
     }
 }

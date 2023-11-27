@@ -18,7 +18,7 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 2. 修改 Kafka 启动脚本
 
 修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`    
-在倒数第二行添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址  
+在脚本正文（即非注释行）的第一行前添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址  
 
 ```shell
 export JMX_PORT=9999;
@@ -35,7 +35,7 @@ export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.
 | 参数名称      | 参数帮助描述 |
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
+| 任务名称     | 标识此监控的名称，名称需要保证唯一性。  |
 | 查询超时时间 | 设置Kafka连接的超时时间，单位ms毫秒，默认3000毫秒。  |
 | 用户名      | JMX连接用户名 |
 | 密码        | JMX连接密码 |

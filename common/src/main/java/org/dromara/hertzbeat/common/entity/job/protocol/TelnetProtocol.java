@@ -48,4 +48,9 @@ public class TelnetProtocol {
      */
     private String timeout;
 
+    /**
+     * 发送的命令
+     */
+    private String cmd;
+
 }

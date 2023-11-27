@@ -14,12 +14,19 @@ import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
+import { AlertConvergeComponent } from './alert-converge/alert-converge.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
 
-const COMPONENTS: Array<Type<void>> = [AlertCenterComponent, AlertSettingComponent, AlertNoticeComponent, AlertSilenceComponent];
+const COMPONENTS: Array<Type<void>> = [
+  AlertCenterComponent,
+  AlertSettingComponent,
+  AlertNoticeComponent,
+  AlertSilenceComponent,
+  AlertConvergeComponent
+];
 
 @NgModule({
   imports: [

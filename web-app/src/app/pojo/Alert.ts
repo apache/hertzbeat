@@ -8,10 +8,10 @@ export class Alert {
   // 告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理
   status!: number;
   content!: string;
+  // alarm times
   times!: number;
-  firstTriggerTime!: number;
-  lastTriggerTime!: number;
-  nextEvalInterval!: number;
+  firstAlarmTime!: number;
+  lastAlarmTime!: number;
   tags!: Record<string, string>;
   gmtCreate!: number;
   gmtUpdate!: number;

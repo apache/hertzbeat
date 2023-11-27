@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
+import com.googlecode.aviator.AviatorEvaluator;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.alert.dao.AlertDefineDao;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,6 +55,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         // todo
+        if (StringUtils.hasText(alertDefine.getExpr())) {
+            try {
+                AviatorEvaluator.compile(alertDefine.getExpr(), false);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("alert expr error: " + e.getMessage());
+            }
+        }
     }
 
     @Override

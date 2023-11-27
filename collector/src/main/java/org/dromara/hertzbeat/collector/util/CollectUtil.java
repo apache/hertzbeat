@@ -19,10 +19,11 @@ package org.dromara.hertzbeat.collector.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
-import org.dromara.hertzbeat.common.entity.job.Configmap;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.job.Configmap;
+import org.dromara.hertzbeat.common.entity.job.Metrics;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -33,13 +34,14 @@ import java.util.regex.Pattern;
 
 /**
  * 采集器工具类
- * @author tom
  *
+ * @author tom
  */
 @Slf4j
 public class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
+    private static final int HEX_STR_WIDTH = 2;
     private static final String SMILING_PLACEHOLDER = "^_^";
     private static final String SMILING_PLACEHOLDER_REX = "\\^_\\^";
     private static final String SMILING_PLACEHOLDER_REGEX = "(\\^_\\^)(\\w|-|$|\\.)+(\\^_\\^)";
@@ -47,10 +49,11 @@ public class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REX = "\\^o\\^";
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
-    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%","G", "g", "M", "m", "K", "k", "B", "b");
+    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
 
     /**
      * 关键字匹配计数
+     *
      * @param content 内容
      * @param keyword 关键字
      * @return 匹配次数
@@ -137,6 +140,7 @@ public class CollectUtil {
 
     /**
      * get timeout integer
+     *
      * @param timeout timeout str
      * @return timeout
      */
@@ -146,7 +150,8 @@ public class CollectUtil {
 
     /**
      * get timeout integer or default value
-     * @param timeout timeout str
+     *
+     * @param timeout        timeout str
      * @param defaultTimeout default timeout
      * @return timeout
      */
@@ -164,8 +169,8 @@ public class CollectUtil {
     /**
      * assert prom field
      */
-    public static Boolean assertPromRequireField(String aliasField){
-        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)){
+    public static Boolean assertPromRequireField(String aliasField) {
+        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)) {
             return true;
         }
         return false;
@@ -174,12 +179,17 @@ public class CollectUtil {
 
     /**
      * is contains cryPlaceholder -_-
+     *
      * @param jsonElement json element
      * @return return true when contains
      */
     public static boolean containCryPlaceholder(JsonElement jsonElement) {
         String jsonStr = jsonElement.toString();
         return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).find();
+    }
+
+    public static boolean notContainCryPlaceholder(JsonElement jsonElement) {
+        return !containCryPlaceholder(jsonElement);
     }
 
     /**
@@ -288,9 +298,11 @@ public class CollectUtil {
                 if (key != null && key.startsWith(SMILING_PLACEHOLDER) && key.endsWith(SMILING_PLACEHOLDER)) {
                     key = key.replaceAll(SMILING_PLACEHOLDER_REX, "");
                     Configmap param = configmap.get(key);
-                    if (param != null && param.getType() == (byte) 3) {
+                    if (param != null && param.getType() == CommonConstants.PARAM_TYPE_MAP) {
                         String jsonValue = (String) param.getValue();
-                        Map<String, String> map = JsonUtil.fromJson(jsonValue, new TypeReference<>() {});
+                        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {
+                        };
+                        Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
                                 if (name != null && !"".equals(name.trim())) {
@@ -336,10 +348,9 @@ public class CollectUtil {
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
-            Iterator<JsonElement> iterator = jsonArray.iterator();
             int index = 0;
-            while (iterator.hasNext()) {
-                JsonElement element = iterator.next();
+            while (index < jsonArray.size()) {
+                JsonElement element = jsonArray.get(index);
                 if (element.isJsonPrimitive()) {
                     // Check if there are special characters Replace
                     // 判断是否含有特殊字符 替换
@@ -347,6 +358,7 @@ public class CollectUtil {
                     Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
                     if (smilingMatcher.find()) {
                         smilingMatcher.reset();
+                        String[] arrayValues = null;
                         while (smilingMatcher.find()) {
                             String group = smilingMatcher.group();
                             String replaceField = group.replaceAll(SMILING_PLACEHOLDER_REX, "");
@@ -359,12 +371,26 @@ public class CollectUtil {
                                     } else {
                                         value = value.replace(group, "");
                                     }
+                                } else if (param.getType() == CommonConstants.PARAM_TYPE_ARRAY) {
+                                    arrayValues = String.valueOf(param.getValue()).split(",");
                                 } else {
                                     value = value.replace(group, (String) param.getValue());
                                 }
+                            } else {
+                                value = null;
+                                break;
                             }
                         }
-                        jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
+                        if (arrayValues != null) {
+                            jsonArray.remove(index);
+                            index--;
+                            for (String arrayValue : arrayValues) {
+                                jsonArray.add(arrayValue);
+                                index++;
+                            }
+                        } else {
+                            jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
+                        }
                     }
                 } else {
                     jsonArray.set(index, replaceSmilingPlaceholder(element, configmap));
@@ -379,5 +405,36 @@ public class CollectUtil {
         uri = uri.replaceAll(" ", "%20");
         // todo more special
         return uri;
+    }
+    
+
+    public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
+
+        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
+        });
+        metrics.setFields(pushFieldList);
+    }
+
+    /**
+     * 将16进制字符串转换为byte[]
+     * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500
+     * 16进制字符串不区分大小写，返回的数组相同
+     * @param hexString 16进制字符串
+     * @return byte[]
+     */
+    public static byte[] fromHexString(String hexString) {
+        if (null == hexString || "".equals(hexString.trim())) {
+            return null;
+        }
+        byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
+        // 16进制字符串
+        String hex;
+        for (int i = 0; i < hexString.length() / HEX_STR_WIDTH; i++) {
+            // 每次截取2位
+            hex = hexString.substring(i * HEX_STR_WIDTH, i * HEX_STR_WIDTH + HEX_STR_WIDTH);
+            // 16进制 --> 十进制
+            bytes[i] = (byte) Integer.parseInt(hex, 16);
+        }
+        return bytes;
     }
 }

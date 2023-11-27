@@ -14,16 +14,25 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
-category: db
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
 app: iotdb
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: IoTDB数据库
-  en-US: IoTDB
+  zh-CN: Apache IoTDB
+  en-US: Apache IoTDB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 Apache IoTDB JVM相关的物联网时序数据库的运行状态，内存任务集群等相关指标(cluster node status、jvm memory committed bytes、jvm memory used bytes、jvm threads states threads、quantity、cache hit、queue、hrift connections)进行监测。<br><span class='help_module_span'>⚠️注意：您需要在 IoTDB 开启 metrics 功能，其将提供 prometheus metrics 形式的接口数据，<a class='help_module_content' href='https://iotdb.apache.org/zh/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>点击查看开启步骤</a>。</span>
+  en-US: "HertzBeat monitors the metrics such as operational status and memory task clusters of loT Series databases related to the Apache IoTDB JVM. <br><span class='help_module_span'>⚠️Note：You should enable the 'metrics' function in IoTDB, which will provide interface data in the form of prometheus metrics.<a class='help_module_content' href='https://iotdb.apache.org/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>Click here to view the specific steps.</a></span>"
+  zh-TW: HertzBeat對Apache IoTDB JVM相關的物聯網時序資料庫的運行狀態，記憶體任務集羣等相關名額（cluster node status、jvm memory committed bytes、jvm memory used bytes、jvm threads states threads、quantity、cache hit、queue、hrift connections）進行監測。<br><span class='help_ module_ span'> ⚠️ 注意：您需要在IoTDB開啟metrics功能，其將提供prometheus metrics形式的介面數據，<a class='help_ module_ content' href='https://iotdb.apache.org/zh/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>點擊查看開啟步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/iotdb/
+  en-US: https://hertzbeat.com/docs/help/iotdb/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host

@@ -6,7 +6,7 @@ sidebar_label: Tutorial 1 Adapting an HTTP protocol monitoring
 
 Through this tutorial, we describe step by step how to add a monitoring type based on the http protocol under the hertzbeat monitoring tool.
 
-Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http.md).
+Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http).
 
 
 ### HTTP protocol parses the general response structure to obtain indicator data
@@ -216,7 +216,7 @@ metrics:
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please give us a star on GitHub Gitee, thank you very much. Thanks for the old iron support. Refill!
+If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much. Thanks for the old iron support. Refill!
 
 **github: https://github.com/dromara/hertzbeat**
 

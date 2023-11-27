@@ -67,5 +67,6 @@ services:
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
     ports:
       - "1157:1157"
+      - "1158:1158"
     networks:
       - hertzbeat

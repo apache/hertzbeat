@@ -50,12 +50,12 @@ public class I18nController {
     public ResponseEntity<Message<Map<String, String>>> queryI18n(
             @Parameter(description = "en: language type,zh: 语言类型", example = "zh-CN")
             @PathVariable(name = "lang", required = false) String lang) {
-        if (lang == null || "".equals(lang)) {
+        if (lang == null || lang.isEmpty()) {
             lang = "zh-CN";
         }
-        lang = "zh-cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
-        lang = "en-us".equalsIgnoreCase(lang) ? "en-US" : lang;
+        lang = "zh-cn".equalsIgnoreCase(lang) || "zh_cn".equalsIgnoreCase(lang) ? "zh-CN" : lang;
+        lang = "en-us".equalsIgnoreCase(lang) || "en_us".equalsIgnoreCase(lang) ? "en-US" : lang;
         Map<String, String> i18nResource = appService.getI18nResources(lang);
-        return ResponseEntity.ok(new Message<>(i18nResource));
+        return ResponseEntity.ok(Message.success(i18nResource));
     }
 }

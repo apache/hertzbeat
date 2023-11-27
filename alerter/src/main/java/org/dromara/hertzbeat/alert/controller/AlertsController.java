@@ -20,7 +20,6 @@ package org.dromara.hertzbeat.alert.controller;
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +34,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -92,7 +90,7 @@ public class AlertsController {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
             }
-            if (content != null && !"".equals(content)) {
+            if (content != null && !content.isEmpty()) {
                 Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
                 andList.add(predicateContent);
             }
@@ -102,7 +100,7 @@ public class AlertsController {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Alert> alertPage = alertService.getAlerts(specification, pageRequest);
-        Message<Page<Alert>> message = new Message<>(alertPage);
+        Message<Page<Alert>> message = Message.success(alertPage);
         return ResponseEntity.ok(message);
     }
 
@@ -113,7 +111,7 @@ public class AlertsController {
         if (ids != null && !ids.isEmpty()) {
             alertService.deleteAlerts(new HashSet<>(ids));
         }
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -121,7 +119,7 @@ public class AlertsController {
     @Operation(summary = "Delete alarms in batches", description = "清空所有告警信息")
     public ResponseEntity<Message<Void>> clearAllAlerts() {
         alertService.clearAlerts();
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -133,7 +131,7 @@ public class AlertsController {
         if (ids != null && status != null && !ids.isEmpty()) {
             alertService.editAlertStatus(status, ids);
         }
-        Message<Void> message = new Message<>();
+        Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
@@ -141,16 +139,8 @@ public class AlertsController {
     @Operation(summary = "Get alarm statistics", description = "获取告警统计信息")
     public ResponseEntity<Message<AlertSummary>> getAlertsSummary() {
         AlertSummary alertSummary = alertService.getAlertsSummary();
-        Message<AlertSummary> message = new Message<>(alertSummary);
+        Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
-
-    @PostMapping("/report")
-    @Operation(summary = "Interface for reporting external alarm information ｜ 对外上报告警信息 接口",
-            description = "对外 新增一个告警")
-    public ResponseEntity<Message<Void>> addNewAlertReport(@Valid @RequestBody AlertReport alertReport) {
-        // 校验请求数据 TODO
-        alertService.addNewAlertReport(alertReport);
-        return ResponseEntity.ok(new Message<>("Add report success"));
-    }
+    
 }

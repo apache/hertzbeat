@@ -18,15 +18,16 @@
 package org.dromara.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.job.protocol.*;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * 监控采集的指标集合详情 eg: cpu | memory | health
  *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor
@@ -51,6 +51,13 @@ public class Metrics {
      * 公共属性-名称 eg: cpu | memory | health
      */
     private String name;
+    /**
+     * metrics group name's i18n value
+     * 指标集合的国际化名称
+     * zh-CN: CPU信息
+     * en-US: CPU Info
+     */
+    private Map<String, String> i18n;
     /**
      * 公共属性-采集监控协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
      */
@@ -84,7 +91,7 @@ public class Metrics {
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields) with the final attribute (fields), and calculate the final attribute (fields) value
      * 公共属性-表达式计算，将前置查询属性(preFields)与最终属性(fields)映射,计算出最终属性(fields)值
      * eg: size = size1 + size2, speed = speedSize
-     * https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m
+     * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
     private List<String> calculates;
     /**
@@ -112,10 +119,10 @@ public class Metrics {
      */
     private TelnetProtocol telnet;
     /**
-     * Use tcp or ucp implemented by socket for service port detection configuration information
-     * 使用socket实现的tcp或ucp进行服务端口探测配置信息
+     * Use udp implemented by socket for service port detection configuration information
+     * 使用socket实现的udp进行服务端口探测配置信息
      */
-    private TcpUdpProtocol tcpUdp;
+    private UdpProtocol udp;
     /**
      * Database configuration information implemented using the public jdbc specification
      * 使用公共的jdbc规范实现的数据库配置信息
@@ -151,6 +158,18 @@ public class Metrics {
      * 使用公共的ftp协议的监控配置信息
      */
     private FtpProtocol ftp;
+    /**
+     * Monitoring configuration information using the public rocketmq protocol 使用公共的rocketmq协议的监控配置信息
+     */
+    private RocketmqProtocol rocketmq;
+    /**
+     * Monitoring configuration information using push style 使用push方式推送的监控配置信息
+     */
+    private PushProtocol push;
+    /**
+     * Monitoring configuration information using the public prometheus protocol
+     */
+    private PrometheusProtocol prometheus;
 
     /**
      * collector use - Temporarily store subTask indicator group response data
@@ -168,13 +187,14 @@ public class Metrics {
 
     /**
      * collector use - Temporarily store subTask id
-     * collector使用 - 分级任务ID
+     * collector使用 - 分级采集任务ID
      */
     @JsonIgnore
     private transient Integer subTaskId;
 
     /**
      * is has subTask
+     *
      * @return true - has
      */
     public boolean isHasSubTask() {
@@ -183,6 +203,7 @@ public class Metrics {
 
     /**
      * consume subTask
+     *
      * @param metricsData response data
      * @return is last task?
      */
@@ -231,12 +252,20 @@ public class Metrics {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @Builder
     public static class Field {
         /**
          * Indicator name
          * 指标名称
          */
         private String field;
+        /**
+         * metric field name's i18n value
+         * 指标的国际化名称
+         * zh-CN: CPU 版本号
+         * en-US: CPU Version
+         */
+        private Map<String, String> i18n;
         /**
          * Indicator type 0-number: number 1-string: string
          * 指标类型 0-number:数字 1-string:字符串

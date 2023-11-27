@@ -58,7 +58,7 @@ public class TagController {
             tag.setId(null);
             }).distinct().collect(Collectors.toList());
         tagService.addTags(tags);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
@@ -69,7 +69,7 @@ public class TagController {
             throw new IllegalArgumentException("The Tag not exist.");
         }
         tagService.modifyTag(tag);
-        return ResponseEntity.ok(new Message<>("Modify success"));
+        return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping()
@@ -90,7 +90,7 @@ public class TagController {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (search != null && !"".equals(search)) {
+            if (search != null && !search.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
                 Predicate predicateValue = criteriaBuilder.like(root.get("value"), "%" + search + "%");
@@ -111,17 +111,17 @@ public class TagController {
         };
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         Page<Tag> alertPage = tagService.getTags(specification, pageRequest);
-        Message<Page<Tag>> message = new Message<>(alertPage);
+        Message<Page<Tag>> message = Message.success(alertPage);
         return ResponseEntity.ok(message);
     }
 
     @DeleteMapping()
     @Operation(summary = "Delete tags based on ID", description = "根据TAG ID删除TAG")
     public ResponseEntity<Message<Void>> deleteTags(
-            @Parameter(description = "TAG IDs | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+            @Parameter(description = "TAG IDs | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
             tagService.deleteTags(new HashSet<>(ids));
         }
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 }

@@ -17,7 +17,7 @@
 
 package org.dromara.hertzbeat.alert.service.impl;
 
-import org.dromara.hertzbeat.common.queue.CommonDataQueue;
+import org.dromara.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.dromara.hertzbeat.alert.dao.AlertDao;
 import org.dromara.hertzbeat.alert.dto.AlertPriorityNum;
 import org.dromara.hertzbeat.alert.dto.AlertSummary;
@@ -55,9 +55,9 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlertDao alertDao;
-
+    
     @Autowired
-    private CommonDataQueue commonDataQueue;
+    private AlarmCommonReduce alarmCommonReduce;
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
@@ -130,7 +130,13 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
-        commonDataQueue.addAlertData(buildAlertData(alertReport));
+        alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
+    }
+
+    @Override
+    public List<Alert> getAlerts(Specification<Alert> specification) {
+
+        return alertDao.findAll(specification);
     }
 
     /**
@@ -149,16 +155,22 @@ public class AlertServiceImpl implements AlertService {
         }else{
             sb = new StringBuilder(alertReport.getContent());
         }
-
+        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), 
+                ZoneId.systemDefault());
         return Alert.builder()
                 .content("Alert Center\n" + sb)
                 .priority(alertReport.getPriority().byteValue())
                 .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
                 .tags(alertReport.getLabels())
-                .target(CommonConstants.AVAILABLE)
-                .times(3)
-                .gmtCreate(LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), ZoneId.systemDefault()))
+                .target(alertReport.getAlertName())
+                .triggerTimes(1)
+                .firstAlarmTime(alertReport.getAlertTime())
+                .lastAlarmTime(alertReport.getAlertTime())
+                .gmtCreate(dateTime)
+                .gmtUpdate(dateTime)
                 .build();
     }
+
+
 
 }

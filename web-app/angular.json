@@ -40,9 +40,14 @@
               }
             ],
             "styles": [
-              "src/styles.less"
+              "src/styles.less",
+              "node_modules/slick-carousel/slick/slick.scss",
+              "node_modules/slick-carousel/slick/slick-theme.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/slick-carousel/slick/slick.min.js"
+            ],
             "allowedCommonJsDependencies": [
               "ajv",
               "ajv-formats",
@@ -153,8 +158,17 @@
   "cli": {
     "packageManager": "yarn",
     "schematicCollections": [
-      "@schematics/angular", "hertzbeat-web-app"
+      "@schematics/angular",
+      "hertzbeat-web-app"
     ],
     "analytics": false
+  },
+  "schematics": {
+    "@angular-eslint/schematics:application": {
+      "setParserOptionsProject": true
+    },
+    "@angular-eslint/schematics:library": {
+      "setParserOptionsProject": true
+    }
   }
 }

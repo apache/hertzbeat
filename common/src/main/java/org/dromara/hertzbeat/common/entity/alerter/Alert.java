@@ -85,8 +85,7 @@ public class Alert {
             description = "告警通知实际内容",
             example = "linux_192.134.32.1: 534543534 cpu usage high",
             accessMode = READ_WRITE)
-    @Length(max = 2048)
-    @Column(length = 2048)
+    @Column(length = 4096)
     private String content;
 
     @Schema(title = "Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed",
@@ -95,27 +94,27 @@ public class Alert {
     @Min(0)
     @Max(3)
     private byte status;
+    
+    @Schema(title = "Alarm times",
+            description = "告警次数",
+            example = "3", accessMode = READ_WRITE)
+    private Integer times;
+    
+    @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
+            description = "首次告警时间(毫秒时间戳)",
+            example = "1612198922000", accessMode = READ_ONLY)
+    private Long firstAlarmTime;
+    
+    @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
+            description = "最近告警时间(毫秒时间戳)",
+            example = "1612198922000", accessMode = READ_ONLY)
+    private Long lastAlarmTime;
 
     @Schema(title = "Alarm threshold trigger times",
             description = "告警阈值触发次数",
             example = "3", accessMode = READ_WRITE)
-    @Min(0)
-    private Integer times;
-
-    @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
-            description = "首次告警触发时间(毫秒时间戳)",
-            example = "1612198922000", accessMode = READ_ONLY)
-    private Long firstTriggerTime;
-
-    @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
-            description = "最近告警触发时间(毫秒时间戳)",
-            example = "1612198922000", accessMode = READ_ONLY)
-    private Long lastTriggerTime;
-
-    @Schema(title = "Alarm evaluation interval (milliseconds)",
-            description = "告警评估时间间隔(单位毫秒)",
-            example = "2000", accessMode = READ_ONLY)
-    private Long nextEvalInterval;
+    @Transient
+    private Integer triggerTimes;
 
     @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)

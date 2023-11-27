@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -77,7 +78,7 @@ public class HttpProtocol {
     /**
      * 响应数据解析方式
      * default - 自有的数据解析规则
-     * json_path 自定义jsonPath脚本 https://www.jsonpath.cn/
+     * json_path 自定义jsonPath脚本 <a href="https://www.jsonpath.cn/">...</a>
      * xml_path 自定义xmlPath脚本
      * prometheus Prometheus数据规则
      */
@@ -90,6 +91,12 @@ public class HttpProtocol {
      * 内容关键字
      */
     private String keyword;
+
+    /**
+     * http success status code. default 200
+     * successCode means what http response status code we consider it collect success.
+     */
+    private List<String> successCodes;
 
     /**
      * 认证信息
@@ -107,19 +114,19 @@ public class HttpProtocol {
          */
         private String bearerTokenToken;
         /**
-         * Basic Auth's username
+         * Basic Auth 's username
          */
         private String basicAuthUsername;
         /**
-         * Basic Auth's password
+         * Basic Auth 's password
          */
         private String basicAuthPassword;
         /**
-         * Digest Auth's username
+         * Digest Auth 's username
          */
         private String digestAuthUsername;
         /**
-         * Digest Auth's password
+         * Digest Auth 's password
          */
         private String digestAuthPassword;
     }

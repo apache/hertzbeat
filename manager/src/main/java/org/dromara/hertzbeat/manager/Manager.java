@@ -20,23 +20,27 @@ package org.dromara.hertzbeat.manager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
+
+import javax.annotation.PostConstruct;
 
 /**
  * @author tomsun28
  *
  */
 
-@SpringBootApplication
+@SpringBootApplication(exclude = MailSenderAutoConfiguration.class)
 @EnableJpaAuditing
-@EnableScheduling
 @EnableJpaRepositories(basePackages = {"org.dromara.hertzbeat"})
 @EntityScan(basePackages = {"org.dromara.hertzbeat"})
 public class Manager {
-
     public static void main(String[] args) {
         SpringApplication.run(Manager.class, args);
+    }
+    @PostConstruct
+    public void init() {
+        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
     }
 }

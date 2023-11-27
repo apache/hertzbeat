@@ -1,30 +1,9 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="code"></i>
-    <span>{{ 'menu.extras.define' | i18n }}</span>
-    <nz-tag
-      *ngIf="currentApp !== undefined"
-      style="font-size: 14px; border-radius: 4px; margin-left: 4px"
-      nzColor="#3f51b5"
-      class="hoverClass"
-    >
-      <span>{{ 'monitor.app.' + currentApp | i18n }}</span>
-    </nz-tag>
-    <a href="https://hertzbeat.com/docs/advanced/extend-point" target="_blank" style="float: right; margin-right: 5%">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'define.help' | i18n"
+  [guild_link]="'define.help.link' | i18n"
+  [module_name]="'menu.extras.define'"
+  [icon_name]="'monitor_icon.setting_modules' | i18n"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <nz-layout style="min-height: 100vh">
@@ -42,11 +21,35 @@
           >
         </ul>
       </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.program' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['program']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
       <li nz-submenu [nzTitle]="'menu.monitor.db' | i18n">
         <ul>
           <li
             nz-menu-item
             *ngFor="let app of appMenus['db']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.cache' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['cache']; let i = index"
             [nzSelected]="app.selected"
             routerLink="/setting/define"
             [queryParams]="{ app: app.value }"
@@ -71,6 +74,30 @@
           <li
             nz-menu-item
             *ngFor="let app of appMenus['mid']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.bigdata' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['bigdata']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.webserver' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['webserver']; let i = index"
             [nzSelected]="app.selected"
             routerLink="/setting/define"
             [queryParams]="{ app: app.value }"

@@ -1,0 +1,81 @@
+@import '@delon/theme/index';
+
+:host {
+  display: block;
+  padding-top: 24px;
+  ::ng-deep {
+    .main {
+      display: flex;
+      width: 100%;
+      padding-top: 16px;
+      padding-bottom: 16px;
+      overflow: auto;
+      background-color: #fff;
+    }
+
+    .menu {
+      width: 224px;
+      border-right: @border-width-base @border-style-base @border-color-split;
+      .ant-menu-inline {
+        border: none;
+      }
+      .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+        font-weight: bold;
+      }
+    }
+
+    .content {
+      flex: 1;
+      padding-top: 8px;
+      padding-right: 40px;
+      padding-bottom: 8px;
+      padding-left: 40px;
+      .title {
+        margin-bottom: 12px;
+        color: @heading-color;
+        font-weight: 500;
+        font-size: 20px;
+        line-height: 28px;
+      }
+      .ant-list-split .ant-list-item:last-child {
+        border-bottom: 1px solid #e8e8e8;
+      }
+      .ant-list-item {
+        padding-top: 14px;
+        padding-bottom: 14px;
+      }
+    }
+
+    @media screen and (max-width: @mobile-max) {
+      .main {
+        flex-direction: column;
+        .menu {
+          width: 100%;
+          border: none;
+        }
+        .content {
+          padding: 40px;
+        }
+      }
+    }
+  }
+}
+
+[data-theme='dark'] {
+  :host ::ng-deep {
+    .main {
+      background-color: #141414;
+    }
+    .content {
+      .title {
+        color: rgba(255, 255, 255, 0.65);
+      }
+    }
+    .menu {
+      border-right-color: #303030;
+    }
+    .content .ant-list-split .ant-list-item:last-child {
+      border-bottom-color: #303030;
+    }
+  }
+}

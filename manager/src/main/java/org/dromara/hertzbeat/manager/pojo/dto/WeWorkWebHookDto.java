@@ -27,7 +27,6 @@ import lombok.NoArgsConstructor;
  *
  * @author 花城
  * @version 1.0
- *
  */
 @Data
 @Builder
@@ -43,11 +42,12 @@ public class WeWorkWebHookDto {
     /**
      * 文本格式
      */
-    private static final String TEXT = "TEXT";
+    private static final String TEXT = "text";
 
     /**
      * 消息类型
      */
+    @Builder.Default
     private String msgtype = MARKDOWN;
 
     /**

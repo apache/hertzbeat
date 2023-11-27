@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
@@ -24,6 +24,15 @@ app: ssl_cert
 name:
   zh-CN: SSL证书
   en-US: SSL Certificate
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 通过证书名称、是否过期、有效期开始时间、有效期开始时间戳(ms)、过期时间、过期时间戳(ms)等指标对网站的 SSL 证书进行监测。您可以点击“<i>新建 SSL 证书</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors website's SSL certificates through metrics such as certificate name, expiration date, validity start time, validity start timestamp (ms), expiration time, and expiration timestamp (ms). <br>You could click the "<i>New SSL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat通過證書名稱、是否過期、有效期開始時間、有效期開始時間戳（ms）、過期時間、過期時間戳（ms）等名額對網站的SSL證書進行監測。 您可以點擊“<i>新建SSL證書</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/ssl_cert
+  en-US: https://hertzbeat.com/docs/help/ssl_cert
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -115,6 +124,20 @@ metrics:
       - field: end_timestamp
         type: 0
         unit: ms
+      - field: days_remaining
+        type: 0
+        unit: d
+    aliasFields:
+      - subject
+      - expired
+      - start_time
+      - start_timestamp
+      - end_time
+      - start_timestamp
+      - end_timestamp
+      - days_remaining
+    calculates:
+      - days_remaining=math.floor((end_timestamp-now())/86400000) #下取整
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssl_cert

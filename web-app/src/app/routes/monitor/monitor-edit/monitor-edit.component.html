@@ -55,14 +55,14 @@
 
       <nz-form-item *ngFor="let paramDefine of paramDefines; let i = index">
         <nz-form-label
-          *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+          *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
           nzSpan="7"
           [nzRequired]="paramDefine.required"
           [nzFor]="paramDefine.field"
           >{{ paramDefine.name }}
         </nz-form-label>
         <nz-form-control
-          *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+          *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
           nzSpan="8"
           [nzErrorTip]="'validation.required' | i18n"
         >
@@ -170,20 +170,37 @@
             valueAlias="Header Value"
           ></app-key-value-input>
         </nz-form-control>
+
+        <nz-form-label
+          *ngIf="paramDefine.type === 'metrics-field'"
+          nzSpan="7"
+          [nzRequired]="paramDefine.required"
+          [nzFor]="paramDefine.field"
+          >{{ paramDefine.name }}
+        </nz-form-label>
+        <nz-form-control *ngIf="paramDefine.type === 'metrics-field'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-metrics-field-input
+            [(value)]="params[i].value"
+            [id]="paramDefine.field"
+            [FieldAlias]="'Field'"
+            [UnitAlias]="'Unit'"
+            [TypeAlias]="'Type'"
+          ></app-metrics-field-input>
+        </nz-form-control>
       </nz-form-item>
 
       <nz-collapse [nzGhost]="true">
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
             <nz-form-label
-              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
               nzSpan="7"
               [nzRequired]="paramDefine.required"
               [nzFor]="paramDefine.field"
               >{{ paramDefine.name }}
             </nz-form-label>
             <nz-form-control
-              *ngIf="paramDefine.field !== 'host' && paramDefine.type === 'text'"
+              *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
               nzSpan="8"
               [nzErrorTip]="'validation.required' | i18n"
             >
@@ -315,21 +332,49 @@
       <nz-divider></nz-divider>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="intervals" [nzTooltipTitle]="'monitor.intervals.tip' | i18n">
-          {{ 'monitor.intervals' | i18n }}
+        <nz-form-label nzSpan="7" nzFor="collector" [nzTooltipTitle]="'monitor.collector.tip' | i18n">
+          {{ 'monitor.collector' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-input-number [(ngModel)]="monitor.intervals" [nzMin]="30" [nzMax]="604800" [nzStep]="60" name="intervals" id="intervals">
-          </nz-input-number>
+          <nz-select
+            [(ngModel)]="collector"
+            [nzDropdownMatchSelectWidth]="false"
+            name="collector"
+            id="collector"
+            [nzCustomTemplate]="collectorTemplate"
+          >
+            <nz-option nzCustomContent [nzValue]="''" [nzLabel]="'monitor.collector.system.default' | i18n">
+              <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
+            </nz-option>
+            <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
+              <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
+                item.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+              }}</nz-tag>
+              <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
+              <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
+              <nz-tag nzColor="success">{{ item.ip }}</nz-tag>
+            </nz-option>
+          </nz-select>
+          <ng-template #collectorTemplate let-selected>
+            <nz-tag nzColor="processing">{{ selected.nzLabel }}</nz-tag>
+          </ng-template>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="detect" [nzTooltipTitle]="'monitors.detect.tip' | i18n">
-          {{ 'monitors.detect' | i18n }}
+        <nz-form-label nzSpan="7" nzFor="intervals" [nzTooltipTitle]="'monitor.intervals.tip' | i18n">
+          {{ 'monitor.intervals' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8">
-          <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
+          <nz-input-number
+            [(ngModel)]="monitor.intervals"
+            [nzMin]="monitor.app === 'push' ? 1 : 30"
+            [nzMax]="604800"
+            [nzStep]="monitor.app === 'push' ? 1 : 60"
+            name="intervals"
+            id="intervals"
+          >
+          </nz-input-number>
         </nz-form-control>
       </nz-form-item>
 
@@ -369,7 +414,16 @@
 
       <div nz-row>
         <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
-          <button nz-button nzType="primary" type="submit" (click)="onDetect(editForm.form)"> {{ 'common.button.detect' | i18n }} </button>
+          <button
+            nz-button
+            nzType="primary"
+            type="submit"
+            nz-tooltip
+            [nzTooltipTitle]="'monitors.detect.tip' | i18n"
+            (click)="onDetect(editForm.form)"
+          >
+            {{ 'common.button.detect' | i18n }}
+          </button>
           <button nz-button nzType="primary" type="submit" (click)="onSubmit(editForm.form)"> {{ 'common.button.ok' | i18n }} </button>
           <button nz-button nzType="primary" type="reset" (click)="onCancel()"> {{ 'common.button.cancel' | i18n }} </button>
         </div>

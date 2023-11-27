@@ -6,7 +6,7 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 通过此教程我们一步一步描述如何在教程一的基础上改造，新增一个指标组，先调用认证接口获取TOKEN后，使用TOKEN作为参数供后面的指标组采集认证使用。
 
-阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http.md)了解熟悉了怎么自定义类型，指标，协议等。   
+阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
 
 ### 请求流程   
 
@@ -45,7 +45,7 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
@@ -107,7 +107,7 @@ metrics: ......
 
 ```yaml
 
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
@@ -237,7 +237,7 @@ metrics:
 
 ```yaml
 
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: hertzbeat_token

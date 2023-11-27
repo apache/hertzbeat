@@ -57,13 +57,13 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	 */
 	private static final String STORAGE_DATABASE = "hertzbeat";
 	private static final String QUERY_HISTORY_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
 	private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
 	private static final String QUERY_INSTANCE_SQL
 			= "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
 	private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-			= "SELECT first, avg ,max, min FROM (SELECT %s as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(%s) as avg, min(%s) as min, max(%s) as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+			= "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
 	private static final String TABLE_NOT_EXIST = "not exist";
 	private static final String DATABASE_NOT_EXIST = "not exist";
 	private GreptimeDB greptimeDb;
@@ -158,7 +158,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
 		List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
-		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
+		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.TimestampMillisecond));
 		List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
 
 		List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
@@ -238,6 +238,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		log.debug("selectSql: {}", selectSql);
 		QueryRequest request = QueryRequest.newBuilder()
 				.exprType(SelectExprType.Sql)
+				.databaseName(STORAGE_DATABASE)
 				.ql(selectSql)
 				.build();
 		try {
@@ -249,8 +250,13 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				List<Map<String, Object>> maps = rows.collectToMaps();
 				List<Value> valueList;
 				for (Map<String, Object> map : maps) {
-					String strValue = new BigDecimal(map.get(metric).toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-					valueList = instanceValuesMap.computeIfAbsent(metric, k -> new LinkedList<>());
+					String instanceValue = map.get("instance") == null ? "" : map.get("instance").toString();
+					Object valueObj = map.get(metric);
+					if (valueObj == null) {
+						continue;
+					}
+					String strValue = new BigDecimal(valueObj.toString()).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+					valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
 					valueList.add(new Value(strValue, (long) map.get("ts")));
 				}
 			}
@@ -301,6 +307,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 			log.debug("selectSql: {}", selectSql);
 			QueryRequest request = QueryRequest.newBuilder()
 					.exprType(SelectExprType.Sql)
+					.databaseName(STORAGE_DATABASE)
 					.ql(selectSql)
 					.build();
 			try {
@@ -335,9 +342,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				log.error(e.getMessage(), e);
 			}
 		}
-		/*
-		TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
-		 */
+		// TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
 		long endTime;
 		long startTime = getExpireTimeFromToken(history);
 
@@ -357,6 +362,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 				log.debug("selectSql: {}", selectSql);
 				QueryRequest request = QueryRequest.newBuilder()
 						.exprType(SelectExprType.Sql)
+						.databaseName(STORAGE_DATABASE)
 						.ql(selectSql)
 						.build();
 				List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());

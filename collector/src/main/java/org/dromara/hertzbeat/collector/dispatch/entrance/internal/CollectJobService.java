@@ -17,14 +17,22 @@
 
 package org.dromara.hertzbeat.collector.dispatch.entrance.internal;
 
+import org.dromara.hertzbeat.collector.dispatch.DispatchProperties;
+import org.dromara.hertzbeat.collector.dispatch.WorkerPool;
+import org.dromara.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.dromara.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
+import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.dromara.hertzbeat.common.util.IpDomainUtil;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.dromara.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -33,15 +41,42 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection job management provides api interface
  * 采集job管理提供api接口
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Service
 @Slf4j
 public class CollectJobService {
 
-    @Autowired
-    private TimerDispatch timerDispatch;
+    private static final String COLLECTOR_STR = "-collector";
+
+    private final TimerDispatch timerDispatch;
+
+    private final WorkerPool workerPool;
+
+    private final String collectorIdentity;
+    
+    private String mode = null;
+
+    private CollectServer collectServer;
+
+    public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
+        this.timerDispatch = timerDispatch;
+        this.workerPool = workerPool;
+        if (properties != null && properties.getEntrance() != null && properties.getEntrance().getNetty() != null
+                && properties.getEntrance().getNetty().isEnabled()) {
+            mode = properties.getEntrance().getNetty().getMode();
+            String collectorName = properties.getEntrance().getNetty().getIdentity();
+            if (StringUtils.hasText(collectorName)) {
+                collectorIdentity = collectorName;
+            } else {
+                collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+                log.info("user not config this collector identity, use [host name - host ip] default: {}.", collectorIdentity);
+            }
+        } else {
+            collectorIdentity = CommonConstants.MAIN_COLLECTOR_NODE;
+        }
+    }
 
     /**
      * Execute a one-time collection task and get the collected data response
@@ -72,40 +107,45 @@ public class CollectJobService {
     }
 
     /**
+     * Execute a one-time collection task and send the collected data response
+     *
+     * @param oneTimeJob Collect task details  采集任务详情
+     */
+    public void collectSyncOneTimeJobData(Job oneTimeJob) {
+        workerPool.executeJob(() -> {
+            List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
+            List<String> jsons = new ArrayList<>(metricsDataList.size());
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                String json = ProtoJsonUtil.toJsonStr(metricsData);
+                if (json != null) {
+                    jsons.add(json);
+                }
+            }
+            String response = JsonUtil.toJson(jsons);
+            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                    .setMsg(response)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
+                    .build();
+            this.collectServer.sendMsg(message);
+        });
+    }
+
+    /**
      * Issue periodic asynchronous collection tasks
      * 下发周期性异步采集任务
      *
      * @param job Collect task details      采集任务详情
-     * @return long Job ID      任务ID
      */
-    public long addAsyncCollectJob(Job job) {
-        long jobId = SnowFlakeIdGenerator.generateId();
-        job.setId(jobId);
-        timerDispatch.addJob(job, null);
-        return job.getId();
-    }
-
-    /**
-     * Update the periodic asynchronous collection tasks that have been delivered
-     * 更新已经下发的周期性异步采集任务
-     *
-     * @param modifyJob Collect task details        采集任务详情
-     * @return long Job ID      新任务ID
-     */
-    public long updateAsyncCollectJob(Job modifyJob) {
-        long preJobId = modifyJob.getId();
-        long newJobId = SnowFlakeIdGenerator.generateId();
-        modifyJob.setId(newJobId);
-        timerDispatch.deleteJob(preJobId, true);
-        timerDispatch.addJob(modifyJob, null);
-        return newJobId;
+    public void addAsyncCollectJob(Job job) {
+        timerDispatch.addJob(job.clone(), null);
     }
 
     /**
      * Cancel periodic asynchronous collection tasks
      * 取消周期性异步采集任务
      *
-     * @param jobId Job ID      任务ID
+     * @param jobId Job ID      采集任务ID
      */
     public void cancelAsyncCollectJob(Long jobId) {
         if (jobId != null) {
@@ -113,4 +153,31 @@ public class CollectJobService {
         }
     }
 
+    /**
+     * send async collect response data
+     *
+     * @param metricsData collect data
+     */
+    public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
+        String data = ProtoJsonUtil.toJsonStr(metricsData);
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setIdentity(collectorIdentity)
+                .setMsg(data)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
+                .build();
+        this.collectServer.sendMsg(message);
+    }
+
+    public String getCollectorIdentity() {
+        return collectorIdentity;
+    }
+    
+    public String getCollectorMode() {
+        return mode;
+    }
+
+    public void setCollectServer(CollectServer collectServer) {
+        this.collectServer = collectServer;
+    }
 }

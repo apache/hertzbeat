@@ -1,24 +1,25 @@
 ---
 id: private  
-title: Privatization deployment    
-sidebar_label: Privatization deployment     
+title: Enterprise     
+sidebar_label: Enterprise     
 ---
-If your team wants to privatize and deploy this monitoring tool, we currently provide two solutions.   
 
-#### Community monitoring product HertzBeat (Free, copyright reserved)   
+:::tip
+**Open source does not mean completely free. If you [modify HertzBeat's logo, name, copyright](https://github.com/dromara/hertzbeat/blob/master/NOTICE), etc., please ask us for authorization, otherwise there will be [legal risks](legal).**     
+**Open source is based on mutual trust, please don't let developers chill. We will pursue all illegal gains of individuals and teams who undermine open source and profit from it.**
+:::
 
-We provide community version monitoring product hertzbeat, which can be downloaded and deployed directly by referring to [HertzBeat deployment document](/docs). It is free for individuals or enterprises.  
-All copyrights, patents, trademarks and ownership statements in this work and the source code must be retained.
-You can feed back or learn problems encountered during installation and deployment through [communities, wechat groups, QQ groups, etc.](/docs/others/contact).  
-We also provide paid remote installation and deployment services.
+HertzBeat monitoring products are divided into open source community version and enterprise version. The enterprise version **provides more enterprise-level features such as user management and log auditing**. The maintenance team quickly responds to enterprise needs.
 
-#### Cluster SAAS version of HertzBeat-TanCloud (paid)      
+## HertzBeat Licensed Version (Paid)
 
-This version is the corresponding version of [TanCloud Official website](https://console.tancloud.cn) environment. Compared with hertzbeat, it has functions of clustering, users, tenants and so on, which is suitable for medium and large-scale team enterprises. 
-This version is a paid version. For tancloud privatization deployment plan and price, please consult us on WeChat tan-cloud, and add WeChat please note: privatization + team name.  
+We provide the community open source version of the monitoring product HertzBeat, which can be used by individuals and businesses for free, **Requires complete reservation of copyright, Logo, trademark, footer copyright statement, and attribution statement**.  
+In some cases, enterprises need to modify the copyright LOGO and attribution statement based on the open source version for secondary development. We have launched **HertzBeat Authorized Version** for such needs.   
+This authorization needs to be paid. We implement enterprise-scale tiered pricing, and will give away technical support, etc. For specific plans and prices, please add our WeChat `tan-cloud` or email `tomsun28@outlook.com`, please note: authorization + team name
 
-#### Privatized custom function development (paid) 
+## Enterprise Edition TanCloud (Paid)
 
-Support the development of custom functions and features. Please contact us on WeChat tan-cloud, and please note: privatization + team name.   
+The enterprise version of the monitoring system is a version specially launched by the TanCloud team for enterprise-level needs. It provides **user management, permissions, logs and other enterprise-level features**, and has received quick response and technical support from our maintenance team.   
+The enterprise version is a paid version. We implement enterprise-scale tiered pricing, and will give away technical support, free maintenance period, technical explanation, etc. For specific plans and prices, please add us WeChat `tan-cloud` or email `tomsun28@outlook.com`, please note: Enterprise Edition + team name
 
-**Welcome to introduce business and become a recommender. We will give the recommender 20% - 30% commission reward for orders**      
+Welcome to introduce business to become a recommendation officer, there will be rewards for successful transactions

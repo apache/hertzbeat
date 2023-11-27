@@ -14,8 +14,8 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
-category: service
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: program
 # The monitoring type eg: springboot2 linux windows tomcat mysql aws...
 # 监控类型 eg: springboot2 linux windows tomcat mysql aws...
 app: springboot2
@@ -24,6 +24,15 @@ app: springboot2
 name:
   zh-CN: SpringBoot2.0
   en-US: SpringBoot2.0
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>点击查看具体步骤</a>。</span>
+  en-US: "HertzBeat collects and monitors SpringBoot through general performance metric(health, environment, threads, memory_used) that exposed by the SpringBoot2.0 Actuator. <br><span class='help_module_span'>⚠️Note: You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>"
+  zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控SpringBoot中的指標，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>點擊查看具體步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/springboot2
+  en-US: https://hertzbeat.com/docs/help/springboot2
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -142,7 +151,7 @@ metrics:
   # 监控指标组 - environment
   - name: environment
     priority: 1
-    # The specific monitoring indicators in the metric group.
+    # The specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
@@ -159,7 +168,7 @@ metrics:
         type: 1
       - field: jvm_version
         type: 1
-    # Indicator alias list, used to identify indicators in query results
+    # metric alias list, used to identify metrics in query results
     # 指标别名列表，用于在查询结果中识别指标
     aliasFields:
       - $.activeProfiles[0]
@@ -210,7 +219,7 @@ metrics:
     # Whether to display the metric group in the query result, the default is true
     # 是否在查询结果中显示指标组,默认为true
     visible: false
-    # The specific monitoring indicators in the metric group.
+    # The specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     priority: 2
     fields:
@@ -309,4 +318,5 @@ metrics:
       url: ^_^base_path^_^/health
       method: GET
       ssl: ^_^ssl^_^
+      successCodes: [200, 503]
       parseType: default

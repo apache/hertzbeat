@@ -28,39 +28,39 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 public interface CommonDataQueue {
 
     /**
-     * offer alert data
-     * @param alert alert data
-     */
-    void addAlertData(Alert alert);
-
-    /**
      * poll alert data
      * @return alert data
      * @throws InterruptedException when poll timeout
      */
-    Alert pollAlertData() throws InterruptedException;
+    Alert pollAlertsData() throws InterruptedException;
 
     /**
      * poll collect metrics data for alerter
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollAlertMetricsData() throws InterruptedException;
+    CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException;
 
     /**
      * poll collect metrics data for Persistent Storage
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollPersistentStorageMetricsData() throws InterruptedException;
+    CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException;
 
     /**
      * poll collect metrics data for real-time Storage
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollRealTimeStorageMetricsData() throws InterruptedException;
-
+    CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException;
+    
+    /**
+     * offer alert data
+     * @param alert alert data
+     */
+    void sendAlertsData(Alert alert);
+    
     /**
      * send collect metrics data
      * @param metricsData metrics data

@@ -294,6 +294,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .filter(it -> StringUtils.hasText(it) && !it.startsWith(SignConstants.WELL_NO) && it.contains(SignConstants.DOUBLE_MARK))
                 .map(this::removeCr)
                 .map(r -> r.split(SignConstants.DOUBLE_MARK))
+                .filter(t -> t.length > 1)
                 .forEach(it -> {
                     result.put(it[0], it[1]);
                 });

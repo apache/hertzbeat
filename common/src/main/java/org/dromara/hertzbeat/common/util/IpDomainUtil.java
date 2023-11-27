@@ -19,9 +19,12 @@ package org.dromara.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.util.InetAddressUtils;
+import org.dromara.hertzbeat.common.constants.CollectorConstants;
+
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 
@@ -37,7 +40,7 @@ public class IpDomainUtil {
      * 域名校验正则
      */
     private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(?=^.{3,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$");
+            Pattern.compile("^(?=^.{3,255}$)[_a-zA-Z0-9][-_a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-_a-zA-Z0-9]{0,62})+$");
 
     private static final String LOCALHOST = "localhost";
 
@@ -104,6 +107,31 @@ public class IpDomainUtil {
             log.warn(e.getMessage());
         }
         return null;
+    }
+
+    /**
+     *
+     * @param ipDomain ip domain
+     * @return IP address type
+     */
+    public static String checkIpAddressType(String ipDomain){
+        if (InetAddressUtils.isIPv6Address(ipDomain)) {
+            return CollectorConstants.IPV6;
+        }
+        return CollectorConstants.IPV4;
+    }
+    
+    /**
+     * get current local host name
+     * @return hostname
+     */
+    public static String getCurrentHostName() {
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            return inetAddress.getHostName();   
+        } catch (UnknownHostException e) {
+            return null;
+        }
     }
 
 }

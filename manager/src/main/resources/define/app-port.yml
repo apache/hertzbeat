@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 mid-中间件 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
@@ -23,6 +23,15 @@ app: port
 name:
   zh-CN: 端口可用性
   en-US: PORT TELNET
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 通过判断对端服务中暴露的TCP端口是否可用，进而判断对端服务是否可用。同时以ms为指标，对响应时间等指标进行监测。您可以点击“<i>新建 端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat determines whether the exposed tcp ports in the peer service are available, thereby determining whether the peer service is available. Simultaneously monitoring response time and other metrics using ms as metric unit. You could click the "<i>New port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 通過判斷對端服務中暴露的TCP端口是否可用，進而判斷對端服務是否可用。 同時以ms為指标，對回應時間等指标進行監測。 您可以點擊“<i>新建埠可用性</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/port
+  en-US: https://hertzbeat.com/docs/help/port
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -32,8 +41,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host

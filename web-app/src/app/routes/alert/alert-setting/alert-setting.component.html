@@ -1,24 +1,10 @@
+<app-help-massage-show
+  [help_massage_content]="'alert.help.setting' | i18n"
+  [guild_link]="'alert.help.center.setting' | i18n"
+  [module_name]="'menu.alert.setting'"
+  [icon_name]="'monitor_icon.alert_setting' | i18n"
+></app-help-massage-show>
 <nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="alert"></i>
-    <span>{{ 'menu.alert.setting' | i18n }}</span>
-    <a href="https://hertzbeat.com/docs/help/alert_threshold" target="_blank" style="float: right; margin-right: 5%">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
-<nz-divider></nz-divider>
-
 <div style="margin-bottom: 20px">
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
@@ -31,6 +17,18 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'common.button.delete' | i18n }}
   </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertDefineTable()">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
+    nz-input
+    type="text"
+    [placeholder]="'alert.setting.search' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadAlertDefineTable()"
+    [(ngModel)]="search"
+  />
 </div>
 
 <nz-table
@@ -65,7 +63,10 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span *ngIf="data.field"> {{ 'monitor.app.' + data.app | i18n }} / {{ data.metric + ' / ' + data.field }} </span>
+        <span *ngIf="data.field">
+          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.app.' + data.app + '.metrics.' + data.metric | i18nElse : data.metric }} /
+          {{ 'monitor.app.' + data.app + '.metrics.' + data.metric + '.metric.' + data.field | i18nElse : data.field }}
+        </span>
         <span *ngIf="!data.field && data.metric === 'availability'">
           {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.availability' | i18n }}
         </span>
@@ -139,18 +140,20 @@
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
-  nzWidth="60%"
+  nzWidth="70%"
   [nzOkLoading]="isManageModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">{{ 'alert.setting.target' | i18n }}</nz-form-label>
-        <nz-form-control [nzSpan]="10" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-cascader
             required
             name="target"
             id="target"
+            [nzShowSearch]="true"
+            [nzPlaceHolder]="'alert.setting.target.place-holder' | i18n"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
             (ngModelChange)="cascadeOnChange($event)"
@@ -158,32 +161,52 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="cascadeValues.length != 2">
-        <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10, offset: 7 }">
+        <nz-col [nzXs]="{ span: 24, offset: 0 }" [nzLg]="{ span: 8, offset: 16 }">
+          <button nz-button [nzType]="isExpr ? 'primary' : 'default'" (click)="switchAlertRuleShow()">
+            <i nz-icon nzType="code" nzTheme="outline"></i>
+            {{ 'alert.setting.rule.switch-expr' | i18n }}
+          </button>
+        </nz-col>
+      </nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2 && isExpr">
+        <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 12, offset: 7 }">
           <nz-collapse>
             <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
               <nz-list nzSize="small" nzSplit="false">
-                <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>{{ cascadeValues[2] }} : {{ 'alert.setting.target.tip' | i18n }}</code>
+                <nz-list-item *ngFor="let item of currentMetrics; let i = index">
+                  <code>
+                    {{ item.value }} :
+                    {{
+                      item.value == item.label
+                        ? i == 0
+                          ? ('alert.setting.target.tip' | i18n)
+                          : ('alert.setting.target.other' | i18n)
+                        : item.label
+                    }}
+                  </code>
+                  <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
+                    {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
+                  </nz-tag>
                 </nz-list-item>
-                <nz-list-item *ngFor="let item of otherMetrics">
-                  <code>{{ item }} : {{ 'alert.setting.target.other' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngIf="otherMetrics.length != 0">
+                <nz-list-item *ngIf="currentMetrics.length > 1">
                   <code>instance : {{ 'alert.setting.target.instance' | i18n }}</code>
                 </nz-list-item>
                 <nz-list-item>
-                  <code>{{ 'alert.setting.operator' | i18n }} : equals(str1,str2), ==, <, <=, >, >=, !=, ( ), +, -, &&, ||</code>
+                  <code>
+                    {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
+                    <, <=, >, >=, !=, ( ), +, -, &&, ||
+                  </code>
                 </nz-list-item>
               </nz-list>
             </nz-collapse-panel>
           </nz-collapse>
         </nz-col>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length != 2">
+      <nz-form-item *ngIf="cascadeValues.length != 2 && isExpr">
         <nz-form-label [nzSpan]="7" nzFor="expr" nzRequired="true" [nzTooltipTitle]="'alert.setting.expr.label' | i18n">
-          {{ 'alert.setting.expr' | i18n }}
+          {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
-        <nz-form-control [nzSpan]="10" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea
               [(ngModel)]="define.expr"
@@ -196,6 +219,128 @@
             >
             </textarea>
           </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2 && !isExpr">
+        <nz-form-label [nzSpan]="7" nzFor="rule" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+          {{ 'alert.setting.rule' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <div id="rule">
+            <div style="width: 100%; margin-bottom: 2px" nz-row *ngFor="let alertRule of alertRules; let i = index">
+              <nz-select
+                [(ngModel)]="alertRule.metric"
+                [ngModelOptions]="{ standalone: true }"
+                nz-col
+                nzSpan="8"
+                [nzDropdownMatchSelectWidth]="false"
+                [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
+              >
+                <nz-option
+                  *ngFor="let item of currentMetrics"
+                  [nzValue]="item"
+                  [nzLabel]="item.label ? item.label : item.value"
+                  nzCustomContent
+                >
+                  {{ item.label ? item.label : item.value }}
+                  <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
+                    {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
+                  </nz-tag>
+                  <nz-tag *ngIf="item.unit">
+                    {{ item.unit }}
+                  </nz-tag>
+                </nz-option>
+              </nz-select>
+              <nz-select
+                [(ngModel)]="alertRule.operator"
+                [ngModelOptions]="{ standalone: true }"
+                nz-col
+                nzSpan="4"
+                [nzShowArrow]="false"
+                [nzDropdownMatchSelectWidth]="false"
+                style="text-align: center; font-weight: bolder"
+                [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
+                [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
+              >
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>'" [nzLabel]="'>'"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'<'" [nzLabel]="'<'"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'=='" [nzLabel]="'=='"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'!='" [nzLabel]="'!='"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'<='" [nzLabel]="'<='"></nz-option>
+                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>='" [nzLabel]="'>='"></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'equals'"
+                  [nzLabel]="'alert.setting.rule.operator.str-equals' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'!equals'"
+                  [nzLabel]="'alert.setting.rule.operator.str-no-equals' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'contains'"
+                  [nzLabel]="'alert.setting.rule.operator.str-contains' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'!contains'"
+                  [nzLabel]="'alert.setting.rule.operator.str-no-contains' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'matches'"
+                  [nzLabel]="'alert.setting.rule.operator.str-matches' | i18n"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 1"
+                  [nzValue]="'!matches'"
+                  [nzLabel]="'alert.setting.rule.operator.str-no-matches' | i18n"
+                ></nz-option>
+                <nz-option [nzValue]="'exists'" [nzLabel]="'alert.setting.rule.operator.exists' | i18n"></nz-option>
+                <nz-option [nzValue]="'!exists'" [nzLabel]="'alert.setting.rule.operator.no-exists' | i18n"></nz-option>
+              </nz-select>
+              <input
+                nz-input
+                [disabled]="alertRule.operator == 'exists' || alertRule.operator == '!exists'"
+                [type]="alertRule.metric?.type === 0 ? 'number' : 'text'"
+                [(ngModel)]="alertRule.value"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="
+                  alertRule.operator == 'exists' || alertRule.operator == '!exists'
+                    ? ''
+                    : alertRule.metric?.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                "
+                nz-col
+                nzSpan="10"
+              />
+              <button
+                *ngIf="i != alertRules.length - 1 || i == 4"
+                nz-button
+                nz-col
+                nzSpan="2"
+                nzDanger
+                nzGhost="true"
+                (click)="onRemoveAlertRule(i)"
+              >
+                <span nz-icon nzType="minus"></span>
+              </button>
+              <button
+                *ngIf="i === alertRules.length - 1 && i < 4"
+                nz-button
+                nzType="primary"
+                nz-col
+                nzSpan="2"
+                nzGhost="true"
+                (click)="onAddNewAlertRule()"
+              >
+                <span nz-icon nzType="plus"></span>
+              </button>
+            </div>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="cascadeValues.length == 2">
@@ -214,7 +359,7 @@
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="priority" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
           {{ 'alert.priority' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="10" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select [(ngModel)]="define.priority" nzPlaceHolder="Choose" name="priority" id="priority">
             <nz-option [nzValue]="0" [nzLabel]="'alert.priority.0' | i18n"></nz-option>
             <nz-option [nzValue]="1" [nzLabel]="'alert.priority.1' | i18n"></nz-option>
@@ -226,13 +371,13 @@
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="duration" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
           {{ 'alert.setting.times' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="10" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="999" [nzStep]="1" required name="duration" id="duration">
           </nz-input-number>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10, offset: 7 }">
+        <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 12, offset: 7 }">
           <nz-collapse>
             <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.template.tip' | i18n">
               <nz-list nzSize="small" nzSplit="false">
@@ -245,11 +390,15 @@
                 <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>&#36;&#123;metric&#125; : {{ 'alert.setting.template.metric-name' | i18n }}</code>
                 </nz-list-item>
-                <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;{{ '{' + cascadeValues[2] + '}' }} : {{ 'alert.setting.template.metric-value' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngFor="let item of otherMetrics">
-                  <code>&#36;{{ '{' + item + '}' }} : {{ 'alert.setting.template.other-value' | i18n }}</code>
+                <nz-list-item *ngFor="let item of filterMetrics(currentMetrics, cascadeValues)">
+                  <code
+                    >&#36;{{ '{' + item.value + '}' }} :
+                    {{
+                      item.value == item.label
+                        ? ('alert.setting.template.other-value' | i18n)
+                        : ('alert.setting.template.metric-value' | i18n) + '-' + item.label
+                    }}</code
+                  >
                 </nz-list-item>
                 <nz-list-item *ngIf="cascadeValues.length == 3">
                   <code>&#36;&#123;instance&#125; : {{ 'alert.setting.template.instance-value' | i18n }}</code>
@@ -263,7 +412,7 @@
         <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.label' | i18n">
           {{ 'alert.setting.template' | i18n }}
         </nz-form-label>
-        <nz-form-control [nzSpan]="10" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="200">
             <textarea
               [(ngModel)]="define.template"
@@ -279,22 +428,102 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="tags" [nzTooltipTitle]="'tag.bind.tip' | i18n">
+          {{ 'tag.bind' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-tag
+            *ngFor="let tag of define.tags; let i = index"
+            [nzMode]="'closeable'"
+            (nzOnClose)="onRemoveTag(tag)"
+            style="margin-top: 4px"
+          >
+            {{ sliceTagName(tag) }}
+          </nz-tag>
+          <a (click)="onShowTagsModal()">
+            <nz-tag style="margin-top: 4px">
+              <i nz-icon nzType="plus"></i>
+              {{ 'tag.new' | i18n }}
+            </nz-tag>
+          </a>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
           {{ 'alert.setting.default' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="10">
+        <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="recoverNotice" [nzTooltipTitle]="'alert.setting.recover-notice.tip' | i18n">
+          {{ 'alert.setting.recover-notice' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch
+            [(ngModel)]="define.recoverNotice"
+            [ngModelOptions]="{ standalone: true }"
+            name="recoverNotice"
+            id="recoverNotice"
+          ></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable" [nzTooltipTitle]="'alert.setting.enable.tip' | i18n">
           {{ 'alert.setting.enable' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="10">
+        <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="define.enable" [ngModelOptions]="{ standalone: true }" name="enable" id="enable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
     </form>
+  </div>
+</nz-modal>
+
+<!-- 选择TAG弹出框 -->
+<nz-modal
+  [(nzVisible)]="isTagManageModalVisible"
+  [nzTitle]="'tag.bind' | i18n"
+  (nzOnCancel)="onTagManageModalCancel()"
+  (nzOnOk)="onTagManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="30%"
+  [nzOkLoading]="isTagManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <input
+      style="margin-left: 5px; width: 50%; border-radius: 9px; text-align: center"
+      nz-input
+      type="text"
+      [placeholder]="'tag.search' | i18n"
+      nzSize="default"
+      (keyup.enter)="loadTagsTable()"
+      [(ngModel)]="tagSearch"
+    />
+    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px; border-radius: 9px">
+      <i nz-icon nzType="setting" nzTheme="outline"></i>
+      {{ 'tag.setting' | i18n }}
+    </button>
+    <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
+      <thead>
+        <tr>
+          <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="tagCheckedAll" (nzCheckedChange)="onTagAllChecked($event)"></th>
+          <th nzAlign="left">{{ 'tag' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of smallTable.data">
+          <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onTagItemChecked(data, $event)"></td>
+          <td nzAlign="left">
+            <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
+            <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">
+              {{ data.name + ':' + data.value }}
+            </nz-tag>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
   </div>
 </nz-modal>
 

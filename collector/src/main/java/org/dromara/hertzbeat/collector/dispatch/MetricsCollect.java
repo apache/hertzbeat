@@ -19,12 +19,16 @@ package org.dromara.hertzbeat.collector.dispatch;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
+import org.dromara.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
 import org.dromara.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.dromara.hertzbeat.collector.dispatch.timer.Timeout;
 import org.dromara.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.dromara.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
@@ -40,9 +44,6 @@ import java.util.stream.Collectors;
 /**
  * Index group collection
  * 指标组采集
- *
- * @author tomsun28
- *
  */
 @Slf4j
 @Data
@@ -53,8 +54,16 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     private static final long WARN_DISPATCH_TIME = 100;
     /**
+     * collector identity
+     */
+    protected String collectorIdentity;
+    /**
+     * Tenant ID
+     */
+    protected long tenantId;
+    /**
      * Monitor ID
-     * 监控ID
+     * 监控任务ID
      */
     protected long monitorId;
     /**
@@ -102,13 +111,16 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     public MetricsCollect(Metrics metrics, Timeout timeout,
                           CollectDataDispatch collectDataDispatch,
+                          String collectorIdentity,
                           List<UnitConvert> unitConvertList) {
         this.newTime = System.currentTimeMillis();
         this.timeout = timeout;
         this.metrics = metrics;
+        this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         this.monitorId = job.getMonitorId();
+        this.tenantId = job.getTenantId();
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
@@ -129,6 +141,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app);
         response.setId(monitorId);
+        response.setTenantId(tenantId);
+        // for prometheus auto 
+        if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
+            List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
+                    .getInstance().collect(response, metrics);
+            validateResponse(metricsData.stream().findFirst().orElse(null));
+            collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+            return;
+        }
         response.setMetrics(metrics.getName());
         // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
         // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
@@ -139,7 +160,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             response.setCode(CollectRep.Code.FAIL);
             response.setMsg("not support " + app + ", "
                     + metrics.getName() + ", " + metrics.getProtocol());
-            return;
         } else {
             try {
                 abstractCollect.collect(response, monitorId, app, metrics);
@@ -328,7 +348,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
         int splitIndex = cal.indexOf("=");
         String field = cal.substring(0, splitIndex).trim();
-        String expressionStr = cal.substring(splitIndex + 1).trim();
+        String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#","#");
         Expression expression;
         try {
             expression = AviatorEvaluator.compile(expressionStr, true);
@@ -389,6 +409,24 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
         }
         return builder.build();
+    }
+
+    private void validateResponse(CollectRep.MetricsData metricsData) {
+        if (metricsData == null) {
+            log.error("[Collect Failed] Response metrics data is null.");
+            return;
+        }
+        long endTime = System.currentTimeMillis();
+        long runningTime = endTime - startTime;
+        long allTime = endTime - newTime;
+        if (startTime - newTime >= WARN_DISPATCH_TIME) {
+            log.warn("[Collector Dispatch Warn, Dispatch Use {}ms.", startTime - newTime);
+        }
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, metricsData.getMsg());
+        } else {
+            log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
+        }
     }
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {

@@ -12,9 +12,12 @@ import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
+import { TagItem } from '../../../pojo/NoticeRule';
+import { Tag } from '../../../pojo/Tag';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
@@ -31,9 +34,10 @@ export class AlertSettingComponent implements OnInit {
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
     private settingsSvc: SettingsService,
+    private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
-
+  search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -42,7 +46,6 @@ export class AlertSettingComponent implements OnInit {
   checkedDefineIds = new Set<number>();
 
   appHierarchies!: any[];
-
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // 查询监控层级
@@ -80,7 +83,7 @@ export class AlertSettingComponent implements OnInit {
 
   loadAlertDefineTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(this.pageIndex - 1, this.pageSize).subscribe(
+    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -104,6 +107,7 @@ export class AlertSettingComponent implements OnInit {
 
   onNewAlertDefine() {
     this.define = new AlertDefine();
+    this.define.tags = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -180,7 +184,11 @@ export class AlertSettingComponent implements OnInit {
             } else {
               this.cascadeValues = [this.define.app, this.define.metric];
             }
+            if (this.define.tags == undefined) {
+              this.define.tags = [];
+            }
             this.cascadeOnChange(this.cascadeValues);
+            this.renderAlertRuleExpr(this.define.expr);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -281,7 +289,9 @@ export class AlertSettingComponent implements OnInit {
   isManageModalAdd = true;
   define: AlertDefine = new AlertDefine();
   cascadeValues: string[] = [];
-  otherMetrics: string[] = [];
+  currentMetrics: any[] = [];
+  alertRules: any[] = [{}];
+  isExpr = false;
   cascadeOnChange(values: string[]): void {
     if (values == null || values.length != 3) {
       return;
@@ -290,12 +300,15 @@ export class AlertSettingComponent implements OnInit {
       if (hierarchy.value == values[0]) {
         hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
           if (metrics.value == values[1]) {
-            this.otherMetrics = [];
+            this.currentMetrics = [];
             if (metrics.children) {
               metrics.children.forEach(item => {
-                if (item.value != values[2]) {
-                  this.otherMetrics.push(item.value);
-                }
+                this.currentMetrics.push(item);
+              });
+              this.currentMetrics.push({
+                value: 'system_value_row_count',
+                type: 0,
+                label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               });
             }
           }
@@ -303,6 +316,110 @@ export class AlertSettingComponent implements OnInit {
       }
     });
   }
+
+  switchAlertRuleShow() {
+    this.isExpr = !this.isExpr;
+    if (this.isExpr) {
+      let expr = this.calculateAlertRuleExpr();
+      if (expr != '') {
+        this.define.expr = expr;
+      }
+    }
+  }
+
+  onAddNewAlertRule() {
+    this.alertRules.push({});
+  }
+
+  onRemoveAlertRule(index: number) {
+    this.alertRules.splice(index, 1);
+  }
+
+  calculateAlertRuleExpr() {
+    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
+    let index = 0;
+    let expr = '';
+    rules.forEach(rule => {
+      let ruleStr = '';
+      if (rule.operator == 'exists' || rule.operator == '!exists') {
+        ruleStr = `${rule.operator}(${rule.metric.value})`;
+      } else {
+        if (rule.metric.type === 0) {
+          ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
+        } else if (rule.metric.type === 1) {
+          ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
+        }
+      }
+      if (ruleStr != '') {
+        expr = expr + ruleStr;
+      }
+      if (index != rules.length - 1) {
+        expr = `${expr} && `;
+      }
+      index++;
+    });
+    return expr;
+  }
+
+  renderAlertRuleExpr(expr: string) {
+    if (expr == undefined || expr == '') {
+      return;
+    }
+    if (expr.indexOf('||') > 0 || expr.indexOf(' + ') > 0 || expr.indexOf(' - ') > 0) {
+      this.isExpr = true;
+      return;
+    }
+    this.alertRules = [];
+    try {
+      let exprArr: string[] = expr.split('&&');
+      for (let index in exprArr) {
+        let exprStr = exprArr[index].trim();
+        const twoParamExpressionArr = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches'];
+        const oneParamExpressionArr = ['exists', '!exists'];
+        let findIndexInTowParamExpression = twoParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        let findIndexInOneParamExpression = oneParamExpressionArr.findIndex(value => exprStr.startsWith(value));
+        if (findIndexInTowParamExpression >= 0) {
+          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
+          let tmpArr = tmp.split(',');
+          if (tmpArr.length == 2) {
+            let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
+            let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
+            let rule = { metric: metric, operator: twoParamExpressionArr[findIndexInTowParamExpression], value: value };
+            this.alertRules.push(rule);
+          }
+        } else if (findIndexInOneParamExpression >= 0) {
+          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
+          if (tmp != '' && tmp != null) {
+            let metric = this.currentMetrics.find(item => item.value == tmp.trim());
+            let rule = { metric: metric, operator: oneParamExpressionArr[findIndexInOneParamExpression] };
+            this.alertRules.push(rule);
+          }
+        } else {
+          let values = exprStr.trim().split(' ');
+          if (values.length == 3 && values[2].trim() != '' && !Number.isNaN(parseFloat(values[2].trim()))) {
+            let metric = this.currentMetrics.find(item => item.value == values[0].trim());
+            let rule = { metric: metric, operator: values[1].trim(), value: values[2].trim() };
+            this.alertRules.push(rule);
+          }
+        }
+      }
+      if (this.alertRules.length != exprArr.length) {
+        this.alertRules = [{}];
+        this.isExpr = true;
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      this.isExpr = true;
+      this.alertRules = [{}];
+      return;
+    }
+    if (this.alertRules.length == 0) {
+      this.alertRules = [{}];
+      this.isExpr = true;
+    }
+  }
+
   onManageModalCancel() {
     this.isManageModalVisible = false;
   }
@@ -312,8 +429,15 @@ export class AlertSettingComponent implements OnInit {
     this.define.metric = this.cascadeValues[1];
     if (this.cascadeValues.length == 3) {
       this.define.field = this.cascadeValues[2];
+      if (!this.isExpr) {
+        let expr = this.calculateAlertRuleExpr();
+        if (expr != '') {
+          this.define.expr = expr;
+        }
+      }
     } else {
       this.define.expr = '';
+      this.define.field = '';
     }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
@@ -363,7 +487,84 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
+
+  onRemoveTag(tag: TagItem) {
+    if (this.define != undefined && this.define.tags != undefined) {
+      this.define.tags = this.define.tags.filter(item => item !== tag);
+    }
+  }
+
+  sliceTagName(tag: TagItem): string {
+    if (tag.value != undefined && tag.value.trim() != '') {
+      return `${tag.name}:${tag.value}`;
+    } else {
+      return tag.name;
+    }
+  }
+
   // end 新增修改告警定义model
+
+  // start Tag model
+  isTagManageModalVisible = false;
+  isTagManageModalOkLoading = false;
+  tagCheckedAll: boolean = false;
+  tagTableLoading = false;
+  tagSearch!: string;
+  tags!: Tag[];
+  checkedTags = new Set<Tag>();
+  loadTagsTable() {
+    this.tagTableLoading = true;
+    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
+      message => {
+        this.tagTableLoading = false;
+        this.tagCheckedAll = false;
+        this.checkedTags.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.tags = page.content;
+        } else {
+          console.warn(message.msg);
+        }
+        tagsReq$.unsubscribe();
+      },
+      error => {
+        this.tagTableLoading = false;
+        tagsReq$.unsubscribe();
+      }
+    );
+  }
+  onShowTagsModal() {
+    this.isTagManageModalVisible = true;
+    this.loadTagsTable();
+  }
+  onTagManageModalCancel() {
+    this.isTagManageModalVisible = false;
+  }
+  onTagManageModalOk() {
+    this.isTagManageModalOkLoading = true;
+    this.checkedTags.forEach(item => {
+      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.value) == undefined) {
+        this.define.tags.push(item);
+      }
+    });
+    this.isTagManageModalOkLoading = false;
+    this.isTagManageModalVisible = false;
+  }
+  onTagAllChecked(checked: boolean) {
+    if (checked) {
+      this.tags.forEach(tag => this.checkedTags.add(tag));
+    } else {
+      this.checkedTags.clear();
+    }
+  }
+  onTagItemChecked(tag: Tag, checked: boolean) {
+    if (checked) {
+      this.checkedTags.add(tag);
+    } else {
+      this.checkedTags.delete(tag);
+    }
+  }
+  // end tag model
 
   // start 告警定义与监控关联model
   isConnectModalVisible = false;
@@ -452,5 +653,43 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
   }
+  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
+    if (cascadeValues.length !== 3) {
+      return currentMetrics;
+    }
+    // sort the cascadeValues[2] to first
+    return currentMetrics.sort((a, b) => {
+      if (a.value !== cascadeValues[2]) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+  }
   // end 告警定义与监控关联model
+  //查询告警阈值
+  onFilterSearchAlertDefinesByName() {
+    this.tableLoading = true;
+    let filter$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
+      message => {
+        filter$.unsubscribe();
+        this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedDefineIds.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.defines = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        this.tableLoading = false;
+        filter$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
+  }
 }

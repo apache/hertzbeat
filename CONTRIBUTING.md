@@ -38,10 +38,10 @@ Even small corrections to typos are very welcome :)
 
 - Front-web start   
 
-1. Need `nodejs npm angular-cli` environment
+1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 16.10.0`
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
-4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
+4. Install angular-cli globally: `yarn global add @angular/cli@15`
 5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
 6. Browser access to localhost:4200 to start   
 
@@ -79,7 +79,7 @@ Please note that the title of the PR needs to conform to our spec, and write the
 
 ### Wait for the code to be merged   
 
-After submitting the PR, the Committer or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.  
+After submitting the PR, the Committee or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.  
 
 If subsequent changes are required, there is no need to initiate a new PR. After submitting a commit on the original branch and pushing it to the remote repository, the PR will be automatically updated.  
 
@@ -135,7 +135,7 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](home/static/img/docs/hertzbeat-stru-en.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 <br>  
 
@@ -182,10 +182,10 @@ Public WeChat: `tancloudtech`
 
 - 前端启动
 
-1. 需要`nodejs npm angular-cli`环境
+1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 16.10.0`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
+4. 全局安装angular-cli `yarn global add @angular/cli@15`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 6. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat
 
@@ -229,7 +229,7 @@ git push origin a-feature-branch
 
 另外，我们的项目有比较规范和严格的 CI 检查流程，在提交 PR 之后会触发 CI，请注意是否通过 CI 检查。
 
-最后，Committer 可以将 PR 合并入DEV主分支。  
+最后，Committer 可以将 PR 合并入 master 主分支。  
 
 ### 代码被合并后  
 
@@ -275,8 +275,8 @@ git pull upstream master
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     

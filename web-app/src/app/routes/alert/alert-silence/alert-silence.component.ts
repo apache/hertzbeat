@@ -29,6 +29,7 @@ export class AlertSilenceComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  search!: string;
   silences!: AlertSilence[];
   tableLoading: boolean = true;
   checkedSilenceIds = new Set<number>();
@@ -43,7 +44,7 @@ export class AlertSilenceComponent implements OnInit {
 
   loadAlertSilenceTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertSilenceService.getAlertSilences(this.pageIndex - 1, this.pageSize).subscribe(
+    let alertDefineInit$ = this.alertSilenceService.getAlertSilences(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -200,6 +201,7 @@ export class AlertSilenceComponent implements OnInit {
     let now = new Date();
     now.setHours(now.getHours() + 6);
     this.silenceDates = [new Date(), now];
+    this.dayCheckOptions.forEach(item => (item.checked = true));
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -233,6 +235,10 @@ export class AlertSilenceComponent implements OnInit {
             this.silence = message.data;
             if (this.silence.type === 0) {
               this.silenceDates = [this.silence.periodStart, this.silence.periodEnd];
+            } else {
+              this.dayCheckOptions.forEach(item => {
+                item.checked = this.silence.days != undefined && this.silence.days.indexOf(item.value) >= 0;
+              });
             }
             this.isManageModalVisible = true;
             this.isManageModalAdd = false;
@@ -279,6 +285,11 @@ export class AlertSilenceComponent implements OnInit {
     if (this.silence.type === 0) {
       this.silence.periodStart = this.silenceDates[0];
       this.silence.periodEnd = this.silenceDates[1];
+    } else {
+      this.silence.days = this.dayCheckOptions
+        .filter(item => item.checked)
+        .map(item => item.value)
+        .concat();
     }
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
@@ -328,12 +339,6 @@ export class AlertSilenceComponent implements OnInit {
           }
         );
     }
-  }
-  onSilenceDaysChange(value: any[]) {
-    this.silence.days = value
-      .filter(item => item.checked == true)
-      .map(item => item.value)
-      .concat();
   }
 
   onPrioritiesChange() {

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 mid-中间件 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: mid
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
@@ -22,8 +22,17 @@ app: zookeeper
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Zookeeper注册配置中心
+  zh-CN: Zookeeper分布式
   en-US: Zookeeper Server
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>⚠️注意：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
+  en-US: "HertzBeat monitors Zookeeper through general performance metrics such as status and configuration. <br><span class='help_module_span'>⚠️Note: Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.com/docs/help/zookeeper'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat對Zookeeper的通用性能指標（conf、stats）進行採集監控。<br><span> ⚠️ 注意：由於需要zookeeper提供的四字命令+ netcat來收集名額數據，您需要將zookeeper的四字命令加入白名單，<a href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/zookeeper
+  en-US: https://hertzbeat.com/docs/help/zookeeper
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -81,37 +90,6 @@ params:
     # default value
     # 默认值
     defaultValue: 6000
-  # field-param field key
-  # field-变量字段标识符
-  - field: username
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 用户名
-      en-US: Username
-    # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: text
-    # when type is text, use limit to limit string length
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 20
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: true
-  # field-param field key
-  # field-变量字段标识符
-  - field: password
-    # name-param field display i18n name
-    # name-参数字段显示名称
-    name:
-      zh-CN: 密码
-      en-US: Password
-    # type-param field type(most mapping the html input tag)
-    # type-字段类型,样式(大部分映射input标签type属性)
-    type: password
-    # required-true or false
-    # required-是否是必输项 true-必填 false-可选
-    required: false
 # collect metrics config list
 # 采集指标组配置列表
 metrics:
@@ -154,23 +132,16 @@ metrics:
       - field: serverId
         type: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: ssh
-    ssh:
-      # ssh host: ipv4 ipv6 domain
+    protocol: telnet
+    telnet:
+      # telnet host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # ssh port: 22
+      # telnet port: 22
       port: ^_^port^_^
-      # ssh account username
-      username: ^_^username^_^
-      # ssh account password
-      password: ^_^password^_^
-      # ssh connect timeout
+      # telnet connect timeout
       timeout: ^_^timeout^_^
-      # ssh collect script
-      script: echo conf | nc 121.40.113.44 2181
-      # ssh parse response data type
-      parseType: netcat
-
+      # telnet collect cmd
+      cmd: conf
   - name: stats
     priority: 1
     fields:
@@ -217,12 +188,9 @@ metrics:
       - field: zk_min_latency
         type: 0
         unit: ms
-    protocol: ssh
-    ssh:
+    protocol: telnet
+    telnet:
       host: ^_^host^_^
       port: ^_^port^_^
-      username: ^_^username^_^
-      password: ^_^password^_^
       timeout: ^_^timeout^_^
-      script: echo mntr | nc 121.40.113.44 2181
-      parseType: netcat
+      cmd: mntr

@@ -14,8 +14,8 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
-category: mid
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: webserver
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
 app: tomcat
@@ -24,6 +24,15 @@ app: tomcat
 name:
   zh-CN: Tomcat应用服务器
   en-US: Tomcat WebServer
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用<a class='help_module_content' href='https://zh.wikipedia.org/zh-cn/JMX'> JMX 协议</a>对 Tomcat 的通用性能指标(memory_pool、code_cache、class_loading、thread)进行采集监控，<a class='help_module_content' href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>点击查看开启步骤</a>。<br>您可以点击“<i>新建 Tomcat 应用服务器</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors general performance metrics of Tomcat through <a class='help_module_content' href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX protocol</a>. <a class='help_module_content' href='https://geekflare.com/enable-jmx-tomcat-to-monitor-administer/'>Click here to view the specific steps.</a> You could click the "<i>New Tomcat</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat使用<a href=' https://zh.wikipedia.org/zh-cn/JMX'> JMX協定</a>對Tomcat的通用性能指標（memory_pool、code_cache、class_loading、thread）進行採集監控，<a href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>點擊查看開啟步驟</a>。<br>您可以點擊“<i>新建Tomcat應用伺服器</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/tomcat
+  en-US: https://hertzbeat.com/docs/help/tomcat
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -169,12 +178,16 @@ metrics:
         instance: true
       - field: committed
         type: 0
+        unit: MB
       - field: init
         type: 0
+        unit: MB
       - field: max
         type: 0
+        unit: MB
       - field: used
         type: 0
+        unit: MB
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -183,6 +196,11 @@ metrics:
       - Usage->init
       - Usage->max
       - Usage->used
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
     # mapping and conversion expressions, use these and aliasField above to calculate metrics value
     # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
@@ -236,6 +254,9 @@ metrics:
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+    units:
+      - CurrentThreadUserTime=NS->S
+      - CurrentThreadCpuTime=NS->S
     protocol: jmx
     jmx:
       host: ^_^host^_^

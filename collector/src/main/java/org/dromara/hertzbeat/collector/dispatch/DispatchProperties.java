@@ -23,9 +23,6 @@ import org.springframework.stereotype.Component;
 /**
  * Schedule Distribution Task Configuration Properties
  * 调度分发任务配置属性
- *
- * @author tomsun28
- *
  */
 @Component
 @ConfigurationProperties(prefix = "collector.dispatch")
@@ -67,11 +64,24 @@ public class DispatchProperties {
      * 入口可以时etcd信息,http请求,消息中间件消息请求
      */
     public static class EntranceProperties {
+        
+        /**
+         * netty server client config
+         */
+        private NettyProperties netty;
         /**
          * etcd配置信息
          */
         private EtcdProperties etcd;
-
+        
+        public NettyProperties getNetty() {
+            return netty;
+        }
+        
+        public void setNetty(NettyProperties netty) {
+            this.netty = netty;
+        }
+        
         public EtcdProperties getEtcd() {
             return etcd;
         }
@@ -86,7 +96,7 @@ public class DispatchProperties {
              * Whether etcd scheduling is started
              * etcd调度是否启动
              */
-            private boolean enabled = true;
+            private boolean enabled = false;
 
             /**
              * etcd's connection endpoint url
@@ -192,6 +202,77 @@ public class DispatchProperties {
 
             public void setJobDir(String jobDir) {
                 this.jobDir = jobDir;
+            }
+        }
+        
+        public static class NettyProperties {
+            
+            /**
+             * whether netty scheduling is started
+             */
+            private boolean enabled = false;
+            
+            /**
+             * this collector unique identity
+             * default is the host name
+             */
+            private String identity;
+
+            /**
+             * this collector mode
+             * public: for public network, support cluster
+             * private: for private network, support cloud-edge
+             */
+            private String mode;
+            
+            /**
+             * connect cluster master host
+             */
+            private String managerHost;
+            
+            /**
+             * connect cluster master port
+             */
+            private int managerPort = 1158;
+            
+            public boolean isEnabled() {
+                return enabled;
+            }
+            
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+            
+            public String getIdentity() {
+                return identity;
+            }
+            
+            public void setIdentity(String identity) {
+                this.identity = identity;
+            }
+
+            public String getMode() {
+                return mode;
+            }
+
+            public void setMode(String mode) {
+                this.mode = mode;
+            }
+
+            public String getManagerHost() {
+                return managerHost;
+            }
+            
+            public void setManagerHost(String managerHost) {
+                this.managerHost = managerHost;
+            }
+            
+            public int getManagerPort() {
+                return managerPort;
+            }
+            
+            public void setManagerPort(int managerPort) {
+                this.managerPort = managerPort;
             }
         }
     }

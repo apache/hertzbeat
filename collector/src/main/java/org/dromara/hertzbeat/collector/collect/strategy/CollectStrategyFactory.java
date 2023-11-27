@@ -3,6 +3,8 @@ package org.dromara.hertzbeat.collector.collect.strategy;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 @Configuration
+@Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 public class CollectStrategyFactory implements CommandLineRunner {
 
     /**

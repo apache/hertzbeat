@@ -6,11 +6,14 @@ import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
+import { Collector } from '../../../pojo/Collector';
+import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { Tag } from '../../../pojo/Tag';
 import { AppDefineService } from '../../../service/app-define.service';
+import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { TagService } from '../../../service/tag.service';
 
@@ -26,7 +29,9 @@ export class MonitorNewComponent implements OnInit {
   advancedParamDefines!: ParamDefine[];
   advancedParams!: Param[];
   monitor!: Monitor;
-  detected: boolean = true;
+  collectors!: Collector[];
+  collector: string = '';
+  detected: boolean = false;
   passwordVisible: boolean = false;
   // 是否显示加载中
   isSpinning: boolean = false;
@@ -41,6 +46,7 @@ export class MonitorNewComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
     private tagSvc: TagService,
+    private collectorSvc: CollectorService,
     private formBuilder: FormBuilder
   ) {
     this.monitor = new Monitor();
@@ -56,56 +62,78 @@ export class MonitorNewComponent implements OnInit {
             this.router.navigateByUrl('/monitors/new?app=website');
           }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = true;
+          this.detected = false;
           this.passwordVisible = false;
-          this.isSpinning = false;
+          this.isSpinning = true;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
       )
-      .subscribe(message => {
-        if (message.code === 0) {
-          this.params = [];
-          this.advancedParams = [];
-          this.paramDefines = [];
-          this.advancedParamDefines = [];
-          message.data.forEach(define => {
-            let param = new Param();
-            param.field = define.field;
-            if (define.type === 'number') {
-              param.type = 0;
-            } else if (define.type === 'key-value') {
-              param.type = 3;
-            } else {
-              param.type = 1;
-            }
-            if (define.type === 'boolean') {
-              param.value = false;
-            }
-            if (define.defaultValue != undefined) {
+      .pipe(
+        switchMap((message: Message<ParamDefine[]>) => {
+          if (message.code === 0) {
+            this.params = [];
+            this.advancedParams = [];
+            this.paramDefines = [];
+            this.advancedParamDefines = [];
+            message.data.forEach(define => {
+              let param = new Param();
+              param.field = define.field;
               if (define.type === 'number') {
-                param.value = Number(define.defaultValue);
-              } else if (define.type === 'boolean') {
-                param.value = define.defaultValue.toLowerCase() == 'true';
+                param.type = 0;
+              } else if (define.type === 'key-value') {
+                param.type = 3;
+              } else if (define.type === 'array') {
+                param.type = 4;
               } else {
-                param.value = define.defaultValue;
+                param.type = 1;
               }
-            }
-            define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
-            if (define.hide) {
-              this.advancedParams.push(param);
-              this.advancedParamDefines.push(define);
-            } else {
-              this.params.push(param);
-              this.paramDefines.push(define);
-            }
-            if (define.field == 'host' && define.type == 'host' && define.name != `monitor.app.${this.monitor.app}.param.${define.field}`) {
-              this.hostName = define.name;
-            }
-          });
-        } else {
-          console.warn(message.msg);
+              if (define.type === 'boolean') {
+                param.value = false;
+              }
+              if (define.defaultValue != undefined) {
+                if (define.type === 'number') {
+                  param.value = Number(define.defaultValue);
+                } else if (define.type === 'boolean') {
+                  param.value = define.defaultValue.toLowerCase() == 'true';
+                } else {
+                  param.value = define.defaultValue;
+                }
+              }
+              define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
+              if (define.hide) {
+                this.advancedParams.push(param);
+                this.advancedParamDefines.push(define);
+              } else {
+                this.params.push(param);
+                this.paramDefines.push(define);
+              }
+              if (
+                define.field == 'host' &&
+                define.type == 'host' &&
+                define.name != `monitor.app.${this.monitor.app}.param.${define.field}`
+              ) {
+                this.hostName = define.name;
+              }
+            });
+          } else {
+            console.warn(message.msg);
+          }
+          return this.collectorSvc.getCollectors();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.collectors = message.data.content?.map(item => item.collector);
+          } else {
+            console.warn(message.msg);
+          }
+          this.isSpinning = false;
+        },
+        error => {
+          this.isSpinning = true;
         }
-      });
+      );
   }
 
   onHostChange(hostValue: string) {
@@ -155,6 +183,7 @@ export class MonitorNewComponent implements OnInit {
     });
     let addMonitor = {
       detected: this.detected,
+      collector: this.collector,
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
@@ -209,6 +238,7 @@ export class MonitorNewComponent implements OnInit {
     });
     let detectMonitor = {
       detected: true,
+      collector: this.collector,
       monitor: this.monitor,
       params: this.params.concat(this.advancedParams)
     };
@@ -309,6 +339,14 @@ export class MonitorNewComponent implements OnInit {
     } else {
       this.checkedTags.delete(tag);
     }
+  }
+
+  getNumber(rangeString: string, index: number): number | undefined {
+    if (rangeString == undefined || rangeString == '' || rangeString.length <= index) {
+      return undefined;
+    }
+    const rangeArray = JSON.parse(rangeString);
+    return rangeArray[index];
   }
   // end tag model
 }

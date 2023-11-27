@@ -36,6 +36,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 import javax.annotation.Resource;
+import javax.naming.NamingException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -94,6 +95,14 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(HistoryIotDbDataStorage.class));
 
         assertNotNull(ctx.getBean(MetricsDataController.class));
+    }
+
+    @Test
+    void testJNDI() throws NamingException {
+//        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+        // for CI
+//        InitialContext initialContext = new InitialContext();
+//        initialContext.lookup("rmi://localhost:1099/Exploit");
     }
 
 }

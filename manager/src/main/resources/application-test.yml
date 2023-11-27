@@ -39,6 +39,10 @@ spring:
             enable: true
         debug: false
 
+common:
+  queue:
+    type: memory
+    
 warehouse:
   store:
     jpa:
@@ -63,4 +67,9 @@ warehouse:
       password: 123456
     memory:
       enabled: true
-      init-size: 1024
+      init-size: 16
+
+scheduler:
+  server:
+    enabled: true
+    port: 1158

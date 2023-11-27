@@ -28,13 +28,13 @@ use hertzbeat;
 DROP TABLE IF EXISTS  hzb_monitor ;
 CREATE TABLE  hzb_monitor
 (
-     id           bigint       not null auto_increment comment '监控ID',
-     job_id       bigint       comment '监控对应下发的任务ID',
+     id           bigint       not null comment '监控ID',
+     job_id       bigint       comment '监控对应下发的采集任务ID',
      name         varchar(100) not null comment '监控的名称',
      app          varchar(100) not null comment '监控的类型:linux,mysql,jvm...',
      host         varchar(100) not null comment '监控的对端host:ipv4,ipv6,域名',
      intervals    int          not null default 600 comment '监控的采集间隔时间,单位秒',
-     status       tinyint      not null default 1 comment '监控状态 0:未监控,1:可用,2:不可用,3:不可达',
+     status       tinyint      not null default 1 comment '任务状态 0:未监控,1:可用,2:不可用',
      description  varchar(255) comment '描述备注信息',
      creator      varchar(100) comment '创建者',
      modifier     varchar(100) comment '最新修改者',
@@ -125,20 +125,22 @@ CREATE TABLE  hzb_tag_monitor_bind
 DROP TABLE IF EXISTS  hzb_alert_define ;
 CREATE TABLE  hzb_alert_define
 (
-    id           bigint           not null auto_increment comment '告警定义ID',
-    app          varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
-    metric       varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
-    field        varchar(100)     comment '配置告警的指标:usage,cores...',
-    preset       boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
-    expr         varchar(255)     comment '告警触发条件表达式',
-    priority     tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
-    times        int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
-    enable       boolean          not null default true comment '告警阈值开关',
-    template     varchar(255)     not null comment '告警通知模板内容',
-    creator      varchar(100)     comment '创建者',
-    modifier     varchar(100)     comment '最新修改者',
-    gmt_create   timestamp        default current_timestamp comment 'create time',
-    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    id                bigint           not null auto_increment comment '告警定义ID',
+    app               varchar(100)     not null comment '配置告警的监控类型:linux,mysql,jvm...',
+    metric            varchar(100)     not null comment '配置告警的指标集合:cpu,memory,info...',
+    field             varchar(100)     comment '配置告警的指标:usage,cores...',
+    preset            boolean          not null default false comment '是否是全局默认告警，是则所有此类型监控默认关联此告警',
+    expr              varchar(255)     comment '告警触发条件表达式',
+    priority          tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
+    times             int              not null default 1 comment '触发次数,即达到触发阈值次数要求后才算触发告警',
+    tags              varchar(4000)    comment '附加告警标签(status:success,env:prod)',
+    enable            boolean          not null default true comment '告警阈值开关',
+    template          varchar(255)     not null comment '告警通知模板内容',
+    recover_notice    boolean          not null default false comment 'Is send alarm recovered notice | 是否发送告警恢复通知',
+    creator           varchar(100)     comment '创建者',
+    modifier          varchar(100)     comment '最新修改者',
+    gmt_create        timestamp        default current_timestamp comment 'create time',
+    gmt_update        datetime         default current_timestamp on update current_timestamp comment 'update time',
     primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -182,6 +184,26 @@ CREATE TABLE  hzb_alert_silence
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
+-- Table structure for hzb_alert_converge
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_alert_converge ;
+CREATE TABLE  hzb_alert_converge
+(
+    id             bigint           not null auto_increment comment '告警静默主键索引ID',
+    name           varchar(100)     not null comment '静默策略名称',
+    enable         boolean          not null default true comment '是否启用此策略',
+    match_all      boolean          not null default true comment '是否应用匹配所有',
+    priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
+    tags           varchar(4000)    comment '匹配告警信息标签(monitorId:xxx,monitorName:xxx)',
+    eval_interval  int              default 0 comment 'Repeat Alert Converge Time Range, unit s',
+    creator        varchar(100)     comment '创建者',
+    modifier       varchar(100)     comment '最新修改者',
+    gmt_create     timestamp        default current_timestamp comment 'create time',
+    gmt_update     datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
 -- Table structure for alert
 -- ----------------------------
 DROP TABLE IF EXISTS  hzb_alert ;
@@ -193,10 +215,9 @@ CREATE TABLE  hzb_alert
     priority             tinyint          not null default 0 comment '告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色',
     content              varchar(4000)    not null comment '告警通知实际内容',
     status               tinyint          not null default 0 comment '告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理',
-    times                int              not null comment '触发次数,即达到告警定义的触发阈值次数要求后才会发告警',
-    first_trigger_time   bigint           comment '首次告警触发时间(毫秒时间戳)',
-    last_trigger_time    bigint           comment '最近告警触发时间(毫秒时间戳)',
-    next_eval_interval   bigint           comment '告警评估时间间隔(单位毫秒)',
+    times                int              not null comment '告警次数',
+    first_alarm_time     bigint           comment '首次告警时间(毫秒时间戳)',
+    last_alarm_time      bigint           comment '最近告警时间(毫秒时间戳)',
     tags                 varchar(4000)    comment '告警信息标签(monitorId:xxx,monitorName:xxx)',
     creator              varchar(100)     comment '创建者',
     modifier             varchar(100)     comment '最新修改者',
@@ -206,7 +227,7 @@ CREATE TABLE  hzb_alert
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
--- Table structure for notice_rule
+-- Table structure for hzb_notice_rule
 -- ----------------------------
 DROP TABLE IF EXISTS  hzb_notice_rule ;
 CREATE TABLE  hzb_notice_rule
@@ -215,6 +236,8 @@ CREATE TABLE  hzb_notice_rule
     name           varchar(100)     not null comment '策略名称',
     receiver_id    bigint           not null comment '消息接收人ID',
     receiver_name  varchar(100)     not null comment '消息接收人标识',
+    template_id    bigint           comment '消息接收人ID',
+    template_name  varchar(100)     comment '消息接收人标识',
     enable         boolean          not null default true comment '是否启用此策略',
     filter_all     boolean          not null default true comment '是否转发所有',
     priorities     varchar(100)     comment '匹配告警级别，空为全部告警级别',
@@ -222,6 +245,24 @@ CREATE TABLE  hzb_notice_rule
     days           varchar(100)     comment '星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六',
     period_start   timestamp        comment '限制时间段起始:00:00:00',
     period_end     timestamp        comment '限制时间段截止:23:59:59',
+    creator        varchar(100)     comment '创建者',
+    modifier       varchar(100)     comment '最新修改者',
+    gmt_create     timestamp        default current_timestamp comment 'create time',
+    gmt_update     datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_notice_template
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_notice_template ;
+CREATE TABLE  hzb_notice_template
+(
+    id             bigint           not null auto_increment comment '通知模版主键索引ID',
+    name           varchar(100)     not null comment '模版名称',
+    type           tinyint          not null comment '通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人',
+    preset         boolean          default false comment '是否为预设模板: true-预设模板 false-自定义模板',
+    content        varchar(60000)   comment '模板内容',
     creator        varchar(100)     comment '创建者',
     modifier       varchar(100)     comment '最新修改者',
     gmt_create     timestamp        default current_timestamp comment 'create time',
@@ -275,6 +316,57 @@ CREATE TABLE  hzb_history
     dou            float            comment '数值',
     time           bigint           comment '采集时间戳',
     primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_config
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_config ;
+CREATE TABLE  hzb_config
+(
+    type         varchar(100)     not null comment '配置类型：sms，email',
+    content      varchar(4096)    not null comment '配置内容JSON',
+    creator      varchar(100)     comment '创建者',
+    modifier     varchar(100)     comment '最新修改者',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (type)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_collector
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_collector ;
+CREATE TABLE  hzb_collector
+(
+    id           bigint           not null auto_increment comment '采集器主键索引ID',
+    name         varchar(255)     not null comment 'collector identity name',
+    ip           varchar(255)     not null comment 'collector ip',
+    status       tinyint          not null default 0 comment 'collector status: 0-online 1-offline',
+    mode         varchar(100)     comment 'collector mode: public private',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    unique key (name)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_collector_monitor_bind
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_collector_monitor_bind ;
+CREATE TABLE  hzb_collector_monitor_bind
+(
+    id           bigint           not null auto_increment comment '主键ID',
+    collector    varchar(255)     not null comment 'collector ID',
+    monitor_id   bigint           not null comment 'monitor ID',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    index index_collector_monitor (collector, monitor_id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 COMMIT;

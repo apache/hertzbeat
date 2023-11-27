@@ -53,7 +53,7 @@ public class Configmap {
 
     /**
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-     * 参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串
+     * 参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串 4:arrays string
      * number,string,secret
      * 数字,非加密字符串,加密字符串
      */

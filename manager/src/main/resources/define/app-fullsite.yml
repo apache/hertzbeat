@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
@@ -24,6 +24,15 @@ app: fullsite
 name:
   zh-CN: SiteMap全站
   en-US: SITE MAP
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对网站全部页面的 URL 路径、HTTP 状态码、响应时间及请求反馈进行监测。由于一个网站可能有多个不同服务提供的页面，系统将采集网站暴露的<a class='help_module_content' href='https://baike.baidu.com/item/sitemap/6241567?fr=ge_ala'>网站地图(SiteMap)</a>来监控全站。<span class='help_module_span'><br>⚠️注意：此功能需要您的网站支持 XML 和 TXT 格式的 SiteMap。</span>
+  en-US: "HertzBeat monitors all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview#:~:text=A%20sitemap%20is%20a%20file,crawl%20your%20site%20more%20efficiently.'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note: HertzBeat support SiteMap in XML or TXT format.</span>"
+  zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://baike.baidu.com/item/sitemap/6241567?fr=ge_ala'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/guide/
+  en-US: https://hertzbeat.com/docs/help/guide/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -33,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host

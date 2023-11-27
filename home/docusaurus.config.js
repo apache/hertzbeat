@@ -1,6 +1,6 @@
 const path = require('path')
 
-const organizationName = 'tomsun28' // Usually your GitHub name.
+const organizationName = 'dromara' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
 const repoUrl = `https://github.com/dromara/${projectName}`
@@ -54,7 +54,7 @@ module.exports = {
     announcementBar: {
       id: 'github-star',
       content:
-        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">give us a star on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee please! </a>⭐️⭐️',
+        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">star us on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee! </a>⭐️⭐️',
       backgroundColor: '#7228B5',
       textColor: '#fafbfc',
       isCloseable: true,
@@ -67,29 +67,53 @@ module.exports = {
       },
       items: [
         {
-          label: 'main',
+          label: 'Docs',
           position: 'left',
-          to: '/',
-        },
-        {
-          label: 'document',
-          position: 'left',
-          to: 'docs/',
+          to: '/docs/',
         },
         {
           label: 'blog',
           position: 'left',
-          to: 'blog/',
+          to: '/blog/',
         },
         {
-          label: 'discuss',
+          label: 'enterprise',
           position: 'left',
-          to: 'docs/others/contact',
+          to: '/docs/others/private',
         },
         {
-          label: 'developer',
+          label: 'Others',
           position: 'left',
-          to: 'docs/others/developer',
+          items: [
+            {
+              label: 'discuss',
+              to: '/docs/others/contact',
+            },
+            {
+              label: 'contributors',
+              to: '/docs/others/developer',
+            },
+            {
+              label: 'contributing',
+              to: '/docs/others/contributing',
+            },
+            {
+              label: 'kanban',
+              href: 'https://github.com/orgs/dromara/projects/6',
+            },
+            {
+              label: 'design',
+              to: '/docs/others/design',
+            },
+            {
+              label: 'sponsor',
+              to: '/docs/others/sponsor',
+            },
+            {
+              label: 'resource',
+              to: '/docs/others/resource',
+            }
+          ],
         },
         {
           label: '开源之夏',
@@ -99,38 +123,7 @@ module.exports = {
         {
           label: '华为云开源活动',
           position: 'left',
-          to: 'docs/others/huaweicloud',
-        },
-        {
-          label: 'enterprise',
-          position: 'left',
-          to: 'docs/others/private',
-        },
-        {
-          label: 'about',
-          position: 'left',
-          items: [
-            {
-              label: 'contributing',
-              to: 'docs/others/contributing',
-            },
-            {
-              label: 'kanban',
-              href: 'https://github.com/dromara/hertzbeat/projects/1',
-            },
-            {
-              label: 'design',
-              to: 'docs/others/design',
-            },
-            {
-              label: 'sponsor',
-              to: 'docs/others/sponsor',
-            },
-            {
-              label: 'resource',
-              to: 'docs/others/resource',
-            },
-          ],
+          to: '/docs/others/huaweicloud',
         },
         {
           type: 'docsVersionDropdown',
@@ -158,19 +151,19 @@ module.exports = {
           items: [
             {
               label: 'use',
-              to: 'docs/',
+              to: '/docs/',
             },
             {
               label: 'quickstart',
-              to: 'docs/start/quickstart',
+              to: '/docs/start/quickstart',
             },
             {
               label: 'custom',
-              to: 'docs/advanced/extend-point',
+              to: '/docs/advanced/extend-point',
             },
             {
               label: 'help',
-              to: 'docs/help/guide',
+              to: '/docs/help/guide',
             },
           ],
         },
@@ -183,7 +176,7 @@ module.exports = {
             },
             {
               label: 'discuss',
-              to: 'docs/others/contact',
+              to: '/docs/others/contact',
             },
             {
               label: 'team',
@@ -208,7 +201,7 @@ module.exports = {
             },
             {
               label: 'relate',
-              to: 'docs/others/resource',
+              to: '/docs/others/resource',
             },
           ],
         },

@@ -31,7 +31,7 @@ Combined with powerful custom notifications, we have monitored databases, middle
 
 ### Start submitting PRs
 
-The first PR was submitted on April 17, 2022, mainly for the problem of TDEngine time zone error found during the use process. Although it was a simple configuration modification, it also let me know more about HertzBeat, and with the in-depth understanding of the source code , learned a lot.
+The first PR was submitted on April 17, 2022, mainly for the problem of TDEngine time zone error found during the use process. Although it was a simple configuration modification, it also let me know more about HertzBeat, and with the in-depth understanding of the source code, learned a lot.
 
 ### Continuous open source contribution and harvest
 
@@ -105,7 +105,7 @@ First of all, I am also a newcomer to Novice Village, but I can share some of my
 - 1. Don't be too impatient, and calm down to understand the general implementation logic of each module.   
 - 2. Use different functions and debug to see the underlying implementation principle of each function.   
 - 3. Slowly try to read the source code and understand it.   
-- 4. If you encounter a bug, you can directly report it to isses, or you can try to solve it yourself.   
+- 4. If you encounter a bug, you can directly report it to issues, or you can try to solve it yourself.   
 
 
 ## What is Hertz Beat?

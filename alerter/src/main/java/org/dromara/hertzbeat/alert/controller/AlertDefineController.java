@@ -46,8 +46,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm definition management API
  * 告警定义管理API
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "Alert Define API | 告警定义管理API")
 @RestController
@@ -64,7 +64,7 @@ public class AlertDefineController {
         // 校验请求数据
         alertDefineService.validate(alertDefine, false);
         alertDefineService.addAlertDefine(alertDefine);
-        return ResponseEntity.ok(new Message<>("Add success"));
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
@@ -74,7 +74,7 @@ public class AlertDefineController {
         // 校验请求数据
         alertDefineService.validate(alertDefine, true);
         alertDefineService.modifyAlertDefine(alertDefine);
-        return ResponseEntity.ok(new Message<>("Modify success"));
+        return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
@@ -85,13 +85,11 @@ public class AlertDefineController {
         // Obtaining Monitoring Information
         // 获取监控信息
         AlertDefine alertDefine = alertDefineService.getAlertDefine(id);
-        Message.MessageBuilder<AlertDefine> messageBuilder = Message.builder();
         if (alertDefine == null) {
-            messageBuilder.code(MONITOR_NOT_EXIST_CODE).msg("AlertDefine not exist.");
+            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertDefine not exist."));
         } else {
-            messageBuilder.data(alertDefine);
+            return ResponseEntity.ok(Message.success(alertDefine));
         }
-        return ResponseEntity.ok(messageBuilder.build());
     }
 
     @DeleteMapping(path = "/{id}")
@@ -102,7 +100,7 @@ public class AlertDefineController {
         // If the alarm definition does not exist or is deleted successfully, the deletion succeeds
         // 删除告警定义不存在或删除成功都返回成功
         alertDefineService.deleteAlertDefine(id);
-        return ResponseEntity.ok(new Message<>("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @PostMapping(path = "/{alertDefineId}/monitors")
@@ -112,7 +110,7 @@ public class AlertDefineController {
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId,
             @RequestBody List<AlertDefineMonitorBind> alertDefineMonitorBinds) {
         alertDefineService.applyBindAlertDefineMonitors(alertDefineId, alertDefineMonitorBinds);
-        return ResponseEntity.ok(new Message<>("Apply success"));
+        return ResponseEntity.ok(Message.success("Apply success"));
     }
 
     @GetMapping(path = "/{alertDefineId}/monitors")
@@ -122,7 +120,7 @@ public class AlertDefineController {
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
         List<AlertDefineMonitorBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
         defineBinds = defineBinds.stream().filter(item -> item.getMonitor() != null).collect(Collectors.toList());
-        return ResponseEntity.ok(new Message<>(defineBinds));
+        return ResponseEntity.ok(Message.success(defineBinds));
     }
 
 }

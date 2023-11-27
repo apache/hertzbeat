@@ -45,7 +45,7 @@ public class AppCount {
      */
     private String app;
     /**
-     * 监控状态
+     * 任务状态
      */
     private transient byte status;
     /**
@@ -53,19 +53,15 @@ public class AppCount {
      */
     private long size;
     /**
-     * 监控状态可用的数量
+     * 任务状态可用的数量
      */
     private long availableSize;
     /**
-     * 监控状态未管理的数量
+     * 任务状态未管理的数量
      */
     private long unManageSize;
     /**
-     * 监控状态不可用的数量
+     * 任务状态不可用的数量
      */
     private long unAvailableSize;
-    /**
-     * 监控状态不可达的数量
-     */
-    private long unReachableSize;
 }

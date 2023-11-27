@@ -63,14 +63,14 @@ public class DataStorageDispatch {
             }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollRealTimeStorageMetricsData();
+                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToRealTimeStorage();
                     if (metricsData != null && realTimeDataStorages != null) {
                         for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
                             realTimeDataStorage.saveData(metricsData);
                         }
                     }
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error(e.getMessage(), e);
                 }
             }
         };
@@ -85,14 +85,14 @@ public class DataStorageDispatch {
             }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollPersistentStorageMetricsData();
+                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToPersistentStorage();
                     if (metricsData != null && historyDataStorages != null) {
                         for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
                             historyDataStorage.saveData(metricsData);
                         }
                     }
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error(e.getMessage(), e);
                 }
             }
         };

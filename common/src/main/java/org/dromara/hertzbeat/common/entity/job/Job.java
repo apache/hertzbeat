@@ -19,23 +19,16 @@ package org.dromara.hertzbeat.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
-import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
+import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +36,6 @@ import java.util.stream.Collectors;
  * 采集任务详情
  *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor
@@ -53,18 +45,22 @@ import java.util.stream.Collectors;
 public class Job {
 
     /**
-     * Task id      任务ID
+     * Task id      采集任务ID
      */
     private long id;
     /**
+     * Tenant id
+     */
+    private long tenantId = 0;
+    /**
      * Monitoring ID Application ID
-     * 监控ID 应用ID
+     * 监控任务ID 应用ID
      */
     private long monitorId;
     /**
      * Large categories of monitoring       监控的大类别
      * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-     * service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+     * service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 os-操作系统监控
      */
     private String category;
     /**
@@ -78,6 +74,16 @@ public class Job {
      * en-US: PING CONNECT
      */
     private Map<String, String> name;
+    /**
+     * The description and help of the monitoring type
+     * zh-CN: PING连通性 - 支持您使用在线配置对端服务的IP或域名地址，监控本机网络与对端网络的PING可连通性。
+     * en-US: PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
+     */
+    private Map<String, String> help;
+    /**
+     * The monitor help link
+     */
+    private Map<String, String> helpLink;
     /**
      * Task dispatch start timestamp
      * 任务派发开始时间戳
@@ -151,7 +157,7 @@ public class Job {
                 .peek(metric -> {
                     // Determine whether to configure aliasFields If not, configure the default
                     // 判断是否配置aliasFields 没有则配置默认
-                    if (metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) {
+                    if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
                         metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
                     // Set the default indicator group execution priority, if not filled, the default last priority
@@ -217,7 +223,8 @@ public class Job {
             if (priorMetrics.isEmpty()) {
                 return null;
             }
-            return priorMetrics.peek();
+            Set<Metrics> source = priorMetrics.peek();
+            return new HashSet<>(source);
         } else {
             return Collections.emptySet();
         }
@@ -233,6 +240,6 @@ public class Job {
     @Override
     public Job clone() {
         // deep clone   深度克隆
-        return JsonUtil.fromJson(JsonUtil.toJson(this), Job.class);
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
     }
 }

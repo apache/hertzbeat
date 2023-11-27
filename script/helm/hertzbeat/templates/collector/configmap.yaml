@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "hertzbeat.collector" . }}"
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+data:
+  IDENTITY: ""
+  MANAGER_HOST: "{{ include "hertzbeat.manager.host" . }}"
+  MANAGER_PORT: "1158"
+  application.yml: |+
+    server:
+      port: 1159
+    spring:
+      application:
+        name: ${HOSTNAME:@hertzbeat-collector@}${PID}
+      profiles:
+        active: cluster
+      jackson:
+        default-property-inclusion: ALWAYS
+      # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed...
+      autoconfigure:
+        exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+    
+    ---
+    spring:
+      config:
+        activate:
+          on-profile: cluster
+    
+    collector:
+      dispatch:
+        entrance:
+          netty:
+            enabled: true
+            identity: ${IDENTITY:}
+            mode: ${MODE:public}
+            manager-host: ${MANAGER_HOST:127.0.0.1}
+            manager-port: ${MANAGER_PORT:1158}
+    
+    common:
+      queue:
+        # memory or kafka
+        type: ${QUEUE_TYPE:netty}
+        # properties when queue type is kafka
+        kafka:
+          servers: ${KAFKA_SERVERS:127.0.0.1:9092}
+          metrics-data-topic: ${KAFKA_TOPIC:async-metrics-data}

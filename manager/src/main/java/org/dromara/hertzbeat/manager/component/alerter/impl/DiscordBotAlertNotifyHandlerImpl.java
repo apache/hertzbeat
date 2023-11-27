@@ -1,13 +1,14 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,12 +27,12 @@ import java.util.List;
 final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
             var notifyBody = DiscordNotifyDTO.builder()
                     .embeds(List.of(EmbedDTO.builder()
                             .title("[" + bundle.getString("alerter.notify.title") + "]")
-                            .description(renderContent(alert))
+                            .description(renderContent(noticeTemplate, alert))
                             .build()))
                     .build();
             var url = String.format(alerterProperties.getDiscordNotifyUrl(), receiver.getDiscordChannelId());
@@ -60,11 +61,6 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     @Override
     public byte type() {
         return 9;
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifyDiscordBot";
     }
 
     @Data

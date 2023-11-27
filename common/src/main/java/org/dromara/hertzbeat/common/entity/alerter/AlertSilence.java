@@ -98,6 +98,7 @@ public class AlertSilence {
     @Schema(description = "匹配告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
+    @Column(length = 2048)
     private List<TagItem> tags;
 
     @Schema(title = "周期性静默时有效 星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)

@@ -31,13 +31,8 @@ spring:
   # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed..
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
-    template-resolver-order: 1
+  freemarker:
+    enabled: false
 
 management:
   health:
@@ -85,21 +80,31 @@ spring:
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
     # Attention: this is mail server address.
-    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
+    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com
     host: smtp.qq.com
-    username: example@tancloud.cn
+    username: tancloud@qq.com
     # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
-    password: example
-    port: 465
-    default-encoding: UTF-8
+    password: your-password
+    #Attention: Tencent mail smtps 465,smtp 587
+    #请注意腾讯邮箱465为smtps,587为smtp
+    port: 587
     properties:
       mail:
         smtp:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
-        debug: false
+
+common:
+  queue:
+    # memory or kafka
+    type: memory
+    # properties when queue type is kafka
+    kafka:
+      servers: 127.0.0.1:9092
+      metrics-data-topic: async-metrics-data
+      alerts-data-topic: async-alerts-data
 
 warehouse:
   store:
@@ -107,7 +112,12 @@ warehouse:
     # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
       enabled: true
+      # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
+      # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
+      # (please set this configuration reasonably as history records can affect performance when it is large)
+      # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
+      max-history-record-num: 6000
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
@@ -124,7 +134,7 @@ warehouse:
       username: root
       password: root
       # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
-      version: V_0_13
+      version: V_1_0
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
@@ -141,7 +151,7 @@ warehouse:
     # 存储实时数据方式, 下方只能enabled启用一种方式
     memory:
       enabled: true
-      init-size: 1024
+      init-size: 16
     redis:
       enabled: false
       host: 127.0.0.1
@@ -153,3 +163,8 @@ warehouse:
 alerter:
   # custom console url
   console-url: https://console.tancloud.cn
+
+scheduler:
+  server:
+    enabled: true
+    port: 1158

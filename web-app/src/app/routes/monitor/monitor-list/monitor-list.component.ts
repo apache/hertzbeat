@@ -10,9 +10,10 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
-import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
+import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { formatTagName } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -25,13 +26,14 @@ export class MonitorListComponent implements OnInit {
     private router: Router,
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
-    private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
+    private storageSvc: MemoryStorageService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  app!: string;
+  app!: string | undefined;
+  tag!: string | undefined;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -52,9 +54,17 @@ export class MonitorListComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(paramMap => {
-      this.app = paramMap.get('app') || '';
-      if (this.app == '') {
-        this.router.navigateByUrl('/monitors?app=website');
+      let appStr = paramMap.get('app');
+      let tagStr = paramMap.get('tag');
+      if (tagStr != null) {
+        this.tag = tagStr;
+      } else {
+        this.tag = undefined;
+      }
+      if (appStr != null) {
+        this.app = appStr;
+      } else {
+        this.app = undefined;
       }
       this.pageIndex = 1;
       this.pageSize = 8;
@@ -67,7 +77,7 @@ export class MonitorListComponent implements OnInit {
   onFilterSearchMonitors() {
     this.tableLoading = true;
     let filter$ = this.monitorSvc
-      .searchMonitors(this.app, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
+      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
       .subscribe(
         message => {
           filter$.unsubscribe();
@@ -95,9 +105,28 @@ export class MonitorListComponent implements OnInit {
     this.loadMonitorTable();
   }
 
+  clearCurrentTag() {
+    this.router.navigateByUrl(`/monitors`);
+  }
+
+  getAppIconName(app: string | undefined): string {
+    let hierarchy: any[] = this.storageSvc.getData('hierarchy');
+    let find = hierarchy.find((item: { category: string; value: string }) => {
+      return item.value == app;
+    });
+    if (find == undefined) {
+      return this.i18nSvc.fanyi('monitor_icon.center');
+    }
+    let icon = this.i18nSvc.fanyi(`monitor_icon.${find.category}`);
+    if (icon == `monitor_icon.${find.category}`) {
+      return this.i18nSvc.fanyi('monitor_icon.center');
+    }
+    return icon;
+  }
+
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
+    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.tag, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -127,21 +156,6 @@ export class MonitorListComponent implements OnInit {
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
     // 参数样例
     // this.router.navigate(['/monitors/new'],{queryParams: {app: "linux"}});
-  }
-
-  onEditMonitor() {
-    // 编辑时只能选中一个监控
-    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
-    if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
-      return;
-    }
-    let monitorId = 0;
-    this.checkedMonitorIds.forEach(item => (monitorId = item));
-    this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
   }
 
   onDeleteOneMonitor(monitorId: number) {
@@ -410,4 +424,6 @@ export class MonitorListComponent implements OnInit {
     const sortOrder = (currentSort && currentSort.value) || null;
     this.loadMonitorTable(sortField, sortOrder);
   }
+
+  protected readonly sliceTagName = formatTagName;
 }

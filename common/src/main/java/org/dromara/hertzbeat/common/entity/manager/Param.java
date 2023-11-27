@@ -65,9 +65,9 @@ public class Param {
 
     /**
      * Monitor ID
-     * 监控ID
+     * 监控任务ID
      */
-    @Schema(title = "监控ID", example = "875846754543", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "875846754543", accessMode = READ_WRITE)
     private Long monitorId;
 
     /**
@@ -92,9 +92,8 @@ public class Param {
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
      * 参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串
      */
-    @Schema(title = "参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串", accessMode = READ_WRITE)
+    @Schema(title = "参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串 4:arrays string", accessMode = READ_WRITE)
     @Min(0)
-    @Max(3)
     private byte type;
 
     /**

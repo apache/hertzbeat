@@ -10,7 +10,7 @@ tags: [opensource]
 ## v1.2.2
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernets, docker, springboot, nacos and database dm, opengauss and more. Also we bring a experimental feature, users can custom define metrics collect from promethues with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage mertics.   
+Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernetes, docker, springboot, nacos and database dm, opengauss and more. Also we bring an experimental feature, users can custom define metrics collect from prometheus with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage metrics.   
 Let's Try It Now!
 
 Only one docker command is needed to install and experience heartbeat：
@@ -37,7 +37,7 @@ Feature：
 13. [[manager] support linux process top10 cpu_usage mem_usage #451](https://github.com/dromara/hertzbeat/pull/451)
 14. [[hertzbeat] support springboot2.0 metrics monitor #453](https://github.com/dromara/hertzbeat/pull/453)
 15. [[manager-monitors]（增强）应用服务检测-网站检测-分页：添加默认name升序 （enhancement）manager-… #455](https://github.com/dromara/hertzbeat/pull/455) @luxx-lq
-16. [[hertzbeat] update use PromQL to collect metrics from promethues server #456](https://github.com/dromara/hertzbeat/pull/456)
+16. [[hertzbeat] update use PromQL to collect metrics from prometheus server #456](https://github.com/dromara/hertzbeat/pull/456)
 17. [[manager] support custom monitor api response data code #460](https://github.com/dromara/hertzbeat/pull/460)
 
 
@@ -86,7 +86,7 @@ Feature：
 13. [[manager] support linux process top10 cpu_usage mem_usage #451](https://github.com/dromara/hertzbeat/pull/451)
 14. [[hertzbeat] support springboot2.0 metrics monitor #453](https://github.com/dromara/hertzbeat/pull/453)
 15. [[manager-monitors]（增强）应用服务检测-网站检测-分页：添加默认name升序 （enhancement）manager-… #455](https://github.com/dromara/hertzbeat/pull/455) @luxx-lq
-16. [[hertzbeat] update use PromQL to collect metrics from promethues server #456](https://github.com/dromara/hertzbeat/pull/456)
+16. [[hertzbeat] update use PromQL to collect metrics from prometheus server #456](https://github.com/dromara/hertzbeat/pull/456)
 17. [[manager] support custom monitor api response data code #460](https://github.com/dromara/hertzbeat/pull/460)
 
 

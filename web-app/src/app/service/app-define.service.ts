@@ -21,6 +21,20 @@ export class AppDefineService {
     return this.http.get<Message<ParamDefine[]>>(paramDefineUri);
   }
 
+  public getPushDefine(monitorId: number | undefined | null): Observable<Message<any>> {
+    if (monitorId === null || monitorId === undefined) {
+      console.log('getPushDefine monitorId can not null');
+    }
+    return this.http.get<Message<any>>(`/apps/${monitorId}/pushdefine`);
+  }
+
+  public getAppDynamicDefine(monitorId: number | undefined | null): Observable<Message<any>> {
+    if (monitorId === null || monitorId === undefined) {
+      console.log('getAppDynamicDefine monitorId can not null');
+    }
+    return this.http.get<Message<any>>(`/apps/${monitorId}/define/dynamic`);
+  }
+
   public getAppDefine(app: string | undefined | null): Observable<Message<any>> {
     if (app === null || app === undefined) {
       console.log('getAppDefine app can not null');
@@ -42,14 +56,18 @@ export class AppDefineService {
     return this.http.get<Message<any>>(`/apps/${app}/define/yml`);
   }
 
-  public saveAppDefineYmlContent(defineContent: string | undefined | null): Observable<Message<any>> {
+  public newAppDefineYmlContent(defineContent: string | undefined | null, isNew: boolean): Observable<Message<any>> {
     if (defineContent === null || defineContent === undefined) {
       console.log('defineContent can not null');
     }
     let body = {
       define: defineContent
     };
-    return this.http.post<Message<any>>(`/apps/define/yml`, body);
+    if (isNew) {
+      return this.http.post<Message<any>>(`/apps/define/yml`, body);
+    } else {
+      return this.http.put<Message<any>>(`/apps/define/yml`, body);
+    }
   }
 
   public getAppHierarchy(lang: string | undefined): Observable<Message<any>> {

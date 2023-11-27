@@ -23,6 +23,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.dromara.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
+import org.dromara.hertzbeat.common.entity.manager.TagItem;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -36,6 +38,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
@@ -93,9 +96,19 @@ public class AlertDefine {
     @Min(0)
     @Max(10)
     private Integer times;
+    
+    @Schema(description = "附加告警标签(status:success,env:prod)", example = "{name: key1, value: value1}",
+            accessMode = READ_WRITE)
+    @Convert(converter = JsonTagListAttributeConverter.class)
+    @Column(length = 2048)
+    private List<TagItem> tags;
 
     @Schema(title = "告警阈值开关", example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
+    
+    @Schema(title = "Is send alarm recover notice | 是否发送告警恢复通知", example = "false", accessMode = READ_WRITE)
+    @Column(columnDefinition = "boolean default false")
+    private boolean recoverNotice = false;
 
     @Schema(title = "告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)

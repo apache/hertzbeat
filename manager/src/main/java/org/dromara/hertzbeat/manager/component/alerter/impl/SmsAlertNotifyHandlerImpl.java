@@ -17,15 +17,15 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.common.service.TencentSmsClient;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
-import org.dromara.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.common.service.TencentSmsClient;
+import org.dromara.hertzbeat.common.util.ResourceBundleUtil;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -33,20 +33,19 @@ import java.util.ResourceBundle;
 
 /**
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty("common.sms.tencent.app-id")
-final class SmsAlertNotifyHandlerImpl implements AlertNotifyHandler {
+final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     private final TencentSmsClient tencentSmsClient;
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         // SMS notification 短信通知
         try {
             String monitorName = null;

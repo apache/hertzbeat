@@ -51,17 +51,18 @@ import java.util.regex.Pattern;
 public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
-    private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO %s USING %s TAGS (%s) VALUES %s";
+    private static final String INSTANCE_NULL = "''";
+    private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT ts, instance, `%s` FROM %s WHERE instance = %s AND ts >= now - %s order by ts desc";
+            = "SELECT ts, instance, `%s` FROM `%s` WHERE instance = '%s' AND ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_SQL
-            = "SELECT ts, instance, `%s` FROM %s WHERE ts >= now - %s order by ts desc";
+            = "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM %s WHERE instance = %s AND ts >= now - %s interval(4h)";
+            = "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM %s WHERE ts >= now - 1w";
+            = "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
 
     private static final String TABLE_NOT_EXIST
             = "Table does not exist";
@@ -230,7 +231,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     /**
      * 从TD ENGINE时序数据库获取指标历史数据
      *
-     * @param monitorId 监控ID
+     * @param monitorId 监控任务ID
      * @param app 监控类型
      * @param metrics 指标集合名
      * @param metric 指标名
@@ -241,6 +242,9 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
+        if (INSTANCE_NULL.equals(instance)) {
+            instance = "";
+        }
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
         log.debug(selectSql);
@@ -258,6 +262,10 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             ResultSet resultSet = statement.executeQuery(selectSql);
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
+                if (ts == null) {
+                    log.error("warehouse tdengine query result timestamp is null, ignore. {}.", selectSql);
+                    continue;
+                }
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
                     instanceValue = "";
@@ -330,12 +338,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(instances.size());
         for (String instanceValue : instances) {
+            if (INSTANCE_NULL.equals(instanceValue)) {
+                instanceValue = "";
+            }
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                             metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
-            if ("''".equals(instanceValue)) {
-                instanceValue = "";
-            }
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;
             try {

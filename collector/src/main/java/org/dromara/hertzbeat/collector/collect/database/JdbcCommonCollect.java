@@ -32,6 +32,8 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -54,6 +56,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_ONE_ROW = "oneRow";
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
+    
+    private static final String RUN_SCRIPT = "runScript";
 
     public JdbcCommonCollect(){}
 
@@ -83,6 +87,11 @@ public class JdbcCommonCollect extends AbstractCollect {
                     break;
                 case QUERY_TYPE_COLUMNS:
                     queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                    break;
+                case RUN_SCRIPT:
+                    Connection connection = statement.getConnection();
+                    FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
+                    ScriptUtils.executeSqlScript(connection, rc);
                     break;
                 default:
                     builder.setCode(CollectRep.Code.FAIL);
@@ -188,8 +197,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private void queryOneRow(Statement statement, String sql, List<String> columns,
                                            CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         statement.setMaxRows(1);
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String column : columns) {
@@ -204,8 +212,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
                 builder.addValues(valueRowBuilder.build());
             }
-        } finally {
-            resultSet.close();
         }
     }
 
@@ -222,8 +228,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
                                               CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             HashMap<String, String> values = new HashMap<>(columns.size());
             while (resultSet.next()) {
                 if (resultSet.getString(1) != null) {
@@ -242,8 +247,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
             }
             builder.addValues(valueRowBuilder.build());
-        } finally {
-            resultSet.close();
         }
     }
 
@@ -259,8 +262,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
                                CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        ResultSet resultSet = statement.executeQuery(sql);
-        try {
+        try (ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String column : columns) {
@@ -275,8 +277,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
                 builder.addValues(valueRowBuilder.build());
             }
-        } finally {
-            resultSet.close();
         }
     }
 

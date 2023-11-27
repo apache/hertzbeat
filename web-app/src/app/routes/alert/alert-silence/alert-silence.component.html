@@ -1,22 +1,9 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="alert"></i>
-    <span>{{ 'menu.alert.silence' | i18n }}</span>
-    <a href="https://hertzbeat.com/docs/help/alert_silence" target="_blank" style="float: right; margin-right: 5%">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'alert.help.silence' | i18n"
+  [guild_link]="'alert.help.silence.link' | i18n"
+  [module_name]="'menu.alert.silence'"
+  [icon_name]="'monitor_icon.alert_silence' | i18n"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <div style="margin-bottom: 20px">
@@ -31,6 +18,18 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.silence.delete' | i18n }}
   </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertSilenceTable()">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
+    nz-input
+    type="text"
+    [placeholder]="'alert.silence.name' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadAlertSilenceTable()"
+    [(ngModel)]="search"
+  />
 </div>
 
 <nz-table
@@ -148,6 +147,7 @@
             (nzOpenChange)="loadTagsOption()"
             [nzOptions]="tagsOption"
             [nzMaxTagCount]="5"
+            [nzDropdownMatchSelectWidth]="false"
             nzShowSearch
             nzMode="multiple"
             nzAllowClear
@@ -205,12 +205,7 @@
       <nz-form-item *ngIf="silence.type == 1">
         <nz-form-label nzSpan="7" nzFor="days">{{ 'alert.notice.rule.period-chose' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-checkbox-group
-            name="days"
-            id="days"
-            [(ngModel)]="dayCheckOptions"
-            (ngModelChange)="onSilenceDaysChange(dayCheckOptions)"
-          ></nz-checkbox-group>
+          <nz-checkbox-group name="days" id="days" [(ngModel)]="dayCheckOptions"></nz-checkbox-group>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="silence.type == 1">

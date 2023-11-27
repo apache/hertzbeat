@@ -37,6 +37,7 @@
         <warehouse.version>1.0</warehouse.version>
         <easy-poi.version>4.3.0</easy-poi.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
+        <huawei.obs.version>3.23.5</huawei.obs.version>
     </properties>
 
     <dependencies>
@@ -60,6 +61,16 @@
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-collector</artifactId>
         </dependency>
+        <!-- remoting -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-remoting</artifactId>
+        </dependency>
+        <!-- push -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-push</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -74,10 +85,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <!--thymeleaf依赖-->
+        <!-- freemaker 依赖  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.nekohtml</groupId>
@@ -139,6 +150,11 @@
             <artifactId>huaweicloud-sdk-smn</artifactId>
             <version>${huawei.sdk.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.huaweicloud</groupId>
+            <artifactId>esdk-obs-java</artifactId>
+            <version>${huawei.obs.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -183,29 +199,126 @@
                     </archive>
                 </configuration>
             </plugin>
-            <!--关键插件,maven提供的assembly插件,需要放在最后-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${maven-assembly-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>make-zip</id>
-                        <!--绑定的maven操作-->
-                        <phase>package</phase>
-                        <!--运行一次-->
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>../script/assembly/server/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!--关键插件,maven提供的assembly插件,需要放在最后-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>make-zip</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>runtime</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>make-macos-arm64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-macos-arm64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-macos-amd64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-macos-amd64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-arm64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-linux-arm64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-amd64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-linux-amd64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-windows-64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-windows-64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

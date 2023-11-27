@@ -19,10 +19,7 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * Public Constant
- * 公共常量
- *
  * @author tomsun28
- *
  */
 public interface CommonConstants {
 
@@ -77,33 +74,21 @@ public interface CommonConstants {
 
     /**
      * Monitoring Status Code: Unmanaged
-     * 监控状态码: 未管理
+     * 任务状态码: 未管理
      */
     byte UN_MANAGE_CODE = 0x00;
 
     /**
      * Monitoring Status Code: Available
-     * 监控状态码: 可用
+     * 任务状态码: 可用
      */
     byte AVAILABLE_CODE = 0x01;
 
     /**
      * Monitoring Status Code: Not Available
-     * 监控状态码: 不可用
+     * 任务状态码: 不可用
      */
     byte UN_AVAILABLE_CODE = 0x02;
-
-    /**
-     * Monitoring Status Code: Unreachable
-     * 监控状态码: 不可达
-     */
-    byte UN_REACHABLE_CODE = 0x03;
-
-    /**
-     * Monitoring Status Code: Pending
-     * 监控状态码: 挂起
-     */
-    byte SUSPENDING_CODE = 0x04;
 
     /**
      * Alarm status: 0 - normal alarm (to be processed)
@@ -189,17 +174,6 @@ public interface CommonConstants {
     String AVAILABILITY = "availability";
 
     /**
-     * Availability Object
-     * 可用性对象
-     */
-    String AVAILABLE = "available";
-
-    /**
-     * Reachability Object可达性对象
-     */
-    String REACHABLE = "reachable";
-
-    /**
      * Parameter Type Number
      * 参数类型 数字
      */
@@ -216,6 +190,16 @@ public interface CommonConstants {
      * 参数类型 密码
      */
     byte PARAM_TYPE_PASSWORD = 2;
+    
+    /**
+     * Parameter Type Map values
+     */
+    byte PARAM_TYPE_MAP = 3;
+    
+    /**
+     * Parameter Type arrays values
+     */
+    byte PARAM_TYPE_ARRAY = 4;
 
     /**
      * Authentication type Account password
@@ -242,19 +226,29 @@ public interface CommonConstants {
     byte AUTH_TYPE_GITEE = 5;
 
     /**
-     * 内有标签: monitorId 监控ID
+     * 内有标签: monitorId 监控任务ID
      */
     String TAG_MONITOR_ID = "monitorId";
 
     /**
-     * 内有标签: monitorName 监控名称
+     * 内有标签: monitorName 任务名称
      */
     String TAG_MONITOR_NAME = "monitorName";
+
+    /**
+     * 内有标签: policyId 告警阈值规则ID
+     */
+    String TAG_THRESHOLD_ID = "thresholdId";
 
     /**
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
+    
+    /**
+     * 内有标签: alarm type
+     */
+    String TAG_ALARM_TYPE = "type";
 
     /**
      * notice_period type 类型字段, 每日类型
@@ -275,4 +269,50 @@ public interface CommonConstants {
      * cache key alert silence
      */
     String CACHE_ALERT_SILENCE = "alert_silence";
+    
+    /**
+     * cache key alert converge
+     */
+    String CACHE_ALERT_CONVERGE = "alert_converge";
+    
+    /**
+     * collector status online 0
+     */
+    byte COLLECTOR_STATUS_ONLINE = 0;
+    
+    /**
+     * collector status offline 1
+     */
+    byte COLLECTOR_STATUS_OFFLINE = 1;
+    
+    /**
+     * default main collector name
+     */
+    String MAIN_COLLECTOR_NODE = "main-default-collector";
+    
+    /**
+     * locale spilt
+     */
+    String LOCALE_SEPARATOR = "_";
+    
+    /**
+     * ignore label
+     * 处理未配置恢复告警，但需要使用恢复告警变更任务状态的情况
+     */
+    String IGNORE = "ignore";
+
+    /**
+     * collector mode public
+     */
+    String MODE_PUBLIC = "public";
+
+    /**
+     * collector mode private
+     */
+    String MODE_PRIVATE = "private";
+
+    /**
+     * collector auth failed message
+     */
+    String COLLECTOR_AUTH_FAILED = "Auth Failed";
 }

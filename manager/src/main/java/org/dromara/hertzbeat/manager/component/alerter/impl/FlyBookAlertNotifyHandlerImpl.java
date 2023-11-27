@@ -18,12 +18,13 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.dromara.hertzbeat.common.entity.alerter.Alert;
-import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.common.entity.alerter.Alert;
+import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,6 @@ import java.util.List;
  * 通过飞书发送告警信息
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
- *
  */
 @Component
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ import java.util.List;
 final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, Alert alert) {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
             Content content = new Content();
@@ -56,7 +56,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             List<FlyBookContent> contents1 = new ArrayList<>();
             FlyBookContent flyBookContent = new FlyBookContent();
             flyBookContent.setTag("text");
-            flyBookContent.setText(renderContent(alert));
+            flyBookContent.setText(renderContent(noticeTemplate, alert));
             contents1.add(flyBookContent);
             FlyBookContent bookContent = new FlyBookContent();
             bookContent.setTag("a");
@@ -70,7 +70,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             String webHookUrl = alerterProperties.getFlyBookWebHookUrl() + receiver.getWechatId();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<FlyBookWebHookDto> flyEntity = new HttpEntity<>(flyBookWebHookDto, headers); 
+            HttpEntity<FlyBookWebHookDto> flyEntity = new HttpEntity<>(flyBookWebHookDto, headers);
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
                     flyEntity, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
@@ -93,11 +93,6 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Override
     public byte type() {
         return 6;
-    }
-
-    @Override
-    protected String templateName() {
-        return "alertNotifyFlyBook";
     }
 
     @Data

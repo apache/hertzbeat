@@ -5,6 +5,12 @@ sidebar_label: 交流联系
 ---
 > 如果您在使用过程有任何需要帮助或者想交流建议，可以通过 微信群、QQ群 社区网站 ISSUE 讨论交流。
 
+[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+
+[Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+
+[Bilibili B站](https://space.bilibili.com/430192869)
+
 ## BUG问题报告，功能建议相关建议通过仓库ISSUE
 
 [GITEE仓库ISSUES](https://gitee.com/dromara/hertzbeat/issues)   
