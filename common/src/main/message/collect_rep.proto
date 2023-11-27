@@ -50,6 +50,8 @@ message Field
     uint32 type = 2;
     // metric value unit
     string unit = 3;
+    // is label field
+    bool label = 4;
 }
 
 message ValueRow
