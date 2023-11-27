@@ -191,7 +191,7 @@ metrics:
       # field-指标名称, i18n-指标国际化展示名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: hostname
         type: 1
-        instance: true
+        label: true
         i18n:
           zh-CN: 主机名称
           en-US: Host Name
@@ -269,7 +269,7 @@ metrics:
     fields:
       - field: hostname
         type: 1
-        instance: true
+        label: true
         i18n:
           zh-CN: 主机名称
           en-US: Hostname

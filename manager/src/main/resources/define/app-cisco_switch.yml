@@ -195,7 +195,7 @@ metrics:
         type: 1
       - field: descr
         type: 1
-        instance: true
+        label: true
       - field: mtu
         type: 0
         unit: 'byte'

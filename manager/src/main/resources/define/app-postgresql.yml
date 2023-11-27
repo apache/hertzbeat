@@ -124,7 +124,7 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: server_version
         type: 1
-        instance: true
+        label: true
       - field: port
         type: 1
       - field: server_encoding
@@ -163,7 +163,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: conflicts
         type: 0
         unit: times
@@ -271,7 +271,7 @@ metrics:
     fields:
       - field: state
         type: 1
-        instance: true
+        label: true
       - field: num
         type: 0
     protocol: jdbc
@@ -292,7 +292,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: active
         type: 0
     protocol: jdbc
@@ -339,7 +339,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: num
         type: 0
       - field: size
@@ -363,7 +363,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: conflicts
         type: 0
         unit: times
@@ -388,7 +388,7 @@ metrics:
     fields:
       - field: sql_text
         type: 1
-        instance: true
+        label: true
       - field: calls
         type: 0
       - field: rows
@@ -427,7 +427,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: commits
         type: 0
         unit: times
@@ -452,7 +452,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: tablespace
         type: 0
       - field: lock
@@ -481,7 +481,7 @@ metrics:
     fields:
       - field: db_name
         type: 1
-        instance: true
+        label: true
       - field: ratio
         type: 0
         unit: '%'

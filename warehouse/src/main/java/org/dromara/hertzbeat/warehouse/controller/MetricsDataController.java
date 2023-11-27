@@ -114,6 +114,7 @@ public class MetricsDataController {
             List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
                             Field.builder().name(tmpField.getName())
                                     .type(Integer.valueOf(tmpField.getType()).byteValue())
+                                    .label(tmpField.getLabel())
                                     .unit(tmpField.getUnit())
                                     .build())
                     .collect(Collectors.toList());

@@ -185,7 +185,7 @@ metrics:
     fields:
       - field: metric
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
 #      - field: description
@@ -207,7 +207,7 @@ metrics:
     fields:
       - field: event
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
 #      - field: description
@@ -229,7 +229,7 @@ metrics:
     fields:
       - field: metric
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
 #      - field: description

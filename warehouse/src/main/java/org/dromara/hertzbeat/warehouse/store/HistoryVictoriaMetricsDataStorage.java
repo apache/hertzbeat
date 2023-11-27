@@ -140,16 +140,15 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);
                 String value = valueRow.getColumns(index);
-                if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                    // number data
+                if (field.getType() == CommonConstants.TYPE_NUMBER && !field.getLabel()) {
+                    // number metrics data
                     if (!CommonConstants.NULL_VALUE.equals(value)) {
                         fieldsValue.put(field.getName(), CommonUtil.parseStrDouble(value));
                     }
-                } else {
-                    // label
-                    if (!CommonConstants.NULL_VALUE.equals(value)) {
-                        labels.put(field.getName(), value);
-                    }
+                }
+                // label
+                if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(value)) {
+                    labels.put(field.getName(), value);
                 }
             }
             for (Map.Entry<String, Double> entry : fieldsValue.entrySet()) {

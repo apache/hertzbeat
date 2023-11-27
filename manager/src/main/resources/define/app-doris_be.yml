@@ -77,7 +77,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -91,7 +91,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -105,7 +105,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -119,7 +119,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -133,7 +133,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -147,7 +147,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -161,7 +161,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -175,7 +175,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -189,7 +189,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -203,7 +203,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -217,7 +217,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -231,7 +231,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -245,7 +245,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -259,7 +259,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -273,7 +273,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -287,7 +287,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -301,7 +301,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -315,7 +315,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     protocol: http
     http:
       host: ^_^host^_^
@@ -329,7 +329,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
         unit: Byte
@@ -346,7 +346,7 @@ metrics:
     fields:
       - field: path
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
         unit: Byte
@@ -363,7 +363,7 @@ metrics:
     fields:
       - field: path
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
         unit: Byte
@@ -380,7 +380,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
         unit: Byte
     protocol: http
     http:
@@ -395,7 +395,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
         unit: Byte
     protocol: http
     http:
@@ -410,7 +410,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
         unit: Byte
     protocol: http
     http:

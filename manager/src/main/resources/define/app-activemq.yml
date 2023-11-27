@@ -175,7 +175,7 @@ metrics:
     fields:
       - field: BrokerName
         type: 1
-        instance: true
+        label: true
       - field: BrokerVersion
         type: 1
       - field: Uptime
@@ -230,7 +230,7 @@ metrics:
     fields:
       - field: Name
         type: 1
-        instance: true
+        label: true
       - field: MemoryLimit
         type: 0
         unit: MB
@@ -293,7 +293,7 @@ metrics:
     fields:
       - field: name
         type: 1
-        instance: true
+        label: true
       - field: committed
         type: 0
         unit: MB

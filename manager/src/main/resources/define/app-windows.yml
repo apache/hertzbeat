@@ -240,7 +240,7 @@ metrics:
     fields:
       - field: descr
         type: 1
-        instance: true
+        label: true
       - field: size
         type: 0
         unit: GB
@@ -299,7 +299,7 @@ metrics:
         type: 1
       - field: descr
         type: 1
-        instance: true
+        label: true
       - field: mtu
         type: 0
         unit: 'byte'
@@ -381,7 +381,7 @@ metrics:
     fields:
       - field: index
         type: 1
-        instance: true
+        label: true
       - field: descr
         type: 1
       - field: status

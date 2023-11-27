@@ -111,7 +111,7 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: subject
         type: 1
-        instance: true
+        label: true
       - field: expired
         type: 1
       - field: start_time

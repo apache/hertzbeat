@@ -56,7 +56,7 @@ message Field
 
 message ValueRow
 {
-    // 主键实例，唯一标识这行数据
+    // Deprecated
     string instance = 1;
     // 采集指标值
     repeated string columns = 2;

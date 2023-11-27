@@ -246,7 +246,7 @@ metrics:
     fields:
       - field: state
         type: 1
-        instance: true
+        label: true
       - field: size
         type: 0
     aliasFields:
@@ -285,7 +285,7 @@ metrics:
     fields:
       - field: space
         type: 1
-        instance: true
+        label: true
       - field: mem_used
         type: 0
         unit: MB
