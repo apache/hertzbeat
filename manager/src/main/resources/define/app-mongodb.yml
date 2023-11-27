@@ -121,24 +121,48 @@ metrics:
     # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
     priority: 1
     # collect metrics content
+    i18n:
+      zh-CN: 构建信息
+      en-US: Build Info
     # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics group unique identifier
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
       - field: version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
       - field: gitVersion
         type: 1
+        i18n:
+          zh-CN: git版本
+          en-US: Git Version
       - field: sysInfo
         type: 1
+        i18n:
+          zh-CN: 系统信息
+          en-US: Sys Info
       - field: loaderFlags
         type: 1
+        i18n:
+          zh-CN: 加载器标志
+          en-US: Loader Flags
       - field: compilerFlags
         type: 1
+        i18n:
+          zh-CN: 编译器标志
+          en-US: Compiler Flags
       - field: allocator
         type: 1
+        i18n:
+          zh-CN: 分配器
+          en-US: Allocator
       - field: javascriptEngine
         type: 1
+        i18n:
+          zh-CN: JavaScript引擎
+          en-US: JavaScript Engine
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: mongodb
     # the config content when protocol is mongodb
@@ -162,15 +186,30 @@ metrics:
   # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
   - name: server_document
     priority: 0
+    i18n:
+      zh-CN: 服务器文档
+      en-US: Server Document
     fields:
       - field: deleted
         type: 0
+        i18n:
+          zh-CN: 已删除数
+          en-US: Deleted
       - field: inserted
         type: 0
+        i18n:
+          zh-CN: 已插入数
+          en-US: Inserted
       - field: returned
         type: 0
+        i18n:
+          zh-CN: 返回结果数
+          en-US: Returned
       - field: updated
         type: 0
+        i18n:
+          zh-CN: 已更新数
+          en-US: Updated
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -183,11 +222,20 @@ metrics:
 
   - name: server_operation
     priority: 1
+    i18n:
+      zh-CN: 服务器操作
+      en-US: Server Operation
     fields:
       - field: scanAndOrder
         type: 0
+        i18n:
+          zh-CN: 扫描订购
+          en-US: Scan And Order
       - field: writeConflicts
         type: 0
+        i18n:
+          zh-CN: 写冲突
+          en-US: Write And Order
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -200,11 +248,20 @@ metrics:
 
   - name: server_ttl
     priority: 1
+    i18n:
+      zh-CN: 服务器_ttl
+      en-US: Max Connections
     fields:
       - field: deletedDocuments
         type: 0
+        i18n:
+          zh-CN: 已删除文档数
+          en-US: Deleted Documents
       - field: passes
         type: 0
+        i18n:
+          zh-CN: 通过数
+          en-US: Passes
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -218,25 +275,52 @@ metrics:
   # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
   - name: systemInfo
     priority: 1
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
     fields:
       - field: currentTime
         type: 1
+        i18n:
+          zh-CN: 当前时间
+          en-US: Current Time
       - field: hostname
         type: 1
+        i18n:
+          zh-CN: 主机名
+          en-US: Host Name
       - field: cpuAddrSize
         type: 0
+        i18n:
+          zh-CN: cpu地址大小
+          en-US: CPU Address Size
       - field: memSizeMB
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 内存大小（MB）
+          en-US: Memory Size MB
       - field: memLimitMB
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 内存限制（MB）
+          en-US: Memory Limit MB
       - field: numCores
         type: 0
+        i18n:
+          zh-CN: CPU 核数
+          en-US: Num Cores
       - field: cpuArch
         type: 1
+        i18n:
+          zh-CN: CPU 架构
+          en-US: CPU Architecture
       - field: numaEnabled
         type: 1
+        i18n:
+          zh-CN: numa是否启用
+          en-US: Numa Enabled
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -249,13 +333,25 @@ metrics:
 
   - name: os
     priority: 1
+    i18n:
+      zh-CN: 操作系统信息
+      en-US: OS Info
     fields:
       - field: type
         type: 1
+        i18n:
+          zh-CN: 操作系统类型
+          en-US: Type
       - field: name
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
       - field: version
         type: 1
+        i18n:
+          zh-CN: Version
+          en-US: 版本号
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -268,23 +364,50 @@ metrics:
 
   - name: extra
     priority: 1
+    i18n:
+      zh-CN: 额外信息
+      en-US: Extra Info
     fields:
       - field: versionString
         type: 1
+        i18n:
+          zh-CN: 版本字符串
+          en-US: Version String
       - field: libcVersion
         type: 1
+        i18n:
+          zh-CN: 标准库版本
+          en-US: Libc Version
       - field: kernelVersion
         type: 1
+        i18n:
+          zh-CN: 内核版本
+          en-US: Kernel Version
       - field: cpuFrequencyMHz
         type: 1
+        i18n:
+          zh-CN: CPU 频率（兆赫兹）
+          en-US: CPU Frequency MHz
       - field: cpuFeatures
         type: 1
+        i18n:
+          zh-CN: CPU 特性
+          en-US: CPU Features
       - field: pageSize
         type: 0
+        i18n:
+          zh-CN: 内存页大小
+          en-US: Page Size
       - field: numPages
         type: 0
+        i18n:
+          zh-CN: 内存页数量
+          en-US: Num Pages
       - field: maxOpenFiles
         type: 0
+        i18n:
+          zh-CN: 最大打开文件数
+          en-US: Max Open Files
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
