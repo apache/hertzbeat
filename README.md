@@ -375,6 +375,7 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaoguolong"><img src="https://avatars.githubusercontent.com/u/33684988?v=4?s=100" width="100px;" alt="xiaoguolong"/><br /><sub><b>xiaoguolong</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaoguolong" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -430,6 +431,11 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 - Postcat [An Open Source API Tool](https://datayi.cn/w/xRxVBBko) supporting api test, mock, documentation, team collaboration etc.
 - Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.        
 - Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.       
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=dromara/hertzbeat&type=Date)](https://star-history.com/#dromara/hertzbeat&Date)
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)

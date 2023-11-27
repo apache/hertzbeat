@@ -50,7 +50,7 @@ const INTERCEPTOR_PROVIDES = [{ provide: HTTP_INTERCEPTORS, useClass: DefaultInt
 // #endregion
 
 // #region global third module
-const GLOBAL_THIRD_MODULES: Array<Type<void>> = [SlickCarouselModule];
+const GLOBAL_THIRD_MODULES: Array<Type<void>> = [SlickCarouselModule, TagCloudComponent];
 // #endregion
 
 // #region Startup Service
@@ -79,6 +79,7 @@ import { STWidgetModule } from './shared/st-widget/st-widget.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { SlickCarouselModule } from 'ngx-slick-carousel';
+import { TagCloudComponent } from 'angular-tag-cloud-module';
 
 @NgModule({
   declarations: [AppComponent],

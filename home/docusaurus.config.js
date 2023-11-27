@@ -69,17 +69,17 @@ module.exports = {
         {
           label: 'Docs',
           position: 'left',
-          to: 'docs/',
+          to: '/docs/',
         },
         {
           label: 'blog',
           position: 'left',
-          to: 'blog/',
+          to: '/blog/',
         },
         {
           label: 'enterprise',
           position: 'left',
-          to: 'docs/others/private',
+          to: '/docs/others/private',
         },
         {
           label: 'Others',
@@ -87,15 +87,15 @@ module.exports = {
           items: [
             {
               label: 'discuss',
-              to: 'docs/others/contact',
+              to: '/docs/others/contact',
             },
             {
               label: 'contributors',
-              href: 'docs/others/developer',
+              to: '/docs/others/developer',
             },
             {
               label: 'contributing',
-              to: 'docs/others/contributing',
+              to: '/docs/others/contributing',
             },
             {
               label: 'kanban',
@@ -103,15 +103,15 @@ module.exports = {
             },
             {
               label: 'design',
-              to: 'docs/others/design',
+              to: '/docs/others/design',
             },
             {
               label: 'sponsor',
-              to: 'docs/others/sponsor',
+              to: '/docs/others/sponsor',
             },
             {
               label: 'resource',
-              to: 'docs/others/resource',
+              to: '/docs/others/resource',
             }
           ],
         },
@@ -123,7 +123,7 @@ module.exports = {
         {
           label: '华为云开源活动',
           position: 'left',
-          to: 'docs/others/huaweicloud',
+          to: '/docs/others/huaweicloud',
         },
         {
           type: 'docsVersionDropdown',
@@ -151,19 +151,19 @@ module.exports = {
           items: [
             {
               label: 'use',
-              to: 'docs/',
+              to: '/docs/',
             },
             {
               label: 'quickstart',
-              to: 'docs/start/quickstart',
+              to: '/docs/start/quickstart',
             },
             {
               label: 'custom',
-              to: 'docs/advanced/extend-point',
+              to: '/docs/advanced/extend-point',
             },
             {
               label: 'help',
-              to: 'docs/help/guide',
+              to: '/docs/help/guide',
             },
           ],
         },
@@ -176,7 +176,7 @@ module.exports = {
             },
             {
               label: 'discuss',
-              to: 'docs/others/contact',
+              to: '/docs/others/contact',
             },
             {
               label: 'team',
@@ -201,7 +201,7 @@ module.exports = {
             },
             {
               label: 'relate',
-              to: 'docs/others/resource',
+              to: '/docs/others/resource',
             },
           ],
         },
