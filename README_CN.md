@@ -31,7 +31,7 @@
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
-- 将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。             
 
@@ -432,7 +432,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 - [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 
 ##### 赞助     
-- Postcat [开源 API 管理工具 ](https://datayi.cn/w/xRxVBBko) 简单可拓展，支持 API 测试、文档、Mock、团队协作等核心功能
+
 - 感谢 [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点     
 - 感谢 [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点
 
@@ -440,6 +440,14 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=dromara/hertzbeat&type=Date)](https://star-history.com/#dromara/hertzbeat&Date)
+
+##### Open-Source Project Build From Open-Source
+
+> HertzBeat is built on so many great open source projects, thanks to them! 
+
+- Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...
+- TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...
+
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
