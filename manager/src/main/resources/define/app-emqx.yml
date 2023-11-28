@@ -121,7 +121,7 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: version
         type: 1
         i18n:
@@ -202,7 +202,7 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: client_connected
         type: 0
       - field: client_disconnected
@@ -301,7 +301,7 @@ metrics:
     priority: 2
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: channels_count
         type: 0
       - field: channels_max

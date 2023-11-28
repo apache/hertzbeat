@@ -46,5 +46,8 @@ public class Field {
 
     @Schema(title = "是否是实例字段")
     private Boolean instance;
+    
+    @Schema(title = "是否是标签字段")
+    private Boolean label;
 
 }
