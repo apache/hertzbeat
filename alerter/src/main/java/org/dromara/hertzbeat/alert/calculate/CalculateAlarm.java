@@ -183,10 +183,7 @@ public class CalculateAlarm {
                     }
                     fieldValueMap.clear();
                     fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
-                    String instance = valueRow.getInstance();
-                    if (!"".equals(instance)) {
-                        fieldValueMap.put("instance", instance);
-                    }
+                    StringBuilder instanceBuilder = new StringBuilder();
                     for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                         String valueStr = valueRow.getColumns(index);
                         if (CommonConstants.NULL_VALUE.equals(valueStr)) {
@@ -204,6 +201,9 @@ public class CalculateAlarm {
                                 fieldValueMap.put(field.getName(), valueStr);
                             }
                         }
+                        if (field.getLabel()) {
+                            instanceBuilder.append(valueStr).append("-");
+                        }
                     }
                     try {
                         boolean match = execAlertExpression(fieldValueMap, expr);
@@ -214,7 +214,7 @@ public class CalculateAlarm {
                             // 若此阈值已被触发，则其它数据行的触发忽略
                             break;
                         } else if (define.isRecoverNotice()) {
-                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (!"".equals(instance) ? instance : null);
+                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (instanceBuilder.length() == 0 ? null : instanceBuilder.toString());
                             handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
                         }
                     } catch (Exception e) {

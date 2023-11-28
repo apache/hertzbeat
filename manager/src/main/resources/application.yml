@@ -118,6 +118,11 @@ warehouse:
       # (please set this configuration reasonably as history records can affect performance when it is large)
       # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
       max-history-record-num: 6000
+    victoria-metrics:
+      enabled: false
+      url: http://localhost:8428
+      username: root
+      password: root
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver

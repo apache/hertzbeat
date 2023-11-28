@@ -144,6 +144,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     Metrics.Field.builder()
                             .field(item.getName())
                             .type((byte) item.getType())
+                            .label(item.getLabel())
                             .unit(item.getUnit())
                             .build())
                     .collect(Collectors.toList());

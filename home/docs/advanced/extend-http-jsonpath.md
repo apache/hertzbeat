@@ -141,7 +141,7 @@ metrics:
       # Metric information include   field: name   type: field type(0-number: number, 1-string: string)   nstance: primary key of instance or not   unit: Metric unit
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: num
         type: 0
 # protocol for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk

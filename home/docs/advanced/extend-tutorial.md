@@ -160,7 +160,7 @@ metrics:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
-        instance: true
+        label: true
       - field: category
         type: 1
       - field: status

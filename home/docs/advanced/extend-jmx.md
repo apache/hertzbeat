@@ -147,7 +147,7 @@ metrics:
     fields:
       - field: name
         type: 1
-        instance: true
+        label: true
       - field: committed
         type: 0
         unit: MB

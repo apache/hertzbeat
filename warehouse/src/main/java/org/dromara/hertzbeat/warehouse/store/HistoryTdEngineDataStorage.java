@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.warehouse.store;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -128,8 +129,8 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             StringBuilder sqlRowBuffer = new StringBuilder("(");
             sqlRowBuffer.append(metricsData.getTime() + i++).append(", ");
-            String instance = formatStringValue(valueRow.getInstance());
-            sqlRowBuffer.append("'").append(instance).append("', ");
+            Map<String, String> labels = new HashMap<>(8);
+            sqlRowBuffer.append("'").append("%s").append("', ");
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);
                 String value = valueRow.getColumns(index);
@@ -154,12 +155,15 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                         sqlRowBuffer.append("'").append(formatStringValue(value)).append("'");
                     }
                 }
+                if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(value)) {
+                    labels.put(field.getName(), formatStringValue(value));
+                }
                 if (index != fields.size() - 1) {
                     sqlRowBuffer.append(", ");
                 }
             }
             sqlRowBuffer.append(")");
-            sqlBuffer.append(" ").append(sqlRowBuffer);
+            sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
         }
         String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
         log.debug(insertDataSql);
@@ -235,15 +239,15 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
      * @param app 监控类型
      * @param metrics 指标集合名
      * @param metric 指标名
-     * @param instance 实例
+     * @param label 实例
      * @param history 历史范围
      * @return 指标历史数据列表
      */
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
-                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
+        String selectSql =  label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
+                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
         log.debug(selectSql);
         Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -294,7 +298,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
+                                                                 String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("\n\t---------------TdEngine Init Failed---------------\n" +
                     "\t--------------Please Config Tdengine--------------\n" +
@@ -303,8 +307,8 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         String table = app + "_" + metrics + "_" + monitorId;
         List<String> instances = new LinkedList<>();
-        if (instance != null) {
-            instances.add(instance);
+        if (label != null) {
+            instances.add(label);
         }
         if (instances.isEmpty()) {
             // 若未指定instance，需查询当前指标数据前1周有多少个instance

@@ -54,12 +54,12 @@ public abstract class AbstractHistoryDataStorage implements DisposableBean {
      * @param app 监控类型
      * @param metrics 指标集合名
      * @param metric 指标名
-     * @param instance 实例
+     * @param label 标签
      * @param history 历史范围
      * @return 指标历史数据列表
      */
     public abstract Map<String, List<Value>> getHistoryMetricData(
-            Long monitorId, String app, String metrics, String metric, String instance, String history);
+            Long monitorId, String app, String metrics, String metric, String label, String history);
 
     /**
      * 从时序数据库获取指标历史间隔数据 平均值 最大值 最小值
@@ -67,10 +67,10 @@ public abstract class AbstractHistoryDataStorage implements DisposableBean {
      * @param app 监控类型
      * @param metrics 指标集合名
      * @param metric 指标名
-     * @param instance 实例
+     * @param label 标签
      * @param history 历史范围
      * @return 指标历史数据列表
      */
     public abstract Map<String, List<Value>> getHistoryIntervalMetricData(
-            Long monitorId, String app, String metrics, String metric, String instance, String history);
+            Long monitorId, String app, String metrics, String metric, String label, String history);
 }

@@ -201,7 +201,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         List<CollectRep.Field> fieldList = new LinkedList<>();
         for (Metrics.Field field : metrics.getFields()) {
             CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
-            fieldBuilder.setName(field.getField()).setType(field.getType());
+            fieldBuilder.setName(field.getField()).setType(field.getType()).setLabel(field.isLabel());
             if (field.getUnit() != null) {
                 fieldBuilder.setUnit(field.getUnit());
             }
@@ -326,13 +326,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
                 realValueRowBuilder.addColumns(value);
                 fieldValueMap.clear();
-                if (field.isInstance() && !CommonConstants.NULL_VALUE.equals(value)) {
-                    instanceBuilder.append(value);
-                }
             }
             aliasFieldValueMap.clear();
-            // set instance
-            realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
@@ -375,20 +370,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         String originUnit = unit.substring(equalIndex + 1, arrowIndex).trim();
         String newUnit = unit.substring(arrowIndex + 2).trim();
         return new Object[]{field, Pair.of(originUnit, newUnit)};
-    }
-
-    /**
-     * build CollectRep.Field
-     * @param field
-     * @return
-     */
-    private CollectRep.Field doCollectRepField(Metrics.Field field) {
-        CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
-        fieldBuilder.setName(field.getField()).setType(field.getType());
-        if (field.getUnit() != null) {
-            fieldBuilder.setUnit(field.getUnit());
-        }
-        return fieldBuilder.build();
     }
 
     private boolean fastFailed() {

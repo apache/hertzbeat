@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.warehouse.store;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.warehouse.config.IotDbVersion;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,6 @@ import java.util.*;
 @Slf4j
 public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String BACK_QUOTE = "`";
-    private static final String DOUBLE_QUOTATION_MARKS = "\"";
     /**
      * set ttl never expire
      */
@@ -79,7 +79,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_SQL
             = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h) WITHOUT NULL ANY";
+            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
 
     private SessionPool sessionPool;
 
@@ -207,29 +207,34 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         try {
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                String instance = valueRow.getInstance();
-                if (!instance.isEmpty()) {
-                    instance = String.format("\"%s\"", instance);
+                Map<String, String> labels = new HashMap<>(8);
+                for (int i = 0; i < fieldsList.size(); i++) {
+                    CollectRep.Field field = fieldsList.get(i);
+                    if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
+                        labels.put(field.getName(), valueRow.getColumns(i));
+                    }
                 }
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, false);
-                if (tabletMap.containsKey(instance)) {
+                String label = JsonUtil.toJson(labels);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), label, false);
+                if (tabletMap.containsKey(label)) {
                     // 避免Time重复
                     now++;
                 } else {
-                    tabletMap.put(instance, new Tablet(deviceId, schemaList));
+                    tabletMap.put(label, new Tablet(deviceId, schemaList));
                 }
-                Tablet tablet = tabletMap.get(instance);
+                Tablet tablet = tabletMap.get(label);
                 int rowIndex = tablet.rowSize++;
                 tablet.addTimestamp(rowIndex, now);
                 for (int i = 0; i < fieldsList.size(); i++) {
+                    CollectRep.Field field = fieldsList.get(i);
                     if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
-                            tablet.addValue(fieldsList.get(i).getName(), rowIndex, Double.parseDouble(valueRow.getColumns(i)));
-                        } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
-                            tablet.addValue(fieldsList.get(i).getName(), rowIndex, valueRow.getColumns(i));
+                        if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                            tablet.addValue(field.getName(), rowIndex, Double.parseDouble(valueRow.getColumns(i)));
+                        } else if (field.getType() == CommonConstants.TYPE_STRING) {
+                            tablet.addValue(field.getName(), rowIndex, valueRow.getColumns(i));
                         }
                     } else {
-                        tablet.addValue(fieldsList.get(i).getName(), rowIndex, null);
+                        tablet.addValue(field.getName(), rowIndex, null);
                     }
                 }
             }
@@ -248,7 +253,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-                                                         String instance, String history) {
+                                                         String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("\n\t---------------IotDb Init Failed---------------\n" +
@@ -256,10 +261,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
         String selectSql = "";
         try {
-            if (instance != null) {
+            if (label != null) {
                 selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                 handleHistorySelect(selectSql, "", instanceValuesMap);
             } else {
@@ -285,7 +290,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
-    private void handleHistorySelect(String selectSql, String instanceId, Map<String, List<Value>> instanceValuesMap)
+    private void handleHistorySelect(String selectSql, String labels, Map<String, List<Value>> instanceValuesMap)
             throws IoTDBConnectionException, StatementExecutionException {
         SessionDataSetWrapper dataSet = null;
         try {
@@ -296,7 +301,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 long timestamp = rowRecord.getTimestamp();
                 double value = rowRecord.getFields().get(0).getDoubleV();
                 String strValue = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(labels, k -> new LinkedList<>());
                 valueList.add(new Value(strValue, timestamp));
             }
         } finally {
@@ -309,7 +314,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
+                                                                 String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("\n\t---------------IotDb Init Failed---------------\n" +
@@ -317,9 +322,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
         String selectSql;
-        if (instance != null) {
+        if (label != null) {
             selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                     addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
             handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
@@ -332,17 +337,17 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             } else {
                 for (String device : devices) {
                     String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
-                    String instanceId = device.substring(prefixDeviceId.length() + 1);
+                    String instance = device.substring(prefixDeviceId.length() + 1);
                     selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceId), history);
-                    handleHistoryIntervalSelect(selectSql, instanceId, instanceValuesMap);
+                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instance), history);
+                    handleHistoryIntervalSelect(selectSql, instance, instanceValuesMap);
                 }
             }
         }
         return instanceValuesMap;
     }
 
-    private void handleHistoryIntervalSelect(String selectSql, String instanceId,
+    private void handleHistoryIntervalSelect(String selectSql, String instance,
                                              Map<String, List<Value>> instanceValuesMap) {
         SessionDataSetWrapper dataSet = null;
         try {
@@ -350,6 +355,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             log.debug("iot select sql: {}", selectSql);
             while (dataSet.hasNext()) {
                 RowRecord rowRecord = dataSet.next();
+                if (rowRecord.hasNullField()) {
+                    continue;
+                }
                 long timestamp = rowRecord.getTimestamp();
                 double origin = rowRecord.getFields().get(0).getDoubleV();
                 String originStr = BigDecimal.valueOf(origin).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
@@ -364,7 +372,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                         .min(minStr).max(maxStr)
                         .time(timestamp)
                         .build();
-                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceId, k -> new LinkedList<>());
+                List<Value> valueList = instanceValuesMap.computeIfAbsent(instance, k -> new LinkedList<>());
                 valueList.add(value);
             }
         } catch (StatementExecutionException | IoTDBConnectionException e) {
@@ -407,17 +415,17 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     /**
      * 获取设备id
-     * 有instanceId的使用 ${group}.${app}.${metrics}.${monitor}.${instanceId} 的方式
+     * 有instanceId的使用 ${group}.${app}.${metrics}.${monitor}.${labels} 的方式
      * 否则使用 ${group}.${app}.${metrics}.${monitor} 的方式
      * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
      */
-    private String getDeviceId(String app, String metrics, Long monitorId, String instanceId, boolean useQuote) {
+    private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
         String deviceId = STORAGE_GROUP + "." +
                 (useQuote ? addQuote(app) : app) + "." +
                 (useQuote ? addQuote(metrics) : metrics) + "." +
                 ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
-        if (instanceId != null && !instanceId.isEmpty() && !instanceId.equals(CommonConstants.NULL_VALUE)) {
-            deviceId += "." + addQuote(instanceId);
+        if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
+            deviceId += "." + addQuote(labels);
         }
         return deviceId;
     }
@@ -429,14 +437,6 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         if (text == null || text.isEmpty() || (text.startsWith(BACK_QUOTE) && text.endsWith(BACK_QUOTE))) {
             return text;
         }
-        if ((text.startsWith(DOUBLE_QUOTATION_MARKS) && text.endsWith(DOUBLE_QUOTATION_MARKS))) {
-            if (IotDbVersion.V_1_0.equals(version)) {
-                text = text.replace("\"", "`");
-            }
-            return text;
-        }
-        text = text.replace("'", "\\'");
-        text = text.replace("\"", "\\\"");
         text = text.replace("*", "-");
         text = String.format("`%s`", text);
         return text;

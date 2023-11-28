@@ -24,9 +24,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * 监控指标组的一行指标数据
+ * 监控指标集合的一行指标数据
  *
  *
  */
@@ -34,12 +35,12 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "监控指标组的一行指标数据")
+@Schema(description = "监控指标集合的一行指标数据")
 public class ValueRow {
+    
+    @Schema(title = "Value Row Labels")
+    private Map<String, String> labels;
 
-    @Schema(title = "此行数据唯一实例")
-    private String instance;
-
-    @Schema(description = "监控指标组指标值")
+    @Schema(description = "监控指标集合指标值")
     private List<Value> values;
 }
