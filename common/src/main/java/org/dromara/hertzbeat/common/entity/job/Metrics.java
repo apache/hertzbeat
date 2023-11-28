@@ -273,9 +273,12 @@ public class Metrics {
         private byte type = 1;
         /**
          * Whether this field is the instance primary key
-         * 此字段是否为实例主键
          */
         private boolean instance = false;
+        /**
+         * Whether this field is the label
+         */
+        private boolean label = false;
         /**
          * Indicator unit
          * 指标单位

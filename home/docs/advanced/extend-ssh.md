@@ -122,7 +122,7 @@ metrics:
       # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
       - field: hostname
         type: 1
-        instance: true
+        label: true
       - field: version
         type: 1
       - field: uptime

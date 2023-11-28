@@ -114,7 +114,7 @@ metrics:
         type: 1
       - field: id
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
         unit: MB

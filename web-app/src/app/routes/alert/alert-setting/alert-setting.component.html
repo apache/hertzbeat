@@ -188,9 +188,6 @@
                     {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
                   </nz-tag>
                 </nz-list-item>
-                <nz-list-item *ngIf="currentMetrics.length > 1">
-                  <code>instance : {{ 'alert.setting.target.instance' | i18n }}</code>
-                </nz-list-item>
                 <nz-list-item>
                   <code>
                     {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
@@ -399,9 +396,6 @@
                         : ('alert.setting.template.metric-value' | i18n) + '-' + item.label
                     }}</code
                   >
-                </nz-list-item>
-                <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#123;instance&#125; : {{ 'alert.setting.template.instance-value' | i18n }}</code>
                 </nz-list-item>
               </nz-list>
             </nz-collapse-panel>

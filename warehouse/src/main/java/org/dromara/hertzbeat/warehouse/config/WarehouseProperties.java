@@ -153,6 +153,10 @@ public class WarehouseProperties {
          */
         private RedisProperties redis;
         /**
+         * VictoriaMetrics Properties
+         */
+        private VictoriaMetricsProperties victoriaMetrics;
+        /**
          * TdEngine配置信息
          */
         private TdEngineProperties tdEngine;
@@ -195,6 +199,14 @@ public class WarehouseProperties {
 
         public void setRedis(RedisProperties redis) {
             this.redis = redis;
+        }
+
+        public VictoriaMetricsProperties getVictoriaMetrics() {
+            return victoriaMetrics;
+        }
+
+        public void setVictoriaMetrics(VictoriaMetricsProperties victoriaMetrics) {
+            this.victoriaMetrics = victoriaMetrics;
         }
 
         public TdEngineProperties getTdEngine() {
@@ -437,6 +449,58 @@ public class WarehouseProperties {
             public void setTableStrColumnDefineMaxLength(int tableStrColumnDefineMaxLength) {
                 this.tableStrColumnDefineMaxLength = tableStrColumnDefineMaxLength;
             }
+        }
+
+        public static class VictoriaMetricsProperties {
+            /**
+             * Whether the VictoriaMetrics data store is enabled
+             */
+            private boolean enabled = false;
+            /**
+             * VictoriaMetrics connect url
+             */
+            private String url = "http://localhost:8428";
+            /**
+             * VictoriaMetrics username
+             */
+            private String username;
+            /**
+             * VictoriaMetrics password
+             */
+            private String password;
+
+            public boolean isEnabled() {
+                return enabled;
+            }
+
+            public void setEnabled(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            public String getUrl() {
+                return url;
+            }
+
+            public void setUrl(String url) {
+                this.url = url;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public void setUsername(String username) {
+                this.username = username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
+
+            public void setPassword(String password) {
+                this.password = password;
+            }
+            
         }
 
         public static class RedisProperties {

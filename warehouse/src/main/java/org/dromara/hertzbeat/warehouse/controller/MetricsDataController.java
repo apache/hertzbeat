@@ -39,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -114,16 +116,29 @@ public class MetricsDataController {
             List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
                             Field.builder().name(tmpField.getName())
                                     .type(Integer.valueOf(tmpField.getType()).byteValue())
+                                    .label(tmpField.getLabel())
                                     .unit(tmpField.getUnit())
                                     .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);
-            List<ValueRow> valueRows = storageData.getValuesList().stream().map(redisValueRow ->
-                    ValueRow.builder().instance(redisValueRow.getInstance())
-                            .values(redisValueRow.getColumnsList().stream()
-                                    .map(origin -> CommonConstants.NULL_VALUE.equals(origin) ? new Value()
-                                            : new Value(origin)).collect(Collectors.toList()))
-                            .build()).collect(Collectors.toList());
+            List<ValueRow> valueRows = new LinkedList<>();
+            for (CollectRep.ValueRow valueRow : storageData.getValuesList()) {
+                Map<String, String> labels = new HashMap<>(8);
+                List<Value> values = new LinkedList<>();
+                for (int i = 0; i < fields.size(); i++) {
+                    Field field = fields.get(i);
+                    String origin = valueRow.getColumns(i);
+                    if (CommonConstants.NULL_VALUE.equals(origin)) {
+                        values.add(new Value());
+                    } else {
+                        values.add(new Value(origin));
+                        if (field.getLabel()) {
+                            labels.put(field.getName(), origin);
+                        }
+                    }
+                }
+                valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+            }
             dataBuilder.valueRows(valueRows);
             return ResponseEntity.ok(Message.success(dataBuilder.build()));
         }

@@ -77,7 +77,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -96,7 +96,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -117,7 +117,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -138,7 +138,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -159,7 +159,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -180,7 +180,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -199,7 +199,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -218,7 +218,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -237,7 +237,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -256,7 +256,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -276,7 +276,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -295,7 +295,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -314,7 +314,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -333,7 +333,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
