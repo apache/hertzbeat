@@ -197,12 +197,12 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
      * @param app 监控类型
      * @param metrics 指标集合名
      * @param metric 指标名
-     * @param instance 实例
+     * @param label 实例
      * @param history 历史范围
      * @return 指标历史数据列表
      */
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String timeSeriesSelector = NAME_KEY + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" + 
                 "," + MONITOR_ID_KEY + "=\"" + monitorId + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -264,7 +264,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
+                                                                 String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n" +
                     "\t--------------Please Config VictoriaMetrics--------------\n" +

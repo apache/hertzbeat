@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.warehouse.store;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.warehouse.config.IotDbVersion;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import lombok.extern.slf4j.Slf4j;
@@ -207,29 +208,34 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         try {
             long now = System.currentTimeMillis();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                String instance = valueRow.getInstance();
-                if (!instance.isEmpty()) {
-                    instance = String.format("\"%s\"", instance);
+                Map<String, String> labels = new HashMap<>(8);
+                for (int i = 0; i < fieldsList.size(); i++) {
+                    CollectRep.Field field = fieldsList.get(i);
+                    if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
+                        labels.put(field.getName(), valueRow.getColumns(i));
+                    }
                 }
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), instance, false);
-                if (tabletMap.containsKey(instance)) {
+                String label = JsonUtil.toJson(labels);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), label, false);
+                if (tabletMap.containsKey(label)) {
                     // 避免Time重复
                     now++;
                 } else {
-                    tabletMap.put(instance, new Tablet(deviceId, schemaList));
+                    tabletMap.put(label, new Tablet(deviceId, schemaList));
                 }
-                Tablet tablet = tabletMap.get(instance);
+                Tablet tablet = tabletMap.get(label);
                 int rowIndex = tablet.rowSize++;
                 tablet.addTimestamp(rowIndex, now);
                 for (int i = 0; i < fieldsList.size(); i++) {
+                    CollectRep.Field field = fieldsList.get(i);
                     if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
-                            tablet.addValue(fieldsList.get(i).getName(), rowIndex, Double.parseDouble(valueRow.getColumns(i)));
-                        } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
-                            tablet.addValue(fieldsList.get(i).getName(), rowIndex, valueRow.getColumns(i));
+                        if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                            tablet.addValue(field.getName(), rowIndex, Double.parseDouble(valueRow.getColumns(i)));
+                        } else if (field.getType() == CommonConstants.TYPE_STRING) {
+                            tablet.addValue(field.getName(), rowIndex, valueRow.getColumns(i));
                         }
                     } else {
-                        tablet.addValue(fieldsList.get(i).getName(), rowIndex, null);
+                        tablet.addValue(field.getName(), rowIndex, null);
                     }
                 }
             }
@@ -248,7 +254,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-                                                         String instance, String history) {
+                                                         String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("\n\t---------------IotDb Init Failed---------------\n" +
@@ -256,10 +262,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
         String selectSql = "";
         try {
-            if (instance != null) {
+            if (label != null) {
                 selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                 handleHistorySelect(selectSql, "", instanceValuesMap);
             } else {
@@ -309,7 +315,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
+                                                                 String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("\n\t---------------IotDb Init Failed---------------\n" +
@@ -317,9 +323,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                     "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, instance, true);
+        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
         String selectSql;
-        if (instance != null) {
+        if (label != null) {
             selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                     addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId, history);
             handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);

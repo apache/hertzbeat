@@ -326,13 +326,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
                 realValueRowBuilder.addColumns(value);
                 fieldValueMap.clear();
-                if (field.isInstance() && !CommonConstants.NULL_VALUE.equals(value)) {
-                    instanceBuilder.append(value);
-                }
             }
             aliasFieldValueMap.clear();
-            // set instance
-            realValueRowBuilder.setInstance(instanceBuilder.toString());
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
