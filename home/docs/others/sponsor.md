@@ -13,7 +13,6 @@ sidebar_label: Sponsor
 
 Thanks [JiShi Information(build a new microwave + optical transaction network)](https://www.flarespeed.com) sponsored server node.          
 Thanks [TianShang cloud computing(new wisdom cloud)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.     
-Thanks [Postcat(An Open source development tool)](https://datayi.cn/w/xRxVBBko) sponsored.    
 
 
 

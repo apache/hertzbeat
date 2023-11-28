@@ -162,9 +162,9 @@ function Home() {
                 </Section>
             )}
 
-            <Section>
-              <Sponsor headerTitle={translate({ message: 'sponsor' })}/>
-            </Section>
+            {/*<Section>*/}
+            {/*  <Sponsor headerTitle={translate({ message: 'sponsor' })}/>*/}
+            {/*</Section>*/}
 
             {/*Friend Links*/}
             <Section>
@@ -174,12 +174,12 @@ function Home() {
               />
             </Section>
             {/*/!*Friend Links*!/*/}
-            <Section>
-              <LogoCarouselStatic
-                  logos={friendsLink}
-                  headerTitle={translate({ message: 'Friends Link' })}
-              />
-            </Section>
+            {/*<Section>*/}
+            {/*  <LogoCarouselStatic*/}
+            {/*      logos={friendsLink}*/}
+            {/*      headerTitle={translate({ message: 'Friends Link' })}*/}
+            {/*  />*/}
+            {/*</Section>*/}
           </main>
         </Layout>
         <DiaLog/>

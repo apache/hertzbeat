@@ -242,9 +242,6 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
-        if (INSTANCE_NULL.equals(instance)) {
-            instance = "";
-        }
         String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
         log.debug(selectSql);

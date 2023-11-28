@@ -111,7 +111,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     slidesToShow: 4,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 1200,
     rows: 1,
     responsive: [
       {
@@ -191,14 +191,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
           name: this.i18nSvc.fanyi('dashboard.monitors.total'),
           type: 'pie',
           selectedMode: 'single',
-          color: '#722ED1',
+          color: '#3f51b5',
           radius: [0, '30%'],
           label: {
             position: 'center',
-            fontSize: 26,
+            fontSize: 38,
             fontWeight: 'bolder',
             color: '#ffffff',
-            fontStyle: 'oblique',
+            fontStyle: 'normal',
             formatter: '{c}'
           },
           labelLine: {

@@ -34,7 +34,7 @@ public class MetricsDataRedisCodec implements RedisCodec<String, CollectRep.Metr
 
     @Override
     public String decodeKey(ByteBuffer byteBuffer) {
-        return new String(byteBuffer.array(), byteBuffer.position(), byteBuffer.limit(), StandardCharsets.UTF_8);
+        return StandardCharsets.UTF_8.decode(byteBuffer).toString();
     }
 
     @Override
