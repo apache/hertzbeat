@@ -435,10 +435,10 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 ##### Open-Source Project Build From Open-Source
 
-> HertzBeat is built on so many great open source projects, thanks to them!
+HertzBeat is built on so many great open source projects, thanks to them!
 
-- Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...
-- TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...
+- `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...`
+- `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
 
 
 ## Star History
