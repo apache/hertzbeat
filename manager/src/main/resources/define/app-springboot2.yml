@@ -119,7 +119,7 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
@@ -155,7 +155,7 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: profile
         type: 1
       - field: port

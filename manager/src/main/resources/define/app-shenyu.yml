@@ -73,7 +73,7 @@ metrics:
   - name: shenyu_request_throw_created
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: value
         type: 0
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -93,7 +93,7 @@ metrics:
   - name: process_cpu_seconds_total
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: value
         type: 0
         unit: s
@@ -114,7 +114,7 @@ metrics:
   - name: process_open_fds
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: value
         type: 0
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -134,7 +134,7 @@ metrics:
   - name: process_max_fds
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: value
         type: 0
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -154,7 +154,7 @@ metrics:
   - name: jvm_info
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: runtime
         type: 1
       - field: vendor
@@ -178,7 +178,7 @@ metrics:
   - name: jvm_memory_bytes_used
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: area
         type: 1
         label: true
@@ -204,7 +204,7 @@ metrics:
   - name: jvm_memory_pool_bytes_used
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: pool
         type: 1
         label: true
@@ -230,7 +230,7 @@ metrics:
   - name: jvm_memory_pool_bytes_committed
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: pool
         type: 1
         label: true
@@ -256,7 +256,7 @@ metrics:
   - name: jvm_memory_pool_bytes_max
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: pool
         type: 1
         label: true
@@ -282,7 +282,7 @@ metrics:
   - name: jvm_threads_state
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: state
         type: 1
         label: true
