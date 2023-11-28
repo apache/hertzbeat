@@ -11,7 +11,7 @@ const iconCommonUrl = '/img/icons/'
 
 var settings = {
     infinite: true,
-    speed: 1200,
+    speed: 400,
     slidesToShow: 6,
     slidesToScroll: 1,
     autoplay: true,

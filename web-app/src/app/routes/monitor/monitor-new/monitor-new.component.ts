@@ -137,7 +137,9 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onHostChange(hostValue: string) {
-    this.monitor.name = `${this.monitor.app.toUpperCase()}_${hostValue}`;
+    if (this.monitor.app != 'prometheus') {
+      this.monitor.name = `${this.monitor.app.toUpperCase()}_${hostValue}`;
+    }
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
