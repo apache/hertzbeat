@@ -32,11 +32,8 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
-import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.Pair;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -282,7 +279,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                             value = String.valueOf(objValue);
                         }
                     } catch (Exception e) {
-                        log.info("[calculates execute warning] {}.",  e.getMessage());
+                        log.info("[calculates execute warning] {}.", e.getMessage());
                     }
                 } else {
                     // does not exist then map the alias value
@@ -293,13 +290,23 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     } else {
                         value = aliasFieldValueMap.get(realField);
                     }
-                    if (CommonConstants.TYPE_NUMBER == field.getType() && value != null) {
-                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                .extractDoubleAndUnitFromStr(value);
-                        value = String.valueOf(doubleAndUnit.getValue());
-                        aliasFieldUnit = doubleAndUnit.getUnit();
+
+                    if (value != null) {
+                        final byte fieldType = field.getType();
+
+                        if (fieldType == CommonConstants.TYPE_NUMBER) {
+                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                    .extractDoubleAndUnitFromStr(value);
+                            final Double tempValue = doubleAndUnit.getValue();
+                            value = tempValue == null ? null : String.valueOf(tempValue);
+                            aliasFieldUnit = doubleAndUnit.getUnit();
+                        } else if (fieldType == CommonConstants.TYPE_TIME) {
+                            final int tempValue;
+                            value = (tempValue = CommonUtil.parseTimeStrToSecond(value)) == -1 ? null : String.valueOf(tempValue);
+                        }
                     }
                 }
+
                 // 单位处理
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
                 if (aliasFieldUnit != null) {
@@ -335,7 +342,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
 
     /**
-     *
      * @param cal
      * @param fieldAliasMap
      * @return
@@ -343,7 +349,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
         int splitIndex = cal.indexOf("=");
         String field = cal.substring(0, splitIndex).trim();
-        String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#","#");
+        String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#", "#");
         Expression expression;
         try {
             expression = AviatorEvaluator.compile(expressionStr, true);
@@ -357,6 +363,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     /**
      * transform unit
+     *
      * @param unit
      * @return
      */

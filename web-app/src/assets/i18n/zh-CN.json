@@ -131,6 +131,7 @@
   "alert.setting.rule": "阈值规则",
   "alert.setting.number": "数值型",
   "alert.setting.string": "字符型",
+  "alert.setting.time": "时间型",
   "alert.setting.rule.label": "图形化选择设置指标触发告警规则,支持多规则与",
   "alert.setting.rule.metric.place-holder": "请选择指标",
   "alert.setting.rule.switch-expr": "阈值表达式",
