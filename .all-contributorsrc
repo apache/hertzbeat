@@ -1422,6 +1422,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Calvin979",
+      "name": "Naruse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/131688897?v=4",
+      "profile": "https://github.com/Calvin979",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
