@@ -131,6 +131,7 @@
   "alert.setting.rule": "Threshold Rule",
   "alert.setting.number": "Numeric",
   "alert.setting.string": "String",
+  "alert.setting.time": "Time",
   "alert.setting.rule.label": "Graphical setting alarm threshold rules, support multiple rules &&",
   "alert.setting.rule.metric.place-holder": "Please select metric",
   "alert.setting.rule.switch-expr": "Coding Threshold",
