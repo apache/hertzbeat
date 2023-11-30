@@ -3,7 +3,7 @@
     "main": "主导航",
     "lang": "语言",
     "dashboard": "仪表盘",
-    "search.placeholder": "搜索监控：名称、IP等",
+    "search.placeholder": "搜索监控任务：任务名称、HOST等",
     "fullscreen": "全屏",
     "fullscreen.exit": "退出全屏",
     "clear.local.storage": "清理本地缓存",

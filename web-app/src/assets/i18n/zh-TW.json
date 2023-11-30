@@ -3,7 +3,7 @@
     "main": "主導航",
     "lang": "語言",
     "dashboard": "儀表盤",
-    "search.placeholder": "搜索監控:名稱、IP等",
+    "search.placeholder": "搜索監控任務：任務名稱、HOST等",
     "fullscreen": "全屏",
     "fullscreen.exit": "退出全屏",
     "clear.local.storage": "清理本地緩存",
