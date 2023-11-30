@@ -10,6 +10,7 @@
 
 > An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.   
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
@@ -157,9 +158,9 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
 
-##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose  
+##### 4：Install All(hertzbeat+mysql+tsdb) via Docker-compose  
 
-Install the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install the mysql/postgresql database, iotdb/tdengine/victoria-metrics database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 

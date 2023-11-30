@@ -21,7 +21,8 @@
       "program": "应用程序监控",
       "webserver": "Web服务器监控",
       "cache": "缓存监控",
-      "bigdata": "大数据监控"
+      "bigdata": "大数据监控",
+      "promql": "数据查询"
     },
     "account": {
       "": "个人页",

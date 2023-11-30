@@ -21,7 +21,8 @@
       "program": "Program Monitor",
       "webserver": "Webserver Monitor",
       "cache": "Cache Monitor",
-      "bigdata": "Bigdata Monitor"
+      "bigdata": "Bigdata Monitor",
+      "promql": "Data Query"
     },
     "account": {
       "": "Personal",

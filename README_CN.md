@@ -10,6 +10,7 @@
 
 > 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力。
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
@@ -155,9 +156,9 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
 
-##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
+##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+tsdb
 
-通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
+通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql/postgresql 数据库, iotdb/tdengine/victoria-metrics 时序数据库和 hertzbeat 安装部署。
 
 详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
 

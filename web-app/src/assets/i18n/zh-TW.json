@@ -21,7 +21,8 @@
       "program": "應用程式監控",
       "webserver": "Web伺服器監控",
       "cache": "快取監控",
-      "bigdata": "大數據監控"
+      "bigdata": "大數據監控",
+      "promql": "数据查询"
     },
     "account": {
       "": "個人頁",
