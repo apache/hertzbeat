@@ -639,13 +639,13 @@ metrics:
         type: 1
         label: true
       - field: sql_text
-        type: 0
+        type: 1
       - field: start_time
         type: 1
       - field: db
         type: 1
       - field: query_time
-        type: 1
+        type: 3
     aliasFields:
       - sql_text
       - start_time
