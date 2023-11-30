@@ -130,6 +130,7 @@
   "alert.setting.rule": "閾值規則",
   "alert.setting.number": "數值型",
   "alert.setting.string": "字符型",
+  "alert.setting.time": "時間型",
   "alert.setting.rule.label": "圖形化選擇設置指標觸發告警規則,支援多規則與",
   "alert.setting.rule.metric.place-holder": "請選擇指標",
   "alert.setting.rule.switch-expr": "閾值表達式",

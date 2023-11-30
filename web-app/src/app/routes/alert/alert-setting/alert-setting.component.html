@@ -241,7 +241,13 @@
                 >
                   {{ item.label ? item.label : item.value }}
                   <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
-                    {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
+                    {{
+                      item.type === 0
+                        ? ('alert.setting.number' | i18n)
+                        : item.type === 3
+                        ? ('alert.setting.time' | i18n)
+                        : ('alert.setting.string' | i18n)
+                    }}
                   </nz-tag>
                   <nz-tag *ngIf="item.unit">
                     {{ item.unit }}
@@ -259,12 +265,36 @@
                 [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
                 [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
               >
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>'" [nzLabel]="'>'"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'<'" [nzLabel]="'<'"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'=='" [nzLabel]="'=='"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'!='" [nzLabel]="'!='"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'<='" [nzLabel]="'<='"></nz-option>
-                <nz-option *ngIf="!alertRule.metric || alertRule.metric.type === 0" [nzValue]="'>='" [nzLabel]="'>='"></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'>'"
+                  [nzLabel]="'>'"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'<'"
+                  [nzLabel]="'<'"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'=='"
+                  [nzLabel]="'=='"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'!='"
+                  [nzLabel]="'!='"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'<='"
+                  [nzLabel]="'<='"
+                ></nz-option>
+                <nz-option
+                  *ngIf="!alertRule.metric || alertRule.metric.type === 0 || alertRule.metric.type === 3"
+                  [nzValue]="'>='"
+                  [nzLabel]="'>='"
+                ></nz-option>
                 <nz-option
                   *ngIf="!alertRule.metric || alertRule.metric.type === 1"
                   [nzValue]="'equals'"
