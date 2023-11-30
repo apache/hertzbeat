@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 - Front-web start   
 
-1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 16.10.0`
+1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 18`
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
 4. Install angular-cli globally: `yarn global add @angular/cli@15`
@@ -182,7 +182,7 @@ Public WeChat: `tancloudtech`
 
 - 前端启动
 
-1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 16.10.0`
+1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 18`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
 4. 全局安装angular-cli `yarn global add @angular/cli@15`
