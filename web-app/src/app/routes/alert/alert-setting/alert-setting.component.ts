@@ -347,7 +347,7 @@ export class AlertSettingComponent implements OnInit {
       if (rule.operator == 'exists' || rule.operator == '!exists') {
         ruleStr = `${rule.operator}(${rule.metric.value})`;
       } else {
-        if (rule.metric.type === 0) {
+        if (rule.metric.type === 0 || rule.metric.type === 3) {
           ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
         } else if (rule.metric.type === 1) {
           ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;

@@ -902,7 +902,7 @@ metrics:
           zh-CN: ID
           en-US: ID
       - field: sql_text
-        type: 0
+        type: 1
         i18n:
           zh-CN: SQL 文本
           en-US: SQL Text
@@ -917,7 +917,7 @@ metrics:
           zh-CN: 数据库
           en-US: Database
       - field: query_time
-        type: 1
+        type: 3
         i18n:
           zh-CN: 查询时间
           en-US: Query Time
