@@ -13,12 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link CollectUtil}
  */
 class CollectUtilTest {
+
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
@@ -79,7 +85,7 @@ class CollectUtilTest {
     }
 
     @Test
-    void replaceCryPlaceholder() {
+    void replaceCryPlaceholder() throws JsonMappingException, JsonProcessingException {
         Metrics metrics = Metrics.builder().name("^o^name^o^").build();
         JsonElement jsonElement = new Gson().toJsonTree(metrics);
         Map<String, Configmap> configmap = new HashMap<>();
@@ -89,8 +95,7 @@ class CollectUtilTest {
 
         Metrics metricsTarget = Metrics.builder().name("张三").build();
         JsonElement jsonElementTarget = new Gson().toJsonTree(metricsTarget);
-        assertEquals(jsonElementTarget.toString(), res1.toString());
-
+        assertEquals(JSON_MAPPER.readTree(jsonElementTarget.toString()), JSON_MAPPER.readTree(res1.toString()));
 
         List<Metrics> metricsList = new ArrayList<>();
         metricsList.add(metrics);
@@ -102,7 +107,7 @@ class CollectUtilTest {
         metricsListTarget.add(metricsTarget);
         metricsListTarget.add(metricsTarget);
         JsonElement jsonArrayTarget = new Gson().toJsonTree(metricsListTarget);
-        assertEquals(jsonArrayTarget.toString(), res2.toString());
+        assertEquals(JSON_MAPPER.readTree(jsonArrayTarget.toString()), JSON_MAPPER.readTree(res2.toString()));
     }
 
     @Test
