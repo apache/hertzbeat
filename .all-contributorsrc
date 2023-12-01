@@ -1413,6 +1413,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Clownsw",
+      "name": "Smliexx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28394742?v=4",
+      "profile": "https://github.com/Clownsw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Calvin979",
+      "name": "Naruse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/131688897?v=4",
+      "profile": "https://github.com/Calvin979",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

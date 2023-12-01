@@ -378,6 +378,8 @@ Thanks to these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaoguolong"><img src="https://avatars.githubusercontent.com/u/33684988?v=4?s=100" width="100px;" alt="xiaoguolong"/><br /><sub><b>xiaoguolong</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaoguolong" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Clownsw"><img src="https://avatars.githubusercontent.com/u/28394742?v=4?s=100" width="100px;" alt="Smliexx"/><br /><sub><b>Smliexx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Clownsw" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
@@ -441,6 +443,15 @@ HertzBeat is built on so many great open source projects, thanks to them!
 
 - `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...`
 - `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
+
+## Landscape
+
+<p align="left">
+<img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="175">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="200" />
+<br /><br />
+HertzBeat enriches the <a href="https://landscape.cncf.io/card-mode?category=monitoring&grouping=category">
+CNCF Observability And Analysis - Monitoring Landscape.</a>
+</p>
 
 
 ## Star History
