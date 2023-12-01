@@ -448,7 +448,7 @@ HertzBeat is built on so many great open source projects, thanks to them!
 <p align="left">
 <img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="175">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="200" />
 <br /><br />
-HertzBeat enriches the <a href="https://landscape.cncf.io/card-mode?category=api-gateway&grouping=category">
+HertzBeat enriches the <a href="https://landscape.cncf.io/card-mode?category=monitoring&grouping=category">
 CNCF Observability And Analysis - Monitoring Landscape.</a>
 </p>
 
