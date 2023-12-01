@@ -68,6 +68,7 @@
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-net>3.10.0</commons-net>
     </properties>
 
     <dependencyManagement>
@@ -159,6 +160,11 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-net</groupId>
+                <artifactId>commons-net</artifactId>
+                <version>${commons-net}</version>
             </dependency>
             <!-- mysql -->
             <dependency>

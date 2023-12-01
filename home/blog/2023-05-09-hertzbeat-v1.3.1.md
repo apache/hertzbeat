@@ -22,7 +22,7 @@ Website: hertzbeat.com | tancloud.cn
 > Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
 > More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     

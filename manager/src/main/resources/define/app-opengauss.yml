@@ -87,10 +87,10 @@ metrics:
     priority: 0
     # 指标组中的具体监控指标
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: server_version
         type: 1
-        instance: true
+        label: true
       - field: port
         type: 1
       - field: server_encoding
@@ -120,7 +120,7 @@ metrics:
   - name: state
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: name
         type: 1
       - field: conflicts
@@ -163,7 +163,7 @@ metrics:
   - name: activity
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: running
         type: 0
         unit: sbc

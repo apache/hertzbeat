@@ -30,9 +30,10 @@ slug: /
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-- 将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式消息及时送达。
+- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。    
@@ -45,7 +46,7 @@ slug: /
 - 使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 但开源不等同于免费，如果基于HertzBeat二次开发修改了logo，名称，版权等，[请找我们授权，否则会有法律风险](https://hertzbeat.com/docs/others/private)。
+- 开源不等同于免费，如果基于HertzBeat二次开发修改了logo，名称，版权等，[请找我们授权，否则会有法律风险](https://hertzbeat.com/docs/others/private)。
 
 ### 强大的监控模版
 
@@ -273,7 +274,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ### 监控模版
 
-- HertzBeat 将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- HertzBeat 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 同理我们内置的所有监控类型(mysql,website,jvm,k8s)也一一映射为对应的监控模版，用户可以新增修改监控模版来自定义监控功能。
 
 ![hertzbeat](/img/home/9.png)

@@ -147,7 +147,7 @@ metrics:
         unit: ms
       - field: app
         type: 1
-        instance: true
+        label: true
       - field: category
         type: 1
       - field: status

@@ -43,6 +43,11 @@
             <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- util -->
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

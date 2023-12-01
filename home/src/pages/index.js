@@ -85,56 +85,26 @@ function Home() {
               >
                 <SwiperSlide>
                   <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
                       src={useBaseUrl('/img/docs/hertzbeat-arch.png')}
                   />
                 </SwiperSlide>
                 <SwiperSlide>
                   <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
                       src={useBaseUrl('/img/home/0.png')}
                   />
                 </SwiperSlide>
                 <SwiperSlide>
                   <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
                       src={useBaseUrl('/img/home/1.png')}
                   />
                 </SwiperSlide>
                 <SwiperSlide>
                   <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
+                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
                       src={useBaseUrl('/img/home/9.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/2.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/4.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/6.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/7.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1000px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/8.png')}
                   />
                 </SwiperSlide>
               </Swiper>
@@ -162,9 +132,9 @@ function Home() {
                 </Section>
             )}
 
-            <Section>
-              <Sponsor headerTitle={translate({ message: 'sponsor' })}/>
-            </Section>
+            {/*<Section>*/}
+            {/*  <Sponsor headerTitle={translate({ message: 'sponsor' })}/>*/}
+            {/*</Section>*/}
 
             {/*Friend Links*/}
             <Section>
@@ -174,12 +144,12 @@ function Home() {
               />
             </Section>
             {/*/!*Friend Links*!/*/}
-            <Section>
-              <LogoCarouselStatic
-                  logos={friendsLink}
-                  headerTitle={translate({ message: 'Friends Link' })}
-              />
-            </Section>
+            {/*<Section>*/}
+            {/*  <LogoCarouselStatic*/}
+            {/*      logos={friendsLink}*/}
+            {/*      headerTitle={translate({ message: 'Friends Link' })}*/}
+            {/*  />*/}
+            {/*</Section>*/}
           </main>
         </Layout>
         <DiaLog/>

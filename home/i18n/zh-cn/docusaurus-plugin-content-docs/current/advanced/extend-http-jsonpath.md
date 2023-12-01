@@ -143,7 +143,7 @@ metrics:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: num
         type: 0
 # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk

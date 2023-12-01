@@ -21,7 +21,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 > 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等指标监控，阈值告警通知一步到位。   
 > 支持更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
+> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)

@@ -21,7 +21,7 @@ Website: hertzbeat.com | tancloud.cn
 > It supports monitoring of application services, database, operating system, middleware, cloud native, network and other metrics, and threshold alert notification in one step.   
 > Support more liberal threshold rules (calculation expressions), `email` `Discord` `Slack` `Telegram` `Pegging` `WeChat` `FlyBook` `SMS` `Webhook` and other ways to timely delivery.
 
-> We have made the protocol specifications such as `Http,Jmx,Ssh,Snmp,Jdbc` configurable so that you can simply configure `YML` to use these protocols to customize the collection of any metrics you want.
+> We have made the protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable so that you can simply configure `YML` to use these protocols to customize the collection of any metrics you want.
 
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by defining YML?
 
