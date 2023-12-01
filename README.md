@@ -164,7 +164,7 @@ Install the mysql/postgresql database, iotdb/tdengine/victoria-metrics database 
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
-##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+##### 5. Install All(hertzbeat+collector+mysql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 

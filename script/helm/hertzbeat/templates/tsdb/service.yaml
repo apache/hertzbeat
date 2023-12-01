@@ -7,8 +7,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 6667
-      targetPort: 6667
+    - port: 8428
+      targetPort: 8428
       protocol: TCP
   selector:
     {{- include "hertzbeat.selectorLabels" . | nindent 4 }}

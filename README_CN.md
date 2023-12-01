@@ -162,7 +162,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
 
-##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+mysql+iotdb
+##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+mysql+tsdb
 
 通过 Helm Chart 一次性将 HertzBeat 集群组件部署到 Kubernetes 集群中。
 
