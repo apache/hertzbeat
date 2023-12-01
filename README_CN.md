@@ -393,14 +393,14 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 
 ##### 微信交流群
 
-加微信号 tan-cloud 或 扫描下面账号二维码拉您进微信群。   
-<img alt="tan-cloud" src="home/static/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
+加微信号 `tan-cloud` 或 扫描下面账号二维码拉您进微信群。   
+<img alt="tan-cloud" src="home/static/img/docs/help/tan-cloud-wechat.jpg" width="150"/>
 
 ##### QQ交流群
 
-加QQ群号 236915833 或 扫描下面的群二维码进群
+加QQ群号 `236915833` 或 扫描下面的群二维码进群。
 
-<img alt="tan-cloud" src="home/static/img/docs/help/qq-qr.jpg" width="200"/>          
+<img alt="tan-cloud" src="home/static/img/docs/help/qq-qr.jpg" width="150"/>          
 
 ##### Channel 
 
@@ -420,11 +420,11 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 
 ##### 公众号与星球     
 
-<img alt="tan-cloud" src="home/static/img/wechat.png" width="400"/>  
+<img alt="tan-cloud" src="home/static/img/wechat.png" width="300"/>  
 
 <br/>
 
-<img alt="planet" src="home/static/img/planet.jpg" width="400"/>    
+<img alt="planet" src="home/static/img/planet.jpg" width="300"/>    
 
 ##### 友情链接   
 
