@@ -32,14 +32,14 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     apache/iotdb:0.13.3-node
 ```
 
-   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of TDengine data directory.`/iotdb/data` should be replaced with the actual local directory.
+   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of IotDB data directory.`/iotdb/data` should be replaced with the actual local directory.
    use```$ docker ps``` to check if the database started successfully
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file 
 
    Modify `hertzbeat/config/application.yml` configuration file     
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
-   Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
+   Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
 
 ```
 warehouse:
