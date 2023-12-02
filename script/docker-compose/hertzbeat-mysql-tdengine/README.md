@@ -15,7 +15,7 @@
 ##### docker compose deploys hertzbeat and its dependent services
 
 1. Download the hertzbeat-docker-compose installation deployment script file
-   The script file is located in `script/docker-compose/hertzbeat-mysql-tdengine` link [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/ hertzbeat-mysql-tdengine)
+   The script file is located in `script/docker-compose/hertzbeat-mysql-tdengine` link [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-tdengine)
 
 
 2. Enter the deployment script docker-compose directory, execute
