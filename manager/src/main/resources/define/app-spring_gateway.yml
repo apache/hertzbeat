@@ -149,6 +149,72 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
 
+  # metrics - environment
+  # 监控指标组 - environment
+  - name: environment
+    priority: 1
+    # The specific monitoring metrics in the metric group.
+    # 指标组中的具体监控指标
+    fields:
+      # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: profile
+        type: 1
+      - field: port
+        type: 0
+      - field: os
+        type: 1
+      - field: os_arch
+        type: 1
+      - field: jdk_vendor
+        type: 1
+      - field: jvm_version
+        type: 1
+    # metric alias list, used to identify metrics in query results
+    # 指标别名列表，用于在查询结果中识别指标
+    aliasFields:
+      - $.activeProfiles[0]
+      - $.propertySources[?(@.name=='server.ports')].properties.*.value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
+    # A list of calculation scripts for metric values.
+    # 计算指标值的脚本列表
+    calculates:
+      - profile=#`$.activeProfiles[0]`
+      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
+      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
+      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
+      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
+      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url
+      # url请求接口路径
+      url: ^_^base_path^_^/env
+      # http request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      # http response data parse script
+      # 响应数据解析脚本
+      parseScript: '$'
 
   - name: thread_state
     visible: false
