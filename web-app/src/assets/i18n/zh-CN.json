@@ -3,7 +3,7 @@
     "main": "主导航",
     "lang": "语言",
     "dashboard": "仪表盘",
-    "search.placeholder": "搜索监控：名称、IP等",
+    "search.placeholder": "搜索监控任务：任务名称、HOST等",
     "fullscreen": "全屏",
     "fullscreen.exit": "退出全屏",
     "clear.local.storage": "清理本地缓存",
@@ -21,7 +21,8 @@
       "program": "应用程序监控",
       "webserver": "Web服务器监控",
       "cache": "缓存监控",
-      "bigdata": "大数据监控"
+      "bigdata": "大数据监控",
+      "promql": "数据查询"
     },
     "account": {
       "": "个人页",
