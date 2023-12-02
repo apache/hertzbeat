@@ -30,12 +30,12 @@ spec:
         imagePullPolicy: {{ .Values.tsdb.image.pullPolicy }}
         livenessProbe:
           tcpSocket:
-            port: 6667
+            port: 8428
           initialDelaySeconds: 300
           periodSeconds: 10
         readinessProbe:
           tcpSocket:
-            port: 6667
+            port: 8428
           initialDelaySeconds: 1
           periodSeconds: 10
         resources:
@@ -45,7 +45,7 @@ spec:
               name: "{{ include "hertzbeat.tsdb" . }}"
         volumeMounts:
         - name: data
-          mountPath: /iotdb/data
+          mountPath: /victoria-metrics-data
           subPath: ""
       volumes:
         {{- if not .Values.tsdb.persistence.enabled }}

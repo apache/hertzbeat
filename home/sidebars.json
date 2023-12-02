@@ -25,6 +25,7 @@
           "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
         },
         "start/upgrade",
+        "start/victoria-metrics-init",
         "start/iotdb-init",
         "start/tdengine-init",
         "start/greptime-init",
