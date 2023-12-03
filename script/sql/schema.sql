@@ -262,7 +262,7 @@ CREATE TABLE  hzb_notice_template
     name           varchar(100)     not null comment '模版名称',
     type           tinyint          not null comment '通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人',
     preset         boolean          default false comment '是否为预设模板: true-预设模板 false-自定义模板',
-    content        varchar(60000)   comment '模板内容',
+    content        longtext         comment '模板内容',
     creator        varchar(100)     comment '创建者',
     modifier       varchar(100)     comment '最新修改者',
     gmt_create     timestamp        default current_timestamp comment 'create time',
