@@ -124,7 +124,7 @@ metrics:
   # The first monitoring metrics basic_influxdb_memstats_alloc.
   # Note: Built-in monitoring metrics include (responseTime - response time)
   - name: basic_influxdb_memstats_alloc
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
@@ -256,7 +256,7 @@ metrics:
       parseType: PromQL
 
   - name: influxdb_query_rate_seconds    # Query rate per second 每秒查询率
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
@@ -320,7 +320,7 @@ metrics:
       parseType: PromQL
 
   - name: influxdb_queryExecutor_queriesFinished_10s    # Query rate per second 每秒查询率
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度

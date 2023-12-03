@@ -11,7 +11,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 
 ### HTTP protocol parses the general response structure to obtain metrics data
 
-> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as indicator data.
+> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as metric data.
 
 
 ```
@@ -157,7 +157,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
         instance: true
@@ -213,7 +213,7 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-3.png)
 
-> After a certain period of time (depending on the collection cycle), we can see the specific indicator data and historical charts in the monitoring details!
+> After a certain period of time (depending on the collection cycle), we can see the specific metric data and historical charts in the monitoring details!
 
 
 ![](/img/docs/advanced/extend-http-example-4.png)

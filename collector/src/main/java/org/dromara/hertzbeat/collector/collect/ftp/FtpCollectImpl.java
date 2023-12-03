@@ -64,7 +64,7 @@ public class FtpCollectImpl extends AbstractCollect {
 
     /**
      * collect data: key-value
-     * Please modify this, if you want to add some indicators.
+     * Please modify this, if you want to add some metrics.
      */
     private Map<String, String> collectValue(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         boolean isActive;

@@ -6,7 +6,7 @@ sidebar_label: IoTDB init (optional)
 
 HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to initialize, or not to install (note ⚠️If you don't install it, there will be no historical chart data)
 
-Apache IoTDB is a software system that integrates the collection, storage, management and analysis of IoT time series data. We use it to store and analyze the collected historical data of monitoring indicators.
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of IoT time series data. We use it to store and analyze the collected historical data of monitoring metrics.
 
 Note ⚠️ IoTDB is optional, if not configured, there will be no historical chart data. Support V0.12 - V0.13 version, recommend to use V0.13.* version
 

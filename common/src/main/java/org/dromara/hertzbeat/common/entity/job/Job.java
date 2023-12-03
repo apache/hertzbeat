@@ -137,7 +137,7 @@ public class Job {
     private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
-     * collector use - construct to initialize metrics group execution view
+     * collector use - construct to initialize metrics execution view
      * collector使用 - 构造初始化指标执行视图
      */
     public synchronized void constructPriorMetrics() {

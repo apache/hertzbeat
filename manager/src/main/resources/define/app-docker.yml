@@ -159,7 +159,7 @@ metrics:
       parseType: default
 
   - name: containers
-    # The smaller the priority value (0-127), the higher the priority of the metrics group. Lower-priority metrics groups will be scheduled after higher-priority metrics groups have been collected. Metrics groups with the same priority will be scheduled to collect data in parallel.
+    # The smaller the priority value (0-127), the higher the priority of the metrics. Lower-priority metricss will be scheduled after higher-priority metricss have been collected. metricss with the same priority will be scheduled to collect data in parallel.
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度

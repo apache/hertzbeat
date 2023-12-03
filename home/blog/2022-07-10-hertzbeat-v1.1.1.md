@@ -11,7 +11,7 @@ tags: [opensource]
 
 **Home: [hertzbeat.com](https://hertzbeat.com)**  
 
-Hi guys! HertzBeat v1.1.1 is coming. This version brings custom monitoring enhancements, and the collected indicator data can be assigned as a variable to the next collection. Fixed several bugs and improved the overall stable usability.
+Hi guys! HertzBeat v1.1.1 is coming. This version brings custom monitoring enhancements, and the collected metric data can be assigned as a variable to the next collection. Fixed several bugs and improved the overall stable usability.
 
 Only one docker command is needed to install and experience hertzbeat：
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
