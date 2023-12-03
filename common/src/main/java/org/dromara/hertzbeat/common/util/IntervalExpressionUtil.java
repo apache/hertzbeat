@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.common.util;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * expression calculate for number range
  * 数值区间表达式计算
  * [a,b] = {a <= x <= b}
  * [a,b) = {a <= x < b}

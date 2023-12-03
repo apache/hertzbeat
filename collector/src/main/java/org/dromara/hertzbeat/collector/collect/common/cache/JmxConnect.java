@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.management.remote.JMXConnector;
 
 /**
- * jmx链接销毁管理
- *
+ * jmx connect object
  * @author huacheng
- *
  **/
 @Slf4j
 public class JmxConnect implements CacheCloseable {

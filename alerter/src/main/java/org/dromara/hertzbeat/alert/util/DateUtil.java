@@ -1,11 +1,14 @@
 package org.dromara.hertzbeat.alert.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 /**
- * 记录一些常用的日期格式
+ * date time common util
  */
+@Slf4j
 public class DateUtil {
 
     private static final String[] DATE_FORMATS = {
@@ -13,7 +16,8 @@ public class DateUtil {
             "yyyy-MM-dd HH:mm:ss"};
 
     /**
-     * 常用日期格式转时间戳
+     * convert date to timestamp
+     * @param date date
      */
     public static Long getTimeStampFromSomeFormats(String date) {
         SimpleDateFormat sdf;
@@ -21,21 +25,24 @@ public class DateUtil {
             try {
                 sdf = new SimpleDateFormat(dateFormat);
                 return sdf.parse(date).getTime();
-            } catch (ParseException e) {}
+            } catch (ParseException e) {
+                log.error(e.getMessage());
+            }
         }
         return null;
     }
 
     /**
-     * 指定日期格式转换时间戳
+     * convert format data to timestamp
      */
     public static Long getTimeStampFromFormat(String date, String format) {
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         try {
             return sdf.parse(date).getTime();
         } catch (Exception e) {
-            throw new RuntimeException("时间格式解析异常！");
+            log.error(e.getMessage());
         }
+        return null;
     }
 
 }

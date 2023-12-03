@@ -101,9 +101,8 @@ public class HttpCollectImpl extends AbstractCollect {
     
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
-                        long appId, String app, Metrics metrics) {
+                        long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 校验参数
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -120,16 +119,13 @@ public class HttpCollectImpl extends AbstractCollect {
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                // 状态码不在successCodes中的状态码为失败
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
                 return;
             }
-            // 在successCodes中的状态码成功
             // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
             // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            // 根据不同的解析方式解析
             if (resp == null || "".equals(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
@@ -164,25 +160,21 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
-            // 对端不可达
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
             builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
-            // 对端连接失败
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (IOException e4) {
-            // 其它IO异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
-            // 其它异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
@@ -218,7 +210,6 @@ public class HttpCollectImpl extends AbstractCollect {
     private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        // 网站关键词数量监测
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : aliasFields) {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
@@ -235,7 +226,6 @@ public class HttpCollectImpl extends AbstractCollect {
     private void parseResponseBySiteMap(String resp, List<String> aliasFields,
                                         CollectRep.MetricsData.Builder builder) {
         List<String> siteUrls = new LinkedList<>();
-        // 使用xml解析
         boolean isXmlFormat = true;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -288,13 +278,10 @@ public class HttpCollectImpl extends AbstractCollect {
                     errorMsg = e1.getMessage();
                 }
             } catch (UnknownHostException e2) {
-                // 对端不可达
                 errorMsg = "unknown host";
             } catch (InterruptedIOException | ConnectException | SSLException e3) {
-                // 对端连接失败
                 errorMsg = "connect error: " + e3.getMessage();
             } catch (IOException e4) {
-                // 其它IO异常
                 errorMsg = "io error: " + e4.getMessage();
             } catch (Exception e) {
                 errorMsg = "error: " + e.getMessage();
@@ -458,7 +445,6 @@ public class HttpCollectImpl extends AbstractCollect {
     
     /**
      * create httpContext
-     *
      * @param httpProtocol http protocol
      * @return context
      */
@@ -483,14 +469,12 @@ public class HttpCollectImpl extends AbstractCollect {
     }
     
     /**
-     * 根据http配置参数构造请求头
-     *
-     * @param httpProtocol http参数配置
-     * @return 请求体
+     * create http request
+     * @param httpProtocol http params
+     * @return http uri request
      */
     public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
         RequestBuilder requestBuilder;
-        // method
         String httpMethod = httpProtocol.getMethod().toUpperCase();
         if (HttpMethod.GET.matches(httpMethod)) {
             requestBuilder = RequestBuilder.get();
@@ -540,11 +524,9 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
         }
         
-        // 判断是否使用Bearer Token认证
         if (httpProtocol.getAuthorization() != null) {
             HttpProtocol.Authorization authorization = httpProtocol.getAuthorization();
             if (DispatchConstants.BEARER_TOKEN.equalsIgnoreCase(authorization.getType())) {
-                // 若使用 将token放入到header里面
                 String value = DispatchConstants.BEARER + " " + authorization.getBearerTokenToken();
                 requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
             } else if (DispatchConstants.BASIC_AUTH.equals(authorization.getType())) {
@@ -557,7 +539,7 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
         
-        // 请求内容，会覆盖post协议的params
+        // if it has payload, would override post params
         if (StringUtils.hasLength(httpProtocol.getPayload())) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }

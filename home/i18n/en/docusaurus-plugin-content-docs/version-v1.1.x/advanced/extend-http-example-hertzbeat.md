@@ -132,9 +132,9 @@ params:
      type: password
      required: false
      hide: true
-# List of indicator groups
+# List of metricss
 metrics:
-   # The first monitoring indicator group summary
+   # The first monitoring metrics summary
    # Note: Built-in monitoring indicators have (responseTime - response time)
    - name: summary
      priority: 0

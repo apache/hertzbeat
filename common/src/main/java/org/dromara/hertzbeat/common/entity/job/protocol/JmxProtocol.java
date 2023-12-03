@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * Jmx protocol
  *
  * @author huacheng
- *
  **/
 @Data
 @Builder

@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 /**
  * sms service client for tencent cloud
  * @author tom
- *
  */
 @Component
 @ConditionalOnProperty("common.sms.tencent.app-id")

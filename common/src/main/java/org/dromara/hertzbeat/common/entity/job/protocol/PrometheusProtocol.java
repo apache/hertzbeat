@@ -27,7 +27,6 @@ import java.util.Map;
 /**
  * Prometheus 协议配置
  * @author tomsun28
- *
  */
 @Data
 @Builder

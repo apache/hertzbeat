@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
  * Alarm template keyword matching replacement engine tool
  * 告警模版关键字匹配替换引擎工具
  * @author tom
- *
  */
 @Slf4j
 public class AlertTemplateUtil {

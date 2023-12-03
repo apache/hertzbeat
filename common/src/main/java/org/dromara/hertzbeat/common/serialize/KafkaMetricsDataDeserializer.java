@@ -8,7 +8,7 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import java.util.Map;
 
 /**
- * kafka指标组监控数据反序列化类
+ * kafka metrics data deserializer
  * @author tablerow
  */
 public class KafkaMetricsDataDeserializer implements Deserializer<CollectRep.MetricsData> {

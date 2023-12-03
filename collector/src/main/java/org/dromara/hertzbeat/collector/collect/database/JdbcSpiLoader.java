@@ -24,9 +24,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 /**
- * 预加载jdbc驱动包 避免spi并发加载造成死锁
+ * load the jdbc driver first to avoid spi concurrent deadlock
  * @author tom
- *
  */
 @Service
 @Slf4j

@@ -54,7 +54,7 @@ keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警�
 | nextEvalInterval |	integer($int64) title: Alarm evaluation interval (milliseconds) 告警评估时间间隔(单位毫秒) |
 | tags	| example: {key1:value1} |
 | gmtCreate |	string($date-time) title: Record the latest creation time (timestamp in milliseconds) 记录最新创建时间(毫秒时间戳) |
-| gmtUpdate	|string($date-time) title: 记录最新修改时间(毫秒时间戳) |
+| gmtUpdate	|string($date-time) title: Record modify time(毫秒时间戳) |
 
 ### webhook通知常见问题   
 

@@ -18,9 +18,8 @@
 package org.dromara.hertzbeat.common.constants;
 
 /**
- * collector 常量
+ * collector constant
  * @author tom
- *
  */
 public interface CollectorConstants {
 
@@ -39,7 +38,7 @@ public interface CollectorConstants {
     String HTTPS_HEADER = "https://";
 
     /**
-     * POSTGRESQL状态码 不可达
+     * POSTGRESQL un reachable status code
      */
     String POSTGRESQL_UN_REACHABLE_CODE = "08001";
 

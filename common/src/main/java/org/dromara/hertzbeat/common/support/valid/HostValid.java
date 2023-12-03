@@ -28,9 +28,8 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * host注解数据自定义校验器注解
+ * Host Param Validator
  * @author tomsun28
- *
  */
 @Target({ FIELD, PARAMETER })
 @Retention(RUNTIME)
@@ -38,7 +37,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = HostParamValidator.class)
 public @interface HostValid {
 
-    String message() default "监控Host必须是ipv4,ipv6或域名,<br>EX:127.0.0.1 或者 hertzbeat.com";
+    String message() default "Host need ipv4,ipv6 or domain,<br>EG:127.0.0.1  hertzbeat.com";
 
     Class<?>[] groups() default {};
 

@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Schedule Distribution Task Configuration Properties
- * 调度分发任务配置属性
  */
 @Component
 @ConfigurationProperties(prefix = "collector.dispatch")
@@ -30,13 +29,11 @@ public class DispatchProperties {
 
     /**
      * Scheduling entry configuration properties
-     * 调度入口配置属性
      */
     private EntranceProperties entrance;
 
     /**
      * Schedule Data Export Configuration Properties
-     * 调度数据出口配置属性
      */
     private ExportProperties export;
 
@@ -58,10 +55,7 @@ public class DispatchProperties {
 
     /**
      * Scheduling entry configuration properties
-     * The entry can be etcd information, http request, message middleware message request
-     * <p>
-     * 调度入口配置属性
-     * 入口可以时etcd信息,http请求,消息中间件消息请求
+     * The entry can be netty information, http request, message middleware message request
      */
     public static class EntranceProperties {
         
@@ -69,10 +63,6 @@ public class DispatchProperties {
          * netty server client config
          */
         private NettyProperties netty;
-        /**
-         * etcd配置信息
-         */
-        private EtcdProperties etcd;
         
         public NettyProperties getNetty() {
             return netty;
@@ -82,128 +72,7 @@ public class DispatchProperties {
             this.netty = netty;
         }
         
-        public EtcdProperties getEtcd() {
-            return etcd;
-        }
-
-        public void setEtcd(EtcdProperties etcd) {
-            this.etcd = etcd;
-        }
-
-        public static class EtcdProperties {
-
-            /**
-             * Whether etcd scheduling is started
-             * etcd调度是否启动
-             */
-            private boolean enabled = false;
-
-            /**
-             * etcd's connection endpoint url
-             * etcd的连接端点url
-             */
-            private String[] endpoints = new String[]{"http://127.0.0.1:2379"};
-
-            /**
-             * etcd connection username
-             * etcd连接用户名
-             */
-            private String username;
-
-            /**
-             * etcd connection password
-             * etcd连接密码
-             */
-            private String password;
-
-            /**
-             * Valid time of etcd lease in seconds
-             * etcd租约的有效时间 单位秒
-             */
-            private long ttl = 200;
-
-            /**
-             * Collector registration directory
-             * 采集器注册目录
-             */
-            private String collectorDir = "/usthe/dispatch/collector/";
-
-            /**
-             * Task scheduling distribution directory
-             * 任务调度分发目录
-             */
-            private String assignDir = "/usthe/dispatch/assign/";
-
-            /**
-             * task inventory
-             * 任务详细目录
-             */
-            private String jobDir = "/usthe/dispatch/job/";
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String[] getEndpoints() {
-                return endpoints;
-            }
-
-            public void setEndpoints(String[] endpoints) {
-                this.endpoints = endpoints;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-
-            public long getTtl() {
-                return ttl;
-            }
-
-            public void setTtl(long ttl) {
-                this.ttl = ttl;
-            }
-
-            public String getCollectorDir() {
-                return collectorDir;
-            }
-
-            public void setCollectorDir(String collectorDir) {
-                this.collectorDir = collectorDir;
-            }
-
-            public String getAssignDir() {
-                return assignDir;
-            }
-
-            public void setAssignDir(String assignDir) {
-                this.assignDir = assignDir;
-            }
-
-            public String getJobDir() {
-                return jobDir;
-            }
-
-            public void setJobDir(String jobDir) {
-                this.jobDir = jobDir;
-            }
-        }
+        
         
         public static class NettyProperties {
             

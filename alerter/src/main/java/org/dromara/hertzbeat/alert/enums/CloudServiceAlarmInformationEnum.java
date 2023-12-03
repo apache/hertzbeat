@@ -8,7 +8,7 @@ import org.dromara.hertzbeat.alert.dto.TenCloudAlertReport;
 import java.util.Arrays;
 
 /**
- * 云服务告警枚举
+ * Cloud server alarm enum
  */
 @AllArgsConstructor
 @Getter
@@ -17,12 +17,12 @@ public enum CloudServiceAlarmInformationEnum {
     TencentCloud("tencloud", TenCloudAlertReport.class);
 
     /**
-     * 云服务名称
+     * cloud service name
      */
     private final String cloudServiceName;
 
     /**
-     * 云服务对应的请求实体
+     * cloud service body
      */
     private final Class<? extends CloudAlertReportAbstract> cloudServiceAlarmInformationEntity;
 

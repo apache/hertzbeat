@@ -24,7 +24,7 @@ import javax.persistence.AttributeConverter;
 import java.util.List;
 
 /**
- * json 互转list paramDefine.Option 对象字段为数据String字段
+ * json str to list paramDefine.Option 
  * @author tom
  *
  */

@@ -45,8 +45,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Alarm definition management API
- * 告警定义管理API
- *
  * @author tom
  */
 @Tag(name = "Alert Define API | 告警定义管理API")
@@ -61,7 +59,6 @@ public class AlertDefineController {
     @Operation(summary = "New Alarm Definition | 新增告警定义", description = "Added an alarm definition | 新增一个告警定义")
     public ResponseEntity<Message<Void>> addNewAlertDefine(@Valid @RequestBody AlertDefine alertDefine) {
         // Verify request data
-        // 校验请求数据
         alertDefineService.validate(alertDefine, false);
         alertDefineService.addAlertDefine(alertDefine);
         return ResponseEntity.ok(Message.success("Add success"));
@@ -71,7 +68,6 @@ public class AlertDefineController {
     @Operation(summary = "Modifying an Alarm Definition | 修改告警定义", description = "Modify an existing alarm definition | 修改一个已存在告警定义")
     public ResponseEntity<Message<Void>> modifyAlertDefine(@Valid @RequestBody AlertDefine alertDefine) {
         // Verify request data
-        // 校验请求数据
         alertDefineService.validate(alertDefine, true);
         alertDefineService.modifyAlertDefine(alertDefine);
         return ResponseEntity.ok(Message.success("Modify success"));
@@ -83,7 +79,6 @@ public class AlertDefineController {
     public ResponseEntity<Message<AlertDefine>> getAlertDefine(
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @PathVariable("id") long id) {
         // Obtaining Monitoring Information
-        // 获取监控信息
         AlertDefine alertDefine = alertDefineService.getAlertDefine(id);
         if (alertDefine == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertDefine not exist."));
@@ -98,7 +93,6 @@ public class AlertDefineController {
     public ResponseEntity<Message<Void>> deleteAlertDefine(
             @Parameter(description = "Alarm Definition ID ｜ 告警定义ID", example = "6565463543") @PathVariable("id") long id) {
         // If the alarm definition does not exist or is deleted successfully, the deletion succeeds
-        // 删除告警定义不存在或删除成功都返回成功
         alertDefineService.deleteAlertDefine(id);
         return ResponseEntity.ok(Message.success("Delete success"));
     }

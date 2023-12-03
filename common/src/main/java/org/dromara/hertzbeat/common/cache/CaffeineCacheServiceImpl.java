@@ -23,8 +23,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 
 /**
+ * caffeine cache impl
  * @author ceilzcx
- *
  */
 public class CaffeineCacheServiceImpl<K, V> implements ICacheService<K, V> {
     private final Cache<K, V> cache;

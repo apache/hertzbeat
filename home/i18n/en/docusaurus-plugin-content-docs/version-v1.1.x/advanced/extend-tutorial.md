@@ -132,15 +132,15 @@ params:
      type: password
      required: false
      hide: true
-# List of indicator groups
+# List of metricss
 metrics:
-   # The first monitoring indicator group summary
+   # The first monitoring metrics summary
    # Note: Built-in monitoring indicators have (responseTime - response time)
    - name: summary
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring indicators in the metrics
      fields:
        # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
        - field: responseTime

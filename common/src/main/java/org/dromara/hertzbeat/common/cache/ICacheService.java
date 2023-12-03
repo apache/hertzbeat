@@ -18,9 +18,8 @@
 package org.dromara.hertzbeat.common.cache;
 
 /**
- * common cache
+ * common cache service
  * @author ceilzcx
- *
  */
 public interface ICacheService<K, V> {
 

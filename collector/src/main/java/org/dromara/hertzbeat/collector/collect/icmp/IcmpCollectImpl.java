@@ -32,9 +32,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * icmp协议采集实现 - ping
+ * icmp ping collect
  * @author tom
- *
  */
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {
@@ -42,7 +41,7 @@ public class IcmpCollectImpl extends AbstractCollect {
     public IcmpCollectImpl(){}
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         // 简单校验必有参数
         if (metrics == null || metrics.getIcmp() == null) {
@@ -59,8 +58,9 @@ public class IcmpCollectImpl extends AbstractCollect {
             log.warn(e.getMessage());
         }
         try {
+            // todo need root java jcm to use ICMP, else it telnet the peer server 7 port available
             // todo 需要配置java虚拟机root权限从而使用ICMP，否则是判断telnet对端7号端口是否开通
-            // https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address
+            // todo https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address
             boolean status = InetAddress.getByName(icmp.getHost()).isReachable(timeout);
             long responseTime = System.currentTimeMillis() - startTime;
             if (status) {

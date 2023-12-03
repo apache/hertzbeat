@@ -4,13 +4,13 @@ title: Tutorial 2 Obtain TOKEN index value based on HTTP protocol for subsequent
 sidebar_label: Tutorial 2 Get TOKEN for subsequent authentication
 ---
 
-Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics group, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent indicator group collection and authentication.
+Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics group, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent metrics collection and authentication.
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
 ### Request process
 
-【**Authentication information indicator group (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an indicator **] -> [**Assign accessToken as a variable parameter to other collection index groups**]
+【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an indicator **] -> [**Assign accessToken as a variable parameter to other collection index groups**]
 
 > Here we still use the hertzbeat monitoring example of Tutorial 1! The hertzbeat background interface not only supports the basic direct account password authentication used in Tutorial 1, but also supports token authentication.
 
@@ -165,15 +165,15 @@ params:
      type: textarea
      placeholder: 'Available When POST PUT'
      required: false
-# List of indicator groups
+# List of metricss
 metrics:
    # The first monitoring index group auth
    # Note: Built-in monitoring indicators have (responseTime - response time)
    - name: auth
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring indicators in the metrics
      fields:
        # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
        - field: token
@@ -223,7 +223,7 @@ metrics:
 
 
 
-### Use `token` as a variable parameter to collect and use the following indicator groups
+### Use `token` as a variable parameter to collect and use the following metricss
 
 **Add an index group definition `summary` in `app-hertzbeat_token.yml`, which is the same as `summary` in Tutorial 1, and set the collection priority to 1**
 
@@ -295,15 +295,15 @@ params:
      type: textarea
      placeholder: 'Available When POST PUT'
      required: false
-# List of indicator groups
+# List of metricss
 metrics:
 # The first monitoring index group cpu
 # Note: Built-in monitoring indicators have (responseTime - response time)
    - name: auth
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring indicators in the metrics
      fields:
        # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
        - field: token
@@ -338,9 +338,9 @@ metrics:
 
    - name: summary
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 1
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring indicators in the metrics
      fields:
        # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
        - field: category
