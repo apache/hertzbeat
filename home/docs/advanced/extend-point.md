@@ -102,8 +102,8 @@ params:
 metrics:
   # metrics - summary, inner monitoring metrics (responseTime - response time, keyword - number of keywords)
   - name: summary
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     # collect metrics content
     fields:
