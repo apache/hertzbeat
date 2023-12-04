@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * redis connection
  *
- *
- *
  */
 @Slf4j
 public class RedisConnect implements CacheCloseable {

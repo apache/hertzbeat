@@ -24,8 +24,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring的ApplicationContext的持有者,可以用静态方法的方式获取spring容器中的bean
- *
+ * Spring ApplicationContext Holder
  *
  */
 @Component

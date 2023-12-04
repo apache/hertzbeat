@@ -30,8 +30,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * gson 工具类
- *
+ * json util
  *
  */
 @ThreadSafe

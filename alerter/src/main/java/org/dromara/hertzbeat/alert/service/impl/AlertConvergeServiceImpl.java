@@ -19,7 +19,6 @@ import java.util.Set;
 /**
  * implement for alert converge service
  *
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)

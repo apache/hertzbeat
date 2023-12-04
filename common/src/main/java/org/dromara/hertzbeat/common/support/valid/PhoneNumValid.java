@@ -28,8 +28,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * phoneNum注解数据自定义校验器注解
- *
+ * PhoneNum Param Validator
  *
  */
 @Target({ FIELD, PARAMETER })

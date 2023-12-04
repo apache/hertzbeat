@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Random;
 
 /**
- * 雪花算法生成器实例
+ * SnowFlakeId Instance 
  * 注意 由于前端JS TS 在json解析大数会造成精度丢失 UUID 不能超过 9007199254740991（10进制）16进制为 0x1FFFFFFFFFFFFF (小于53bit)
  * 1位符号位+41位时间戳+4位机器ID+8位序列号 = 53位
  * Note that because the front-end JS TS parses large numbers in json, the precision will be lost.
@@ -116,9 +116,9 @@ public class SnowFlakeIdWorker {
     }
 
     /**
-     * 获得下一个 ID(该方法是线程安全的)
-     *
-     * @return 返回一个长度位15的 long类型的数字
+     * get next id
+     * thread safe
+     * @return id with 15 length
      */
     public synchronized long nextId() {
         long timestamp = timeGen();

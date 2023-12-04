@@ -17,12 +17,11 @@
 
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.dromara.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -72,4 +71,40 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         return 4;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class WeWorkWebHookDto {
+
+        public static final String WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+        /**
+         * markdown格式
+         */
+        private static final String MARKDOWN = "markdown";
+        /**
+         * 文本格式
+         */
+        private static final String TEXT = "text";
+
+        /**
+         * 消息类型
+         */
+        @Builder.Default
+        private String msgtype = MARKDOWN;
+
+        /**
+         * markdown消息
+         */
+        private MarkdownDTO markdown;
+
+        @Data
+        private static class MarkdownDTO {
+            /**
+             * 消息内容
+             */
+            private String content;
+        }
+
+    }
 }

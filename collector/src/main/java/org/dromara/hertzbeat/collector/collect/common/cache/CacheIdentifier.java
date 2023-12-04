@@ -23,8 +23,7 @@ import lombok.Data;
 import java.util.Objects;
 
 /**
- * 缓存key唯一标识符
- *
+ * resource identifier in cache
  *
  */
 @Data

@@ -28,7 +28,6 @@ import java.util.Map;
 /**
  * http 协议配置
  *
- *
  */
 @Data
 @Builder

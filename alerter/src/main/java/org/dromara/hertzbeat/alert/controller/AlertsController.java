@@ -41,9 +41,7 @@ import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * Alarm Management API 告警管理API
- *
- *
+ * Alarm Management API
  *
  *
  */

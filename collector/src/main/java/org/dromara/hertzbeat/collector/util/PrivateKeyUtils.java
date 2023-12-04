@@ -9,10 +9,9 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
- * 将私钥写入~/.ssh
+ * private key util
+ * write private key to ~/.ssh
  *
- *
- * Created by gcdd1993 on 2023/7/9
  */
 @Slf4j
 @UtilityClass

@@ -26,9 +26,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
 
 /**
- * Alarm Statistics Information  告警统计信息
- *
- *
+ * Alarm Statistics Information
  *
  */
 @Data

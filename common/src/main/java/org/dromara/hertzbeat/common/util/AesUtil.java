@@ -28,8 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 /**
- * AES 对称加密解密工具
- *
+ * AES Util
  *
  */
 @Slf4j

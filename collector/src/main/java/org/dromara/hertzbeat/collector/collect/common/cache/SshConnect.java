@@ -6,8 +6,6 @@ import org.apache.sshd.client.session.ClientSession;
 /**
  * ssh connection holder
  *
- *
- *
  */
 @Slf4j
 public class SshConnect implements CacheCloseable {

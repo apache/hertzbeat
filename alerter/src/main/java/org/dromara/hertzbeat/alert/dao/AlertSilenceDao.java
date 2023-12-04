@@ -25,8 +25,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import java.util.Set;
 
 /**
- * AlertSilence 数据库操作
- *
+ * AlertSilence Dao
  *
  */
 public interface AlertSilenceDao extends JpaRepository<AlertSilence, Long>, JpaSpecificationExecutor<AlertSilence> {

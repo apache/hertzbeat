@@ -28,8 +28,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * email注解数据自定义校验器注解
- *
+ * EmailValid 
  *
  */
 @Target({ FIELD, PARAMETER })

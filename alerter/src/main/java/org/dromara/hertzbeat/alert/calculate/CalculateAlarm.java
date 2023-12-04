@@ -55,8 +55,6 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
- * 根据告警定义规则和采集数据匹配计算告警
- *
  *
  */
 @Component
@@ -96,7 +94,6 @@ public class CalculateAlarm {
         this.triggeredAlertMap = new ConcurrentHashMap<>(128);
         this.notRecoveredAlertMap = new ConcurrentHashMap<>(128);
         // Initialize stateAlertMap
-        // 初始化stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
@@ -136,13 +133,12 @@ public class CalculateAlarm {
         long monitorId = metricsData.getId();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
-        // If the indicator group whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE, the highest severity alarm is generated to monitor the status change
-        // 先判断调度优先级为0的指标组采集响应数据状态 UN_REACHABLE/UN_CONNECTABLE 则需发最高级别告警进行任务状态变更
+        // If the metrics whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE,
+        // the highest severity alarm is generated to monitor the status change
         if (metricsData.getPriority() == 0) {
             handlerAvailableMetrics(monitorId, app, metricsData);
         }
-        // Query the alarm definitions associated with the indicator set of the monitoring type
-        // 查出此监控类型下的此指标集合下关联配置的告警定义信息
+        // Query the alarm definitions associated with the metrics of the monitoring type
         // field - define[]
         Map<String, List<AlertDefine>> defineMap = alertDefineService.getMonitorBindAlertDefines(monitorId, app, metrics);
         if (defineMap.isEmpty()) {
@@ -293,7 +289,6 @@ public class CalculateAlarm {
                     .firstAlarmTime(currentTimeMilli)
                     .lastAlarmTime(currentTimeMilli)
                     // Keyword matching and substitution in the template
-                    // 模板中关键字匹配替换
                     .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                     .build();
             int defineTimes = define.getTimes() == null ? 1 : define.getTimes();

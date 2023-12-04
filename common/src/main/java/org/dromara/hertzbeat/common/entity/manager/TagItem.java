@@ -10,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 /**
  * tag item
  *
- *
  */
 @AllArgsConstructor
 @NoArgsConstructor

@@ -54,7 +54,6 @@ import java.util.stream.Collectors;
 /**
  * tdengine data storage
  *
- *
  */
 @Primary
 @Component
@@ -189,18 +188,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     
     @Override
     public void destroy() {}
-
-    /**
-     * 从TD ENGINE时序数据库获取指标历史数据
-     *
-     * @param monitorId 监控任务ID
-     * @param app 监控类型
-     * @param metrics 指标集合名
-     * @param metric 指标名
-     * @param label 实例
-     * @param history 历史范围
-     * @return 指标历史数据列表
-     */
+    
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String timeSeriesSelector = NAME_KEY + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" + 

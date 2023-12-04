@@ -41,10 +41,8 @@ import org.springframework.web.client.RestTemplate;
  * Created by Musk.Chen on 2023/1/16
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-    private final RestTemplate restTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {

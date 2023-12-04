@@ -6,12 +6,12 @@ sidebar_label: Quick Tutorial
 
 Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the hertzbeat monitoring tool.
 
-Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http).
+Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring] (extend-point) and [http Protocol Customization] (extend-http).
 
 
-### HTTP protocol parses the general response structure to obtain indicator data
+### HTTP protocol parses the general response structure to obtain metric data
 
-> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as indicator data.
+> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as metric data.
 
 
 ```
@@ -56,7 +56,7 @@ As above, usually our background API interface will design such a general return
 }
 ```
 
-**This time we get the indicator data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
+**This time we get the metric data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
 
 
 ### Add corresponding application definition YML and parameter definition YML
@@ -67,7 +67,7 @@ A monitoring configuration definition file named after the monitoring type - for
 
 Define which parameters we need to enter on the page. The general HTTP protocol parameters mainly include ip, port, headers, params, uri, account password, etc. We directly reuse the parameter definition content in param-api.yml and delete our No need to enter parameters such as uri parameters and keyword keywords.
 
-Define what type of collection is, which protocol collection method needs to be used, what indicators are collected, protocol configuration parameters, etc. We directly reuse the definition content in app-api.yml and modify it to our current monitoring type `hertzbeat` configuration parameters, as follows: Note⚠️We get `category`, `app` in the interface response data this time, Fields such as `status`, `size`, `availableSize` are used as indicator data.
+Define what type of collection is, which protocol collection method needs to be used, what metrics are collected, protocol configuration parameters, etc. We directly reuse the definition content in app-api.yml and modify it to our current monitoring type `hertzbeat` configuration parameters, as follows: Note⚠️We get `category`, `app` in the interface response data this time, Fields such as `status`, `size`, `availableSize` are used as metric data.
 
 ```yaml
 # This monitoring type belongs to the category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -132,17 +132,17 @@ params:
      type: password
      required: false
      hide: true
-# List of indicator groups
+# List of metricss
 metrics:
-   # The first monitoring indicator group summary
-   # Note: Built-in monitoring indicators have (responseTime - response time)
+   # The first monitoring metrics summary
+   # Note: Built-in monitoring metrics have (responseTime - response time)
    - name: summary
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring metrics in the metrics
      fields:
-       # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
        - field: responseTime
          type: 0
          unit: ms
@@ -179,7 +179,7 @@ metrics:
          basicAuthPassword: ^_^password^_^
          digestAuthUsername: ^_^username^_^
          digestAuthPassword: ^_^password^_^
-       # Response data parsing method: default-system rules, jsonPath-jsonPath script, website-website usability indicator monitoring, we use jsonpath here to parse the response data
+       # Response data parsing method: default-system rules, jsonPath-jsonPath script, website-website usability metric monitoring, we use jsonpath here to parse the response data
        parseType: jsonPath
        parseScript: '$.data.apps.*'
 
@@ -201,7 +201,7 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-3.png)
 
-> After a certain period of time (depending on the collection cycle), we can see the specific indicator data and historical charts in the monitoring details!
+> After a certain period of time (depending on the collection cycle), we can see the specific metric data and historical charts in the monitoring details!
 
 
 ![](/img/docs/advanced/extend-http-example-4.png)

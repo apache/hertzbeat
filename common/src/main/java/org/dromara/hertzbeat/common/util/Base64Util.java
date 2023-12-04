@@ -20,8 +20,7 @@ package org.dromara.hertzbeat.common.util;
 import java.util.Base64;
 
 /**
- * base64工具类
- *
+ * base64 util
  *
  */
 public class Base64Util {

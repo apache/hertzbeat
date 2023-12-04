@@ -32,8 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 内存采集数据队列实现
- *
+ * common data queue implement memory
  *
  */
 @Configuration

@@ -24,7 +24,6 @@ import java.sql.Connection;
 /**
  * jdbc common connection
  *
- *
  */
 @Slf4j
 public class JdbcConnect implements CacheCloseable {

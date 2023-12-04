@@ -88,7 +88,7 @@ params:
     required: false
 
 # collect metrics config list
-# 采集指标组配置列表
+# 采集指标配置列表
 metrics:
   - name: airflow_health
     priority: 0

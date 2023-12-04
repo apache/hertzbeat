@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 监控指标集合的一行指标数据
+ * Monitoring Metrics DataRow
  *
  *
  */
@@ -35,12 +35,12 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "监控指标集合的一行指标数据")
+@Schema(description = "Monitoring Metrics DataRow")
 public class ValueRow {
     
     @Schema(title = "Value Row Labels")
     private Map<String, String> labels;
 
-    @Schema(description = "监控指标集合指标值")
+    @Schema(description = "Monitoring Metrics DataRow")
     private List<Value> values;
 }

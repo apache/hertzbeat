@@ -7,8 +7,6 @@ import java.time.temporal.TemporalAmount;
 /**
  * time util
  *
- *
- *
  */
 public class TimePeriodUtil {
 

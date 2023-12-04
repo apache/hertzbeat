@@ -56,19 +56,19 @@ public class Collector {
 	@Schema(title = "collector mode: public or private")
 	private String mode;
 
-	@Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom")
+	@Schema(title = "The creator of this record", example = "tom")
 	@CreatedBy
 	private String creator;
 	
-	@Schema(title = "This record was last modified by", description = "此条记录最新修改者")
+	@Schema(title = "This record was last modified by")
 	@LastModifiedBy
 	private String modifier;
 	
-	@Schema(title = "This record creation time (millisecond timestamp)", description = "记录创建时间")
+	@Schema(title = "This record creation time (millisecond timestamp)")
 	@CreatedDate
 	private LocalDateTime gmtCreate;
 	
-	@Schema(title = "Record the latest modification time (timestamp in milliseconds)", description = "记录最新修改时间")
+	@Schema(title = "Record the latest modification time (timestamp in milliseconds)")
 	@LastModifiedDate
 	private LocalDateTime gmtUpdate;
 }

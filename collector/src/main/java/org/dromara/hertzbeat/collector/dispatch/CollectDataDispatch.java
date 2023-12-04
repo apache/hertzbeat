@@ -26,27 +26,23 @@ import java.util.List;
 
 /**
  * Collection data scheduler interface
- * 采集数据调度器接口
  */
 public interface CollectDataDispatch {
 
     /**
      * Processing and distributing collection result data
-     * 处理分发采集结果数据
-     *
-     * @param timeout     time wheel timeout        时间轮timeout
-     * @param metrics     The following indicator group collection tasks    下面的指标组采集任务
-     * @param metricsData Collect result data       采集结果数据
+     * @param timeout     time wheel timeout        
+     * @param metrics     The following metrics collection tasks   
+     * @param metricsData Collect result data       
      */
     void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
 
     /**
      * Processing and distributing collection result data
-     * 处理分发采集结果数据
      *
-     * @param timeout     time wheel timeout        时间轮timeout
-     * @param metrics     The following indicator group collection tasks    下面的指标组采集任务
-     * @param metricsDataList Collect result data       采集结果数据
+     * @param timeout     time wheel timeout        
+     * @param metrics     The following metrics collection tasks    
+     * @param metricsDataList Collect result data       
      */
     void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList);
 

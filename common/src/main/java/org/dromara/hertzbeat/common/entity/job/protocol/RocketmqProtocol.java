@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 /**
  * rocketmq protocol
  *
- *
- * @since 5/6/2023
  */
 @Data
 @Builder

@@ -429,7 +429,7 @@ public class HashedWheelTimer implements Timer {
             // Initialize the startTime.
             startTime = System.nanoTime();
             if (startTime == 0) {
-                // We use 0 as an indicator for the uninitialized value here, so make sure it's not 0 when initialized.
+                // We use 0 as an metric for the uninitialized value here, so make sure it's not 0 when initialized.
                 startTime = 1;
             }
 

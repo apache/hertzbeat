@@ -26,10 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * jmx 协议采集实现 - jmx
  * jmx protocol acquisition implementation
- *
- *
  *
  */
 @Slf4j
@@ -45,7 +42,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
