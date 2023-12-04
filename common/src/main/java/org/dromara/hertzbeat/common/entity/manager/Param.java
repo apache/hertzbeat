@@ -40,9 +40,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Monitor parameter values
  * 监控参数值
- *
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
@@ -97,18 +95,16 @@ public class Param {
     private byte type;
 
     /**
-     * Record Creation Time
-     * 记录创建时间
+     * Record create time
      */
-    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
      * Record the latest modification time
-     * 记录最新修改时间
      */
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

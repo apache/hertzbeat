@@ -7,22 +7,20 @@ import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.core.CoreModuleProperties;
 
 /**
- * ssh公共client
+ * common ssh pool client
  * @author tom
- *
  */
 @Slf4j
 public class CommonSshClient {
 
     private static final SshClient SSH_CLIENT;
-
-
+    
     static {
         SSH_CLIENT = SshClient.setUpDefaultClient();
-        // 接受所有服务端公钥校验，会打印warn日志 Server at {} presented unverified {} key: {}
+        // accept all server key verifier, will print warn log : Server at {} presented unverified {} key: {}
         AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
         SSH_CLIENT.setServerKeyVerifier(verifier);
-        // 设置链接保活心跳2000毫秒一次, 客户端等待保活心跳响应超时时间300_000毫秒
+        // set connection heartbeat interval time 2000ms, wait for heartbeat response timeout 300_000ms
         PropertyResolverUtils.updateProperty(
                 SSH_CLIENT, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
         PropertyResolverUtils.updateProperty(

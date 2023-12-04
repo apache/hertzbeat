@@ -20,8 +20,8 @@ import java.util.Optional;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ * Extern Alarm Manage API
  * @author zqr10159
- * 第三方告警上报接口
  */
 @Tag(name = "Extern Alarm Manage API | 第三方告警管理API")
 @RestController
@@ -33,8 +33,7 @@ public class AlertReportController {
     private AlertService alertService;
 
     @PostMapping("/{cloud}")
-    @Operation(summary = "Interface for reporting external alarm information of cloud service ｜ 对外上报告警信息 接口",
-            description = "对外 新增一个云服务告警")
+    @Operation(summary = "Interface for reporting external alarm information of cloud service ｜ 对外上报告警信息接口")
     public ResponseEntity<Message<Void>> addNewAlertReportFromCloud(@PathVariable("cloud") String cloudServiceName,
                                                                     @RequestBody String alertReport) {
         // 根据枚举获取到对应的枚举对象

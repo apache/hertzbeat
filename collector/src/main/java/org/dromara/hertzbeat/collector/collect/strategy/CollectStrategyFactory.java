@@ -11,22 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Specific metrics collection factory
- * 数据收集策略工厂
  * @author myth
- *
  */
 @Configuration
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 public class CollectStrategyFactory implements CommandLineRunner {
 
     /**
-     * strategy container 策略容器
+     * strategy container
      */
     private static final ConcurrentHashMap<String, AbstractCollect> COLLECT_STRATEGY = new ConcurrentHashMap<>();
 
     /**
      * get instance of this protocol collection
-     * 获取注册的收集实现类
      * @param protocol collect protocol
      * @return implement of Metrics Collection
      */

@@ -33,8 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 采集器工具类
- *
+ * util for collector
  * @author tom
  */
 @Slf4j
@@ -52,11 +51,11 @@ public class CollectUtil {
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
 
     /**
-     * 关键字匹配计数
+     * count match keyword number
      *
-     * @param content 内容
-     * @param keyword 关键字
-     * @return 匹配次数
+     * @param content content
+     * @param keyword keyword
+     * @return match num
      */
     public static int countMatchKeyword(String content, String keyword) {
         if (content == null || "".equals(content) || keyword == null || "".equals(keyword.trim())) {
@@ -194,7 +193,6 @@ public class CollectUtil {
 
     /**
      * json parameter replacement
-     * json 参数替换
      *
      * @param jsonElement json
      * @param configmap   parameter map
@@ -279,7 +277,6 @@ public class CollectUtil {
 
     /**
      * json parameter replacement
-     * json 参数替换
      *
      * @param jsonElement json
      * @param configmap   parameter map
@@ -294,7 +291,6 @@ public class CollectUtil {
                 JsonElement element = entry.getValue();
                 String key = entry.getKey();
                 // Replace the attributes of the KEY-VALUE case such as http headers params
-                // 替换KEY-VALUE情况的属性 比如http headers params
                 if (key != null && key.startsWith(SMILING_PLACEHOLDER) && key.endsWith(SMILING_PLACEHOLDER)) {
                     key = key.replaceAll(SMILING_PLACEHOLDER_REX, "");
                     Configmap param = configmap.get(key);
@@ -315,10 +311,8 @@ public class CollectUtil {
                     continue;
                 }
                 // Replace normal VALUE value
-                // 替换正常的VALUE值
                 if (element.isJsonPrimitive()) {
                     // Check if there are special characters Replace
-                    // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
                     if (smilingMatcher.find()) {
@@ -353,7 +347,6 @@ public class CollectUtil {
                 JsonElement element = jsonArray.get(index);
                 if (element.isJsonPrimitive()) {
                     // Check if there are special characters Replace
-                    // 判断是否含有特殊字符 替换
                     String value = element.getAsString();
                     Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
                     if (smilingMatcher.find()) {
@@ -416,10 +409,10 @@ public class CollectUtil {
     }
 
     /**
-     * 将16进制字符串转换为byte[]
+     * convert 16 hexString to byte[]
      * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500
      * 16进制字符串不区分大小写，返回的数组相同
-     * @param hexString 16进制字符串
+     * @param hexString 16 hexString
      * @return byte[]
      */
     public static byte[] fromHexString(String hexString) {
@@ -427,12 +420,9 @@ public class CollectUtil {
             return null;
         }
         byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
-        // 16进制字符串
         String hex;
         for (int i = 0; i < hexString.length() / HEX_STR_WIDTH; i++) {
-            // 每次截取2位
             hex = hexString.substring(i * HEX_STR_WIDTH, i * HEX_STR_WIDTH + HEX_STR_WIDTH);
-            // 16进制 --> 十进制
             bytes[i] = (byte) Integer.parseInt(hex, 16);
         }
         return bytes;

@@ -20,7 +20,6 @@ import java.util.Set;
 /**
  * management interface service implement for alert silence
  * @author tom
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)

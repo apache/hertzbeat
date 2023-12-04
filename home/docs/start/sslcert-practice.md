@@ -45,7 +45,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 3. View the detection index data
 
-> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the indicator data chart, etc.
+> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
 
 ![](/img/docs/start/ssl_3.png)
@@ -60,7 +60,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 ![](/img/docs/start/ssl_4.png)
 
-> Configure the threshold, select the SSL certificate indicator object, configure the alarm expression-triggered when the indicator `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
+> Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
 
 ![](/img/docs/start/ssl_5.png)
@@ -73,7 +73,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 5. Set the threshold (triggered one week before the certificate expires)
 
-> In the same way, add a new configuration threshold and configure an alarm expression - when the indicator expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
+> In the same way, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
 
 ![](/img/docs/start/ssl_7.png)

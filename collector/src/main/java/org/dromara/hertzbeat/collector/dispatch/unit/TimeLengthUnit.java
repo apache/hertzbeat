@@ -1,10 +1,7 @@
 package org.dromara.hertzbeat.collector.dispatch.unit;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * the enum of time length
- * 时间长短的枚举类
  * @author rbsrcy
  *
  */

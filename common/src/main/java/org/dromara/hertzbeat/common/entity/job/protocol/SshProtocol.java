@@ -24,9 +24,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * ssh 协议参数配置
- *
  * @author tom
- *
  */
 @Data
 @Builder

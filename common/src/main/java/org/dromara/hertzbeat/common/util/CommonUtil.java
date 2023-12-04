@@ -29,8 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 公共工具类
- *
+ * common util
  * @author tomsun28
  */
 @Slf4j

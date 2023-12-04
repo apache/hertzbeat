@@ -25,9 +25,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import java.util.Set;
 
 /**
- * AlertConverge 数据库操作
+ * AlertConverge Dao
  * @author tom
- *
  */
 public interface AlertConvergeDao extends JpaRepository<AlertConverge, Long>, JpaSpecificationExecutor<AlertConverge> {
 	
