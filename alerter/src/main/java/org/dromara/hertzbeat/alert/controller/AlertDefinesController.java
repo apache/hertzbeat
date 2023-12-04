@@ -46,8 +46,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Define the batch API for alarms
- * 告警定义批量API
- *
  * @author tom
  */
 @Tag(name = "Alert Define Batch API | 告警定义管理API")
@@ -111,7 +109,6 @@ public class AlertDefinesController {
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));
         };
-        // 分页是必须的
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);

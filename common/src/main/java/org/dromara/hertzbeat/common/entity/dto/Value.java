@@ -24,15 +24,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 监控指标组指标值
+ * Monitoring Metrics Data
  * @author tom
- *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "监控指标组指标值")
+@Schema(description = "Monitoring Metrics Data")
 public class Value {
 
     public Value(String origin) {
@@ -44,21 +43,21 @@ public class Value {
         this.time = time;
     }
 
-    @Schema(title = "原始值")
+    @Schema(title = "Origin Value")
     private String origin;
 
-    @Schema(title = "平均值")
+    @Schema(title = "Mean Avg Value")
     private String mean;
 
-    @Schema(title = "中位数值,暂不支持")
+    @Schema(title = "Median Value, Not Support Now")
     private String median;
 
-    @Schema(title = "最小值")
+    @Schema(title = "Min Value")
     private String min;
 
-    @Schema(title = "最大值")
+    @Schema(title = "Max Value")
     private String max;
 
-    @Schema(title = "数据采集时间,此字段查历史数据时有效")
+    @Schema(title = "Collect Data Time(effect when history range data)")
     private Long time;
 }

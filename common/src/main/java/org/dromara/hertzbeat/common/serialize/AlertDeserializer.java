@@ -8,7 +8,7 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 import java.util.Map;
 
 /**
- * kafka告警记录反序列化类
+ * kafka alert deserializer
  * @author tablerow
  */
 public class AlertDeserializer implements Deserializer<Alert> {

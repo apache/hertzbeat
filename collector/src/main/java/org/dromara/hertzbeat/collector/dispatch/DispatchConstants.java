@@ -18,7 +18,7 @@
 package org.dromara.hertzbeat.collector.dispatch;
 
 /**
- * dispatch  constant 常量
+ * dispatch  constant
  */
 public interface DispatchConstants {
 
@@ -123,7 +123,7 @@ public interface DispatchConstants {
      */
     String PARSE_XML_PATH = "xmlPath";
     /**
-     * Analysis method  Website availability monitoring rules Provide responseTime indicators
+     * Analysis method  Website availability monitoring rules Provide responseTime metrics
      * 解析方式 网站可用性监控规则 提供responseTime指标
      */
     String PARSE_WEBSITE = "website";

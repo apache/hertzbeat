@@ -1,9 +1,8 @@
 package org.dromara.hertzbeat.common.util;
 
 /**
- * Pair类(简写)，类似java.util.Map.Entry，只包含一个K、V
+ * Pair KV 
  * @author ceilzcx
- *
  */
 public class Pair<K, V> {
     private K left;

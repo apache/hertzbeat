@@ -138,7 +138,7 @@ public class AppController {
     }
 
     @GetMapping(path = "/hierarchy")
-    @Operation(summary = "Query all monitor metrics level, output in a hierarchical structure", description = "查询所有监控的类型-指标组-指标层级,以层级结构输出")
+    @Operation(summary = "Query all monitor metrics level, output in a hierarchical structure", description = "查询所有监控的类型指标层级,以层级结构输出")
     public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchy(
             @Parameter(description = "en: language type,zh: 语言类型",
                     example = "zh-CN")

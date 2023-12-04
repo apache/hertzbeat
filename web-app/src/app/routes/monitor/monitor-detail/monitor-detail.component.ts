@@ -116,7 +116,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           this.isSpinning = true;
           let id = paramMap.get('monitorId');
           this.monitorId = Number(id);
-          // 查询监控指标组结构信息
           return this.monitorSvc.getMonitor(this.monitorId);
         })
       )

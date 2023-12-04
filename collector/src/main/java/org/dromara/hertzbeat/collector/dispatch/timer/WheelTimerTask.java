@@ -27,7 +27,6 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
-import org.dromara.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.dromara.hertzbeat.common.support.SpringContextHolder;
 import org.dromara.hertzbeat.common.util.AesUtil;
 
@@ -38,8 +37,6 @@ import java.util.stream.Collectors;
 
 /**
  * Timer Task implementation
- * TimerTask实现
- *
  * @author tomsun28
  */
 @Slf4j
@@ -53,22 +50,18 @@ public class WheelTimerTask implements TimerTask {
         this.metricsTaskDispatch = SpringContextHolder.getBean(MetricsTaskDispatch.class);
         this.job = job;
         // The initialization job will monitor the actual parameter value and replace the collection field
-        // 初始化job 将监控实际参数值对采集字段进行替换
         initJobMetrics(job);
     }
 
     /**
      * Initialize job fill information
-     * 初始化job填充信息
-     *
      * @param job job
      */
     private void initJobMetrics(Job job) {
-        // 将监控实际参数值对采集字段进行替换
         List<Configmap> config = job.getConfigmap();
         Map<String, Configmap> configmap = config.stream()
                 .peek(item -> {
-                    // 对加密串进行解密
+                    // decode password
                     if (item.getType() == CommonConstants.PARAM_TYPE_PASSWORD && item.getValue() != null) {
                         String decodeValue = AesUtil.aesDecode(String.valueOf(item.getValue()));
                         if (decodeValue == null) {

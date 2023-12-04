@@ -49,10 +49,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * Snmp protocol collection implementation
- * snmp 协议采集实现
- *
  * @author wangtao
- *
  */
 @Slf4j
 public class SnmpCollectImpl extends AbstractCollect {
@@ -71,9 +68,8 @@ public class SnmpCollectImpl extends AbstractCollect {
 
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 校验参数
         try {
             validateParams(metrics);
         } catch (Exception e) {

@@ -1,8 +1,8 @@
 package org.dromara.hertzbeat.common.util;
 
 /**
+ * network util
  * @author ceilzcx
- * @since 19/7/2023
  */
 public class NetworkUtil {
 

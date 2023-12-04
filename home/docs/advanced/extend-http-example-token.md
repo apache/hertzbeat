@@ -4,13 +4,13 @@ title: Tutorial 2 Obtain TOKEN index value based on HTTP protocol for subsequent
 sidebar_label: Tutorial 2 Get TOKEN for subsequent authentication
 ---
 
-Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics group, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent indicator group collection and authentication.
+Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent metrics collection and authentication.
 
-Before reading this tutorial, we hope that you are familiar with how to customize types, indicators, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
+Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
 ### Request process
 
-【**Authentication information indicator group (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an indicator **] -> [**Assign accessToken as a variable parameter to other collection index groups**]
+【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an metric **] -> [**Assign accessToken as a variable parameter to other collection index groups**]
 
 > Here we still use the hertzbeat monitoring example of Tutorial 1! The hertzbeat background interface not only supports the basic direct account password authentication used in Tutorial 1, but also supports token authentication.
 
@@ -108,7 +108,7 @@ metrics: ....
 
 ```
 
-### Define metrics group `auth` login request to get `token`
+### Define metrics `auth` login request to get `token`
 
 1. Add an index group definition `auth` in `hertzbeat_token`, set the collection priority to the highest 0, and collect the index `token`.
 
@@ -165,17 +165,17 @@ params:
      type: textarea
      placeholder: 'Available When POST PUT'
      required: false
-# List of indicator groups
+# List of metricss
 metrics:
    # The first monitoring index group auth
-   # Note: Built-in monitoring indicators have (responseTime - response time)
+   # Note: Built-in monitoring metrics have (responseTime - response time)
    - name: auth
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring metrics in the metrics
      fields:
-       # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
        - field: token
          type: 1
        - field: refreshToken
@@ -197,7 +197,7 @@ metrics:
        # request header content
        headers:
          content-type: ^_^contentType^_^
-       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability indicator monitoring
+       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability metric monitoring
        parseType: jsonPath
        parseScript: '$.data'
 
@@ -215,7 +215,7 @@ metrics:
 ![](/img/docs/advanced/extend-http-example-5.png)
 
 
-** After the addition is successful, we can see the `token`, `refreshToken` indicator data we collected on the details page. **
+** After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page. **
 
 ![](/img/docs/advanced/extend-http-example-6.png)
 
@@ -223,7 +223,7 @@ metrics:
 
 
 
-### Use `token` as a variable parameter to collect and use the following indicator groups
+### Use `token` as a variable parameter to collect and use the following metricss
 
 **Add an index group definition `summary` in `app-hertzbeat_token.yml`, which is the same as `summary` in Tutorial 1, and set the collection priority to 1**
 
@@ -295,17 +295,17 @@ params:
      type: textarea
      placeholder: 'Available When POST PUT'
      required: false
-# List of indicator groups
+# List of metricss
 metrics:
 # The first monitoring index group cpu
-# Note: Built-in monitoring indicators have (responseTime - response time)
+# Note: Built-in monitoring metrics have (responseTime - response time)
    - name: auth
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 0
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring metrics in the metrics
      fields:
-       # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
        - field: token
          type: 1
        - field: refreshToken
@@ -331,18 +331,18 @@ metrics:
        # Request parameter content
        params:
          ^_^params^_^: ^_^params^_^
-       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability indicator monitoring
+       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability metric monitoring
        parseType: jsonPath
        parseScript: '$.data'
 
 
    - name: summary
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
-     # The indicator group with priority 0 is the availability indicator group, that is, it will be scheduled first, and other indicator groups will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
+     # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
      priority: 1
-     # Specific monitoring indicators in the indicator group
+     # Specific monitoring metrics in the metrics
      fields:
-       # Indicator information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: indicator unit
+       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
        - field: category
          type: 1
        - field: app
@@ -369,7 +369,7 @@ metrics:
          # Authentication methods: Basic Auth, Digest Auth, Bearer Token
          type: Bearer Token
          bearerTokenToken: ^o^token^o^
-       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability indicator monitoring
+       # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability metric monitoring
        parseType: jsonPath
        parseScript: '$.data.apps.*'
 

@@ -21,22 +21,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
- * Number of monitoring level alarms 监控级别告警数量
- *
+ * Number of monitoring level alarms
  * @author tom
- *
  */
 @Data
 @AllArgsConstructor
 public class AlertPriorityNum {
 
     /**
-     * Alarm level 告警级别
+     * Alarm level
      */
     private byte priority;
 
     /**
-     * count 数量
+     * Alarm count 
      */
     private long num;
 }

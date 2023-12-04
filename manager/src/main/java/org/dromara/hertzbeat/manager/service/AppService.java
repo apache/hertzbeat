@@ -81,11 +81,11 @@ public interface AppService {
     Map<String, String> getI18nResources(String lang);
 
     /**
-     * Query all types of monitoring - indicator group - indicator level
-     * 查询所有监控的类型-指标组-指标层级
-     *
-     * @param lang language     语言
-     * @return level information        层级信息
+     * Query all types of monitoring hierarchy
+     * 查询所有监控的层级资源
+     * 
+     * @param lang language     
+     * @return hierarchy information 
      */
     List<Hierarchy> getAllAppHierarchy(String lang);
 

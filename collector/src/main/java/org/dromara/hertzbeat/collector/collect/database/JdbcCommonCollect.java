@@ -46,9 +46,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 数据库JDBC通用查询
+ * common query for database query
  * @author tomsun28
- *
  */
 @Slf4j
 public class JdbcCommonCollect extends AbstractCollect {
@@ -56,15 +55,14 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_ONE_ROW = "oneRow";
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
-    
     private static final String RUN_SCRIPT = "runScript";
 
     public JdbcCommonCollect(){}
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 简单校验必有参数
+        // check the params
         if (metrics == null || metrics.getJdbc() == null) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("DATABASE collect must has jdbc params");
@@ -72,7 +70,6 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
-        // 查询超时时间默认6000毫秒
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
         Statement statement = null;
         try {
@@ -147,11 +144,11 @@ public class JdbcCommonCollect extends AbstractCollect {
             JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
             try {
                 statement = jdbcConnect.getConnection().createStatement();
-                // 设置查询超时时间10秒
+                // set query timeout
                 int timeoutSecond = timeout / 1000;
                 timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
                 statement.setQueryTimeout(timeoutSecond);
-                // 设置查询最大行数1000行
+                // set query max row number
                 statement.setMaxRows(1000);
             } catch (Exception e) {
                 log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
@@ -170,14 +167,12 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (statement != null) {
             return statement;
         }
-        // 复用失败则新建连接
+        // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
         statement = connection.createStatement();
-        // 设置查询超时时间10秒
         int timeoutSecond = timeout / 1000;
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
         statement.setQueryTimeout(timeoutSecond);
-        // 设置查询最大行数1000行
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
         CommonCache.getInstance().addCache(identifier, jdbcConnect);
@@ -185,13 +180,13 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
-     * 查询一行数据, 通过查询返回结果集的列名称，和查询的字段映射
+     * query one row record, response metrics header and one value row
      * eg:
-     * 查询字段：one tow three four
-     * 查询SQL：select one, tow, three, four from book limit 1;
-     * @param statement 执行器
+     * query metrics：one tow three four
+     * query sql：select one, tow, three, four from book limit 1;
+     * @param statement statement
      * @param sql sql
-     * @param columns 查询的列头(一般是数据库表字段，也可能包含特殊字段,eg: responseTime)
+     * @param columns query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRow(Statement statement, String sql, List<String> columns,
@@ -216,14 +211,18 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
-     * 查询一行数据, 通过查询的两列数据(key-value)，key和查询的字段匹配，value为查询字段的值
+     * query two columns to mapping one row
      * eg:
-     * 查询字段：one two three four
-     * 查询SQL：select key, value from book;
-     * 返回的key映射查询字段
-     * @param statement 执行器
+     * query metrics：one two three four
+     * query sql：select key, value from book; the key is the query metrics fields
+     * select key, value from book; 
+     * one    -  value1
+     * two    -  value2
+     * three  -  value3
+     * four   -  value4
+     * @param statement statement
      * @param sql sql
-     * @param columns 查询的列头(一般是数据库表字段，也可能包含特殊字段,eg: responseTime)
+     * @param columns query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
@@ -251,13 +250,14 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
-     * 查询多行数据, 通过查询返回结果集的列名称，和查询的字段映射
+     * query multi row record, response metrics header and multi value row
      * eg:
-     * 查询字段：one tow three four
-     * 查询SQL：select one, tow, three, four from book;
-     * @param statement 执行器
+     * query metrics：one tow three four
+     * query sql：select one, tow, three, four from book;
+     * and return multi row record mapping with the metrics
+     * @param statement statement
      * @param sql sql
-     * @param columns 查询的列头(一般是数据库表字段，也可能包含特殊字段,eg: responseTime)
+     * @param columns query metrics field list
      * @throws Exception when error happen
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
@@ -281,7 +281,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
-     * 根据jdbc入参构造数据库URL
+     * construct jdbc url due the jdbc protocol
      * @param jdbcProtocol jdbc
      * @return URL
      */
@@ -289,7 +289,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
-            // 入参数URL有效 则优先级最高返回
+            // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }
         String url;
