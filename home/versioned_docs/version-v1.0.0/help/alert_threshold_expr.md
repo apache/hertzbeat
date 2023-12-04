@@ -43,7 +43,7 @@ equals(str1,str2)
 `responseTime>3000`   
 3. 全站监控->URL(instance)路径为 `https://baidu.com/book/3` 的响应时间大于200ms时触发告警  
 `equals(instance,"https://baidu.com/book/3")&&responseTime>200`     
-4. MYSQL监控->status指标组->threads_running(运行线程数)指标大于7时触发告警   
+4. MYSQL监控->status指标->threads_running(运行线程数)指标大于7时触发告警   
 `threads_running>7`   
 
 若遇到问题可以通过交流群ISSUE交流反馈哦！  

@@ -18,7 +18,6 @@ import java.util.Set;
 
 /**
  * implement for alert converge service
- *
  * @author tom
  */
 @Service

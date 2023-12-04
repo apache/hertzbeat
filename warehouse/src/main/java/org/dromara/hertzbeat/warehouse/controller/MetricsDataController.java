@@ -111,7 +111,7 @@ public class MetricsDataController {
         }
         {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
-            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metric(storageData.getMetrics())
+            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())
                     .time(storageData.getTime());
             List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
                             Field.builder().name(tmpField.getName())
@@ -145,14 +145,14 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
-    @Operation(summary = "查询监控指标组的指定指标的历史数据", description = "查询监控指标组下的指定指标的历史数据")
+    @Operation(summary = "查询监控的指定指标的历史数据", description = "查询监控下的指定指标的历史数据")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
             @Parameter(description = "监控任务ID", example = "343254354")
             @PathVariable Long monitorId,
             @Parameter(description = "监控指标全路径", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
-            @Parameter(description = "所属实例,默认空", example = "disk2")
-            @RequestParam(required = false) String instance,
+            @Parameter(description = "标签过滤,默认空", example = "disk2")
+            @RequestParam(required = false) String label,
             @Parameter(description = "查询历史时间段,默认6h-6小时:s-秒、m-分, h-小时, d-天, w-周", example = "6h")
             @RequestParam(required = false) String history,
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
@@ -183,12 +183,12 @@ public class MetricsDataController {
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
+            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
         } else {
-            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
+            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
-                .id(monitorId).metric(metrics).values(instanceValuesMap)
+                .id(monitorId).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         return ResponseEntity.ok(Message.success(historyData));

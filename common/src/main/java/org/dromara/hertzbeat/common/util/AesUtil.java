@@ -28,9 +28,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 /**
- * AES 对称加密解密工具
+ * AES Util
  * @author tomsun28
- *
  */
 @Slf4j
 public class AesUtil {

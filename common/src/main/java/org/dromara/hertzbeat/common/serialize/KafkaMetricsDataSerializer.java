@@ -9,7 +9,7 @@ import java.util.Map;
 
 
 /**
- * kafka指标组监控数据序列化类
+ * kafka metrics data serializer
  * @author tablerow
  */
 public class KafkaMetricsDataSerializer implements Serializer<CollectRep.MetricsData> {

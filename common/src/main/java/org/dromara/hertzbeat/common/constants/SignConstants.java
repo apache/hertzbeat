@@ -1,9 +1,8 @@
 package org.dromara.hertzbeat.common.constants;
 
 /**
- * 特殊字符常量
+ * Sign Constants
  * @author hdd
- *
  */
 public interface SignConstants {
 
@@ -17,5 +16,4 @@ public interface SignConstants {
     String CARRIAGE_RETURN = "\r";
 
     String RIGHT_DASH = "/";
-
 }

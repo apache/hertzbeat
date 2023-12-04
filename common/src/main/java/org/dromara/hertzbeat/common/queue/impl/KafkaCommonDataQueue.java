@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 
 /**
- * kafka采集数据队列实现
+ * common data queue implement kafka
  * @author tablerow
  *
  */

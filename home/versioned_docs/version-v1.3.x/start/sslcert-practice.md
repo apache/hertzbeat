@@ -45,7 +45,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 3. View the detection index data
 
-> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the indicator data chart, etc.
+> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)
@@ -62,7 +62,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
 
-> Configure the threshold, select the SSL certificate indicator object, configure the alarm expression-triggered when the indicator `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
+> Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
@@ -77,7 +77,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 5. Set the threshold (triggered one week before the certificate expires)
 
-> In the same way, add a new configuration threshold and configure an alarm expression - when the indicator expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
+> In the same way, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d6f837f57c247e09f668f60eff4a0ff~tplv-k3u1fbpfcp-zoom-1.image)

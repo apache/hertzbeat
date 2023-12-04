@@ -24,13 +24,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Monitoring configuration parameter properties and values
- * 监控配置参数属性及值
  * During the process, you need to replace the content with the identifier ^_^key^_^
  * in the protocol configuration parameter with the real value in the configuration parameter
- * 过程中需要将协议配置参数里面的标识符为^_^key^_^的内容替换为配置参数里的真实值
- *
  * @author tomsun28
- *
  */
 @Data
 @AllArgsConstructor

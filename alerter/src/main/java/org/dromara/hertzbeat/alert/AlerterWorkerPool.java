@@ -28,9 +28,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * warehouse 工作线程池
+ * alarm module thread pool
  * @author tom
- *
  */
 @Component
 @Slf4j
@@ -43,11 +42,11 @@ public class AlerterWorkerPool {
     }
 
     private void initWorkExecutor() {
-        // 线程工厂
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable); })
+                    log.error(throwable.getMessage(), throwable);
+                })
                 .setDaemon(true)
                 .setNameFormat("alerter-worker-%d")
                 .build();
@@ -61,9 +60,9 @@ public class AlerterWorkerPool {
     }
 
     /**
-     * Run the alerter task 运行alerter任务
-     * @param runnable task 任务
-     * @throws RejectedExecutionException when The thread pool is full of 线程池满
+     * Run the alerter task
+     * @param runnable task
+     * @throws RejectedExecutionException when The thread pool is full of
      */
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);

@@ -15,7 +15,6 @@ import java.util.Map;
 
 /**
  * reduce alarm and send alert data
- *
  * @author tom
  */
 @Service

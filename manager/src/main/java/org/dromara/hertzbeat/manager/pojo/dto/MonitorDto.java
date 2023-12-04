@@ -31,44 +31,26 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitoring Information External Interaction Entities
- * 监控信息对外交互实体
- *
  * @author tomsun28
- *
  */
 @Data
 @Schema(description = "Monitoring information entities | 监控信息实体")
 public class MonitorDto {
-
-    /**
-     * Monitoring entity
-     * 监控实体
-     */
-    @Schema(description = "监控实体", accessMode = READ_WRITE)
+    
+    @Schema(description = "Monitor Content", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private Monitor monitor;
-
-    /**
-     * Params 参数
-     */
-    @Schema(description = "监控参数", accessMode = READ_WRITE)
+    
+    @Schema(description = "Monitor Params", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private List<Param> params;
-
-    /**
-     * List of indicator groups
-     * 指标组列表
-     */
-    @Schema(description = "指标组列表", accessMode = READ_ONLY)
+    
+    @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
     private List<String> metrics;
-
-    /**
-     * Whether to detect
-     * 是否探测
-     */
-    @Schema(description = "是否进行探测", accessMode = READ_WRITE)
+    
+    @Schema(description = "Whether to Detect", accessMode = READ_WRITE)
     private boolean detected;
     
     /**

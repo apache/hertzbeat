@@ -23,15 +23,14 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * email注解数据自定义校验器
+ * email validator
  * @author tomsun28
- *
  */
 public class EmailParamValidator implements ConstraintValidator<EmailValid, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        // 判断value是否满足ipv4 ipv5 域名 格式
+        // validate email 
         return CommonUtil.validateEmail(value);
     }
 }

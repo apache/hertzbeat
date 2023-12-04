@@ -3,8 +3,8 @@ package org.dromara.hertzbeat.manager.scheduler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 分配的采集任务列表
@@ -34,10 +34,10 @@ public class AssignJobs {
     private Set<Long> pinnedJobs;
 
     public AssignJobs() {
-        jobs = new HashSet<>(16);
-        addingJobs = new HashSet<>(16);
-        removingJobs = new HashSet<>(16);
-        pinnedJobs = new HashSet<>(16);
+        jobs = ConcurrentHashMap.newKeySet(16);
+        addingJobs = ConcurrentHashMap.newKeySet(16);
+        removingJobs = ConcurrentHashMap.newKeySet(16);
+        pinnedJobs = ConcurrentHashMap.newKeySet(16);
     }
 
     public void addAssignJob(Long jobId) {

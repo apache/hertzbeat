@@ -39,15 +39,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Index group collection
- * 指标组采集
+ * metrics collection
  */
 @Slf4j
 @Data
 public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
      * Scheduling alarm threshold time 100ms
-     * 调度告警阈值时间 100ms
      */
     private static final long WARN_DISPATCH_TIME = 100;
     /**
@@ -60,47 +58,38 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     protected long tenantId;
     /**
      * Monitor ID
-     * 监控任务ID
      */
     protected long monitorId;
     /**
      * Monitoring type name
-     * 监控类型名称
      */
     protected String app;
     /**
-     * Metric group configuration
-     * 指标组配置
+     * Metrics configuration
      */
     protected Metrics metrics;
     /**
      * time wheel timeout
-     * 时间轮timeout
      */
     protected Timeout timeout;
     /**
      * Task and Data Scheduling
-     * 任务和数据调度
      */
     protected CollectDataDispatch collectDataDispatch;
     /**
      * task execution priority
-     * 任务执行优先级
      */
     protected byte runPriority;
     /**
      * Periodic collection or one-time collection true-periodic false-one-time
-     * 是周期性采集还是一次性采集 true-周期性 false-一次性
      */
     protected boolean isCyclic;
     /**
-     * Time for creating an indicator group collection task
-     * 指标组采集任务新建时间
+     * Time for creating collection task
      */
     protected long newTime;
     /**
-     * Start time of the index group collection task
-     * 指标组采集任务开始执行时间
+     * Start time of the collection task
      */
     protected long startTime;
 
@@ -123,7 +112,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.isCyclic = job.isCyclic();
         this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
-        // 临时一次性任务执行优先级高
         if (isCyclic) {
             runPriority = (byte) -1;
         } else {
@@ -148,8 +136,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         response.setMetrics(metrics.getName());
-        // According to the indicator group collection protocol, application type, etc., dispatch to the real application indicator group collection implementation class
-        // 根据指标组采集协议,应用类型等来调度到真正的应用指标组采集实现类
+        // According to the metrics collection protocol, application type, etc., 
+        // dispatch to the real application metrics collection implementation class
         AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
         if (abstractCollect == null) {
             log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
@@ -173,7 +161,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             }
         }
         // Alias attribute expression replacement calculation
-        // 别名属性表达式替换计算
         if (fastFailed()) {
             return;
         }
@@ -184,14 +171,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
 
     /**
-     * Calculate the real indicator (fields) value according to the calculates and aliasFields configuration
-     * Calculate instance value
-     * <p>
-     * 根据 calculates 和 aliasFields 配置计算出真正的指标(fields)值
-     * 计算instance实例值
+     * Calculate the real metrics value according to the calculates and aliasFields configuration
      *
-     * @param metrics     Metric group configuration        指标组配置
-     * @param collectData Data collection       采集数据
+     * @param metrics     Metrics configuration     
+     * @param collectData Data collection    
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
@@ -210,11 +193,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         collectData.clearValues();
-        // Preprocess calculates first      先预处理 calculates
+        // Preprocess calculates first    
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
-        // eg: database_pages=Database pages unconventional mapping   非常规映射
+        // eg: database_pages=Database pages unconventional mapping 
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
@@ -244,7 +227,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
             }
 
-            StringBuilder instanceBuilder = new StringBuilder();
             for (Metrics.Field field : fields) {
                 String realField = field.getField();
                 Expression expression = fieldExpressionMap.get(realField);
@@ -252,7 +234,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldUnit = null;
                 if (expression != null) {
                     // If there is a calculation expression, calculate the value
-                    // 存在计算表达式 则计算值
                     if (CommonConstants.TYPE_NUMBER == field.getType()) {
                         for (String variable : expression.getVariableFullNames()) {
                             // extract double value and unit from aliasField value
@@ -283,7 +264,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     }
                 } else {
                     // does not exist then map the alias value
-                    // 不存在 则映射别名值
                     String aliasField = fieldAliasMap.get(realField);
                     if (aliasField != null) {
                         value = aliasFieldValueMap.get(aliasField);
@@ -306,8 +286,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                 }
-
-                // 单位处理
+                
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
                 if (aliasFieldUnit != null) {
                     if (unitPair != null) {
@@ -323,8 +302,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                 }
-                // Handle indicator values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
-                // 处理可能带单位的指标数值 比如 34%, 34Mb，并将数值小数点限制到4位
+                // Handle metrics values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
                 if (CommonConstants.TYPE_NUMBER == field.getType()) {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
@@ -342,9 +320,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
 
     /**
-     * @param cal
-     * @param fieldAliasMap
-     * @return
+     * @param cal cal
+     * @param fieldAliasMap field alias map
+     * @return expr
      */
     private Object[] transformCal(String cal, Map<String, String> fieldAliasMap) {
         int splitIndex = cal.indexOf("=");
@@ -363,9 +341,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     /**
      * transform unit
-     *
-     * @param unit
-     * @return
+     * @param unit unit
+     * @return units
      */
     private Object[] transformUnit(String unit) {
         int equalIndex = unit.indexOf("=");

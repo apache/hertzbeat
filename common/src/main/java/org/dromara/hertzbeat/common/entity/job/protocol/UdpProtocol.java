@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 /**
  * 使用socket实现的udp进行服务端口可用性探测
  * @author tomsun28
- *
  */
 @Data
 @Builder

@@ -60,8 +60,6 @@ import java.util.stream.Collectors;
 
 /**
  * Ssh protocol collection implementation
- * ssh协议采集实现
- *
  * @author tom
  */
 @Slf4j
@@ -77,9 +75,8 @@ public class SshCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 校验参数
         try {
             validateParams(metrics);
         } catch (Exception e) {

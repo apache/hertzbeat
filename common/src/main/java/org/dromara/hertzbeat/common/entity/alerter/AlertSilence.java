@@ -43,9 +43,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alert Silence strategy entity
- * 告警静默策略
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_alert_silence")
@@ -90,7 +88,7 @@ public class AlertSilence {
             description = "已静默告警次数", accessMode = READ_WRITE)
     private Integer times;
 
-    @Schema(title = "匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+    @Schema(title = "Alarm Level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
@@ -111,23 +109,19 @@ public class AlertSilence {
     @Schema(title = "限制时间段截止", example = "23:59:59", accessMode = READ_WRITE)
     private ZonedDateTime periodEnd;
 
-    @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "This record was last modified by",
-            description = "此条记录最新修改者",
-            example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "This record was last modified by", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "This record creation time (millisecond timestamp)",
-            description = "记录创建时间", accessMode = READ_ONLY)
+    @Schema(title = "This record creation time (millisecond timestamp)", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "Record the latest modification time (timestamp in milliseconds)",
-            description = "记录最新修改时间", accessMode = READ_ONLY)
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 }

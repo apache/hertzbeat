@@ -41,10 +41,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * Alarm record entity 告警记录实体
- *
+ * Alarm record entity
  * @author tom
- *
  */
 @Entity
 @Table(name = "hzb_alert")
@@ -74,8 +72,7 @@ public class Alert {
             example = "8743267443543", accessMode = READ_WRITE)
     private Long alertDefineId;
 
-    @Schema(title = "Alarm level 0: high-emergency-critical alarm-red 1: medium-critical-critical alarm-orange 2: low-warning-warning alarm-yellow",
-            description = "告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+    @Schema(title = "Alarm level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning", 
             example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(2)
@@ -122,11 +119,11 @@ public class Alert {
     @Column(length = 2048)
     private Map<String, String> tags;
 
-    @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
@@ -136,7 +133,7 @@ public class Alert {
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

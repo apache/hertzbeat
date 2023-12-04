@@ -16,24 +16,25 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * alarm converge 
- * 告警收敛
+ * alarm converge
+ *
  * @author tom
  */
 @Service
 public class AlarmConvergeReduce {
-    
+
     private final AlertConvergeDao alertConvergeDao;
-    
+
     private final Map<Integer, Alert> converageAlertMap;
-    
+
     public AlarmConvergeReduce(AlertConvergeDao alertConvergeDao) {
         this.alertConvergeDao = alertConvergeDao;
         this.converageAlertMap = new ConcurrentHashMap<>(16);
     }
-    
+
     /**
      * currentAlert converge filter data
+     *
      * @param currentAlert currentAlert
      * @return true when not filter
      */
@@ -109,9 +110,9 @@ public class AlarmConvergeReduce {
                 if (evalInterval <= 0) {
                     return true;
                 }
-                int alertHash = Objects.hash(currentAlert.getPriority()) 
-                                        + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
-                                        + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+                int alertHash = Objects.hash(currentAlert.getPriority())
+                        + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
+                        + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
                 Alert preAlert = converageAlertMap.get(alertHash);
                 if (preAlert == null) {
                     currentAlert.setTimes(1);

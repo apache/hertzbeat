@@ -18,14 +18,13 @@
 package org.dromara.hertzbeat.collector.collect.common.cache;
 
 /**
- * 连接资源关闭回调接口
+ * resource in cache remove callback 
  * @author tomsun28
- *
  */
 public interface CacheCloseable {
 
     /**
-     * 在缓存remove掉此对象前，回调接口对连接对象进行相关资源的释放
+     * when the resource in cache want to be removed, callback this
      */
     void close();
 }
