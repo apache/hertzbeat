@@ -1,12 +1,11 @@
 package org.dromara.hertzbeat.manager.component.alerter.impl;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppDTO;
-import org.dromara.hertzbeat.manager.pojo.dto.WeChatAppReq;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -79,5 +78,74 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     @Override
     public byte type() {
         return 10;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class WeChatAppReq {
+
+        @JsonProperty(value = "errcode")
+        private Integer errCode;
+
+        @JsonProperty(value = "errmsg")
+        private String errMsg;
+
+        @JsonProperty(value = "access_token")
+        private String accessToken;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class WeChatAppDTO {
+
+        /**
+         * markdown格式
+         */
+        public static final String MARKDOWN = "markdown";
+
+        @JsonProperty(value = "touser")
+        private String toUser;
+
+        @JsonProperty(value = "toparty")
+        private String toParty;
+
+        @JsonProperty(value = "totag")
+        private String toTag;
+
+        @JsonProperty(value = "msgtype")
+        private String msgType;
+
+        @JsonProperty(value = "agentid")
+        private Integer agentId;
+
+        /**
+         * text message
+         */
+        private TextDTO text;
+
+        /**
+         * markdown消息
+         */
+        private MarkdownDTO markdown;
+
+        @Data
+        private static class MarkdownDTO {
+            /**
+             * 消息内容
+             */
+            private String content;
+        }
+
+        @Data
+        private static class TextDTO {
+            /**
+             * 消息内容
+             */
+            private String content;
+        }
+
     }
 }

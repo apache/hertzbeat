@@ -131,8 +131,8 @@ public interface NoticeConfigService {
      * Query the template information according to the template ID
      * 根据通知模板ID查询模板信息
      *
-     * @param id Template ID List      接收人ID
-     * @return Template     通知模板
+     * @param id Template ID     
+     * @return Template   
      */
     NoticeTemplate getOneTemplateById(Long id);
 
@@ -156,17 +156,15 @@ public interface NoticeConfigService {
 
     /**
      * Add a notification template
-     * 新增一个通知接收人
      *
-     * @param noticeTemplate template information  接收人信息
+     * @param noticeTemplate template information 
      */
     void addNoticeTemplate(NoticeTemplate noticeTemplate);
 
     /**
      * Modify notification templates
-     * 修改通知接收人
      *
-     * @param noticeTemplate template information  接收人信息
+     * @param noticeTemplate template information 
      */
     void editNoticeTemplate(NoticeTemplate noticeTemplate);
 
