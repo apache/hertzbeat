@@ -41,6 +41,8 @@ import org.snmp4j.security.SecurityModel;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.nio.Buffer;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -181,6 +183,15 @@ public class SnmpCollectImpl extends AbstractCollect {
                         } else {
                             String oid = oidMap.get(alias);
                             String value = oidsValueMap.get(oid);
+                            if (value == null) {
+                                // get leaf
+                                for (String key : oidsValueMap.keySet()) {
+                                    if (key.startsWith(oid)){
+                                        value = oidsValueMap.get(key);
+                                        break;
+                                    }
+                                }
+                            }
                             if (value != null) {
                                 valueRowBuilder.addColumns(value);
                             } else {
