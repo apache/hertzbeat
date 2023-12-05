@@ -22,3 +22,19 @@ jobs:
         java-version: 11
     - name: Build with Maven
       run: mvn clean -B package --file pom.xml
+    - name: Build Image
+      env:
+        IMAGE_PUSH: false
+        IMAGE_LOAD: true
+        IMAGE_PLATFORM: linux/amd64
+      run: |
+        docker buildx create --use --name mybuilder --driver docker-container
+        docker buildx use mybuilder
+
+        ./script/docker/server/build.sh
+    - name: Run E2E
+      run: |
+        sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+        sudo chmod u+x /usr/local/bin/docker-compose
+
+        cd e2e && ./start.sh

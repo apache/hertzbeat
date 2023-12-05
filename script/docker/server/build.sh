@@ -31,7 +31,7 @@ fi
 # 编译上下文目录
 CONTEXT_DIR=`pwd`
 
-COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
+COMMAND="docker buildx build --platform ${IMAGE_PLATFORM:-linux/arm64,linux/amd64} -t tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push=${IMAGE_PUSH:-true} --load=${IMAGE_LOAD:-false}"
 
 #COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
@@ -46,5 +46,6 @@ COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hert
 echo "$COMMAND"
 
 $COMMAND
+docker tag tancloud/hertzbeat:v$VERSION tancloud/hertzbeat
 
 #docker build -t tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION"
