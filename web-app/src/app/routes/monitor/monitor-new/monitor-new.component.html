@@ -352,8 +352,13 @@
             id="collector"
             [nzCustomTemplate]="collectorTemplate"
           >
-            <nz-option nzCustomContent [nzValue]="''" [nzLabel]="'monitor.collector.system.default' | i18n">
+            <nz-option
+              nzCustomContent
+              [nzValue]="0"
+              [nzLabel]="('monitor.collector.system.default' | i18n) + '-' + ('collector.mode.public' | i18n)"
+            >
               <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
+              <nz-tag nzColor="success">{{ 'collector.mode.public' | i18n }}</nz-tag>
             </nz-option>
             <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
               <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
@@ -361,7 +366,10 @@
               }}</nz-tag>
               <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
               <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
-              <nz-tag nzColor="success">{{ item.ip }}</nz-tag>
+              <nz-tag nzColor="processing">{{ item.ip }}</nz-tag>
+              <nz-tag [nzColor]="item.mode == 'private' ? 'warning' : 'success'">
+                {{ item.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
+              </nz-tag>
             </nz-option>
           </nz-select>
           <ng-template #collectorTemplate let-selected>
