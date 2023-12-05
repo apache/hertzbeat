@@ -315,7 +315,7 @@ public class CalculateAlarm {
         } catch (Exception e) {
             log.error("Alert Define Rule: {} Run Error: {}.", e, e.getMessage());
         }
-        return match;
+        return match != null && match;
     }
 
     private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
