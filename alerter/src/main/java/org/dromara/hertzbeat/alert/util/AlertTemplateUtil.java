@@ -44,14 +44,14 @@ public class AlertTemplateUtil {
         }
         try {
             Matcher matcher = PATTERN.matcher(template);
-            StringBuilder buffer = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
             while (matcher.find()) {
                 Object objectValue = replaceData.getOrDefault(matcher.group(1), "NullValue");
                 String value = objectValue.toString();
-                matcher.appendReplacement(buffer, value);
+                matcher.appendReplacement(builder, Matcher.quoteReplacement(value));
             }
-            matcher.appendTail(buffer);
-            return buffer.toString();
+            matcher.appendTail(builder);
+            return builder.toString();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return template;
