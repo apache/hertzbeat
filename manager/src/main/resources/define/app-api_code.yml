@@ -15,20 +15,20 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
-category: custom
+category: service
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: api_code
 # The app api i18n name
 # app api国际化名称
 name:
   zh-CN: API Code
-  en-US: API Code
+  en-US: API业务状态码
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 api 返回的状态码进行监控。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對api返回的狀態碼進行監控。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: 监控 HTTP API 接口，对 API 返回的业务自定义状态码(非 Http 状态码)进行监控。此需通过配置 JsonPath 来解析您 API 的业务状态码路径。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Monitor HTTP API to monitor business-defined status codes (non-HTTP status codes) returned by API. To do this, you need to configure JsonPath to resolve the business status code path of your API. <br>You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: 監控 HTTP API 接口，對 API 返回的業務自定義狀態碼(非 Http 狀態碼)進行監控。此需通過配置 JsonPath 來解析您 API 的業務狀態碼路徑。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/api_code
   en-US: https://hertzbeat.com/docs/help/api_code
@@ -151,8 +151,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: JsonPath解析路径
-      en-US: JsonPath
+      zh-CN: JsonPath解析状态码路径
+      en-US: JsonPath Parse Code
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: text
@@ -351,14 +351,31 @@ params:
     hide: true
 
 metrics:
+  # metrics - status
+  # 监控指标 - status
   - name: status
+    i18n:
+      zh-CN: 状态
+      en-US: Status
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: ResponseTime
       - field: code
-        type: 0
+        type: 1
+        i18n:
+          zh-CN: 业务状态码
+          en-US: Status Code
     aliasFields:
       - ^_^jsonPath^_^
       - responseTime

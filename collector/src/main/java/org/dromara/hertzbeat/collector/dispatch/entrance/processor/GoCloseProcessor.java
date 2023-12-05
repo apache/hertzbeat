@@ -29,7 +29,7 @@ public class GoCloseProcessor implements NettyRemotingProcessor {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         if (message.getMsg().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
-            log.error("receive client auth failed message and go close. {}", message.getMsg());
+            log.error("[Auth Failed]receive client auth failed message and go close. {}", message.getMsg());
         }
         this.timerDispatch.goOffline();
         this.collectServer.shutdown();
