@@ -1450,6 +1450,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "LinuxSuRen",
+      "name": "Rick",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1450685?v=4",
+      "profile": "https://linuxsuren.github.io/open-source-best-practice/",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
