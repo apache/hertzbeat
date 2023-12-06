@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
 
 /**
  * Collect task details
- * 采集任务详情
- *
  * @author tomsun28
  */
 @Data
@@ -45,7 +43,7 @@ import java.util.stream.Collectors;
 public class Job {
 
     /**
-     * Task id      采集任务ID
+     * Task Job id
      */
     private long id;
     /**
@@ -53,23 +51,20 @@ public class Job {
      */
     private long tenantId = 0;
     /**
-     * Monitoring ID Application ID
-     * 监控任务ID 应用ID
+     * Monitoring Task ID
      */
     private long monitorId;
     /**
-     * Large categories of monitoring       监控的大类别
-     * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-     * service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 os-操作系统监控
+     * Large categories of monitoring   
+     * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring...
      */
     private String category;
     /**
      * Type of monitoring eg: linux | mysql | jvm
-     * 监控的类型 eg: linux | mysql | jvm
      */
     private String app;
     /**
-     * The internationalized name of the monitoring type    监控类型的国际化名称
+     * The internationalized name of the monitoring type   
      * zh-CN: PING连通性
      * en-US: PING CONNECT
      */
@@ -104,8 +99,8 @@ public class Job {
      */
     private List<ParamDefine> params;
     /**
-     * Indicator group configuration eg: cpu memory
-     * 指标组配置 eg: cpu memory
+     * Metrics configuration eg: cpu memory
+     * eg: cpu memory
      */
     private List<Metrics> metrics;
     /**
@@ -116,20 +111,13 @@ public class Job {
 
     /**
      * collector use - timestamp when the task was scheduled by the time wheel
-     * collector使用 - 任务被时间轮开始调度的时间戳
+     * 任务被时间轮开始调度的时间戳
      */
     @JsonIgnore
     private transient long dispatchTime;
-
-    /**
-     * collector use - task version, this field is not stored in etcd
-     * collector使用 - 任务版本,此字段不存储于etcd
-     */
-    @JsonIgnore
-    private transient long version;
+    
     /**
      * collector usage - metric group task execution priority view
-     * collector使用 - 指标组任务执行优先级视图
      * 0 - availability
      * 1 - cpu | memory
      * 2 - health
@@ -142,15 +130,15 @@ public class Job {
     private transient LinkedList<Set<Metrics>> priorMetrics;
 
     /**
-     * collector use - Temporarily store one-time task indicator group response data
-     * collector使用 - 临时存储一次性任务指标组响应数据
+     * collector use - Temporarily store one-time task metrics response data
+     * collector使用 - 临时存储一次性任务响应数据
      */
     @JsonIgnore
     private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
-     * collector uses - construct to initialize metrics group execution view
-     * collector使用 - 构造初始化指标组执行视图
+     * collector use - construct to initialize metrics execution view
+     * collector使用 - 构造初始化指标执行视图
      */
     public synchronized void constructPriorMetrics() {
         Map<Byte, List<Metrics>> map = metrics.stream()
@@ -160,15 +148,15 @@ public class Job {
                     if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
                         metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
-                    // Set the default indicator group execution priority, if not filled, the default last priority
-                    // 设置默认的指标组执行优先级,不填则默认最后优先级
+                    // Set the default metrics execution priority, if not filled, the default last priority
+                    // 设置默认执行优先级,不填则默认最后优先级
                     if (metric.getPriority() == null) {
                         metric.setPriority(Byte.MAX_VALUE);
                     }
                 })
                 .collect(Collectors.groupingBy(Metrics::getPriority));
-        // Construct a linked list of task execution order of the indicator group
-        // 构造指标组任务执行顺序链表
+        // Construct a linked list of task execution order of the metrics
+        // 构造采集任务执行顺序链表
         priorMetrics = new LinkedList<>();
         map.values().forEach(metric -> {
             Set<Metrics> metricsSet = Collections.synchronizedSet(new HashSet<>(metric));
@@ -186,18 +174,18 @@ public class Job {
 
     /**
      * collector use - to get the next set of priority metric group tasks
-     * collector使用 - 获取下一组优先级的指标组任务
+     * collector使用 - 获取下一组优先级的采集任务
      *
-     * @param metrics Current indicator group       当前指标组
-     * @param first   Is it the first time to get     是否是第一次获取
-     * @return Metric Group Tasks       指标组任务
-     * Returning null means: the job has been completed, and the collection of all indicator groups has ended
-     * 返回null表示：job已完成,所有指标组采集结束
-     * Returning the empty set indicates that there are still indicator group collection tasks at the current
-     * level that have not been completed,and the next level indicator group task collection cannot be performed.
-     * 返回empty的集合表示：当前级别下还有指标组采集任务未结束,无法进行下一级别的指标组任务采集
-     * Returns a set of data representation: get the next set of priority index group tasks
-     * 返回有数据集合表示：获取到下一组优先级的指标组任务
+     * @param metrics Current Metrics
+     * @param first   Is it the first time to get  
+     * @return Metrics Tasks       
+     * Returning null means: the job has been completed, and the collection of all metrics has ended
+     * 返回null表示：job已完成,所有采集任务结束
+     * Returning the empty set metrics that there are still metrics collection tasks at the current
+     * level that have not been completed,and the next level metrics task collection cannot be performed.
+     * 返回empty的集合表示：当前级别下还有指标采集任务未结束,无法进行下一级别的任务采集
+     * Returns a set of data representation: get the next set of priority index collcet tasks
+     * 返回有数据集合表示：获取到下一组优先级的采集任务
      */
     public synchronized Set<Metrics> getNextCollectMetrics(Metrics metrics, boolean first) {
         if (priorMetrics == null || priorMetrics.isEmpty()) {

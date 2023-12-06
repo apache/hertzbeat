@@ -1,0 +1,24 @@
+version: '3.1'
+services:
+  testing:
+    build:
+      context: .
+    environment:
+      SERVER: http://hertzbeat:1157
+    depends_on:
+      hertzbeat:
+        condition: service_healthy
+    links:
+      - hertzbeat
+  hertzbeat:
+    image: tancloud/hertzbeat
+    ports:
+      - 1157:1157
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/1157"]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 3s

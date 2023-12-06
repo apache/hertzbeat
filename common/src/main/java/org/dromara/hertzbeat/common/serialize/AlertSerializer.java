@@ -9,7 +9,7 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 import java.util.Map;
 
 /**
- * kafka告警记录序列化类
+ * kafka alert entity serializer
  * @author tablerow
  */
 public class AlertSerializer implements Serializer<Alert> {

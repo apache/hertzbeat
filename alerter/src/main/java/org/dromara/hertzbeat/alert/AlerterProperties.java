@@ -23,10 +23,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * alerter config
- *
+ * alerter prop config
  * @author tom
- *
  */
 @Component
 @ConfigurationProperties(prefix = "alerter")
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
 public class AlerterProperties {
 
     /**
-     * 告警内容控制台链接
      * Alarm content console link
      */
     private String consoleUrl = "https://console.tancloud.cn";
@@ -71,41 +68,19 @@ public class AlerterProperties {
     private String serverChanNotifyUrl = "https://sctapi.ftqq.com/%s.send";
 
     /**
-     * 告警评估时间间隔起始基数 每下一次乘2 单位毫秒
-     * base of alert eval interval time, unit:ms. The next time is 2 times the previous time.
-     */
-    @Deprecated
-    private long alertEvalIntervalBase = 1000 * 60 * 10L;
-
-    /**
-     * 最大告警评估时间间隔 单位毫秒
-     * max of alert eval interval time, unit:ms
-     */
-    @Deprecated
-    private long maxAlertEvalInterval = 1000 * 60 * 60 * 24L;
-
-    /**
-     * 系统内置告警(available alert, reachable alert...)触发次数
-     * system alert(available alert, reachable alert...) trigger times
-     */
-    @Deprecated
-    private int systemAlertTriggerTimes = 1;
-
-    /**
-     * Data entry configuration properties 数据入口配置属性
+     * Data entry configuration properties
      */
     private EntranceProperties entrance;
 
     /**
-     * Data entry configuration properties 数据入口配置属性
-     * The entry can obtain data from messaging middleware such as kafka rabbitmq rocketmq 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
+     * Data entry configuration properties
      */
     @Getter
     @Setter
     public static class EntranceProperties {
 
         /**
-         * kafka configuration information kafka配置信息
+         * kafka configuration information
          */
         private KafkaProperties kafka;
 
@@ -113,20 +88,20 @@ public class AlerterProperties {
         @Setter
         public static class KafkaProperties {
             /**
-             * Whether the kafka data entry is started kafka数据入口是否启动
+             * Whether the kafka data entry is started
              */
             private boolean enabled = true;
 
             /**
-             * kafka's connection server url kafka的连接服务器url
+             * kafka's connection server url
              */
             private String servers = "127.0.0.1:9092";
             /**
-             * The name of the topic that receives the data 接收数据的topic名称
+             * The name of the topic that receives the data
              */
             private String topic;
             /**
-             * Consumer Group ID 消费者组ID
+             * Consumer Group ID
              */
             private String groupId;
 

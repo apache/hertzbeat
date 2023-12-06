@@ -1,0 +1,80 @@
+
+{
+    "detected": false,
+    "collector": "",
+    "monitor": {
+      "intervals": 60,
+      "tags": [],
+      "app": "api",
+      "host": "127.0.0.1",
+      "name": "{{.param.monitorHTTP}}"
+    },
+    "params": [
+      {
+        "field": "host",
+        "type": 1,
+        "value": "127.0.0.1"
+      },
+      {
+        "field": "port",
+        "type": 0,
+        "value": 80
+      },
+      {
+        "field": "method",
+        "type": 1,
+        "value": "GET"
+      },
+      {
+        "field": "uri",
+        "type": 1,
+        "value": ""
+      },
+      {
+        "field": "ssl",
+        "type": 1,
+        "value": false
+      },
+      {
+        "field": "headers",
+        "type": 3
+      },
+      {
+        "field": "params",
+        "type": 3
+      },
+      {
+        "field": "timeout",
+        "type": 0
+      },
+      {
+        "field": "contentType",
+        "type": 1
+      },
+      {
+        "field": "payload",
+        "type": 1
+      },
+      {
+        "field": "authType",
+        "type": 1
+      },
+      {
+        "field": "username",
+        "type": 1
+      },
+      {
+        "field": "password",
+        "type": 1
+      },
+      {
+        "field": "keyword",
+        "type": 1
+      },
+      {
+        "field": "successCode",
+        "type": 4,
+        "value": "200, 201"
+      }
+    ]
+}

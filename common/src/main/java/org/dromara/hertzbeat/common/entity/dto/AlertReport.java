@@ -29,15 +29,14 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 
 /**
- * 告警 对外上报实体类
+ * Alarm Report Content Entity
  * @author yuye
- *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "告警对外上报字段")
+@Schema(description = "Alarm Report Content Entity")
 public class AlertReport {
 
     @Schema(title = "Alert record saas index ID")

@@ -6,9 +6,7 @@ import java.time.temporal.TemporalAmount;
 
 /**
  * time util
- *
  * @author tom
- *
  */
 public class TimePeriodUtil {
 

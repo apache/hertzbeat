@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * rocketmq采集数据实体类
+ * rocketmq collect data
  *
  * @author ceilzcx
- * @since 5/6/2023
  */
 @Data
 public class RocketmqCollectData {

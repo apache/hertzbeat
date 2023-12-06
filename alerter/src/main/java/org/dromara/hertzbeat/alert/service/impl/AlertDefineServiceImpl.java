@@ -37,9 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
- * 告警定义管理接口实现
  * @author tom
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -101,10 +99,8 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         // todo 校验此告警定义和监控是否存在
 
         // Delete all associations of this alarm
-        // 先删除此告警的所有关联
         alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
         // Save the associated
-        // 保存关联
         alertDefineBindDao.saveAll(alertDefineBinds);
     }
 

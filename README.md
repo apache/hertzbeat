@@ -381,6 +381,8 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Clownsw"><img src="https://avatars.githubusercontent.com/u/28394742?v=4?s=100" width="100px;" alt="Smliexx"/><br /><sub><b>Smliexx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Clownsw" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bbelide2"><img src="https://avatars.githubusercontent.com/u/26840796?v=4?s=100" width="100px;" alt="Bala Sukesh"/><br /><sub><b>Bala Sukesh</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=bbelide2" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jinyaoMa"><img src="https://avatars.githubusercontent.com/u/25066570?v=4?s=100" width="100px;" alt="Jinyao Ma"/><br /><sub><b>Jinyao Ma</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jinyaoMa" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://linuxsuren.github.io/open-source-best-practice/"><img src="https://avatars.githubusercontent.com/u/1450685?v=4?s=100" width="100px;" alt="Rick"/><br /><sub><b>Rick</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
@@ -430,7 +432,7 @@ WeChat Group : Add friend `tan-cloud`, and will invite you to the group.
 - [Jpom](https://gitee.com/dromara/Jpom) : 简而轻的低侵入式在线构建、自动部署、日常运维、项目监控软件  
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
 - [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
-
+- [API Testing](https://github.com/LinuxSuRen/api-testing)：轻量级、可扩展的接口开发、测试工具
 
 ##### Sponsor     
 

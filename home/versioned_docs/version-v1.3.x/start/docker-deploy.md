@@ -32,8 +32,8 @@ sidebar_label: Install via Docker
    You can modify the configuration file according to your needs.      
    - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
    - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)  
-   - **Recommended** If you need to use the time series database TDengine to store indicator data, you need to replace the `warehouse.store.td-engine` parameter in `application.yml` for specific steps, see [Using TDengine to store metrics data](tdengine-init)   
-   - **Recommended** If you need to use the time series database IotDB to store the indicator database, you need to replace the `warehouse.storeiot-db` parameter in `application.yml` For specific steps, see [Use IotDB to store metrics data](iotdb-init)   
+   - **Recommended** If you need to use the time series database TDengine to store metric data, you need to replace the `warehouse.store.td-engine` parameter in `application.yml` for specific steps, see [Using TDengine to store metrics data](tdengine-init)   
+   - **Recommended** If you need to use the time series database IotDB to store the metric database, you need to replace the `warehouse.storeiot-db` parameter in `application.yml` For specific steps, see [Use IotDB to store metrics data](iotdb-init)   
 
 4. Mounted the account file(optional)           
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       

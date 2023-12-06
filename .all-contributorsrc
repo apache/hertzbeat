@@ -1441,6 +1441,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jinyaoMa",
+      "name": "Jinyao Ma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25066570?v=4",
+      "profile": "https://github.com/jinyaoMa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LinuxSuRen",
+      "name": "Rick",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1450685?v=4",
+      "profile": "https://linuxsuren.github.io/open-source-best-practice/",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -24,9 +24,8 @@ import javax.persistence.AttributeConverter;
 import java.util.Map;
 
 /**
- * json 互转map对象字段为数据String字段
+ * json map converter
  * @author tom
- *
  */
 public class JsonMapAttributeConverter implements AttributeConverter<Map<String, String>, String> {
 

@@ -28,54 +28,48 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Hierarchical structure
- * 层级关系结构
- * eg: Monitoring Type Indicator Group Indicator Information Hierarchy Relationship
- * eg: 监控类型指标组指标信息层级关系
- *
+ * eg: Monitoring Type metrics Information Hierarchy Relationship
  * @author tom
- *
  */
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Schema(description = "Monitor Hierarchy | 监控类型指标组指标信息层级关系")
+@Schema(description = "Monitor Hierarchy | 监控类型指标信息层级关系")
 public class Hierarchy {
 
     /**
      * Category value
      */
-    @Schema(description = "类别值", example = "os", accessMode = READ_WRITE)
+    @Schema(description = "Category Value", example = "os", accessMode = READ_WRITE)
     String category;
 
     /**
      * Attribute value
      */
-    @Schema(description = "属性值", example = "linux", accessMode = READ_WRITE)
+    @Schema(description = "Attribute value", example = "linux", accessMode = READ_WRITE)
     String value;
 
     /**
      * Attribute internationalization tag
      */
-    @Schema(description = "属性国际化标签", example = "Linux系统", accessMode = READ_WRITE)
+    @Schema(description = "Attribute internationalization tag", example = "Linux系统", accessMode = READ_WRITE)
     String label;
 
     /**
      * Is it a leaf node
      */
-    @Schema(description = "是否是叶子节点", example = "true", accessMode = READ_WRITE)
+    @Schema(description = "Is it a leaf node", example = "true", accessMode = READ_WRITE)
     Boolean isLeaf = false;
     
     /**
      * For leaf metric
      * metric type 0-number: number 1-string: string
-     * 指标类型 0-number:数字 1-string:字符串
      */
     @Schema(description = "metric type 0-number: number 1-string: string")
     private Byte type;
     
     /**
      * metric unit
-     * 指标单位
      */
     @Schema(description = "metric unit")
     private String unit;
@@ -83,6 +77,6 @@ public class Hierarchy {
     /**
      * Next level of association
      */
-    @Schema(description = "下一关联层级", accessMode = READ_WRITE)
+    @Schema(description = "Next Hierarchy", accessMode = READ_WRITE)
     private List<Hierarchy> children;
 }

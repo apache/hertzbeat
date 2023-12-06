@@ -109,15 +109,15 @@ params:
     required: false
 
 # collect metrics config list
-# 采集指标组配置列表
+# 采集指标配置列表
 metrics:
   # metrics - server
-  # 监控指标组 - server
+  # 监控指标 - server
   - name: server
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     i18n:
       zh-CN: 服务器信息
@@ -267,12 +267,12 @@ metrics:
       # 超时时间 单位：ms
       timeout: ^_^timeout^_^
   # metrics - clients
-  # 监控指标组 - clients
+  # 监控指标 - clients
   - name: clients
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     i18n:
       zh-CN: 客户端信息
@@ -328,12 +328,12 @@ metrics:
       password: ^_^password^_^
       timeout: ^_^timeout^_^
   # metrics - memory
-  # 监控指标组 - memory
+  # 监控指标 - memory
   - name: memory
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 2
     i18n:
       zh-CN: 内存信息
@@ -580,12 +580,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - persistence
-  # 监控指标组 - persistence
+  # 监控指标 - persistence
   - name: persistence
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 3
     i18n:
       zh-CN: 持久化信息
@@ -733,12 +733,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - stats
-  # 监控指标组 - stats
+  # 监控指标 - stats
   - name: stats
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 4
     i18n:
       zh-CN: 全局统计信息
@@ -961,12 +961,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - replication
-  # 监控指标组 - replication
+  # 监控指标 - replication
   - name: replication
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 5
     i18n:
       zh-CN: 主从同步信息
@@ -1054,12 +1054,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - cpu
-  # 监控指标组 - cpu
+  # 监控指标 - cpu
   - name: cpu
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 6
     i18n:
       zh-CN: CPU消耗信息
@@ -1122,12 +1122,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - errorstats
-  # 监控指标组 - errorstats
+  # 监控指标 - errorstats
   - name: errorstats
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 8
     i18n:
       zh-CN: 错误信息
@@ -1170,7 +1170,7 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - cluster
-  # 监控指标组 - cluster
+  # 监控指标 - cluster
   - name: cluster
     # collect metrics content
     # 具体监控指标列表
@@ -1209,12 +1209,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - commandstats
-  # 监控指标组 - commandstats
+  # 监控指标 - commandstats
   - name: commandstats
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 9
     i18n:
       zh-CN: 命令统计信息
@@ -1297,12 +1297,12 @@ metrics:
       timeout: ^_^timeout^_^
 
   # metrics - keyspace
-  # 监控指标组 - keyspace
+  # 监控指标 - keyspace
   - name: keyspace
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 9
     i18n:
       zh-CN: 数据库统计信息

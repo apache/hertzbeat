@@ -18,7 +18,6 @@ import java.util.List;
 
 /**
  * @author myth
- *
  */
 @Data
 @AllArgsConstructor

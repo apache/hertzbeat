@@ -40,7 +40,7 @@ Hi guys! Major release. HertzBeat v1.3.2 has published.
 
 **This delightful version came out of the hard work of 27 friends. Thank them! Love 💗**
 
-In this version, we support new monitoring types and indicators for **freebsd, debian, opensuse, redhat, apache doris**, etc.
+In this version, we support new monitoring types and metrics for **freebsd, debian, opensuse, redhat, apache doris**, etc.
 
 - Support WEB page configuration mail server, replace the previous file configuration
 - Supports alarm convergence. If repeated alarms are frequently sent, it will be resolved immediately with alarm convergence

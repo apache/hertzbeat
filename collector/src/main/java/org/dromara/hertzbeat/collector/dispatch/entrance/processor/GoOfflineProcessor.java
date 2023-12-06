@@ -26,7 +26,7 @@ public class GoOfflineProcessor implements NettyRemotingProcessor {
         log.info("receive offline message and handle success");
         message.getMsg();
         if (message.getMsg().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
-            log.error("receive client auth failed message and go offline. {}", message.getMsg());
+            log.error("[Auth Failed]receive client auth failed message and go offline. {}", message.getMsg());
             return null;
         }
         return ClusterMsg.Message.newBuilder()

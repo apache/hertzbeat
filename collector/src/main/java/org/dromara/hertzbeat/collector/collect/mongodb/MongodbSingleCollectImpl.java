@@ -44,7 +44,7 @@ import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Mongodb 单机指标收集器
+ * Mongodb single collect
  *
  * @author <a href="mailto:liudonghua123@gmail.com">liudonghua</a>
  * see also https://www.mongodb.com/languages/java,
@@ -80,7 +80,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     };
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         try {
             preCheck(metrics);
         } catch (Exception e) {
