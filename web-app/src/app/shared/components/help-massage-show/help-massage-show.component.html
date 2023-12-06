@@ -11,8 +11,8 @@
       <div class="flex help_massage_nav">
         <a class="help_massage_nav_item" [routerLink]="">
           <i class="help_link_span" nz-icon nzType="{{ icon_name }}"></i>
-          <span *ngIf="app != undefined">{{ 'monitor.app.' + app | i18n }}</span>
-          <span *ngIf="app == undefined">{{ module_name | i18n }}</span>
+          <span *ngIf="app != undefined && module_name == undefined">{{ 'monitor.app.' + app | i18n }}</span>
+          <span *ngIf="module_name != undefined">{{ module_name | i18n }}</span>
         </a>
       </div>
     </div>
