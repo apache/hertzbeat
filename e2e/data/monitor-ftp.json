@@ -1,0 +1,41 @@
+{
+    "detected": false,
+    "collector": "",
+    "monitor": {
+      "intervals": 60,
+      "tags": [],
+      "app": "ftp",
+      "host": "127.0.0.1",
+      "name": "{{.param.monitorFTP}}"
+    },
+    "params": [
+      {
+        "field": "host",
+        "type": 1,
+        "value": "127.0.0.1"
+      },
+      {
+        "field": "port",
+        "type": 0,
+        "value": 21
+      },
+      {
+        "field": "direction",
+        "type": 1,
+        "value": "127.0.0.1"
+      },
+      {
+        "field": "timeout",
+        "type": 0,
+        "value": 1000
+      },
+      {
+        "field": "username",
+        "type": 1
+      },
+      {
+        "field": "password",
+        "type": 1
+      }
+    ]
+}

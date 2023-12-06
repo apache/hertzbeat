@@ -1,0 +1,32 @@
+{
+    "detected": false,
+    "collector": "",
+    "monitor": {
+      "intervals": 60,
+      "tags": [],
+      "app": "udp_port",
+      "host": "127.0.0.1",
+      "name": "{{.param.monitorUDP}}"
+    },
+    "params": [
+      {
+        "field": "host",
+        "type": 1,
+        "value": "127.0.0.1"
+      },
+      {
+        "field": "port",
+        "type": 0,
+        "value": 81
+      },
+      {
+        "field": "timeout",
+        "type": 0,
+        "value": 6000
+      },
+      {
+        "field": "content",
+        "type": 1
+      }
+    ]
+}

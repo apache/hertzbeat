@@ -5,6 +5,13 @@ api: |
   {{default "http://localhost:1157" (env "SERVER")}}
 param:
   monitorHTTP: "{{randAlpha 6}}"
+  monitorSiteMap: "{{randAlpha 6}}"
+  monitorPort: "{{randAlpha 6}}"
+  monitorSSL: "{{randAlpha 6}}"
+  monitorPing: "{{randAlpha 6}}"
+  monitorUDP: "{{randAlpha 6}}"
+  monitorWebsite: "{{randAlpha 6}}"
+  monitorFTP: "{{randAlpha 6}}"
   tagName: "{{randAlpha 3}}"
 items:
 - name: login
@@ -55,6 +62,62 @@ items:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
     bodyFromFile: data/monitor-http.json
+- name: createSitemapMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-sitemap.json
+- name: createPortMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-port.json
+- name: createSSLMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ssl.json
+- name: createPingMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ping.json
+- name: createUDPMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-udp.json
+- name: createWebsiteMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-website.json
+- name: createFTPMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ftp.json
 - name: listHTTPMonitor
   request:
     api: /api/monitors
