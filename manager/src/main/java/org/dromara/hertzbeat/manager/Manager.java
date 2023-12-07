@@ -17,12 +17,13 @@
 
 package org.dromara.hertzbeat.manager;
 
+import org.dromara.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -39,6 +40,7 @@ import javax.annotation.PostConstruct;
 @EntityScan(basePackages = {"org.dromara.hertzbeat"})
 @ComponentScan(basePackages = {"org.dromara.hertzbeat"})
 @ConfigurationPropertiesScan(basePackages = {"org.dromara.hertzbeat"})
+@ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 public class Manager {
     public static void main(String[] args) {
         SpringApplication.run(Manager.class, args);

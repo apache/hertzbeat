@@ -20,7 +20,7 @@
     <parent>
         <artifactId>hertzbeat</artifactId>
         <groupId>org.dromara.hertzbeat</groupId>
-        <version>1.0</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>hertzbeat-manager</artifactId>
@@ -45,6 +45,12 @@
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-logging</artifactId>
+                    <groupId>commons-logging</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- data warehouse -->
         <dependency>
@@ -60,6 +66,12 @@
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-collector</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-logging</artifactId>
+                    <groupId>commons-logging</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- remoting -->
         <dependency>
@@ -188,31 +200,12 @@
                     <buildArgs>
                         <arg>
                             --no-fallback
-                            --initialize-at-build-time=org.slf4j.LoggerFactory
-                            --initialize-at-build-time=org.apache.logging.log4j.simple.SimpleLogger
-                            --initialize-at-build-time=org.apache.logging.log4j.util.ProviderUtil
-                            --initialize-at-build-time=org.apache.logging.log4j.spi.AbstractLogger
-                            --initialize-at-build-time=org.apache.logging.log4j.util.PropertiesUtil
-                            --initialize-at-build-time=org.apache.logging.log4j.spi.StandardLevel
-                            --initialize-at-build-time=org.apache.logging.log4j.util.Strings
-                            --initialize-at-build-time=org.apache.logging.log4j.spi.Provider
-                            --initialize-at-build-time=org.apache.logging.log4j.status.StatusLogger
-                            --initialize-at-build-time=org.apache.logging.log4j.util.OsgiServiceLocator
-                            --initialize-at-build-time=org.apache.logging.log4j.Level
-                            --initialize-at-build-time=org.apache.logging.log4j.util.LoaderUtil
-                            --initialize-at-build-time=org.apache.logging.log4j.util.PropertySource$Util
-                            --initialize-at-build-time=org.apache.logging.log4j.spi.ExtendedLoggerWrapper
-                            --initialize-at-build-time=org.apache.logging.log4j.LogManager
-                            --initialize-at-build-time=org.apache.logging.log4j.util.Constants
-                            --initialize-at-build-time=org.apache.logging.log4j.spi.LoggerRegistry
-                            --initialize-at-build-time=org.apache.logging.log4j.core.impl.Log4jContextFactory
-                            --initialize-at-build-time=org.apache.logging.slf4j.SLF4JLoggerContextFactory
-                            --initialize-at-build-time=org.apache.logging.slf4j.SLF4JLogger
-                            --initialize-at-build-time=org.apache.logging.slf4j.SLF4JLogger$1
-                            --initialize-at-build-time=org.apache.logging.slf4j.SLF4JLogger
-                            --report-unsupported-elements-at-runtime
-                            --allow-incomplete-classpath
                             -H:+ReportExceptionStackTraces
+                            --install-exit-handlers
+                            --report-unsupported-elements-at-runtime
+                            -H:+AddAllCharsets
+                            -H:-AddAllFileSystemProviders
+                            --trace-class-initialization=oracle.i18n.text.converter.CharacterConverterZHTEUC,ch.qos.logback.core.status.InfoStatus,oracle.i18n.text.converter.CharacterConverterShift,ch.qos.logback.core.status.StatusBase,oracle.i18n.text.converter.CharacterConverterGB18030,ch.qos.logback.classic.Logger,ch.qos.logback.classic.Level,oracle.i18n.text.converter.CharacterConverter1Byte,ch.qos.logback.core.util.StatusPrinter,oracle.i18n.text.converter.CharsetMeta,oracle.i18n.text.converter.CharacterConverterJAEUC,ch.qos.logback.core.util.Loader,oracle.i18n.text.converter.CharacterConverterLC,org.slf4j.LoggerFactory
                         </arg>
                     </buildArgs>
                 </configuration>

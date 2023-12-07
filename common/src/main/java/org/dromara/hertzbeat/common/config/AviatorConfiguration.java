@@ -23,7 +23,11 @@ import com.googlecode.aviator.Feature;
 import com.googlecode.aviator.Options;
 import com.googlecode.aviator.lexer.token.OperatorType;
 import com.googlecode.aviator.runtime.function.AbstractFunction;
-import com.googlecode.aviator.runtime.type.*;
+import com.googlecode.aviator.runtime.type.AviatorBoolean;
+import com.googlecode.aviator.runtime.type.AviatorDouble;
+import com.googlecode.aviator.runtime.type.AviatorObject;
+import com.googlecode.aviator.runtime.type.AviatorString;
+import com.googlecode.aviator.runtime.type.AviatorType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
@@ -44,7 +48,7 @@ public class AviatorConfiguration {
     private static final int AVIATOR_LRU_CACHE_SIZE = 1024;
 
     @Bean
-    public void configAviatorEvaluator() {
+    public AviatorEvaluatorInstance configAviatorEvaluator() {
         AviatorEvaluatorInstance instance = AviatorEvaluator.getInstance();
 
         // 配置AviatorEvaluator使用LRU缓存编译后的表达式
@@ -87,6 +91,7 @@ public class AviatorConfiguration {
         instance.addFunction(new StrContainsFunction());
         instance.addFunction(new ObjectExistsFunction());
         instance.addFunction(new StrMatchesFunction());
+        return instance;
     }
 
     /**
