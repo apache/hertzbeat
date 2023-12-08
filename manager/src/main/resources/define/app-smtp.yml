@@ -18,20 +18,17 @@
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
-app: port
+app: smtp
 # 监控类型国际化名称
 name:
-  zh-CN: 端口可用性
-  en-US: PORT TELNET
+  zh-CN: SMTP监控
+  en-US: SMTP MONITORS
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 通过判断对端服务中暴露的TCP端口是否可用，进而判断对端服务是否可用。同时以ms为指标，对响应时间等指标进行监测。您可以点击“<i>新建 端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat determines whether the exposed tcp ports in the peer service are available, thereby determining whether the peer service is available. Simultaneously monitoring response time and other metrics using ms as metric unit. You could click the "<i>New port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat 通過判斷對端服務中暴露的TCP端口是否可用，進而判斷對端服務是否可用。 同時以ms為指标，對回應時間等指标進行監測。 您可以點擊“<i>新建埠可用性</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/port
-  en-US: https://hertzbeat.com/docs/help/port
+  zh-CN: HertzBeat 对 SMTP 服务的(Banner,helo响应)相关指标进行监测。
+  en-US: HertzBeat monitors the banner and hello response related indicators of the SMTP service.
+  zh-TW: HertzBeat對SMTP服務的（Banner，helo響應）相關名額進行監測。
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -41,7 +38,7 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 目标Host
+      zh-CN: SMTP的Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
@@ -66,9 +63,9 @@ params:
     # required-true or false
     # 是否是必输项 true-必填 false-可选
     required: true
-    # default value 80
-    # 默认值 80
-    defaultValue: 80
+    # default value 25
+    # 默认值 25
+    defaultValue: 25
   # field-param field key
   # field-字段名称标识符
   - field: timeout
@@ -89,6 +86,16 @@ params:
     # default value 6000
     # 默认值 6000
     defaultValue: 6000
+  # field-param field key
+  # field-字段名称标识符
+  - field: email
+    name:
+      zh-CN: email
+      en-US: email
+    type: text
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
 # collect metrics config list
 # 采集指标配置列表
 metrics:
@@ -113,12 +120,44 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: ResponseTime
+      - field: response
+        type: 1
+        i18n:
+          zh-CN: 响应状态
+          en-US: Response
+      - field: smtpBanner
+        type: 1
+        i18n:
+          zh-CN: SMTP的Banner
+          en-US: SMTPBanner
+      - field: heloInfo
+        type: 1
+        i18n:
+          zh-CN: Helo日志
+          en-US: HeloInfo
+#      - field: emailMaxSize
+#        type: 0
+#        unit: byte
+#        i18n:
+#          zh-CN: 最大邮件大小
+#          en-US: EmailMaxSize
+#      - field: serverInfo
+#        type: 1
+#        i18n:
+#          zh-CN: 服务器相关信息
+#          en-US: ServerInfo
+#      - field: heloInfo
+#        type: 1
+#        i18n:
+#          zh-CN: Helo日志
+#          en-US: HeloInfo
+
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: telnet
+    protocol: smtp
     # Specific collection configuration when protocol is telnet protocol
     # 当protocol为telnet协议时具体的采集配置
-    telnet:
+    smtp:
       # telnet host
       # 远程登录主机
       host: ^_^host^_^
@@ -128,3 +167,6 @@ metrics:
       # timeout
       # 超时时间
       timeout: ^_^timeout^_^
+      # email
+      # email(helo命令所需)
+      email: ^_^email^_^

@@ -99,6 +99,9 @@ metrics:
   # metrics - certificate
   # 监控指标 - certificate
   - name: certificate
+    i18n:
+      zh-CN: 证书
+      en-US: Certificate
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -112,21 +115,42 @@ metrics:
       - field: subject
         type: 1
         label: true
+        i18n:
+          zh-CN: 颁发对象
+          en-US: Subject
       - field: expired
         type: 1
+        i18n:
+          zh-CN: 是否过期
+          en-US: Expired
       - field: start_time
         type: 1
+        i18n:
+          zh-CN: 颁发日期
+          en-US: Start Time
       - field: start_timestamp
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 颁发时间戳
+          en-US: Start Timestamp
       - field: end_time
         type: 1
+        i18n:
+          zh-CN: 截止日期
+          en-US: End Time
       - field: end_timestamp
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 截止时间戳
+          en-US: End Timestamp
       - field: days_remaining
         type: 0
         unit: d
+        i18n:
+          zh-CN: 剩余天数
+          en-US: Remaining Days
     aliasFields:
       - subject
       - expired

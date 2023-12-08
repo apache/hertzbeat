@@ -1,34 +1,9 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/monitors']" [queryParams]="{ app: monitor.app ? monitor.app : '' }">
-      <i nz-icon nzType="reconciliation"></i>
-      <span>{{ 'monitors.list' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="edit"></i>
-    <span>{{ 'monitors.edit' | i18n }} </span>
-    <a routerLink="/setting/define" [queryParams]="{ app: monitor.app }">
-      <nz-tag style="font-size: 14px; border-radius: 4px" nzColor="#3f51b5" class="hoverClass">
-        <span>{{ 'monitor.app.' + monitor.app | i18n }}</span>
-      </nz-tag>
-    </a>
-    <span>{{ 'monitor' | i18n }}</span>
-    <a [href]="'https://hertzbeat.com/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'monitor.app.' + monitor.app + '.help' | i18n"
+  [module_name]="('monitors.edit' | i18n) + ' ' + ('monitor.app.' + monitor.app | i18n) + ' ' + ('monitor' | i18n)"
+  [guild_link]="'monitor.app.' + monitor.app + '.helpLink' | i18n"
+  [icon_name]="'edit'"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <nz-spin [nzSpinning]="isSpinning" [nzTip]="spinningTip" nzSize="large">
@@ -345,7 +320,7 @@
           >
             <nz-option
               nzCustomContent
-              [nzValue]="0"
+              [nzValue]="''"
               [nzLabel]="('monitor.collector.system.default' | i18n) + '-' + ('collector.mode.public' | i18n)"
             >
               <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>

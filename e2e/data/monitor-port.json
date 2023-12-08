@@ -1,0 +1,28 @@
+{
+    "detected": false,
+    "collector": "",
+    "monitor": {
+      "intervals": 60,
+      "tags": [],
+      "app": "port",
+      "host": "127.0.0.1",
+      "name": "{{.param.monitorPort}}"
+    },
+    "params": [
+      {
+        "field": "host",
+        "type": 1,
+        "value": "127.0.0.1"
+      },
+      {
+        "field": "port",
+        "type": 0,
+        "value": 80
+      },
+      {
+        "field": "timeout",
+        "type": 0,
+        "value": 6000
+      }
+    ]
+}

@@ -1,4 +1,4 @@
-name: 'hertzbeat-doc-pdf-builder'
+name: 'HertzBeat Doc Pdf Builder'
 on:
   page_build
 
