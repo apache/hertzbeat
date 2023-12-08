@@ -102,7 +102,7 @@ public class SmtpCollectImpl extends AbstractCollect {
     }
 
     private static Map<String, String> execCmdAndParseResult(SMTP smtp, String cmd, SmtpProtocol smtpProtocol) throws IOException {
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>(8);
         // 存入smtp连接的响应
         result.put("smtpBanner", smtp.getReplyString());
         smtp.helo(smtpProtocol.getEmail());
