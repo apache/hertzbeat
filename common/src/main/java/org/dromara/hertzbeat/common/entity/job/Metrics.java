@@ -116,6 +116,11 @@ public class Metrics {
      */
     private TelnetProtocol telnet;
     /**
+     * Monitoring configuration information using the public smtp protocol
+     * 使用smtp协议的监控配置信息
+     */
+    private SmtpProtocol smtp;
+    /**
      * Use udp implemented by socket for service port detection configuration information
      * 使用socket实现的udp进行服务端口探测配置信息
      */
