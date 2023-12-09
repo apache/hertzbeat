@@ -68,6 +68,7 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
+    private static final String PARSE_TYPE_LOG = "log";
 
     private static final int DEFAULT_TIMEOUT = 10_000;
 
@@ -110,6 +111,9 @@ public class SshCollectImpl extends AbstractCollect {
                 return;
             }
             switch (sshProtocol.getParseType()) {
+                case PARSE_TYPE_LOG:
+                    parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
+                    break;
                 case PARSE_TYPE_NETCAT:
                     parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
                     break;
@@ -120,7 +124,8 @@ public class SshCollectImpl extends AbstractCollect {
                     parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
                     break;
                 default:
-                    parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("Ssh collect not support this parse type: " + sshProtocol.getParseType());
                     break;
             }
         } catch (ConnectException connectException) {
@@ -169,6 +174,24 @@ public class SshCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSH;
     }
 
+    private void parseResponseDataByLog(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+        String[] lines = result.split("\n");
+        if (lines.length + 1 < aliasFields.size()) {
+            log.error("ssh response data not enough: {}", result);
+            return;
+        }
+        for (String line : lines) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String alias : aliasFields) {
+                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(responseTime.toString());
+                } else {
+                    valueRowBuilder.addColumns(line);
+                }
+            }
+            builder.addValues(valueRowBuilder.build());
+        }
+    }
 
     private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
         String[] lines = result.split("\n");
@@ -267,9 +290,9 @@ public class SshCollectImpl extends AbstractCollect {
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
             throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
-                                             .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                                             .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                                             .build();
+                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
+                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
+                .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
             Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
@@ -288,7 +311,7 @@ public class SshCollectImpl extends AbstractCollect {
             }
             if (clientSession != null) {
                 return clientSession;
-            }   
+            }
         }
         SshClient sshClient = CommonSshClient.getSshClient();
         clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
@@ -300,7 +323,7 @@ public class SshCollectImpl extends AbstractCollect {
             SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), null)
                     .forEach(clientSession::addPublicKeyIdentity);
         }  // else auth with localhost private public key certificates
-        
+
         // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             clientSession.close();
@@ -308,7 +331,7 @@ public class SshCollectImpl extends AbstractCollect {
         }
         if (reuseConnection) {
             SshConnect sshConnect = new SshConnect(clientSession);
-            CommonCache.getInstance().addCache(identifier, sshConnect);   
+            CommonCache.getInstance().addCache(identifier, sshConnect);
         }
         return clientSession;
     }
