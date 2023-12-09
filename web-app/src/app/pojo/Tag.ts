@@ -10,8 +10,7 @@ export class Tag {
   gmtCreate!: number;
   gmtUpdate!: number;
 
-
   private getRandomColor(): string {
     return '#' + Array.from({ length: 6 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join('');
-}
+  }
 }
