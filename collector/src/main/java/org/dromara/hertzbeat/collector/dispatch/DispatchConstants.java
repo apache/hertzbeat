@@ -36,6 +36,14 @@ public interface DispatchConstants {
      */
     String PROTOCOL_TELNET = "telnet";
     /**
+     * protocol smtp
+     */
+    String PROTOCOL_SMTP = "smtp";
+    /**
+     * protocol ntp
+     */
+    String PROTOCOL_NTP = "ntp";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";
