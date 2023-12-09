@@ -232,7 +232,7 @@
             <!--sureness-->
             <dependency>
                 <groupId>com.usthe.sureness</groupId>
-                <artifactId>spring-boot-starter-sureness</artifactId>
+                <artifactId>spring-boot3-starter-sureness</artifactId>
                 <version>${spring-boot-starter-sureness.version}</version>
             </dependency>
             <dependency>
