@@ -32,8 +32,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 
 /**
- * udp探测协议采集实现
- *
+ * udp collect
  * @author tom
  */
 @Slf4j
@@ -45,16 +44,14 @@ public class UdpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 简单校验必有参数
         if (metrics == null || metrics.getUdp() == null) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Udp collect must has udp params");
             return;
         }
         UdpProtocol udpProtocol = metrics.getUdp();
-        // 超时时间默认6000毫秒
         int timeout = CollectUtil.getTimeout(udpProtocol.getTimeout());
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(timeout);

@@ -17,7 +17,7 @@ keywords: [opensource monitoring, SpringBoot monitoring, alert]
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
@@ -30,9 +30,9 @@ Github: https://github.com/dromara/hertzbeat
 
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 1. The `actuator` indicator endpoint is exposed on the SpringBoot2 application side, which will provide metrics endpoints data.
+#### 1. The `actuator` metric endpoint is exposed on the SpringBoot2 application side, which will provide metrics endpoints data.
 
-1. Open SpringBoot Actuator Endpoint to expose `metrics health env` indicator interface
+1. Open SpringBoot Actuator Endpoint to expose `metrics health env` metric interface
 
 ```yaml
 management:
@@ -46,7 +46,7 @@ management:
      enabled-by-default: on
 ```
 
-2. After restarting, test whether the access indicator interface `ip:port/actuator` has response json data as follows:
+2. After restarting, test whether the access metric interface `ip:port/actuator` has response json data as follows:
 
 ```json
 {
@@ -102,11 +102,11 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 ![hertzbeat](/img/blog/monitor-springboot2-3.png)
 
-4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring indicator data of the SpringBoot2 application.
+4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of the SpringBoot2 application.
 
 ![hertzbeat](/img/blog/monitor-springboot2-4.png)
 
-5. Click **Monitoring History Details TAB** to browse the historical monitoring indicator data chart of the SpringBoot2 application📈.
+5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of the SpringBoot2 application📈.
 
 ![hertzbeat](/img/blog/monitor-springboot2-5.png)
 
@@ -116,20 +116,20 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 
 :::tip
-Through the above, we have completed the monitoring of the SpringBoot2 application. We can check the status and availability of various indicators of the SpringBoot2 application at any time in HertzBeat.  
-Of course, it is impossible to manually check the indicators in real time. Monitoring is often accompanied by alarm thresholds. When the performance indicators of the SpringBoot2 application exceed our threshold or the SpringBoot2 application itself is abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles it. , this is a complete monitoring and alarm process.
+Through the above, we have completed the monitoring of the SpringBoot2 application. We can check the status and availability of various metrics of the SpringBoot2 application at any time in HertzBeat.  
+Of course, it is impossible to manually check the metrics in real time. Monitoring is often accompanied by alarm thresholds. When the performance metrics of the SpringBoot2 application exceed our threshold or the SpringBoot2 application itself is abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles it. , this is a complete monitoring and alarm process.
 :::
 
-**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system. When the indicators of the SpringBoot2 application are abnormal, we will be notified in time**  
+**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system. When the metrics of the SpringBoot2 application are abnormal, we will be notified in time**  
 
-#### 3. Add SpringBoot2 application indicator threshold alarm in HertzBeat system
+#### 3. Add SpringBoot2 application metric threshold alarm in HertzBeat system
 
-1. Configure an alarm threshold for an important indicator
+1. Configure an alarm threshold for an important metric
 
 Path: Menu -> Threshold Rules -> Add Threshold
 
-- Select the configured indicator object. SpringBoot2 application monitoring mainly focuses on stack memory threads and other related indicators. For example, we set the threshold for the indicator `threads` -> `threads`. When the number of threads in the `runnable` state is greater than At 300 an alert is issued.
-- Here we configure to send an alarm when `size`, `state` of `equals(state, "runnable"") && size>300` of this indicator, the alarm level is **warning alarm**, which will be triggered three times, specifically As shown below.
+- Select the configured metric object. SpringBoot2 application monitoring mainly focuses on stack memory threads and other related metrics. For example, we set the threshold for the metric `threads` -> `threads`. When the number of threads in the `runnable` state is greater than At 300 an alert is issued.
+- Here we configure to send an alarm when `size`, `state` of `equals(state, "runnable"") && size>300` of this metric, the alarm level is **warning alarm**, which will be triggered three times, specifically As shown below.
 
 ![hertzbeat](/img/blog/monitor-springboot2-6.png)
 
@@ -173,7 +173,7 @@ Content details: The springboot2 service's runnable state threads num is over 30
 ## Summary
 
 :::tip
-This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor SpringBoot2 application indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click a little on the page The SpringBoot2 application can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor SpringBoot2 application metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click a little on the page The SpringBoot2 application can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
 
 > Only one docker command is needed to install and experience heartbeat:
@@ -182,7 +182,7 @@ This practical article took us to experience how to use the open source real-tim
 
 ## More powerful
 
-> Through the simple steps above, we have realized the monitoring of SpringBoot2, but the built-in indicators in it do not meet the needs. Can we customize and monitor more indicators of SpringBoot2? The answer is of course yes, through **Monitoring Definition**->**SpringBoot2** on the page, you can customize and modify the performance indicators you want to monitor by editing the following YML configuration file at any time.
+> Through the simple steps above, we have realized the monitoring of SpringBoot2, but the built-in metrics in it do not meet the needs. Can we customize and monitor more metrics of SpringBoot2? The answer is of course yes, through **Monitoring Definition**->**SpringBoot2** on the page, you can customize and modify the performance metrics you want to monitor by editing the following YML configuration file at any time.
 
 ![hertzbeat](/img/blog/monitor-springboot2-8.png)
 
@@ -192,7 +192,7 @@ This practical article took us to experience how to use the open source real-tim
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     

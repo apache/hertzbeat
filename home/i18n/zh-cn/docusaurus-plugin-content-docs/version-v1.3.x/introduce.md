@@ -25,11 +25,11 @@ slug: /
 ## 🎡 <font color="green">介绍</font>
 
 > [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警系统。     
-> 集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等监控，阈值告警通知一步到位。   
+> 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控，阈值告警通知一步到位。   
 > 易用友好，全 WEB 页面操作，鼠标点一点就能监控告警，零上手学习成本。  
 > 更自由化的阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您只需在浏览器配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
+> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需在浏览器配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
 > 您相信只需配置下就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？
 
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。    
@@ -53,7 +53,7 @@ slug: /
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 

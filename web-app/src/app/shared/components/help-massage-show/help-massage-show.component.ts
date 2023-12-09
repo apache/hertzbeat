@@ -20,7 +20,7 @@ export class HelpMassageShowComponent implements OnInit {
   @Input()
   guild_link: string = 'content';
   @Input()
-  module_name: string = 'content';
+  module_name!: string;
   @Input()
   icon_name: string = 'home';
   constructor(

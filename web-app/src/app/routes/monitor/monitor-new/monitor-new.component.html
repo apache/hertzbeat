@@ -1,34 +1,9 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/monitors']" [queryParams]="{ app: monitor.app ? monitor.app : '' }">
-      <i nz-icon nzType="reconciliation"></i>
-      <span>{{ 'monitors.list' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="plus-circle"></i>
-    <span>{{ 'monitors.new' | i18n }} </span>
-    <a routerLink="/setting/define" [queryParams]="{ app: monitor.app }">
-      <nz-tag style="font-size: 14px; border-radius: 4px" nzColor="#3f51b5" class="hoverClass">
-        <span>{{ 'monitor.app.' + monitor.app | i18n }}</span>
-      </nz-tag>
-    </a>
-    <span>{{ 'monitor' | i18n }}</span>
-    <a [href]="'https://hertzbeat.com/docs/help/' + monitor.app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'monitor.app.' + monitor.app + '.help' | i18n"
+  [module_name]="('monitors.new' | i18n) + ' ' + ('monitor.app.' + monitor.app | i18n) + ' ' + ('monitor' | i18n)"
+  [guild_link]="'monitor.app.' + monitor.app + '.helpLink' | i18n"
+  [icon_name]="'plus-circle'"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
 <nz-spin [nzSpinning]="isSpinning" [nzTip]="spinningTip" nzSize="large">
@@ -352,8 +327,13 @@
             id="collector"
             [nzCustomTemplate]="collectorTemplate"
           >
-            <nz-option nzCustomContent [nzValue]="''" [nzLabel]="'monitor.collector.system.default' | i18n">
+            <nz-option
+              nzCustomContent
+              [nzValue]="''"
+              [nzLabel]="('monitor.collector.system.default' | i18n) + '-' + ('collector.mode.public' | i18n)"
+            >
               <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
+              <nz-tag nzColor="success">{{ 'collector.mode.public' | i18n }}</nz-tag>
             </nz-option>
             <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
               <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
@@ -361,7 +341,10 @@
               }}</nz-tag>
               <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
               <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
-              <nz-tag nzColor="success">{{ item.ip }}</nz-tag>
+              <nz-tag nzColor="processing">{{ item.ip }}</nz-tag>
+              <nz-tag [nzColor]="item.mode == 'private' ? 'warning' : 'success'">
+                {{ item.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
+              </nz-tag>
             </nz-option>
           </nz-select>
           <ng-template #collectorTemplate let-selected>
@@ -384,15 +367,6 @@
             id="intervals"
           >
           </nz-input-number>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="detect" [nzTooltipTitle]="'monitors.detect.tip' | i18n">
-          {{ 'monitors.detect' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-switch [(ngModel)]="detected" name="detect" id="detect"></nz-switch>
         </nz-form-control>
       </nz-form-item>
 
@@ -432,7 +406,16 @@
 
       <div nz-row>
         <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
-          <button nz-button nzType="primary" type="submit" (click)="onDetect(newForm.form)"> {{ 'common.button.detect' | i18n }} </button>
+          <button
+            nz-button
+            nzType="primary"
+            type="submit"
+            nz-tooltip
+            [nzTooltipTitle]="'monitors.detect.tip' | i18n"
+            (click)="onDetect(newForm.form)"
+          >
+            {{ 'common.button.detect' | i18n }}
+          </button>
           <button nz-button nzType="primary" type="submit" (click)="onSubmit(newForm.form)"> {{ 'common.button.ok' | i18n }} </button>
           <button nz-button nzType="primary" type="reset" (click)="onCancel()"> {{ 'common.button.cancel' | i18n }} </button>
         </div>

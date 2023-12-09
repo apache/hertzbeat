@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 
 ### Pre-monitoring Operations  
 
-> HertzBeat uses RabbitMQ Management's Rest Api to collect RabbitMQ indicator data.
+> HertzBeat uses RabbitMQ Management's Rest Api to collect RabbitMQ metric data.
 > Therefore, you need to enable the Management plug-in in your RabbitMQ environment
 
 1. Open the Management plugin, or use the self-opening version
@@ -38,7 +38,7 @@ rabbitmq-plugins enable rabbitmq_management
 
 ### Collect Metrics
 
-#### Metrics Group: overview
+#### metrics: overview
 
 | Metric Name        | Metric Unit | Metric Description                 |
 |--------------------|-------------|------------------------------------|
@@ -50,7 +50,7 @@ rabbitmq-plugins enable rabbitmq_management
 | cluster_name       | None        | Cluster name                       |
 | rates_mode         | None        | rates mode                         |
 
-#### Metrics Group: object_totals
+#### metrics: object_totals
 
 | Metric Name | Metric Unit | Metric Description          |
 |-------------|-------------|-----------------------------|
@@ -60,7 +60,7 @@ rabbitmq-plugins enable rabbitmq_management
 | exchanges   | none        | total number of exchanges   |
 | queues      | none        | total number of queues      |
 
-#### Metrics Group: nodes
+#### metrics: nodes
 
 | Metric Name        | Metric Unit | Metric Description                                        |
 |--------------------|-------------|-----------------------------------------------------------|
@@ -101,7 +101,7 @@ rabbitmq-plugins enable rabbitmq_management
 | connection_closed  | None        | connection closed num                                     |
 
 
-#### Metrics Group: queues
+#### metrics: queues
 
 | Metric Name                  | Metric Unit | Metric Description                                                                                                                   |
 |------------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------|

@@ -20,7 +20,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 > HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。    
 
 - 集**监控-告警-通知为一体**，支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Slack Discord Telegram)。    
-- 其将Http,Jmx,Ssh,Snmp,Jdbc等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
+- 其将Http, Jmx, Ssh, Snmp, Jdbc, Prometheus等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
 - HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。  
 
 ### 在 HertzBeat 5分钟搞定对 Mysql 数据库监控   
@@ -108,8 +108,8 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 ```
 [HertzBeat告警通知]
 告警目标对象 : mysql.cahce.query_cache_hit_rate
-所属监控ID : 205540620394932
-所属监控名称 : Mysql_localhost
+所属监控任务ID : 205540620394932
+所属任务名称 : Mysql_localhost
 告警级别 : 严重告警
 告警触发时间 : 2023-02-11 21:13:44
 内容详情 : mysql db query_cache_hit_rate is too low, now is 20.

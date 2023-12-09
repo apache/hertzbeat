@@ -1,10 +1,9 @@
 package org.dromara.hertzbeat.alert.controller;
 
+import org.dromara.hertzbeat.alert.dto.GeneralCloudAlertReport;
 import org.dromara.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.dromara.hertzbeat.alert.service.AlertService;
-import org.dromara.hertzbeat.alert.service.impl.AlertConvertTenCloudServiceImpl;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
-import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,15 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AlertReportControllerTest {
     
     private MockMvc mockMvc;
-    
-    @InjectMocks
-    private AlertReportController alertReportController;
-    
+
     @Mock
     private AlertService alertService;
     
-    @Mock
-    AlertConvertTenCloudServiceImpl alertConvertTenCloudService;
+    @InjectMocks
+    private AlertReportController alertReportController;
     
     @BeforeEach
     void setUp() {
@@ -46,10 +42,42 @@ class AlertReportControllerTest {
     
     @Test
     void addNewAlertReportTencent() throws Exception {
+        TenCloudAlertReport.Dimensions dimensions = new TenCloudAlertReport.Dimensions();
+        dimensions.setUnInstanceId("3333");
+
+        TenCloudAlertReport.AlarmObjInfo alarmObjInfo = new TenCloudAlertReport.AlarmObjInfo();
+        alarmObjInfo.setRegion("广东");
+        alarmObjInfo.setNamespace("广州节点1");
+        alarmObjInfo.setAppId("1111");
+        alarmObjInfo.setUin("2222");
+        alarmObjInfo.setDimensions(dimensions);
+
+        TenCloudAlertReport.Conditions conditions = new TenCloudAlertReport.Conditions();
+        conditions.setMetricName("xx");
+        conditions.setMetricShowName("xxx");
+        conditions.setCalcType("a");
+        conditions.setCalcValue("aa");
+        conditions.setCalcUnit("aaa");
+        conditions.setCurrentValue("b");
+        conditions.setCalcUnit("bb");
+        conditions.setProductName("guangzhou");
+        conditions.setProductShowName("广州");
+        conditions.setEventName("CVS");
+        conditions.setEventShowName("内核异常");
+
+        TenCloudAlertReport.AlarmPolicyInfo alarmPolicyInfo = new TenCloudAlertReport.AlarmPolicyInfo();
+        alarmPolicyInfo.setPolicyTypeCname("x");
+        alarmPolicyInfo.setPolicyName("测试1");
+        alarmPolicyInfo.setConditions(conditions);
+
         TenCloudAlertReport report = TenCloudAlertReport.builder()
-                                             .sessionId("xxxxxxxx")
+                                             .sessionId("123")
                                              .alarmStatus("1")
-                                             .alarmType("metric")
+                                             .alarmType("event")
+                                             .durationTime(2)
+                                             .firstOccurTime("2023-08-14 11:11:11")
+                                             .alarmObjInfo(alarmObjInfo)
+                                             .alarmPolicyInfo(alarmPolicyInfo)
                                              .build();
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -65,11 +93,13 @@ class AlertReportControllerTest {
     
     @Test
     void addNewAlertReport() throws Exception {
-        mockMvc.perform(
-                        MockMvcRequestBuilders
+        GeneralCloudAlertReport generalCloudAlertReport = new GeneralCloudAlertReport();
+        generalCloudAlertReport.setAlertDateTime("2023-02-22T07:27:15.404000000Z");
+
+        mockMvc.perform(MockMvcRequestBuilders
                                 .post("/api/alerts/report")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(JsonUtil.toJson(AlertReport.builder().build()))
+                                .content(JsonUtil.toJson(generalCloudAlertReport))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

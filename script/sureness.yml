@@ -59,6 +59,7 @@ excludedResource:
   - /api/metrics===get
   - /api/apps/hierarchy===get
   - /actuator/**===get
+  - /api/push/**===*
   # web ui 前端静态资源
   - /===get
   - /dashboard/**===get
@@ -77,6 +78,8 @@ excludedResource:
   - /**/*.jpg===get
   - /**/*.svg===get
   - /**/*.json===get
+  - /**/*.woff===get
+  - /**/*.eot===get
   # swagger ui 资源
   - /swagger-resources/**===get
   - /v2/api-docs===get

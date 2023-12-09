@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.entity.warehouse.History;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.TimePeriodUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.dromara.hertzbeat.warehouse.dao.HistoryDao;
@@ -132,12 +133,12 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 					.metrics(metrics)
 					.time(metricsData.getTime());
 			for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-				String instance = valueRow.getInstance();
-				if (!instance.isEmpty()) {
-					instance = formatStrValue(instance);
-					historyBuilder.instance(instance);
-				} else {
-					historyBuilder.instance(null);
+				Map<String, String> labels = new HashMap<>(8);
+				for (int i = 0; i < fieldsList.size(); i++) {
+					CollectRep.Field field = fieldsList.get(i);
+					if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
+						labels.put(field.getName(), valueRow.getColumns(i));
+					}
 				}
 				for (int i = 0; i < fieldsList.size(); i++) {
 					CollectRep.Field field = fieldsList.get(i);
@@ -146,6 +147,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 						continue;
 					}
 					historyBuilder.metric(field.getName());
+					historyBuilder.instance(JsonUtil.toJson(labels));
 					if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
 						if (field.getType() == CommonConstants.TYPE_NUMBER) {
 							historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
@@ -169,20 +171,9 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 			log.error(e.getMessage(), e);
 		}
 	}
-
-	/**
-	 * 从数据库获取指标历史数据
-	 *
-	 * @param monitorId 监控ID
-	 * @param app       监控类型
-	 * @param metrics   指标集合名
-	 * @param metric    指标名
-	 * @param instance  实例
-	 * @param history   历史范围
-	 * @return 指标历史数据列表
-	 */
+	
 	@Override
-	public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+	public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
 		Specification<History> specification = (root, query, criteriaBuilder) -> {
 			List<Predicate> andList = new ArrayList<>();
@@ -194,8 +185,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 			andList.add(predicateMonitorType);
 			andList.add(predicateMonitorMetrics);
 			andList.add(predicateMonitorMetric);
-			if (instance != null && !"".equals(instance)) {
-				Predicate predicateMonitorInstance = criteriaBuilder.equal(root.get("instance"), instance);
+			if (label != null && !"".equals(label)) {
+				Predicate predicateMonitorInstance = criteriaBuilder.equal(root.get("instance"), label);
 				andList.add(predicateMonitorInstance);
 			}
 			if (history != null) {
@@ -247,7 +238,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 	}
 
 	@Override
-	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
 		return new HashMap<>(8);
 	}
 

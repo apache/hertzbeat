@@ -40,22 +40,18 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
 
     /**
      * time round schedule
-     * 时间轮调度
      */
     private final Timer wheelTimer;
     /**
      * Existing periodic scheduled tasks
-     * 已存在的周期性调度任务
      */
     private final Map<Long, Timeout> currentCyclicTaskMap;
     /**
      * Existing temporary scheduled tasks
-     * 已存在的临时性调度任务
      */
     private final Map<Long, Timeout> currentTempTaskMap;
     /**
      * One-time task response listener holds
-     * 一次性任务响应监听器持有
      * jobId - listener
      */
     private final Map<Long, CollectResponseEventListener> eventListeners;
@@ -101,7 +97,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             return;
         }
         Long jobId = timerTask.getJob().getId();
-        // 判断此周期性job是否已经被取消
+        // whether is the job has been canceled
         if (currentCyclicTaskMap.containsKey(jobId)) {
             Timeout timeout = wheelTimer.newTimeout(timerTask, interval, TimeUnit.SECONDS);
             currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout);

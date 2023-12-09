@@ -28,49 +28,48 @@ import java.util.Map;
 /**
  * data storage abstract class
  * @author ceilzcx
- *
  */
 @Slf4j
 public abstract class AbstractHistoryDataStorage implements DisposableBean {
     protected boolean serverAvailable;
 
     /**
-     * @return data storage是否可用
+     * @return data storage available
      */
     public boolean isServerAvailable() {
         return serverAvailable;
     }
 
     /**
-     * 持久化数据
-     * @param metricsData 采集数据
+     * save metrics data
+     * @param metricsData metrics data
      */
     abstract void saveData(CollectRep.MetricsData metricsData);
 
     /**
-     * 从时序数据库获取指标历史数据
-     *
-     * @param monitorId 监控ID
-     * @param app 监控类型
-     * @param metrics 指标集合名
-     * @param metric 指标名
-     * @param instance 实例
-     * @param history 历史范围
-     * @return 指标历史数据列表
+     * query history range metrics data from tsdb
+     * @param monitorId monitor id
+     * @param app monitor type
+     * @param metrics metrics
+     * @param metric metric
+     * @param label label
+     * @param history range
+     * @return metrics data
      */
     public abstract Map<String, List<Value>> getHistoryMetricData(
-            Long monitorId, String app, String metrics, String metric, String instance, String history);
+            Long monitorId, String app, String metrics, String metric, String label, String history);
 
     /**
-     * 从时序数据库获取指标历史间隔数据 平均值 最大值 最小值
-     * @param monitorId 监控ID
-     * @param app 监控类型
-     * @param metrics 指标集合名
-     * @param metric 指标名
-     * @param instance 实例
-     * @param history 历史范围
-     * @return 指标历史数据列表
+     * query history range interval metrics data from tsdb
+     * max min mean metrics value
+     * @param monitorId monitor id
+     * @param app monitor type
+     * @param metrics metrics
+     * @param metric metric
+     * @param label label
+     * @param history history range
+     * @return metrics data
      */
     public abstract Map<String, List<Value>> getHistoryIntervalMetricData(
-            Long monitorId, String app, String metrics, String metric, String instance, String history);
+            Long monitorId, String app, String metrics, String metric, String label, String history);
 }

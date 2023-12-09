@@ -15,7 +15,7 @@ keywords: [Open source monitoring tool, operating system monitoring, Linux monit
 > HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 
 - Integrate **monitoring-alarm-notification**, support monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, alarm notifications (email WeChat Dingding Feishu SMS Slack Discord Telegram).
-- It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, etc. You only need to configure YML to use these protocols to customize and collect any indicators you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
+- It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. You only need to configure YML to use these protocols to customize and collect any metrics you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
 Github: https://github.com/dromara/hertzbeat
@@ -45,13 +45,13 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 ![hertzbeat](/img/blog/monitor-linux-3.png)
 
-4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring indicator data of Linux.
+4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of Linux.
 
 ![hertzbeat](/img/blog/monitor-linux-4.png)
 
 ![hertzbeat](/img/blog/monitor-linux-7.png)
 
-5. Click **Monitoring History Details TAB** to browse the historical monitoring indicator data chart of Linux📈.
+5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of Linux📈.
 
 ![hertzbeat](/img/blog/monitor-linux-5.png)
 
@@ -62,20 +62,20 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 - **On the HertzBeat monitoring page, configure the IP port account password and add Linux monitoring**
 
 :::tip
-Through the above two steps, we have completed the monitoring of Linux. We can view the monitoring details and indicators in HertzBeat at any time to observe its service status.
-Of course, just looking at it is definitely not perfect. Monitoring is often accompanied by alarm thresholds. When Linux performance indicators exceed our expectations or are abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles the problem. It is a complete monitoring and alarm process.
+Through the above two steps, we have completed the monitoring of Linux. We can view the monitoring details and metrics in HertzBeat at any time to observe its service status.
+Of course, just looking at it is definitely not perfect. Monitoring is often accompanied by alarm thresholds. When Linux performance metrics exceed our expectations or are abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles the problem. It is a complete monitoring and alarm process.
 :::
 
-**Next, we will demonstrate step by step how to configure threshold alarm notifications in the HertzBeat system, so that when Linux indicators are found to be abnormal, they will be notified to us in time**
+**Next, we will demonstrate step by step how to configure threshold alarm notifications in the HertzBeat system, so that when Linux metrics are found to be abnormal, they will be notified to us in time**
 
-#### 3. Add Linux indicator threshold alarm in HertzBeat system
+#### 3. Add Linux metric threshold alarm in HertzBeat system
 
-1. Configure an alarm threshold for an important indicator
+1. Configure an alarm threshold for an important metric
 
 Path: Menu -> Threshold Rules -> Add Threshold
 
-- Select the configured indicator object. Linux monitors mainly related indicators such as cpu, memory, disk, network performance, etc. For example, we set the threshold for the indicator `CPU utilization` `cpu` -> `usage`. When the Linux cpu utilization is greater than 90% When a warning is issued.
-- Here we configure to send an alarm when the `usage>90` of this indicator `cpu`, the alarm level is **Warning Alarm**, which will be triggered after three times, as shown in the figure below.
+- Select the configured metric object. Linux monitors mainly related metrics such as cpu, memory, disk, network performance, etc. For example, we set the threshold for the metric `CPU utilization` `cpu` -> `usage`. When the Linux cpu utilization is greater than 90% When a warning is issued.
+- Here we configure to send an alarm when the `usage>90` of this metric `cpu`, the alarm level is **Warning Alarm**, which will be triggered after three times, as shown in the figure below.
 
 ![hertzbeat](/img/blog/monitor-linux-8.png)
 
@@ -119,7 +119,7 @@ Content details: The linux cpu usage is too high. now is 95.
 ## Summary
 
 :::tip
-This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Linux indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use. Linux can be included in the monitoring and alarm notification, and there is no need to deploy multiple components and write configuration files.
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Linux metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use. Linux can be included in the monitoring and alarm notification, and there is no need to deploy multiple components and write configuration files.
 :::
 
 > Only one docker command is needed to install and experience heartbeat:
@@ -130,7 +130,7 @@ This practical article took us to experience how to use the open source real-tim
 
 > [HertzBeat Hertz Beat](https://github.com/dromara/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
 
-> We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to customize and collect any indicators you want to collect.
+> We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure YML to use these protocols to customize and collect any metrics you want to collect.
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.

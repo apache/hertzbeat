@@ -18,7 +18,7 @@
 package org.dromara.hertzbeat.common.constants;
 
 /**
- * Public Constant
+ * Public Common Constant
  * @author tomsun28
  */
 public interface CommonConstants {
@@ -74,33 +74,21 @@ public interface CommonConstants {
 
     /**
      * Monitoring Status Code: Unmanaged
-     * 监控状态码: 未管理
+     * 任务状态码: 未管理
      */
     byte UN_MANAGE_CODE = 0x00;
 
     /**
      * Monitoring Status Code: Available
-     * 监控状态码: 可用
+     * 任务状态码: 可用
      */
     byte AVAILABLE_CODE = 0x01;
 
     /**
      * Monitoring Status Code: Not Available
-     * 监控状态码: 不可用
+     * 任务状态码: 不可用
      */
     byte UN_AVAILABLE_CODE = 0x02;
-
-    /**
-     * Monitoring Status Code: Unreachable
-     * 监控状态码: 不可达
-     */
-    byte UN_REACHABLE_CODE = 0x03;
-
-    /**
-     * Monitoring Status Code: Pending
-     * 监控状态码: 挂起
-     */
-    byte SUSPENDING_CODE = 0x04;
 
     /**
      * Alarm status: 0 - normal alarm (to be processed)
@@ -163,19 +151,23 @@ public interface CommonConstants {
     byte TYPE_SECRET = 2;
 
     /**
-     * Collection indicator value: null placeholder for empty value
+     * Field parameter type: time
+     * 字段参数类型: 时间
+     */
+    byte TYPE_TIME = 3;
+
+    /**
+     * Collection metric value: null placeholder for empty value
      * 采集指标值：null空值占位符
      */
     String NULL_VALUE = "&nbsp;";
 
     /**
      *
-     *
      */
     String PROM_TIME = "timestamp";
 
     /**
-     *
      *
      */
     String PROM_VALUE = "value";
@@ -202,12 +194,12 @@ public interface CommonConstants {
      * 参数类型 密码
      */
     byte PARAM_TYPE_PASSWORD = 2;
-    
+
     /**
      * Parameter Type Map values
      */
     byte PARAM_TYPE_MAP = 3;
-    
+
     /**
      * Parameter Type arrays values
      */
@@ -238,12 +230,12 @@ public interface CommonConstants {
     byte AUTH_TYPE_GITEE = 5;
 
     /**
-     * 内有标签: monitorId 监控ID
+     * 内有标签: monitorId 监控任务ID
      */
     String TAG_MONITOR_ID = "monitorId";
 
     /**
-     * 内有标签: monitorName 监控名称
+     * 内有标签: monitorName 任务名称
      */
     String TAG_MONITOR_NAME = "monitorName";
 
@@ -256,7 +248,7 @@ public interface CommonConstants {
      * 内有标签: app 监控类型
      */
     String TAG_MONITOR_APP = "app";
-    
+
     /**
      * 内有标签: alarm type
      */
@@ -276,40 +268,40 @@ public interface CommonConstants {
      * cache key notice_rule
      */
     String CACHE_NOTICE_RULE = "notice_rule";
-    
+
     /**
      * cache key alert silence
      */
     String CACHE_ALERT_SILENCE = "alert_silence";
-    
+
     /**
      * cache key alert converge
      */
     String CACHE_ALERT_CONVERGE = "alert_converge";
-    
+
     /**
      * collector status online 0
      */
     byte COLLECTOR_STATUS_ONLINE = 0;
-    
+
     /**
      * collector status offline 1
      */
     byte COLLECTOR_STATUS_OFFLINE = 1;
-    
+
     /**
      * default main collector name
      */
     String MAIN_COLLECTOR_NODE = "main-default-collector";
-    
+
     /**
      * locale spilt
      */
     String LOCALE_SEPARATOR = "_";
-    
+
     /**
      * ignore label
-     * 处理未配置恢复告警，但需要使用恢复告警变更监控状态的情况
+     * 处理未配置恢复告警，但需要使用恢复告警变更任务状态的情况
      */
     String IGNORE = "ignore";
 

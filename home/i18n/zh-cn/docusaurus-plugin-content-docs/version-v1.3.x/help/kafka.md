@@ -35,7 +35,7 @@ export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.
 | 参数名称      | 参数帮助描述 |
 | ----------- | ----------- |
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
+| 任务名称     | 标识此监控的名称，名称需要保证唯一性。  |
 | 查询超时时间 | 设置Kafka连接的超时时间，单位ms毫秒，默认3000毫秒。  |
 | 用户名      | JMX连接用户名 |
 | 密码        | JMX连接密码 |

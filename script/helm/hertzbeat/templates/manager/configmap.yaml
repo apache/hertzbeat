@@ -25,14 +25,8 @@ data:
       # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed..
       autoconfigure:
         exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-      thymeleaf:
-        prefix: classpath:/templates/
-        check-template-location: true
-        cache: true
-        suffix: .html
-        mode: HTML
-        template-resolver-order: 1
-    
+      freemarker:
+        enabled: false
     management:
       health:
         mail:
@@ -106,29 +100,28 @@ data:
         # 存储历史数据方式, 下方只能enabled启用一种方式
         jpa:
           enabled: false
-          # The maximum retention time for history records, after which records will be deleted
-          expire-time: 1h
-          # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
-          # (please set this configuration reasonably as history records can affect performance when it is large)
-          # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
-          max-history-record-num: 6000
+        victoria-metrics:
+          enabled: true
+          url: http://{{ include "hertzbeat.tsdb" . }}:8428
+          username: root
+          password: root
         td-engine:
           enabled: false
           driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
-          url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+          url: jdbc:TAOS-RS://{{ include "hertzbeat.tsdb" . }}:6041/hertzbeat
           username: root
           password: taosdata
         greptime:
           enabled: false
           endpoint: localhost:4001
         iot-db:
-          enabled: true
+          enabled: false
           host: {{ include "hertzbeat.tsdb" . }}
           rpc-port: 6667
           username: root
           password: root
           # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
-          version: V_0_13
+          version: V_1_0
           query-timeout-in-ms: -1
           # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
           # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
@@ -145,7 +138,7 @@ data:
         # 存储实时数据方式, 下方只能enabled启用一种方式
         memory:
           enabled: true
-          init-size: 1024
+          init-size: 16
         redis:
           enabled: false
           host: 127.0.0.1
@@ -220,6 +213,8 @@ data:
       - /**/*.jpg===get
       - /**/*.svg===get
       - /**/*.json===get
+      - /**/*.woff===get
+      - /**/*.eot===get
       # swagger ui 
       - /swagger-resources/**===get
       - /v2/api-docs===get

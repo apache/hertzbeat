@@ -18,9 +18,9 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
+import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
@@ -49,6 +49,7 @@ import org.dromara.hertzbeat.manager.service.TagService;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.dromara.hertzbeat.manager.support.exception.MonitorMetricsException;
+import org.dromara.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
@@ -61,7 +62,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -84,8 +86,6 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
-
-    private static final Gson GSON = new Gson();
 
     @Autowired
     private AppService appService;
@@ -117,6 +117,9 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
@@ -137,8 +140,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        // To detect availability, you only need to collect the set of availability indicators with a priority of 0.
-        // 探测可用性只需要采集优先级为0的可用性指标集合
+        // To detect availability, you only need to collect the set of availability metrics with a priority of 0.
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
@@ -149,7 +151,6 @@ public class MonitorServiceImpl implements MonitorService {
             collectRep = collectJobScheduling.collectSyncJobData(appDefine);
         }
         // If the detection result fails, a detection exception is thrown
-        // 判断探测结果 失败则抛出探测异常
         if (collectRep == null || collectRep.isEmpty()) {
             throw new MonitorDetectException("Collect Timeout No Response");
         }
@@ -600,11 +601,17 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setMonitor(monitor);
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
-            Job job = appService.getAppDefine(monitor.getApp());
-            List<String> metrics = job.getMetrics().stream()
-                    .filter(Metrics::isVisible)
-                    .map(Metrics::getName).collect(Collectors.toList());
-            monitorDto.setMetrics(metrics);
+            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())) {
+                List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
+                List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
+                monitorDto.setMetrics(metrics);
+            } else {
+                Job job = appService.getAppDefine(monitor.getApp());
+                List<String> metrics = job.getMetrics().stream()
+                        .filter(Metrics::isVisible)
+                        .map(Metrics::getName).collect(Collectors.toList());
+                monitorDto.setMetrics(metrics);   
+            }
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;
@@ -621,7 +628,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Delete corresponding monitoring periodic task
-        // 更新监控状态  删除对应的监控周期性任务
+        // 更新任务状态  删除对应的监控周期性任务
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
@@ -641,7 +648,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void enableManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
-        // 更新监控状态 新增对应的监控周期性任务
+        // 更新任务状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
@@ -734,37 +741,38 @@ public class MonitorServiceImpl implements MonitorService {
 
             monitorOpt.ifPresentOrElse(monitor -> {
                 // deep copy original monitor to achieve persist in JPA
-                Monitor newMonitor = GSON.fromJson(GSON.toJson(monitor), Monitor.class);
-                copyMonitor(newMonitor, params);
+                Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
+                if (newMonitor != null) {
+                    copyMonitor(newMonitor, params);   
+                }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
     }
 
     @Override
     public void updateAppCollectJob(Job job) {
-        List<Monitor> availableMonitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
-                stream().filter(monitor -> monitor.getStatus() == CommonConstants.AVAILABLE_CODE)
+        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
+                stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
                 .collect(Collectors.toList());
-        if (!availableMonitors.isEmpty()) {
-            for (Monitor monitor : availableMonitors) {
-                Job appDefine = JsonUtil.fromJson(JsonUtil.toJson(job), Job.class);
-                if (monitor == null || appDefine == null) {
+        List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findCollectorMonitorBindsByMonitorIdIn(
+                monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));
+        Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
+                Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
+        for (Monitor monitor : monitors) {
+            try {
+                Job appDefine = job.clone();
+                if (monitor == null || appDefine == null || monitor.getId() == null || monitor.getJobId() == null) {
+                    log.error("update monitor job error when template modify, define | id | jobId is null. continue");
                     continue;
                 }
-                if (monitor.getId() != null) {
-                    appDefine.setMonitorId(monitor.getId());
-                } else {
-                    continue;
-                }
-                if (monitor.getIntervals() != null) {
-                    appDefine.setInterval(monitor.getIntervals());
-                } else {
-                    continue;
-                }
+                appDefine.setId(monitor.getJobId());
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
+                        param.getValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .collect(Collectors.toList());
@@ -775,10 +783,14 @@ public class MonitorServiceImpl implements MonitorService {
                     }
                 });
                 appDefine.setConfigmap(configmaps);
+                // if is pinned collector
+                String collector = monitorIdCollectorMap.get(monitor.getId());
                 // 下发采集任务
-                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+                long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
-                monitorDao.save(monitor);
+                monitorDao.save(monitor);   
+            } catch (Exception e) {
+                log.error("update monitor job error when template modify: {}.continue", e.getMessage(), e);
             }
         }
     }

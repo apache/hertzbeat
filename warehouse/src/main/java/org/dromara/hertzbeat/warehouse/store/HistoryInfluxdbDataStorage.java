@@ -6,6 +6,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
@@ -130,19 +131,23 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             Point.Builder builder = Point.measurement(table);
             builder.time(metricsData.getTime(), TimeUnit.MILLISECONDS);
-            String instance = valueRow.getInstance();
-            builder.tag("instance", instance);
+            Map<String, String> labels = new HashMap<>(8);
             for (int i = 0; i < fieldsList.size(); i++) {
+                CollectRep.Field field = fieldsList.get(i);
                 if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                    if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
-                        builder.addField(fieldsList.get(i).getName(), Double.parseDouble(valueRow.getColumns(i)));
-                    } else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
-                        builder.addField(fieldsList.get(i).getName(), valueRow.getColumns(i));
+                    if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                        builder.addField(field.getName(), Double.parseDouble(valueRow.getColumns(i)));
+                    } else if (field.getType() == CommonConstants.TYPE_STRING) {
+                        builder.addField(field.getName(), valueRow.getColumns(i));
+                    }
+                    if (field.getLabel()) {
+                        labels.put(field.getName(), valueRow.getColumns(i));
                     }
                 } else {
-                    builder.addField(fieldsList.get(i).getName(), "");
+                    builder.addField(field.getName(), "");
                 }
             }
+            builder.tag("instance", JsonUtil.toJson(labels));
             points.add(builder.build());
         }
         BatchPoints.Builder builder = BatchPoints.database(DATABASE);
@@ -151,10 +156,10 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = this.generateTable(app, metrics, monitorId);
-        String selectSql = instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history)
-                : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, instance, history);
+        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history)
+                : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, label, history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         try {
             QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
@@ -182,12 +187,12 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = this.generateTable(app, metrics, monitorId);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
-        if (instance != null) {
-            instances.add(instance);
+        if (label != null) {
+            instances.add(label);
         }
         if (instances.isEmpty()) {
             // query the instance near 1week

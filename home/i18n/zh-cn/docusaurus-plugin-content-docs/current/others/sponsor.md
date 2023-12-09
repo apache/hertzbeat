@@ -11,7 +11,6 @@ sidebar_label: 赞助我们
      
 感谢[吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点      
 感谢[蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) 赞助服务器采集节点      
-感谢[Postcat(开源 API 管理工具)](https://datayi.cn/w/xRxVBBko) 赞助      
 
 
 

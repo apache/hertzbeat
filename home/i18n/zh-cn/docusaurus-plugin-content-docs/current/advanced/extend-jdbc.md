@@ -65,7 +65,7 @@ SQL响应数据：
 样例：自定义一个名称为example_sql的自定义监控类型，其使用JDBC协议采集指标数据。
 
 ```yaml
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: db
 # 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: example_sql
@@ -115,18 +115,18 @@ params:
       en-US: Url
     type: text
     required: false
-# 指标组列表
+# 采集指标配置列表
 metrics:
   - name: basic
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     fields:
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
       - field: version
         type: 1
-        instance: true
+        label: true
       - field: port
         type: 1
       - field: datadir

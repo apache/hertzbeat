@@ -22,25 +22,19 @@ import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * Specific indicator group collection implementation abstract class
- * 具体的指标组采集实现抽象类
- *
+ * Specific metrics collection implementation abstract class
  * @author tomsun28
- *
  */
 public abstract class AbstractCollect {
 
     /**
      * Real acquisition implementation interface
-     * 真正的采集实现接口
-     *
      * @param builder response builder
-     * @param appId   App monitoring ID   应用监控ID
-     * @param app     Application Type  应用类型
-     * @param metrics Metric group configuration    指标组配置
-     *                return response builder
+     * @param monitorId  monitor id   
+     * @param app monitor type 
+     * @param metrics metric configuration
      */
-    public abstract void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics);
+    public abstract void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics);
 
     /**
      * the protocol this collect instance support

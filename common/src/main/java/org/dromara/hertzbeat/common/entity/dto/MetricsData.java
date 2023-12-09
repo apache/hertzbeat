@@ -26,32 +26,31 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 指标组监控数据
+ * Monitoring Metrics Data
  * @author tom
- *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "指标组监控数据")
+@Schema(description = "Monitoring Metrics Data")
 public class MetricsData {
 
-    @Schema(title = "监控ID")
+    @Schema(title = "Monitoring Task ID")
     private Long id;
 
-    @Schema(title = "监控类型")
+    @Schema(title = "Monitoring Type")
     private String app;
 
-    @Schema(title = "监控指标组")
-    private String metric;
+    @Schema(title = "Monitoring Metrics")
+    private String metrics;
 
-    @Schema(title = "最新采集时间")
+    @Schema(title = "Latest Collect Time")
     private Long time;
 
-    @Schema(description = "监控指标字段列表")
+    @Schema(description = "Monitoring Metrics fields")
     private List<Field> fields;
 
-    @Schema(description = "监控指标列表值集合")
+    @Schema(description = "Monitoring Metrics DataRow")
     private List<ValueRow> valueRows;
 }

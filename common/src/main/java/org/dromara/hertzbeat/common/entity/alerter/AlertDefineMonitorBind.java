@@ -37,9 +37,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 
 /**
- * 告警定义与监控关联实体
+ * Alarm Threshold Relate Monitor Entity
  * @author tom
- *
  */
 @Entity
 @Table(name = "hzb_alert_define_monitor_bind", indexes = {
@@ -50,27 +49,27 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "告警定义与监控关联实体")
+@Schema(description = "Alarm Threshold Relate Monitor Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertDefineMonitorBind {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "告警定义与监控关联主键索引ID", example = "74384", accessMode = READ_ONLY)
+    @Schema(title = "id", example = "74384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "告警定义ID", example = "87432674384", accessMode = READ_WRITE)
+    @Schema(title = "Alarm Define Id", example = "87432674384", accessMode = READ_WRITE)
     private Long alertDefineId;
 
-    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "Monitor Id", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 
-    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

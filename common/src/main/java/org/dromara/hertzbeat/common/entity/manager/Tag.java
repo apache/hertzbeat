@@ -38,10 +38,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * Tag
- * 标签
+ * Tag Entity
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_tag")
@@ -74,19 +72,19 @@ public class Tag {
     @Max(3)
     private byte type;
 
-    @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

@@ -60,6 +60,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             // 查询过滤出此监控下可计算聚合的数字指标
             if (this.app == 'push') {
               return this.appDefineSvc.getPushDefine(this.monitorId);
+            } else if (this.app == 'prometheus') {
+              return this.appDefineSvc.getAppDynamicDefine(this.monitorId);
             } else {
               return this.appDefineSvc.getAppDefine(this.app);
             }
@@ -114,7 +116,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           this.isSpinning = true;
           let id = paramMap.get('monitorId');
           this.monitorId = Number(id);
-          // 查询监控指标组结构信息
           return this.monitorSvc.getMonitor(this.monitorId);
         })
       )

@@ -39,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,7 +85,7 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标组的指标数据")
+    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标的实时指标数据")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @Parameter(description = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,
@@ -109,35 +111,48 @@ public class MetricsDataController {
         }
         {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
-            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metric(storageData.getMetrics())
+            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())
                     .time(storageData.getTime());
             List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
                             Field.builder().name(tmpField.getName())
                                     .type(Integer.valueOf(tmpField.getType()).byteValue())
+                                    .label(tmpField.getLabel())
                                     .unit(tmpField.getUnit())
                                     .build())
                     .collect(Collectors.toList());
             dataBuilder.fields(fields);
-            List<ValueRow> valueRows = storageData.getValuesList().stream().map(redisValueRow ->
-                    ValueRow.builder().instance(redisValueRow.getInstance())
-                            .values(redisValueRow.getColumnsList().stream()
-                                    .map(origin -> CommonConstants.NULL_VALUE.equals(origin) ? new Value()
-                                            : new Value(origin)).collect(Collectors.toList()))
-                            .build()).collect(Collectors.toList());
+            List<ValueRow> valueRows = new LinkedList<>();
+            for (CollectRep.ValueRow valueRow : storageData.getValuesList()) {
+                Map<String, String> labels = new HashMap<>(8);
+                List<Value> values = new LinkedList<>();
+                for (int i = 0; i < fields.size(); i++) {
+                    Field field = fields.get(i);
+                    String origin = valueRow.getColumns(i);
+                    if (CommonConstants.NULL_VALUE.equals(origin)) {
+                        values.add(new Value());
+                    } else {
+                        values.add(new Value(origin));
+                        if (field.getLabel()) {
+                            labels.put(field.getName(), origin);
+                        }
+                    }
+                }
+                valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+            }
             dataBuilder.valueRows(valueRows);
             return ResponseEntity.ok(Message.success(dataBuilder.build()));
         }
     }
 
     @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
-    @Operation(summary = "查询监控指标组的指定指标的历史数据", description = "查询监控指标组下的指定指标的历史数据")
+    @Operation(summary = "查询监控的指定指标的历史数据", description = "查询监控下的指定指标的历史数据")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "监控ID", example = "343254354")
+            @Parameter(description = "监控任务ID", example = "343254354")
             @PathVariable Long monitorId,
             @Parameter(description = "监控指标全路径", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
-            @Parameter(description = "所属实例,默认空", example = "disk2")
-            @RequestParam(required = false) String instance,
+            @Parameter(description = "标签过滤,默认空", example = "disk2")
+            @RequestParam(required = false) String label,
             @Parameter(description = "查询历史时间段,默认6h-6小时:s-秒、m-分, h-小时, d-天, w-周", example = "6h")
             @RequestParam(required = false) String history,
             @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
@@ -168,12 +183,12 @@ public class MetricsDataController {
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, instance, history);
+            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
         } else {
-            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, instance, history);
+            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
-                .id(monitorId).metric(metrics).values(instanceValuesMap)
+                .id(monitorId).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         return ResponseEntity.ok(Message.success(historyData));

@@ -27,24 +27,15 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 /**
- * Alert Monitor 数据库操作
+ * Alert Monitor Dao
  * @author tomsun28
- *
  */
 public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
-
-    /**
-     * Query the monitoring status of a specified monitoring state ｜ 查询指定监控状态的监控
-     * @param status 监控状态
-     * @return Monitor the list ｜ 监控列表
-     */
-    List<Monitor> findMonitorsByStatusIn(List<Byte> status);
-    
     
     /**
-     * Query the monitoring status of a specified monitoring state ｜ 查询指定监控状态的监控
-     * @param status 监控状态
-     * @return Monitor the list ｜ 监控列表
+     * Query the monitoring status of a specified monitoring state
+     * @param status status value
+     * @return Monitor the list
      */
     List<Monitor> findMonitorsByStatus(Byte status);
     

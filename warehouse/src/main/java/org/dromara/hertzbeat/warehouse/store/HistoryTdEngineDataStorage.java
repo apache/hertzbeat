@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.warehouse.store;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -51,6 +52,7 @@ import java.util.regex.Pattern;
 public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
+    private static final String INSTANCE_NULL = "''";
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
@@ -59,7 +61,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_HISTORY_SQL
             = "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(`ts`), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
+            = "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
 
@@ -127,8 +129,8 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             StringBuilder sqlRowBuffer = new StringBuilder("(");
             sqlRowBuffer.append(metricsData.getTime() + i++).append(", ");
-            String instance = formatStringValue(valueRow.getInstance());
-            sqlRowBuffer.append("'").append(instance).append("', ");
+            Map<String, String> labels = new HashMap<>(8);
+            sqlRowBuffer.append("'").append("%s").append("', ");
             for (int index = 0; index < fields.size(); index++) {
                 CollectRep.Field field = fields.get(index);
                 String value = valueRow.getColumns(index);
@@ -153,12 +155,15 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                         sqlRowBuffer.append("'").append(formatStringValue(value)).append("'");
                     }
                 }
+                if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(value)) {
+                    labels.put(field.getName(), formatStringValue(value));
+                }
                 if (index != fields.size() - 1) {
                     sqlRowBuffer.append(", ");
                 }
             }
             sqlRowBuffer.append(")");
-            sqlBuffer.append(" ").append(sqlRowBuffer);
+            sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
         }
         String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
         log.debug(insertDataSql);
@@ -226,23 +231,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             hikariDataSource.close();
         }
     }
-
-    /**
-     * 从TD ENGINE时序数据库获取指标历史数据
-     *
-     * @param monitorId 监控ID
-     * @param app 监控类型
-     * @param metrics 指标集合名
-     * @param metric 指标名
-     * @param instance 实例
-     * @param history 历史范围
-     * @return 指标历史数据列表
-     */
+    
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String instance, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql =  instance == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
-                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, instance, history);
+        String selectSql =  label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
+                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
         log.debug(selectSql);
         Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -258,6 +252,10 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             ResultSet resultSet = statement.executeQuery(selectSql);
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
+                if (ts == null) {
+                    log.error("warehouse tdengine query result timestamp is null, ignore. {}.", selectSql);
+                    continue;
+                }
                 String instanceValue = resultSet.getString(2);
                 if (instanceValue == null || "".equals(instanceValue)) {
                     instanceValue = "";
@@ -289,7 +287,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String instance, String history) {
+                                                                 String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("\n\t---------------TdEngine Init Failed---------------\n" +
                     "\t--------------Please Config Tdengine--------------\n" +
@@ -298,8 +296,8 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         String table = app + "_" + metrics + "_" + monitorId;
         List<String> instances = new LinkedList<>();
-        if (instance != null) {
-            instances.add(instance);
+        if (label != null) {
+            instances.add(label);
         }
         if (instances.isEmpty()) {
             // 若未指定instance，需查询当前指标数据前1周有多少个instance
@@ -330,12 +328,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(instances.size());
         for (String instanceValue : instances) {
+            if (INSTANCE_NULL.equals(instanceValue)) {
+                instanceValue = "";
+            }
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                             metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
-            if ("''".equals(instanceValue)) {
-                instanceValue = "";
-            }
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;
             try {

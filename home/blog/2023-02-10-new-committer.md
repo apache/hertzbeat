@@ -38,7 +38,7 @@ The first PR was submitted on April 17, 2022, mainly for the problem of TDEngine
 So far, I have participated in the hertzbeat open source project for more than half a year, contributed a lot, and grown and gained a lot. details as follows:
 
 * Refactored the alarm module based on the strategy mode   
-* Implemented indicator monitoring for `Redis` database   
+* Implemented metric monitoring for `Redis` database   
 * Optimize `spring.factories` configuration items   
 * Implemented message notification channels supporting `Telegram`, `Discord`, `Slack`   
 * Use `Thymeleaf` to restructure the alarm text, and the alarm notification template is more standardized   
@@ -112,7 +112,7 @@ First of all, I am also a newcomer to Novice Village, but I can share some of my
 
 > [HertzBeat Hertz Beat](https://github.com/dromara/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
 
-> We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc` configurable, and you only need to configure YML to use these protocols to customize and collect any indicators you want to collect.  
+> We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure YML to use these protocols to customize and collect any metrics you want to collect.  
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.

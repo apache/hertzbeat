@@ -40,9 +40,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitor Entity
- * 监控实体
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_monitor", indexes = {
@@ -60,24 +58,21 @@ public class Monitor {
 
     /**
      * Monitor ID
-     * 主键ID
      */
     @Id
-    @Schema(title = "监控ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "监控任务ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     /**
      * Job ID
-     * 监控对应下发的任务ID
      */
-    @Schema(title = "任务ID", example = "43243543543", accessMode = READ_ONLY)
+    @Schema(title = "采集任务ID", example = "43243543543", accessMode = READ_ONLY)
     private Long jobId;
 
     /**
      * Monitor Name
-     * 监控的名称
      */
-    @Schema(title = "监控名称", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
+    @Schema(title = "任务名称", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
     @Length(max = 100)
     private String name;
 
@@ -107,10 +102,10 @@ public class Monitor {
     private Integer intervals;
 
     /**
-     * Monitoring status 0: Unmonitored, 1: Available, 2: Unavailable, 3: Unreachable, 4: Suspended
-     * 监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起
+     * Monitoring status 0: Unmonitored, 1: Available, 2: Unavailable
+     * 任务状态 0:未监控,1:可用,2:不可用
      */
-    @Schema(title = "监控状态 0:未监控,1:可用,2:不可用,3:不可达,4:挂起", accessMode = READ_WRITE)
+    @Schema(title = "任务状态 0:未监控,1:可用,2:不可用", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;
@@ -125,33 +120,29 @@ public class Monitor {
 
     /**
      * The creator of this record
-     * 此条记录创建者
      */
-    @Schema(title = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
     /**
      * This record was last modified by
-     * 此条记录最新修改者
      */
-    @Schema(title = "此条记录最新修改者", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
     /**
-     * record creation time (millisecond timestamp)
-     * 记录创建时间
+     * Record create time
      */
-    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
      * Record the latest modification time (timestamp in milliseconds)
-     * 记录最新修改时间
      */
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

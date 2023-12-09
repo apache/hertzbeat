@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * json 互转 tag list 对象字段为数据String字段
+ * json str to tag list 
  * @author tom
  *
  */

@@ -71,10 +71,10 @@ database:
 
 tsdb:
   image:
-    repository: apache/iotdb
+    repository: victoriametrics/victoria-metrics
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.13.3-node"
+    tag: "v1.95.1"
   timezone: "Asia/Shanghai"
   persistence:
     enabled: true

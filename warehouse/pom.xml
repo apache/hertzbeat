@@ -29,7 +29,7 @@
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.3.1</greptimedb.version>
+        <greptimedb.version>0.4.0</greptimedb.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -42,6 +42,11 @@
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <!-- util -->
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -92,11 +97,6 @@
             <artifactId>greptimedb-protocol</artifactId>
             <version>${greptimedb.version}</version>
             <exclusions>
-                <!-- TODO delete this when greptime sdk stable https://github.com/GreptimeTeam/greptimedb-client-java/issues/51 -->
-                <exclusion>
-                    <groupId>com.github.GreptimeTeam</groupId>
-                    <artifactId>greptime-proto</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>io.grpc</groupId>
                     <artifactId>grpc-all</artifactId>

@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-category: db
+category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
 app: doris_fe
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Doris 数据库FE
-  en-US: Doris DatabaseFE
+  zh-CN: Apache Doris FE
+  en-US: Apache Doris FE
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
@@ -40,8 +40,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -77,7 +77,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -96,7 +96,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -117,7 +117,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -138,7 +138,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -159,7 +159,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -180,7 +180,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -199,7 +199,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -218,7 +218,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -237,7 +237,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -256,7 +256,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -276,7 +276,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -295,7 +295,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -314,7 +314,7 @@ metrics:
     fields:
       - field: value
         type: 0
-        instance: true
+        label: true
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
@@ -333,7 +333,7 @@ metrics:
     fields:
       - field: type
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk

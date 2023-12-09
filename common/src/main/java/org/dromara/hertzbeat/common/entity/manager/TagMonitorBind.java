@@ -35,7 +35,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
  * Tag Bind Monitor
  * 标签与监控关联实体
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_tag_monitor_bind", indexes = {
@@ -59,15 +58,15 @@ public class TagMonitorBind {
     @Column(name = "tag_id")
     private Long tagId;
 
-    @Schema(title = "监控ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 
-    @Schema(title = "记录创建时间", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * mongodb connect client
- *
  * @author tom
- *
  */
 @Slf4j
 public class MongodbConnect implements CacheCloseable {

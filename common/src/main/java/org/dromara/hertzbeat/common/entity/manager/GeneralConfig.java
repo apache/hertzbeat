@@ -20,7 +20,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * 公共配置实体
+ * Common Config Entity
  * @author zqr10159
  */
 @Entity
@@ -43,23 +43,19 @@ public class GeneralConfig {
 	@Column(length = 8192)
 	private String content;
 	
-	@Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom", accessMode = READ_ONLY)
+	@Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
 	@CreatedBy
 	private String creator;
 	
-	@Schema(title = "This record was last modified by",
-			description = "此条记录最新修改者",
-			example = "tom", accessMode = READ_ONLY)
+	@Schema(title = "This record was last modified by", example = "tom", accessMode = READ_ONLY)
 	@LastModifiedBy
 	private String modifier;
 	
-	@Schema(title = "This record creation time (millisecond timestamp)",
-			description = "记录创建时间", accessMode = READ_ONLY)
+	@Schema(title = "This record creation time (millisecond timestamp)", accessMode = READ_ONLY)
 	@CreatedDate
 	private LocalDateTime gmtCreate;
 	
-	@Schema(title = "Record the latest modification time (timestamp in milliseconds)",
-			description = "记录最新修改时间", accessMode = READ_ONLY)
+	@Schema(title = "Record the latest modification time (timestamp in milliseconds)", accessMode = READ_ONLY)
 	@LastModifiedDate
 	private LocalDateTime gmtUpdate;
 }

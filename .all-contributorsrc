@@ -807,7 +807,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/55838224?v=4",
       "profile": "https://github.com/vinci-897",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "design"
       ]
     },
     {
@@ -1240,7 +1242,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/104416402?v=4",
       "profile": "https://github.com/YutingNie",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "design"
       ]
     },
     {
@@ -1249,7 +1253,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/23418428?v=4",
       "profile": "https://github.com/mikezzb",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "design"
       ]
     },
     {
@@ -1358,7 +1364,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/68422437?v=4",
       "profile": "https://github.com/Eden4701",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "design"
       ]
     },
     {
@@ -1368,6 +1376,98 @@
       "profile": "https://github.com/XiaTian688",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "liyin",
+      "name": "liyinjiang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/863169?v=4",
+      "profile": "https://github.com/liyin",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jiashu1024",
+      "name": "ZhangJiashu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67859663?v=4",
+      "profile": "https://github.com/jiashu1024",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "1036664317",
+      "name": "moghn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7696697?v=4",
+      "profile": "https://github.com/1036664317",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "xiaoguolong",
+      "name": "xiaoguolong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33684988?v=4",
+      "profile": "https://github.com/xiaoguolong",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Clownsw",
+      "name": "Smliexx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28394742?v=4",
+      "profile": "https://github.com/Clownsw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Calvin979",
+      "name": "Naruse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/131688897?v=4",
+      "profile": "https://github.com/Calvin979",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "bbelide2",
+      "name": "Bala Sukesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26840796?v=4",
+      "profile": "https://github.com/bbelide2",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jinyaoMa",
+      "name": "Jinyao Ma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25066570?v=4",
+      "profile": "https://github.com/jinyaoMa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LinuxSuRen",
+      "name": "Rick",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1450685?v=4",
+      "profile": "https://linuxsuren.github.io/open-source-best-practice/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "ZY945",
+      "name": "东风",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74083801?v=4",
+      "profile": "https://github.com/ZY945",
+      "contributions": [
+        "code"
       ]
     }
   ],

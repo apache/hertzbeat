@@ -31,7 +31,7 @@ slug: /
 > HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等及时通知送达。            
 > 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。
 
-> 我们将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，您仅仅只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
+> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您仅仅只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
 > 您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？
 
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
@@ -53,7 +53,7 @@ slug: /
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 

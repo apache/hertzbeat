@@ -14,8 +14,8 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控
-category: service
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: program
 # The monitoring type eg: springboot2 linux windows tomcat mysql aws...
 # 监控类型 eg: springboot2 linux windows tomcat mysql aws...
 app: springboot2
@@ -42,8 +42,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -105,21 +105,21 @@ params:
     # hide-是否隐藏 true-隐藏 false-不隐藏
     hide: true
 # collect metrics config list
-# 采集指标组配置列表
+# 采集指标配置列表
 metrics:
   # metrics - available
-  # 监控指标组 - available
+  # 监控指标 - available
   - name: available
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # collect metrics content
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
@@ -148,14 +148,14 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
   # metrics - environment
-  # 监控指标组 - environment
+  # 监控指标 - environment
   - name: environment
     priority: 1
     # The specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: profile
         type: 1
       - field: port
@@ -214,13 +214,13 @@ metrics:
       # 响应数据解析脚本
       parseScript: '$'
   # metrics - thread_state
-  # 监控指标组 - thread_state
+  # 监控指标 - thread_state
   - name: thread_state
     # Whether to display the metric group in the query result, the default is true
-    # 是否在查询结果中显示指标组,默认为true
+    # 是否在查询结果中显示,默认为true
     visible: false
     # The specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     priority: 2
     fields:
       - field: state
@@ -246,7 +246,7 @@ metrics:
     fields:
       - field: state
         type: 1
-        instance: true
+        label: true
       - field: size
         type: 0
     aliasFields:
@@ -285,7 +285,7 @@ metrics:
     fields:
       - field: space
         type: 1
-        instance: true
+        label: true
       - field: mem_used
         type: 0
         unit: MB

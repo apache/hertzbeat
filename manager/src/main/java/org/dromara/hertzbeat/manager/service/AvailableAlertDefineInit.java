@@ -40,7 +40,7 @@ public class AvailableAlertDefineInit implements CommandLineRunner {
 							.app(app)
 							.metric(CommonConstants.AVAILABILITY)
 							.preset(true)
-							.times(1)
+							.times(2)
 							.enable(true)
                             .recoverNotice(false)
 							.priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)

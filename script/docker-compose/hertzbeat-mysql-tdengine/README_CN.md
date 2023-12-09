@@ -27,20 +27,24 @@
 
 3. 进入tdengine创建hertzbeat数据库     
 
-   `$ docker exec -it tdengine /bin/bash
-   root@tdengine-server:~/TDengine-server-2.4.0.4#`
+   ```bash
+   $ docker exec -it tdengine /bin/bash
+   root@tdengine-server:~/TDengine-server-2.4.0.4#
+   ```
 
    创建名称为hertzbeat的数据库 进入容器后，执行 taos shell 客户端程序。
-
-   `root@tdengine-server:~/TDengine-server-2.4.0.4# taos
-   Welcome to the TDengine shell from Linux, Client Version:2.4.0.4
+   
+   ```bash
+   root@tdengine-server:~/TDengine-server-2.4.0.4# taos
+   Welcome to the TDengine shell from Linux, Client Version: 2.4.0.4
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
-   taos>`
+   taos>
+   ```
 
    执行创建数据库命令
-
+   
    `taos> show databases;`
-
+   
    `taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;`
 
 ##### 重启应用  
@@ -51,6 +55,6 @@
 
 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`  
 
----   
+---
 
 怎么样是不是很简单，只要几分钟就可以部署完成，赶紧试试吧！

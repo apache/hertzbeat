@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.collector.collect.telnet;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
+import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.constants.CollectorConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.TelnetProtocol;
@@ -35,9 +36,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * telnet协议采集实现
+ * telnet collect
  * @author tom
- *
  */
 @Slf4j
 public class TelnetCollectImpl extends AbstractCollect {
@@ -45,9 +45,8 @@ public class TelnetCollectImpl extends AbstractCollect {
     public TelnetCollectImpl(){}
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 简单校验必有参数
         if (metrics == null || metrics.getTelnet() == null) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Telnet collect must has telnet params");
@@ -55,16 +54,9 @@ public class TelnetCollectImpl extends AbstractCollect {
         }
 
         TelnetProtocol telnet = metrics.getTelnet();
-        // 超时时间默认6000毫秒
-        int timeout = 6000;
-        try {
-            timeout = Integer.parseInt(telnet.getTimeout());
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
+        int timeout = CollectUtil.getTimeout(telnet.getTimeout());
         TelnetClient telnetClient = null;
         try {
-            //指明Telnet终端类型，否则会返回来的数据中文会乱码
             telnetClient = new TelnetClient("vt200");
             telnetClient.setConnectTimeout(timeout);
             telnetClient.connect(telnet.getHost(), Integer.parseInt(telnet.getPort()));
@@ -132,7 +124,7 @@ public class TelnetCollectImpl extends AbstractCollect {
         String result = new String(telnetClient.getInputStream().readAllBytes());
         String[] lines = result.split("\n");
         boolean contains = lines[0].contains("=");
-        Map<String, String> mapValue = Arrays.stream(lines)
+        return Arrays.stream(lines)
                 .map(item -> {
                     if (contains) {
                         return item.split("=");
@@ -142,6 +134,5 @@ public class TelnetCollectImpl extends AbstractCollect {
                 })
                 .filter(item -> item.length == 2)
                 .collect(Collectors.toMap(x -> x[0], x -> x[1]));
-        return mapValue;
     }
 }

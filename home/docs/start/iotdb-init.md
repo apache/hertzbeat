@@ -6,7 +6,7 @@ sidebar_label: Use IoTDB Store Metrics
 
 HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
 
-Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring indicators collected. Support V0.13+ version and V1.0.+ version.  
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.  
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**  
@@ -32,14 +32,14 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     apache/iotdb:0.13.3-node
 ```
 
-   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of TDengine data directory.`/iotdb/data` should be replaced with the actual local directory.
+   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of IotDB data directory.`/iotdb/data` should be replaced with the actual local directory.
    use```$ docker ps``` to check if the database started successfully
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file 
 
    Modify `hertzbeat/config/application.yml` configuration file     
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
-   Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
+   Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.  
 
 ```
 warehouse:

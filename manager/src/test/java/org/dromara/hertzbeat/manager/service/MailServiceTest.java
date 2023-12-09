@@ -12,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.thymeleaf.TemplateEngine;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -31,9 +30,6 @@ class MailServiceTest {
     @Spy
     @InjectMocks
     private MailServiceImpl mailService;
-
-    @Mock
-    private TemplateEngine templateEngine;
 
     @Mock
     private AlerterProperties alerterProperties;

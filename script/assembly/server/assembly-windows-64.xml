@@ -1,0 +1,90 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
+http://maven.apache.org/ASSEMBLY/2.0.0 ">
+    <!--必填,会追加到打包文件名称的末尾-->
+    <id>windows64_1.4.3</id>
+    <!--打包类型,可以设置多种类型,打包的时候不同的类型都会打包打出来-->
+    <formats>
+        <format>zip</format>
+    </formats>
+    <!--第三方依赖设置-->
+    <dependencySets>
+        <dependencySet>
+            <!--使用项目中的artifact,第三方包打包进tar.gz文件的lib目录下-->
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+        </dependencySet>
+    </dependencySets>
+
+    <!--文件相关设置-->
+    <fileSets>
+        <!--bin文件下的所有脚本文件输出到打包后的bin目录下-->
+        <fileSet>
+            <directory>../script/assembly/server/bin</directory>
+            <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
+            <filtered>true</filtered>
+            <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- src/main/resources目录下配置文件打包到config目录下 -->
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>application.yml</include>
+                <include>logback-spring.xml</include>
+                <include>sureness.yml</include>
+            </includes>
+            <filtered>true</filtered>
+            <outputDirectory>${file.separator}config</outputDirectory>
+        </fileSet>
+
+        <!-- src/main/resources/define目录下配置文件打包到define目录下 -->
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>define/**</include>
+            </includes>
+            <filtered>true</filtered>
+            <outputDirectory>${file.separator}</outputDirectory>
+        </fileSet>
+
+        <!-- 将target目录下的启动jar打包到目录下-->
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+
+        <!-- 将webapp的静态资源打包到目录下-->
+        <fileSet>
+            <directory>../web-app/dist</directory>
+            <outputDirectory>dist</outputDirectory>
+        </fileSet>
+        
+        <!-- copy jdk -->
+        <fileSet>
+            <directory>../jdk/windows-64</directory>
+            <outputDirectory>java</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>

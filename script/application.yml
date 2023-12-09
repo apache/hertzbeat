@@ -29,12 +29,11 @@ spring:
       static-locations:
         - classpath:/dist/
         - classpath:../dist/
-  thymeleaf:
-    prefix: classpath:/templates/
-    check-template-location: true
-    cache: true
-    suffix: .html
-    mode: HTML
+  # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed..
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+  freemarker:
+    enabled: false
 
 management:
   health:
@@ -105,6 +104,11 @@ warehouse:
     jpa:
       enabled: true
       expire-time: 1h
+    victoria-metrics:
+      enabled: false
+      url: http://localhost:8428
+      username: root
+      password: root
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
@@ -121,7 +125,7 @@ warehouse:
       username: root
       password: root
       # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
-      version: V_0_13
+      version: V_1_0
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
@@ -138,7 +142,7 @@ warehouse:
 # 存储实时数据方式, 下方只能enabled启用一种方式
     memory:
       enabled: true
-      init-size: 1024
+      init-size: 16
     redis:
       enabled: false
       host: 127.0.0.1

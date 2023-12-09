@@ -34,58 +34,54 @@ gitee: https://gitee.com/dromara/hertzbeat
 > System Page -> Monitor Menu -> SSL Certificate -> Add SSL Certificate
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd53f343a5b54feab62e71458d076441~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_1.png)
 
 2. Configure the monitoring website
 
 > Here we take the example of monitoring Baidu website, configure monitoring host domain name, name, collection interval, etc.
 > Click OK Note ⚠️Before adding, it will test the connectivity of the website by default, and the connection will be successful before adding. Of course, you can also gray out the **Test or not** button.
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad1154670648413bb82c8bdeb5b13609~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_2.png)
 
 3. View the detection index data
 
-> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the indicator data chart, etc.
+> In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_3.png)
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ef5d7443f8c04818ae5aa28d421203be~tplv-k3u1fbpfcp-zoom-1.image)
-
-
+![](/img/docs/start/ssl_11.png)
 
 4. Set the threshold (triggered when the certificate expires)
 
 > System Page -> Alarms -> Alarm Thresholds -> New Thresholds
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_4.png)
 
-> Configure the threshold, select the SSL certificate indicator object, configure the alarm expression-triggered when the indicator `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
+> Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_5.png)
 
 > Associating thresholds with monitoring, in the threshold list, set which monitoring this threshold applies to.
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9b9063d7bcf9454387be0491fc382bd1~tplv-k3u1fbpfcp-zoom-1.image)
-
-
+![](/img/docs/start/ssl_6.png)
 
 
 5. Set the threshold (triggered one week before the certificate expires)
 
-> In the same way, add a new configuration threshold and configure an alarm expression - when the indicator expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
+> In the same way, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d6f837f57c247e09f668f60eff4a0ff~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_7.png)
 
 > Finally, you can see the triggered alarm in the alarm center.
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a61b23127524976b2c209ce0ca6a339~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_8.png)
 
 
 6. Alarm notification (in time notification via Dingding WeChat Feishu, etc.)
@@ -93,7 +89,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 > Monitoring Tool -> Alarm Notification -> New Receiver
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f36956060ef410a82bbecafcbb2957f~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_10.png)
 
 For token configuration such as Dingding WeChat Feishu, please refer to the help document
 
@@ -103,7 +99,7 @@ https://tancloud.cn/docs/help/alert_dingtalk
 > Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d976343e81f843138344a039f3aff8a3~tplv-k3u1fbpfcp-zoom-1.image)
+![](/img/docs/start/ssl_11.png)
 
 7. OK When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 

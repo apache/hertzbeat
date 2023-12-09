@@ -13,21 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: mid
 # 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
 app: emqx
 # The app api i18n name
 # app api国际化名称
 name:
-  zh-CN: EMQX消息服务器
-  en-US: EMQX Server
+  zh-CN: EMQX 消息服务器
+  en-US: EMQX MQTT
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat对emqx消息服务器的通用指标进行测量监控，<br>您可以点击 “<i>新建 EMQX消息服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat measures and monitors common indicators of the emqx message server.<br>You can click "<i>New EMQX message server</i>" and configure it, or select "<i>More operations</i>", Import existing configuration.
-  zh-TW: Hertzbeat對emqx訊息伺服器的通用指標進行測量監控，<br>您可以點擊“<i>新EMQX訊息伺服器</i>” 並進行配置，或選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: EMQX 是一款开源的大规模分布式 MQTT 消息服务器。Hertzbeat对EMQX MQTT消息服务器 5.0+ 版本的通用指标进行测量监控，<br>您可以点击 “<i>新建 EMQX 消息服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: EMQX is an open source large-scale distributed MQTT message server. Hertzbeat measures and monitors common metrics of the EMQX message server 5.0+ version.<br>You can click "<i>New EMQX message server</i>" and configure it, or select "<i>More operations</i>", Import existing configuration.
+  zh-TW: EMQX 是一款開源的大規模分散式 MQTT 訊息伺服器。 Hertzbeat對EMQX MQTT訊息伺服器 5.0+ 版本的通用指標進行測量監控，<br>您可以點擊“<i>新建 EMQX 訊息伺服器</i>” 並進行配置，或者選擇“<i>更多操作</i>” ，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/emqx
   en-US: https://hertzbeat.com/docs/help/emqx
@@ -40,8 +40,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -68,13 +68,12 @@ params:
     # default value
     # 端口默认值
     defaultValue: 18083
-#  - field: ssl
-#    name:
-#      zh-CN: 启用HTTPS
-#      en-US: HTTPS
-#    type: boolean
-#    required: true
-#    defaultValue: false
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    defaultValue: false
   - field: timeout
     name:
       zh-CN: 超时时间(ms)
@@ -91,63 +90,178 @@ params:
     options:
       - label: Basic Auth
         value: Basic Auth
+    defaultValue: Basic Auth
   - field: apikey
     name:
       zh-CN: API Key
       en-US: API Key
     type: text
     required: true
-#    hide: true
   - field: secretkey
     name:
       zh-CN: Secret Key
       en-US: Secret Key
     type: text
     required: true
-#    hide: true
 metrics:
-  # the first metrics summary
-  # attention: Built-in monitoring metrics contains (responseTime - Response time)
-  # 第一个监控指标组 summary
-  # 注意：内置监控指标有 (responseTime - 响应时间)
+  # metrics - summary
+  # 监控指标 - summary
   - name: summary
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics name i18n label
+    # 指标国际化展示名称
+    i18n:
+      zh-CN: 概要
+      en-US: Summary
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # collect metrics content
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: client.connected
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 系统版本
+          en-US: Version
+      - field: node_name
+        type: 1
+        i18n:
+          zh-CN: 节点名称
+          en-US: Node Name
+      - field: broker_status
+        type: 1
+        i18n:
+          zh-CN: Broker 状态
+          en-US: Broker Status
+      - field: app_status
+        type: 1
+        i18n:
+          zh-CN: 应用状态
+          en-US: App Status
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - rel_vsn
+      - node_name
+      - broker_status
+      - app_status
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - version=rel_vsn
+      - node_name=node_name
+      - broker_status=broker_status
+      - app_status=app_status
+    #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
+    protocol: http
+    # the config content when protocol is http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
+      # url请求接口路径，我们这里不需要输入传参，写死为 /api/summary
+      url: /api/v5/status?format=json
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH, default fixed value is GET
+      # 请求方式 GET POST PUT DELETE PATCH，写死为 GET
+      method: GET
+      # if enabled https, default value is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http auth
+      # 认证
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^apikey^_^
+        basicAuthPassword: ^_^secretkey^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
+      parseType: jsonPath
+      parseScript: '$'
+      
+  - name: metrics
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: client_connected
         type: 0
-      - field: client.disconnected
+      - field: client_disconnected
         type: 0
-      - field: packets.sent
+      - field: packets_sent
         type: 0
-      - field: packets.received
+      - field: packets_received
         type: 0
-      - field: bytes.sent
+      - field: bytes_sent
         type: 0
-      - field: bytes.received
+      - field: bytes_received
         type: 0
-      - field: messages.sent
+      - field: messages_sent
         type: 0
-      - field: messages.acked
+      - field: messages_acked
         type: 0
-      - field: messages.delayed
+      - field: messages_delayed
         type: 0
-      - field: authorization.deny
+      - field: authorization_deny
         type: 0
-      - field: client.authorize
+      - field: client_authorize
         type: 0
-      - field: session.created
+      - field: session_created
         type: 0
-      - field: session.discarded
+      - field: session_discarded
         type: 0
-
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - client.connected
+      - client.disconnected
+      - packets.sent
+      - packets.received
+      - bytes.sent
+      - bytes.received
+      - messages.sent
+      - messages.acked
+      - messages.delayed
+      - authorization.deny
+      - client.authorize
+      - session.created
+      - session.discarded
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - client_connected=client.connected
+      - client_disconnected=client.disconnected
+      - packets_sent=packets.sent
+      - packets_received=packets.received
+      - bytes_sent=bytes.sent
+      - bytes_received=bytes.received
+      - messages_sent=messages.sent
+      - messages_acked=messages.acked
+      - messages_delayed=messages.delayed
+      - authorization_deny=authorization.deny
+      - client_authorize=client.authorize
+      - session_created=session.created
+      - session_discarded=session.discarded
     #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
     protocol: http
@@ -169,7 +283,7 @@ metrics:
       method: GET
       # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
-      ssl: false # ^_^ssl^_^
+      ssl: ^_^ssl^_^
       # http auth
       # 认证
       authorization:
@@ -178,212 +292,111 @@ metrics:
         type: ^_^authType^_^
         basicAuthUsername: ^_^apikey^_^
         basicAuthPassword: ^_^secretkey^_^
-      #        digestAuthUsername: ^_^username^_^
-      #        digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
       parseType: jsonPath
       parseScript: '$'
 
-  - name: all
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
-    priority: 0
-    # collect metrics content
-    # 指标组中的具体监控指标
+  - name: stats
+    priority: 2
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
-      - field: packets.pubcomp.received
-        type: 0
-#        instance: true
-      - field: packets.pingreq.received
-        type: 0
-      - field: packets.publish.inuse
-        type: 0
-      - field: packets.pubrel.sent
-        type: 0
-      - field: packets.pubrec.missed
-        type: 0
-      - field: messages.delivered
-        type: 0
-      - field: messages.dropped.await_pubrel_timeout
-        type: 0
-      - field: client.connect
-        type: 0
-      - field: packets.publish.auth_error
-        type: 0
-      - field: client.connected
-        type: 0
-      - field: messages.acked
-        type: 0
-      - field: packets.publish.dropped
-        type: 0
-      - field: packets.received
-        type: 0
-      - field: packets.disconnect.sent
-        type: 0
-      - field: client.subscribe
-        type: 0
-      - field: authorization.superuser
-        type: 0
-      - field: packets.disconnect.received
-        type: 0
-      - field: packets.puback.received
-        type: 0
-      - field: session.terminated
-        type: 0
-      - field: client.authenticate
-        type: 0
-      - field: packets.pubcomp.inuse
-        type: 0
-      - field: olp.hbn
-        type: 0
-      - field: session.resumed
-        type: 0
-      - field: packets.pubrec.received
-        type: 0
-      - field: packets.auth.sent
-        type: 0
-      - field: olp.delay.ok
-        type: 0
-      - field: client.disconnected
-        type: 0
-      - field: messages.forward
-        type: 0
-      - field: messages.qos2.sent
-        type: 0
-      - field: packets.sent
-        type: 0
-      - field: client.auth.anonymous
-        type: 0
-      - field: packets.pubrel.missed
-        type: 0
-      - field: delivery.dropped.no_local
-        type: 0
-      - field: packets.pubcomp.missed
-        type: 0
-      - field: packets.connack.auth_error
-        type: 0
-      - field: authorization.nomatch
-        type: 0
-      - field: messages.dropped
-        type: 0
-      - field: packets.publish.error
-        type: 0
-      - field: authorization.matched.deny
-        type: 0
-      - field: authentication.success.anonymous
-        type: 0
-      - field: packets.pubrel.received
-        type: 0
-      - field: packets.unsuback.sent
-        type: 0
-      - field: packets.unsubscribe.received
-        type: 0
-      - field: packets.subscribe.received
-        type: 0
-      - field: packets.unsubscribe.error
-        type: 0
-      - field: client.connack
-        type: 0
-      - field: bytes.received
-        type: 0
-      - field: delivery.dropped.expired
-        type: 0
-      - field: messages.qos1.sent
-        type: 0
-      - field: packets.puback.inuse
-        type: 0
-      - field: packets.publish.sent
-        type: 0
-      - field: packets.pingresp.sent
-        type: 0
-      - field: authorization.matched.allow
-        type: 0
-      - field: messages.dropped.no_subscribers
-        type: 0
-      - field: authorization.deny
-        type: 0
-      - field: packets.puback.sent
-        type: 0
-      - field: olp.delay.timeout
-        type: 0
-      - field: messages.delayed
-        type: 0
-      - field: packets.subscribe.error
-        type: 0
-      - field: packets.connect.received
-        type: 0
-      - field: authorization.allow
-        type: 0
-      - field: packets.pubcomp.sent
-        type: 0
-      - field: messages.received
-        type: 0
-      - field: packets.pubrec.inuse
-        type: 0
-      - field: packets.pubrec.sent
-        type: 0
-      - field: client.authorize
-        type: 0
-      - field: delivery.dropped.too_large
-        type: 0
-      - field: bytes.sent
-        type: 0
-      - field: olp.new_conn
-        type: 0
-      - field: packets.subscribe.auth_error
-        type: 0
-      - field: messages.qos1.received
-        type: 0
-      - field: messages.qos0.sent
-        type: 0
-      - field: authentication.failure
-        type: 0
-      - field: packets.connack.sent
-        type: 0
-      - field: messages.sent
-        type: 0
-      - field: messages.publish
-        type: 0
-      - field: session.takenover
-        type: 0
-      - field: authentication.success
-        type: 0
-      - field: session.created
-        type: 0
-      - field: delivery.dropped.queue_full
-        type: 0
-      - field: packets.publish.received
-        type: 0
-      - field: packets.auth.received
-        type: 0
-      - field: packets.puback.missed
-        type: 0
-      - field: messages.qos0.received
-        type: 0
-      - field: packets.connack.error
-        type: 0
-      - field: session.discarded
-        type: 0
-      - field: delivery.dropped
-        type: 0
-      - field: olp.gc
-        type: 0
-      - field: client.unsubscribe
-        type: 0
-      - field: authorization.cache_hit
-        type: 0
-      - field: delivery.dropped.qos0_msg
-        type: 0
-      - field: messages.qos2.received
-        type: 0
-      - field: packets.suback.sent
-        type: 0
-
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: channels_count
+        type: 0
+      - field: channels_max
+        type: 0
+      - field: connections_count
+        type: 0
+      - field: connections_max
+        type: 0
+      - field: delayed_count
+        type: 0
+      - field: delayed_max
+        type: 0
+      - field: live_connections_count
+        type: 0
+      - field: live_connections_max
+        type: 0
+      - field: retained_count
+        type: 0
+      - field: retained_max
+        type: 0
+      - field: sessions_count
+        type: 0
+      - field: sessions_max
+        type: 0
+      - field: suboptions_count
+        type: 0
+      - field: suboptions_max
+        type: 0
+      - field: subscribers_count
+        type: 0
+      - field: subscribers_max
+        type: 0
+      - field: subscriptions_count
+        type: 0
+      - field: subscriptions_max
+        type: 0
+      - field: subscriptions_shared_count
+        type: 0
+      - field: subscriptions_shared_max
+        type: 0
+      - field: topics_count
+        type: 0
+      - field: topics_max
+        type: 0
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - channels.count
+      - channels.max
+      - connections.count
+      - connections.max
+      - delayed.count
+      - delayed.max
+      - live_connections.count
+      - live_connections.max
+      - retained.count
+      - retained.max
+      - sessions.count
+      - sessions.max
+      - suboptions.count
+      - suboptions.max
+      - subscribers.count
+      - subscribers.max
+      - subscriptions.count
+      - subscriptions.max
+      - subscriptions.shared.count
+      - subscriptions.shared.max
+      - topics.count
+      - topics.max
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - channels_count=channels.count
+      - channels_max=channels.max
+      - connections_count=connections.count
+      - connections_max=connections.max
+      - delayed_count=delayed.count
+      - delayed_max=delayed.max
+      - live_connections_count=live_connections.count
+      - live_connections_max=live_connections.max
+      - retained_count=retained.count
+      - retained_max=retained.max
+      - sessions_count=sessions.count
+      - sessions_max=sessions.max
+      - suboptions_count=suboptions.count
+      - suboptions_max=suboptions.max
+      - subscribers_count=subscribers.count
+      - subscribers_max=subscribers.max
+      - subscriptions_count=subscriptions.count
+      - subscriptions_max=subscriptions.max
+      - subscriptions_shared_count=subscriptions.shared.count
+      - subscriptions_shared_max=subscriptions.shared.max
+      - topics_count=topics.count
+      - topics_max=topics.max
     #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
     protocol: http
@@ -398,14 +411,14 @@ metrics:
       port: ^_^port^_^
       # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
       # url请求接口路径，我们这里不需要输入传参，写死为 /api/summary
-      url: /api/v5/metrics?aggregate=true
+      url: /api/v5/stats?aggregate=true
       timeout: ^_^timeout^_^
       # http method: GET POST PUT DELETE PATCH, default fixed value is GET
       # 请求方式 GET POST PUT DELETE PATCH，写死为 GET
       method: GET
       # if enabled https, default value is false
       # 是否启用ssl/tls,即是http还是https,默认false
-      ssl: false # ^_^ssl^_^
+      ssl: ^_^ssl^_^
       # http auth
       # 认证
       authorization:
@@ -414,8 +427,6 @@ metrics:
         type: ^_^authType^_^
         basicAuthUsername: ^_^apikey^_^
         basicAuthPassword: ^_^secretkey^_^
-#        digestAuthUsername: ^_^username^_^
-#        digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
       parseType: jsonPath

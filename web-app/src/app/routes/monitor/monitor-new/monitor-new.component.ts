@@ -31,7 +31,7 @@ export class MonitorNewComponent implements OnInit {
   monitor!: Monitor;
   collectors!: Collector[];
   collector: string = '';
-  detected: boolean = true;
+  detected: boolean = false;
   passwordVisible: boolean = false;
   // 是否显示加载中
   isSpinning: boolean = false;
@@ -62,7 +62,7 @@ export class MonitorNewComponent implements OnInit {
             this.router.navigateByUrl('/monitors/new?app=website');
           }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = true;
+          this.detected = false;
           this.passwordVisible = false;
           this.isSpinning = true;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
@@ -137,7 +137,12 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onHostChange(hostValue: string) {
-    this.monitor.name = `${this.monitor.app.toUpperCase()}_${hostValue}`;
+    if (this.monitor.app != 'prometheus') {
+      let autoName = `${this.monitor.app.toUpperCase()}_${hostValue}`;
+      if (this.monitor.name == undefined || this.monitor.name == '' || this.monitor.name.startsWith(this.monitor.app.toUpperCase())) {
+        this.monitor.name = autoName;
+      }
+    }
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {

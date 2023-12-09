@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * Jmx protocol
  *
  * @author huacheng
- *
  **/
 @Data
 @Builder
@@ -47,13 +46,13 @@ public class JmxProtocol {
     private String password;
 
     /**
-     * jmx protocol custom collection indicator address
+     * jmx protocol custom collection metric address
      * jmx协议自定义收集指标地址
      */
     private String url;
 
     /**
-     * The name of the type where the outer layer of the jmx indicator is located
+     * The name of the type where the outer layer of the jmx metric is located
      * jmx指标外层所在类型名称
      */
     private String objectName;

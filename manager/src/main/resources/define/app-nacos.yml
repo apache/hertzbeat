@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
-# 监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控 os-操作系统监控 cn-云原生cloud native network-网络监控 mid-中间件
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 mid-中间件
 category: mid
 # The monitoring: nacos
 # 监控类型 nacos
@@ -22,7 +22,7 @@ app: nacos
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Nacos注册配置中心
+  zh-CN: Nacos分布式
   en-US: Nacos Server
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
@@ -43,7 +43,7 @@ params:
     # name-参数字段显示名称
     name:
       zh-CN: 服务器Host
-      en-US: Host
+      en-US: Target Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
@@ -72,13 +72,13 @@ params:
     defaultValue: 8848
 
 # collect metrics config list
-# 采集指标组配置列表
+# 采集指标配置列表
 metrics:
   - name: system_cpu_usage
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0->127)->(优先级高->低) 优先级低的指标组会等优先级高的指标组采集完成后才会被调度, 相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     fields:
       - field: usage
@@ -114,7 +114,7 @@ metrics:
         type: 1
       - field: id
         type: 1
-        instance: true
+        label: true
       - field: value
         type: 0
         unit: MB

@@ -259,7 +259,7 @@
                         <version>${maven-assembly-plugin.version}</version>
                         <executions>
                             <execution>
-                                <id>make-zip</id>
+                                <id>without-jdk</id>
                                 <!--绑定的maven操作-->
                                 <phase>package</phase>
                                 <!--运行一次-->
@@ -269,6 +269,76 @@
                                 <configuration>
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-macos-arm64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly-macos-arm64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-macos-amd64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly-macos-amd64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-arm64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly-linux-arm64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-amd64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly-linux-amd64.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-windows-64</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly-windows-64.xml</descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>

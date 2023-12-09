@@ -23,6 +23,7 @@ import org.apache.arrow.flight.FlightRuntimeException;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.common.util.TimePeriodUtil;
 import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -57,13 +58,13 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 	 */
 	private static final String STORAGE_DATABASE = "hertzbeat";
 	private static final String QUERY_HISTORY_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
 	private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-			= "SELECT ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+			= "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
 	private static final String QUERY_INSTANCE_SQL
 			= "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
 	private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-			= "SELECT first, avg ,max, min FROM (SELECT %s as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(%s) as avg, min(%s) as min, max(%s) as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+			= "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
 	private static final String TABLE_NOT_EXIST = "not exist";
 	private static final String DATABASE_NOT_EXIST = "not exist";
 	private GreptimeDB greptimeDb;
@@ -158,7 +159,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(TableName.with(STORAGE_DATABASE, table));
 
 		List<SemanticType> semanticTypes = new LinkedList<>(Arrays.asList(SemanticType.Tag, SemanticType.Tag, SemanticType.Timestamp));
-		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.Int64));
+		List<ColumnDataType> dataTypes = new LinkedList<>(Arrays.asList(ColumnDataType.String, ColumnDataType.String, ColumnDataType.TimestampMillisecond));
 		List<String> columnNames = new LinkedList<>(Arrays.asList("monitor_id", "instance", "ts"));
 
 		List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
@@ -182,27 +183,25 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 			values[0] = monitorId;
 			values[2] = now;
 			for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-				String instance = valueRow.getInstance();
-				if (!instance.isEmpty()) {
-					instance = String.format("\"%s\"", instance);
-					values[1] = instance;
-				} else {
-					values[1] = null;
-				}
+				Map<String, String> labels = new HashMap<>(8);
 				for (int i = 0; i < fieldsList.size(); i++) {
 					if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-						if (fieldsList.get(i).getType() == CommonConstants.TYPE_NUMBER) {
+						CollectRep.Field field = fieldsList.get(i);
+						if (field.getType() == CommonConstants.TYPE_NUMBER) {
 							values[3 + i] = Double.parseDouble(valueRow.getColumns(i));
-						} else if (fieldsList.get(i).getType() == CommonConstants.TYPE_STRING) {
+						} else if (field.getType() == CommonConstants.TYPE_STRING) {
 							values[3 + i] = valueRow.getColumns(i);
+						}
+						if (field.getLabel()) {
+							labels.put(field.getName(), String.valueOf(values[3 + i]));
 						}
 					} else {
 						values[3 + i] = null;
 					}
 				}
+				values[1] = JsonUtil.toJson(labels);
 				rows.insert(values);
 			}
-
 			rows.finish();
 			CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(rows);
 			try {
@@ -222,7 +221,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 
 	@Override
 	public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-	                                                     String instance, String history) {
+														 String label, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
 		if (!isServerAvailable()) {
 			log.error("\n\t---------------Greptime Init Failed---------------\n" +
@@ -232,9 +231,9 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		}
 		long expireTime = getExpireTimeFromToken(history);
 		String table = app + "_" + metrics;
-		String selectSql = instance == null ?
+		String selectSql = label == null ?
 				String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
-				: String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, expireTime, monitorId, instance);
+				: String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, expireTime, monitorId, label);
 		log.debug("selectSql: {}", selectSql);
 		QueryRequest request = QueryRequest.newBuilder()
 				.exprType(SelectExprType.Sql)
@@ -289,7 +288,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 
 	@Override
 	public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-	                                                             String metric, String instance, String history) {
+																 String metric, String label, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
 		if (!isServerAvailable()) {
 			log.error("\n\t---------------Greptime Init Failed---------------\n" +
@@ -299,8 +298,8 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 		}
 		String table = app + "_" + metrics;
 		List<String> instances = new LinkedList<>();
-		if (instance != null) {
-			instances.add(instance);
+		if (label != null) {
+			instances.add(label);
 		}
 		if (instances.isEmpty()) {
 			String selectSql = String.format(QUERY_INSTANCE_SQL, table);

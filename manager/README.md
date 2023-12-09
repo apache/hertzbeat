@@ -15,7 +15,11 @@ Provides monitoring management, monitoring application configuration management,
 
 The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`
 
-3. Execute command in collector
+3. Build package with jdk
+
+```mvn clean package -Pruntime```
+
+4. Execute command in collector
 
 ```mvn clean package -Pcluster```
 

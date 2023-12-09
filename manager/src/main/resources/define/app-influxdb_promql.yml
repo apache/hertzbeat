@@ -1,5 +1,5 @@
 # The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
-# 此监控类型所属类别：service-应用服务监控 db-数据库监控 custom-自定义监控
+# 此监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # The monitoring application type name (consistent with the file name)
 # 监控应用类型名称(与文件名保持一致)
@@ -19,8 +19,8 @@ helpLink:
 params:
   - field: host
     name:
-      zh-CN: 主机Host
-      en-US: Host
+      zh-CN: 目标Host
+      en-US: Target Host
     type: host
     required: true
   - field: port
@@ -121,21 +121,19 @@ params:
     hide: true
 
 metrics:
-  # The first monitoring metric group CPU.
+  # The first monitoring metrics basic_influxdb_memstats_alloc.
   # Note: Built-in monitoring metrics include (responseTime - response time)
-  # 第一个监控指标组 cpu
-  # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: basic_influxdb_memstats_alloc
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
-    # Specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # metrics fields list.
+    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp
@@ -190,16 +188,16 @@ metrics:
       parseType: PromQL
 
   - name: influxdb_database_numMeasurements
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
-    # Specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # metrics fields list.
+    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: job
         type: 1
       - field: instance
@@ -258,16 +256,16 @@ metrics:
       parseType: PromQL
 
   - name: influxdb_query_rate_seconds    # Query rate per second 每秒查询率
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
-    # Specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # metrics fields list.
+    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp
@@ -322,16 +320,16 @@ metrics:
       parseType: PromQL
 
   - name: influxdb_queryExecutor_queriesFinished_10s    # Query rate per second 每秒查询率
-    # metrics group scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
-    # Specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
+    # metrics fields list.
+    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp

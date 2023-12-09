@@ -38,8 +38,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
+ * aviator config
  * @author tomsun28
- *
  */
 @Configuration
 @Slf4j

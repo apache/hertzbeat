@@ -39,9 +39,9 @@ alerter:
    console-url: https://console.tancloud.cn
 ```
 
-3. Use external redis instead of memory to store real-time indicator data
+3. Use external redis instead of memory to store real-time metric data
 
-> By default, the real-time data of our indicators is stored in memory, which can be configured as follows to use redis instead of memory storage.
+> By default, the real-time data of our metrics is stored in memory, which can be configured as follows to use redis instead of memory storage.
 
 Note ⚠️ `memory.enabled: false, redis.enabled: true`
 ```yaml

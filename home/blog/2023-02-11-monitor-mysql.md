@@ -20,7 +20,7 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 > HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
 
 - Integrate **monitoring-alarm-notification**, support monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, alarm notifications (email WeChat Dingding Feishu SMS Slack Discord Telegram).
-- It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, etc. You only need to configure YML to use these protocols to customize and collect any indicators you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
+- It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. You only need to configure YML to use these protocols to customize and collect any metrics you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
 ### Get the Mysql database monitoring in HertzBeat in 5 minutes
@@ -49,11 +49,11 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 ![hertzbeat](/img/blog/monitor-mysql-1.png)
 
-4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring indicator data of the Mysql database.
+4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of the Mysql database.
 
 ![hertzbeat](/img/blog/monitor-mysql-3.png)
 
-5. Click **Monitoring History Details TAB** to browse the historical monitoring indicator data chart of Mysql database📈.
+5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of Mysql database📈.
 
 ![hertzbeat](/img/blog/monitor-mysql-4.png)
 
@@ -61,20 +61,20 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 - **On the HertzBeat monitoring page, configure the IP port account password and add Mysql monitoring**
 
 :::tip
-Through the above two steps, we have completed the monitoring of the Mysql database. We can view the monitoring details and indicators in HertzBeat at any time to observe its service status.
-Of course, just looking at it is definitely not perfect. Monitoring is often accompanied by alarm thresholds. When the indicators of the Mysql database exceed our expectations or are abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles the problem. It is a complete monitoring and alarm process.
+Through the above two steps, we have completed the monitoring of the Mysql database. We can view the monitoring details and metrics in HertzBeat at any time to observe its service status.
+Of course, just looking at it is definitely not perfect. Monitoring is often accompanied by alarm thresholds. When the metrics of the Mysql database exceed our expectations or are abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles the problem. It is a complete monitoring and alarm process.
 :::
 
-**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system, so that when the indicators of the Mysql database are found to be abnormal, they will be notified to us in time**
+**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system, so that when the metrics of the Mysql database are found to be abnormal, they will be notified to us in time**
 
 #### 3. Add Mysql database index threshold alarm in HertzBeat system
 
-1. Configure an alarm threshold for an important indicator
+1. Configure an alarm threshold for an important metric
 
 Path: Menu -> Threshold Rules -> Add Threshold
 
-- Select the configured indicator object. Mysql database monitoring is mainly about database performance and other related indicators. For example, we set the threshold for the indicator `query cache hit rate` `cache` -> `query_cache_hit_rate`. When the query cache hit rate of Mysql is very low An alarm is issued when it is less than 30%.
-- Here we configure to send an alarm when the `query_cache_hit_rate<30` of this indicator `cache`, the alarm level is **serious alarm**, and it will be triggered after three times, as shown in the figure below.
+- Select the configured metric object. Mysql database monitoring is mainly about database performance and other related metrics. For example, we set the threshold for the metric `query cache hit rate` `cache` -> `query_cache_hit_rate`. When the query cache hit rate of Mysql is very low An alarm is issued when it is less than 30%.
+- Here we configure to send an alarm when the `query_cache_hit_rate<30` of this metric `cache`, the alarm level is **serious alarm**, and it will be triggered after three times, as shown in the figure below.
 
 ![hertzbeat](/img/blog/monitor-mysql-5.png)
 
@@ -118,7 +118,7 @@ Content details: mysql db query_cache_hit_rate is too low, now is 20.
 ## Summary
 
 :::tip
-This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database indicator data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
+This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
  
 Mysql Github: https://github.com/mysql/mysql-server    

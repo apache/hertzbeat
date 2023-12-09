@@ -66,7 +66,7 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 
 ### Collect Metrics   
 
-#### Metrics Group: broker
+#### metrics: broker
 
 | Metric Name             | Unit | Description                                                           |
 |-------------------------|------|-----------------------------------------------------------------------|
@@ -89,7 +89,7 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 | MaxMessageSize          | None    | Max message size on this broker                                       |
 | MinMessageSize          | None    | Min message size on this broker                                       |
 
-#### Metrics Group: topic   
+#### metrics: topic   
 
 | Metric Name             | Unit | Description                                                                               |
 |-------------------------|------|-------------------------------------------------------------------------------------------|
@@ -114,7 +114,7 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 | MinMessageSize          | B    | Min message size on this destination                                                      |
 
 
-#### Metrics Group: memory_pool
+#### metrics: memory_pool
 
 | Metric Name | Unit | Description    |
 |-------------| ----------- |----------------|
@@ -124,7 +124,7 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 | max         | kb | max size |
 | used        | kb | used size |
 
-#### Metrics Group: class_loading
+#### metrics: class_loading
 
 | Metric Name           | Unit | Description    |
 |-----------------------| ----------- | ----------- |
@@ -133,7 +133,7 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 | UnloadedClassCount    |  | Unloaded Class Count |
 
 
-#### Metrics Group: thread
+#### metrics: thread
 
 | Metric Name             | Unit | Description    |
 |-------------------------| ----------- | ----------- |

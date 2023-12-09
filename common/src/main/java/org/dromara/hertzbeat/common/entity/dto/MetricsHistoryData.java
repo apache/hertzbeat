@@ -27,29 +27,28 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 历史单指标数据
+ * Metric History Range Query Data
  * @author tom
- *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "历史单指标数据")
+@Schema(description = "Metric History Range Query Data")
 public class MetricsHistoryData {
 
-    @Schema(title = "监控ID")
+    @Schema(title = "Monitoring Task ID")
     private Long id;
 
-    @Schema(title = "监控类型")
+    @Schema(title = "Monitoring Type")
     private String app;
 
-    @Schema(title = "监控指标组")
-    private String metric;
+    @Schema(title = "Monitoring Metrics")
+    private String metrics;
 
-    @Schema(title = "监控指标")
+    @Schema(title = "Monitoring Metrics Field")
     private Field field;
 
-    @Schema(description = "监控指标历史值 instance<==>values")
+    @Schema(description = "Monitoring Range Query Data tags<==>values")
     private Map<String, List<Value>> values;
 }

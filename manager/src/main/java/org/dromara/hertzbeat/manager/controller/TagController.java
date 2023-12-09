@@ -118,7 +118,7 @@ public class TagController {
     @DeleteMapping()
     @Operation(summary = "Delete tags based on ID", description = "根据TAG ID删除TAG")
     public ResponseEntity<Message<Void>> deleteTags(
-            @Parameter(description = "TAG IDs | 监控ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+            @Parameter(description = "TAG IDs | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
             tagService.deleteTags(new HashSet<>(ids));
         }

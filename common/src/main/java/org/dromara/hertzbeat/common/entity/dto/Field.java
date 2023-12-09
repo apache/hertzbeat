@@ -24,27 +24,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 监控指标组指标字段
+ * monitoring metrics field
  * @author tom
- *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "监控指标组指标字段")
+@Schema(description = "Monitoring Metrics Field")
 public class Field {
 
-    @Schema(title = "指标采集字符名称")
+    @Schema(title = "Metrics Field Name")
     private String name;
 
-    @Schema(title = "字段类型：0-number数字 1-string字符串")
+    @Schema(title = "Field Type：0-number 1-string")
     private Byte type;
 
-    @Schema(title = "指标单位")
+    @Schema(title = "Field Unit")
     private String unit;
-
-    @Schema(title = "是否是实例字段")
-    private Boolean instance;
+    
+    @Schema(title = "Whether is a label")
+    private Boolean label;
 
 }

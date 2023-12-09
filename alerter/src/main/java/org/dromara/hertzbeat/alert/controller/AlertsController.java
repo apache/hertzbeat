@@ -41,11 +41,9 @@ import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * Alarm Management API 告警管理API
- *
+ * Alarm Management API
  * @author tom
  * @author <a href="mailto:1252532896@qq.com">Hua.Cheng</a>
- *
  */
 @Tag(name = "Alarm Manage Batch API | 告警批量管理API")
 @RestController

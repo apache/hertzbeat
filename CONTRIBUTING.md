@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 - Front-web start   
 
-1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 16.10.0`
+1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 18`
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
 4. Install angular-cli globally: `yarn global add @angular/cli@15`
@@ -182,7 +182,7 @@ Public WeChat: `tancloudtech`
 
 - 前端启动
 
-1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 16.10.0`
+1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 18`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
 4. 全局安装angular-cli `yarn global add @angular/cli@15`
@@ -275,7 +275,7 @@ git pull upstream master
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 

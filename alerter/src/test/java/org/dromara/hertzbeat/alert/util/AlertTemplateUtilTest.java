@@ -62,4 +62,17 @@ class AlertTemplateUtilTest {
         template = "${key1} ${key2} ${key3}";
         assertEquals(AlertTemplateUtil.render(template, param), "Just for testing");
     }
+
+    @Test
+    void renderSpecialCharacters() {
+        Map<String, Object> param = new HashMap<>();
+        param.put("valueWithDollar", "$100");
+        param.put("valueWithBackslash", "C:\\Users");
+
+        String template = "The price is ${valueWithDollar} and the path is ${valueWithBackslash}";
+
+        // Expected to handle the dollar sign and backslash correctly without throwing an exception
+        String expectedResult = "The price is $100 and the path is C:\\Users";
+        assertEquals(expectedResult, AlertTemplateUtil.render(template, param));
+    }
 }

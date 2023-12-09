@@ -25,9 +25,9 @@ Cloud: **[GreptimePlay](https://greptime.com/playground)**
 
 > [HertzBeat](https://github.com/dromara/hertzbeat) 一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
 
-- 集 **监控+告警+通知** All in one，支持对应用服务，数据库，操作系统，中间件，云原生，网络等监控，阈值告警通知一步到位。
+- 集 **监控+告警+通知** All in one，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控，阈值告警通知一步到位。
 - 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
-- 将`Http,Jmx,Ssh,Snmp,Jdbc`等协议规范可配置化，只需在浏览器配置`YML`监控模版就能使用这些协议去自定义采集想要的指标。
+- 将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需在浏览器配置`YML`监控模版就能使用这些协议去自定义采集想要的指标。
 
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。    
 
