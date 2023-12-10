@@ -87,7 +87,11 @@ public interface DispatchConstants {
      * protocol prometheus
      */
     String PROTOCOL_PROMETHEUS = "prometheus";
-    
+    /**
+     * protocol dns
+     */
+    String PROTOCOL_DNS = "dns";
+
     // Protocol type related - end
     // 协议类型相关 - end //
 

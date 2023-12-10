@@ -172,6 +172,10 @@ public class Metrics {
      * Monitoring configuration information using the public prometheus protocol
      */
     private PrometheusProtocol prometheus;
+    /**
+     * Monitoring configuration information using the public DNS protocol
+     */
+    private DnsProtocol dns;
 
     /**
      * collector use - Temporarily store subTask metrics response data

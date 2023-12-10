@@ -13,3 +13,4 @@ org.dromara.hertzbeat.collector.collect.ftp.FtpCollectImpl
 org.dromara.hertzbeat.collector.collect.mq.RocketmqSingleCollectImpl
 org.dromara.hertzbeat.collector.collect.udp.UdpCollectImpl
 org.dromara.hertzbeat.collector.collect.push.PushCollectImpl
+org.dromara.hertzbeat.collector.collect.dns.DnsCollectImpl
