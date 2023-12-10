@@ -40,6 +40,14 @@ public interface DispatchConstants {
      */
     String PROTOCOL_SMTP = "smtp";
     /**
+     * protocol ntp
+     */
+    String PROTOCOL_NTP = "ntp";
+    /**
+     * protocol websocket
+     */
+    String PROTOCOL_WEBSOCKET = "websocket";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";
