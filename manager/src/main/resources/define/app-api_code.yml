@@ -21,8 +21,8 @@ app: api_code
 # The app api i18n name
 # app api国际化名称
 name:
-  zh-CN: API Code
-  en-US: API业务状态码
+  zh-CN: API业务状态码
+  en-US: API Code
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
