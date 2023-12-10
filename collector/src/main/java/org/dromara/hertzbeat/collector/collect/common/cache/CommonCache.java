@@ -30,50 +30,45 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * lru cache 对连接对象进行缓存
+ * lru common resource cache 
  * @author tomsun28
- *
  */
 @Slf4j
 public class CommonCache {
 
     /**
-     * 默认缓存时间 800s
+     * default cache time 800s
      */
     private static final long DEFAULT_CACHE_TIMEOUT = 800 * 1000L;
 
     /**
-     * 默认最大缓存数量
+     * default cache num
      */
     private static final int DEFAULT_MAX_CAPACITY = 10000;
 
     /**
-     * cacheTime数组大小
+     * cacheTime length
      */
     private static final int CACHE_TIME_LENGTH = 2;
 
     /**
-     * 存储对象的数据过期时间点
+     * cache timeout map
      */
     private Map<Object, Long[]> timeoutMap;
 
     /**
-     * 存储缓存对象
+     * object cache
      */
     private ConcurrentLinkedHashMap<Object, Object> cacheMap;
 
     /**
-     * 过期数据清理线程池
+     * the executor who clean cache when timeout
      */
     private ThreadPoolExecutor cleanTimeoutExecutor;
 
     private CommonCache() { init();}
-
-    /**
-     * 初始化 cache
-     */
+    
     private void init() {
-        // 初始化lru hashmap
         cacheMap = new ConcurrentLinkedHashMap
                 .Builder<>()
                 .maximumWeightedCapacity(DEFAULT_MAX_CAPACITY)
@@ -84,17 +79,12 @@ public class CommonCache {
                     }
                     log.info("lru cache discard key: {}, value: {}.", key, value);
                 }).build();
-
-        // 初始化时间纪录map
         timeoutMap = new ConcurrentHashMap<>(DEFAULT_MAX_CAPACITY >> 6);
-
-        // 初始化过期数据清理线程池
         cleanTimeoutExecutor = new ThreadPoolExecutor(1, 1,
                 1, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(1), r -> new Thread("lru-cache-timeout-cleaner"),
                 new ThreadPoolExecutor.DiscardOldestPolicy());
-
-        // 初始化可用性探测定位任务,每次探测间隔时间为20分钟
+        // init monitor available detector cyc task
         ScheduledThreadPoolExecutor scheduledExecutor =  new ScheduledThreadPoolExecutor(1,
                 r -> new Thread(r, "lru-cache-available-detector"));
         scheduledExecutor.scheduleWithFixedDelay(this::detectCacheAvailable,
@@ -102,12 +92,11 @@ public class CommonCache {
     }
 
     /**
-     * 探测所有可探测的缓存对象的可用性，清除不可用和过期对象
+     * detect all cache available, cleanup not ava object
      */
     private void detectCacheAvailable() {
         try {
             cacheMap.forEach((key, value) -> {
-                // 先判断是否过期
                 Long[] cacheTime = timeoutMap.get(key);
                 long currentTime = System.currentTimeMillis();
                 if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH
@@ -126,7 +115,7 @@ public class CommonCache {
     }
 
     /**
-     * 清理过期线程
+     * clean timeout cache
      */
     private void cleanTimeoutCache() {
         try {
@@ -137,7 +126,7 @@ public class CommonCache {
                 if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
                     timeoutMap.put(key, new Long[]{currentTime, DEFAULT_CACHE_TIMEOUT});
                 } else if (cacheTime[0] + cacheTime[1] < currentTime) {
-                    // 过期了 discard 关闭这个cache的资源
+                    // timeout, remove this object cache
                     log.warn("[cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
@@ -153,10 +142,10 @@ public class CommonCache {
     }
 
     /**
-     * 新增或更新cache
-     * @param key 存储对象key
-     * @param value 存储对象
-     * @param timeDiff 缓存对象保存时间 millis
+     * add update cache
+     * @param key cache key
+     * @param value cache value
+     * @param timeDiff cache time millis
      */
     public void addCache(Object key, Object value, Long timeDiff) {
         removeCache(key);
@@ -176,19 +165,19 @@ public class CommonCache {
     }
 
     /**
-     * 新增或更新cache
-     * @param key 存储对象key
-     * @param value 存储对象
+     * add update cache
+     * @param key cache key
+     * @param value cache value
      */
     public void addCache(Object key, Object value) {
         addCache(key, value, DEFAULT_CACHE_TIMEOUT);
     }
 
     /**
-     * 根据缓存key获取缓存对象
-     * @param key key
-     * @param refreshCache 是否刷新命中的缓存的存活时间 true是,false否
-     * @return 缓存对象
+     * get cache by key
+     * @param key cache key
+     * @param refreshCache is refresh cache
+     * @return cache object
      */
     public Optional<Object> getCache(Object key, boolean refreshCache) {
         Long[] cacheTime = timeoutMap.get(key);
@@ -215,7 +204,7 @@ public class CommonCache {
     }
 
     /**
-     * 根据缓存key删除缓存对象
+     * remove cache by key
      * @param key key
      */
     public void removeCache(Object key) {
@@ -227,7 +216,7 @@ public class CommonCache {
     }
 
     /**
-     * 获取缓存实例
+     * get common cache instance
      * @return cache
      */
     public static CommonCache getInstance() {
@@ -235,12 +224,9 @@ public class CommonCache {
     }
 
     /**
-     * 静态内部类
+     * static instance
      */
     private static class SingleInstance {
-        /**
-         * 单例
-         */
         private static final CommonCache INSTANCE= new CommonCache();
     }
 }

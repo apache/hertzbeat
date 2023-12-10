@@ -31,11 +31,8 @@ import org.springframework.web.client.RestTemplate;
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a>
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-    
-    private final RestTemplate restTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {

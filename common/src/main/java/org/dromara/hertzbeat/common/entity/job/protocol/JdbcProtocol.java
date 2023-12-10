@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 /**
  * 公共的jdbc规范实现的数据库配置信息
  * @author tomsun28
- *
  */
 @Data
 @Builder

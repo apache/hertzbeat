@@ -55,7 +55,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         try {
             preCheck(metrics);
         } catch (Exception e) {
@@ -298,9 +298,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .forEach(it -> {
                     result.put(it[0], it[1]);
                 });
-        // https://github.com/dromara/hertzbeat/pull/913
-        // fix 数组越界
-        // 如果返回的指标数量小于yml配置的指标总和，不区分指标类型 赋值 &nbsp;
+        // fix https://github.com/dromara/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {
                 if (!result.containsKey(field.getField())) {

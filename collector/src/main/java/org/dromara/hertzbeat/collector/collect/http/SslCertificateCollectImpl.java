@@ -46,7 +46,6 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 /**
  * ssl Certificate
  * @author tomsun28
- *
  */
 @Slf4j
 public class SslCertificateCollectImpl extends AbstractCollect {
@@ -62,7 +61,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
-                        long appId, String app, Metrics metrics) {
+                        long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         try {
             validateParams(metrics);
@@ -126,25 +125,21 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
-            // 对端不可达
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_REACHABLE);
             builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
-            // 对端连接失败
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (IOException e4) {
-            // 其它IO异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
-            // 其它异常
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);

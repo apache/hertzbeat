@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
- * rocketmq采集实现类
+ * rocketmq collect
  *
  * @author ceilzcx
  * @since 5/6/2023
@@ -96,7 +96,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long appId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         try {
             preCheck(metrics);
         } catch (Exception e) {
@@ -131,9 +131,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 采集前置条件, 入参判断
-     *
-     * @param metrics 数据指标
+     * preCheck params
+     * @param metrics metrics config
      */
     private void preCheck(Metrics metrics) {
         if (metrics == null || metrics.getRocketmq() == null) {
@@ -145,9 +144,9 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 创建DefaultMQAdminExt实体类; 这里有个小问题, 是否需要每次都重新创建
-     *
-     * @param metrics 数据指标
+     * create the DefaultMQAdminExt
+     * one problem the DefaultMQAdminExt can not reuse
+     * @param metrics metrics
      * @return DefaultMQAdminExt
      */
     private DefaultMQAdminExt createMqAdminExt(Metrics metrics) {
@@ -164,11 +163,10 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 采集rocketmq数据
-     *
-     * @param mqAdminExt          rocketmq提供的远程调用类
-     * @param rocketmqCollectData rocketmq数据采集类
-     * @throws Exception 远程调用异常
+     * collect rocketmq data
+     * @param mqAdminExt          rocketmq rpc admin
+     * @param rocketmqCollectData rocketmq data
+     * @throws Exception when rpc error
      */
     private void collectData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         this.collectClusterData(mqAdminExt, rocketmqCollectData);
@@ -177,11 +175,10 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 采集rocketmq的集群数据
-     *
-     * @param mqAdminExt          rocketmq提供的远程调用类
-     * @param rocketmqCollectData rocketmq数据采集类
-     * @throws Exception 远程调用异常
+     * collect rocketmq cluster data
+     * @param mqAdminExt          rocketmq rpc admin
+     * @param rocketmqCollectData rocketmq data
+     * @throws Exception when rpc error
      */
     private void collectClusterData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         try {
@@ -239,7 +236,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                         clusterBrokerData.setTodayConsumeCount(todayConsumerCount);
                     }
                 }
-
             }
         } catch (Exception e) {
             log.warn("collect rocketmq cluster data error", e);
@@ -248,16 +244,15 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 采集rocketmq的消费者数据
-     *
-     * @param mqAdminExt          rocketmq提供的远程调用类
-     * @param rocketmqCollectData rocketmq数据采集类
-     * @throws Exception 远程调用异常
+     * collect rocketmq consumer data
+     * @param mqAdminExt          rocketmq rpc admin
+     * @param rocketmqCollectData rocketmq data
+     * @throws Exception when rpc error
      */
     private void collectConsumerData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         Set<String> consumerGroupSet = new HashSet<>();
         try {
-            // 获取consumerGroup集合
+            // get consumerGroup
             ClusterInfo clusterInfo = mqAdminExt.examineBrokerClusterInfo();
             for (BrokerData brokerData : clusterInfo.getBrokerAddrTable().values()) {
                 SubscriptionGroupWrapper subscriptionGroupWrapper = mqAdminExt.getAllSubscriptionGroup(brokerData.selectBrokerAddr(), 3000L);
@@ -316,9 +311,10 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * @param mqAdminExt          rocketmq提供的远程调用类
-     * @param rocketmqCollectData rocketmq数据采集类
-     * @throws Exception 远程调用异常
+     * collect topic data
+     * @param mqAdminExt          rocketmq rpc admin
+     * @param rocketmqCollectData rocketmq data
+     * @throws Exception when rpc error
      */
     private void collectTopicData(DefaultMQAdminExt mqAdminExt, RocketmqCollectData rocketmqCollectData) throws Exception {
         try {
@@ -333,7 +329,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 List<RocketmqCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
 
                 // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用次数也会很多
-
                 topicQueueInfoTable.put(topic, topicQueueInfoList);
                 topicInfoList.add(topicQueueInfoTable);
                 rocketmqCollectData.setTopicInfoList(topicInfoList);
@@ -345,12 +340,12 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     /**
-     * 采集数据填充到builder
+     * fill data to builder
      *
-     * @param rocketmqCollectData rocketmq数据采集类
+     * @param rocketmqCollectData rocketmq data
      * @param builder             metrics data builder
-     * @param aliasFields         字段别名
-     * @param parseScript         JSON的base path
+     * @param aliasFields         alia fields
+     * @param parseScript         JSON base path
      */
     private void fillBuilder(RocketmqCollectData rocketmqCollectData, CollectRep.MetricsData.Builder builder, List<String> aliasFields, String parseScript) {
         String dataJson = JSONObject.toJSONString(rocketmqCollectData);

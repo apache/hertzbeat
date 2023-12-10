@@ -26,7 +26,6 @@ import java.util.*;
 /**
  * json path parser
  * @author tomsun28
- *
  */
 public class JsonPathParser {
 
@@ -41,10 +40,10 @@ public class JsonPathParser {
     }
 
     /**
-     * 使用jsonPath来解析json内容
-     * @param content json内容
-     * @param jsonPath jsonPath脚本
-     * @return 解析后的内容 [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
+     * use json path to parse content 
+     * @param content json content
+     * @param jsonPath jsonPath
+     * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static List<Object> parseContentWithJsonPath(String content, String jsonPath) {
         if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
@@ -54,10 +53,10 @@ public class JsonPathParser {
     }
 
     /**
-     * 使用jsonPath来解析json内容
-     * @param content json内容
-     * @param jsonPath jsonPath脚本
-     * @return 解析后的内容 [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
+     * use json path to parse content 
+     * @param content json content
+     * @param jsonPath jsonPath
+     * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static <T> T parseContentWithJsonPath(String content, String jsonPath, TypeRef<T> typeRef) {
         if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {

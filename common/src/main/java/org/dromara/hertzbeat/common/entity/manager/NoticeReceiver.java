@@ -41,9 +41,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Message notification recipient entity
  * 消息通知接收人实体
- *
  * @author tomsun28
- *
  */
 @Entity
 @Table(name = "hzb_notice_receiver")
@@ -195,23 +193,22 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String serverChanToken;
 
-    @Schema(title = "The creator of this record", description = "此条记录创建者", example = "tom",
+    @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "This record was last modified by", description = "此条记录最新修改者",
-            example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "This record was last modified by", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "Record creation time (millisecond timestamp)", description = "记录创建时间",
+    @Schema(title = "Record creation time (millisecond timestamp)",
             example = "1612198922000", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
     @Schema(title = "Record the latest modification time (timestamp in milliseconds)",
-            description = "记录最新修改时间", example = "1612198444000", accessMode = READ_ONLY)
+            example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

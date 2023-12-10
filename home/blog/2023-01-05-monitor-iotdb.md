@@ -61,11 +61,11 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 ![hertzbeat](/img/blog/monitor-iotdb-3.png)
 
-4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring indicator data of IoTDB.
+4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of IoTDB.
 
 ![hertzbeat](/img/blog/monitor-iotdb-4.png)
 
-5. Click **Monitoring History Details TAB** to browse IoTDB's historical monitoring indicator data chart📈.
+5. Click **Monitoring History Details TAB** to browse IoTDB's historical monitoring metric data chart📈.
 
 ![hertzbeat](/img/blog/monitor-iotdb-5.png)
 
@@ -74,18 +74,18 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 - **Another step is to configure the IP port on the HertzBeat monitoring page to add monitoring**
 
 
-**In this way, we have completed the monitoring of IoTDB. We can view the monitoring details and indicators at any time to observe its service status, but people cannot always watch it. When there is always a time to rest, monitoring is often accompanied by alarms. When monitoring When the indicators are abnormal, the monitoring tool needs to be able to notify the person in charge in time**
+**In this way, we have completed the monitoring of IoTDB. We can view the monitoring details and metrics at any time to observe its service status, but people cannot always watch it. When there is always a time to rest, monitoring is often accompanied by alarms. When monitoring When the metrics are abnormal, the monitoring tool needs to be able to notify the person in charge in time**
 
 **Next, we will teach you step by step to configure the threshold alarm notification in the HertzBeat system**
 
-#### 3. Add IoTDB indicator threshold alarm in HertzBeat system
+#### 3. Add IoTDB metric threshold alarm in HertzBeat system
 
-1. Configure a threshold alarm for an important indicator
+1. Configure a threshold alarm for an important metric
 
 Path: Menu -> Alarm Threshold -> Add Threshold
 
-- Select the configured indicator object. IotDB monitors many indicators, one of which is related to the status of the node `cluster_node_status` -> `status` (node status, 1=online 2=offline).
-- Here we configure to send an alarm when the indicator `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
+- Select the configured metric object. IotDB monitors many metrics, one of which is related to the status of the node `cluster_node_status` -> `status` (node status, 1=online 2=offline).
+- Here we configure to send an alarm when the metric `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
 
 ![hertzbeat](/img/blog/monitor-iotdb-6.png)
 
@@ -122,7 +122,7 @@ Content details: The status of IOTDB node 127.0.0.1 is monitored as OFFLINE, ple
 
 ## Summary
 
-This practical article took us to experience that if HertzBeat is used to monitor the IoTDB database indicator data, we can find that HertzBeat, which integrates monitoring-alarm-notification, is more convenient in operation and use, and IoTDB can be included in the monitoring with a simple click on the page, it is no longer necessary to deploy multiple components and write multiple YML configuration files with thresholds.
+This practical article took us to experience that if HertzBeat is used to monitor the IoTDB database metric data, we can find that HertzBeat, which integrates monitoring-alarm-notification, is more convenient in operation and use, and IoTDB can be included in the monitoring with a simple click on the page, it is no longer necessary to deploy multiple components and write multiple YML configuration files with thresholds.
 
 IoTDB Github: https://github.com/apache/iotdb
 HertzBeat Github: https://github.com/dromara/hertzbeat
@@ -132,4 +132,4 @@ HertzBeat Github: https://github.com/dromara/hertzbeat
 Only one docker command is needed to install and experience heartbeat:
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 
-Note ⚠️HertzBeat v1.2.3 version supports IoTDB v0.12 v0.13. Since its v1.0 has just been released, all indicators of this version are not yet compatible.
+Note ⚠️HertzBeat v1.2.3 version supports IoTDB v0.12 v0.13. Since its v1.0 has just been released, all metrics of this version are not yet compatible.

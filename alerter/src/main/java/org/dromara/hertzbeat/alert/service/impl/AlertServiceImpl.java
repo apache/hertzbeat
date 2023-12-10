@@ -43,10 +43,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Realization of Alarm Information Service 告警信息服务实现
- *
+ * Realization of Alarm Information Service
  * @author tom
- *
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -87,8 +85,7 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public AlertSummary getAlertsSummary() {
         AlertSummary alertSummary = new AlertSummary();
-        //Statistics on the alarm information in the alarm state
-        //统计正在告警状态下的告警信息
+        // Statistics on the alarm information in the alarm state
         List<AlertPriorityNum> priorityNums = alertDao.findAlertPriorityNum();
         if (priorityNums != null) {
             for (AlertPriorityNum priorityNum : priorityNums) {
@@ -140,9 +137,9 @@ public class AlertServiceImpl implements AlertService {
     }
 
     /**
-     * The external alarm information is converted to Alert  对外告警信息 转换为Alert
-     * @param alertReport 对外告警信息
-     * @return Alert entity ｜ Alert实体
+     * The external alarm information is converted to Alert  
+     * @param alertReport alarm body
+     * @return Alert entity
      */
     private Alert buildAlertData(AlertReport alertReport){
         Map<String, String> annotations = alertReport.getAnnotations();

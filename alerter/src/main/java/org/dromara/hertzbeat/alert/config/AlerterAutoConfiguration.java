@@ -22,7 +22,6 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
  * @version 2.1
- * Created by Musk.Chen on 2023/1/14
  */
 @ComponentScan(basePackages = "org.dromara.hertzbeat.alert")
 public class AlerterAutoConfiguration {

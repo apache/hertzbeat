@@ -12,10 +12,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * metrics history
- *
+ * metrics history data entity
  * @author tom
- *
  */
 @Entity
 @Table(name = "hzb_history", indexes = {
@@ -28,7 +26,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Metrics data history entity | 指标数据历史实体")
+@Schema(description = "Metrics History Data Entity | 指标数据历史实体")
 public class History {
 
     @Id
@@ -36,33 +34,32 @@ public class History {
     @Schema(description = "指标数据历史实体主键索引ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "Monitoring Id", example = "87432674336", accessMode = READ_WRITE)
     private Long monitorId;
 
-    @Schema(title = "监控类型 mysql oracle db2")
+    @Schema(title = "Monitoring Type mysql oracle db2")
     private String app;
 
-    @Schema(title = "指标集合名称 innodb disk cpu")
+    @Schema(title = "Monitoring Metrics innodb disk cpu")
     private String metrics;
 
-    @Schema(title = "指标名称 usage speed count")
+    @Schema(title = "Monitoring Metric usage speed count")
     private String metric;
-
-    @Schema(title = "实例")
+    
     @Column(length = 2048)
     private String instance;
 
-    @Schema(title = "字段类型 0: 数值 1：字符串")
+    @Schema(title = "Metric Type 0: Number 1：String")
     private Byte metricType;
 
-    @Schema(title = "字符值")
+    @Schema(title = "Metric String Value")
     @Column(length = 2048)
     private String str;
 
-    @Schema(title = "数值")
+    @Schema(title = "Metric Number Value")
     private Double dou;
 
-    @Schema(title = "采集时间戳")
+    @Schema(title = "Collect Time")
     private Long time;
 
 }

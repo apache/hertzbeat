@@ -20,8 +20,8 @@ package org.dromara.hertzbeat.common.cache;
 import java.time.Duration;
 
 /**
+ * common cache factory
  * @author ceilzcx
- *
  */
 public class CacheFactory {
     private CacheFactory() {}
@@ -36,7 +36,7 @@ public class CacheFactory {
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
     
     /**
-     * 获取notice模块的cache
+     * get notice cache
      * @return caffeine cache
      */
     public static ICacheService<String, Object> getNoticeCache() {

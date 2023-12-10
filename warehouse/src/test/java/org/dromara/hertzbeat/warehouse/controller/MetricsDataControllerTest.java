@@ -104,7 +104,7 @@ class MetricsDataControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").isEmpty())
                 .andExpect(jsonPath("$.data.id").value(monitorId))
-                .andExpect(jsonPath("$.data.metric").value(metric))
+                .andExpect(jsonPath("$.data.metrics").value(metric))
                 .andExpect(jsonPath("$.data.app").value(app))
                 .andExpect(jsonPath("$.data.time").value(time))
                 .andReturn();
@@ -160,7 +160,7 @@ class MetricsDataControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.id").value(monitorId))
-                .andExpect(jsonPath("$.data.metric").value(metrics))
+                .andExpect(jsonPath("$.data.metrics").value(metrics))
                 .andExpect(jsonPath("$.data.field.name").value(metric))
                 .andExpect(jsonPath("$.data.field.type").value(String.valueOf(CommonConstants.TYPE_NUMBER)))
                 .andExpect(jsonPath("$.msg").isEmpty())

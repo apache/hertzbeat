@@ -1429,7 +1429,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/131688897?v=4",
       "profile": "https://github.com/Calvin979",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -1437,6 +1438,43 @@
       "name": "Bala Sukesh",
       "avatar_url": "https://avatars.githubusercontent.com/u/26840796?v=4",
       "profile": "https://github.com/bbelide2",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jinyaoMa",
+      "name": "Jinyao Ma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25066570?v=4",
+      "profile": "https://github.com/jinyaoMa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LinuxSuRen",
+      "name": "Rick",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1450685?v=4",
+      "profile": "https://linuxsuren.github.io/open-source-best-practice/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "ZY945",
+      "name": "东风",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74083801?v=4",
+      "profile": "https://github.com/ZY945",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "prolevel1",
+      "name": "sonam singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51995525?v=4",
+      "profile": "https://github.com/prolevel1",
       "contributions": [
         "code"
       ]

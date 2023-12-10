@@ -34,25 +34,25 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.SUCCESS_COD
  * @author tomsun28
  */
 @Data
-@Schema(description = "公共消息包装")
+@Schema(description = "Common message structure")
 public class Message<T> {
 
     /**
      * message body data
      */
-    @Schema(description = "响应数据")
+    @Schema(description = "Response Data")
     private T data;
 
     /**
      * exception message when error happen or success message
      */
-    @Schema(title = "携带消息")
+    @Schema(title = "Other Message")
     private String msg;
 
     /**
      * response code, not http code
      */
-    @Schema(title = "携带编码")
+    @Schema(title = "Response Code")
     private byte code = SUCCESS_CODE;
 
     public static <T> Message<T> success() {

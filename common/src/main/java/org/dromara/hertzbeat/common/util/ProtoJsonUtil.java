@@ -22,9 +22,8 @@ import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * protobuf json相互转换工具类
+ * protobuf json convert util
  * @author tomsun28
- *
  */
 @Slf4j
 public class ProtoJsonUtil {
@@ -33,7 +32,7 @@ public class ProtoJsonUtil {
     private static final JsonFormat.Parser PARSER = JsonFormat.parser();
 
     /**
-     * protobuf 转 json
+     * protobuf to json
      * @param proto protobuf
      * @return json
      */
@@ -47,7 +46,7 @@ public class ProtoJsonUtil {
     }
 
     /**
-     * json转protobuf
+     * json to protobuf
      * @param json json str
      * @param builder proto instance builder
      * @return protobuf

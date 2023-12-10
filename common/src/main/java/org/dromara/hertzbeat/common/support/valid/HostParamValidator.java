@@ -23,7 +23,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * host注解数据自定义校验器
+ * Host Param Validator
  * @author tomsun28
  *
  */
@@ -36,7 +36,6 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        // 判断value是否满足ipv4 ipv5 域名 格式
         if(value != null && value.toLowerCase().contains(HTTP)){
             value = value.replaceAll(PATTERN_HTTP, BLANK);
         }

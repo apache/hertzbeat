@@ -136,11 +136,18 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 				Map<String, String> labels = new HashMap<>(8);
 				for (int i = 0; i < fieldsList.size(); i++) {
 					CollectRep.Field field = fieldsList.get(i);
+					if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
+						labels.put(field.getName(), valueRow.getColumns(i));
+					}
+				}
+				for (int i = 0; i < fieldsList.size(); i++) {
+					CollectRep.Field field = fieldsList.get(i);
 					// ignore string value store in db
 					if (field.getType() == CommonConstants.TYPE_STRING) {
 						continue;
 					}
 					historyBuilder.metric(field.getName());
+					historyBuilder.instance(JsonUtil.toJson(labels));
 					if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
 						if (field.getType() == CommonConstants.TYPE_NUMBER) {
 							historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
@@ -148,9 +155,6 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 						} else if (field.getType() == CommonConstants.TYPE_STRING) {
 							historyBuilder.metricType(CommonConstants.TYPE_STRING)
 									.str(formatStrValue(valueRow.getColumns(i)));
-						}
-						if (field.getLabel()) {
-							labels.put(field.getName(), valueRow.getColumns(i));
 						}
 					} else {
 						if (field.getType() == CommonConstants.TYPE_NUMBER) {
@@ -161,25 +165,13 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 					}
 					historyList.add(historyBuilder.build());
 				}
-				historyBuilder.instance(JsonUtil.toJson(labels));
 			}
 			historyDao.saveAll(historyList);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
 	}
-
-	/**
-	 * 从数据库获取指标历史数据
-	 *
-	 * @param monitorId 监控任务ID
-	 * @param app       监控类型
-	 * @param metrics   指标集合名
-	 * @param metric    指标名
-	 * @param label  实例
-	 * @param history   历史范围
-	 * @return 指标历史数据列表
-	 */
+	
 	@Override
 	public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
 		Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);

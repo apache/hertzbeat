@@ -9,9 +9,9 @@ Through this tutorial, we describe step by step how to add a monitoring type bas
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
 
-### HTTP protocol parses the general response structure to obtain indicator data
+### HTTP protocol parses the general response structure to obtain metric data
 
-> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as indicator data.
+> In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as metric data.
 
 
 ```
@@ -56,7 +56,7 @@ As above, usually our background API interface will design such a general return
 }
 ```
 
-**This time we get the indicator data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
+**This time we get the metric data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
 
 ### Add custom monitoring template `hertzbeat`
 
@@ -152,12 +152,12 @@ metrics:
   # the first metrics summary
   # attention: Built-in monitoring metrics contains (responseTime - Response time)
   - name: summary
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     # collect metrics content
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics group, unit-metric unit('%','ms','MB')
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
         instance: true
@@ -214,7 +214,7 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-3.png)
 
-> After a certain period of time (depending on the collection cycle), we can see the specific indicator data and historical charts in the monitoring details!
+> After a certain period of time (depending on the collection cycle), we can see the specific metric data and historical charts in the monitoring details!
 
 
 ![](/img/docs/advanced/extend-http-example-4.png)

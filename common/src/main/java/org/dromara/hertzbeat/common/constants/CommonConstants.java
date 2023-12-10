@@ -18,8 +18,7 @@
 package org.dromara.hertzbeat.common.constants;
 
 /**
- * Public Constant
- *
+ * Public Common Constant
  * @author tomsun28
  */
 public interface CommonConstants {
@@ -158,7 +157,7 @@ public interface CommonConstants {
     byte TYPE_TIME = 3;
 
     /**
-     * Collection indicator value: null placeholder for empty value
+     * Collection metric value: null placeholder for empty value
      * 采集指标值：null空值占位符
      */
     String NULL_VALUE = "&nbsp;";
