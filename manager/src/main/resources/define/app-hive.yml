@@ -15,25 +15,24 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
-category: program
+category: bigdata
 # The monitoring type eg: springboot2 linux windows tomcat mysql aws...
 # 监控类型 eg: springboot2 linux windows tomcat mysql aws...
-app: spring_gateway
-
+app: hive
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: SpringGateway
-  en-US: SpringGateway
+  zh-CN: Apache Hive
+  en-US: Apache Hive
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
-  en-US: "HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>⚠️Note: You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>"
-  zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
+  zh-CN: HertzBeat对 <a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a> 暴露的通用性能指标(basic、environment、thread、code_cache)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 Apache Hive 中的信息，需要您的 Apache Hive 应用集成并开启 Hive Server2, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/hive'>点击查看具体步骤</a>。</span>
+  en-US: "HertzBeat collects and monitors Apache Hive through general performance metric(health, environment, threads, memory_used) that exposed by the Hive Server2. <br><span class='help_module_span'>⚠️Note: You should make sure that your Apache Hive application have already integrated and enabled the Hive Server2, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/hive'>click here to see the specific steps.</a></span>"
+  zh-TW: HertzBeat對<a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a>暴露的通用性能指標（basic、environment、thread、code_cache）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控Apache Hive中的指標，需要您的Apache Hive應用集成並開啟Hive Server2，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/hive'>點擊查看具體步驟</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/spring_gateway
-  en-US: https://hertzbeat.com/docs/help/spring_gateway
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/hive
+  en-US: https://hertzbeat.com/docs/help/hive
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -70,7 +69,7 @@ params:
     required: true
     # default value
     # 默认值
-    defaultValue: 8008
+    defaultValue: 10002
   # field-param field key
   # field-变量字段标识符
   - field: ssl
@@ -98,7 +97,7 @@ params:
     type: text
     # default value
     # 默认值
-    defaultValue: /actuator
+    defaultValue: /jmx
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: true
@@ -120,7 +119,7 @@ metrics:
     # 指标组中的具体监控指标
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: responseTime
         type: 0
         unit: ms
@@ -149,45 +148,77 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
 
+  - name: basic
+    priority: 1
+    fields:
+      - field: vm_name
+        type: 1
+      - field: vm_vendor
+        type: 1
+      - field: vm_version
+        type: 1
+      - field: up_time
+        type: 0
+        unit: ms
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmName
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
+    calculates:
+      - vm_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmName`
+      - vm_vendor=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor`
+      - vm_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion`
+      - up_time=#`$.beans[?(@.name == 'java.lang:type=Runtime')].Uptime`
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
   # metrics - environment
   # 监控指标组 - environment
   - name: environment
-    priority: 1
+    priority: 2
     # The specific monitoring metrics in the metric group.
     # 指标组中的具体监控指标
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
-      - field: profile
-        type: 1
-      - field: port
+      - field: https_proxyPort
         type: 0
-      - field: os
+      - field: os_name
+        type: 1
+      - field: os_version
         type: 1
       - field: os_arch
         type: 1
-      - field: jdk_vendor
+      - field: java_runtime_name
         type: 1
-      - field: jvm_version
+      - field: java_runtime_version
         type: 1
     # metric alias list, used to identify metrics in query results
     # 指标别名列表，用于在查询结果中识别指标
     aliasFields:
-      - $.activeProfiles[0]
-      - $.propertySources[?(@.name=='server.ports')].properties.*.value
-      - $.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
-      - $.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
-      - $.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
-      - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
     # A list of calculation scripts for metric values.
     # 计算指标值的脚本列表
     calculates:
-      - profile=#`$.activeProfiles[0]`
-      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
-      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
-      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
-      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
-      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+      - https_proxyPort=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value`
+      - os_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value`
+      - os_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value`
+      - os_arch=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value`
+      - java_runtime_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value`
+      - java_runtime_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value`
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -202,7 +233,7 @@ metrics:
       port: ^_^port^_^
       # http url
       # url请求接口路径
-      url: ^_^base_path^_^/env
+      url: ^_^base_path^_^
       # http request method GET POST PUT DELETE PATCH
       # 请求方式 GET POST PUT DELETE PATCH
       method: GET
@@ -216,143 +247,72 @@ metrics:
       # 响应数据解析脚本
       parseScript: '$'
 
-  - name: thread_state
-    visible: false
-    priority: 1
+  - name: thread
+    priority: 4
     fields:
-      - field: state
-        type: 1
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      url: ^_^base_path^_^/metrics/jvm.threads.states
-      method: GET
-      ssl: ^_^ssl^_^
-      parseType: jsonPath
-      parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
-
-  - name: threads
-    priority: 2
-    fields:
-      - field: state
-        type: 1
-        instance: true
-      - field: size
+      - field: thread_count
+        type: 0
+      - field: total_started_thread
+        type: 0
+      - field: peak_thread_count
+        type: 0
+      - field: daemon_thread_count
         type: 0
     aliasFields:
-      - $.measurements[?(@.statistic == "VALUE")].value
+      - $.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
     calculates:
-      - state='^o^state^o^'
-      - size=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount`
+      - total_started_thread=#`$.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount`
+      - peak_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount`
+      - daemon_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount`
     protocol: http
     http:
       host: ^_^host^_^
       port: ^_^port^_^
-      url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
+      url: ^_^base_path^_^
       method: GET
       ssl: ^_^ssl^_^
       parseType: jsonPath
       parseScript: '$'
 
-  - name: space_name
-    visible: false
-    priority: 3
+  - name: code_cache
+    priority: 5
     fields:
-      - field: id
+      - field: committed
         type: 1
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      url: ^_^base_path^_^/metrics/jvm.memory.used
-      method: GET
-      ssl: ^_^ssl^_^
-      parseType: jsonPath
-      parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
-
-  - name: memory_used
-    priority: 4
-    fields:
-      - field: space
-        type: 1
-        instance: true
-      - field: mem_used
+        unit: MB
+      - field: init
+        type: 0
+        unit: MB
+      - field: max
+        type: 0
+        unit: MB
+      - field: used
         type: 0
         unit: MB
     aliasFields:
-      - $.measurements[?(@.statistic == "VALUE")].value
+      - $.beans[?(@.Name == 'Code Cache')].Usage.committed
+      - $.beans[?(@.Name == 'Code Cache')].Usage.init
+      - $.beans[?(@.Name == 'Code Cache')].Usage.max
+      - $.beans[?(@.Name == 'Code Cache')].Usage.used
     calculates:
-      - space="^o^id^o^"
-      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - committed=#`$.beans[?(@.Name == 'Code Cache')].Usage.committed`
+      - init=#`$.beans[?(@.Name == 'Code Cache')].Usage.init`
+      - max=#`$.beans[?(@.Name == 'Code Cache')].Usage.max`
+      - used=#`$.beans[?(@.Name == 'Code Cache')].Usage.used`
     units:
-      - mem_used=B->MB
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
     protocol: http
     http:
       host: ^_^host^_^
       port: ^_^port^_^
-      url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
-      method: GET
-      ssl: ^_^ssl^_^
-      parseType: jsonPath
-      parseScript: '$'
-
-  - name: health
-    priority: 5
-    fields:
-      - field: status
-        type: 1
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      url: ^_^base_path^_^/health
-      method: GET
-      ssl: ^_^ssl^_^
-      parseType: default
-
-  - name: route_id
-    visible: false
-    priority: 6
-    fields:
-      - field: name
-        type: 1
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      url: ^_^base_path^_^/gateway/routes
-      method: GET
-      ssl: ^_^ssl^_^
-      parseType: jsonPath
-      parseScript: '$[*].route_id'
-
-  - name: route_info
-    priority: 7
-    fields:
-      - field: route_id
-        type: 1
-        instance: true
-      - field: predicate
-        type: 1
-      - field: uri
-        type: 1
-      - field: order
-        type: 0
-    aliasFields:
-      - $.predicate
-      - $.uri
-      - $.order
-    calculates:
-      - route_id="^o^name^o^"
-      - predicate=#`$.predicate`
-      - uri=#`$.uri`
-      - order=#`$.order`
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      url: ^_^base_path^_^/gateway/routes/^o^name^o^
+      url: ^_^base_path^_^
       method: GET
       ssl: ^_^ssl^_^
       parseType: jsonPath
