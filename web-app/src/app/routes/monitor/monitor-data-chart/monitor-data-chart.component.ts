@@ -230,20 +230,19 @@ export class MonitorDataChartComponent implements OnInit {
             if (!isInterval || legend.length > 1) {
               if (legend.length > 1) {
                 this.lineHistoryTheme.legend = {
-                  orient: 'vertical',
+                  type: 'scroll',
+                  orient: 'horizontal',
                   align: 'auto',
-                  right: '10%',
-                  top: '10%',
+                  bottom: 40,
+                  pageIconSize: 10,
+                  pageButtonGap: 10,
+                  pageButtonPosition: 'end',
                   data: legend
                 };
               }
               this.lineHistoryTheme.series = [];
-              let maxLegend = 5;
               let valueKeyArr = Object.keys(values);
               for (let index = 0; index < valueKeyArr.length; index++) {
-                if (maxLegend-- <= 0) {
-                  break;
-                }
                 let key = valueKeyArr[index];
                 let seriesData: Array<{ value: any }> = [];
                 values[key].forEach((item: { time: number; origin: any }) => {
@@ -251,7 +250,6 @@ export class MonitorDataChartComponent implements OnInit {
                     value: [item.time, item.origin]
                   });
                 });
-                // @ts-ignore
                 this.lineHistoryTheme.series.push({
                   name: key,
                   type: 'line',
