@@ -22,7 +22,7 @@ app: ntp
 # 监控类型国际化名称
 name:
   zh-CN: NTP监控
-  en-US: NTP 
+  en-US: NTP Server
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
@@ -38,8 +38,8 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: NTP服务的Host
-      en-US: Host of NTP service
+      zh-CN: NTP服务Host
+      en-US: NTP Host
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: host
