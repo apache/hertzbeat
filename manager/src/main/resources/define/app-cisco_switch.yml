@@ -27,7 +27,7 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 cisco switch 的通用指标进行测量监控。<br>您可以点击 “<i>新建 Cisco Switch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  zh-CN: Hertzbeat 通过对 Cisco 通用交换机的通用指标 () 进行采集监控。<br>您可以点击 “<i>新建 Cisco Switch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New Cisco Switch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對cisco switch的通用名額進行量測監控。<br>您可以點擊“<i>新建Cisco Switch</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:

@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 PostgreSQL 数据库的通用性能指标(basic、state、activity)进行采集监控，支持版本为 PostgreSQL 10+。<br>您可以点击“<i>新建 PostgreSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors PostgreSQL database through basic performance metrics such as state and activity, the version we support is PostgreSQL 10+. <br>You could click the "<i>New MariPostgreSQLaDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat對PostgreSQL資料庫的通用性能指標（basic、state、activity）進行採集監控，支持版本為PostgreSQL 10+。<br>您可以點擊“<i>新建PostgreSQL資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 PostgreSQL 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 PostgreSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of PostgreSQL database  (basic、state、activity etc). Supported version is PostgreSQL10+. <br>You can click "<i>New PostgreSQL Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 PostgreSQL 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 PostgreSQL10+。<br>您可以點擊“<i>新建 PostgreSQL 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/postgresql
   en-US: https://hertzbeat.com/docs/help/postgresql

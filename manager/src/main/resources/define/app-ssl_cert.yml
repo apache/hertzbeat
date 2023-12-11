@@ -29,7 +29,7 @@ name:
 help:
   zh-CN: HertzBeat 通过证书名称、是否过期、有效期开始时间、有效期开始时间戳(ms)、过期时间、过期时间戳(ms)等指标对网站的 SSL 证书进行监测。您可以点击“<i>新建 SSL 证书</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors website's SSL certificates through metrics such as certificate name, expiration date, validity start time, validity start timestamp (ms), expiration time, and expiration timestamp (ms). <br>You could click the "<i>New SSL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat通過證書名稱、是否過期、有效期開始時間、有效期開始時間戳（ms）、過期時間、過期時間戳（ms）等名額對網站的SSL證書進行監測。 您可以點擊“<i>新建SSL證書</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-TW: HertzBeat 通過證書名稱、是否過期、有效期開始時間、有效期開始時間戳(ms)、過期時間、過期時間戳(ms)等指標對網站的 SSL 證書進行監測。您可以點擊“<i>新建 SSL 證書</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/ssl_cert
   en-US: https://hertzbeat.com/docs/help/ssl_cert
