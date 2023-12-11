@@ -172,6 +172,13 @@
             <artifactId>rocketmq-tools</artifactId>
             <version>4.9.4</version>
         </dependency>
+
+        <!--dns-->
+        <dependency>
+            <groupId>dnsjava</groupId>
+            <artifactId>dnsjava</artifactId>
+            <version>3.5.2</version>
+        </dependency>
     </dependencies>
     
     <profiles>

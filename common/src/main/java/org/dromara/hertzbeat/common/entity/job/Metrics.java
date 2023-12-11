@@ -126,6 +126,11 @@ public class Metrics {
      */
     private NtpProtocol ntp;
     /**
+     * Monitoring configuration information using the websocket protocol
+     * 使用websocket的监控配置信息
+     */
+    private WebsocketProtocol websocket;
+    /**
      * Use udp implemented by socket for service port detection configuration information
      * 使用socket实现的udp进行服务端口探测配置信息
      */
@@ -177,6 +182,10 @@ public class Metrics {
      * Monitoring configuration information using the public prometheus protocol
      */
     private PrometheusProtocol prometheus;
+    /**
+     * Monitoring configuration information using the public DNS protocol
+     */
+    private DnsProtocol dns;
 
     /**
      * collector use - Temporarily store subTask metrics response data
