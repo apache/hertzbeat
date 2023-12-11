@@ -401,11 +401,11 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 ##### Channel
 
+**[Chat On Discord](https://discord.gg/Fb6M73htGr)**
+
 **WeChat Group** : Add friend `tan-cloud` and will invite you to the group.
 
 [QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `236915833`
-
-[Chat On Discord](https://discord.gg/Fb6M73htGr)
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 

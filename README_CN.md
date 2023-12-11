@@ -410,7 +410,7 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 
 ##### Channel 
 
-[Chat On Discord](https://discord.gg/Fb6M73htGr)
+**[Chat On Discord](https://discord.gg/Fb6M73htGr)**
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
