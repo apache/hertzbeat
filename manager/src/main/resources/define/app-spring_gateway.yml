@@ -15,11 +15,10 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
-category: program
+category: mid
 # The monitoring type eg: springboot2 linux windows tomcat mysql aws...
 # 监控类型 eg: springboot2 linux windows tomcat mysql aws...
 app: spring_gateway
-
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
@@ -28,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
   en-US: HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>
-  zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
+  zh-TW: HertzBeat 對 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/spring_gateway
   en-US: https://hertzbeat.com/docs/help/spring_gateway
@@ -106,18 +105,18 @@ params:
     # hide-是否隐藏 true-隐藏 false-不隐藏
     hide: true
 # collect metrics config list
-# 采集指标组配置列表
+# 采集指标配置列表
 metrics:
   # metrics - available
-  # 监控指标组 - available
+  # 监控指标 - available
   - name: available
-    # metrics group scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
-    # priority 0's metrics group is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标组调度优先级(0-127)越小优先级越高,优先级低的指标组会等优先级高的指标组采集完成后才会被调度,相同优先级的指标组会并行调度采集
-    # 优先级为0的指标组为可用性指标组,即它会被首先调度,采集成功才会继续调度其它指标组,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # collect metrics content
-    # 指标组中的具体监控指标
+    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
@@ -149,12 +148,8 @@ metrics:
       # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
       parseType: default
 
-  # metrics - environment
-  # 监控指标组 - environment
   - name: environment
     priority: 1
-    # The specific monitoring metrics in the metric group.
-    # 指标组中的具体监控指标
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
