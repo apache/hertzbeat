@@ -41,9 +41,9 @@
 
 ----
 
-[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/)   
+![hertzbeat](home/static/img/home/1.png)
 
-[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/) 
+![hertzbeat](home/static/img/home/9.png)
 
 ----
 
