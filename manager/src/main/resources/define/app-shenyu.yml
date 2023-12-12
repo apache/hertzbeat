@@ -16,14 +16,14 @@
 category: mid
 app: shenyu
 name:
-  zh-CN: Apache ShenYu
+  zh-CN: ShenYu网关
   en-US: Apache ShenYu
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 ShenYu 网关的运行状态（JVM相关），请求响应等相关指标（shenyu request total、process cpu seconds total、process open fds、process max fds、jvm memory pool bytes used、jvm memory pool bytes max、jvm threads state等）进行监测。<br><span class='help_module_span'>⚠️注意：您需要在 ShenYu 开启 <a class='help_module_content' href='https://shenyu.incubator.apache.org/zh/docs/next/plugin-center/observability/metrics-plugin/'>metrics 插件 </a>，暴露对应的 prometheus metrics 接口, <a class='help_module_content' href='https://shenyu.incubator.apache.org/zh/docs/next/plugin-center/observability/metrics-plugin/'>点击查看开启步骤</a>。
-  en-US: "HertzBeat monitors ShenYu through runtime status(related to JVM) and request response and so on. <br><span class='help_module_span'>⚠️Note：You should enable the <a class='help_module_content' href='https://shenyu.incubator.apache.org/docs/next/plugin-center/observability/metrics-plugin/'>metrics plug-in component</a> in ShenYu gateway for expose related prometheus metrics interface, <a class='help_module_content' href='https://shenyu.incubator.apache.org/docs/next/plugin-center/observability/metrics-plugin/'>Click here to view the specific steps.</a>"
-  zh-TW: HertzBeat對ShenYu閘道的運行狀態（JVM相關），請求響應等相關名額（shenyu request total、process cpu seconds total、process open fds、process max fds、jvm memory pool bytes used、jvm memory pool bytes max、jvm threads state等）進行監測。<br><span class='help_module_span'> ⚠️ 注意：您需要在ShenYu開啟<a class='help_ module_ content' href='https://shenyu.incubator.apache.org/zh/docs/next/plugin-center/observability/metrics-plugin/'>metrics挿件</a>，暴露對應的prometheus metrics介面，<a class='help_module_content' href='https://shenyu.incubator.apache.org/zh/docs/next/plugin-center/observability/metrics-plugin/'>點擊查看開啟步驟</a>。
+  zh-CN: Hertzbeat 通过调用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 对 ShenYu 网关的通用指标 (请求量、执行时间、JVM、内存占用、线程信息等) 进行采集监控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">开启暴露 ShenYu Metrics 插件暴露其数据接口</a>。您可以点击 “<i>新建 ShenYu</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors metrics of the ShenYu Gateway by calling the <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics Api</a>. <br>Note⚠️:You need to <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">enable ShenYu Metrics Plugin</a> in advance. You can click "<i>New ShenYu</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: Hertzbeat 通過調用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 對 ShenYu 網關的通用指標 (請求量、執行時間、JVM、內存占用、線程信息等) 進行采集監控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">開啓暴露 ShenYu Metrics 插件暴露其數據接口</a>。您可以點擊 “<i>新建 ShenYu</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/shenyu
   en-US: https://hertzbeat.com/docs/help/shenyu

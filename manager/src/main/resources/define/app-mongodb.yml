@@ -29,8 +29,8 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 MongoDB 数据库的通用指标进行测量监控。<br>您可以点击 “<i>新建 MongoDB 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors MongoDB through general performance metric. You could click the "<i>New MongoDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對MongoDB資料庫的通用名額進行量測監控。<br>您可以點擊“<i>新建MongoDB資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  en-US: Hertzbeat monitors MongoDB general performance metrics. You could click the "<i>New MongoDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 MongoDB 數據庫的通用指標進行測量監控。<br>您可以點擊 “<i>新建 MongoDB 數據庫</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/mongodb
   en-US: https://hertzbeat.com/docs/help/mongodb

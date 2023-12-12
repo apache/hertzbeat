@@ -28,8 +28,8 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 REDIS 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本为 REDIS1.0+。<br>您可以点击“<i>新建 REDIS 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors REDIS database through general performance metric such as memory, persistence, replication and so on. The versions we support is REDIS1.0+. <br>You could click the "<i>New REDIS</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat對REDIS資料庫的通用性能指標進行採集監控（server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats），支持版本為REDIS1.0+。<br>您可以點擊“<i>新建REDIS資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  en-US: HertzBeat monitors REDIS database of general performance metrics such as memory, persistence, replication and so on. The versions we support is REDIS1.0+. <br>You could click the "<i>New REDIS</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 REDIS 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本爲 REDIS1.0+。<br>您可以點擊“<i>新建 REDIS 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/redis
   en-US: https://hertzbeat.com/docs/help/redis
