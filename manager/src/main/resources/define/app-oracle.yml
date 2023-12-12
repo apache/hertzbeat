@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 Oracle 数据库的通用指标（tablespace、user connect、performance）进行测量监控。<br>您可以点击 “<i>新建 Oracle数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors Oracle database through general performance metric. You could click the "<i>New Oracle DB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對Oracle資料庫的通用名額（tablespace、user connect、performance）進行量測監控。<br>您可以點擊“<i>新建Oracle資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 Oracle 数据库的通用性能指标(表空间、性能状态、用户连接、缓存、慢SQL等)进行采集监控。<br>您可以点击“<i>新建 Oracle 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of Oracle database (tablespace、user connect、performance、slow SQL etc.). <br>You can click "<i>New Oracle Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 Oracle 數據庫的通用性能指標(表空間、性能狀態、用戶連接、緩存、慢SQL等)進行采集監控。<br>您可以點擊“<i>新建 Oracle 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/oracle/
   en-US: https://hertzbeat.com/docs/help/oracle/

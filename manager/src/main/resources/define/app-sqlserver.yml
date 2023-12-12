@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 SqlServer 数据库的通用性能指标(basic、performance counters、connection)进行采集监控，支持版本为 SqlServer 2017+。<br><span class='help_module_span'>⚠️注意<a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>点击查看可能遇见的 ssh 问题</a>。</span>
-  en-US: "HertzBeat monitors SqlServer database through basic performance metrics such as performance counters and connection, the version we support is SqlServer 2017+. <br><span class='help_module_span'>⚠️Note: <a class='help_module_content'  href='https://hertzbeat.com/docs/help/sqlserver'>Click here to see the possible SSH problems.</a></span>"
-  zh-TW: HertzBeat對SqlServer資料庫的通用性能指標（basic、performance counters、connection）進行採集監控，支持版本為SqlServer 2017+。<br><span> ⚠️ 注意<a href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>點擊查看可能遇見的ssh問題</a>。</span>
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 SqlServer 数据库的通用性能指标(系统信息、性能状态、连接等)进行采集监控，支持版本为 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>点击查看可能遇见的问题</a>。您可以点击“<i>新建 Mysql 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of SqlServer database (basic、performance counters、connection etc.). Supported version is SqlServer 2017+. <br><a class='help_module_content' href='https://hertzbeat.com/docs/help/sqlserver'>Click here to see the possible SSH problems.</a>. You can click "<i>New Mysql Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 SqlServer 數據庫的通用性能指標(系統信息、性能狀態、连接等)進行采集監控，支持版本爲 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>點擊查看可能遇見的問題</a>。您可以點擊“<i>新建 Mysql 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/sqlserver
   en-US: https://hertzbeat.com/docs/help/sqlserver

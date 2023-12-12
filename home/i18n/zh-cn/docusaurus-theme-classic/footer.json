@@ -9,19 +9,19 @@
   },
   "link.item.label.use": {
     "message": "使用介绍",
-    "description": "The label of footer link with label=use linking to docs/"
+    "description": "The label of footer link with label=use linking to /docs/"
   },
   "link.item.label.quickstart": {
     "message": "安装文档",
-    "description": "The label of footer link with label=quickstart linking to docs/start/quickstart"
+    "description": "The label of footer link with label=quickstart linking to /docs/start/quickstart"
   },
   "link.item.label.custom": {
     "message": "自定义监控",
-    "description": "The label of footer link with label=custom linking to docs/advanced/extend-point"
+    "description": "The label of footer link with label=custom linking to /docs/advanced/extend-point"
   },
   "link.item.label.help": {
     "message": "帮助文档",
-    "description": "The label of footer link with label=help linking to docs/help/guide"
+    "description": "The label of footer link with label=help linking to /docs/help/guide"
   },
   "link.item.label.dromara": {
     "message": "Dromara开源社区",
@@ -29,7 +29,7 @@
   },
   "link.item.label.discuss": {
     "message": "交流联系",
-    "description": "The label of footer link with label=discuss linking to docs/others/contact"
+    "description": "The label of footer link with label=discuss linking to /docs/others/contact"
   },
   "link.item.label.team": {
     "message": "我们的故事",
@@ -57,6 +57,6 @@
   },
   "link.item.label.relate": {
     "message": "其它资源",
-    "description": "The label of footer link with label=relate linking to docs/others/resource"
+    "description": "The label of footer link with label=relate linking to /docs/others/resource"
   }
 }

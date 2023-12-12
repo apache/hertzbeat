@@ -17,7 +17,7 @@ const routes: Routes = [
     path: 'settings',
     component: SettingsComponent,
     children: [
-      { path: '', redirectTo: 'server', pathMatch: 'full' },
+      { path: '', redirectTo: 'config', pathMatch: 'full' },
       {
         path: 'server',
         component: MessageServerComponent,
