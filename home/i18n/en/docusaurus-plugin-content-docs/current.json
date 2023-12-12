@@ -48,7 +48,7 @@
     "description": "The label for category notice in sidebar docs"
   },
   "sidebar.docs.category.mid": {
-    "message": "Middleware",
+    "message": "Middleware Monitor",
     "description": "The label for category mid in sidebar docs"
   },
   "sidebar.docs.category.Others": {
@@ -56,7 +56,7 @@
     "description": "The label for category Others in sidebar docs"
   },
   "sidebar.docs.category.cloud-native": {
-    "message": "CloudNative",
+    "message": "CloudNative Monitor",
     "description": "The label for category cloud-native in sidebar docs"
   },
   "sidebar.docs.link.Cloud Service": {
@@ -77,6 +77,26 @@
   },
   "sidebar.docs.link.Install via Helm": {
     "message": "Install via Helm",
-    "description": "The label for link Install via Helm in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+    "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+  },
+  "sidebar.docs.category.push": {
+    "message": "Push",
+    "description": "The label for category push in sidebar docs"
+  },
+  "sidebar.docs.category.program": {
+    "message": "Program Monitor",
+    "description": "The label for category program in sidebar docs"
+  },
+  "sidebar.docs.category.cache": {
+    "message": "Cache Monitor",
+    "description": "The label for category cache in sidebar docs"
+  },
+  "sidebar.docs.category.bigdata": {
+    "message": "Bigdata Monitor",
+    "description": "The label for category bigdata in sidebar docs"
+  },
+  "sidebar.docs.category.webserver": {
+    "message": "WebServer Monitor",
+    "description": "The label for category webserver in sidebar docs"
   }
 }
