@@ -186,6 +186,10 @@ public class Metrics {
      * Monitoring configuration information using the public DNS protocol
      */
     private DnsProtocol dns;
+    /**
+     * Monitoring configuration information using the public DNS protocol
+     */
+    private NginxProtocol nginx;
 
     /**
      * collector use - Temporarily store subTask metrics response data
