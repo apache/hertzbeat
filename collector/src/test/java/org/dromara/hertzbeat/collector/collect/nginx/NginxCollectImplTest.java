@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 /**
  * Test case for {@link NginxCollectImpl}
- * @author zhoushusheng
+ * @author a-little-fool
  */
 public class NginxCollectImplTest {
     private NginxCollectImpl nginxCollect;

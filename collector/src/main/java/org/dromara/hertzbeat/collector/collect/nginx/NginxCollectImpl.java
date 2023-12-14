@@ -42,7 +42,7 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * nginx collect
- * @author zhoushusheng
+ * @author a-little-fool
  */
 @Slf4j
 public class NginxCollectImpl extends AbstractCollect {
