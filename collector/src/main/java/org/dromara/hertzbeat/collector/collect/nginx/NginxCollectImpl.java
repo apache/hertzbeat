@@ -94,9 +94,9 @@ public class NginxCollectImpl extends AbstractCollect {
 
             Long responseTime = System.currentTimeMillis() - startTime;
             // 根据metrics name选择调用不同解析方法
-            if (metrics.getName().equals(NGINX_STATUS_NAME) || metrics.getName().equals(AVAILABLE)) {
+            if (NGINX_STATUS_NAME.equals(metrics.getName()) || AVAILABLE.equals(metrics.getName())) {
                 parseNginxStatusResponse(builder, resp, metrics, responseTime);
-            } else if (metrics.getName().equals(REQ_STATUS_NAME)) {
+            } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
                 parseReqStatusResponse(builder, resp, metrics, responseTime);
             }
         } catch (IOException e1) {
@@ -185,7 +185,7 @@ public class NginxCollectImpl extends AbstractCollect {
          * Reading: 0 Writing: 1 Waiting: 1
          */
         List<String> aliasFields = metrics.getAliasFields();
-        Map<String,Object> metricMap = regexNginxStatusMatch(resp);
+        Map<String,Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
         // 返回数据
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
@@ -267,22 +267,22 @@ public class NginxCollectImpl extends AbstractCollect {
         return method.invoke(reqSatusResponse);
     }
 
-    private Map<String,Object> regexNginxStatusMatch(String resp) {
-        Map<String,Object> metricsMap = new HashMap<>();
+    private Map<String,Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
+        Map<String,Object> metricsMap = new HashMap<>(aliasFieldsSize);
         // 正则提取监控信息
         Pattern pattern = Pattern.compile(REGEX_SERVER);
         Matcher matcher = pattern.matcher(resp);
         while (matcher.find()) {
             String key = StringUtils.lowerCase(matcher.group(1));
             String value = matcher.group(2);
-            metricsMap.put(key.equals(CONNECTIONS) ? ACTIVE : key, value);
+            metricsMap.put(CONNECTIONS.equals(key) ? ACTIVE : key, value);
         }
         Pattern pattern1 = Pattern.compile(REGEX_KEYS);
         Matcher matcher1 = pattern1.matcher(resp);
         Pattern pattern2 = Pattern.compile(REGEX_VALUES);
         Matcher matcher2 = pattern2.matcher(resp);
         if (matcher1.find() && matcher2.find()) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < matcher1.groupCount(); i++) {
                 metricsMap.put(matcher1.group(i + 1), matcher2.group(i + 1));
             }
         }
