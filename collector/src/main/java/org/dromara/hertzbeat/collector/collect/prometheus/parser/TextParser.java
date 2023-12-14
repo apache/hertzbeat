@@ -102,7 +102,7 @@ public class TextParser {
             return;
         }
         String labelName = readTokenAsLabelName(buffer);
-        if (labelName.isEmpty() || labelName.equals(NAME_LABEL)) {
+        if (labelName.isEmpty() || NAME_LABEL.equals(labelName)) {
             throw new ParseException("invalid label name" + labelName + ", label name size = 0 or label name equals " + NAME_LABEL);
         }
         MetricFamily.Label label = new MetricFamily.Label();
