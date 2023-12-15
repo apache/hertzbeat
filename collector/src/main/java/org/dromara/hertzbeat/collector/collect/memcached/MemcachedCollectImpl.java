@@ -36,6 +36,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
     private static final String STATS_SETTINGS = "stats settings";
     private static final String STATS_ITEMS = "stats items";
     private static final String STATS_SIZES = "stats sizes";
+    private static final String STATS_END_RSP = "END";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -58,7 +59,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 // 发送统计命令
-                Map<String, String> resultMap = new HashMap<>();
+                Map<String, String> resultMap = new HashMap<>(128);
                 parseCMDResponse(resultMap, in, out, STATS);
                 parseCMDResponse(resultMap, in, out, STATS_SETTINGS);
                 parseSizesOutput(resultMap, in, out);
@@ -112,7 +113,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
                                          String cmd) throws IOException {
         out.println(cmd);
         String line;
-        while ((line = in.readLine()) != null && !line.equals("END")) {
+        while ((line = in.readLine()) != null && !line.equals(STATS_END_RSP)) {
             // 解析每一行，将键值对存入HashMap
             String[] parts = line.split(" ");
             if (parts.length == 3) {
@@ -126,7 +127,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
                                          PrintWriter out) throws IOException {
         out.println(STATS_SIZES);
         String line;
-        while ((line = in.readLine()) != null && !line.equals("END")) {
+        while ((line = in.readLine()) != null && !line.equals(STATS_END_RSP)) {
             String[] parts = line.split("\\s+");
             // 提取 slab size 和 slab count，并放入HashMap
             if (parts.length >= 3 && "STAT".equals(parts[0])) {
