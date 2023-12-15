@@ -52,6 +52,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_WEBSOCKET = "websocket";
     /**
+     * protocol memcached
+     */
+    String PROTOCOL_MEMCACHED = "memcached";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";
