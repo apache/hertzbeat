@@ -39,9 +39,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.dromara.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.dromara.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
-import org.dromara.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
-import org.dromara.hertzbeat.collector.collect.http.promethus.exporter.MetricType;
+import org.dromara.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
+import org.dromara.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.constants.CollectorConstants;
@@ -60,7 +59,6 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -170,15 +168,9 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
-    
     private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                                            CollectRep.MetricsData.Builder builder) {
-        if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
-            EXPORTER_PARSER_TABLE.put(builder.getId(), new ExporterParser());
-        }
-        ExporterParser parser = EXPORTER_PARSER_TABLE.get(builder.getId());
-        Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
+        Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
         List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
             builder.clearMetrics();
@@ -187,16 +179,12 @@ public class PrometheusAutoCollectImpl {
             String metricsName = entry.getKey();
             builder.setMetrics(metricsName);
             MetricFamily metricFamily = entry.getValue();
-            if (metricFamily.getMetricType() == MetricType.HISTOGRAM || metricFamily.getMetricType() == MetricType.SUMMARY) {
-                // todo HISTOGRAM SUMMARY
-                continue;
-            }
             if (!metricFamily.getMetricList().isEmpty()) {
                 List<String> metricsFields = new LinkedList<>();
                 for (int index = 0; index < metricFamily.getMetricList().size(); index++) {
                     MetricFamily.Metric metric = metricFamily.getMetricList().get(index);
                     if (index == 0) {
-                        metric.getLabelPair().forEach(label -> {
+                        metric.getLabels().forEach(label -> {
                             metricsFields.add(label.getName());
                             builder.addFields(CollectRep.Field.newBuilder().setName(label.getName())
                                     .setType(CommonConstants.TYPE_STRING).setLabel(true).build());
@@ -204,7 +192,7 @@ public class PrometheusAutoCollectImpl {
                         builder.addFields(CollectRep.Field.newBuilder().setName("value")
                                 .setType(CommonConstants.TYPE_NUMBER).setLabel(false).build());
                     }
-                    Map<String, String> labelMap = metric.getLabelPair()
+                    Map<String, String> labelMap = metric.getLabels()
                             .stream()
                             .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -212,17 +200,7 @@ public class PrometheusAutoCollectImpl {
                         String fieldValue = labelMap.get(field);
                         valueRowBuilder.addColumns(fieldValue == null ? CommonConstants.NULL_VALUE : fieldValue);
                     }
-                    if (metric.getCounter() != null) {
-                        valueRowBuilder.addColumns(String.valueOf(metric.getCounter().getValue()));
-                    } else if (metric.getGauge() != null) {
-                        valueRowBuilder.addColumns(String.valueOf(metric.getGauge().getValue()));
-                    } else if (metric.getUntyped() != null) {
-                        valueRowBuilder.addColumns(String.valueOf(metric.getUntyped().getValue()));
-                    } else if (metric.getInfo() != null) {
-                        valueRowBuilder.addColumns(String.valueOf(metric.getInfo().getValue()));
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
+                    valueRowBuilder.addColumns(String.valueOf(metric.getValue()));
                     builder.addValues(valueRowBuilder.build());
                 }
                 metricsDataList.add(builder.build());
