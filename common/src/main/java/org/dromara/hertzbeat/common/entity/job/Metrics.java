@@ -131,6 +131,11 @@ public class Metrics {
      */
     private WebsocketProtocol websocket;
     /**
+     * Monitoring configuration information using the memcached protocol
+     * 使用memcached的监控配置信息
+     */
+    private MemcachedProtocol memcached;
+    /**
      * Use udp implemented by socket for service port detection configuration information
      * 使用socket实现的udp进行服务端口探测配置信息
      */
