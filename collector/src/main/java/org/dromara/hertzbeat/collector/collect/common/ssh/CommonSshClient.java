@@ -1,10 +1,16 @@
 package org.dromara.hertzbeat.collector.collect.common.ssh;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.sshd.client.ClientBuilder;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
+import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolverUtils;
+import org.apache.sshd.common.kex.BuiltinDHFactories;
+import org.apache.sshd.common.signature.BuiltinSignatures;
 import org.apache.sshd.core.CoreModuleProperties;
+
+import java.util.ArrayList;
 
 /**
  * common ssh pool client
@@ -27,6 +33,13 @@ public class CommonSshClient {
                 SSH_CLIENT, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 300_000);
         PropertyResolverUtils.updateProperty(
                 SSH_CLIENT, CoreModuleProperties.SOCKET_KEEPALIVE.getName(), true);
+        // set support all KeyExchange
+        SSH_CLIENT.setKeyExchangeFactories(NamedFactory.setUpTransformedFactories(
+                false,
+                BuiltinDHFactories.VALUES,
+                ClientBuilder.DH2KEX
+        ));
+        SSH_CLIENT.setSignatureFactories(new ArrayList<>(BuiltinSignatures.VALUES));
         SSH_CLIENT.start();
     }
 
