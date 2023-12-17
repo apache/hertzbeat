@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source spring gateway monitoring to
 
 ## Pre-monitoring operations
 
-If you want to monitor information in 'SpringBoot' with this monitoring type, you need to integrate your SpringBoot application and enable the SpringBoot Actuator.
+If you want to monitor information in 'Spring Gateway' with this monitoring type, you need to integrate your SpringBoot application and enable the SpringBoot Actuator.
 
 **1、Add POM .XML dependencies:**
 
