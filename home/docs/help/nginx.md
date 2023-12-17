@@ -2,7 +2,7 @@
 id: nginx  
 title: Monitoring Nginx      
 sidebar_label: Nginx Monitor
-keywords: [open source monitoring tool, open source java spark monitoring tool, monitoring nginx metrics]
+keywords: [open source monitoring tool, open source java monitoring tool, monitoring nginx metrics]
 ---
 
 > Collect and monitor the general performance Metrics of Nginx.
@@ -75,7 +75,7 @@ http {
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
-| Port                | Port provided by JMX                                                                                                                                                      |
+| Port                | Port provided by Nginx                                                                                                                                                    |
 | Timeout             | Allow collection response time                                                                                                                                            |
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
 | Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
