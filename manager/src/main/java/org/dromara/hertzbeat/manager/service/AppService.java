@@ -23,6 +23,7 @@ import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Monitoring Type Management Interface
@@ -61,6 +62,14 @@ public interface AppService {
      *                                  当不存在即不支持对应名称的监控类型时抛出
      */
     Job getAppDefine(String app) throws IllegalArgumentException;
+
+    /**
+     * Get monitor structure definition based on monitor type name
+     *
+     * @param app Monitoring type name 
+     * @return Monitoring Structure Definition Optional
+     */
+    Optional<Job> getAppDefineOption(String app);
 
     /**
      * 获取app定义的指标

@@ -81,6 +81,9 @@ public class SchedulerInit implements CommandLineRunner {
             try {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());

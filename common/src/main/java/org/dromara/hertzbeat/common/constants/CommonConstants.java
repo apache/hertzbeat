@@ -319,4 +319,14 @@ public interface CommonConstants {
      * collector auth failed message
      */
     String COLLECTOR_AUTH_FAILED = "Auth Failed";
+
+    /**
+     * for prometheus task name prefix
+     */
+    String PROMETHEUS_APP_PREFIX = "_prometheus_";
+
+    /**
+     * prometheus 
+     */
+    String PROMETHEUS = "prometheus";
 }

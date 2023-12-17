@@ -134,6 +134,9 @@ public class MonitorServiceImpl implements MonitorService {
             monitorId = MONITOR_ID_TMP;
         }
         Job appDefine = appService.getAppDefine(monitor.getApp());
+        if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+            appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+        }
         appDefine.setMonitorId(monitorId);
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
@@ -172,8 +175,11 @@ public class MonitorServiceImpl implements MonitorService {
         }
         tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
         tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
-        // Construct the collection task Job entity     构造采集任务Job实体
+        // Construct the collection task Job entity     
         Job appDefine = appService.getAppDefine(monitor.getApp());
+        if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+            appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+        }
         appDefine.setMonitorId(monitorId);
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
@@ -317,17 +323,21 @@ public class MonitorServiceImpl implements MonitorService {
                     param.setValue(value);
                 })
                 .collect(Collectors.toMap(Param::getField, param -> param));
-        // Check name uniqueness    校验名称唯一性
+        // Check name uniqueness and can not equal app type    
         if (isModify != null) {
+            Optional<Job> defineOptional = appService.getAppDefineOption(monitor.getName());
+            if (defineOptional.isPresent()) {
+                throw new IllegalArgumentException("Monitoring name cannot be the existed monitoring type name!");
+            }
             Optional<Monitor> monitorOptional = monitorDao.findMonitorByNameEquals(monitor.getName());
             if (monitorOptional.isPresent()) {
                 Monitor existMonitor = monitorOptional.get();
                 if (isModify) {
                     if (!existMonitor.getId().equals(monitor.getId())) {
-                        throw new IllegalArgumentException("Monitoring name cannot be repeated!");
+                        throw new IllegalArgumentException("Monitoring name already exists!");
                     }
                 } else {
-                    throw new IllegalArgumentException("Monitoring name cannot be repeated!");
+                    throw new IllegalArgumentException("Monitoring name already exists!");
                 }
             }
         }
@@ -509,6 +519,9 @@ public class MonitorServiceImpl implements MonitorService {
             // Construct the collection task Job entity
             // 构造采集任务Job实体
             Job appDefine = appService.getAppDefine(monitor.getApp());
+            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+            }
             appDefine.setId(preMonitor.getJobId());
             appDefine.setMonitorId(monitorId);
             appDefine.setInterval(monitor.getIntervals());
@@ -659,6 +672,9 @@ public class MonitorServiceImpl implements MonitorService {
                 // Construct the collection task Job entity
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                }
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
@@ -764,6 +780,9 @@ public class MonitorServiceImpl implements MonitorService {
                 if (monitor == null || appDefine == null || monitor.getId() == null || monitor.getJobId() == null) {
                     log.error("update monitor job error when template modify, define | id | jobId is null. continue");
                     continue;
+                }
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
                 }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
