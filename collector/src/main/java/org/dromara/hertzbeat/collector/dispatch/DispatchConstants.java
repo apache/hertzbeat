@@ -107,6 +107,10 @@ public interface DispatchConstants {
      * protocol dns
      */
     String PROTOCOL_DNS = "dns";
+    /**
+     * protocol pop3
+     */
+    String PROTOCOL_POP3 = "pop3";
 
     // Protocol type related - end
     // 协议类型相关 - end //
