@@ -310,9 +310,10 @@ CREATE TABLE  hzb_history
     app            varchar(100)     not null comment '监控类型 mysql oracle db2',
     metrics        varchar(100)     not null comment '指标集合名称 innodb disk cpu',
     metric         varchar(100)     not null comment '指标名称 usage speed count',
-    instance       varchar(1024)    comment '实例',
+    instance       varchar(5000)    comment '实例',
     metric_type    tinyint          not null comment '字段类型 0: 数值 1：字符串',
     str            varchar(1024)    comment '字符值',
+    int32          int              comment '整数',
     dou            float            comment '数值',
     time           bigint           comment '采集时间戳',
     primary key (id)
