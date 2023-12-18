@@ -99,9 +99,9 @@
       "": "Task Status",
       "all": "All Status",
       "available": "Available",
-      "unavailable": "UnAvailable",
-      "unreachable": "UnReachable",
-      "un-manage": "UnManaged"
+      "unavailable": "Unavailable",
+      "unreachable": "Unreachable",
+      "unmonitored": "Unmonitored"
     }
   },
   "alert": {

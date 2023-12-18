@@ -98,10 +98,10 @@
     "status": {
       "": "任務狀態",
       "all": "全部狀態",
-      "available": "正常監控",
+      "available": "正常",
       "unavailable": "不可用",
       "unreachable": "不可達",
-      "un-manage": "未管理"
+      "unmonitored": "未監控"
     }
   },
   "alert": {
