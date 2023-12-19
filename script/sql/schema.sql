@@ -234,8 +234,8 @@ CREATE TABLE  hzb_notice_rule
 (
     id             bigint           not null auto_increment comment '通知策略主键索引ID',
     name           varchar(100)     not null comment '策略名称',
-    receiver_id    bigint           not null comment '消息接收人ID',
-    receiver_name  varchar(100)     not null comment '消息接收人标识',
+    receiver_id    bigint           not null comment '消息接收对象ID',
+    receiver_name  varchar(100)     not null comment '消息接收对象标识',
     template_id    bigint           comment '消息模版ID',
     template_name  varchar(100)     comment '消息模版标识',
     enable         boolean          not null default true comment '是否启用此策略',
@@ -276,8 +276,8 @@ CREATE TABLE  hzb_notice_template
 DROP TABLE IF EXISTS  hzb_notice_receiver ;
 CREATE TABLE  hzb_notice_receiver
 (
-    id           bigint           not null auto_increment comment '消息接收人ID',
-    name         varchar(100)     not null comment '消息接收人姓名',
+    id           bigint           not null auto_increment comment '消息接收对象ID',
+    name         varchar(100)     not null comment '消息接收对象姓名',
     type         tinyint          not null comment '通知信息方式: 0-手机短信 1-邮箱 2-webhook 3-微信公众号 4-企业微信机器人 5-钉钉机器人',
     phone        varchar(100)     comment '手机号, 通知方式为手机短信时有效',
     email        varchar(100)     comment '邮箱账号, 通知方式为邮箱时有效',

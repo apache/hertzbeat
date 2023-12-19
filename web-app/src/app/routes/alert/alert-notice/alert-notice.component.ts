@@ -28,7 +28,7 @@ export class AlertNoticeComponent implements OnInit {
   loading = false;
   code: string = '';
   originalCode: string = '';
-  // start 新增或修改通知接收人弹出框
+  // start 新增或修改通知接收对象弹出框
   isManageReceiverModalVisible: boolean = false;
   isManageReceiverModalAdd: boolean = true;
   isManageReceiverModalOkLoading: boolean = false;

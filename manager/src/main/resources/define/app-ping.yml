@@ -96,7 +96,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
     # Monitoring and collection protocols eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: icmp
