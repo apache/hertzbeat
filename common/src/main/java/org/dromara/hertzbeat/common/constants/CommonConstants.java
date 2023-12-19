@@ -73,8 +73,8 @@ public interface CommonConstants {
 
 
     /**
-     * Monitoring Status Code: Unmanaged
-     * 任务状态码: 未管理
+     * Monitoring Status Code: Unmonitored
+     * 任务状态码: 未监控
      */
     byte UN_MANAGE_CODE = 0x00;
 

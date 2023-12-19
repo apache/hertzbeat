@@ -63,6 +63,6 @@ keywords: [告警 Telegram 通知, 开源告警系统, 开源监控告警系统]
 
 > 请排查在告警中心是否已有触发的告警信息   
 > 请排查是否配置正确机器人Token, UserId，是否已配置告警策略关联   
-> UserId 应为消息接收人的UserId 
+> UserId 应为消息接收对象的UserId 
 
 其它问题可以通过交流群ISSUE反馈哦！  

@@ -57,7 +57,7 @@ public class AppCount {
      */
     private long availableSize;
     /**
-     * 任务状态未管理的数量
+     * 任务状态未监控的数量
      */
     private long unManageSize;
     /**
