@@ -46,7 +46,7 @@ public class History {
     @Schema(title = "Monitoring Metric usage speed count")
     private String metric;
     
-    @Column(length = 2048)
+    @Column(length = 5000)
     private String instance;
 
     @Schema(title = "Metric Type 0: Number 1：String")
@@ -55,6 +55,9 @@ public class History {
     @Schema(title = "Metric String Value")
     @Column(length = 2048)
     private String str;
+
+    @Schema(title = "Metric Integer Value")
+    private Integer int32;
 
     @Schema(title = "Metric Number Value")
     private Double dou;
