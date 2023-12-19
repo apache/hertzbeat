@@ -89,7 +89,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
       - field: time
         type: 0
         unit: ms
