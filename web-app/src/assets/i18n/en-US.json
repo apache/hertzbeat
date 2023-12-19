@@ -245,7 +245,7 @@
   "alert.notice.template.preset.true": "System Preset",
   "alert.notice.template.preset.false": "User Custom",
   "alert.notice.template.content": "Template Content",
-  "alert.notice.receiver": "Message Receiver",
+  "alert.notice.receiver": "Notice Receiver",
   "alert.notice.receiver.new": "New Receiver",
   "alert.notice.receiver.edit": "Edit Receiver",
   "alert.notice.receiver.delete": "Delete Receiver",
