@@ -110,6 +110,13 @@ public class Job {
     private List<Configmap> configmap;
 
     /**
+     * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
+     * 优先级高的采集响应单行指标可以作为后续优先级采集配置的环境变量 ^o^xxx^o^
+     */
+    @JsonIgnore
+    private Map<String, Configmap> envConfigmaps;
+
+    /**
      * collector use - timestamp when the task was scheduled by the time wheel
      * 任务被时间轮开始调度的时间戳
      */
@@ -170,6 +177,7 @@ public class Job {
                 return Byte.MAX_VALUE;
             }
         }));
+        envConfigmaps = new HashMap<>(8);
     }
 
     /**
@@ -223,6 +231,18 @@ public class Job {
             responseDataTemp = new LinkedList<>();
         }
         responseDataTemp.add(metricsData);
+    }
+
+    public Map<String, Configmap> getEnvConfigmaps() {
+        return envConfigmaps;
+    }
+
+    public void addEnvConfigmaps(Map<String, Configmap> envConfigmaps) {
+        if (this.envConfigmaps == null) {
+            this.envConfigmaps = envConfigmaps;
+        } else {
+            this.envConfigmaps.putAll(envConfigmaps);   
+        }
     }
 
     @Override

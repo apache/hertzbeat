@@ -52,7 +52,10 @@ public class AviatorConfiguration {
                 .useLRUExpressionCache(AVIATOR_LRU_CACHE_SIZE)
                 .addFunction(new StrEqualFunction());
 
-        // 配置Aviator语法特性集合
+        // limit loop 限制循环次数
+        instance.setOption(Options.MAX_LOOP_COUNT, 10);
+        
+        // 启用部分Aviator语法特性集合
         instance.setOption(Options.FEATURE_SET,
                 Feature.asSet(Feature.If,
                         Feature.Assignment,
