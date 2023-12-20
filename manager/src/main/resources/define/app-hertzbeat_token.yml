@@ -185,6 +185,11 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
+        # ^o^xxx^o^ 替换符表示上一个优先级的采集指标xxx的值
+        bearerTokenToken: ^o^token^o^
       parseType: jsonPath
       parseScript: '$.data'
 
@@ -201,6 +206,11 @@ metrics:
       url: /actuator/metrics/jvm.threads.states
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
+        # ^o^xxx^o^ 替换符表示上一个优先级的采集指标xxx的值
+        bearerTokenToken: ^o^token^o^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
@@ -223,6 +233,11 @@ metrics:
       url: /actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
+        # ^o^xxx^o^ 替换符表示上一个优先级的采集指标xxx的值
+        bearerTokenToken: ^o^token^o^
       parseType: jsonPath
       parseScript: '$'
 
@@ -239,6 +254,11 @@ metrics:
       url: /actuator/metrics/jvm.memory.used
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
+        # ^o^xxx^o^ 替换符表示上一个优先级的采集指标xxx的值
+        bearerTokenToken: ^o^token^o^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
@@ -264,5 +284,10 @@ metrics:
       url: /actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
+        # ^o^xxx^o^ 替换符表示上一个优先级的采集指标xxx的值
+        bearerTokenToken: ^o^token^o^
       parseType: jsonPath
       parseScript: '$'
