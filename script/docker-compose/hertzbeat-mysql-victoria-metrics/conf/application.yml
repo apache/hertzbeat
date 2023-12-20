@@ -45,7 +45,6 @@ management:
         include:
           - 'metrics'
           - 'health'
-          - 'env'
     enabled-by-default: on
 
 sureness:
