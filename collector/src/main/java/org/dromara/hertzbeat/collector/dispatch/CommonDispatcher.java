@@ -62,6 +62,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
      * Trigger sub task max num
      */
     private static final int MAX_SUB_TASK_NUM = 50;
+    /**
+     * Collect Response env config length
+     */
+    private static final int ENV_CONFIG_SIZE = 1;
     private static final Gson GSON = new Gson();
     /**
      * Priority queue of index collection tasks
@@ -256,21 +260,29 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The execution of the current level metrics is completed, and the execution of the next level metrics starts
                 // use pre collect metrics data to replace next metrics config params
                 List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
+                if (configmapList.size() == ENV_CONFIG_SIZE) {
+                    job.addEnvConfigmaps(configmapList.get(0));
+                }
                 for (Metrics metricItem : metricsSet) {
-                    if (CollectionUtils.isEmpty(configmapList) || CollectUtil.notContainCryPlaceholder(GSON.toJsonTree(metricItem))) {
-                        MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this, 
+                    Set<String> cryPlaceholderFields = CollectUtil.matchCryPlaceholderField(GSON.toJsonTree(metricItem));
+                    if (cryPlaceholderFields.isEmpty()) {
+                        MetricsCollect metricsCollect = new MetricsCollect(metricItem, timeout, this,
                                 collectorIdentity, unitConvertList);
                         jobRequestQueue.addJob(metricsCollect);
                         metricsTimeoutMonitorMap.put(job.getId() + "-" + metricItem.getName(),
                                 new MetricsTime(System.currentTimeMillis(), metricItem, timeout));
                         continue;
                     }
-
-                    int subTaskNum = Math.min(configmapList.size(), MAX_SUB_TASK_NUM);
+                    boolean isSubTask = configmapList.stream().anyMatch(map -> map.keySet().stream().anyMatch(cryPlaceholderFields::contains));
+                    int subTaskNum = isSubTask ? Math.min(configmapList.size(), MAX_SUB_TASK_NUM) : 1;
                     AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
                     AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
                     for (int index = 0; index < subTaskNum; index++) {
-                        Map<String, Configmap> configmap = configmapList.get(index);
+                        Map<String, Configmap> configmap = new HashMap<>(job.getEnvConfigmaps());
+                        if (isSubTask) {
+                            Map<String, Configmap> preConfigMap = configmapList.get(index);
+                            configmap.putAll(preConfigMap);
+                        }
                         JsonElement metricJson = GSON.toJsonTree(metricItem);
                         CollectUtil.replaceCryPlaceholder(metricJson, configmap);
                         Metrics metric = GSON.fromJson(metricJson, Metrics.class);
@@ -351,7 +363,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
 
     private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
         if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
-            return null;
+            return new LinkedList<>();
         }
         List<Map<String, Configmap>> mapList = new LinkedList<>();
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
