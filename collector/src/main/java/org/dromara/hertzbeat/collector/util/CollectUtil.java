@@ -25,12 +25,10 @@ import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.util.JsonUtil;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * util for collector
@@ -177,7 +175,7 @@ public class CollectUtil {
 
 
     /**
-     * is contains cryPlaceholder -_-
+     * is contains cryPlaceholder ^o^xxx^o^
      *
      * @param jsonElement json element
      * @return return true when contains
@@ -189,6 +187,18 @@ public class CollectUtil {
 
     public static boolean notContainCryPlaceholder(JsonElement jsonElement) {
         return !containCryPlaceholder(jsonElement);
+    }
+
+    /**
+     * match existed cry placeholder fields ^o^field^o^
+     * @param jsonElement json element
+     * @return match field str
+     */
+    public static Set<String> matchCryPlaceholderField(JsonElement jsonElement) {
+        String jsonStr = jsonElement.toString();
+        return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).results()
+                .map(item -> item.group().replaceAll(CRYING_PLACEHOLDER_REX, ""))
+                .collect(Collectors.toSet());
     }
 
     /**
