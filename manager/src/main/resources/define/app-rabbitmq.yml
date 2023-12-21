@@ -161,7 +161,7 @@ metrics:
         i18n:
           zh-CN: RabbitMQ 版本
           en-US: RabbitMQ Version
-      - field: managementrabb_version
+      - field: management_version
         type: 1
         i18n:
           zh-CN: RabbitMQ Management 版本
