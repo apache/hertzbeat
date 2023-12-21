@@ -10,7 +10,8 @@
 
 > 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控能力。
 
-[![discord](https://img.shields.io/badge/Chat-On%20Discord-brightgreen)](https://discord.gg/Fb6M73htGr)
+[<img alt="discord" src="https://img.shields.io/badge/Chat-On%20Discord-brightgreen" height="25"/>](https://discord.gg/Fb6M73htGr)
+[<img alt="reddit" src="https://img.shields.io/badge/Reddit-%20Community-brightgreen" height="25"/>](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
@@ -413,6 +414,8 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 **[Chat On Discord](https://discord.gg/Fb6M73htGr)**
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
+
+[Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
 [User Club](https://support.qq.com/products/379369)
 
