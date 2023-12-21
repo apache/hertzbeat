@@ -34,7 +34,7 @@ public class AvailableAlertDefineInit implements CommandLineRunner {
 		Set<String> apps = appService.getAllAppDefines().keySet();
 		for (String app : apps) {
 			try {
-				List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetricAndField(app, CommonConstants.AVAILABILITY, null);
+				List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetric(app, CommonConstants.AVAILABILITY);
 				if (defines.isEmpty()) {
 					AlertDefine alertDefine = AlertDefine.builder()
 							.app(app)

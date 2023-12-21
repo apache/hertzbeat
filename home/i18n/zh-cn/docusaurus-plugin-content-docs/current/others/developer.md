@@ -20,6 +20,7 @@ sidebar_label: 开发者们
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zqr10159"><img src="https://avatars.githubusercontent.com/u/30048352?v=4?s=100" width="100px;" alt="zqr10159"/><br /><sub><b>Logic</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=zqr10159" title="Code">💻</a><a href="#design-Ceilzcx" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vinci-897"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="vinci"/><br /><sub><b>vinci</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=vinci-897" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=vinci-897" title="Documentation">📖</a> <a href="#design-vinci-897" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/a-little-fool"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="淞筱"/><br /><sub><b>淞筱</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=a-little-fool" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=a-little-fool" title="Documentation">📖</a> <a href="#design-a-little-fool" title="Design">🎨</a></td>
     </tr>
   </tbody>
 </table>
