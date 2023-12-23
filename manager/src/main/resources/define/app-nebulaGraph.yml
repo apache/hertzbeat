@@ -23,7 +23,15 @@ name:
   zh-CN: NebulaGraph
   en-US: NebulaGraph
 # 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 将调用NebulaGraph提供的 HTTP API 监控接口，对nebulaGraph及存储数据的rocksdb的指标进行监测。
+  en-US: Hertzbeat will call the HTTP API monitoring interface provided by NebulaGraph to monitor the indicators of NebulaGraph and the Rocksdb that stores data.
+  zh-TW: Hertzbeat將調用NebulaGraph提供的HTTP API監控介面，對nebulaGraph及存儲數據的rocksdb的名額進行監測。
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
 helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/nebulagraph
+  en-US: https://hertzbeat.com/docs/help/nebulagraph
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:
