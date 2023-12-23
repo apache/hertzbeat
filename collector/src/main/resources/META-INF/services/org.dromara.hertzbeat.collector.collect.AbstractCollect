@@ -18,4 +18,5 @@ org.dromara.hertzbeat.collector.collect.push.PushCollectImpl
 org.dromara.hertzbeat.collector.collect.dns.DnsCollectImpl
 org.dromara.hertzbeat.collector.collect.nginx.NginxCollectImpl
 org.dromara.hertzbeat.collector.collect.memcached.MemcachedCollectImpl
+org.dromara.hertzbeat.collector.collect.nebulagraph.NebulaGraphCollectImpl
 org.dromara.hertzbeat.collector.collect.pop3.Pop3CollectImpl
