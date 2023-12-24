@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
@@ -25,9 +26,7 @@ import org.dromara.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
-import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +41,7 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * nginx collect
+ *
  * @author a-little-fool
  */
 @Slf4j
@@ -83,7 +83,8 @@ public class NginxCollectImpl extends AbstractCollect {
         HttpUriRequest request = createHttpRequest(metrics.getNginx());
         try {
             // 发起http请求，获取响应数据
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
+            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
+                    .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -99,13 +100,8 @@ public class NginxCollectImpl extends AbstractCollect {
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
                 parseReqStatusResponse(builder, resp, metrics, responseTime);
             }
-        } catch (IOException e1) {
-            String errorMsg = CommonUtil.getMessageFromThrowable(e1);
-            log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
-        } catch (Exception e2) {
-            String errorMsg = CommonUtil.getMessageFromThrowable(e2);
+        } catch (Exception e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
@@ -119,10 +115,12 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     private void validateParams(Metrics metrics) throws Exception {
-        NginxProtocol nginxProtocol = metrics.getNginx();
-        if (metrics == null || nginxProtocol == null || nginxProtocol.isInValid()) {
+        final NginxProtocol nginxProtocol;
+
+        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
+        
         if (nginxProtocol.getUrl() == null
                 || "".equals(nginxProtocol.getUrl())
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
@@ -157,7 +155,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
-        Integer timeout = Integer.parseInt(nginxProtocol.getTimeout());
+        int timeout = Integer.parseInt(nginxProtocol.getTimeout());
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
                     .setConnectTimeout(timeout)
@@ -171,6 +169,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
     /**
      * 解析nginx自带ngx_http_stub_status_module模块暴露信息
+     *
      * @param builder
      * @param resp
      * @param metrics
@@ -185,7 +184,7 @@ public class NginxCollectImpl extends AbstractCollect {
          * Reading: 0 Writing: 1 Waiting: 1
          */
         List<String> aliasFields = metrics.getAliasFields();
-        Map<String,Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
+        Map<String, Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
         // 返回数据
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
@@ -205,13 +204,14 @@ public class NginxCollectImpl extends AbstractCollect {
 
     /**
      * 解析ngx_http_reqstat_module模块暴露信息
+     *
      * @param builder
      * @param resp
      * @param metrics
      * @param responseTime
      */
     private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
-                                          Long responseTime) {
+                                        Long responseTime) {
         /** example
          * zone_name       key     max_active      max_bw  traffic requests        active  bandwidth
          * imgstore_appid  43    27      6M      63G     374063  0        0
@@ -239,19 +239,9 @@ public class NginxCollectImpl extends AbstractCollect {
                         Object value = reflect(reqSatusResponse, methodName);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
                         valueRowBuilder.addColumns(String.valueOf(value));
-                    } catch (NoSuchMethodException e1) {
-                        String errorMsg = CommonUtil.getMessageFromThrowable(e1);
-                        log.info(errorMsg);
-                        builder.setCode(CollectRep.Code.FAIL);
-                        builder.setMsg(errorMsg);
-                    } catch (InvocationTargetException e2) {
-                        String errorMsg = CommonUtil.getMessageFromThrowable(e2);
-                        log.info(errorMsg);
-                        builder.setCode(CollectRep.Code.FAIL);
-                        builder.setMsg(errorMsg);
-                    } catch (IllegalAccessException e3) {
-                        String errorMsg = CommonUtil.getMessageFromThrowable(e3);
-                        log.info(errorMsg);
+                    } catch (Exception e) {
+                        String errorMsg = CommonUtil.getMessageFromThrowable(e);
+                        log.error(errorMsg);
                         builder.setCode(CollectRep.Code.FAIL);
                         builder.setMsg(errorMsg);
                     }
@@ -267,8 +257,8 @@ public class NginxCollectImpl extends AbstractCollect {
         return method.invoke(reqSatusResponse);
     }
 
-    private Map<String,Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
-        Map<String,Object> metricsMap = new HashMap<>(aliasFieldsSize);
+    private Map<String, Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
+        Map<String, Object> metricsMap = new HashMap<>(aliasFieldsSize);
         // 正则提取监控信息
         Pattern pattern = Pattern.compile(REGEX_SERVER);
         Matcher matcher = pattern.matcher(resp);
