@@ -56,6 +56,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_MEMCACHED = "memcached";
     /**
+     * protocol nebulagraph
+     */
+    String PROTOCOL_NEBULAGRAPH = "nebulaGraph";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";
