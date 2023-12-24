@@ -136,6 +136,11 @@ public class Metrics {
      */
     private MemcachedProtocol memcached;
     /**
+     * Monitoring configuration information using the nebulaGraph protocol
+     * 使用nebulaGraph的监控配置信息
+     */
+    private NebulaGraphProtocol nebulaGraph;
+    /**
      * Use udp implemented by socket for service port detection configuration information
      * 使用socket实现的udp进行服务端口探测配置信息
      */
