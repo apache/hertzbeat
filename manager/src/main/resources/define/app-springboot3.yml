@@ -111,6 +111,9 @@ metrics:
   # metrics - available
   # 监控指标 - available
   - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: available
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -122,6 +125,9 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: responseTime
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
         type: 0
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -155,6 +161,9 @@ metrics:
     priority: 1
     fields:
       - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
         type: 1
     protocol: http
     http:
@@ -167,12 +176,21 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
+    i18n:
+      zh-CN: 线程
+      en-US: threads
     priority: 2
     fields:
       - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
         type: 1
         label: true
       - field: size
+        i18n:
+          zh-CN: 大小
+          en-US: size
         type: 0
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
@@ -206,12 +224,21 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
+    i18n:
+      zh-CN: 内存使用
+      en-US: memory used
     priority: 4
     fields:
       - field: space
+        i18n:
+          zh-CN: 空间
+          en-US: space
         type: 1
         label: true
       - field: mem_used
+        i18n:
+          zh-CN: 已使用
+          en-US: memory used
         type: 0
         unit: MB
     aliasFields:
@@ -232,9 +259,15 @@ metrics:
       parseScript: '$'
 
   - name: health
+    i18n:
+      zh-CN: 健康状态
+      en-US: memory used
     priority: 5
     fields:
       - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
         type: 1
     protocol: http
     http:
