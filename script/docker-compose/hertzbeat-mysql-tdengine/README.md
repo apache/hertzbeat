@@ -43,8 +43,8 @@
    Execute the create database command
    
    `taos> show databases;`
-   
-   `taos> CREATE DATABASE hertzbeat KEEP 90 DAYS 10 BLOCKS 6 UPDATE 1;`
+
+   `taos> CREATE DATABASE hertzbeat KEEP 90 DURATION 10 BUFFER 16;`
 
 ##### Restart the application
 
