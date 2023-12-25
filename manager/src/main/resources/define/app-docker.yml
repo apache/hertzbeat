@@ -70,6 +70,9 @@ params:
     required: false
 metrics:
   - name: system
+    i18n:
+      zh-CN: 宿主机
+      en-US: system
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -81,29 +84,65 @@ metrics:
       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: name
+        i18n:
+          zh-CN: 主机名
+          en-US: name
         type: 1
       - field: version
+        i18n:
+          zh-CN: 版本
+          en-US: version
         type: 1
       - field: os
+        i18n:
+          zh-CN: 操作系统
+          en-US: os
         type: 1
       - field: root_dir
+        i18n:
+          zh-CN: 根目录
+          en-US: root dir
         type: 1
       - field: containers
+        i18n:
+          zh-CN: 容器总数
+          en-US: containers
         type: 0
       - field: containers_running
+        i18n:
+          zh-CN: 运行容器数
+          en-US: running containers
         type: 0
       - field: containers_paused
+        i18n:
+          zh-CN: 暂停容器数
+          en-US: paused containers
         type: 0
       - field: containers_stopped
+        i18n:
+          zh-CN: 已停止容器数
+          en-US: stopped containers
         type: 0
       - field: images
+        i18n:
+          zh-CN: 镜像数
+          en-US: images
         type: 0
       - field: ncpu
+        i18n:
+          zh-CN: CPU数量
+          en-US: ncpu
         type: 0
       - field: mem_total
+        i18n:
+          zh-CN: 内存总量
+          en-US: total memory
         type: 0
         unit: MB
       - field: system_time
+        i18n:
+          zh-CN: 系统时间
+          en-US: system time
         type: 1
     aliasFields:
       - Name
@@ -159,6 +198,9 @@ metrics:
       parseType: default
 
   - name: containers
+    i18n:
+      zh-CN: 容器
+      en-US: containers
     # The smaller the priority value (0-127), the higher the priority of the metrics. Lower-priority metricss will be scheduled after higher-priority metricss have been collected. metricss with the same priority will be scheduled to collect data in parallel.
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -170,16 +212,34 @@ metrics:
       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: id
+        i18n:
+          zh-CN: ID
+          en-US: ID
         type: 1
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
         type: 1
       - field: image
+        i18n:
+          zh-CN: 镜像
+          en-US: image
         type: 1
       - field: command
+        i18n:
+          zh-CN: 启动命令
+          en-US: command
         type: 1
       - field: state
+        i18n:
+          zh-CN: 当前状态
+          en-US: state
         type: 1
       - field: status
+        i18n:
+          zh-CN: 更新时间
+          en-US: status
         type: 1
     aliasFields:
       - Id
@@ -222,24 +282,48 @@ metrics:
       parseScript: '$.*'
 
   - name: stats
+    i18n:
+      zh-CN: 状态详情
+      en-US: stats
     priority: 2
     fields:
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
         type: 1
       - field: available_memory
+        i18n:
+          zh-CN: 可用内存
+          en-US: available memory
         type: 0
         unit: MB
       - field: used_memory
+        i18n:
+          zh-CN: 已用内存
+          en-US: used memory
         type: 0
         unit: MB
       - field: memory_usage
+        i18n:
+          zh-CN: 内存使用率
+          en-US: memory usage
         type: 0
         unit: '%'
       - field: cpu_delta
+        i18n:
+          zh-CN: 已使用CPU数
+          en-US: cpu delta
         type: 0
       - field: number_cpus
+        i18n:
+          zh-CN: 可使用CPU数
+          en-US: cpus number
         type: 0
       - field: cpu_usage
+        i18n:
+          zh-CN: CPU使用率
+          en-US: cpu usage
         type: 0
         unit: '%'
     aliasFields:
