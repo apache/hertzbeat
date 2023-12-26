@@ -213,7 +213,7 @@ metrics:
 
   - name: thread_state
     visible: false
-    priority: 1
+    priority: 2
     fields:
       - field: state
         type: 1
@@ -228,7 +228,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
-    priority: 2
+    priority: 3
     fields:
       - field: state
         type: 1
@@ -252,7 +252,7 @@ metrics:
 
   - name: space_name
     visible: false
-    priority: 3
+    priority: 4
     fields:
       - field: id
         type: 1
@@ -267,7 +267,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
-    priority: 4
+    priority: 5
     fields:
       - field: space
         type: 1
@@ -293,7 +293,7 @@ metrics:
       parseScript: '$'
 
   - name: health
-    priority: 5
+    priority: 6
     fields:
       - field: status
         type: 1
@@ -308,7 +308,7 @@ metrics:
 
   - name: route_id
     visible: false
-    priority: 6
+    priority: 7
     fields:
       - field: name
         type: 1
@@ -323,7 +323,7 @@ metrics:
       parseScript: '$[*].route_id'
 
   - name: route_info
-    priority: 7
+    priority: 8
     fields:
       - field: route_id
         type: 1

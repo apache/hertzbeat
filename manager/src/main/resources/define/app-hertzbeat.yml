@@ -184,7 +184,7 @@ metrics:
     priority: 1
     fields:
       - field: state
-        type: 1
+        type: 2
     protocol: http
     http:
       host: ^_^host^_^
@@ -202,7 +202,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
-    priority: 2
+    priority: 3
     fields:
       - field: state
         type: 1
@@ -231,7 +231,7 @@ metrics:
 
   - name: space_name
     visible: false
-    priority: 3
+    priority: 4
     fields:
       - field: id
         type: 1
@@ -252,7 +252,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
-    priority: 4
+    priority: 5
     fields:
       - field: space
         type: 1
