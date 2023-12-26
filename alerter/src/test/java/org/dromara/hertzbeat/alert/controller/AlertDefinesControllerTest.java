@@ -131,4 +131,13 @@ class AlertDefinesControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
     }
+
+    /**
+     * 测试导出告警阀值规则
+     * @throws Exception
+     */
+    @Test
+    void export() throws Exception {
+
+    }
 }
