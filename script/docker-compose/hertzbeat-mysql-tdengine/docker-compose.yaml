@@ -37,15 +37,14 @@ services:
       - hertzbeat
 
   tdengine:
-    image: tdengine/tdengine:2.4.0.12
+    image: tdengine/tdengine:3.2.2.0
     container_name: compose-tdengine
     hostname: tdengine
     restart: always
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "6030-6049"
-      - "6030-6049/udp"
+      - "6041"
     volumes:
       - ./dbdata/taosdata:/var/lib/taos/
     networks:

@@ -44,14 +44,14 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "8428-8428"
+      - "8428"
     volumes:
       - ./dbdata/tsdbdata:/victoria-metrics-data
     networks:
       - hertzbeat
 
   hertzbeat:
-    image: tancloud/hertzbeat:v1.4.2
+    image: tancloud/hertzbeat
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
