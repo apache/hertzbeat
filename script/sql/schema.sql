@@ -370,4 +370,60 @@ CREATE TABLE  hzb_collector_monitor_bind
     index index_collector_monitor (collector, monitor_id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ----------------------------
+-- Table structure for hzb_status_page_org
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_status_page_org ;
+CREATE TABLE  hzb_status_page_org
+(
+    id           bigint           not null auto_increment comment '主键ID',
+    name         varchar(255)     not null comment 'org name',
+    desc         varchar(255)     comment 'org description',
+    home         varchar(255)     not null comment 'org home link',
+    logo         longtext         comment 'org logo pic, only support svg format',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id),
+    unique key (component)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_status_page_config
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_status_page_config ;
+CREATE TABLE  hzb_status_page_config
+(
+    id           bigint           not null auto_increment comment '主键ID',
+    org_id       bigint           not null comment 'org id',
+    component    varchar(255)     not null comment 'component name',
+    desc         varchar(255)     comment 'component description',
+    tag          varchar(255)     not null comment '匹配标签{labelName:labelValue}',
+    type         tinyint          not null default 0 comment '状态计算方式: 0-自动 1-手工',
+    state        tinyint          comment '手工时设置的组件状态: 0-Normal 1-Abnormal 2-Suspended',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for hzb_status_page_history
+-- ----------------------------
+DROP TABLE IF EXISTS  hzb_status_page_history ;
+CREATE TABLE  hzb_status_page_history
+(
+    id           bigint           not null auto_increment comment '主键ID',
+    component_id bigint           not null comment 'component id',
+    state        tinyint          not null comment '组件状态: 0-Normal 1-Abnormal 2-Suspended',
+    timestamp    bigint           not null comment '状态计算时间戳',
+    creator      varchar(100)     comment 'creator',
+    modifier     varchar(100)     comment 'modifier',
+    gmt_create   timestamp        default current_timestamp comment 'create time',
+    gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
+    primary key (id)
+) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
