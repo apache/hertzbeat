@@ -29,7 +29,9 @@ import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
+import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.util.*;
 import org.springframework.util.Assert;
@@ -37,7 +39,6 @@ import org.snmp4j.*;
 import org.snmp4j.fluent.SnmpBuilder;
 import org.snmp4j.fluent.SnmpCompletableFuture;
 import org.snmp4j.fluent.TargetBuilder;
-import org.snmp4j.security.SecurityModel;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -90,11 +91,18 @@ public class SnmpCollectImpl extends AbstractCollect {
             if (snmpVersion == SnmpConstants.version3) {
                 target = targetBuilder
                         .user(snmpProtocol.getUsername())
-                        .auth(TargetBuilder.AuthProtocol.hmac192sha256).authPassphrase(snmpProtocol.getAuthPassphrase())
-                        .priv(TargetBuilder.PrivProtocol.aes128).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .auth(TargetBuilder.AuthProtocol.md5).authPassphrase(snmpProtocol.getAuthPassphrase())
+                        .priv(TargetBuilder.PrivProtocol.des).privPassphrase(snmpProtocol.getPrivPassphrase())
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
+                // todo 有待测试
+                USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
+                SecurityModels.getInstance().addSecurityModel(usm);
+                snmpService.getUSM().addUser(
+                        new OctetString(snmpProtocol.getUsername()),
+                        new UsmUser(new OctetString(snmpProtocol.getUsername()), AuthMD5.ID, new OctetString(snmpProtocol.getAuthPassphrase()), PrivDES.ID, new OctetString(snmpProtocol.getPrivPassphrase()))
+                );
             } else if (snmpVersion == SnmpConstants.version1) {
                 target = targetBuilder
                         .v1()
