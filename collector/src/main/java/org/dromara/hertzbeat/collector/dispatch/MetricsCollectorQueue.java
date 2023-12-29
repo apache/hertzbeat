@@ -33,7 +33,7 @@ public class MetricsCollectorQueue {
     private final PriorityBlockingQueue<MetricsCollect> jobQueue;
 
     public MetricsCollectorQueue() {
-        jobQueue = new PriorityBlockingQueue<>(2000);
+        jobQueue = new PriorityBlockingQueue<>();
     }
 
     public void addJob(MetricsCollect job) {
@@ -41,7 +41,7 @@ public class MetricsCollectorQueue {
     }
 
     public MetricsCollect getJob() throws InterruptedException {
-        return jobQueue.poll(2, TimeUnit.SECONDS);
+        return jobQueue.poll(60, TimeUnit.SECONDS);
     }
 
 }

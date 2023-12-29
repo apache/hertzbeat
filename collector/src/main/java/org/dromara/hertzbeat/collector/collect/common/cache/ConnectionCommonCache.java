@@ -18,6 +18,7 @@
 package org.dromara.hertzbeat.collector.collect.common.cache;
 
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,12 +27,12 @@ import java.util.Optional;
 import java.util.concurrent.*;
 
 /**
- * lru common resource cache
+ * lru common resource cache for client-server connection
  *
  * @author tomsun28
  */
 @Slf4j
-public class CommonCache {
+public class ConnectionCommonCache {
 
     /**
      * default cache time 800s
@@ -61,9 +62,9 @@ public class CommonCache {
     /**
      * the executor who clean cache when timeout
      */
-    private ThreadPoolExecutor cleanTimeoutExecutor;
+    private ThreadPoolExecutor timeoutCleanerExecutor;
 
-    private CommonCache() {
+    private ConnectionCommonCache() {
         init();
     }
 
@@ -79,20 +80,23 @@ public class CommonCache {
                     log.info("lru cache discard key: {}, value: {}.", key, value);
                 }).build();
         timeoutMap = new ConcurrentHashMap<>(DEFAULT_MAX_CAPACITY >> 6);
-        cleanTimeoutExecutor = new ThreadPoolExecutor(1, 1,
+        // last-first-coverage algorithm, run the first and last thread, discard mid
+        timeoutCleanerExecutor = new ThreadPoolExecutor(1, 1,
                 1, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(1),
-                r -> new Thread(r, "lru-cache-timeout-cleaner"),
+                r -> new Thread(r, "connection-cache-timeout-cleaner"),
                 new ThreadPoolExecutor.DiscardOldestPolicy());
         // init monitor available detector cyc task
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1,
-                r -> new Thread(r, "lru-cache-available-detector"));
-        scheduledExecutor.scheduleWithFixedDelay(this::detectCacheAvailable,
-                2, 20, TimeUnit.MINUTES);
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("connection-cache-ava-detector-%d")
+                .setDaemon(true)
+                .build();
+        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1, threadFactory);
+        scheduledExecutor.scheduleWithFixedDelay(this::detectCacheAvailable, 2, 20, TimeUnit.MINUTES);
     }
 
     /**
-     * detect all cache available, cleanup not ava object
+     * detect all cache available, cleanup not ava connection
      */
     private void detectCacheAvailable() {
         try {
@@ -155,7 +159,7 @@ public class CommonCache {
         }
         cacheMap.put(key, value);
         timeoutMap.put(key, new Long[]{System.currentTimeMillis(), timeDiff});
-        cleanTimeoutExecutor.execute(() -> {
+        timeoutCleanerExecutor.execute(() -> {
             try {
                 cleanTimeoutCache();
                 Thread.sleep(10 * 1000);
@@ -224,7 +228,7 @@ public class CommonCache {
      *
      * @return cache
      */
-    public static CommonCache getInstance() {
+    public static ConnectionCommonCache getInstance() {
         return SingleInstance.INSTANCE;
     }
 
@@ -232,6 +236,6 @@ public class CommonCache {
      * static instance
      */
     private static class SingleInstance {
-        private static final CommonCache INSTANCE = new CommonCache();
+        private static final ConnectionCommonCache INSTANCE = new ConnectionCommonCache();
     }
 }
