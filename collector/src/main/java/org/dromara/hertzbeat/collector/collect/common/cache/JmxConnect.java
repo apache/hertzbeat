@@ -11,7 +11,7 @@ import javax.management.remote.JMXConnector;
 @Slf4j
 public class JmxConnect implements CacheCloseable {
 
-    private JMXConnector connection;
+    private final JMXConnector connection;
 
     public JmxConnect(JMXConnector connection) {
         this.connection = connection;
@@ -25,7 +25,7 @@ public class JmxConnect implements CacheCloseable {
                 connection.close();
             }
         } catch (Exception e) {
-            log.error("close redis connect error: {}", e.getMessage());
+            log.error("[connection common cache] close jmx connect error: {}", e.getMessage());
         }
     }
 
