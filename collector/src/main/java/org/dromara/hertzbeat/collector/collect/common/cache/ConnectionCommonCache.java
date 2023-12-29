@@ -35,12 +35,12 @@ import java.util.concurrent.*;
 public class ConnectionCommonCache {
 
     /**
-     * default cache time 800s
+     * default cache time 200s
      */
-    private static final long DEFAULT_CACHE_TIMEOUT = 800 * 1000L;
+    private static final long DEFAULT_CACHE_TIMEOUT = 200 * 1000L;
 
     /**
-     * default cache num
+     * default max cache num
      */
     private static final int DEFAULT_MAX_CAPACITY = 10000;
 
@@ -77,12 +77,11 @@ public class ConnectionCommonCache {
                     if (value instanceof CacheCloseable) {
                         ((CacheCloseable) value).close();
                     }
-                    log.info("lru cache discard key: {}, value: {}.", key, value);
+                    log.info("connection common cache discard key: {}, value: {}.", key, value);
                 }).build();
         timeoutMap = new ConcurrentHashMap<>(DEFAULT_MAX_CAPACITY >> 6);
         // last-first-coverage algorithm, run the first and last thread, discard mid
-        timeoutCleanerExecutor = new ThreadPoolExecutor(1, 1,
-                1, TimeUnit.SECONDS,
+        timeoutCleanerExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(1),
                 r -> new Thread(r, "connection-cache-timeout-cleaner"),
                 new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -114,7 +113,7 @@ public class ConnectionCommonCache {
                 }
             });
         } catch (Exception e) {
-            log.error("detect cache available error: {}.", e.getMessage(), e);
+            log.error("connection common cache detect cache available error: {}.", e.getMessage(), e);
         }
     }
 
@@ -131,17 +130,18 @@ public class ConnectionCommonCache {
                     timeoutMap.put(key, new Long[]{currentTime, DEFAULT_CACHE_TIMEOUT});
                 } else if (cacheTime[0] + cacheTime[1] < currentTime) {
                     // timeout, remove this object cache
-                    log.warn("[cache] clean the timeout cache, key {}", key);
+                    log.warn("[connection common cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
                     if (value instanceof CacheCloseable) {
-                        log.warn("[cache] close the timeout cache, key {}", key);
+                        log.warn("[connection common cache] close the timeout cache, key {}", key);
                         ((CacheCloseable) value).close();
                     }
                 }
             });
+            Thread.sleep(20 * 1000);
         } catch (Exception e) {
-            log.error("[cache] clean timeout cache error: {}.", e.getMessage(), e);
+            log.error("[connection common cache] clean timeout cache error: {}.", e.getMessage(), e);
         }
     }
 
@@ -159,14 +159,7 @@ public class ConnectionCommonCache {
         }
         cacheMap.put(key, value);
         timeoutMap.put(key, new Long[]{System.currentTimeMillis(), timeDiff});
-        timeoutCleanerExecutor.execute(() -> {
-            try {
-                cleanTimeoutCache();
-                Thread.sleep(10 * 1000);
-            } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
-            }
-        });
+        timeoutCleanerExecutor.execute(this::cleanTimeoutCache);
     }
 
     /**
@@ -189,18 +182,18 @@ public class ConnectionCommonCache {
     public Optional<Object> getCache(Object key, boolean refreshCache) {
         Long[] cacheTime = timeoutMap.get(key);
         if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
-            log.info("[cache] not hit the cache, key {}.", key);
+            log.info("[connection common cache] not hit the cache, key {}.", key);
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {
-            log.warn("[cache] is timeout, remove it, key {}.", key);
+            log.warn("[connection common cache] is timeout, remove it, key {}.", key);
             timeoutMap.remove(key);
             cacheMap.remove(key);
             return Optional.empty();
         }
         Object value = cacheMap.get(key);
         if (value == null) {
-            log.error("[cache] value is null, remove it, key {}.", key);
+            log.error("[connection common cache] value is null, remove it, key {}.", key);
             cacheMap.remove(key);
             timeoutMap.remove(key);
         } else if (refreshCache) {
@@ -226,14 +219,14 @@ public class ConnectionCommonCache {
     /**
      * get common cache instance
      *
-     * @return cache
+     * @return connection common cache
      */
     public static ConnectionCommonCache getInstance() {
         return SingleInstance.INSTANCE;
     }
 
     /**
-     * static instance
+     * static single instance
      */
     private static class SingleInstance {
         private static final ConnectionCommonCache INSTANCE = new ConnectionCommonCache();
