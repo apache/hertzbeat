@@ -41,7 +41,7 @@ public class MetricsCollectorQueue {
     }
 
     public MetricsCollect getJob() throws InterruptedException {
-        return jobQueue.poll(60, TimeUnit.SECONDS);
+        return jobQueue.poll(2, TimeUnit.SECONDS);
     }
 
 }
