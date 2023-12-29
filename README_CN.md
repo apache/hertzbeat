@@ -418,8 +418,6 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[User Club](https://support.qq.com/products/379369)
-
 [Follow Us Twitter](https://twitter.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
