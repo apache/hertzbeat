@@ -25,7 +25,7 @@ import java.util.Optional;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.MongodbConnect;
 import org.dromara.hertzbeat.common.util.CommonUtil;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
@@ -176,7 +176,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(mongodbProtocol.getHost()).port(mongodbProtocol.getPort())
                 .username(mongodbProtocol.getUsername()).password(mongodbProtocol.getPassword()).build();
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
         MongoClient mongoClient = null;
         if (cacheOption.isPresent()) {
             MongodbConnect mongodbConnect = (MongodbConnect) cacheOption.get();
@@ -192,7 +192,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                     log.error(e2.getMessage());
                 }
                 mongoClient = null;
-                CommonCache.getInstance().removeCache(identifier);
+                ConnectionCommonCache.getInstance().removeCache(identifier);
             }
         }
         if (mongoClient != null) {
@@ -206,7 +206,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
         mongoClient = MongoClients.create(url);
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
-        CommonCache.getInstance().addCache(identifier, mongodbConnect);
+        ConnectionCommonCache.getInstance().addCache(identifier, mongodbConnect);
         return mongoClient;
     }
 }

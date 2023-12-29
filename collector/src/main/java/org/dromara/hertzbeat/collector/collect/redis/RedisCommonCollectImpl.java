@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.collector.collect.redis;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.RedisConnect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
@@ -166,7 +166,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClient redisClient = buildSingleClient(redisProtocol);
             connection = redisClient.connect();
-            CommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -204,7 +204,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
             connection = redisClusterClient.connect();
-            CommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -217,7 +217,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
         if (cacheOption.isPresent()) {
             RedisConnect redisConnect = (RedisConnect) cacheOption.get();
             connection = redisConnect.getConnection();
@@ -228,7 +228,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     log.info("The redis connect form cache, close error: {}", e.getMessage());
                 }
                 connection = null;
-                CommonCache.getInstance().removeCache(identifier);
+                ConnectionCommonCache.getInstance().removeCache(identifier);
             }
         }
         return connection;

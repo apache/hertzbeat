@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RedisConnect implements CacheCloseable {
 
-    private StatefulConnection<String, String> connection;
+    private final StatefulConnection<String, String> connection;
 
     public RedisConnect(StatefulConnection<String, String> connection) {
         this.connection = connection;
@@ -40,7 +40,7 @@ public class RedisConnect implements CacheCloseable {
                 connection.closeAsync();
             }
         } catch (Exception e) {
-            log.error("close redis connect error: {}", e.getMessage());
+            log.error("[connection common cache] close redis connect error: {}", e.getMessage());
         }
     }
 

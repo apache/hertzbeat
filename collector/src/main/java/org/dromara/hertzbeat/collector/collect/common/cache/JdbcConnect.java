@@ -28,7 +28,7 @@ import java.sql.Connection;
 @Slf4j
 public class JdbcConnect implements CacheCloseable {
 
-    private Connection connection;
+    private final Connection connection;
 
     public JdbcConnect(Connection connection) {
         this.connection = connection;
@@ -41,7 +41,7 @@ public class JdbcConnect implements CacheCloseable {
                 connection.close();
             }
         } catch (Exception e) {
-            log.error("close jdbc connect error: {}", e.getMessage());
+            log.error("[connection common cache] close jdbc connect error: {}", e.getMessage());
         }
     }
 
