@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.collector.collect.database;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
@@ -138,7 +138,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
             JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
@@ -161,7 +161,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     log.error(e2.getMessage());
                 }
                 statement = null;
-                CommonCache.getInstance().removeCache(identifier);
+                ConnectionCommonCache.getInstance().removeCache(identifier);
             }
         }
         if (statement != null) {
@@ -175,7 +175,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         statement.setQueryTimeout(timeoutSecond);
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        CommonCache.getInstance().addCache(identifier, jdbcConnect);
+        ConnectionCommonCache.getInstance().addCache(identifier, jdbcConnect);
         return statement;
     }
 
