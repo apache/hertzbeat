@@ -413,8 +413,6 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[User Club](https://support.qq.com/products/379369)
-
 [Follow Us Twitter](https://twitter.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
@@ -441,8 +439,7 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 ##### Sponsor     
 
-- Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.        
-- Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.       
+- Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.         
 
 
 ##### Open-Source Project Build From Open-Source
