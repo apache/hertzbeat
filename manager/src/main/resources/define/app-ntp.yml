@@ -21,7 +21,7 @@ category: service
 app: ntp
 # 监控类型国际化名称
 name:
-  zh-CN: NTP监控
+  zh-CN: NTP服务器
   en-US: NTP Server
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
