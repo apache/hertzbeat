@@ -32,7 +32,7 @@ name:
 help:
   zh-CN: HertzBeat 以 ms 为指标单位，对端 HOST 地址进行 PING 操作，判断其连通性。您可以点击“<i>新建 PING 连通性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses 'ms' as the metric unit to PING the end HOST address and determines the connectivity. You could click the "Add API " button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat以ms為名額組織，對端HOST地址進行PING操作，判斷其連通性。 您可以點擊“<i>新建PING連通性</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-TW: HertzBeat 以 ms 爲指標單位，對端 HOST 地址進行 PING 操作，判斷其連通性。您可以點擊“<i>新建 PING 連通性</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/ping
   en-US: https://hertzbeat.com/docs/help/ping
@@ -96,7 +96,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
     # Monitoring and collection protocols eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: icmp

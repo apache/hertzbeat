@@ -28,7 +28,7 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 使用 HTTP 和 JDBC 协议对 TiDB 的通用性能指标进行采集监控，点击查看开启步骤</a>。<br>您可以点击“<i>新建 TiDB 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors general performance metrics of TiDB through HTTP adn JMX protocol. <br> You could click the "<i>New TiDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>".
+  en-US: HertzBeat monitors general performance metrics of TiDB through HTTP adn JDBC protocol. <br> You could click the "<i>New TiDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>".
   zh-TW: HertzBeat 使用 HTTP 和 JDBC 協議對 TiDB 的通用性能指標進行採集監控，點擊查看開啟步驟</a>。 <br>您可以點擊“<i>新建 TiDB 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/tidb

@@ -1,7 +1,7 @@
 <app-help-massage-show
   [guild_link]="'alert.help.notice.link' | i18n"
   [help_massage_content]="'alert.help.notice' | i18n"
-  [icon_name]="'monitor_icon.alert_notice' | i18n"
+  [icon_name]="'notification'"
   [module_name]="'menu.alert.dispatch'"
 ></app-help-massage-show>
 <nz-divider></nz-divider>
@@ -365,7 +365,7 @@
             [nzOptions]="receiversOption"
             id="receiver"
             name="receiver"
-            nzPlaceHolder="Select a person"
+            nzPlaceHolder="Select a receiver"
             nzShowSearch
             required
           >
@@ -477,7 +477,7 @@
     </form>
   </div>
 </nz-modal>
-<!-- 新增或修改消息接收人弹出框 -->
+<!-- 新增或修改通知媒介弹出框 -->
 <nz-modal
   (nzOnCancel)="onManageReceiverModalCancel()"
   (nzOnOk)="onManageReceiverModalOk()"

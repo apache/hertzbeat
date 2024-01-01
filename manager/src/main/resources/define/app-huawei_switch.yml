@@ -22,14 +22,14 @@ app: huawei_switch
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
-  zh-CN: Huawei通用交换机
+  zh-CN: 华为通用交换机
   en-US: Huawei Switch
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 Huawei 通用交换机的通用指标进行测量监控。<br>您可以点击 “<i>新建 Huawei通用交换机</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors Huawei Switch through general performance metric. You could click the "<i>New Huawei Switch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對Huawei通用交換機的通用名額進行量測監控。<br>您可以點擊“<i>新建Huawei通用交換機</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 协议</a> 对 华为交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 华为通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring Huawei Switch general performance metrics. <br>You can click the "<i>New Huawei Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 協議</a> 對 华为交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 华为通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/huawei_switch
   en-US: https://hertzbeat.com/docs/help/huawei_switch

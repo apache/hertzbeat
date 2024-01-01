@@ -110,9 +110,19 @@
             "help/port",
             "help/fullsite",
             "help/ssl_cert",
+            "help/nginx",
+            "help/pop3",
+            "help/smtp",
+            "help/ntp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "program",
+          "items": [
             "help/jvm",
-            "help/springboot2"
-
+            "help/springboot2",
+            "help/dynamic_tp"
           ]
         },
         {
@@ -126,8 +136,15 @@
             "help/oracle",
             "help/dm",
             "help/opengauss",
-            "help/iotdb",
-            "help/redis"
+            "help/nebulaGraph"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "cache",
+          "items": [
+            "help/redis",
+            "help/memcached"
           ]
         },
         {
@@ -145,14 +162,31 @@
           "label": "mid",
           "items": [
             "help/zookeeper",
-            "help/kafka",
-            "help/tomcat",
             "help/shenyu",
-            "help/dynamic_tp",
             "help/rabbitmq",
             "help/activemq",
-            "help/jetty",
-            "help/hadoop"
+            "help/spring_gateway"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "bigdata",
+          "items": [
+            "help/spark",
+            "help/doris_be",
+            "help/doris_fe",
+            "help/hadoop",
+            "help/iotdb",
+            "help/hive",
+            "help/airflow"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "webserver",
+          "items": [
+            "help/tomcat",
+            "help/jetty"
           ]
         },
         {

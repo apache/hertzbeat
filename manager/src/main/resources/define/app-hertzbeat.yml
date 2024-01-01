@@ -170,6 +170,12 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.data'
 
@@ -178,31 +184,25 @@ metrics:
     priority: 1
     fields:
       - field: state
-        type: 1
+        type: 2
     protocol: http
     http:
-      # http host: ipv4 ipv6 domain
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # http port
-      # 端口
       port: ^_^port^_^
-      # http url
-      # url请求接口路径
       url: /actuator/metrics/jvm.threads.states
-      # http method: GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # if enabled https, default value is false
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
-    priority: 2
+    priority: 3
     fields:
       - field: state
         type: 1
@@ -215,56 +215,44 @@ metrics:
       - number=#`$.measurements[?(@.statistic == "VALUE")].value`
     protocol: http
     http:
-      # http host: ipv4 ipv6 domain
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # http port
-      # 端口
       port: ^_^port^_^
-      # http url
-      # url请求接口路径
       url: /actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
-      # http method: GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # if enabled https, default value is false
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
   - name: space_name
     visible: false
-    priority: 3
+    priority: 4
     fields:
       - field: id
         type: 1
     protocol: http
     http:
-      # http host: ipv4 ipv6 domain
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # http port
-      # 端口
       port: ^_^port^_^
-      # http url
-      # url请求接口路径
       url: /actuator/metrics/jvm.memory.used
-      # http method: GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # if enabled https, default value is false
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
-    priority: 4
+    priority: 5
     fields:
       - field: space
         type: 1
@@ -280,22 +268,16 @@ metrics:
       - mem_used=B->MB
     protocol: http
     http:
-      # http host: ipv4 ipv6 domain
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # http port
-      # 端口
       port: ^_^port^_^
-      # http url
-      # url请求接口路径
       url: /actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
-      # http method: GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # if enabled https, default value is false
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'

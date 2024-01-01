@@ -8,15 +8,15 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力.   
+> An open-source, real-time monitoring system with custom-monitoring, performance-cluster, prometheus-compatible and agentless. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控能力.   
 
+[<img alt="discord" src="https://img.shields.io/badge/Chat-On%20Discord-brightgreen" height="25"/>](https://discord.gg/Fb6M73htGr)
+[<img alt="reddit" src="https://img.shields.io/badge/Reddit-%20Community-brightgreen" height="25"/>](https://www.reddit.com/r/hertzbeat/)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
-[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![QQ](https://img.shields.io/badge/QQ-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 **Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
@@ -25,7 +25,7 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.   
+[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster, prometheus-compatible and agentless capabilities.   
 
 ### Features
 
@@ -42,9 +42,9 @@
 
 ----
 
-[![hertzbeat](home/static/img/home/1.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/)   
+![hertzbeat](home/static/img/home/1.png)
 
-[![hertzbeat](home/static/img/home/9.png)](https://www.bilibili.com/video/BV1Vc411V7BJ/) 
+![hertzbeat](home/static/img/home/9.png)
 
 ----
 
@@ -385,8 +385,11 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://linuxsuren.github.io/open-source-best-practice/"><img src="https://avatars.githubusercontent.com/u/1450685?v=4?s=100" width="100px;" alt="Rick"/><br /><sub><b>Rick</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Tests">⚠️</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZY945"><img src="https://avatars.githubusercontent.com/u/74083801?v=4?s=100" width="100px;" alt="东风"/><br /><sub><b>东风</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ZY945" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZY945"><img src="https://avatars.githubusercontent.com/u/74083801?v=4?s=100" width="100px;" alt="东风"/><br /><sub><b>东风</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ZY945" title="Code">💻</a> <a href="#design-ZY945" title="Design">🎨</a> <a href="https://github.com/dromara/hertzbeat/commits?author=ZY945" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/prolevel1"><img src="https://avatars.githubusercontent.com/u/51995525?v=4?s=100" width="100px;" alt="sonam singh"/><br /><sub><b>sonam singh</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=prolevel1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZhangZixuan1994"><img src="https://avatars.githubusercontent.com/u/20011653?v=4?s=100" width="100px;" alt="ZhangZixuan1994"/><br /><sub><b>ZhangZixuan1994</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ZhangZixuan1994" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hurenjie1"><img src="https://avatars.githubusercontent.com/u/40120355?v=4?s=100" width="100px;" alt="SHIG"/><br /><sub><b>SHIG</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=hurenjie1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://tslj1024.github.io/"><img src="https://avatars.githubusercontent.com/u/155222677?v=4?s=100" width="100px;" alt="泰上老菌"/><br /><sub><b>泰上老菌</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=tslj1024" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -402,17 +405,15 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 ##### Channel
 
-WeChat Group : Add friend `tan-cloud`, and will invite you to the group.   
+**[Chat On Discord](https://discord.gg/Fb6M73htGr)**
 
-[QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Add group num `236915833`   
+**WeChat Group** : Add friend `tan-cloud` and will invite you to the group.
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
-[Chat On Discord](https://discord.gg/Fb6M73htGr)
+[QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `236915833`
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[User Club](https://support.qq.com/products/379369)
+[Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
 [Follow Us Twitter](https://twitter.com/hertzbeat1024)
 
@@ -440,8 +441,7 @@ WeChat Group : Add friend `tan-cloud`, and will invite you to the group.
 
 ##### Sponsor     
 
-- Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.        
-- Thanks [蓝易云(全新智慧上云)](https://www.tsyvps.com/aff/BZBEGYLX) sponsored server node.       
+- Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.         
 
 
 ##### Open-Source Project Build From Open-Source

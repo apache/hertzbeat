@@ -21,14 +21,14 @@ category: service
 app: websocket
 # 监控类型国际化名称
 name:
-  zh-CN: WebSocket监控
-  en-US: WebSocket MONITORS
+  zh-CN: WebSocket
+  en-US: WebSocket
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 WebSocket 服务的首次握手的响应等相关指标进行监测。
-  en-US: HertzBeat monitors metrics such as the response of the WebSocket service's first handshake.
-  zh-TW: HertzBeat對WebSocket服務的首次握手的響應等相關名額進行監測。
+  zh-CN: HertzBeat 对 WebSocket 服务的首次握手的响应等相关指标进行监测。<br>您可以点击 “<i>新建 WebSocket监控</i>” 并配置路径进行添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors metrics such as the response of the WebSocket service's first handshake. <br>You can click "<i>New WebSocket</i>" and configure the uri to add it, or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 WebSocket 服務的首次握手的響應等相關指標進行監測。<br>您可以點擊 “<i>新建 WebSocket監控</i>” 並配置路徑進行添加，或者選擇“<i>更多操作</i>”，導入已有配置。
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -86,7 +86,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
       - field: httpVersion
         type: 1
         i18n:

@@ -73,13 +73,13 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String STATUS_PATH = "/api/v1/status/tsdb";
     private static final String STATUS = "status";
     private static final String STATUS_SUCCESS = "success";
-    private static final String NAME_KEY = "__name__";
+    private static final String LABEL_KEY_NAME = "__name__";
+    private static final String LABEL_KEY_JOB = "job";
+    private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String SPILT = "_";
     private static final String BASIC = "Basic";
-    private static final String MONITOR_TYPE_KEY = "__app__";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
-    private static final String MONITOR_ID_KEY = "__monitorId__";
     
     private final WarehouseProperties.StoreProperties.VictoriaMetricsProperties victoriaMetricsProp;
     
@@ -125,9 +125,16 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             return;
         }
         Map<String, String> defaultLabels = new HashMap<>(8);
-        defaultLabels.put(MONITOR_ID_KEY, String.valueOf(metricsData.getId()));
-        defaultLabels.put(MONITOR_TYPE_KEY, metricsData.getApp());
         defaultLabels.put(MONITOR_METRICS_KEY, metricsData.getMetrics());
+        boolean isPrometheusAuto = false;
+        if (metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
+            isPrometheusAuto = true;
+            defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp()
+                    .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));   
+        } else {
+            defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
+        }
+        defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
         
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Long[] timestamp = new Long[]{metricsData.getTime()};
@@ -154,7 +161,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 if (entry.getKey() != null && entry.getValue() != null) {
                     try {
                         labels.putAll(defaultLabels);
-                        labels.put(NAME_KEY, metricsData.getApp() + SPILT + metricsData.getMetrics() + SPILT + entry.getKey());
+                        String labelName = isPrometheusAuto ? metricsData.getMetrics() 
+                                : metricsData.getMetrics() + SPILT + entry.getKey();
+                        labels.put(LABEL_KEY_NAME, labelName);
                         labels.put(MONITOR_METRIC_KEY, entry.getKey());
                         VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                 .metric(labels)
@@ -191,8 +200,13 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String timeSeriesSelector = NAME_KEY + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" + 
-                "," + MONITOR_ID_KEY + "=\"" + monitorId + "\"";
+        String labelName = metrics + SPILT + metric;
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            labelName = metrics;
+        }
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" + 
+                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
+                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -219,9 +233,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     ).collect(Collectors.toList());
                     for (VictoriaMetricsContent content : contents) {
                         Map<String, String> labels = content.getMetric();
-                        labels.remove(NAME_KEY);
-                        labels.remove(MONITOR_ID_KEY);
-                        labels.remove(MONITOR_TYPE_KEY);
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -275,8 +289,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
             startTime = dateTime.toEpochSecond();
         }
-        String timeSeriesSelector = NAME_KEY + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" +
-                "," + MONITOR_ID_KEY + "=\"" + monitorId + "\"";
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" +
+                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -304,9 +318,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
-                        labels.remove(NAME_KEY);
-                        labels.remove(MONITOR_ID_KEY);
-                        labels.remove(MONITOR_TYPE_KEY);
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -339,9 +353,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
-                        labels.remove(NAME_KEY);
-                        labels.remove(MONITOR_ID_KEY);
-                        labels.remove(MONITOR_TYPE_KEY);
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -373,9 +387,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
-                        labels.remove(NAME_KEY);
-                        labels.remove(MONITOR_ID_KEY);
-                        labels.remove(MONITOR_TYPE_KEY);
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -407,9 +421,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
-                        labels.remove(NAME_KEY);
-                        labels.remove(MONITOR_ID_KEY);
-                        labels.remove(MONITOR_TYPE_KEY);
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);

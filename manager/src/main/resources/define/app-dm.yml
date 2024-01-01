@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 DM 达梦数据库的通用性能指标(basic、status、thread)进行采集监控，支持版本为 DM8+。<br>您可以点击“<i>新建 达梦数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors DM database through basic performance metrics such as status and thread, the version we support is DM8+. You could click the "<i>New DM</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat對DM達夢資料庫的通用性能指標（basic、status、thread）進行採集監控，支持版本為DM8+。<br>您可以點擊“<i>新建達夢資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: HertzBeat 对 DM达梦数据库 的通用性能指标(basic、status、thread)进行采集监控，支持版本为 DM8+。<br>您可以点击“<i>新建 达梦数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors DM database of basic performance metrics such as status and thread, the version we support is DM8+. You could click the "<i>New DM</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 DM達夢數據庫 的通用性能指標(basic、status、thread)進行采集監控，支持版本爲 DM8+。<br>您可以點擊“<i>新建 達夢數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/dm
   en-US: https://hertzbeat.com/docs/help/dm

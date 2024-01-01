@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
-  en-US: "HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>⚠️Note: You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>"
-  zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/spring_gateway
   en-US: https://hertzbeat.com/docs/help/spring_gateway
@@ -213,7 +213,7 @@ metrics:
 
   - name: thread_state
     visible: false
-    priority: 1
+    priority: 2
     fields:
       - field: state
         type: 1
@@ -228,7 +228,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
-    priority: 2
+    priority: 3
     fields:
       - field: state
         type: 1
@@ -252,7 +252,7 @@ metrics:
 
   - name: space_name
     visible: false
-    priority: 3
+    priority: 4
     fields:
       - field: id
         type: 1
@@ -267,7 +267,7 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
-    priority: 4
+    priority: 5
     fields:
       - field: space
         type: 1
@@ -293,7 +293,7 @@ metrics:
       parseScript: '$'
 
   - name: health
-    priority: 5
+    priority: 6
     fields:
       - field: status
         type: 1
@@ -308,7 +308,7 @@ metrics:
 
   - name: route_id
     visible: false
-    priority: 6
+    priority: 7
     fields:
       - field: name
         type: 1
@@ -323,7 +323,7 @@ metrics:
       parseScript: '$[*].route_id'
 
   - name: route_info
-    priority: 7
+    priority: 8
     fields:
       - field: route_id
         type: 1

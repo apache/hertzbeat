@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 使用<a class='help_module_content' href='https://zh.wikipedia.org/zh-cn/JMX'> JMX 协议</a>对 Tomcat 的通用性能指标(memory_pool、code_cache、class_loading、thread)进行采集监控，<a class='help_module_content' href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>点击查看开启步骤</a>。<br>您可以点击“<i>新建 Tomcat 应用服务器</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors general performance metrics of Tomcat through <a class='help_module_content' href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX protocol</a>. <a class='help_module_content' href='https://geekflare.com/enable-jmx-tomcat-to-monitor-administer/'>Click here to view the specific steps.</a> You could click the "<i>New Tomcat</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat使用<a href=' https://zh.wikipedia.org/zh-cn/JMX'> JMX協定</a>對Tomcat的通用性能指標（memory_pool、code_cache、class_loading、thread）進行採集監控，<a href='https://blog.csdn.net/weixin_41924764/article/details/108694239'>點擊查看開啟步驟</a>。<br>您可以點擊“<i>新建Tomcat應用伺服器</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 协议</a> 对 Tomcat 的通用性能指标(基础信息，内存池，类加载，线程信息等)进行采集监控。<br>⚠️注意：您需要在 Tomcat 应用中开启 JMX 服务，应用启动时添加 JMX 参数, 可自定义暴露端口,对外IP。<a href="https://hertzbeat.com/zh-cn/docs/help/tomcat">点击查看开启步骤</a>。
+  en-US: HertzBeat uses <a href='https://hertzbeat.com/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring and collect general performance metric of Tomcat. <br>⚠️Note:You need to enable JMX services in Tomcat application, and add the JXM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://hertzbeat.com/docs/help/tomcat'>Click here to view the activation steps.</a>"
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 協議</a> 對 Tomcat 的通用性能指標(基礎信息，內存池，類加載，線程信息等)進行采集監控。<br>⚠️注意：您需要在 Tomcat 應用中開啓 JMX 服務，應用啓動時添加 JMX 參數, 可自定義暴露端口,對外IP。<a href="https://hertzbeat.com/zh-cn/docs/help/tomcat">點擊查看開啓步驟</a>。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/tomcat
   en-US: https://hertzbeat.com/docs/help/tomcat

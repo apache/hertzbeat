@@ -173,6 +173,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
+    public Optional<Job> getAppDefineOption(String app) {
+        if (StringUtils.hasText(app)) {
+            Job appDefine = appDefines.get(app.toLowerCase());
+            return Optional.ofNullable(appDefine);
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
         if (StringUtils.hasLength(app)) {
