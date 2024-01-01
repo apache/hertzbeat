@@ -87,12 +87,10 @@ public class MailServiceImpl implements MailService {
         model.put("namePriority", bundle.getString("alerter.notify.priority"));
         model.put("priority", bundle.getString("alerter.priority." + alert.getPriority()));
         model.put("nameTriggerTime", bundle.getString("alerter.notify.triggerTime"));
+        model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
         if (CommonConstants.ALERT_STATUS_CODE_RESTORED == alert.getStatus()) {
-            model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
             model.put("nameRestoreTime", bundle.getString("alerter.notify.restoreTime"));
             model.put("restoreTime", simpleDateFormat.format(new Date(alert.getFirstAlarmTime())));
-        }else {
-            model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
         }
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
         model.put("nameContent", bundle.getString("alerter.notify.content"));
