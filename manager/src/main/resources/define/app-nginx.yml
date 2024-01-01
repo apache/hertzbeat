@@ -20,8 +20,8 @@ app: nginx
 # The app api i18n name
 # app api国际化名称
 name:
-  zh-CN: Nginx
-  en-US: Nginx
+  zh-CN: Nginx服务器
+  en-US: Nginx Server
 # 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通过配置 ngx_http_stub_status_module 对 nginx 的通用性能指标(nginx_status、req_status等)进行采集监控。<br>您可以点击“<i>新建 nginx</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
