@@ -381,7 +381,7 @@
 </div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md" style="height: 100%">
     <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
       <nz-timeline nzMode="left">
         <nz-timeline-item
@@ -408,7 +408,7 @@
       </nz-timeline>
     </nz-card>
   </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 7 }" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 9 }" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsEChartOption"
@@ -417,18 +417,6 @@
       [loading]="alertsLoading"
       (chartInit)="onAlertNumChartInit($event)"
       style="width: 100%; height: inherit; padding-left: 30px"
-      class="ant-card ant-card-bordered ant-card-hoverable"
-    ></div>
-  </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 5 }" class="mb-md" style="height: 100%">
-    <div
-      echarts
-      [options]="alertsDealEChartOption"
-      theme="default"
-      [autoResize]="true"
-      [loading]="alertsDealLoading"
-      (chartInit)="onAlertRateChartInit($event)"
-      style="width: 100%; height: inherit"
       class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>

@@ -1,3 +1,10 @@
+---
+id: ntp
+title: 监控 NTP 服务器
+sidebar_label: NTP 服务器
+keywords: [ open source monitoring tool, open source NTP monitoring tool, monitoring NTP metrics ]
+---
+
 NTP监控的中文文档如下：
 
 # NTP监控

@@ -21,7 +21,7 @@ category: service
 app: websocket
 # 监控类型国际化名称
 name:
-  zh-CN: WebSocket监控
+  zh-CN: WebSocket
   en-US: WebSocket
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息

@@ -39,7 +39,8 @@ public class CommonSshClient {
                 BuiltinDHFactories.VALUES,
                 ClientBuilder.DH2KEX
         ));
-        SSH_CLIENT.setSignatureFactories(new ArrayList<>(BuiltinSignatures.VALUES));
+        // todo when connect AlibabaCloud ubuntu server, custom signature factories will cause error, why?
+        // SSH_CLIENT.setSignatureFactories(new ArrayList<>(BuiltinSignatures.VALUES));
         SSH_CLIENT.start();
     }
 

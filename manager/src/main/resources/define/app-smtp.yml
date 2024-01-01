@@ -21,8 +21,8 @@ category: service
 app: smtp
 # 监控类型国际化名称
 name:
-  zh-CN: SMTP监控
-  en-US: SMTP Server
+  zh-CN: SMTP邮件服务器
+  en-US: SMTP Email Server
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
