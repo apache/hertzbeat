@@ -36,6 +36,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
