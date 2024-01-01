@@ -244,7 +244,7 @@ public class CalculateAlarm {
                     .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                     .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
                     .firstAlarmTime(currentTimeMilli)
-                    .lastAlarmTime(currentTimeMilli)
+                    .lastAlarmTime(notResolvedAlert.getLastAlarmTime())
                     .triggerTimes(1)
                     .build();
             alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
@@ -400,7 +400,7 @@ public class CalculateAlarm {
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                         .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
                         .firstAlarmTime(currentTimeMill)
-                        .lastAlarmTime(currentTimeMill)
+                        .lastAlarmTime(notResolvedAlert.getLastAlarmTime())
                         .triggerTimes(1)
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);

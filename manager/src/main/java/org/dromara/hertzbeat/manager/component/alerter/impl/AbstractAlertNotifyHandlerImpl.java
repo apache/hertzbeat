@@ -96,6 +96,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("priorityValue", alert.getPriority());
         model.put("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
         model.put("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        if (CommonConstants.ALERT_STATUS_CODE_RESTORED == alert.getStatus()) {
+            model.put("restoreTimeLabel", bundle.getString("alerter.notify.restoreTime"));
+            model.put("restoreTime", DTF.format(Instant.ofEpochMilli(alert.getFirstAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        }
         model.put("timesLabel", bundle.getString("alerter.notify.times"));
         model.put("times", alert.getTimes());
         model.put("contentLabel", bundle.getString("alerter.notify.content"));
