@@ -36,7 +36,10 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Mailbox sending service interface implementation class
@@ -56,6 +59,7 @@ public class MailServiceImpl implements MailService {
     protected NoticeConfigService noticeConfigService;
 
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public String buildAlertHtmlTemplate(final Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException {
@@ -82,10 +86,14 @@ public class MailServiceImpl implements MailService {
         model.put("namePriority", bundle.getString("alerter.notify.priority"));
         model.put("priority", bundle.getString("alerter.priority." + alert.getPriority()));
         model.put("nameTriggerTime", bundle.getString("alerter.notify.triggerTime"));
+        if (CommonConstants.ALERT_STATUS_CODE_RESTORED == alert.getStatus()) {
+            model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
+            model.put("nameRestoreTime", bundle.getString("alerter.notify.restoreTime"));
+            model.put("restoreTime", simpleDateFormat.format(new Date(alert.getFirstAlarmTime())));
+        }else {
+            model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
+        }
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastAlarmTime()));
-        model.put("lastTriggerTime", triggerTime);
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
         if (noticeTemplate == null) {
