@@ -111,7 +111,9 @@
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
-            "help/pop3"
+            "help/pop3",
+            "help/smtp",
+            "help/ntp"
           ]
         },
         {
@@ -133,14 +135,16 @@
             "help/sqlserver",
             "help/oracle",
             "help/dm",
-            "help/opengauss"
+            "help/opengauss",
+            "help/nebulaGraph"
           ]
         },
         {
           "type": "category",
           "label": "cache",
           "items": [
-            "help/redis"
+            "help/redis",
+            "help/memcached"
           ]
         },
         {
@@ -173,7 +177,8 @@
             "help/doris_fe",
             "help/hadoop",
             "help/iotdb",
-            "help/hive"
+            "help/hive",
+            "help/airflow"
           ]
         },
         {
