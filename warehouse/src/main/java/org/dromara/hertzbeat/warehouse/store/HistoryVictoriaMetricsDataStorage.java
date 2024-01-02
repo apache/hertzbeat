@@ -221,6 +221,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + EXPORT_PATH)
                     .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
+                    .queryParam("end", "now")
                     .build(true).toUri();
             ResponseEntity<String> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, String.class);
