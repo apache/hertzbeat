@@ -59,7 +59,7 @@ final class HuaweiCloudSmnAlertNotifyHandlerImpl extends AbstractAlertNotifyHand
             var response = smnClient.publishMessage(request);
             log.debug("huaweiCloud smn alert response: {}", response);
         } catch (Exception e) {
-            throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
+            throw new AlertNoticeException("[Huawei Cloud Smn Notify Error] " + e.getMessage());
         }
     }
 

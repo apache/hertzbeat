@@ -21,8 +21,8 @@ category: service
 app: dns
 # 监控类型国际化名称
 name:
-  zh-CN: DNS服务器
-  en-US: DNS Server
+  zh-CN: DNS服务器监控
+  en-US: DNS SERVER MONITORS
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
