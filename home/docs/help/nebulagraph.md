@@ -1,7 +1,7 @@
 ---
 id: nebulaGraph
 title: Monitoring NebulaGraph
-sidebar_label: NebulaGraph Monitor
+sidebar_label: NebulaGraph Database
 keywords: [ open source monitoring tool, open source NebulaGraph monitoring tool, monitoring NebulaGraph metrics ]
 ---
 

@@ -9,7 +9,7 @@ import org.apache.sshd.client.session.ClientSession;
  */
 @Slf4j
 public class SshConnect implements CacheCloseable {
-	private ClientSession clientSession;
+	private final ClientSession clientSession;
 	
 	public SshConnect(ClientSession clientSession) {
 		this.clientSession = clientSession;
@@ -22,7 +22,7 @@ public class SshConnect implements CacheCloseable {
 				clientSession.close();
 			}
 		} catch (Exception e) {
-			log.error("close ssh connect error: {}", e.getMessage());
+			log.error("[connection common cache] close ssh connect error: {}", e.getMessage());
 		}
 	}
 	
