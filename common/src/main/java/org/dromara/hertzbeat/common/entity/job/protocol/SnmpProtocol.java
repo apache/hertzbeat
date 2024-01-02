@@ -77,4 +77,9 @@ public class SnmpProtocol {
      * oid map
      */
     private Map<String, String> oids;
+
+    /**
+     * contextName
+     */
+    private String contextName = "";
 }

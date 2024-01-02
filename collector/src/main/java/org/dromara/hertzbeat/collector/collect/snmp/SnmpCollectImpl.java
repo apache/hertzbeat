@@ -42,8 +42,6 @@ import org.snmp4j.fluent.TargetBuilder;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -81,9 +79,11 @@ public class SnmpCollectImpl extends AbstractCollect {
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
         int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
+        Snmp snmpService = null;
         try {
             SnmpBuilder snmpBuilder = new SnmpBuilder();
-            Snmp snmpService = getSnmpService(snmpVersion);
+            snmpService = getSnmpService(snmpVersion, snmpBuilder);
+            snmpService.listen();
             Target<?> target;
             Address targetAddress = GenericAddress.parse(DEFAULT_PROTOCOL + ":" + snmpProtocol.getHost()
                     + "/" + snmpProtocol.getPort());
@@ -96,7 +96,6 @@ public class SnmpCollectImpl extends AbstractCollect {
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
-                // todo 有待测试
                 USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
                 SecurityModels.getInstance().addSecurityModel(usm);
                 snmpService.getUSM().addUser(
@@ -121,7 +120,7 @@ public class SnmpCollectImpl extends AbstractCollect {
             String operation = snmpProtocol.getOperation();
             operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
             if (OPERATION_GET.equalsIgnoreCase(operation)) {
-                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).build();
+                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).contextName(snmpProtocol.getContextName()).build();
                 SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
                 List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
                 long responseTime = System.currentTimeMillis() - startTime;
@@ -220,6 +219,16 @@ public class SnmpCollectImpl extends AbstractCollect {
             log.warn("[snmp collect] error: {}", errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            if (snmpService != null) {
+                if (snmpVersion == SnmpConstants.version3) {
+                    try {
+                        snmpClose(snmpService, SnmpConstants.version3);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
     }
 
@@ -239,14 +248,13 @@ public class SnmpCollectImpl extends AbstractCollect {
         Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
     }
 
-    private synchronized Snmp getSnmpService(int snmpVersion) throws IOException {
+    private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);
         if (snmpService != null) {
             return snmpService;
         }
-        SnmpBuilder snmpBuilder = new SnmpBuilder();
         if (snmpVersion == SnmpConstants.version3) {
-            snmpService = snmpBuilder.udp().v3().usm().threads(4).build();
+            snmpService = snmpBuilder.udp().v3().securityProtocols(SecurityProtocols.SecurityProtocolSet.maxCompatibility).usm().threads(4).build();
         } else if (snmpVersion == SnmpConstants.version1) {
             snmpService = snmpBuilder.udp().v1().threads(4).build();
         } else {
@@ -289,5 +297,10 @@ public class SnmpCollectImpl extends AbstractCollect {
         } else {
             return hexString;
         }
+    }
+
+    private void snmpClose(Snmp snmp, int version) throws IOException {
+        snmp.close();
+        versionSnmpService.remove(version);
     }
 }
