@@ -300,6 +300,8 @@ metrics:
       privPassphrase: ^_^privPassphrase^_^
       privPasswordEncryption: ^_^privPasswordEncryption^_^
       authPasswordEncryption: ^_^authPasswordEncryption^_^
+      # contextName
+      contextName: ^_^contextName^_^
       # snmp connect timeout
       timeout: ^_^timeout^_^
       # snmp community
@@ -393,6 +395,7 @@ metrics:
       privPassphrase: ^_^privPassphrase^_^
       privPasswordEncryption: ^_^privPasswordEncryption^_^
       authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
       version: ^_^version^_^
