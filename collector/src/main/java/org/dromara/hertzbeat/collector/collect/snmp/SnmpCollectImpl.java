@@ -53,6 +53,9 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class SnmpCollectImpl extends AbstractCollect {
 
+    private static final String AES128 = "1";
+
+    private static final String SHA1 = "1";
     private static final String DEFAULT_PROTOCOL = "udp";
     private static final String OPERATION_GET = "get";
     private static final String OPERATION_WALK = "walk";
@@ -308,14 +311,14 @@ public class SnmpCollectImpl extends AbstractCollect {
 
     private TargetBuilder.PrivProtocol getPrivPasswordEncryption(String privPasswordEncryption) {
         if (privPasswordEncryption == null) return TargetBuilder.PrivProtocol.des;
-        else if (privPasswordEncryption.equals("1")) {
+        else if (AES128.equals(privPasswordEncryption)) {
             return TargetBuilder.PrivProtocol.aes128;
         } else return TargetBuilder.PrivProtocol.des;
     }
 
     private TargetBuilder.AuthProtocol getAuthPasswordEncryption(String authPasswordEncryption) {
         if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
-        else if (authPasswordEncryption.equals("1"))  return TargetBuilder.AuthProtocol.sha1;
+        else if (SHA1.equals(authPasswordEncryption))  return TargetBuilder.AuthProtocol.sha1;
         else return TargetBuilder.AuthProtocol.md5;
     }
 }
