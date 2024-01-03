@@ -23,7 +23,7 @@ import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.dromara.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
@@ -284,7 +284,7 @@ public class SshCollectImpl extends AbstractCollect {
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
                 .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
                 .build();
-        CommonCache.getInstance().removeCache(identifier);
+        ConnectionCommonCache.getInstance().removeCache(identifier);
     }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
@@ -295,18 +295,18 @@ public class SshCollectImpl extends AbstractCollect {
                 .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
-            Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+            Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
             if (cacheOption.isPresent()) {
                 clientSession = ((SshConnect) cacheOption.get()).getConnection();
                 try {
                     if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                         clientSession = null;
-                        CommonCache.getInstance().removeCache(identifier);
+                        ConnectionCommonCache.getInstance().removeCache(identifier);
                     }
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                     clientSession = null;
-                    CommonCache.getInstance().removeCache(identifier);
+                    ConnectionCommonCache.getInstance().removeCache(identifier);
                 }
             }
             if (clientSession != null) {
@@ -331,7 +331,7 @@ public class SshCollectImpl extends AbstractCollect {
         }
         if (reuseConnection) {
             SshConnect sshConnect = new SshConnect(clientSession);
-            CommonCache.getInstance().addCache(identifier, sshConnect);
+            ConnectionCommonCache.getInstance().addCache(identifier, sshConnect);
         }
         return clientSession;
     }

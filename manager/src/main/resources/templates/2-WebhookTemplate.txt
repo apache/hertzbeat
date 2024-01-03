@@ -7,6 +7,7 @@
   "status": ${status},
   "times": ${times},
   "triggerTime": "${triggerTime}",
+  <#if (restoreTime??)>"restoreTime": "${restoreTime}",</#if>
   "tags": {
     <#list tags as key,value>
       "${key}": "${value}",
