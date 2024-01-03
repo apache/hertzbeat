@@ -40,11 +40,14 @@ class IpDomainUtilTest {
         assertTrue(IpDomainUtil.validateIpDomain("good.didi"));
         assertTrue(IpDomainUtil.validateIpDomain("spider_rds.sogou"));
         assertTrue(IpDomainUtil.validateIpDomain("_redis.hn.sogou"));
-        assertFalse(IpDomainUtil.validateIpDomain("tmp"));
-        assertFalse(IpDomainUtil.validateIpDomain("good"));
+        assertTrue(IpDomainUtil.validateIpDomain("host"));
+        assertTrue(IpDomainUtil.validateIpDomain("host-1"));
         assertFalse(IpDomainUtil.validateIpDomain("www.baidu.com."));
         assertFalse(IpDomainUtil.validateIpDomain("good."));
         assertFalse(IpDomainUtil.validateIpDomain(".good."));
+        assertFalse(IpDomainUtil.validateIpDomain("www.baidu..com"));
+        assertFalse(IpDomainUtil.validateIpDomain("www.baidu*com"));
+        assertFalse(IpDomainUtil.validateIpDomain("host$-1"));
     }
 
     @Test
