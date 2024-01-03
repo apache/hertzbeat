@@ -89,10 +89,12 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "/" + snmpProtocol.getPort());
             TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
             if (snmpVersion == SnmpConstants.version3) {
+                TargetBuilder.PrivProtocol PrivPasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
+                TargetBuilder.AuthProtocol authPasswordEncryption = getAuthPasswordEncryption(snmpProtocol.getAuthPasswordEncryption());
                 target = targetBuilder
                         .user(snmpProtocol.getUsername())
-                        .auth(TargetBuilder.AuthProtocol.md5).authPassphrase(snmpProtocol.getAuthPassphrase())
-                        .priv(TargetBuilder.PrivProtocol.des).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .auth(authPasswordEncryption).authPassphrase(snmpProtocol.getAuthPassphrase())
+                        .priv(PrivPasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
@@ -302,5 +304,18 @@ public class SnmpCollectImpl extends AbstractCollect {
     private void snmpClose(Snmp snmp, int version) throws IOException {
         snmp.close();
         versionSnmpService.remove(version);
+    }
+
+    private TargetBuilder.PrivProtocol getPrivPasswordEncryption(String privPasswordEncryption) {
+        if (privPasswordEncryption == null) return TargetBuilder.PrivProtocol.des;
+        else if (privPasswordEncryption.equals("1")) {
+            return TargetBuilder.PrivProtocol.aes128;
+        } else return TargetBuilder.PrivProtocol.des;
+    }
+
+    private TargetBuilder.AuthProtocol getAuthPasswordEncryption(String authPasswordEncryption) {
+        if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
+        else if (authPasswordEncryption.equals("1"))  return TargetBuilder.AuthProtocol.sha1;
+        else return TargetBuilder.AuthProtocol.md5;
     }
 }

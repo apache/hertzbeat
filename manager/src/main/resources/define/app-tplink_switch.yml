@@ -109,7 +109,7 @@ params:
     limit: 100
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
-    required: true
+    required: false
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
@@ -129,7 +129,7 @@ params:
     limit: 20
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
-    required: true
+    required: false
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp username for v3'
@@ -169,10 +169,31 @@ params:
     limit: 100
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
-    required: true
+    required: false
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: authPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: authPassword 加密方式
+      en-US: authPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: MD5
+        value: 0
+      - label: SHA1
+        value: 1
     # field-param field key
     # field-变量字段标识符
   - field: privPassphrase
@@ -189,10 +210,31 @@ params:
     limit: 100
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
-    required: true
+    required: false
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: privPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: privPassword 加密方式
+      en-US: privPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: DES
+        value: 0
+      - label: AES128
+        value: 1
     # field-param field key
     # field-变量字段标识符
   - field: timeout
@@ -256,6 +298,8 @@ metrics:
       username: ^_^username^_^
       authPassphrase: ^_^authPassphrase^_^
       privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
       # snmp connect timeout
       timeout: ^_^timeout^_^
       # snmp community
@@ -347,6 +391,8 @@ metrics:
       username: ^_^username^_^
       authPassphrase: ^_^authPassphrase^_^
       privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
       version: ^_^version^_^
