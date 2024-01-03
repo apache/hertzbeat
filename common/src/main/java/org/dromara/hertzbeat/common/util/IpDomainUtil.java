@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 public class IpDomainUtil {
     
     private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^[-\w]+(\.[-\w]+)*$");
+            Pattern.compile("^[-\\w]+(\\.[-\\w]+)*$");
 
     private static final String LOCALHOST = "localhost";
 
