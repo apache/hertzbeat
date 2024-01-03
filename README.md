@@ -390,6 +390,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZhangZixuan1994"><img src="https://avatars.githubusercontent.com/u/20011653?v=4?s=100" width="100px;" alt="ZhangZixuan1994"/><br /><sub><b>ZhangZixuan1994</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ZhangZixuan1994" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hurenjie1"><img src="https://avatars.githubusercontent.com/u/40120355?v=4?s=100" width="100px;" alt="SHIG"/><br /><sub><b>SHIG</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=hurenjie1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://tslj1024.github.io/"><img src="https://avatars.githubusercontent.com/u/155222677?v=4?s=100" width="100px;" alt="泰上老菌"/><br /><sub><b>泰上老菌</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=tslj1024" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ldysdu"><img src="https://avatars.githubusercontent.com/u/15815338?v=4?s=100" width="100px;" alt="ldysdu"/><br /><sub><b>ldysdu</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=ldysdu" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
