@@ -95,49 +95,49 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 时间戳
-          en-US: time
+          en-US: Timestamp
       - field: date
         type: 1
         i18n:
           zh-CN: 时间
-          en-US: date
+          en-US: Date
       - field: offset
         type: 0
         unit: ms
         i18n:
           zh-CN: 偏移量
-          en-US: offset
+          en-US: Offset
       - field: delay
         type: 0
         unit: ms
         i18n:
           zh-CN: 延迟
-          en-US: delay
+          en-US: Delay
       - field: version
         type: 0
         i18n:
           zh-CN: 版本号
-          en-US: version
+          en-US: Version
       - field: mode
         type: 0
         i18n:
           zh-CN: 模式
-          en-US: mode
+          en-US: Mode
       - field: stratum
         type: 0
         i18n:
           zh-CN: 层级
-          en-US: stratum
+          en-US: Stratum
       - field: referenceId
         type: 1
         i18n:
           zh-CN: 参考ID
-          en-US: referenceId
+          en-US: ReferenceId
       - field: precision
         type: 0
         i18n:
           zh-CN: 精度
-          en-US: precision
+          en-US: Precision
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
