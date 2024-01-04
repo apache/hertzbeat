@@ -133,6 +133,9 @@ metrics:
   # metrics - server
   # 监控指标 - server
   - name: server
+    i18n:
+      zh-CN: Tomcat 信息
+      en-US: Tomcat Server
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -145,14 +148,29 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: serverInfo
         type: 1
+        i18n:
+          zh-CN: 服务信息
+          en-US: Server Info
       - field: serverNumber
         type: 1
+        i18n:
+          zh-CN: 服务版本
+          en-US: Server Number
       - field: serverBuilt
         type: 1
+        i18n:
+          zh-CN: Server Built
+          en-US: Server Built
       - field: port
         type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
       - field: address
         type: 1
+        i18n:
+          zh-CN: 地址
+          en-US: Address
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is http
@@ -172,22 +190,45 @@ metrics:
 
   - name: memory_pool
     priority: 1
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
     fields:
       - field: name
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
       - field: committed
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
       - field: init
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
       - field: max
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
       - field: used
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -196,11 +237,6 @@ metrics:
       - Usage->init
       - Usage->max
       - Usage->used
-    units:
-      - committed=B->MB
-      - init=B->MB
-      - max=B->MB
-      - used=B->MB
     # mapping and conversion expressions, use these and aliasField above to calculate metrics value
     # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
@@ -212,7 +248,11 @@ metrics:
       - used=Usage->used
     protocol: jmx
     jmx:
+      # host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
+      # port
+      # 端口
       port: ^_^port^_^
       username: ^_^username^_^
       password: ^_^password^_^
@@ -220,14 +260,30 @@ metrics:
       url: ^_^url^_^
 
   - name: class_loading
-    priority: 1
+    priority: 2
+    i18n:
+      zh-CN: 类加载信息
+      en-US: Class Loading
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: LoadedClassCount
         type: 0
+        i18n:
+          zh-CN: 当前已加载类数量
+          en-US: Loaded Class Count
       - field: TotalLoadedClassCount
         type: 0
+        i18n:
+          zh-CN: 已加载类总数量
+          en-US: Total Loaded Class Count
       - field: UnloadedClassCount
         type: 0
+        i18n:
+          zh-CN: 未加载类总数量
+          en-US: Unloaded Class Count
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -238,22 +294,47 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 1
+    priority: 3
+    i18n:
+      zh-CN: 线程信息
+      en-US: Thread
+    # collect metrics content
+    # 具体监控指标列表
     fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: TotalStartedThreadCount
         type: 0
+        i18n:
+          zh-CN: 已启动线程总数
+          en-US: Total Started Thread Count
       - field: ThreadCount
         type: 0
+        i18n:
+          zh-CN: 活跃线程数
+          en-US: Thread Count
       - field: PeakThreadCount
         type: 0
+        i18n:
+          zh-CN: 最大峰值线程数
+          en-US: Peak Thread Count
       - field: DaemonThreadCount
         type: 0
+        i18n:
+          zh-CN: 活跃守护线程数
+          en-US: Daemon Thread Count
       - field: CurrentThreadUserTime
         type: 0
         unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间(用户态)
+          en-US: Current Thread User Time
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间
+          en-US: Current Thread CPU Time
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S
@@ -267,43 +348,94 @@ metrics:
       url: ^_^url^_^
 
   - name: application
-    priority: 1
+    i18n:
+      zh-CN: 应用信息
+      en-US: Application
+    priority: 4
     fields:
       - field: name
         type: 1
         label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
       - field: acceptCount
         type: 0
+        i18n:
+          zh-CN: 接收请求数
+          en-US: Accept Count
       - field: acceptorThreadCount
         type: 0
+        i18n:
+          zh-CN: 接收处理线程数
+          en-US: Acceptor Thread Count
       - field: acceptorThreadPriority
         type : 0
+        i18n:
+          zh-CN: 接收线程级别
+          en-US: Acceptor Thread Priority
       - field: connectionTimeout
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 链接超时时间
+          en-US: Connection Timeout
       - field: currentThreadCount
         type: 0
+        i18n:
+          zh-CN: 当前线程数
+          en-US: Current Thread Count
       - field: currentThreadsBusy
         type: 0
+        i18n:
+          zh-CN: 繁忙线程数
+          en-US: Current Threads Busy
       - field: keepAliveCount
         type: 0
+        i18n:
+          zh-CN: 心跳保持链接数量
+          en-US: Keep Alive Count
       - field: keepAliveTimeout
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 心跳超时时间
+          en-US: Keep Alive Timeout
       - field: maxConnections
         type: 0
+        i18n:
+          zh-CN: 最大链接数
+          en-US: Max Connections
       - field: maxKeepAliveRequests
         type: 0
+        i18n:
+          zh-CN: 最大链接保持请求
+          en-US: Max KeepAlive Requests
       - field: maxThreads
         type: 0
+        i18n:
+          zh-CN: 最大线程数
+          en-US: Max Threads
       - field: minSpareThreads
         type: 0
+        i18n:
+          zh-CN: 最小备用线程数
+          en-US: Min Spare Threads
       - field: pollerThreadCount
         type: 0
+        i18n:
+          zh-CN: 轮询线程数
+          en-US: Poller Thread Count
       - field: pollerThreadPriority
         type: 0
+        i18n:
+          zh-CN: 轮询线程级别
+          en-US: Poller Thread Priority
       - field: running
         type: 1
+        i18n:
+          zh-CN: 运行中
+          en-US: Running
     protocol: jmx
     jmx:
       host: ^_^host^_^
