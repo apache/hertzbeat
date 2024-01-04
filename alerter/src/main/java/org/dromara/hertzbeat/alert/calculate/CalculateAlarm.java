@@ -69,7 +69,7 @@ public class CalculateAlarm {
      * key - monitorId+alertDefineId 为普通阈值告警 ｜ The alarm is a common threshold alarm
      * key - monitorId 为任务状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
-    private final Map<String, Alert> triggeredAlertMap;
+    private final Map<String, Alert>  triggeredAlertMap;
     /**
      * The not recover alert
      * key - monitorId + alertDefineId + (instance)
@@ -91,8 +91,8 @@ public class CalculateAlarm {
         this.alertDefineService = alertDefineService;
         this.alertService = alertService;
         this.bundle = ResourceBundleUtil.getBundle("alerter");
-        this.triggeredAlertMap = new ConcurrentHashMap<>(128);
-        this.notRecoveredAlertMap = new ConcurrentHashMap<>(128);
+        this.triggeredAlertMap = new ConcurrentHashMap<>(16);
+        this.notRecoveredAlertMap = new ConcurrentHashMap<>(16);
         // Initialize stateAlertMap
         List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
         if (monitors != null) {
@@ -102,7 +102,7 @@ public class CalculateAlarm {
                 tags.put(TAG_MONITOR_NAME, monitor.getName());
                 tags.put(TAG_MONITOR_APP, monitor.getApp());
                 this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY,
-                        Alert.builder().tags(tags).target(AVAILABILITY).status(UN_AVAILABLE_CODE).build());
+                        Alert.builder().tags(tags).target(AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
             }
         }
         startCalculate();
@@ -145,17 +145,15 @@ public class CalculateAlarm {
             return;
         }
         List<CollectRep.Field> fields = metricsData.getFieldsList();
-        Map<String, Object> fieldValueMap = new HashMap<>(16);
+        Map<String, Object> fieldValueMap = new HashMap<>(8);
         int valueRowCount = metricsData.getValuesCount();
         for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
             List<AlertDefine> defines = entry.getValue();
             for (AlertDefine define : defines) {
                 final String expr = define.getExpr();
-
                 if (StringUtils.isBlank(expr)) {
                     continue;
                 }
-
                 if (expr.contains(SYSTEM_VALUE_ROW_COUNT)) {
                     fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
                     try {
@@ -166,9 +164,13 @@ public class CalculateAlarm {
                             afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
                             // 若此阈值已被触发，则其它数据行的触发忽略
                             continue;
-                        } else if (define.isRecoverNotice()) {
-                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + null;
-                            handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
+                        } else {
+                            String monitorAlertKey = String.valueOf(monitorId) + define.getId();
+                            triggeredAlertMap.remove(monitorAlertKey);
+                            if (define.isRecoverNotice()) {
+                                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + null;
+                                handleRecoveredAlert(currentTimeMilli, define, expr, notResolvedAlertKey);
+                            }
                         }
                     } catch (Exception e) {
                         log.warn(e.getMessage(), e);
@@ -219,9 +221,13 @@ public class CalculateAlarm {
                             afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, fieldValueMap, define);
                             // 若此阈值已被触发，则其它数据行的触发忽略
                             break;
-                        } else if (define.isRecoverNotice()) {
-                            String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (instanceBuilder.length() == 0 ? null : instanceBuilder.toString());
-                            handleRecoveredAlert(currentTimeMilli, monitorId, app, define, expr, notResolvedAlertKey);
+                        } else {
+                            String monitorAlertKey = String.valueOf(monitorId) + define.getId();
+                            triggeredAlertMap.remove(monitorAlertKey);
+                            if (define.isRecoverNotice()) {
+                                String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + (instanceBuilder.length() == 0 ? null : instanceBuilder.toString());
+                                handleRecoveredAlert(currentTimeMilli, define, expr, notResolvedAlertKey);
+                            }
                         }
                     } catch (Exception e) {
                         log.warn(e.getMessage(), e);
@@ -231,7 +237,7 @@ public class CalculateAlarm {
         }
     }
 
-    private void handleRecoveredAlert(long currentTimeMilli, long monitorId, String app, AlertDefine define, String expr, String notResolvedAlertKey) {
+    private void handleRecoveredAlert(long currentTimeMilli, AlertDefine define, String expr, String notResolvedAlertKey) {
         Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
         if (notResolvedAlert != null) {
             // Sending an alarm Restore
@@ -261,6 +267,7 @@ public class CalculateAlarm {
             triggeredAlert.setLastAlarmTime(currentTimeMilli);
             int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
             if (times >= defineTimes) {
+                triggeredAlert.setStatus(ALERT_STATUS_CODE_PENDING);
                 String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + fieldValueMap.get("instance");
                 triggeredAlertMap.remove(monitorAlertKey);
                 notRecoveredAlertMap.put(notResolvedAlertKey, triggeredAlert);
@@ -270,7 +277,7 @@ public class CalculateAlarm {
             fieldValueMap.put("app", app);
             fieldValueMap.put("metrics", metrics);
             fieldValueMap.put("metric", define.getField());
-            Map<String, String> tags = new HashMap<>(6);
+            Map<String, String> tags = new HashMap<>(8);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(CommonConstants.TAG_MONITOR_APP, app);
             tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(define.getId()));
@@ -283,7 +290,7 @@ public class CalculateAlarm {
             Alert alert = Alert.builder()
                     .tags(tags)
                     .priority(define.getPriority())
-                    .status(ALERT_STATUS_CODE_PENDING)
+                    .status(ALERT_STATUS_CODE_NOT_REACH)
                     .target(app + "." + metrics + "." + define.getField())
                     .triggerTimes(1)
                     .firstAlarmTime(currentTimeMilli)
@@ -293,9 +300,10 @@ public class CalculateAlarm {
                     .build();
             int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
             if (1 >= defineTimes) {
+                alert.setStatus(ALERT_STATUS_CODE_PENDING);
                 String notResolvedAlertKey = String.valueOf(monitorId) + define.getId() + fieldValueMap.get("instance");
                 notRecoveredAlertMap.put(notResolvedAlertKey, alert);
-                alarmCommonReduce.reduceAndSendAlarm(alert);
+                alarmCommonReduce.reduceAndSendAlarm(alert.clone());
             } else {
                 triggeredAlertMap.put(monitorAlertKey, alert);
             }
@@ -346,7 +354,7 @@ public class CalculateAlarm {
                 Alert.AlertBuilder alertBuilder = Alert.builder()
                         .tags(tags)
                         .priority(avaAlertDefine.getPriority())
-                        .status(ALERT_STATUS_CODE_PENDING)
+                        .status(ALERT_STATUS_CODE_NOT_REACH)
                         .target(CommonConstants.AVAILABILITY)
                         .content(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap))
                         .firstAlarmTime(currentTimeMill)
@@ -354,19 +362,14 @@ public class CalculateAlarm {
                         .triggerTimes(1);
                 if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
                     String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
+                    alertBuilder.status(ALERT_STATUS_CODE_PENDING);
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
-                    alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build().clone());
+                    alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
-                    alertBuilder.status(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
+                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());   
                 }
-                triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
             } else {
                 int times = preAlert.getTriggerTimes() + 1;
-                if (preAlert.getStatus() == ALERT_STATUS_CODE_PENDING) {
-                    times = 1;
-                    preAlert.setContent(AlertTemplateUtil.render(avaAlertDefine.getTemplate(), valueMap));
-                    preAlert.setTags(tags);
-                }
                 preAlert.setTriggerTimes(times);
                 preAlert.setFirstAlarmTime(currentTimeMill);
                 preAlert.setLastAlarmTime(currentTimeMill);
@@ -376,14 +379,14 @@ public class CalculateAlarm {
                     String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
                     notRecoveredAlertMap.put(notResolvedAlertKey, preAlert.clone());
                     alarmCommonReduce.reduceAndSendAlarm(preAlert.clone());
-                } else {
-                    preAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_NOT_REACH);
+                    triggeredAlertMap.remove(String.valueOf(monitorId));
                 }
             }
         } else {
             // Check whether an availability or unreachable alarm is generated before the association monitoring
             // and send a clear alarm to clear the monitoring status
             // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行任务状态恢复
+            triggeredAlertMap.remove(String.valueOf(monitorId));
             String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
             Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
             if (notResolvedAlert != null) {
