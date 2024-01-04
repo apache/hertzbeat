@@ -135,7 +135,7 @@ metrics:
   # 监控指标 - available
   - name: available
     i18n:
-      zh-CN: 通用指标
+      zh-CN: 可用性
       en-US: Available
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -180,7 +180,7 @@ metrics:
 
   - name: email_status
     i18n:
-      zh-CN: 邮箱 状态信息
+      zh-CN: 邮箱状态信息
       en-US: Email Status
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue

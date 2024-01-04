@@ -128,8 +128,8 @@ metrics:
       - field: smtpBanner
         type: 1
         i18n:
-          zh-CN: SMTP的Banner
-          en-US: SMTPBanner
+          zh-CN: SMTP Banner
+          en-US: SMTP Banner
       - field: heloInfo
         type: 1
         i18n:

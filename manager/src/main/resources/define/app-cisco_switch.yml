@@ -264,6 +264,9 @@ metrics:
   # metrics - system
   # 监控指标 - system
   - name: system
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -276,17 +279,35 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: name
         type: 1
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
       - field: descr
         type: 1
+        i18n:
+          zh-CN: 描述信息
+          en-US: Description
       - field: uptime
         type: 1
+        i18n:
+          zh-CN: 运行时长
+          en-US: Uptime
       - field: location
         type: 1
+        i18n:
+          zh-CN: 位置
+          en-US: Location
       - field: contact
         type: 1
+        i18n:
+          zh-CN: 联系人
+          en-US: Contact
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: snmp
     # the config content when protocol is snmp
@@ -325,41 +346,80 @@ metrics:
         contact: 1.3.6.1.2.1.1.4.0
 
   - name: interfaces
+    i18n:
+      zh-CN: 接口详情
+      en-US: Interfaces Detail
     priority: 1
     fields:
       - field: index
         type: 1
+        i18n:
+          zh-CN: 编号
+          en-US: Index
       - field: descr
         type: 1
         label: true
+        i18n:
+          zh-CN: 接口名称
+          en-US: Interface Name
       - field: mtu
         type: 0
         unit: 'byte'
+        i18n:
+          zh-CN: MTU
+          en-US: MTU
       - field: speed
         type: 0
-        unit: 'KB/s'
+        unit: 'MB/s'
+        i18n:
+          zh-CN: 接口速率
+          en-US: Interface Speed
       - field: in_octets
         type: 0
-        unit: 'byte'
+        unit: 'MByte'
+        i18n:
+          zh-CN: 入流量
+          en-US: In Octets
       - field: in_discards
         type: 0
         unit: 'package'
+        i18n:
+          zh-CN: 入丢包数
+          en-US: In Discards
       - field: in_errors
         type: 0
         unit: 'package'
+        i18n:
+          zh-CN: 入错包数
+          en-US: In Errors
       - field: out_octets
         type: 0
-        unit: 'byte'
+        unit: 'MByte'
+        i18n:
+          zh-CN: 出流量
+          en-US: Out Octets
       - field: out_discards
         type: 0
         unit: 'package'
+        i18n:
+          zh-CN: 出丢包数
+          en-US: Out Discards
       - field: out_errors
         type: 0
         unit: 'package'
+        i18n:
+          zh-CN: 出错包数
+          en-US: Out Errors
       - field: admin_status
         type: 1
+        i18n:
+          zh-CN: 配置状态
+          en-US: Config Status        
       - field: oper_status
         type: 1
+        i18n:
+          zh-CN: 当前状态
+          en-US: Current Status
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -382,11 +442,11 @@ metrics:
       - index=ifIndex
       - descr=ifDescr
       - mtu=ifMtu
-      - speed=ifSpeed / 1024
-      - in_octets=ifInOctets
+      - speed=ifSpeed / 1024 / 1024
+      - in_octets=ifInOctets / 1024 / 1024
       - in_discards=ifInDiscards
       - in_errors=ifInErrors
-      - out_octets=ifOutOctets
+      - out_octets=ifOutOctets / 1024 / 1024
       - out_discards=ifOutDiscards
       - out_errors=ifOutErrors
       - admin_status=ifAdminStatus
