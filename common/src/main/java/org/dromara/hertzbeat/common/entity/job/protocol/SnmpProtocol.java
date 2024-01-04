@@ -81,7 +81,7 @@ public class SnmpProtocol {
     /**
      * contextName
      */
-    private String contextName = "";
+    private String contextName;
 
     /**
      * authPasswordEncryption

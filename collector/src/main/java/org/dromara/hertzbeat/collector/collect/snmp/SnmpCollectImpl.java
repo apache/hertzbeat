@@ -125,7 +125,8 @@ public class SnmpCollectImpl extends AbstractCollect {
             String operation = snmpProtocol.getOperation();
             operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
             if (OPERATION_GET.equalsIgnoreCase(operation)) {
-                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).contextName(snmpProtocol.getContextName()).build();
+                String contextName = getContextName(snmpProtocol.getContextName());
+                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).contextName(contextName).build();
                 SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
                 List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
                 long responseTime = System.currentTimeMillis() - startTime;
@@ -320,5 +321,9 @@ public class SnmpCollectImpl extends AbstractCollect {
         if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
         else if (SHA1.equals(authPasswordEncryption))  return TargetBuilder.AuthProtocol.sha1;
         else return TargetBuilder.AuthProtocol.md5;
+    }
+
+    private String getContextName(String contextName) {
+        return contextName == null ? "" : contextName;
     }
 }
