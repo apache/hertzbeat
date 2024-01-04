@@ -91,6 +91,8 @@ params:
         value: 0
       - label: SNMPv2c
         value: 1
+      - label: SNMPv3
+        value: 3
   # field-param field key
   # field-变量字段标识符
   - field: community
@@ -107,12 +109,134 @@ params:
     limit: 100
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
-    required: true
+    required: false
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
   # field-param field key
   # field-变量字段标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP username
+      en-US: SNMP username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp username for v3'
+  # field-param field key
+  # field-变量字段标识符
+  - field: contextName
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP contextName
+      en-US: SNMP contextName
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp contextName for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: authPassphrase
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP authPassword
+      en-US: SNMP authPassword
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: authPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: authPassword 加密方式
+      en-US: authPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: MD5
+        value: 0
+      - label: SHA1
+        value: 1
+    # field-param field key
+    # field-变量字段标识符
+  - field: privPassphrase
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP privPassphrase
+      en-US: SNMP privPassphrase
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: privPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: privPassword 加密方式
+      en-US: privPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: DES
+        value: 0
+      - label: AES128
+        value: 1
+    # field-param field key
+    # field-变量字段标识符
   - field: timeout
     # name-param field display i18n name
     # name-参数字段显示名称
@@ -171,6 +295,18 @@ metrics:
       host: ^_^host^_^
       # server port
       port: ^_^port^_^
+      # snmp username
+      username: ^_^username^_^
+      # snmp authPassphrase
+      authPassphrase: ^_^authPassphrase^_^
+      # snmp privPassphrase
+      privPassphrase: ^_^privPassphrase^_^
+      # snmp privPasswordEncryption
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      # snmp authPasswordEncryption
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      # contextName
+      contextName: ^_^contextName^_^
       # snmp connect timeout
       timeout: ^_^timeout^_^
       # snmp community
@@ -254,6 +390,12 @@ metrics:
     snmp:
       host: ^_^host^_^
       port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
       version: ^_^version^_^
