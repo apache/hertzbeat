@@ -140,7 +140,7 @@ metrics:
     priority: 0
     i18n:
       zh-CN: 虚拟机基础信息
-      en-US: Basic
+      en-US: JVM Basic
     # collect metrics content
     # 具体监控指标列表
     fields:
@@ -257,7 +257,7 @@ metrics:
       url: ^_^url^_^
 
   - name: code_cache
-    priority: 5
+    priority: 2
     i18n:
       zh-CN: 本地代码缓冲区
       en-US: Code Cache
@@ -306,7 +306,7 @@ metrics:
       url: ^_^url^_^
 
   - name: class_loading
-    priority: 6
+    priority: 3
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
@@ -340,7 +340,7 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 7
+    priority: 4
     i18n:
       zh-CN: 线程信息
       en-US: Thread
