@@ -75,6 +75,9 @@ params:
 # 采集指标配置列表
 metrics:
   - name: system_cpu_usage
+    i18n:
+      zh-CN: CPU 使用率
+      en-US: CPU Usage
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -84,6 +87,9 @@ metrics:
       - field: usage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
     aliasFields:
       - value
     calculates:
@@ -108,16 +114,28 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_used_bytes
+    i18n:
+      zh-CN: JVM 内存使用
+      en-US: JVM Memory Used
     priority: 1
     fields:
       - field: area
         type: 1
+        i18n:
+          zh-CN: 区域
+          en-US: Area
       - field: id
         type: 1
         label: true
+        i18n:
+          zh-CN: ID
+          en-US: ID
       - field: value
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 大小
+          en-US: Size
     units:
       - value=B->MB
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -135,14 +153,26 @@ metrics:
       parseType: prometheus
 
   - name: nacos_monitor
+    i18n:
+      zh-CN: Nacos 详情
+      en-US: Nacos Monitor
     priority: 1
     fields:
       - field: module
         type: 1
+        i18n:
+          zh-CN: 模块
+          en-US: Module
       - field: name
         type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
       - field: value
         type: 0
+        i18n:
+          zh-CN: 大小
+          en-US: Value
     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置

@@ -261,7 +261,6 @@ metrics:
       # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
       # sql
-      # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
       # JDBC url
       url: ^_^url^_^
