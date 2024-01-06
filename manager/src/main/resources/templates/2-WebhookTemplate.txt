@@ -8,9 +8,11 @@
   "times": ${times},
   "triggerTime": "${triggerTime}",
   <#if (restoreTime??)>"restoreTime": "${restoreTime}",</#if>
+  <#if (tags??)>
   "tags": {
     <#list tags as key,value>
-      "${key}": "${value}",
-    </#list>  
+    "${key}": "${value}",
+    </#list>
   }
+  </#if>
 }
