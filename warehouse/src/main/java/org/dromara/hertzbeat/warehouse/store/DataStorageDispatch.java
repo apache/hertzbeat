@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * dispatch storage metrics data
@@ -47,10 +46,8 @@ public class DataStorageDispatch {
                                List<AbstractRealTimeDataStorage> realTimeDataStorages) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.historyDataStorages = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).collect(Collectors.toList());
-        this.realTimeDataStorages = realTimeDataStorages.stream()
-                .filter(AbstractRealTimeDataStorage::isServerAvailable).collect(Collectors.toList());
+        this.historyDataStorages = historyDataStorages;
+        this.realTimeDataStorages = realTimeDataStorages;
         startStoragePersistentData();
         startStorageRealTimeData();
     }
