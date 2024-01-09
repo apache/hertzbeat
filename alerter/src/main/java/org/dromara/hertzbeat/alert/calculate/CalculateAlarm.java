@@ -327,13 +327,16 @@ public class CalculateAlarm {
     }
 
     private void handlerAvailableMetrics(long monitorId, String app, CollectRep.MetricsData metricsData) {
+        if (metricsData.getCode() == CollectRep.Code.TIMEOUT) {
+            return;
+        }
         // TODO CACHE getMonitorBindAlertAvaDefine
         AlertDefine avaAlertDefine = alertDefineService.getMonitorBindAlertAvaDefine(monitorId, app, CommonConstants.AVAILABILITY);
         if (avaAlertDefine == null) {
             return;
         }
         long currentTimeMill = System.currentTimeMillis();
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS ) {
             Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
