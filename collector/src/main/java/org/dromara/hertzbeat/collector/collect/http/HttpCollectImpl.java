@@ -112,9 +112,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
-        try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);

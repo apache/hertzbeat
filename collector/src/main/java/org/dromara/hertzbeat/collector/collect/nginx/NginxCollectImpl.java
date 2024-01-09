@@ -81,10 +81,8 @@ public class NginxCollectImpl extends AbstractCollect {
 
         HttpContext httpContext = createHttpContext(metrics.getNginx());
         HttpUriRequest request = createHttpRequest(metrics.getNginx());
-        try {
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
             // 发起http请求，获取响应数据
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                    .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -105,6 +103,10 @@ public class NginxCollectImpl extends AbstractCollect {
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            if (request != null) {
+                request.abort();
+            }
         }
 
     }
