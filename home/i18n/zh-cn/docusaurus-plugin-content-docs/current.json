@@ -1,58 +1,102 @@
 {
   "version.label": {
-    "message": "v1.1.x",
+    "message": "v1.4.x",
     "description": "The label for version current"
   },
-  "sidebar.docs.category.快速入门": {
+  "sidebar.docs.category.quickstart": {
     "message": "快速入门",
-    "description": "The label for category 快速入门 in sidebar docs"
+    "description": "The label for category quickstart in sidebar docs"
   },
-  "sidebar.docs.category.自定义监控": {
+  "sidebar.docs.category.custom": {
     "message": "自定义监控",
-    "description": "The label for category 自定义监控 in sidebar docs"
+    "description": "The label for category custom in sidebar docs"
   },
-  "sidebar.docs.category.HTTP协议": {
+  "sidebar.docs.category.http": {
     "message": "HTTP协议",
-    "description": "The label for category HTTP协议 in sidebar docs"
+    "description": "The label for category http in sidebar docs"
   },
-  "sidebar.docs.category.JDBC协议": {
+  "sidebar.docs.category.jdbc": {
     "message": "JDBC协议",
-    "description": "The label for category JDBC协议 in sidebar docs"
+    "description": "The label for category jdbc in sidebar docs"
   },
-  "sidebar.docs.category.SSH协议": {
+  "sidebar.docs.category.ssh": {
     "message": "SSH协议",
-    "description": "The label for category SSH协议 in sidebar docs"
+    "description": "The label for category ssh in sidebar docs"
   },
-  "sidebar.docs.category.帮助文档": {
+  "sidebar.docs.category.help": {
     "message": "帮助文档",
-    "description": "The label for category 帮助文档 in sidebar docs"
+    "description": "The label for category help in sidebar docs"
   },
-  "sidebar.docs.category.应用服务监控": {
+  "sidebar.docs.category.service": {
     "message": "应用服务监控",
-    "description": "The label for category 应用服务监控 in sidebar docs"
+    "description": "The label for category service in sidebar docs"
   },
-  "sidebar.docs.category.数据库监控": {
+  "sidebar.docs.category.database": {
     "message": "数据库监控",
-    "description": "The label for category 数据库监控 in sidebar docs"
+    "description": "The label for category database in sidebar docs"
   },
-  "sidebar.docs.category.操作系统": {
+  "sidebar.docs.category.os": {
     "message": "操作系统",
-    "description": "The label for category 操作系统 in sidebar docs"
+    "description": "The label for category os in sidebar docs"
   },
-  "sidebar.docs.category.中间件": {
+  "sidebar.docs.category.mid": {
     "message": "中间件",
-    "description": "The label for category 中间件 in sidebar docs"
+    "description": "The label for category mid in sidebar docs"
   },
-  "sidebar.docs.category.阈值告警配置": {
+  "sidebar.docs.category.threshold": {
     "message": "阈值告警配置",
-    "description": "The label for category 阈值告警配置 in sidebar docs"
+    "description": "The label for category threshold in sidebar docs"
   },
-  "sidebar.docs.category.告警通知配置": {
+  "sidebar.docs.category.notice": {
     "message": "告警通知配置",
-    "description": "The label for category 告警通知配置 in sidebar docs"
+    "description": "The label for category notice in sidebar docs"
   },
   "sidebar.docs.category.Others": {
-    "message": "Others",
+    "message": "其它",
     "description": "The label for category Others in sidebar docs"
+  },
+  "sidebar.docs.category.cloud-native": {
+    "message": "云原生",
+    "description": "The label for category cloud-native in sidebar docs"
+  },
+  "sidebar.docs.link.Cloud Service": {
+    "message": "云服务直接开始",
+    "description": "The label for link Cloud Service in sidebar docs, linking to https://console.tancloud.cn"
+  },
+  "sidebar.docs.link.Install via HuaweiCloud": {
+    "message": "华为云方式部署",
+    "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+  },
+  "sidebar.docs.category.jmx": {
+    "message": "JMX协议",
+    "description": "The label for category jmx in sidebar docs"
+  },
+  "sidebar.docs.category.snmp": {
+    "message": "SNMP协议",
+    "description": "The label for category snmp in sidebar docs"
+  },
+  "sidebar.docs.link.Install via Helm": {
+    "message": "Kubernetes Helm部署",
+    "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+  },
+  "sidebar.docs.category.push": {
+    "message": "Push",
+    "description": "The label for category push in sidebar docs"
+  },
+  "sidebar.docs.category.program": {
+    "message": "应用程序",
+    "description": "The label for category program in sidebar docs"
+  },
+  "sidebar.docs.category.cache": {
+    "message": "缓存",
+    "description": "The label for category cache in sidebar docs"
+  },
+  "sidebar.docs.category.bigdata": {
+    "message": "大数据",
+    "description": "The label for category bigdata in sidebar docs"
+  },
+  "sidebar.docs.category.webserver": {
+    "message": "Web服务器",
+    "description": "The label for category webserver in sidebar docs"
   }
 }

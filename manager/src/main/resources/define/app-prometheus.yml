@@ -1,0 +1,289 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: auto
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: prometheus
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Prometheus任务
+  en-US: Prometheus Task
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Prometheus 任务管理，您可以通过此监控支持 Prometheus 协议的应用类型数据，像 Prometheus 监控它们一样方便，并且是可视化页面的操作。<br><span class='help_module_span'>⚠️注意：监控对端需要提供 prometheus metrics 协议的数据接口。</span>
+  en-US: Prometheus Task Management, you can use this to monitor application that supports the Prometheus protocol, as convenient as Prometheus monitoring them, and it is a visual page operation. <br><span class='help_module_span'> The monitoring peer needs to provide the data interface of the prometheus metrics protocol. </span>
+  zh-TW: Prometheus 任務管理，您可以透過此監控支援 Prometheus 協定的應用程式類型數據，像 Prometheus 監控它們一樣方便，並且是視覺化頁面的操作。 <br><span class='help_module_span'>⚠️注意：監控對端需要提供 prometheus metrics 協定的資料介面。 </span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/prometheus/
+  en-US: https://hertzbeat.com/docs/help/prometheus/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # default value
+    defaultValue: 9091
+    required: true
+  # field-param field key
+  # field-变量字段标识
+  - field: path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端点路径
+      en-US: Endpoint Path
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Exporter Url Endpoint Path'
+    defaultValue: "/metrics"
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    defaultValue: 6000
+  # field-变量字段标识
+  - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: boolean
+    hide: true
+    # field-param field key
+  - field: headers
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: key-value
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    hide: true
+    # when type is key-value, use keyAlias to config key alias name
+    # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
+    keyAlias: Header Name
+    # when type is key-value, use valueAlias to config value alias name
+    # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
+    valueAlias: Header Value
+    # field-param field key
+  # field-变量字段标识
+  - field: params
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 查询Params
+      en-US: Params
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: key-value
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    hide: true
+    # when type is key-value, use keyAlias to config key alias name
+    # 当字段类型为key-value时, 使用keyAlias配置key的展示别名
+    keyAlias: Param Key
+    # when type is key-value, use valueAlias to config value alias name
+    # 当字段类型为key-value时, 使用valueAlias配置value的展示别名
+    valueAlias: Param Value
+  # field-param field key
+  # field-变量字段标识
+  - field: contentType
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Request Body Type'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+  # field-param field key
+  # field-变量字段标识
+  - field: payload
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: textarea
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Available When POST PUT'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    # field-param field key
+  # field-变量字段标识
+  - field: authType
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+    # field-param field key
+  # field-变量字段标识
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    # field-param field key
+  # field-变量字段标识
+  - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - cluster_node_status
+  # 监控指标 - cluster_node_status
+  - name: auto
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: prometheus
+    # the config content when protocol is http
+    prometheus:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http path
+      path: ^_^path^_^
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http request payload
+      payload: ^_^payload^_^
+      # http request header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # http request params
+      params:
+        ^_^params^_^: ^_^params^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^

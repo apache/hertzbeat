@@ -1,0 +1,322 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: program
+# The monitoring type eg: springboot2 linux windows tomcat mysql aws...
+# 监控类型 eg: springboot2 linux windows tomcat mysql aws...
+app: springboot2
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: SpringBoot2.0
+  en-US: SpringBoot2.0
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collects and monitors SpringBoot through general performance metric(health, environment, threads, memory_used) that exposed by the SpringBoot2.0 Actuator. <br><span class='help_module_span'>Note⚠️:You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot2.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringBoot中的指標，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>點擊查看具體步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/springboot2
+  en-US: https://hertzbeat.com/docs/help/springboot2
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 8080
+  # field-param field key
+  # field-变量字段标识符
+  - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: base_path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    # type-字段类型,样式(大部分映射input标签type属性) text类型属于文本输入框
+    type: text
+    # default value
+    # 默认值
+    defaultValue: /actuator
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # hide-true or false
+    # hide-是否隐藏 true-隐藏 false-不隐藏
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - available
+  # 监控指标 - available
+  - name: available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: responseTime
+        type: 0
+        unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url
+      # url请求接口路径
+      url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+  # metrics - environment
+  # 监控指标 - environment
+  - name: environment
+    priority: 1
+    # The specific monitoring metrics in the metric group.
+    # 具体监控指标列表
+    fields:
+      # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: profile
+        type: 1
+      - field: port
+        type: 0
+      - field: os
+        type: 1
+      - field: os_arch
+        type: 1
+      - field: jdk_vendor
+        type: 1
+      - field: jvm_version
+        type: 1
+    # metric alias list, used to identify metrics in query results
+    # 指标别名列表，用于在查询结果中识别指标
+    aliasFields:
+      - $.activeProfiles[0]
+      - $.propertySources[?(@.name=='server.ports')].properties.*.value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
+      - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
+    # A list of calculation scripts for metric values.
+    # 计算指标值的脚本列表
+    calculates:
+      - profile=#`$.activeProfiles[0]`
+      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
+      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
+      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
+      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
+      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url
+      # url请求接口路径
+      url: ^_^base_path^_^/env
+      # http request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      # http response data parse script
+      # 响应数据解析脚本
+      parseScript: '$'
+  # metrics - thread_state
+  # 监控指标 - thread_state
+  - name: thread_state
+    # Whether to display the metric group in the query result, the default is true
+    # 是否在查询结果中显示,默认为true
+    visible: false
+    # The specific monitoring metrics in the metric group.
+    # 具体监控指标列表
+    priority: 2
+    fields:
+      - field: state
+        type: 1
+    protocol: http
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^base_path^_^/metrics/jvm.threads.states
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
+
+  - name: threads
+    priority: 3
+    fields:
+      - field: state
+        type: 1
+        label: true
+      - field: size
+        type: 0
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - state='^o^state^o^'
+      - size=#`$.measurements[?(@.statistic == "VALUE")].value`
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: space_name
+    visible: false
+    priority: 4
+    fields:
+      - field: id
+        type: 1
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/metrics/jvm.memory.used
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
+
+  - name: memory_used
+    priority: 5
+    fields:
+      - field: space
+        type: 1
+        label: true
+      - field: mem_used
+        type: 0
+        unit: MB
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - space="^o^id^o^"
+      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+    units:
+      - mem_used=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: health
+    priority: 6
+    fields:
+      - field: status
+        type: 1
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/health
+      method: GET
+      ssl: ^_^ssl^_^
+      successCodes: [200, 503]
+      parseType: default

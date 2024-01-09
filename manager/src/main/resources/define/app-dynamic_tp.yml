@@ -1,0 +1,258 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: program
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: dynamic_tp
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: DynamicTp线程池
+  en-US: DynamicTp Pool
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 DynamicTp actuator 暴露的线程池性能指标（thread pool）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要集成使用 DynamicTp，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>点击查看集成步骤</a>。
+  en-US: HertzBeat monitoring DynamicTp of the thread Pool Performance Metrics which exposed by DynamicTp actuator. <br><span class='help_module_span'>Note⚠️:You should integrate and use DynamicTp, <a class='help_module_content' href='https://hertzbeat.com/docs/help/dynamic_tp'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat 對 DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_ module_ span'>注意⚠️：您需要集成使用DynamicTp，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/dynamic_tp/
+  en-US: https://hertzbeat.com/docs/help/dynamic_tp/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 8080
+  # field-param field key
+  # field-变量字段标识符
+  - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # type-param field type(most mapping the html input type)
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: base_path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # default value
+    # 默认值
+    defaultValue: /actuator
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # hide-is hide this field and put it in advanced layout
+    # hide-是否隐藏此参数将其放入高级设置中
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - thread_pool
+  # 监控指标 - thread_pool
+  - name: thread_pool
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: pool_name
+        type: 1
+        label: true
+      - field: queue_type
+        type: 1
+      - field: core_pool_size
+        type: 0
+      - field: maximum_pool_size
+        type: 0
+      - field: fair
+        type: 1
+      - field: reject_handler_name
+        type: 1
+      - field: dynamic
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - poolName
+      - corePoolSize
+      - maximumPoolSize
+      - queueType
+      - fair
+      - rejectHandlerName
+      - dynamic
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - pool_name=poolName
+      - core_pool_size=corePoolSize
+      - maximum_pool_size=maximumPoolSize
+      - queue_type=queueType
+      - fair=fair
+      - reject_handler_name=rejectHandlerName
+      - dynamic=dynamic
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    # 当使用http协议时的配置内容
+    http:
+      # http host: ipv4 ipv6 domain
+      # http 主机：ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # http 端口
+      port: ^_^port^_^
+      # url request interface path
+      # url 请求接口路径
+      url: ^_^base_path^_^/dynamic-tp
+      # http method: GET POST PUT DELETE PATCH
+      # http 请求方法: GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      # http response data parse script
+      # 响应数据解析脚本
+      parseScript: '$.*'
+
+  - name: thread_pool_running
+    priority: 1
+    fields:
+      - field: pool_name
+        type: 1
+        label: true
+      - field: queue_capacity
+        type: 0
+        unit: MB
+      - field: queue_size
+        type: 0
+      - field: queue_remaining_capacity
+        type: 0
+        unit: MB
+      - field: active_count
+        type: 0
+      - field: task_count
+        type: 0
+      - field: completed_task_count
+        type: 0
+      - field: largest_pool_size
+        type: 0
+      - field: pool_size
+        type: 0
+      - field: wait_task_count
+        type: 0
+      - field: reject_count
+        type: 0
+      - field: run_timeout_count
+        type: 0
+      - field: queue_timeout_count
+        type: 0
+    aliasFields:
+      - poolName
+      - queueCapacity
+      - queueSize
+      - queueRemainingCapacity
+      - activeCount
+      - taskCount
+      - completedTaskCount
+      - largestPoolSize
+      - poolSize
+      - waitTaskCount
+      - rejectCount
+      - runTimeoutCount
+      - queueTimeoutCount
+    calculates:
+      - pool_name=poolName
+      - queue_capacity=queueCapacity
+      - queue_size=queueSize
+      - queue_remaining_capacity=queueRemainingCapacity
+      - active_count=activeCount
+      - task_count=taskCount
+      - completed_task_count=completedTaskCount
+      - largest_pool_size=largestPoolSize
+      - pool_size=poolSize
+      - wait_task_count=waitTaskCount
+      - reject_count=rejectCount
+      - run_timeout_count=runTimeoutCount
+      - queue_timeout_count=queueTimeoutCount
+    units:
+      - queue_capacity=B->MB
+      - queue_remaining_capacity=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/dynamic-tp
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.*'

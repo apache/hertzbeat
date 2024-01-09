@@ -13,9 +13,9 @@ sidebar_label: 安装包方式部署
    安装后命令行检查是否成功安装   
    ```
    $ java -version
-   openjdk version "1.8.0_312"
-   OpenJDK Runtime Environment (Zulu 8.58.0.13-CA-macos-aarch64) (build 1.8.0_312-b07)
-   OpenJDK 64-Bit Server VM (Zulu 8.58.0.13-CA-macos-aarch64) (build 25.312-b07, mixed mode)
+   openjdk version "11.0.11" 2021-04-20
+   OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)
+   OpenJDK 64-Bit Server VM AdoptOpenJDK-11.0.11+9 (build 11.0.11+9, mixed mode)
    ```
 2. 下载HertzBeat安装包
    下载您系统环境对应的安装包

@@ -7,6 +7,7 @@ import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
 
 const alerts_uri = '/alerts';
+const alerts_clear_uri = '/alerts/clear';
 const alerts_summary_uri = '/alerts/summary';
 const alerts_status_uri = '/alerts/status';
 
@@ -55,6 +56,10 @@ export class AlertService {
     });
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(alerts_uri, options);
+  }
+
+  public clearAlerts(): Observable<Message<any>> {
+    return this.http.delete<Message<any>>(alerts_clear_uri);
   }
 
   public applyAlertsStatus(alertIds: Set<number>, status: number): Observable<Message<any>> {

@@ -15,7 +15,7 @@ body .companyUsage h3 {
 .logos ul {
     display: flex;
     justify-content: space-around;
-    /*width: 3200px;*/
+    /* width: 3200px; */
     margin: 0;
     transition: transform 1000ms ease;
 }
@@ -26,7 +26,7 @@ body .companyUsage h3 {
     }
     .logos ul {
         padding: 0;
-        width: 3000px;
+        /* width: 3000px; */
     }
     .logos ul li {
         min-width: 125px;

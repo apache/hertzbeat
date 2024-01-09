@@ -1,0 +1,188 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 mid-中间件
+category: mid
+# The monitoring: nacos
+# 监控类型 nacos
+app: nacos
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Nacos分布式
+  en-US: Nacos Server
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 通过调用 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">Nacos Metrics 接口</a> 对 Nacos 注册配置中心服务的通用指标进行采集监控。<br>注意⚠️：需要您提前 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">开启暴露 Nacos Metrics 数据</a>，支持 Nacos 版本0.8+，您可以点击 “<i>新建 Nacos</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors metrics of the Nacos Server by calling the <a href="https://nacos.io/en-us/docs/monitor-guide.html">Nacos Metrics Api</a>. <br>Note⚠️:You need to <a href="https://nacos.io/en-us/docs/monitor-guide.html">enable exposure of Nacos Metrics data</a> in advance, support Nacos version 0.8+ , you can click "<i>New Nacos</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: Hertzbeat 通過調用 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">Nacos Metrics 接口</a> 對 Nacos 注冊配置中心服務的通用指標進行采集監控。<br>注意⚠️：需要您提前 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">開啓暴露 Nacos Metrics 數據</a>，支持 Nacos 版本0.8+，您可以點擊 “<i>新建 Nacos</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/nacos
+  en-US: https://hertzbeat.com/docs/help/nacos
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 服务器Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # required-true or false
+  # required-是否是必输项 true-必填 false-可选
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Nacos服务端口
+      en-US: Nacos Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    defaultValue: 8848
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  - name: system_cpu_usage
+    i18n:
+      zh-CN: CPU 使用率
+      en-US: CPU Usage
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    fields:
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - value
+    calculates:
+      - usage=value
+    protocol: http
+    # the config content when protocol is http
+    # 当使用http协议时的配置内容
+    http:
+      # http host: ipv4 ipv6 domain
+      # http 主机：ipv4 ipv6域名
+      host: ^_^host^_^
+      # http port
+      # http 端口
+      port: ^_^port^_^
+      # http url
+      url: /nacos/actuator/prometheus
+      # http method: GET POST PUT DELETE PATCH
+      # http 请求方法: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
+
+  - name: jvm_memory_used_bytes
+    i18n:
+      zh-CN: JVM 内存使用
+      en-US: JVM Memory Used
+    priority: 1
+    fields:
+      - field: area
+        type: 1
+        i18n:
+          zh-CN: 区域
+          en-US: Area
+      - field: id
+        type: 1
+        label: true
+        i18n:
+          zh-CN: ID
+          en-US: ID
+      - field: value
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 大小
+          en-US: Size
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /nacos/actuator/prometheus
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: nacos_monitor
+    i18n:
+      zh-CN: Nacos 详情
+      en-US: Nacos Monitor
+    priority: 1
+    fields:
+      - field: module
+        type: 1
+        i18n:
+          zh-CN: 模块
+          en-US: Module
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 大小
+          en-US: Value
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /nacos/actuator/prometheus
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus

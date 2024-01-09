@@ -1,0 +1,371 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: cn
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: docker
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Docker
+  en-US: Docker
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat monitoring Docker of general performance metrics such as containers, status etc. <br><span class='help_module_span'>Note⚠️:In order to monitoring metrics of Docker, you need to enable the data export port so that the collector can collect data from here，<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker'>Click here to view the steps</a>.</span>
+  zh-TW: HertzBeat 對 Docker 容器的通用性能指標（system、containers、stats）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Docker 中的容器信息，您需要打開端口，讓采集請求獲取到對應的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker'>點擊查看開啓步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/docker/
+  en-US: https://hertzbeat.com/docs/help/docker/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field - field name identifier
+  # field-字段名称标识符
+  - field: host
+    # name - parameter field display name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-field type, style (most map input tag type attribute)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # Is it mandatory? true-required false-optional
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # When type is number, use range to represent the range
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 2375
+  - field: ssl
+    name:
+      zh-CN: SSL连接
+      en-US: SSL
+    # shen the type is boolean, the front end uses switch to display the switch
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    required: false
+metrics:
+  - name: system
+    i18n:
+      zh-CN: 系统
+      en-US: system
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # metrics fields list
+    # 具体监控指标列表
+    fields:
+      # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: name
+        i18n:
+          zh-CN: 主机名
+          en-US: name
+        type: 1
+      - field: version
+        i18n:
+          zh-CN: 版本
+          en-US: version
+        type: 1
+      - field: os
+        i18n:
+          zh-CN: 操作系统
+          en-US: os
+        type: 1
+      - field: root_dir
+        i18n:
+          zh-CN: 根目录
+          en-US: root dir
+        type: 1
+      - field: containers
+        i18n:
+          zh-CN: 容器总数
+          en-US: containers
+        type: 0
+      - field: containers_running
+        i18n:
+          zh-CN: 运行容器数
+          en-US: running containers
+        type: 0
+      - field: containers_paused
+        i18n:
+          zh-CN: 暂停容器数
+          en-US: paused containers
+        type: 0
+      - field: containers_stopped
+        i18n:
+          zh-CN: 已停止容器数
+          en-US: stopped containers
+        type: 0
+      - field: images
+        i18n:
+          zh-CN: 镜像数
+          en-US: images
+        type: 0
+      - field: ncpu
+        i18n:
+          zh-CN: CPU数量
+          en-US: ncpu
+        type: 0
+      - field: mem_total
+        i18n:
+          zh-CN: 内存总量
+          en-US: total memory
+        type: 0
+        unit: MB
+      - field: system_time
+        i18n:
+          zh-CN: 系统时间
+          en-US: system time
+        type: 1
+    aliasFields:
+      - Name
+      - ServerVersion
+      - OperatingSystem
+      - OSType
+      - Architecture
+      - DockerRootDir
+      - Containers
+      - ContainersRunning
+      - ContainersPaused
+      - ContainersStopped
+      - Images
+      - NCPU
+      - MemTotal
+      - SystemTime
+    calculates:
+      - name = Name
+      - version = OperatingSystem + " " + ServerVersion
+      - os = OSType + " " + Architecture
+      - root_dir = DockerRootDir
+      - containers = Containers
+      - containers_running = ContainersRunning
+      - containers_paused = ContainersPaused
+      - containers_stopped = ContainersStopped
+      - images = Images
+      - ncpu = NCPU
+      - mem_total = MemTotal
+      - system_time = SystemTime
+    units:
+      - mem_total=B->MB
+    protocol: http
+    # When the protocol is the http protocol, the specific collection configuration
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # Host host: ipv4 ipv6 domain name
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # port
+      # 端口
+      port: ^_^port^_^
+      # url request interface path
+      # url请求接口路径
+      url: /info
+      # request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+
+  - name: containers
+    i18n:
+      zh-CN: 容器总数
+      en-US: containers
+    # The smaller the priority value (0-127), the higher the priority of the metrics. Lower-priority metricss will be scheduled after higher-priority metricss have been collected. metricss with the same priority will be scheduled to collect data in parallel.
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    # metrics fields list
+    # 具体监控指标列表
+    fields:
+      # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: id
+        i18n:
+          zh-CN: 主键
+          en-US: ID
+        type: 1
+      - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
+        type: 1
+      - field: image
+        i18n:
+          zh-CN: 镜像
+          en-US: image
+        type: 1
+      - field: command
+        i18n:
+          zh-CN: 命令行
+          en-US: command
+        type: 1
+      - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
+        type: 1
+      - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
+        type: 1
+    aliasFields:
+      - Id
+      - $.Names[0]
+      - Image
+      - Command
+      - State
+      - Status
+    calculates:
+      - id = Id
+      - name=#`$.Names[0]`
+      - image = Image
+      - command = Command
+      - state = State
+      - status = Status
+    # Protocols used for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # When the protocol is the http protocol, the specific collection configuration
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # Host host: ipv4 ipv6 domain name
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # port
+      # 端口
+      port: ^_^port^_^
+      # url request interface path
+      # url请求接口路径
+      url: /containers/json?all=true
+      # # request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$.*'
+
+  - name: stats
+    i18n:
+      zh-CN: 状态
+      en-US: stats
+    priority: 2
+    fields:
+      - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
+        type: 1
+      - field: available_memory
+        i18n:
+          zh-CN: 可用内存
+          en-US: available memory
+        type: 0
+        unit: MB
+      - field: used_memory
+        i18n:
+          zh-CN: 已用内存
+          en-US: used memory
+        type: 0
+        unit: MB
+      - field: memory_usage
+        i18n:
+          zh-CN: 内存使用率
+          en-US: memory usage
+        type: 0
+        unit: '%'
+      - field: cpu_delta
+        i18n:
+          zh-CN: 已使用CPU数
+          en-US: cpu delta
+        type: 0
+      - field: number_cpus
+        i18n:
+          zh-CN: 可使用CPU数
+          en-US: cpus number
+        type: 0
+      - field: cpu_usage
+        i18n:
+          zh-CN: CPU使用率
+          en-US: cpu usage
+        type: 0
+        unit: '%'
+    aliasFields:
+      - $.name
+      - $.memory_stats.usage
+      - $.memory_stats.limit
+      - $.cpu_stats.cpu_usage.total_usage
+      - $.precpu_stats.cpu_usage.total_usage
+      - $.cpu_stats.online_cpus
+      - $.cpu_stats.system_cpu_usage
+      - $.precpu_stats.system_cpu_usage
+    calculates:
+      - name=$.name
+      - available_memory = $.memory_stats.limit
+      - used_memory=$.memory_stats.usage
+      - memory_usage=($.memory_stats.usage / $.memory_stats.limit) * 100
+      - cpu_delta=$.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage
+      - number_cpus=$.cpu_stats.online_cpus
+      - cpu_usage=(($.cpu_stats.cpu_usage.total_usage - $.precpu_stats.cpu_usage.total_usage) / ($.cpu_stats.system_cpu_usage - $.precpu_stats.system_cpu_usage)) * $.cpu_stats.online_cpus * 100
+    units:
+      - available_memory=B->MB
+      - used_memory=B->MB
+    protocol: http
+    http:
+      # Host host: ipv4 ipv6 domain name
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # port
+      # 端口
+      port: ^_^port^_^
+      # url request interface path
+      # url请求接口路径
+      url: /containers/^o^id^o^/stats
+      # request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      params:
+        stream: false
+      # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-api usability metric monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      parseScript: '$'

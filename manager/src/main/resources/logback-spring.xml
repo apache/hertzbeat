@@ -15,7 +15,12 @@
         <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 归档的日志文件的路径。%d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
-            <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+            <!--日志保留时长-->
+            <maxHistory>7</maxHistory>
+            <!--日志保留最大值-->
+            <totalSizeCap>10GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
             <!-- 除按日志记录之外，还配置了日志文件不能超过200M，若超过200M，日志文件会以索引0开始 -->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>200MB</maxFileSize>
@@ -32,7 +37,12 @@
 
     <appender name="ErrOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}-error.%i.log</fileNamePattern>
+            <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}-error.%i.log.zip</fileNamePattern>
+            <!--日志保留时长-->
+            <maxHistory>7</maxHistory>
+            <!--日志保留最大值-->
+            <totalSizeCap>10GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>200MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -52,7 +62,7 @@
 
     <!--这个logger的设置是：举例在org.springframework包下面的所有输出日志必须级别level在info及以上级别才会被输出！-->
     <!--这样可以避免输出一些spring框架的许多常见debug信息!-->
-    <logger name="org.springframework" level="info" />
+    <logger name="org.springframework" level="info"/>
     <logger name="org.json" level="error"/>
     <logger name="io.netty" level="info"/>
     <logger name="org.slf4j" level="info"/>
@@ -62,6 +72,8 @@
     <logger name="org.apache.http" level="info"/>
     <logger name="com.zaxxer" level="info"/>
     <logger name="springfox" level="info"/>
+    <logger name="org.mongodb" level="warn"/>
+    <logger name="io.greptime" level="warn"/>
 
     <!-- 生产环境配置 -->
     <springProfile name="prod">
@@ -70,11 +82,33 @@
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>
+        <!-- north log -->
+        <Logger name="com.obs.services.AbstractClient" level="OFF"
+                additivity="false">
+        </Logger>
+
+        <!-- south log -->
+        <Logger name="com.obs.services.internal.RestStorageService" level="OFF"
+                additivity="false">
+        </Logger>
+        <!-- access log -->
+        <Logger name="com.obs.log.AccessLogger" level="OFF"
+                additivity="false">
+        </Logger>
     </springProfile>
 
     <!-- 开发环境配置 -->
     <springProfile name="dev">
-        <root level="DEBUG">
+        <root level="INFO">
+            <appender-ref ref="ConsoleAppender"/>
+            <appender-ref ref="SystemOutFileAppender"/>
+            <appender-ref ref="ErrOutFileAppender"/>
+        </root>
+    </springProfile>
+
+    <!-- 开发环境配置 -->
+    <springProfile name="mysql">
+        <root level="INFO">
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>

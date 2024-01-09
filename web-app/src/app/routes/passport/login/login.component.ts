@@ -29,7 +29,6 @@ export class UserLoginComponent implements OnDestroy {
     @Inject(ReuseTabService)
     private reuseTabService: ReuseTabService,
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
-    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private startupSrv: StartupService,
     private http: _HttpClient,
     private cdr: ChangeDetectorRef,
@@ -126,7 +125,8 @@ export class UserLoginComponent implements OnDestroy {
         let user: User = {
           name: this.userName.value,
           avatar: './assets/img/avatar.svg',
-          email: this.i18nSvc.fanyi('app.role.admin')
+          email: 'administrator',
+          role: message.data.role
         };
         this.settingsService.setUser(user);
         // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响
@@ -146,4 +146,6 @@ export class UserLoginComponent implements OnDestroy {
       clearInterval(this.interval$);
     }
   }
+
+  protected readonly window = window;
 }

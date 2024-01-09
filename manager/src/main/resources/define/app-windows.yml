@@ -1,0 +1,519 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: os
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: windows
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Windows操作系统
+  en-US: OS Windows
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Windows操作系统 的通用指标(用户数、进程数量、响应时间等)进行采集监控。<br><span class='help_module_span'>注意⚠️：Windows 服务器需要开启 SNMP 服务，<a class='help_module_content' href='https://learn.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service'>点击查看开启步骤</a>。</span>您可以点击 “<i>新建 Windows操作系统</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring OS Windows general performance metrics such as number of users, number of processes, response time. <br><span class='help_module_span'>Note⚠️:Windows server need enable the SNMP services <a class='help_module_content' href='https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service'>Click here to view the specific steps.</a></span> You can click the "<i>New OS Windows</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Windows操作系统 的通用指标(用户数、进程数量、响应时间等)进行采集监控。<br><span class='help_module_span'>注意⚠️：Windows 服务器需要开启 SNMP 服务，<a class='help_module_content' href='https://learn.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service'>点击查看开启步骤</a>。</span>您可以点击 “<i>新建 Windows操作系统</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/windows
+  en-US: https://hertzbeat.com/docs/help/windows
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 161
+  # field-param field key
+  # field-变量字段标识符
+  - field: version
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP 版本
+      en-US: SNMP Version
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: SNMPv1
+        value: 0
+      - label: SNMPv2c
+        value: 1
+  # field-param field key
+  # field-变量字段标识符
+  - field: community
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP 团体字
+      en-US: SNMP Community
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp community for v1 v2c'
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    # hide-是否隐藏此参数将其放入高级设置中
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - system
+  # 监控指标 - system
+  - name: system
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    fields:
+      - field: name
+        type: 1
+      - field: descr
+        type: 1
+      - field: uptime
+        type: 1
+      - field: numUsers
+        type: 0
+      - field: services
+        type: 0
+      - field: processes
+        type: 0
+      - field: responseTime
+        type: 0
+        unit: ms
+      - field: location
+        type: 1
+      - field: memory
+        type: 0
+        unit: GB
+    units:
+      - memory=KB->GB
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: get
+      oids:
+        name: 1.3.6.1.2.1.1.5.0
+        descr: 1.3.6.1.2.1.1.1.0
+        uptime: 1.3.6.1.2.1.25.1.1.0
+        numUsers: 1.3.6.1.2.1.25.1.5.0
+        services: 1.3.6.1.2.1.1.7.0
+        processes: 1.3.6.1.2.1.25.1.6.0
+        location: 1.3.6.1.2.1.1.6.0
+        memory: 1.3.6.1.2.1.25.2.2.0
+
+  - name: processes
+    priority: 1
+    fields:
+      - field: hrSWRunIndex
+        type: 0
+      - field: hrSWRunName
+        type: 1
+        label: true
+      - field: hrSWRunID
+        type: 1
+      - field: hrSWRunPath
+        type: 1
+      - field: hrSWRunParameters
+        type: 1
+      - field: hrSWRunType
+        type: 0
+      - field: hrSWRunStatus
+        type: 0
+      - field: hrSWRunPerfCPU
+        type: 0
+        unit: 's'
+      - field: hrSWRunPerfMem
+        type: 0
+        unit: 'KB'
+    calculates:
+      - hrSWRunPerfCPU = hrSWRunPerfCPU / 100
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrSWRunIndex: 1.3.6.1.2.1.25.4.2.1.1
+        hrSWRunName: 1.3.6.1.2.1.25.4.2.1.2
+        hrSWRunID: 1.3.6.1.2.1.25.4.2.1.3
+        hrSWRunPath: 1.3.6.1.2.1.25.4.2.1.4
+        hrSWRunParameters: 1.3.6.1.2.1.25.4.2.1.5
+        hrSWRunType: 1.3.6.1.2.1.25.4.2.1.6
+        hrSWRunStatus: 1.3.6.1.2.1.25.4.2.1.7
+        hrSWRunPerfCPU: 1.3.6.1.2.1.25.5.1.1.1
+        hrSWRunPerfMem: 1.3.6.1.2.1.25.5.1.1.2
+
+  - name: services
+    priority: 1
+    fields:
+      - field: svSvcName
+        type: 1
+        label: true
+      - field: svSvcInstalledState
+        type: 0
+      - field: svSvcOperatingState
+        type: 0
+      - field: svSvcCanBeUninstalled
+        type: 0
+      - field: svSvcCanBePaused
+        type: 0
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        svSvcName: 1.3.6.1.4.1.77.1.2.3.1.1
+        svSvcInstalledState: 1.3.6.1.4.1.77.1.2.3.1.2
+        svSvcOperatingState: 1.3.6.1.4.1.77.1.2.3.1.3
+        svSvcCanBeUninstalled: 1.3.6.1.4.1.77.1.2.3.1.4
+        svSvcCanBePaused: 1.3.6.1.4.1.77.1.2.3.1.5
+
+  - name: installed
+    priority: 1
+    fields:
+      - field: hrSWInstalledIndex
+        type: 0
+      - field: hrSWInstalledName
+        type: 1
+        label: true
+      - field: hrSWInstalledID
+        type: 1
+      - field: hrSWInstalledType
+        type: 0
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrSWInstalledIndex: 1.3.6.1.2.1.25.6.3.1.1
+        hrSWInstalledName: 1.3.6.1.2.1.25.6.3.1.2
+        hrSWInstalledID: 1.3.6.1.2.1.25.6.3.1.3
+        hrSWInstalledType: 1.3.6.1.2.1.25.6.3.1.4
+
+  - name: cpu
+    priority: 1
+    fields:
+      - field: hrProcessorFrwID
+        type: 1
+      - field: hrProcessorLoad
+        type: 0
+        unit: '%'
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrProcessorFrwID: 1.3.6.1.2.1.25.3.3.1.1
+        hrProcessorLoad: 1.3.6.1.2.1.25.3.3.1.2
+
+  - name: storages
+    priority: 1
+    fields:
+      - field: index
+        type: 0
+      - field: descr
+        type: 1
+        label: true
+      - field: size
+        type: 0
+        unit: MB
+      - field: free
+        type: 0
+        unit: MB
+      - field: used
+        type: 0
+        unit: MB
+      - field: usage
+        type: 0
+        unit: '%'
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - hrStorageIndex
+      - hrStorageDescr
+      - hrStorageSize
+      - hrStorageUsed
+      - hrStorageAllocationUnits
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - index=hrStorageIndex
+      - descr=hrStorageDescr
+      - size=hrStorageSize * hrStorageAllocationUnits
+      - free=(hrStorageSize - hrStorageUsed) * hrStorageAllocationUnits
+      - used=hrStorageUsed * hrStorageAllocationUnits
+      - usage= hrStorageUsed / hrStorageSize * 100
+    units:
+      - size=B->MB
+      - used=B->MB
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrStorageDescr: 1.3.6.1.2.1.25.2.3.1.3
+        hrStorageIndex: 1.3.6.1.2.1.25.2.3.1.1
+        hrStorageSize: 1.3.6.1.2.1.25.2.3.1.5
+        hrStorageUsed: 1.3.6.1.2.1.25.2.3.1.6
+        hrStorageAllocationUnits: 1.3.6.1.2.1.25.2.3.1.4
+
+  - name: disk
+    priority: 2
+    fields:
+      - field: hrDiskStorageAccess
+        type: 0
+      - field: hrDiskStorageMedia
+        type: 0
+      - field: hrDiskStorageRemoveble
+        type: 0
+      - field: hrDiskStorageCapacity
+        type: 0
+        unit: MB
+    units:
+      - hrDiskStorageCapacity=KB->MB
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrDiskStorageAccess: 1.3.6.1.2.1.25.3.6.1.1
+        hrDiskStorageMedia: 1.3.6.1.2.1.25.3.6.1.2
+        hrDiskStorageRemoveble: 1.3.6.1.2.1.25.3.6.1.3
+        hrDiskStorageCapacity: 1.3.6.1.2.1.25.3.6.1.4
+
+  - name: network
+    priority: 3
+    fields:
+      - field: number
+        type: 1
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      oids:
+        number: 1.3.6.1.2.1.2.1.0
+
+  - name: interfaces
+    priority: 4
+    fields:
+      - field: index
+        type: 0
+      - field: descr
+        type: 1
+        label: true
+      - field: mtu
+        type: 0
+        unit: 'byte'
+      - field: speed
+        type: 0
+        unit: 'KB/s'
+      - field: in_octets
+        type: 0
+        unit: 'byte'
+      - field: in_discards
+        type: 0
+        unit: 'package'
+      - field: in_errors
+        type: 0
+        unit: 'package'
+      - field: out_octets
+        type: 0
+        unit: 'byte'
+      - field: out_discards
+        type: 0
+        unit: 'package'
+      - field: out_errors
+        type: 0
+        unit: 'package'
+      - field: admin_status
+        type: 1
+      - field: oper_status
+        type: 1
+    aliasFields:
+      - ifIndex
+      - ifDescr
+      - ifMtu
+      - ifSpeed
+      - ifInOctets
+      - ifInDiscards
+      - ifInErrors
+      - ifOutOctets
+      - ifOutDiscards
+      - ifOutErrors
+      - ifAdminStatus
+      - ifOperStatus
+    calculates:
+      - index=ifIndex
+      - descr=ifDescr
+      - mtu=ifMtu
+      - speed=ifSpeed / 1024
+      - in_octets=ifInOctets
+      - in_discards=ifInDiscards
+      - in_errors=ifInErrors
+      - out_octets=ifOutOctets
+      - out_discards=ifOutDiscards
+      - out_errors=ifOutErrors
+      - admin_status=ifAdminStatus
+      - oper_status=ifOperStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        ifIndex: 1.3.6.1.2.1.2.2.1.1
+        ifDescr: 1.3.6.1.2.1.2.2.1.2
+        ifMtu: 1.3.6.1.2.1.2.2.1.4
+        ifSpeed: 1.3.6.1.2.1.2.2.1.5
+        ifInOctets: 1.3.6.1.2.1.2.2.1.10
+        ifInDiscards: 1.3.6.1.2.1.2.2.1.13
+        ifInErrors: 1.3.6.1.2.1.2.2.1.14
+        ifOutOctets: 1.3.6.1.2.1.2.2.1.16
+        ifOutDiscards: 1.3.6.1.2.1.2.2.1.19
+        ifOutErrors: 1.3.6.1.2.1.2.2.1.20
+        ifAdminStatus: 1.3.6.1.2.1.2.2.1.7
+        ifOperStatus: 1.3.6.1.2.1.2.2.1.8
+
+  - name: devices
+    priority: 4
+    fields:
+      - field: index
+        type: 1
+        label: true
+      - field: descr
+        type: 1
+      - field: status
+        type: 1
+    aliasFields:
+      - hrDeviceIndex
+      - hrDeviceDescr
+      - hrDeviceStatus
+    calculates:
+      - index=hrDeviceIndex
+      - descr=hrDeviceDescr
+      - status=hrDeviceStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        hrDeviceIndex: 1.3.6.1.2.1.25.3.2.1.1
+        hrDeviceDescr: 1.3.6.1.2.1.25.3.2.1.3
+        hrDeviceStatus: 1.3.6.1.2.1.25.3.2.1.5

@@ -1,0 +1,225 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: service
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: pop3
+# The app api i18n name
+# app api国际化名称
+name:
+  zh-CN: POP3邮件服务器
+  en-US: POP3 Email Server
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通过开启邮箱 pop3 服务 对 POP3服务器 的通用性能指标(email_count、mailbox_size)进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> to open pop3 service for collecting general metrics of POP3 Server (email_count, mailbox_size.). <br>You can click "<i>New POP3</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通過开启邮箱 pop3 服务 對 POP3服务器 的通用性能指標(邮件数量、邮箱大小等)進行采集監控。<br>您可以點擊“<i>新建 POP3</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/pop3
+  en-US: https://hertzbeat.com/docs/help/pop3
+# app api所需输入参数定义(根据定义渲染页面UI)
+# Input params define for app api(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 110
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value 6000
+    # 默认值 6000
+    defaultValue: 6000
+  - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: email
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: POP邮箱地址
+      en-US: Email
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    # type-字段类型,样式(大部分映射input标签type属性) text类型属于文本输入框
+    type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: authorize
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 授权码
+      en-US: Authorize Code
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    # type-字段类型,样式(大部分映射input标签type属性) text类型属于文本输入框
+    type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - available
+  # 监控指标 - available
+  - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: Available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
+    protocol: pop3
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    pop3:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # email
+      # pop邮箱地址
+      email: ^_^email^_^
+      # password
+      # 授权码
+      authorize: ^_^authorize^_^
+
+  - name: email_status
+    i18n:
+      zh-CN: 邮箱状态信息
+      en-US: Email Status
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    fields:
+      - field: email_count
+        type: 0
+        i18n:
+          zh-CN: 邮箱数量
+          en-US: Email Count
+      - field: mailbox_size
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: 邮箱大小
+          en-US: MailBox Size
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
+    protocol: pop3
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    pop3:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # email
+      # pop邮箱地址
+      email: ^_^email^_^
+      # password
+      # 授权码
+      authorize: ^_^authorize^_^

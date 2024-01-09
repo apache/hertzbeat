@@ -1,64 +1,86 @@
 ---
 id: quickstart  
-title: 快速开始    
-sidebar_label: 快速开始    
+title: Quick Start    
+sidebar_label: Quick Start    
 ---
 
-### 🐕 开始使用
+### 🐕 Quick Start
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻[登录注册](https://console.tancloud.cn)免费使用。  
-- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。 
+- If you prefer to use HertzBeat directly without deploying it, we provide SAAS Monitoring Cloud-TanCloud, **[Log In For Free](https://console.tancloud.cn)**.
+- If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
-安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)
+### 🍞 Install HertzBeat
 
-### 🐵 依赖服务部署(可选)
+> HertzBeat supports installation through source code, docker or package, cpu support X86/ARM64.
 
-> HertzBeat依赖于 关系型数据库 H2(已内置无需安装) 和 时序性数据库 [TDengine2+](https://www.taosdata.com/getting-started) (可选，未配置则无历史图表数据)
+##### 1：Install quickly via docker
 
-##### 安装TDengine
-1. docker安装TDengine   
-   `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:2.4.0.12`
-2. 创建名称为hertzbeat的数据库
-3. 在hertzbeat的配置文件`application.yml`配置tdengine连接   
+1. Just one command to get started:
 
-详细步骤参考 [依赖服务TDengine安装初始化](tdengine-init.md)
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
 
+```or use quay.io (if dockerhub network connect timeout)```
 
-### 🍞 HertzBeat安装   
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-#### 方式一：Docker方式快速安装  
+2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
-1. `docker` 环境仅需一条命令即可开始
+3. Deploy collector clusters
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+```
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+```
+- `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+- `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
+- `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
-2. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
-更多配置详细步骤参考 [通过Docker方式安装HertzBeat](docker-deploy.md) 
+##### 2：Install via package
 
-#### 方式二：通过安装包安装    
+1. Download the release package `hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
+3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
+5. Deploy collector clusters
+   - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
+     ```yaml
+     collector:
+       dispatch:
+         entrance:
+           netty:
+             enabled: true
+             identity: ${IDENTITY:}
+             mode: ${MODE:public}
+             manager-host: ${MANAGER_HOST:127.0.0.1}
+             manager-port: ${MANAGER_PORT:1158}
+     ```
+   - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+   - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
-1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
-2. 需要已安装java环境, `jdk8 -- jdk11`
-3. [可选]配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`
-4. 部署启动 `$ ./startup.sh `
-5. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)
 
-更多配置详细步骤参考 [通过安装包安装HertzBeat](package-deploy.md) 
+##### 3：Start via source code
 
-#### 方式三：本地代码启动   
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程manager和前端工程web-app
-2. 后端：需要`maven3+`, `java8+`和`lombok`环境，修改YML配置信息并启动manager服务
-3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在web-app目录下启动 `ng serve --open`
-4. 浏览器访问 `localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
+1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.
+2. Backend：need `maven3+`, `java11`, `lombok`, start the `manager` service.
+3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
+4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
-详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
+Detailed steps refer to [CONTRIBUTING](../others/contributing)   
 
-#### 方式四：Docker-Compose统一安装hertzbeat及其依赖服务
+##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
 
-通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把mysql数据库,tdengine数据库和hertzbeat安装部署。
+Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
 
-详细步骤参考 [docker-compose安装](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
+Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
 
-**HAVE FUN**
+##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+
+Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+
+Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+
+**HAVE FUN**  

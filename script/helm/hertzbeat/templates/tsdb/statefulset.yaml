@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "hertzbeat.tsdb" . }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+    component: tsdb
+spec:
+  replicas: 1
+  serviceName: {{ include "hertzbeat.tsdb" . }}
+  selector:
+    matchLabels:
+      {{- include "hertzbeat.selectorLabels" . | nindent 6 }}
+      component: tsdb
+  template:
+    metadata:
+      {{- with .Values.tsdb.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "hertzbeat.selectorLabels" . | nindent 8 }}
+        component: tsdb
+    spec:
+      securityContext:
+        {{- toYaml .Values.tsdb.podSecurityContext | nindent 8 }}
+      containers:
+      - name: tsdb
+        image: {{ .Values.tsdb.image.repository }}:{{ .Values.tsdb.image.tag }}
+        imagePullPolicy: {{ .Values.tsdb.image.pullPolicy }}
+        livenessProbe:
+          tcpSocket:
+            port: 8428
+          initialDelaySeconds: 300
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8428
+          initialDelaySeconds: 1
+          periodSeconds: 10
+        resources:
+          {{- toYaml .Values.tsdb.resources | nindent 12 }}
+        envFrom:
+          - configMapRef:
+              name: "{{ include "hertzbeat.tsdb" . }}"
+        volumeMounts:
+        - name: data
+          mountPath: /victoria-metrics-data
+          subPath: ""
+      volumes:
+        {{- if not .Values.tsdb.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else }}
+        - name: data
+          persistentVolumeClaim: 
+            claimName: {{ .Values.tsdb.persistence.existingClaim | default (include "hertzbeat.tsdb" .) }}
+        {{- end }}
+      {{- with .Values.tsdb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tsdb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tsdb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

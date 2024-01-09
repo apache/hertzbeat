@@ -1,47 +1,69 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="monitor"></i>
-    <span>{{ 'monitor.app.' + app | i18n }} {{ 'monitors.list' | i18n }}</span>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  *ngIf="app != undefined"
+  [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
+  [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
+  [icon_name]="getAppIconName(app)"
+></app-help-massage-show>
+<app-help-massage-show
+  *ngIf="app == undefined"
+  [help_massage_content]="'monitors.center.help' | i18n"
+  [guild_link]="'monitors.center.help.link' | i18n"
+  [module_name]="'menu.monitor.center'"
+  [icon_name]="'laptop'"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
-<div>
+<div style="margin-bottom: 20px">
   <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
-  <button nz-button nzType="primary">
+  <button *ngIf="app != undefined" nz-button nzType="primary">
     <a routerLink="/monitors/new" [queryParams]="{ app: app }">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
     </a>
   </button>
 
-  <button nz-button nzType="primary" (click)="onEnableManageMonitors()">
+  <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
     <i nz-icon nzType="up-circle" nzTheme="outline"></i>
     {{ 'monitors.enable' | i18n }}
   </button>
-  <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()">
+  <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
     <i nz-icon nzType="down-circle" nzTheme="outline"></i>
     {{ 'monitors.cancel' | i18n }}
   </button>
   <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
     <i nz-icon nzType="delete" nzTheme="outline"></i>
-    {{ 'monitors.delete' | i18n }}
+    {{ 'monitors.delete-monitor' | i18n }}
   </button>
-
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+  <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+    {{ 'common.button.operation.more' | i18n }}
+    <span nz-icon nzType="down"></span>
+  </button>
+  <nz-dropdown-menu #more_menu="nzDropdownMenu">
+    <ul nz-menu>
+      <li nz-menu-item>
+        <button nz-button nzType="primary" (click)="onExportMonitors()">
+          <i nz-icon nzType="export" nzTheme="outline"></i>
+          {{ 'monitors.export' | i18n }}
+        </button>
+      </li>
+      <li nz-menu-item>
+        <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
+          <button nz-button nzType="primary">
+            <i nz-icon nzType="import" nzTheme="outline"></i>
+            {{ 'monitors.import' | i18n }}
+          </button>
+        </nz-upload>
+      </li>
+    </ul>
+  </nz-dropdown-menu>
+  <button style="margin-right: 25px; float: right" class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
     {{ 'common.search' | i18n }}
   </button>
   <input
-    style="margin-right: 5px; float: right; width: 150px; border-radius: 9px; text-align: center"
+    style="margin-right: 5px; float: right; width: 180px; border-radius: 9px; text-align: center"
+    class="mobile-hide"
     nz-input
     type="text"
     [placeholder]="'monitors.search.placeholder' | i18n"
@@ -49,17 +71,27 @@
     (keyup.enter)="onFilterSearchMonitors()"
     [(ngModel)]="filterContent"
   />
+  <input
+    style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+    class="mobile-hide"
+    nz-input
+    type="text"
+    [placeholder]="'monitors.search.tag' | i18n"
+    nzSize="default"
+    (keyup.enter)="onFilterSearchMonitors()"
+    [(ngModel)]="tag"
+  />
   <nz-select
-    style="margin-right: 10px; float: right; width: 120px"
+    style="margin-right: 10px; float: right"
+    class="mobile-hide"
     nzAllowClear
-    [nzPlaceHolder]="'monitors.search.filter' | i18n"
+    [nzPlaceHolder]="'monitor.status' | i18n"
     [(ngModel)]="filterStatus"
   >
     <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
     <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
     <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.unreachable' | i18n" nzValue="3"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.un-manage' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.unmonitored' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -76,54 +108,84 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzLeft>{{ 'monitor.name' | i18n }}</th>
-      <th nzAlign="center">{{ 'monitor.status' | i18n }}</th>
-      <th nzAlign="center">{{ 'monitor.host' | i18n }}</th>
-      <th nzAlign="center">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="17%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'monitor.host' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'tag' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="18%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center" nzLeft>
-        <a [routerLink]="['/monitors/' + data.id]">
-          <span>{{ data.name }}</span>
-        </a>
+      <td nzAlign="center">
+        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.id]">
+          {{ data.name }}
+          <span nz-icon nzType="area-chart"></span>
+        </button>
       </td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.status == 0" nzColor="default">
-          <i nz-icon nzType="robot" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.un-manage' | i18n }}</span>
+        <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
+          <i nz-icon nzType="meh" nzTheme="outline"></i>
+          <span>{{ 'monitor.status.unmonitored' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 1" nzColor="success">
+        <nz-tag *ngIf="data.status == 1" [nzColor]="'#09b919'">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
           <span>{{ 'monitor.status.available' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 2" nzColor="warning">
-          <i nz-icon nzType="meh" nzTheme="outline"></i>
+        <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
+          <i nz-icon nzType="frown" nzTheme="outline"></i>
           <span>{{ 'monitor.status.unavailable' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 3" nzColor="error">
-          <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unreachable' | i18n }}</span>
-        </nz-tag>
       </td>
-      <td nzAlign="center">{{ data.host }}</td>
       <td nzAlign="center">
-        <nz-tag nzColor="processing">
-          <i nz-icon nzType="cloud"></i>
-          <span>{{ 'monitor.app.' + data.app | i18n }}</span>
-        </nz-tag>
+        <button
+          nz-button
+          nzSize="default"
+          nzType="text"
+          [cdkCopyToClipboard]="data.host"
+          nz-tooltip
+          [nzTooltipTitle]="'common.copy' | i18n"
+          (click)="notifyCopySuccess()"
+        >
+          {{ data.host }}
+          <span nz-icon nzType="copy"></span>
+        </button>
       </td>
-      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
+        <a routerLink="/monitors" [queryParams]="{ app: data.app }">
+          <nz-tag nzColor="processing" class="hoverClass">
+            <i nz-icon nzType="cloud"></i>
+            <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+          </nz-tag>
+        </a>
+      </td>
+      <td nzAlign="left">
+        <a *ngFor="let tag of data?.tags; let i = index" routerLink="/monitors" [queryParams]="{ tag: sliceTagName(tag) }">
+          <nz-tag style="margin-top: 2px" [nzColor]="tag?.color" class="hoverClass">
+            {{ sliceTagName(tag) }}
+          </nz-tag>
+        </a>
+      </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <button
+          nz-button
+          nzType="primary"
+          [routerLink]="['/monitors/' + data.id]"
+          nzDanger
+          nz-tooltip
+          [nzTooltipTitle]="'monitors.detail' | i18n"
+        >
+          <i nz-icon nzType="area-chart" nzTheme="outline"></i>
+        </button>
         <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitors.edit-monitor' | i18n">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
         </button>
@@ -164,3 +226,31 @@
 </nz-table>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<nz-modal
+  [(nzVisible)]="isSwitchExportTypeModalVisible"
+  [nzTitle]="'monitors.export.switch-type' | i18n"
+  nzOkDisabled="true"
+  [nzFooter]="switchExportTypeModalFooter"
+>
+  <ng-container *nzModalContent>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('YAML')" [nzLoading]="exportYamlButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('JSON')" [nzLoading]="exportJsonButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('EXCEL')" [nzLoading]="exportExcelButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}
+      </button>
+    </p>
+  </ng-container>
+</nz-modal>

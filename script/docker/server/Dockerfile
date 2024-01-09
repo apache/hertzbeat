@@ -1,12 +1,23 @@
-FROM openjdk:11.0.15-jre-slim-buster
+FROM openjdk:11.0.16-jre-slim-buster
 
-MAINTAINER tomsun28 "tomsun28@outlook.com"
+# add args version
+ARG VERSION
 
-ADD hertzbeat-1.1.1.tar /opt/
+MAINTAINER tancloud "tomsun28@outlook.com"
+
+# Install SSH And Locales
+RUN apt-get update && apt-get install -y openssh-server && apt-get install -y locales
+RUN mkdir /var/run/sshd
+# Build zh_CN en_US locale resource package
+RUN localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
+RUN localedef -c -f UTF-8 -i en_US en_US.UTF-8
+
+ADD hertzbeat-${VERSION}.tar /opt/
 
 ENV TZ=Asia/Shanghai
+ENV LANG=en_US.UTF-8
 
-EXPOSE 1157
+EXPOSE 1157 1158 22
 
 WORKDIR /opt/hertzbeat/
 

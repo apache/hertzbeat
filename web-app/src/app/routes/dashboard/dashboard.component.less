@@ -1,4 +1,4 @@
-@import '~@delon/theme/index';
+@import '@delon/theme/index';
 :host ::ng-deep {
   .ant-timeline {
     .ant-timeline-label {
@@ -93,5 +93,12 @@
         }
       }
     }
+  }
+}
+
+.hoverCard {
+  &:hover {
+    transform: scale(104%);
+    transition: 0.2s;
   }
 }

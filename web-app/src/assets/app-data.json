@@ -30,16 +30,40 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "monitor-center",
+          "i18n": "menu.monitor.center",
+          "icon": "anticon-laptop",
+          "link": "/monitors"
+        },
+        {
+          "text": "Prometheus",
+          "i18n": "menu.monitor.prometheus",
+          "icon": "anticon-insert-row-below",
+          "link": "/monitors?app=prometheus"
+        },
+        {
           "key": "service",
           "text": "应用服务",
           "i18n": "menu.monitor.service",
-          "icon": "anticon-cloud"
+          "icon": "anticon-appstore"
+        },
+        {
+          "key": "program",
+          "text": "应用程序",
+          "i18n": "menu.monitor.program",
+          "icon": "anticon-code"
         },
         {
           "key": "db",
           "text": "数据库",
           "i18n": "menu.monitor.db",
-          "icon": "anticon-database"
+          "icon": "anticon-console-sql"
+        },
+        {
+          "key": "cache",
+          "text": "缓存",
+          "i18n": "menu.monitor.cache",
+          "icon": "anticon-group"
         },
         {
           "key": "os",
@@ -53,13 +77,41 @@
           "text": "中间件",
           "hide": false,
           "i18n": "menu.monitor.mid",
-          "icon": "anticon-merge-cells"
+          "icon": "anticon-cluster"
+        },
+        {
+          "key": "bigdata",
+          "text": "大数据",
+          "hide": false,
+          "i18n": "menu.monitor.bigdata",
+          "icon": "anticon-dot-chart"
+        },
+        {
+          "key": "webserver",
+          "text": "Web服务器",
+          "hide": false,
+          "i18n": "menu.monitor.webserver",
+          "icon": "anticon-database"
+        },
+        {
+          "key": "cn",
+          "text": "云原生",
+          "hide": false,
+          "i18n": "menu.monitor.cn",
+          "icon": "anticon-cloud-server"
+        },
+        {
+          "key": "network",
+          "text": "网络",
+          "hide": false,
+          "i18n": "menu.monitor.network",
+          "icon": "anticon-global"
         },
         {
           "key": "custom",
           "text": "自定义",
           "i18n": "menu.monitor.custom",
-          "icon": "anticon-skin"
+          "icon": "anticon-project"
         }
       ]
     },
@@ -70,16 +122,28 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "告警配置",
+          "i18n": "menu.alert.setting",
+          "icon": "anticon-calculator",
+          "link": "/alert/setting"
+        },
+        {
+          "text": "告警收敛",
+          "i18n": "menu.alert.converge",
+          "icon": "anticon-filter",
+          "link": "/alert/converge"
+        },
+        {
+          "text": "告警静默",
+          "i18n": "menu.alert.silence",
+          "icon": "anticon-audio-muted",
+          "link": "/alert/silence"
+        },
+        {
           "text": "告警中心",
           "i18n": "menu.alert.center",
           "icon": "anticon-alert",
           "link": "/alert/center"
-        },
-        {
-          "text": "告警配置",
-          "i18n": "menu.alert.setting",
-          "icon": "anticon-bulb",
-          "link": "/alert/setting"
         },
         {
           "text": "告警通知",
@@ -96,10 +160,30 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "collector",
+          "i18n": "menu.extras.collector",
+          "icon": "anticon-cluster",
+          "link": "/setting/collector"
+        },
+        {
           "text": "tags",
           "i18n": "menu.extras.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
+        },
+        {
+          "text": "define",
+          "i18n": "menu.extras.define",
+          "icon": "anticon-code",
+          "link": "/setting/define",
+          "badgeDot": true,
+          "badge": 1
+        },
+        {
+          "text": "settings",
+          "i18n": "menu.extras.settings",
+          "icon": "anticon-setting",
+          "link": "/setting/settings"
         },
         {
           "text": "helpCenter",

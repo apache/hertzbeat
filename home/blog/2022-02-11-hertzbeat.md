@@ -53,7 +53,7 @@ tags: [opensource]
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)
 
@@ -111,7 +111,7 @@ HertzBeat赫兹跳动为 [Dromara开源社区](https://dromara.org/) 孵化项�
 
 ##### QQ交流群
 
-加QQ群号 718618151 或 扫描下面的群二维码进群, 验证信息: tancloud
+加QQ群号 236915833 或 扫描下面的群二维码进群, 验证信息: tancloud
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>          
 

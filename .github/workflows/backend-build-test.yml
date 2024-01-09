@@ -1,0 +1,38 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Backend CI
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Build with Maven
+      run: mvn clean -B package --file pom.xml
+    - name: Build Image
+      env:
+        IMAGE_PUSH: false
+        IMAGE_LOAD: true
+        IMAGE_PLATFORM: linux/amd64
+      run: |
+        docker buildx create --use --name mybuilder --driver docker-container
+        docker buildx use mybuilder
+
+        ./script/docker/server/build.sh
+    - name: Run E2E
+      run: |
+        sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+        sudo chmod u+x /usr/local/bin/docker-compose
+
+        cd e2e && ./start.sh

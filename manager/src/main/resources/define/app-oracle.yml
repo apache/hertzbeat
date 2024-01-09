@@ -1,0 +1,561 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: oracle
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Oracle数据库
+  en-US: Oracle DB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 Oracle 数据库的通用性能指标(表空间、性能状态、用户连接、缓存、慢SQL等)进行采集监控。<br>您可以点击“<i>新建 Oracle 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of Oracle database (tablespace、user connect、performance、slow SQL etc.). <br>You can click "<i>New Oracle Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 Oracle 數據庫的通用性能指標(表空間、性能狀態、用戶連接、緩存、慢SQL等)進行采集監控。<br>您可以點擊“<i>新建 Oracle 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/oracle/
+  en-US: https://hertzbeat.com/docs/help/oracle/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    defaultValue: 1521
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    range: '[400,200000]'
+    required: false
+    hide: true
+    defaultValue: 6000
+  - field: database
+    name:
+      zh-CN: 服务名
+      en-US: Service Name
+    type: text
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+    hide: true
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - basic
+  # 监控指标 - basic
+  - name: basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: database_version
+        type: 1
+        label: true
+      - field: hostname
+        type: 1
+      - field: instance_name
+        type: 1
+      - field: startup_time
+        type: 1
+      - field: status
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    aliasFields:
+      - VERSION
+      - HOST_NAME
+      - INSTANCE_NAME
+      - STARTUP_TIME
+      - STATUS
+    # (optional)mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - database_version=VERSION
+      - hostname=HOST_NAME
+      - instance_name=INSTANCE_NAME
+      - startup_time=STARTUP_TIME
+      - status=STATUS
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    # 协议为jdbc时的配置内容
+    jdbc:
+      # host: ipv4 ipv6 host
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      port: ^_^port^_^
+      # database platform name
+      # 数据库平台名称
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      # SQL Query Method：oneRow, multiRow, columns
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: select * from sys.v_$instance
+      # JDBC url
+      url: ^_^url^_^
+
+  - name: tablespace
+    priority: 1
+    fields:
+      - field: file_id
+        type: 1
+        label: true
+      - field: file_name
+        type: 1
+      - field: tablespace_name
+        type: 1
+      - field: status
+        type: 1
+      - field: bytes
+        type: 0
+        unit: MB
+      - field: blocks
+        type: 0
+        unit: 块数
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      
+      sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
+      url: ^_^url^_^
+
+  - name: total_sessions
+    priority: 1
+    fields:
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: select count(*) as count from v$session
+      url: ^_^url^_^
+
+  - name: active_sessions
+    priority: 1
+    fields:
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: select count(*) as count from v$session where username is not null and status = 'ACTIVE'
+      url: ^_^url^_^
+
+  - name: background_sessions
+    priority: 1
+    fields:
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: select count(*) as count from v$session where username is null
+      url: ^_^url^_^
+
+  - name: connection
+    priority: 1
+    fields:
+      - field: username
+        type: 1
+        label: true
+      - field: count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: SELECT username, count( username ) as count FROM v$session WHERE username IS NOT NULL GROUP BY username
+      url: ^_^url^_^
+
+  - name: performance
+    priority: 1
+    fields:
+      - field: qps
+        type: 0
+        unit: qps
+      - field: tps
+        type: 0
+        unit: tps
+      - field: mbps
+        type: 0
+        unit: mbps
+    aliasFields:
+      - I/O Requests per Second
+      - User Transaction Per Sec
+      - I/O Megabytes per Second
+    calculates:
+      - qps=I/O Requests per Second
+      - tps=User Transaction Per Sec
+      - mbps=I/O Megabytes per Second
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
+      url: ^_^url^_^
+
+
+  - name: percentage
+    priority: 1
+    fields:
+      - field: tablespace_name
+        type: 1
+        label: true
+      - field: total
+        type: 0
+      - field: used
+        type: 0
+      - field: free
+        type: 0
+      - field: used_percentage
+        type: 0
+        unit: '%'
+      - field: free_percentage
+        type: 0
+        unit: '%'
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      # DBA_TABLESPACE_USAGE_METRICS可以查出表空间used_max值，它的大小计算单位是block，1kb=8block，把block*8/1024转化为MB单位
+      sql: "SELECT tablespace_name,ROUND ( (TABLESPACE_SIZE * 8 / 1024), 0) AS total,ROUND ( (USED_SPACE * 8 / 1024), 0) AS used,ROUND ( ( (TABLESPACE_SIZE * 8 / 1024) - (USED_SPACE * 8 / 1024)), 0) AS free,ROUND ( (USED_PERCENT), 0) AS used_percentage,100 - ROUND ( (USED_PERCENT), 0) AS free_percentage FROM sys.dba_tablespace_usage_metrics ORDER BY used_percent DESC"
+      url: ^_^url^_^
+
+  - name: process
+    priority: 1
+    fields:
+      - field: process_count
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: select count(*) as process_count from v$process
+      url: ^_^url^_^
+
+  - name: transaction
+    priority: 1
+    fields:
+      - field: commits
+        type: 0
+        unit: 't/s'
+      - field: rollbacks
+        type: 0
+        unit: 't/s'
+    aliasFields:
+      - User Commits Per Sec
+      - User Rollbacks Per Sec
+    calculates:
+      - commits=User Commits Per Sec
+      - rollbacks=User Rollbacks Per Sec
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'
+      url: ^_^url^_^
+
+  - name: wait
+    priority: 1
+    fields:
+      - field: concurrent_wait_time
+        type: 0
+        unit: ms
+      - field: commit_wait_time
+        type: 0
+        unit: ms
+      - field: app_wait_time
+        type: 0
+        unit: ms
+      - field: network_wait_time
+        type: 0
+        unit: ms
+      - field: system_io_wait_time
+        type: 0
+        unit: ms
+      - field: user_io_wait_time
+        type: 0
+        unit: ms
+      - field: configure_wait_time
+        type: 0
+        unit: ms
+      - field: scheduler_wait_time
+        type: 0
+        unit: ms
+    aliasFields:
+      - System I/O
+      - Application
+      - User I/O
+      - Commit
+      - Concurrency
+      - Configuration
+      - Idle
+      - Other
+    calculates:
+      - system_io_wait_time=System I/O
+      - app_wait_time=Application
+      - user_io_wait_time=User I/O
+      - commit_wait_time=Commit
+      - concurrent_wait_time=Concurrency
+      - configure_wait_time=Configuration
+      - scheduler_wait_time=Idle
+      - network_wait_time=Other
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select wait_class, sum(time_waited) total_wait_time from v$active_session_history where session_state = 'WAITING' GROUP BY wait_class ORDER BY total_wait_time DESC
+      url: ^_^url^_^
+
+  - name: cpu_stats
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: num
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'
+      url: ^_^url^_^
+
+  - name: mem_stats
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: num
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: select stat_name as type, value as num from v$osstat where stat_name like '%BYTES'
+      url: ^_^url^_^
+
+  - name: cache_hit_ratio
+    priority: 1
+    fields:
+      - field: lib_cache_hit_ratio
+        type: 0
+      - field: buffer_cache_hit_ratio
+        type: 0
+    aliasFields:
+      - Library Cache Hit Ratio
+      - Buffer Cache Hit Ratio
+    calculates:
+      - lib_cache_hit_ratio=Library Cache Hit Ratio
+      - buffer_cache_hit_ratio=Buffer Cache Hit Ratio
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
+      url: ^_^url^_^
+
+  - name: slow_query
+    priority: 1
+    fields:
+      - field: sql_id
+        type: 1
+      - field: child_number
+        type: 1
+      - field: executions
+        type: 1
+        unit: 次数
+      - field: per_secs
+        type: 1
+        unit: 秒
+      - field: cpu_secs
+        type: 1
+        unit: 秒
+      - field: buffer_gets
+        type: 1
+      - field: disk_reads
+        type: 1
+      - field: fetches
+        type: 1
+      - field: parse_calls
+        type: 1
+      - field: optimizer_cost
+        type: 1
+      - field: sql_text
+        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM (SELECT sql_id, child_number, executions, ROUND(CASE WHEN executions = 0 THEN NULL ELSE elapsed_time / (executions*1000000) END,4) AS per_secs, cpu_time / 1000000 AS cpu_secs, buffer_gets, disk_reads, fetches, parse_calls, optimizer_cost, sql_text FROM  v$sql  ) where rownum <= 10 ORDER BY  per_secs DESC
+      url: ^_^url^_^

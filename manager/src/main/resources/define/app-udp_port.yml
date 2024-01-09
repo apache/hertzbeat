@@ -1,0 +1,142 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: udp_port
+# 监控类型国际化名称
+name:
+  zh-CN: UDP端口可用性
+  en-US: UDP PORT
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: UDP 是面向无连接的传输层协议，其端口可用性状态我们通过在应用层发送请求报文获得响应来判断，配置信息我们需要填充能使对端响应的应用层16进制报文内容。建议使用wireshark抓包来获取发送报文内容。<br>您可以点击“<i>新建 UDP端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: UDP is a connectionless transport layer protocol. We can judge its port availability status by sending a request message at the application layer and getting a response. We need to input the application layer hexadecimal message content that enables the peer to respond. Suggest using wireshark to capture packets to obtain the send package content. <br>You could click the "<i>New UDP Port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: UDP 是面向無連接的傳輸層協議，其連接埠可用性狀態我們透過在應用層發送請求封包獲得回應來判斷，設定指標我們需要填充能使對端回應的應用層16進位封包 內容。建議使用wireshark抓包來取得報文內容。<br>您可以點選“<i>新 UDP連接埠可用性</i>”並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/port
+  en-US: https://hertzbeat.com/docs/help/port
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-字段名称标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value 81
+    # 默认值 81
+    defaultValue: 81
+  # field-param field key
+  # field-字段名称标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value 6000
+    # 默认值 6000
+    defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
+  - field: content
+    name:
+      zh-CN: 发送报文内容(16进制串)
+      en-US: Send Package Content(HexString)
+    type: text
+    placeholder: 3025020101040
+    required: false
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - summary
+  # 监控指标 - summary
+  - name: summary
+    i18n:
+      zh-CN: 概要
+      en-US: Summary
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+    # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+    # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: udp
+    # Specific collection configuration when protocol is telnet protocol
+    # 当protocol为telnet协议时具体的采集配置
+    udp:
+      # telnet host
+      # 远程登录主机
+      host: ^_^host^_^
+      # port
+      # 端口
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+      # protocol content
+      # udp 上层协议的16进制报文内容
+      content: ^_^content^_^

@@ -1,0 +1,273 @@
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: custom
+# 监控应用类型名称(与文件名保持一致)
+app: kafka_promql
+name:
+  zh-CN: Kafka-PromQL
+  en-US: Kafka-PromQL
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 Kafka 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 Kafka，需要从 Prometheus 服务器抓取 Kafka 的监控数据。<br>您可以点击 “<i>新建 Kafka-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring Kafka. This solution is suitable for Prometheus to monitor Kafka, and it need to capture Kafka monitoring data from the Prometheus server. <br>You could click the "<i>New Kafka-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 Kafka 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 Kafka，需要從 Prometheus 服務器抓取 Kafka 的監控數據。<br>您可以點擊 “<i>新建 Kafka-PromQL</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/kafka_promql
+  en-US: https://hertzbeat.com/docs/help/kafka_promql
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+  - field: method
+    name:
+      zh-CN: 请求方式
+      en-US: Method
+    type: radio
+    required: true
+    options:
+      - label: GET请求
+        value: GET
+      - label: POST请求
+        value: POST
+      - label: PUT请求
+        value: PUT
+      - label: DELETE请求
+        value: DELETE
+  - field: uri
+    name:
+      zh-CN: 相对路径
+      en-US: URI
+    type: text
+    limit: 200
+    required: true
+    placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    type: boolean
+    required: false
+  - field: headers
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+    type: key-value
+    required: false
+    keyAlias: Header Name
+    valueAlias: Header Value
+  - field: params
+    name:
+      zh-CN: 查询Params
+      en-US: Params
+    type: key-value
+    required: false
+    keyAlias: Param Key
+    valueAlias: Param Value
+  - field: contentType
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+    type: text
+    placeholder: '请求BODY资源类型'
+    required: false
+    hide: true
+  - field: payload
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+    type: textarea
+    placeholder: 'POST PUT请求时有效'
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+metrics:
+  # metrics - kafka_brokers
+  # 监控指标 - kafka_brokers
+  - name: kafka_brokers
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, i18n-指标国际化展示名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: __name__
+        type: 1
+      - field: instance
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+# 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: kafka_brokers
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: PromQL
+
+  - name: kafka_topic_partitions
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    # 具体监控指标列表
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: __name__
+        type: 1
+      - field: topic
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: kafka_topic_partitions
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL
+
+  - name: kafka_server_brokertopicmetrics_bytesinpersec    #每秒查询率
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    # 具体监控指标列表
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: instance
+        type: 1
+      - field: job
+        type: 1
+      - field: topic
+        type: 1
+      - field: timestamp
+        type: 1
+      - field: value
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ^_^uri^_^
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # 请求头内容
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # 请求参数内容
+      params:
+        query: kafka_server_brokertopicmetrics_bytesinpersec
+      # 认证
+      authorization:
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
+      parseType: PromQL

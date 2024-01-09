@@ -1,0 +1,227 @@
+<app-help-massage-show
+  [help_massage_content]="'alert.help.silence' | i18n"
+  [guild_link]="'alert.help.silence.link' | i18n"
+  [module_name]="'menu.alert.silence'"
+  [icon_name]="'audio-muted'"
+></app-help-massage-show>
+<nz-divider></nz-divider>
+
+<div style="margin-bottom: 20px">
+  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+    <i nz-icon nzType="sync" nzTheme="outline"></i>
+  </button>
+  <button nz-button nzType="primary" (click)="onNewAlertSilence()">
+    <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+    {{ 'alert.silence.new' | i18n }}
+  </button>
+  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlertSilences()">
+    <i nz-icon nzType="delete" nzTheme="outline"></i>
+    {{ 'alert.silence.delete' | i18n }}
+  </button>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertSilenceTable()">
+    {{ 'common.search' | i18n }}
+  </button>
+  <input
+    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
+    nz-input
+    type="text"
+    [placeholder]="'alert.silence.name' | i18n"
+    nzSize="default"
+    (keyup.enter)="loadAlertSilenceTable()"
+    [(ngModel)]="search"
+  />
+</div>
+
+<nz-table
+  #fixedTable
+  [nzData]="silences"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.times' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td nzAlign="center" nzLeft [nzChecked]="checkedSilenceIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">
+        <span> {{ data.name }} </span>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngIf="data.type == 0" nzColor="processing">
+          <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
+          <span>{{ 'alert.silence.type.once' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 1" nzColor="processing">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+          <span>{{ 'alert.silence.type.cyc' | i18n }}</span>
+        </nz-tag>
+      </td>
+      <td nzAlign="center" *ngIf="!data.matchAll">
+        <nz-tag nzColor="processing" style="margin-top: 2px" *ngFor="let tag of data.tags; let i = index">
+          {{ sliceTagName(tag) }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center" *ngIf="data.matchAll">
+        <nz-tag nzColor="warning">
+          {{ 'alert.silence.match-all' | i18n }}
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag nzColor="processing">
+          <i nz-icon nzType="audio-muted" nzTheme="outline"></i>
+          <span>{{ data.times == undefined ? 0 : data.times }}</span>
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertSilence(data)" name="enable"></nz-switch>
+      </td>
+      <td nzAlign="center">
+        <button nz-button nzType="primary" (click)="onEditAlertSilence(data.id)" nz-tooltip [nzTooltipTitle]="'alert.silence.edit' | i18n">
+          <i nz-icon nzType="edit" nzTheme="outline"></i>
+        </button>
+        <button
+          nz-button
+          nzDanger
+          nzType="primary"
+          (click)="onDeleteOneAlertSilence(data.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.silence.delete' | i18n"
+        >
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<!-- 新增或修改告警静默策略弹出框 -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="isManageModalAdd ? ('alert.silence.new' | i18n) : ('alert.silence.edit' | i18n)"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #ruleForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">{{ 'alert.silence.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="silence.name" nz-input required name="rule_name" type="text" id="rule_name" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="matchAll">{{ 'alert.silence.match-all' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="silence.matchAll" name="matchAll" id="matchAll"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="!silence.matchAll">
+        <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.silence.tags' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-select
+            [(ngModel)]="matchTags"
+            [nzDisabled]="silence.matchAll"
+            (nzOpenChange)="loadTagsOption()"
+            [nzOptions]="tagsOption"
+            [nzMaxTagCount]="5"
+            [nzDropdownMatchSelectWidth]="false"
+            nzShowSearch
+            nzMode="multiple"
+            nzAllowClear
+            nzPlaceHolder="Select Tags"
+            required
+            name="tags"
+            id="tags"
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="!silence.matchAll">
+        <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.silence.priority' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-select
+            [(ngModel)]="silence.priorities"
+            [nzDisabled]="silence.matchAll"
+            (ngModelChange)="onPrioritiesChange()"
+            nzShowSearch
+            nzMode="multiple"
+            nzAllowClear
+            nzPlaceHolder="Select Priorities"
+            required
+            name="priorities"
+            id="priorities"
+          >
+            <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
+            <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="type">{{ 'alert.silence.type' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-radio-group [(ngModel)]="silence.type" nzButtonStyle="solid" id="type" name="type">
+            <label nz-radio-button [nzValue]="0">{{ 'alert.silence.type.once' | i18n }}</label>
+            <label nz-radio-button [nzValue]="1">{{ 'alert.silence.type.cyc' | i18n }}</label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="silence.type == 0">
+        <nz-form-label nzSpan="7" nzFor="date">{{ 'alert.silence.time' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-range-picker
+            [nzShowTime]="{ nzFormat: 'HH:mm' }"
+            nzFormat="yyyy-MM-dd HH:mm"
+            [(ngModel)]="silenceDates"
+            id="date"
+            name="date"
+          ></nz-range-picker>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="silence.type == 1">
+        <nz-form-label nzSpan="7" nzFor="days">{{ 'alert.notice.rule.period-chose' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-checkbox-group name="days" id="days" [(ngModel)]="dayCheckOptions"></nz-checkbox-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="silence.type == 1">
+        <nz-form-label nzSpan="7" nzFor="time">{{ 'alert.silence.time' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-time-picker [(ngModel)]="silence.periodStart" nzFormat="HH:mm" name="periodStart" id="periodStart"></nz-time-picker>
+          <span nz-icon nzType="right-circle" nzTheme="outline" style="margin-right: 6px; margin-left: 6px"></span>
+          <nz-time-picker [(ngModel)]="silence.periodEnd" nzFormat="HH:mm" name="periodEnd" id="periodEnd"></nz-time-picker>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="silence.enable" name="enable" id="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

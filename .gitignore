@@ -11,6 +11,8 @@ mvnw
 mvnw.bat
 *.log
 package-lock.json
+*.zip
+jdk/
 
 ### STS ###
 .apt_generated
@@ -40,7 +42,6 @@ nbdist/
 # dependencies
 node_modules
 .docusaurus
-yarn.lock
 
 # h2 data
 *.mv.db

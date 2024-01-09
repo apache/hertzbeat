@@ -1,8 +1,4 @@
-## 项目工程公共包   
+## Common lib    
 
 
-### 规范和一些约定      
-
-- 指标字段格式类型 
-> 用 type 表示，0-number数字, 1-string字符串   
--  
+### Some Conventions      

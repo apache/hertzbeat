@@ -51,10 +51,6 @@
     "message": "Older Post",
     "description": "The blog post button label to navigate to the older/next post"
   },
-  "theme.tags.tagsPageTitle": {
-    "message": "Tags",
-    "description": "The title of the tag list page"
-  },
   "theme.blog.post.plurals": {
     "message": "One post|{count} posts",
     "description": "Pluralized label for \"{count} posts\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
@@ -106,14 +102,6 @@
   "theme.docs.sidebar.collapseButtonAriaLabel": {
     "message": "Collapse sidebar",
     "description": "The title attribute for collapse button of doc sidebar"
-  },
-  "theme.docs.sidebar.responsiveCloseButtonLabel": {
-    "message": "Close menu",
-    "description": "The ARIA label for close button of mobile doc sidebar"
-  },
-  "theme.docs.sidebar.responsiveOpenButtonLabel": {
-    "message": "Open menu",
-    "description": "The ARIA label for open button of mobile doc sidebar"
   },
   "theme.docs.versions.unreleasedVersionLabel": {
     "message": "This is unreleased documentation for {siteTitle} {versionLabel} version.",
@@ -191,9 +179,6 @@
     "message": "Search",
     "description": "The ARIA label and placeholder for search button"
   },
-  "Get Started": {
-    "message": "Get Started"
-  },
   "theme.PwaReloadPopup.info": {
     "message": "New version available",
     "description": "The text for PWA reload popup"
@@ -214,29 +199,14 @@
     "message": "Live Editor",
     "description": "The live editor label of the live codeblocks"
   },
-  "开箱即用": {
-    "message": "Convenient"
+  "convenient": {
+    "message": "Convenient Used"
   },
-  "中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统。往往有时候，那套监控系统比自身网站消耗的资源还大。{TANCLOUD} 提供{SAAS}云版本，{console}即可开始您的服务监控。{br}安全是最重要的，我们对账户密钥和监控密钥全链路加密。": {
-    "message": "Micro-teams no longer need to deploy a cumbersome monitoring system in order to monitor their own website resources. Often times, that monitoring system consumes more resources than its own website. {TANCLOUD} provides {SAAS} cloud, {console} can start your service monitoring. {br}Security is the most important, we encrypt the whole link of account key and monitoring key."
+  "custom-multi-support": {
+    "message": "High Performance and Custom"
   },
-  "多支持与自定义": {
-    "message": "Custom Monitor"
-  },
-  "HertzBeat目前支持对网站，API，PING连通性，端口可用性，SiteMap全站，数据库，操作系统等的监控，快速迭代提供更多的监控类型和性能指标。{br}我们提供了更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。{br}不同团队的监控需求千变万化，我们提供{custom}，仅需配置YML就能快速接入监控系统。": {
-    "message": "HertzBeat supports monitoring of website, api, ping connectivity, port availability, sitemap, database, operating system, etc., and provides more monitoring types and metrics. {br}We provide a more liberalized threshold alarm configuration, support email, SMS, webhook, DingTalk, WeChat, Feishu robot and other alarm notifications. {br}The monitoring needs of different teams are ever-changing. We provide {custom}, which can quickly access the monitoring system only by configuring YML."
-  },
-  "拥抱开源": {
+  "opensource": {
     "message": "Opensource Friendly"
-  },
-  "HertzBeat监控系统代码开源，非常欢迎任何对此有兴趣的同学参与中来，我们一起进步，丰富的资源文档正在完善中。{br}中二的我们相信开源改变世界！{br}{github} {br}{gitee}": {
-    "message": "The HertzBeat code is open source, and anyone who are interested in it are very welcome to participate. We will make progress together, and the rich resource documents are being improved. {br}We believe that open source can change the world! {br}{github} {br}{gitee}."
-  },
-  "易用友好的云监控系统": {
-    "message": "Friendly Cloud Monitor System"
-  },
-  "即刻登录免费使用": {
-    "message": "Login Now"
   },
   "theme.ErrorPageContent.title": {
     "message": "This page crashed.",
@@ -285,5 +255,227 @@
   "theme.TOCCollapsible.toggleButtonLabel": {
     "message": "On this page",
     "description": "The label used by the button on the collapsible TOC component"
+  },
+  "convenient-content": {
+    "message": "{docker} {br} [Monitoring+Alarm+Notification] all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more. {br} Easy to use and agentless, offering full web-based operations for monitoring and alerting with just a few clicks. {br} We also provider sass cloud - tancloud, {console}. Security is the most important, we encrypt the whole data of account and monitoring."
+  },
+  "custom-multi-support-content": {
+    "message": "Makes protocols such as Http, Jmx, Ssh, Snmp, Jdbc configurable, allowing you to collect any metrics by simply configuring the template online. {br} High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration. {br} Provides flexible alarm threshold rules and timely notifications delivered via Discord Slack Telegram Email DingDing WeChat FeiShu Webhook SMS."
+  },
+  "opensource-content": {
+    "message": "HertzBeat's stand-alone and cluster version code are all open source, unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a document code or a typo, we respect everyone and learn and grow together. {br} We hope that the code we participate in can be deployed to thousands of machines, leaving our code footprints in this world.{br}{github} {gitee}"
+  },
+  "slogan": {
+    "message": "Open Source Real-time Monitoring System"
+  },
+  "Who uses HertzBeat?": {
+    "message": "Who uses HertzBeat?"
+  },
+  "Dromara Friends": {
+    "message": "Dromara Friends"
+  },
+  "Friends Link": {
+    "message": "Friends Link"
+  },
+  "theme.admonition.note": {
+    "message": "note",
+    "description": "The default label used for the Note admonition (:::note)"
+  },
+  "theme.admonition.tip": {
+    "message": "tip",
+    "description": "The default label used for the Tip admonition (:::tip)"
+  },
+  "theme.admonition.danger": {
+    "message": "danger",
+    "description": "The default label used for the Danger admonition (:::danger)"
+  },
+  "theme.admonition.info": {
+    "message": "info",
+    "description": "The default label used for the Info admonition (:::info)"
+  },
+  "theme.admonition.caution": {
+    "message": "caution",
+    "description": "The default label used for the Caution admonition (:::caution)"
+  },
+  "theme.colorToggle.ariaLabel": {
+    "message": "Switch between dark and light mode (currently {mode})",
+    "description": "The ARIA label for the navbar color mode toggle"
+  },
+  "theme.colorToggle.ariaLabel.mode.dark": {
+    "message": "dark mode",
+    "description": "The name for the dark color mode"
+  },
+  "theme.colorToggle.ariaLabel.mode.light": {
+    "message": "light mode",
+    "description": "The name for the light color mode"
+  },
+  "theme.docs.breadcrumbs.home": {
+    "message": "Home page",
+    "description": "The ARIA label for the home page in the breadcrumbs"
+  },
+  "theme.docs.breadcrumbs.navAriaLabel": {
+    "message": "Breadcrumbs",
+    "description": "The ARIA label for the breadcrumbs"
+  },
+  "theme.docs.DocCard.categoryDescription": {
+    "message": "{count} items",
+    "description": "The default description for a category card in the generated index about how many items this category includes"
+  },
+  "theme.docs.versionBadge.label": {
+    "message": "Version: {versionLabel}"
+  },
+  "theme.CodeBlock.wordWrapToggle": {
+    "message": "Toggle word wrap",
+    "description": "The title attribute for toggle word wrapping button of code block lines"
+  },
+  "theme.navbar.mobileLanguageDropdown.label": {
+    "message": "Languages",
+    "description": "The label for the mobile language switcher dropdown"
+  },
+  "theme.blog.post.readMoreLabel": {
+    "message": "Read more about {title}",
+    "description": "The ARIA label for the link to full blog posts from excerpts"
+  },
+  "theme.SearchBar.seeAll": {
+    "message": "See all {count} results"
+  },
+  "theme.SearchModal.searchBox.resetButtonTitle": {
+    "message": "Clear the query",
+    "description": "The label and ARIA label for search box reset button"
+  },
+  "theme.SearchModal.searchBox.cancelButtonText": {
+    "message": "Cancel",
+    "description": "The label and ARIA label for search box cancel button"
+  },
+  "theme.SearchModal.startScreen.recentSearchesTitle": {
+    "message": "Recent",
+    "description": "The title for recent searches"
+  },
+  "theme.SearchModal.startScreen.noRecentSearchesText": {
+    "message": "No recent searches",
+    "description": "The text when no recent searches"
+  },
+  "theme.SearchModal.startScreen.saveRecentSearchButtonTitle": {
+    "message": "Save this search",
+    "description": "The label for save recent search button"
+  },
+  "theme.SearchModal.startScreen.removeRecentSearchButtonTitle": {
+    "message": "Remove this search from history",
+    "description": "The label for remove recent search button"
+  },
+  "theme.SearchModal.startScreen.favoriteSearchesTitle": {
+    "message": "Favorite",
+    "description": "The title for favorite searches"
+  },
+  "theme.SearchModal.startScreen.removeFavoriteSearchButtonTitle": {
+    "message": "Remove this search from favorites",
+    "description": "The label for remove favorite search button"
+  },
+  "theme.SearchModal.errorScreen.titleText": {
+    "message": "Unable to fetch results",
+    "description": "The title for error screen of search modal"
+  },
+  "theme.SearchModal.errorScreen.helpText": {
+    "message": "You might want to check your network connection.",
+    "description": "The help text for error screen of search modal"
+  },
+  "theme.SearchModal.footer.selectText": {
+    "message": "to select",
+    "description": "The explanatory text of the action for the enter key"
+  },
+  "theme.SearchModal.footer.selectKeyAriaLabel": {
+    "message": "Enter key",
+    "description": "The ARIA label for the Enter key button that makes the selection"
+  },
+  "theme.SearchModal.footer.navigateText": {
+    "message": "to navigate",
+    "description": "The explanatory text of the action for the Arrow up and Arrow down key"
+  },
+  "theme.SearchModal.footer.navigateUpKeyAriaLabel": {
+    "message": "Arrow up",
+    "description": "The ARIA label for the Arrow up key button that makes the navigation"
+  },
+  "theme.SearchModal.footer.navigateDownKeyAriaLabel": {
+    "message": "Arrow down",
+    "description": "The ARIA label for the Arrow down key button that makes the navigation"
+  },
+  "theme.SearchModal.footer.closeText": {
+    "message": "to close",
+    "description": "The explanatory text of the action for Escape key"
+  },
+  "theme.SearchModal.footer.closeKeyAriaLabel": {
+    "message": "Escape key",
+    "description": "The ARIA label for the Escape key button that close the modal"
+  },
+  "theme.SearchModal.footer.searchByText": {
+    "message": "Search by",
+    "description": "The text explain that the search is making by Algolia"
+  },
+  "theme.SearchModal.noResultsScreen.noResultsText": {
+    "message": "No results for",
+    "description": "The text explains that there are no results for the following search"
+  },
+  "theme.SearchModal.noResultsScreen.suggestedQueryText": {
+    "message": "Try searching for",
+    "description": "The text for the suggested query when no results are found for the following search"
+  },
+  "theme.SearchModal.noResultsScreen.reportMissingResultsText": {
+    "message": "Believe this query should return results?",
+    "description": "The text for the question where the user thinks there are missing results"
+  },
+  "theme.SearchModal.noResultsScreen.reportMissingResultsLinkText": {
+    "message": "Let us know.",
+    "description": "The text for the link to report missing results"
+  },
+  "theme.SearchModal.placeholder": {
+    "message": "Search docs",
+    "description": "The placeholder of the input of the DocSearch pop-up modal"
+  },
+  "theme.IdealImageMessage.loading": {
+    "message": "Loading...",
+    "description": "When the full-scale image is loading"
+  },
+  "theme.IdealImageMessage.load": {
+    "message": "Click to load{sizeMessage}",
+    "description": "To prompt users to load the full image. sizeMessage is a parenthesized size figure."
+  },
+  "theme.IdealImageMessage.offline": {
+    "message": "Your browser is offline. Image not loaded",
+    "description": "When the user is viewing an offline document"
+  },
+  "theme.IdealImageMessage.404error": {
+    "message": "404. Image not found",
+    "description": "When the image is not found"
+  },
+  "theme.IdealImageMessage.error": {
+    "message": "Error. Click to reload",
+    "description": "When the image fails to load for unknown error"
+  },
+  "sponsor": {
+    "message": "Sponsor"
+  },
+  "support hertzbeat": {
+    "message": "Support HertzBeat"
+  },
+  "click": {
+    "message": "Click"
+  },
+  "go github": {
+    "message": "Go To Github"
+  },
+  "If you like HertzBeat, star us on GitHub": {
+    "message": "If you like HertzBeat, star us on GitHub."
+  },
+  "We will grow better with your support.": {
+    "message": "We will grow better with your support and is our greatest motivation."
+  },
+  "quickstart": {
+    "message": "Quick Start"
+  },
+  "Support HertzBeat": {
+    "message": "Support HertzBeat"
+  },
+  "Go to Github": {
+    "message": "Go to Github"
   }
 }

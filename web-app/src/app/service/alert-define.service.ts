@@ -47,7 +47,7 @@ export class AlertDefineService {
     return this.http.delete<Message<any>>(alert_defines_uri, options);
   }
 
-  public getAlertDefines(pageIndex: number, pageSize: number): Observable<Message<Page<AlertDefine>>> {
+  public getAlertDefines(search: string | undefined, pageIndex: number, pageSize: number): Observable<Message<Page<AlertDefine>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
@@ -58,6 +58,9 @@ export class AlertDefineService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (search != undefined && search.trim() != '') {
+      httpParams = httpParams.append('search', search.trim());
+    }
     const options = { params: httpParams };
     return this.http.get<Message<Page<AlertDefine>>>(alert_defines_uri, options);
   }

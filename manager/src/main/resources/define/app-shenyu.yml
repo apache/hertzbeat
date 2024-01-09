@@ -1,0 +1,308 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: shenyu
+name:
+  zh-CN: ShenYu网关
+  en-US: Apache ShenYu
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 通过调用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 对 ShenYu 网关的通用指标 (请求量、执行时间、JVM、内存占用、线程信息等) 进行采集监控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">开启暴露 ShenYu Metrics 插件暴露其数据接口</a>。您可以点击 “<i>新建 ShenYu</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors metrics of the ShenYu Gateway by calling the <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics Api</a>. <br>Note⚠️:You need to <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">enable ShenYu Metrics Plugin</a> in advance. You can click "<i>New ShenYu</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: Hertzbeat 通過調用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 對 ShenYu 網關的通用指標 (請求量、執行時間、JVM、內存占用、線程信息等) 進行采集監控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">開啓暴露 ShenYu Metrics 插件暴露其數據接口</a>。您可以點擊 “<i>新建 ShenYu</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/shenyu
+  en-US: https://hertzbeat.com/docs/help/shenyu
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    defaultValue: 8090
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+metrics:
+  - name: shenyu_request_total
+    priority: 0
+    fields:
+      - field: value
+        type: 0
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: shenyu_request_throw_created
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: value
+        type: 0
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: process_cpu_seconds_total
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: value
+        type: 0
+        unit: s
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: process_open_fds
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: value
+        type: 0
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: process_max_fds
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: value
+        type: 0
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_info
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: runtime
+        type: 1
+      - field: vendor
+        type: 1
+      - field: version
+        type: 1
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_bytes_used
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: area
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_pool_bytes_used
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: pool
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_pool_bytes_committed
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: pool
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_pool_bytes_max
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: pool
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_threads_state
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: state
+        type: 1
+        label: true
+      - field: count
+        type: 0
+    aliasFields:
+      - state
+      - value
+    calculates:
+      - count=value
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: ''
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus

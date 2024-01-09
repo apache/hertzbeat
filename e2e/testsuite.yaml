@@ -1,0 +1,285 @@
+#!api-testing
+# yaml-language-server: $schema=https://linuxsuren.github.io/api-testing/api-testing-schema.json
+name: hertzbeat
+api: |
+  {{default "http://localhost:1157" (env "SERVER")}}
+param:
+  monitorHTTP: "{{randAlpha 6}}"
+  monitorSiteMap: "{{randAlpha 6}}"
+  monitorPort: "{{randAlpha 6}}"
+  monitorSSL: "{{randAlpha 6}}"
+  monitorPing: "{{randAlpha 6}}"
+  monitorUDP: "{{randAlpha 6}}"
+  monitorWebsite: "{{randAlpha 6}}"
+  monitorFTP: "{{randAlpha 6}}"
+  tagName: "{{randAlpha 3}}"
+items:
+- name: login
+  request:
+    api: /api/account/auth/form
+    method: POST
+    header:
+      Content-type: application/json
+    body: |
+      {
+        "type": 0,
+        "identifier": "admin",
+        "credential": "hertzbeat"
+      }
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: login-missing-content-type
+  request:
+    api: /api/account/auth/form
+    method: POST
+    body: |
+      {
+        "type": 0,
+        "identifier": "admin",
+        "credential": "hertzbeat"
+      }
+  expect:
+    statusCode: 409
+- name: missing-auth-header
+  request:
+    api: /api/monitors
+  expect:
+    statusCode: 401
+- name: monitorList
+  request:
+    api: /api/monitors?pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: 0
+- name: createHTTPMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-http.json
+- name: createSitemapMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-sitemap.json
+- name: createPortMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-port.json
+- name: createSSLMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ssl.json
+- name: createPingMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ping.json
+- name: createUDPMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-udp.json
+- name: createWebsiteMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-website.json
+- name: createFTPMonitor
+  request:
+    api: /api/monitor
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    bodyFromFile: data/monitor-ftp.json
+- name: listHTTPMonitor
+  request:
+    api: /api/monitors
+    query:
+      pageIndex: 0
+      pageSize: 8
+      app: api
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: cancelHTTPMonitor
+  request:
+    api: /api/monitors/manage
+    query:
+      ids: "{{(index .listHTTPMonitor.data.content 0).id}}"
+      type: JSON
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: deleteHTTPMonitor
+  request:
+    api: /api/monitors
+    query:
+      ids: "{{(index .listHTTPMonitor.data.content 0).id}}"
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listAlertDefines
+  request:
+    api: /api/alert/defines
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: deleteAlertDefine
+  request:
+    api: /api/alert/defines
+    query:
+      ids: "{{(index .listAlertDefine.data.content 0).id}}"
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listAlertConverges
+  request:
+    api: /api/alert/converges
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listAlertSilences
+  request:
+    api: /api/alert/silences
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listAlerts
+  request:
+    api: /api/alerts
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listReceivers
+  request:
+    api: /api/notice/receivers
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listRules
+  request:
+    api: /api/notice/rules
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listTemplates
+  request:
+    api: /api/notice/templates
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: listCollectors
+  request:
+    api: /api/collector
+    header:
+      Authorization: Bearer {{.login.data.token}}
+
+## Tag
+- name: createTag
+  request:
+    api: /api/tag
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: |
+      [
+        {
+          "color": "#ff4081",
+          "name": "{{.param.tagName}}"
+        }
+      ]
+- name: listTags
+  request:
+    api: /api/tag
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: updateTag
+  request:
+    api: /api/tag
+    method: PUT
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+    body: |
+      {
+        "id": {{(index .listTags.data.content 0).id}},
+        "name": "{{randAlpha 3}}",
+        "value": "{{randAlpha 3}}",
+        "color": "#ff4081",
+        "type": 1,
+        "creator": "admin",
+        "modifier": "admin"
+      }
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: deleteTag
+  request:
+    api: /api/tag
+    query:
+      ids: "{{(index .listTags.data.content 0).id}}"
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+
+## Config
+- name: getConfigEmail
+  request:
+    api: /api/config/email
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: getConfigSystem
+  request:
+    api: /api/config/system
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: updateSystem
+  request:
+    api: /api/config/system
+    method: POST
+    body: |
+      {
+        "timeZoneId": "Asia/Shanghai",
+        "locale": "en_US",
+        "theme": null
+      }
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json
+- name: getConfigOSS
+  request:
+    api: /api/config/oss
+    header:
+      Authorization: Bearer {{.login.data.token}}
+- name: updateOSS
+  request:
+    api: /api/config/oss
+    method: POST
+    body: |
+      {
+        "type": "FILE",
+        "config": {}
+      }
+    header:
+      Authorization: Bearer {{.login.data.token}}
+      Content-type: application/json

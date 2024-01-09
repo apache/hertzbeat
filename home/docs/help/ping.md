@@ -1,27 +1,36 @@
 ---
 id: ping  
-title: 监控：PING连通性      
-sidebar_label: PING连通性       
+title: Monitoring：PING connectivity       
+sidebar_label: PING connectivity       
+keywords: [open source monitoring tool, open source network monitoring tool, monitoring ping metrics]
 ---
 
-> 对对端HOST地址进行PING操作，判断其连通性   
+> Ping the opposite end HOST address and judge its connectivity.    
 
-### 配置参数
+### Configuration parameter
 
-| 参数名称      | 参数帮助描述 |
+| Parameter name      | Parameter help description |
 | ----------- | ----------- |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 监控名称     | 标识此监控的名称，名称需要保证唯一性。  |
-| Ping超时时间 | 设置PING未响应数据时的超时时间，单位ms毫秒，默认3000毫秒。  |
-| 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为10秒  |
-| 是否探测    | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作  |
-| 描述备注    | 更多标识和描述此监控的备注信息，用户可以在这里备注信息  |
+| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
+| Monitoring name     | Identify the name of this monitoring. The name needs to be unique |
+| Ping timeout | Set the timeout when Ping does not respond to data, unit:ms, default: 3000ms | 
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Whether to detect    | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
+| Description remarks    | For more information about identifying and describing this monitoring, users can note information here |
 
-### 采集指标
+### Collection Metric
 
-#### 指标集合：summary
+#### Metric set：summary
 
-| 指标名称      | 指标单位 | 指标帮助描述 |
+| Metric name      | Metric unit | Metric help description |
 | ----------- | ----------- | ----------- |
-| responseTime   | ms毫秒 | 网站响应时间 |
+| responseTime   | ms | Website response time |
 
+
+### Common Problem
+
+1. Ping connectivity monitoring exception when installing hertzbeat for package deployment.  
+   The hertzbeat installed and deployed by the installation package is not available for ping connectivity monitoring, but local direct ping is available 。
+> The deployment of the installation package requires configuring the root permission of the Java virtual machine to start hertzbeat to use ICMP. If the root permission is not enabled, judge whether port 7 of telnet opposite end is opened.    
+> When you install HertzBeat via DockerDocker root is enabled by default. No such problem.   
+> See https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address  

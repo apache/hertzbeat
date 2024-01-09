@@ -1,23 +1,12 @@
-<nz-divider></nz-divider>
-<nz-breadcrumb>
-  <nz-breadcrumb-item>
-    <a [routerLink]="['/']">
-      <i nz-icon nzType="home"></i>
-      <span>{{ 'menu.dashboard' | i18n }}</span>
-    </a>
-  </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
-    <i nz-icon nzType="tags"></i>
-    <span>{{ 'menu.extras.tags' | i18n }}</span>
-    <a href="https://hertzbeat.com/docs/help/alert_threshold" target="_blank" style="float: right; margin-right: 5%">
-      <span>{{ 'common.button.help' | i18n }}&nbsp;</span>
-      <i nz-icon nzType="question-circle" nzTheme="outline"></i>
-    </a>
-  </nz-breadcrumb-item>
-</nz-breadcrumb>
+<app-help-massage-show
+  [help_massage_content]="'tag.help' | i18n"
+  [guild_link]="'tag.help.link' | i18n"
+  [module_name]="'menu.extras.tags'"
+  [icon_name]="'tags'"
+></app-help-massage-show>
 <nz-divider></nz-divider>
 
-<div>
+<div style="margin-bottom: 20px">
   <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
     <i nz-icon nzType="sync" nzTheme="outline"></i>
   </button>
@@ -31,10 +20,11 @@
     {{ 'tag.delete' | i18n }}
   </button>
 
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)='loadTagsTable()'>
+  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
   <input
+    class="mobile-hide"
     style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
     nz-input
     type="text"
@@ -58,34 +48,35 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1150px', y: '1240px' }"
+  [nzScroll]="{ x: '1240px', y: '100%' }"
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center">{{ 'tag.name' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.value' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.color' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.display' | i18n }}</th>
-      <th nzAlign="center">{{ 'tag.update-time' | i18n }}</th>
-      <th nzAlign="center">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.color' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">
+        <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger" class="hoverClass">
+            {{ formatTagName(data) }}
+          </nz-tag>
+        </a>
+      </td>
       <td nzAlign="center">{{ data.name }}</td>
       <td nzAlign="center">{{ data.value }}</td>
       <td nzAlign="center">
-        <nz-tag [nzColor]="data.color">{{ data.color }}</nz-tag>
+        <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger">{{ data.color }}</nz-tag>
       </td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-        <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">{{
-          data.name + ':' + data.value
-        }}</nz-tag>
-      </td>
-      <td nzAlign="center">{{ data.gmtUpdate | date: 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onEditOneTag(data)" nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n">
           <i nz-icon nzType="edit" nzTheme="outline"></i>
@@ -133,7 +124,7 @@
             cpOutputFormat="hex"
             [style.background]="tag.color"
             required
-            style="border-radius: 25px"
+            style="border-radius: 5px; width: 100%"
             name="color"
             id="color"
           />

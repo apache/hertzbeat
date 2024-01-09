@@ -1,0 +1,140 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等 mid-中间件
+category: bigdata
+# The monitoring: airflow
+# 监控类型 airflow
+app: airflow
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Apache Airflow
+  en-US: Apache Airflow
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 Apache Airflow 通用性能指标（airflow health、airflow version）进行采集监控。<br>您可以点击“<i>新建 Apache Airflow </i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors Apache Airflow through general performance metrics such as airflow health and airflow version. You could click the "<i>New Apache Airflow</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Apache Airflow通用性能指標（airflow health、airflow version）進行採集監控。<br>您可以點擊“<i>新建 Apache Airflow</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/airflow/
+  en-US: https://hertzbeat.com/docs/help/airflow/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 服务器Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # required-true or false
+  # required-是否是必输项 true-必填 false-可选
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 服务端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    defaultValue: 8080
+
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    hide: true
+    required: true
+
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    hide: true
+    required: false
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  - name: airflow_health
+    priority: 0
+    fields:
+      - field: metadatabase
+        type: 1
+      - field: scheduler
+        type: 1
+      - field: triggerer
+        type: 1
+    aliasFields:
+      - $.metadatabase.status
+      - $.scheduler.status
+      - $.triggerer.status
+    calculates:
+      - metadatabase=$.metadatabase.status
+      - scheduler=$.scheduler.status
+      - triggerer=$.triggerer.status
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      # url请求接口路径
+      url: /api/v1/health
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: airflow_version
+    priority: 1
+    fields:
+      - field: version
+        type: 1
+      - field: git_version
+        type: 1
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/v1/version
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: jsonPath
+      parseScript: '$'

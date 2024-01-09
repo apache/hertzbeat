@@ -6,10 +6,9 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
-import { AlertDefine } from '../../../pojo/AlertDefine';
-import { NoticeReceiver } from '../../../pojo/NoticeReceiver';
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
+import { formatTagName } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-setting-tags',
@@ -67,15 +66,16 @@ export class SettingTagsComponent implements OnInit {
 
   onDeleteTags() {
     if (this.checkedTagIds == null || this.checkedTagIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('alert.center.notify.no-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.delete-batch'),
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteTags(this.checkedTagIds)
     });
   }
@@ -89,6 +89,7 @@ export class SettingTagsComponent implements OnInit {
       nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
       nzOkDanger: true,
       nzOkType: 'primary',
+      nzClosable: false,
       nzOnOk: () => this.deleteTags(alerts)
     });
   }
@@ -211,4 +212,5 @@ export class SettingTagsComponent implements OnInit {
     }
   }
   // end 新增修改告警定义model
+  protected readonly formatTagName = formatTagName;
 }

@@ -1,0 +1,185 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: db
+app: opengauss
+name:
+  zh-CN: OpenGauss数据库
+  en-US: OpenGauss DB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OpenGauss 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 OpenGauss 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OpenGauss database  (basic、state、activity etc). Supported version is PostgreSQL10+. <br>You can click "<i>New OpenGauss Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 OpenGauss 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 PostgreSQL10+。<br>您可以點擊“<i>新建 OpenGauss 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/opengauss
+  en-US: https://hertzbeat.com/docs/help/opengauss
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 5432
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
+    required: false
+    hide: true
+    defaultValue: 6000
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    defaultValue: postgres
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+    hide: true
+metrics:
+  - name: basic
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # 具体监控指标列表
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: server_version
+        type: 1
+        label: true
+      - field: port
+        type: 1
+      - field: server_encoding
+        type: 1
+      - field: data_directory
+        type: 1
+      - field: max_connections
+        type: 0
+        unit: sbc
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
+      url: ^_^url^_^
+
+  - name: state
+    priority: 1
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: name
+        type: 1
+      - field: conflicts
+        type: 0
+        unit: times
+      - field: deadlocks
+        type: 0
+        unit: times
+      - field: blks_read
+        type: 0
+        unit: blocks per second
+      - field: blks_hit
+        type: 0
+        unit: blocks per second
+      - field: blk_read_time
+        type: 0
+        unit: ms
+      - field: blk_write_time
+        type: 0
+        unit: ms
+      - field: stats_reset
+        type: 1
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: SELECT COALESCE(datname,'shared-object') as name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      url: ^_^url^_^
+
+  - name: activity
+    priority: 2
+    fields:
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: running
+        type: 0
+        unit: sbc
+    protocol: jdbc
+    jdbc:
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # 端口
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL查询方式： oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: SELECT count(*) as running FROM pg_stat_activity WHERE NOT pid=pg_backend_pid();
+      url: ^_^url^_^

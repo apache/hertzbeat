@@ -1,0 +1,278 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: sqlserver
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: SqlServer数据库
+  en-US: SqlServer DB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 SqlServer 数据库的通用性能指标(系统信息、性能状态、连接等)进行采集监控，支持版本为 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>点击查看可能遇见的问题</a>。您可以点击“<i>新建 Mysql 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of SqlServer database (basic、performance counters、connection etc.). Supported version is SqlServer 2017+. <br><a class='help_module_content' href='https://hertzbeat.com/docs/help/sqlserver'>Click here to see the possible SSH problems.</a>. You can click "<i>New Mysql Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 SqlServer 數據庫的通用性能指標(系統信息、性能狀態、连接等)進行采集監控，支持版本爲 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/sqlserver'>點擊查看可能遇見的問題</a>。您可以點擊“<i>新建 Mysql 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/sqlserver
+  en-US: https://hertzbeat.com/docs/help/sqlserver
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 1433
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
+  - field: database
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: url
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    name:
+      zh-CN: URL
+      en-US: URL
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - basic
+  # 监控指标 - basic
+  - name: basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: machine_name
+        type: 1
+        label: true
+      - field: server_name
+        type: 1
+      - field: version
+        type: 1
+      - field: edition
+        type: 1
+      - field: start_time
+        type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # database type
+      platform: sqlserver
+      # database username
+      username: ^_^username^_^
+      # database password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # jdbc connect timeout
+      timeout: ^_^timeout^_^
+      # sql query data type: oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: SELECT SERVERPROPERTY('MachineName') AS machine_name, SERVERPROPERTY('ServerName') AS server_name, SERVERPROPERTY('ProductVersion') AS version, SERVERPROPERTY('Edition') AS edition, sqlserver_start_time AS start_time FROM sys.dm_os_sys_info;
+      # custom jdbc url
+      url: ^_^url^_^
+
+  - name: performance_counters
+    priority: 1
+    fields:
+      - field: database_pages
+        type: 0
+      - field: target_pages
+        type: 0
+      - field: page_life_expectancy
+        type: 0
+      - field: buffer_cache_hit_ratio
+        type: 0
+      - field: checkpoint_pages_sec
+        type: 0
+      - field: page_reads_sec
+        type: 0
+      - field: page_writes_sec
+        type: 0
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - Database pages
+      - Target pages
+      - Page life expectancy
+      - Buffer cache hit ratio
+      - Checkpoint pages/sec
+      - Page reads/sec
+      - Page writes/sec
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - database_pages=Database pages
+      - target_pages=Target pages
+      - page_life_expectancy=Page life expectancy
+      - buffer_cache_hit_ratio=Buffer cache hit ratio
+      - checkpoint_pages_sec=Checkpoint pages/sec
+      - page_reads_sec=Page reads/sec
+      - page_writes_sec=Page writes/sec
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select counter_name, cntr_value from sys.dm_os_performance_counters where object_name = 'SQLServer:Buffer Manager';
+      url: ^_^url^_^
+
+  - name: connection
+    priority: 1
+    fields:
+      - field: user_connection
+        type: 0
+        unit: 连接数
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
+      url: ^_^url^_^

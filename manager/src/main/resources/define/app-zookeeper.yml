@@ -1,0 +1,196 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: mid
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: zookeeper
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Zookeeper服务
+  en-US: Zookeeper Server
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 支持对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
+  en-US: HertzBeat monitors Zookeeper general performance metrics such as status and configuration. <br><span class='help_module_span'>Note⚠️:Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.com/docs/help/zookeeper'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat 支持對 Zookeeper 的通用性能指標(conf、stats)進行采集監控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 來收集指標數據，您需要將 zookeeper 的四字命令加入白名單，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/zookeeper
+  en-US: https://hertzbeat.com/docs/help/zookeeper
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 2181
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    # hide-是否隐藏此参数将其放入高级设置中
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - cluster
+  # 监控指标 - 集群状态
+  - name: conf
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: clientPort
+        type: 0
+      - field: dataDir
+        type: 1
+      - field: dataDirSize
+        type: 0
+        unit: kb
+      - field: dataLogDir
+        type: 1
+      - field: dataLogSize
+        type: 0
+        unit: kb
+      - field: tickTime
+        type: 0
+        unit: ms
+      - field: maxClientCnxns
+        type: 1
+      - field: minSessionTimeout
+        type: 0
+        unit: ms
+      - field: maxSessionTimeout
+        type: 0
+        unit: ms
+      - field: serverId
+        type: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: telnet
+    telnet:
+      # telnet host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # telnet port: 22
+      port: ^_^port^_^
+      # telnet connect timeout
+      timeout: ^_^timeout^_^
+      # telnet collect cmd
+      cmd: conf
+  - name: stats
+    priority: 1
+    fields:
+      - field: zk_version
+        type: 1
+      - field: zk_server_state
+        type: 1
+      - field: zk_num_alive_connections
+        type: 0
+        unit: 个
+      - field: zk_avg_latency
+        type: 0
+        unit: ms
+      - field: zk_outstanding_requests
+        type: 0
+        unit: 个
+      - field: zk_znode_count
+        type: 0
+        unit: 个
+      - field: zk_packets_sent
+        type: 0
+        unit: 个
+      - field: zk_packets_received
+        type: 0
+        unit: 个
+      - field: zk_watch_count
+        type: 0
+        unit: 个
+      - field: zk_max_file_descriptor_count
+        type: 0
+        unit: 个
+      - field: zk_approximate_data_size
+        type: 0
+        unit: kb
+      - field: zk_open_file_descriptor_count
+        type: 0
+        unit: 个
+      - field: zk_max_latency
+        type: 0
+        unit: ms
+      - field: zk_ephemerals_count
+        type: 0
+        unit: 个
+      - field: zk_min_latency
+        type: 0
+        unit: ms
+    protocol: telnet
+    telnet:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      cmd: mntr

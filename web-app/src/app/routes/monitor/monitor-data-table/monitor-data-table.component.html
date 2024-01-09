@@ -1,19 +1,37 @@
-<nz-card *ngIf="isTable" nzHoverable style="height: auto; margin-left: 14px" [nzBordered]="true" [nzTitle]="monitor_metrics_card_title">
+<nz-card
+  *ngIf="isTable"
+  nzHoverable
+  style="height: 100%; margin-left: 10px; overflow: scroll"
+  [nzBordered]="true"
+  [nzTitle]="monitor_metrics_card_title"
+>
   <nz-table #smallTable nzSize="small" nzNoResult="No Metrics Data" nzFrontPagination="false" [nzData]="valueRows">
     <thead>
       <tr>
-        <th style="text-align: center" *ngFor="let field of fields">{{ field.name }}</th>
+        <th style="text-align: center" *ngFor="let field of fields">
+          {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+        </th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let valueRow of smallTable.data">
-        <td *ngFor="let value of valueRow.values">{{ value.origin }}</td>
+        <td *ngFor="let value of valueRow.values; let i = index">
+          {{ value.origin }}
+          <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+          <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+        </td>
       </tr>
     </tbody>
   </nz-table>
 </nz-card>
 
-<nz-card *ngIf="!isTable" nzHoverable style="height: auto; margin-left: 14px" [nzBordered]="true" [nzTitle]="monitor_metrics_card_title">
+<nz-card
+  *ngIf="!isTable"
+  nzHoverable
+  style="height: 100%; margin-left: 10px; overflow: scroll"
+  [nzBordered]="true"
+  [nzTitle]="monitor_metrics_card_title"
+>
   <nz-table #smallTable nzSize="small" nzNoResult="No Metrics Data" nzFrontPagination="false" [nzData]="valueRows">
     <thead>
       <tr>
@@ -23,21 +41,29 @@
     </thead>
     <tbody>
       <tr *ngFor="let field of fields; let i = index">
-        <td>{{ field.name }}</td>
-        <td>{{ rowValues[i].origin + ' ' + (field.unit ? field.unit : '') }}</td>
+        <td>
+          {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+        </td>
+        <td
+          >{{ rowValues[i].origin }}
+          <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+          <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
+        </td>
       </tr>
     </tbody>
   </nz-table>
 </nz-card>
 
 <ng-template #monitor_metrics_card_title>
-  <p style="font-size: small; text-align: center; margin-bottom: 3px">{{ metrics }}</p>
+  <p style="font-size: small; text-align: center; margin-bottom: 3px">
+    {{ 'monitor.app.' + app + '.metrics.' + metrics | i18nElse : metrics }}
+  </p>
   <div>
-    <a nz-popover [nzPopoverContent]="'Last Collect Time ' + (time | _date: 'yyyy-MM-dd HH:mm:ss')">
+    <a nz-popover [nzPopoverContent]="('monitors.collect.time.tip' | i18n) + ' ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
       <i nz-icon nzType="field-time" nzTheme="outline"></i
     ></a>
-    <i style="font-size: 0.3px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
-      {{ 'monitors.collect.time' | i18n }}:{{ time | _date: 'HH:mm:ss' }}
+    <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
+      {{ 'monitors.collect.time' | i18n }}:{{ time | _date : 'HH:mm:ss' }}
     </i>
   </div>
 </ng-template>

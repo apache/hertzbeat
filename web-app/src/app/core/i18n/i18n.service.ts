@@ -1,6 +1,6 @@
-// 请参考：https://ng-alain.com/docs/i18n
 import { Platform } from '@angular/cdk/platform';
 import { registerLocaleData } from '@angular/common';
+import { HttpHeaders } from '@angular/common/http';
 import ngEn from '@angular/common/locales/en';
 import ngZh from '@angular/common/locales/zh';
 import ngZhTw from '@angular/common/locales/zh-Hant';
@@ -32,8 +32,16 @@ interface LangConfigData {
   delon: NzSafeAny;
 }
 
-const DEFAULT = 'zh-CN';
+const DEFAULT = 'en-US';
 const LANGS: { [key: string]: LangConfigData } = {
+  'en-US': {
+    text: 'English',
+    ng: ngEn,
+    zorro: zorroEnUS,
+    date: dfEn,
+    delon: delonEnUS,
+    abbr: '🇬🇧'
+  },
   'zh-CN': {
     text: '简体中文',
     ng: ngZh,
@@ -49,14 +57,6 @@ const LANGS: { [key: string]: LangConfigData } = {
     date: dfZhTw,
     delon: delonZhTw,
     abbr: '🇭🇰'
-  },
-  'en-US': {
-    text: 'English',
-    ng: ngEn,
-    zorro: zorroEnUS,
-    date: dfEn,
-    delon: delonEnUS,
-    abbr: '🇬🇧'
   }
 };
 
@@ -95,7 +95,8 @@ export class I18NService extends AlainI18nBaseService {
   }
 
   loadLangData(lang: string): Observable<NzSafeAny> {
-    return zip(this.http.get(`./assets/i18n/${lang}.json`), this.http.get(`/i18n/${lang}`)).pipe(
+    const headers = new HttpHeaders({ 'Cache-Control': 'no-cache' });
+    return zip(this.http.get(`./assets/i18n/${lang}.json`, null, { headers: headers }), this.http.get(`/i18n/${lang}`)).pipe(
       map(([langLocalData, langRemoteData]: [Record<string, string>, Message<any>]) => {
         let remote: Record<string, string> = langRemoteData.data;
         Object.keys(remote).forEach(key => {
@@ -107,8 +108,6 @@ export class I18NService extends AlainI18nBaseService {
   }
 
   use(lang: string, data: Record<string, unknown>): void {
-    if (this._currentLang === lang) return;
-
     this._data = this.flatData(data, []);
 
     const item = LANGS[lang];

@@ -3,51 +3,19 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "web-app": {
+    "hertzbeat-web-app": {
       "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
       "schematics": {
         "@schematics/angular:component": {
-          "skipTests": false,
-          "flat": false,
-          "inlineStyle": true,
-          "inlineTemplate": false,
           "style": "less"
         },
         "@schematics/angular:application": {
           "strict": true
-        },
-        "ng-alain:module": {
-          "routing": true,
-          "skipTests": false
-        },
-        "ng-alain:list": {
-          "skipTests": false
-        },
-        "ng-alain:edit": {
-          "skipTests": false,
-          "modal": true
-        },
-        "ng-alain:view": {
-          "skipTests": false,
-          "modal": true
-        },
-        "ng-alain:curd": {
-          "skipTests": false
-        },
-        "@schematics/angular:module": {
-          "routing": true,
-          "skipTests": false
-        },
-        "@schematics/angular:directive": {
-          "skipTests": false
-        },
-        "@schematics/angular:service": {
-          "skipTests": false
         }
       },
-      "root": "",
-      "sourceRoot": "src",
-      "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -55,51 +23,66 @@
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "less",
+            "polyfills": "src/polyfills.ts",
             "assets": [
-              "src/favicon.ico",
               "src/assets",
+              "src/favicon.ico",
               {
                 "glob": "**/*",
                 "input": "./node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/monaco-editor/min/vs",
+                "output": "/assets/vs/"
               }
             ],
             "styles": [
-              "src/styles.less"
+              "src/styles.less",
+              "node_modules/slick-carousel/slick/slick.scss",
+              "node_modules/slick-carousel/slick/slick-theme.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/slick-carousel/slick/slick.min.js"
+            ],
             "allowedCommonJsDependencies": [
-              "@antv/g2",
               "ajv",
               "ajv-formats",
+              "mockjs",
               "date-fns",
-              "file-saver"
-            ]
+              "file-saver",
+              "extend"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/"
+              ]
+            }
           },
           "configurations": {
             "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "4mb",
-                  "maximumError": "4mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "8kb"
-                }
-              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "6mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
             },
             "development": {
               "buildOptimizer": false,
@@ -114,23 +97,24 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "hertzbeat-web-app:build",
+            "proxyConfig": "proxy.conf.js"
+          },
           "configurations": {
             "production": {
-              "browserTarget": "web-app:build:production"
+              "browserTarget": "hertzbeat-web-app:build:production"
             },
             "development": {
-              "browserTarget": "web-app:build:development"
+              "browserTarget": "hertzbeat-web-app:build:development"
             }
           },
-          "defaultConfiguration": "development",
-          "options": {
-            "proxyConfig": "proxy.conf.js"
-          }
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "web-app:build"
+            "browserTarget": "hertzbeat-web-app:build"
           }
         },
         "test": {
@@ -138,17 +122,13 @@
           "options": {
             "main": "src/test.ts",
             "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
-            "inlineStyleLanguage": "less",
+            "tsConfig": "tsconfig.spec.json",
+            "scripts": [],
+            "styles": [],
             "assets": [
-              "src/favicon.ico",
               "src/assets"
-            ],
-            "styles": [
-              "src/styles.less"
-            ],
-            "scripts": []
+            ]
           }
         },
         "lint": {
@@ -159,9 +139,36 @@
               "src/**/*.html"
             ]
           }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "e2e/protractor.conf.js",
+            "devServerTarget": "hertzbeat-web-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "hertzbeat-web-app:serve:production"
+            }
+          }
         }
       }
     }
   },
-  "defaultProject": "web-app"
+  "cli": {
+    "packageManager": "yarn",
+    "schematicCollections": [
+      "@schematics/angular",
+      "hertzbeat-web-app"
+    ],
+    "analytics": false
+  },
+  "schematics": {
+    "@angular-eslint/schematics:application": {
+      "setParserOptionsProject": true
+    },
+    "@angular-eslint/schematics:library": {
+      "setParserOptionsProject": true
+    }
+  }
 }

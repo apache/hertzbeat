@@ -1,0 +1,472 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: os
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: freebsd
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: FreeBSD操作系统
+  en-US: OS FreeBSD
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-ssh'> SSH 协议</a> 对 FreeBSD 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 FreeBSD</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-ssh'> SSH protocol</a> to monitors FreeBSD operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New FreeBSD</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-ssh'> SSH 协议</a> 對 FreeBSD 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 FreeBSD</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn//docs/help/freebsd
+  en-US: https://hertzbeat.com/docs/help/freebsd
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 22
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[400,200000]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # default value
+    # 默认值
+    defaultValue: 6000
+  # field-param field key
+  # field-变量字段标识符
+  - field: reuseConnection
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    defaultValue: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: privateKey
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 私钥
+      en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - basic, inner monitoring metrics (responseTime - response time)
+  # 监控指标 - basic, 内置监控指标有 (responseTime - 响应时间)
+  - name: basic
+    i18n:
+      zh-CN: 系统基本信息
+      en-US: Basic Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: hostname
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 操作系统版本
+          en-US: System Version
+      - field: uptime
+        type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Uptime
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      script: uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g"
+      # ssh response data parse type: oneRow, multiRow
+      parseType: oneRow
+
+  - name: cpu
+    i18n:
+      zh-CN: CPU 信息
+      en-US: CPU Info
+    priority: 1
+    fields:
+      - field: info
+        type: 1
+        i18n:
+          zh-CN: 型号
+          en-US: Info
+      - field: cores
+        type: 0
+        i18n:
+          zh-CN: 核数
+          en-US: Cores
+      - field: interrupt
+        type: 0
+        i18n:
+          zh-CN: 中断数
+          en-US: Interrupt
+      - field: load
+        type: 1
+        i18n:
+          zh-CN: 负载
+          en-US: Load
+      - field: context_switch
+        type: 0
+        i18n:
+          zh-CN: 上下文切换
+          en-US: Context Switch
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - info
+      - cores
+      - load
+      - interrupt
+      - context_switch
+      - idle
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - info=info
+      - cores=cores
+      - load=load
+      - interrupt=interrupt
+      - context_switch=context_switch
+      - usage=100-idle
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: "dmesg | grep -i cpu | awk 'NR==1';sysctl hw.ncpu | awk '{print $2}';uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
+      parseType: oneRow
+
+  - name: memory
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory Info
+    priority: 2
+    fields:
+      - field: physmem
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 物理内存
+          en-US: Physics Memory
+      - field: usermem
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 用户内存
+          en-US: User Program Memory
+      - field: realmem
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 实际内存
+          en-US: Real Memory
+      - field: availmem
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 可用内存
+          en-US: Available Memory
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存使用率
+          en-US: Memory Usage
+    aliasFields:
+      - physmem
+      - usermem
+      - realmem
+      - availmem
+    calculates:
+      - physmem=physmem
+      - usermem=usermem
+      - realmem=realmem
+      - availmem=availmem
+      - usage=((realmem - availmem) / realmem) * 100
+    units:
+      - physmem=B->MB
+      - usermem=B->MB
+      - realmem=B->MB
+      - availmem=B->MB
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: sysctl hw | egrep 'hw.(phys|user|real)' | awk '{print $2}';dmesg | grep memory | grep avail | awk '{print $4}';
+      parseType: oneRow
+
+  - name: disk_free
+    i18n:
+      zh-CN: 文件系统
+      en-US: Disk Free
+    priority: 3
+    fields:
+      - field: filesystem
+        type: 1
+        i18n:
+          zh-CN: 文件系统
+          en-US: Filesystem
+      - field: used
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 已使用量
+          en-US: Used
+      - field: available
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 可用量
+          en-US: Available
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+      - field: mounted
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 挂载点
+          en-US: Mounted
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: df -m | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
+      parseType: multiRow
+
+  - name: top_cpu_process
+    i18n:
+      zh-CN: Top10 CPU 进程
+      en-US: Top10 CPU Process
+    priority: 3
+    fields:
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU占用率
+          en-US: CPU Usage
+      - field: mem_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存占用率
+          en-US: Memory Usage
+      - field: command
+        type: 1
+        i18n:
+          zh-CN: 执行命令
+          en-US: Command
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: ps -aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow
+
+  - name: top_mem_process
+    i18n:
+      zh-CN: Top10 内存进程
+      en-US: Top10 Memory Process
+    priority: 3
+    fields:
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: mem_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存占用率
+          en-US: Memory Usage
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU占用率
+          en-US: CPU Usage
+      - field: command
+        type: 1
+        i18n:
+          zh-CN: 执行命令
+          en-US: Command
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: ps -aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {print $2, $3, $4, $11}'| head -n 10
+      parseType: multiRow

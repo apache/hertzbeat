@@ -1,0 +1,247 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: clickhouse
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: ClickHouse
+  en-US: ClickHouse
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 ClickHouse 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ClickHouse 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New ClickHouse Database</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 ClickHouse 資料庫監控通用名額進行量測監控。<br>您可以點擊 “<i>新建ClickHouse資料庫</i>” 並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/clickhouse
+  en-US: https://hertzbeat.com/docs/help/clickhouse
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-字段名称标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: HTTP端口
+      en-US: HTTP Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 8123
+  # field-param field key
+  # field-字段名称标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    # hide-是否隐藏此参数将其放入高级设置中
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+  # field-param field key
+  # field-字段名称标识符
+  - field: database
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-字段名称标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-字段名称标识符
+  - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: password
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: false
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - ping_available
+  # 监控指标 - ping_available
+  - name: ping_available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: responseTime
+        type: 0
+        unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # http 主机：ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # http 端口
+      port: ^_^port^_^
+      # url request interface path
+      # url 请求接口路径
+      url: /ping
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: false
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
+      parseType: website
+
+  - name: system
+    priority: 1
+    fields:
+      - field: metric
+        type: 1
+        label: true
+      - field: value
+        type: 0
+#      - field: description
+#        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM system.metrics LIMIT 10;
+
+  - name: events
+    priority: 2
+    fields:
+      - field: event
+        type: 1
+        label: true
+      - field: value
+        type: 0
+#      - field: description
+#        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM system.events LIMIT 5;
+
+  - name: asynchronous
+    priority: 3
+    fields:
+      - field: metric
+        type: 1
+        label: true
+      - field: value
+        type: 0
+#      - field: description
+#        type: 1
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM system.asynchronous_metrics LIMIT 10;

@@ -1,0 +1,5 @@
+  _   _           _       ____             _
+ | | | | ___ _ __| |_ ___| __ )  ___  __ _| |_
+ | |_| |/ _ \ '__| __|_  /  _ \ / _ \/ _` | __|        Profile: ${spring.profiles.active}
+ |  _  |  __/ |  | |_ / /| |_) |  __/ (_| | |_         Name: ${spring.application.name} Port: ${server.port} Pid: ${pid}
+ |_| |_|\___|_|   \__/___|____/ \___|\__,_|\__|        https://hertzbeat.com/

@@ -1,24 +1,25 @@
 ---
 id: private  
-title: 私有化部署    
-sidebar_label: 私有化部署     
+title: Enterprise     
+sidebar_label: Enterprise     
 ---
-如果您的团队想私有化部署此监控系统，目前我们提供两种方案。   
 
-#### 社区版监控产品HertzBeat(免费需保留版权)   
+:::tip
+**Open source does not mean completely free. If you [modify HertzBeat's logo, name, copyright](https://github.com/dromara/hertzbeat/blob/master/NOTICE), etc., please ask us for authorization, otherwise there will be [legal risks](legal).**     
+**Open source is based on mutual trust, please don't let developers chill. We will pursue all illegal gains of individuals and teams who undermine open source and profit from it.**
+:::
 
-我们提供社区版监控产品 HertzBeat, 可以直接参考[HertzBeat部署文档](/docs)下载部署, 对个人或企业免费。  
-必须保留本作品及源码中的所有版权、专利、商标和归属声明。
-安装部署过程中遇到的问题可以通过[社区，微信群，QQ群等](/docs/others/contact)反馈交流学习。  
-我们也提供有偿远程安装部署服务。
+HertzBeat monitoring products are divided into open source community version and enterprise version. The enterprise version **provides more enterprise-level features such as user management and log auditing**. The maintenance team quickly responds to enterprise needs.
 
-#### HertzBeat的集群SAAS版本-TanCloud(付费)      
+## HertzBeat Licensed Version (Paid)
 
-此版本即[TanCloud官网](https://console.tancloud.cn)环境对应版本，对比HertzBeat拥有集群，用户，租户等功能，适合中大型团队企业。  
-此版本为付费版本，关于TanCloud私有化部署方案及价格，请加我们微信 tomsun28 咨询，加微信请备注：私有化+团队名   
+We provide the community open source version of the monitoring product HertzBeat, which can be used by individuals and businesses for free, **Requires complete reservation of copyright, Logo, trademark, footer copyright statement, and attribution statement**.  
+In some cases, enterprises need to modify the copyright LOGO and attribution statement based on the open source version for secondary development. We have launched **HertzBeat Authorized Version** for such needs.   
+This authorization needs to be paid. We implement enterprise-scale tiered pricing, and will give away technical support, etc. For specific plans and prices, please add our WeChat `tan-cloud` or email `tomsun28@outlook.com`, please note: authorization + team name
 
-#### 私有化自定义功能开发(付费)
+## Enterprise Edition TanCloud (Paid)
 
-支持自定义功能特性开发，请加我们微信 tomsun28 联系，请备注：私有化+团队名   
+The enterprise version of the monitoring system is a version specially launched by the TanCloud team for enterprise-level needs. It provides **user management, permissions, logs and other enterprise-level features**, and has received quick response and technical support from our maintenance team.   
+The enterprise version is a paid version. We implement enterprise-scale tiered pricing, and will give away technical support, free maintenance period, technical explanation, etc. For specific plans and prices, please add us WeChat `tan-cloud` or email `tomsun28@outlook.com`, please note: Enterprise Edition + team name
 
-**欢迎介绍业务成为推荐官，我们给予推荐官订单20% - 30%的佣金奖励**    
+Welcome to introduce business to become a recommendation officer, there will be rewards for successful transactions

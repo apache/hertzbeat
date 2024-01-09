@@ -1,0 +1,283 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: custom
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: hertzbeat
+name:
+  zh-CN: HertzBeat
+  en-US: HertzBeat
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/hertzbeat
+  en-US: https://hertzbeat.com/docs/help/hertzbeat
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 1157
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 20
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+metrics:
+  # the first metrics summary
+  # attention: Built-in monitoring metrics contains (responseTime - Response time)
+  - name: summary
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      - field: app
+        type: 1
+        label: true
+      - field: category
+        type: 1
+      - field: status
+        type: 0
+      - field: size
+        type: 0
+      - field: availableSize
+        type: 0
+    #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, 我们这里使用HTTP协议
+    protocol: http
+    # the config content when protocol is http
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url, we don't need to enter a parameter here, just set the fixed value to /api/summary
+      # url请求接口路径，我们这里不需要输入传参，写死为 /api/summary
+      url: /api/summary
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH, default fixed value is GET
+      # 请求方式 GET POST PUT DELETE PATCH，写死为 GET
+      method: GET
+      # if enabled https, default value is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http auth
+      # 认证
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, we use jsonpath to parse response data here
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控，我们这里使用jsonpath来解析响应数据
+      parseType: jsonPath
+      parseScript: '$.data.apps.*'
+
+  - name: inner_queue
+    priority: 1
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+      - field: alertDataQueue
+        type: 0
+      - field: metricsDataToAlertQueue
+        type: 0
+      - field: metricsDataToPersistentStorageQueue
+        type: 0
+      - field: metricsDataToMemoryStorageQueue
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/metrics
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.data'
+
+  - name: thread_state
+    visible: false
+    priority: 1
+    fields:
+      - field: state
+        type: 2
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /actuator/metrics/jvm.threads.states
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
+
+  - name: threads
+    priority: 3
+    fields:
+      - field: state
+        type: 1
+      - field: number
+        type: 0
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - state='^o^state^o^'
+      - number=#`$.measurements[?(@.statistic == "VALUE")].value`
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /actuator/metrics/jvm.threads.states?tag=state:^o^state^o^
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: space_name
+    visible: false
+    priority: 4
+    fields:
+      - field: id
+        type: 1
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /actuator/metrics/jvm.memory.used
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
+
+  - name: memory_used
+    priority: 5
+    fields:
+      - field: space
+        type: 1
+      - field: mem_used
+        type: 0
+        unit: MB
+    aliasFields:
+      - $.measurements[?(@.statistic == "VALUE")].value
+    calculates:
+      - space="^o^id^o^"
+      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+    units:
+      - mem_used=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /actuator/metrics/jvm.memory.used?tag=id:^o^id^o^
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$'

@@ -22,10 +22,10 @@ export const CoolTheme: ThemeOption = {
   tooltip: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     axisPointer: {
-      // Axis indicator, coordinate trigger effective
+      // Axis metric, coordinate trigger effective
       type: 'line', // The default is a straight line： 'line' | 'shadow'
       lineStyle: {
-        // Straight line indicator style settings
+        // Straight line metric style settings
         color: '#00aecd',
         type: 'dashed'
       },
@@ -33,7 +33,7 @@ export const CoolTheme: ThemeOption = {
         color: '#00aecd'
       },
       shadowStyle: {
-        // Shadow indicator style settings
+        // Shadow metric style settings
         color: 'rgba(200,200,200,0.3)'
       }
     }

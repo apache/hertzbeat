@@ -1,0 +1,29 @@
+{{- if .Values.database.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "hertzbeat.database" . }}
+  annotations:
+  {{- range $key, $value := .Values.database.persistence.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- if eq .Values.database.persistence.resourcePolicy "keep" }}
+    helm.sh/resource-policy: keep
+  {{- end }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+    component: database
+spec:
+  accessModes: 
+    - {{ .Values.database.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size }}
+  {{- if .Values.database.persistence.storageClass }}
+    {{- if eq "-" .Values.database.persistence.storageClass }}
+  storageClassName: ""
+    {{- else }}
+  storageClassName: {{ .Values.database.persistence.storageClass }}
+    {{- end }}
+  {{- end }}
+{{- end }}

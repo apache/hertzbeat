@@ -8,6 +8,14 @@
     color: #999
 }
 
+@media (max-width: 1296px) {
+    .navbar .DocSearch-Button-Placeholder {
+        font-size: 0.8rem;
+        font-family: 'IBM Plex Mono';
+        color: #999
+    }
+}
+
 body .navbar .DocSearch-Search-Icon {
     width: 15px;
     height: 15px;

@@ -1,0 +1,15 @@
+<div *ngFor="let item of fields; let i = index" nz-row>
+  <div nz-col nzSpan="7">
+    <input nz-input [placeholder]="FieldAlias" [(ngModel)]="item.field" (ngModelChange)="onChange()" />
+  </div>
+  <div nz-col nzSpan="7">
+    <input nz-input [placeholder]="UnitAlias" [(ngModel)]="item.unit" (ngModelChange)="onChange()" />
+  </div>
+  <div nz-col nzSpan="7">
+    <input nz-input [placeholder]="TypeAlias" [(ngModel)]="item.type" (ngModelChange)="onChange()" />
+  </div>
+  <div nz-col nzSpan="3">
+    <i nz-icon nzType="plus-circle" class="dynamic-button" *ngIf="i === 0" (click)="addNew($event)"></i>
+    <i nz-icon nzType="minus-circle" class="dynamic-button" (click)="removeCurrent(i, $event)"></i>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+name: 'HertzBeat Doc Pdf Builder'
+on:
+  page_build
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Install Prince
+        run: |
+          LANG="zh_CN.UTF-8"
+          export LANG="zh_CN.UTF-8"
+          curl https://www.princexml.com/download/prince-15.1-macos.zip -O
+          tar zxf prince-15.1-macos.zip
+          cd prince-15.1-macos
+          yes "" | sudo ./install.sh
+  
+      - name: Build CN PDF
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/zh-cn/docs --output docs-cn.pdf
+
+      - name: Build EN PDF
+        run: npx docusaurus-prince-pdf -u https://hertzbeat.com/docs --output docs-en.pdf
+  
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-cn-pdf
+          path: docs-cn.pdf
+          if-no-files-found: error
+          retention-days: 1
+          
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-en-pdf
+          path: docs-en.pdf
+          if-no-files-found: error
+          retention-days: 1
+  

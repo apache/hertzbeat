@@ -1,0 +1,87 @@
+<nz-spin [nzSpinning]="loading">
+  <nz-list nzItemLayout="horizontal">
+    <nz-list-item [nzActions]="[emailOp]">
+      <ng-template #emailOp>
+        <a (click)="onConfigEmailServer()">{{ 'common.button.setting' | i18n }}</a>
+      </ng-template>
+      <nz-list-item-meta [nzTitle]="'settings.server.email' | i18n" [nzDescription]="emailDesc">
+        <ng-template #emailDesc>
+          {{ 'alert.notice.sender.mail.host' | i18n }}: {{ emailSender.emailHost }}
+          <br />
+          {{ 'alert.notice.sender.mail.username' | i18n }}: {{ emailSender.emailUsername }}
+          <br />
+          {{ 'alert.notice.sender.mail.port' | i18n }}: {{ emailSender.emailPort }}
+          <br />
+          {{ 'alert.notice.sender.mail.ssl' | i18n }}: {{ emailSender.emailSsl ? ('common.yes' | i18n) : ('common.no' | i18n) }}
+          <br />
+          {{ 'alert.notice.sender.mail.enable' | i18n }}: {{ emailSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
+        </ng-template>
+      </nz-list-item-meta>
+    </nz-list-item>
+    <nz-list-item [nzActions]="[phoneOp]">
+      <ng-template #phoneOp>
+        <a disabled>
+          {{ 'common.button.setting' | i18n }}
+        </a>
+      </ng-template>
+      <nz-list-item-meta [nzTitle]="'settings.server.sms' | i18n" [nzDescription]="phoneDesc">
+        <ng-template #phoneDesc>
+          <!--          {{ 'settings.security.phone.bind' | i18n }}-->
+          <!--          <span class="text-green">{{ 'settings.security.phone.yes-verify' | i18n }}</span>-->
+        </ng-template>
+      </nz-list-item-meta>
+    </nz-list-item>
+  </nz-list>
+</nz-spin>
+
+<!-- email server modal -->
+<nz-modal
+  [(nzVisible)]="isEmailServerModalVisible"
+  [nzTitle]="'settings.server.email.setting' | i18n"
+  (nzOnCancel)="onCancelEmailServer()"
+  (nzOnOk)="onSaveEmailServer()"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  [nzOkLoading]="senderServerLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #senderForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="emailHost" nzRequired="true">{{ 'alert.notice.sender.mail.host' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="emailSender.emailHost" nz-input required name="emailHost" type="text" id="emailHost" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="emailPort" nzRequired="true">{{ 'alert.notice.sender.mail.port' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="emailSender.emailPort" nz-input required name="emailPort" type="number" id="emailPort" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="emailUsername" nzRequired="true">{{ 'alert.notice.sender.mail.username' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="emailSender.emailUsername" nz-input name="emailUsername" type="text" id="emailUsername" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="emailPassword" nzRequired="true">{{ 'alert.notice.sender.mail.password' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="emailSender.emailPassword" nz-input name="emailPassword" type="password" id="emailPassword" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="emailSsl" nzRequired="true">{{ 'alert.notice.sender.mail.ssl' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="emailSender.emailSsl" name="emailSsl" id="emailSsl"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="emailSender.enable" name="emailEnable" id="emailEnable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

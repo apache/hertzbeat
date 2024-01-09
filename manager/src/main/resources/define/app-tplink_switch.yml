@@ -1,0 +1,480 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: network
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: tplink_switch
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: TP-LINK通用交换机
+  en-US: TP-LINK Switch
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 协议</a> 对 TP-LINK交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 TP-LINK通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring TP-LINK Switch general performance metrics. <br>You can click the "<i>New TP-LINK Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 協議</a> 對 TP-LINK交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 TP-LINK通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/tplink_switch
+  en-US: https://hertzbeat.com/docs/help/tplink_switch
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 161
+  # field-param field key
+  # field-变量字段标识符
+  - field: version
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP 版本
+      en-US: SNMP Version
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: SNMPv1
+        value: 0
+      - label: SNMPv2c
+        value: 1
+      - label: SNMPv3
+        value: 3
+  # field-param field key
+  # field-变量字段标识符
+  - field: community
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP 团体字
+      en-US: SNMP Community
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp community for v1 v2c'
+  # field-param field key
+  # field-变量字段标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP username
+      en-US: SNMP username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp username for v3'
+  # field-param field key
+  # field-变量字段标识符
+  - field: contextName
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP contextName
+      en-US: SNMP contextName
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp contextName for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: authPassphrase
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP authPassword
+      en-US: SNMP authPassword
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: authPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: authPassword 加密方式
+      en-US: authPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: MD5
+        value: 0
+      - label: SHA1
+        value: 1
+    # field-param field key
+    # field-变量字段标识符
+  - field: privPassphrase
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: SNMP privPassphrase
+      en-US: SNMP privPassphrase
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 100
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # field-param field key
+    # field-变量字段标识符
+  - field: privPasswordEncryption
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: privPassword 加密方式
+      en-US: privPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    # type-当type为radio时,前端用radio展示开关
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: DES
+        value: 0
+      - label: AES128
+        value: 1
+    # field-param field key
+    # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    # hide-是否隐藏此参数将其放入高级设置中
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - system
+  # 监控指标 - system
+  - name: system
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
+      - field: descr
+        type: 1
+        i18n:
+          zh-CN: 描述信息
+          en-US: Description
+      - field: uptime
+        type: 1
+        i18n:
+          zh-CN: 运行时长
+          en-US: Uptime
+      - field: location
+        type: 1
+        i18n:
+          zh-CN: 位置
+          en-US: Location
+      - field: contact
+        type: 1
+        i18n:
+          zh-CN: 联系人
+          en-US: Contact
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: snmp
+    # the config content when protocol is snmp
+    snmp:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # snmp username
+      username: ^_^username^_^
+      # snmp authPassphrase
+      authPassphrase: ^_^authPassphrase^_^
+      # snmp privPassphrase
+      privPassphrase: ^_^privPassphrase^_^
+      # snmp privPasswordEncryption
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      # snmp authPasswordEncryption
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      # contextName
+      contextName: ^_^contextName^_^
+      # snmp connect timeout
+      timeout: ^_^timeout^_^
+      # snmp community
+      # snmp 团体字
+      community: ^_^community^_^
+      # snmp version
+      version: ^_^version^_^
+      # snmp operation: get, walk
+      operation: get
+      # metrics oids: metric_name - oid_value
+      oids:
+        name: 1.3.6.1.2.1.1.5.0
+        descr: 1.3.6.1.2.1.1.1.0
+        uptime: 1.3.6.1.2.1.1.3.0
+        location: 1.3.6.1.2.1.1.6.0
+        contact: 1.3.6.1.2.1.1.4.0
+
+  - name: interfaces
+    i18n:
+      zh-CN: 接口详情
+      en-US: Interfaces Detail
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 编号
+          en-US: Index
+      - field: descr
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 接口名称
+          en-US: Interface Name
+      - field: mtu
+        type: 0
+        unit: 'byte'
+        i18n:
+          zh-CN: MTU
+          en-US: MTU
+      - field: speed
+        type: 0
+        unit: 'MB/s'
+        i18n:
+          zh-CN: 接口速率
+          en-US: Interface Speed
+      - field: in_octets
+        type: 0
+        unit: 'MByte'
+        i18n:
+          zh-CN: 入流量
+          en-US: In Octets
+      - field: in_discards
+        type: 0
+        unit: 'package'
+        i18n:
+          zh-CN: 入丢包数
+          en-US: In Discards
+      - field: in_errors
+        type: 0
+        unit: 'package'
+        i18n:
+          zh-CN: 入错包数
+          en-US: In Errors
+      - field: out_octets
+        type: 0
+        unit: 'MByte'
+        i18n:
+          zh-CN: 出流量
+          en-US: Out Octets
+      - field: out_discards
+        type: 0
+        unit: 'package'
+        i18n:
+          zh-CN: 出丢包数
+          en-US: Out Discards
+      - field: out_errors
+        type: 0
+        unit: 'package'
+        i18n:
+          zh-CN: 出错包数
+          en-US: Out Errors
+      - field: admin_status
+        type: 1
+        i18n:
+          zh-CN: 配置状态
+          en-US: Config Status
+      - field: oper_status
+        type: 1
+        i18n:
+          zh-CN: 当前状态
+          en-US: Current Status
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - ifIndex
+      - ifDescr
+      - ifMtu
+      - ifSpeed
+      - ifInOctets
+      - ifInDiscards
+      - ifInErrors
+      - ifOutOctets
+      - ifOutDiscards
+      - ifOutErrors
+      - ifAdminStatus
+      - ifOperStatus
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - index=ifIndex
+      - descr=ifDescr
+      - mtu=ifMtu
+      - speed=ifSpeed / 1024 / 1024
+      - in_octets=ifInOctets / 1024 / 1024
+      - in_discards=ifInDiscards
+      - in_errors=ifInErrors
+      - out_octets=ifOutOctets / 1024 / 1024
+      - out_discards=ifOutDiscards
+      - out_errors=ifOutErrors
+      - admin_status=ifAdminStatus
+      - oper_status=ifOperStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^version^_^
+      operation: walk
+      oids:
+        ifIndex: 1.3.6.1.2.1.2.2.1.1
+        ifDescr: 1.3.6.1.2.1.2.2.1.2
+        ifMtu: 1.3.6.1.2.1.2.2.1.4
+        ifSpeed: 1.3.6.1.2.1.2.2.1.5
+        ifInOctets: 1.3.6.1.2.1.2.2.1.10
+        ifInDiscards: 1.3.6.1.2.1.2.2.1.13
+        ifInErrors: 1.3.6.1.2.1.2.2.1.14
+        ifOutOctets: 1.3.6.1.2.1.2.2.1.16
+        ifOutDiscards: 1.3.6.1.2.1.2.2.1.19
+        ifOutErrors: 1.3.6.1.2.1.2.2.1.20
+        ifAdminStatus: 1.3.6.1.2.1.2.2.1.7
+        ifOperStatus: 1.3.6.1.2.1.2.2.1.8

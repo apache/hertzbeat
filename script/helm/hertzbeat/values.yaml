@@ -1,0 +1,133 @@
+# Default values for hertzbeat.
+
+manager:
+  image:
+    repository: tancloud/hertzbeat
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  account:
+    username: "admin"
+    password: "hertzbeat"
+  jwtSecretKey: "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV143R
+                 LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+                 8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+                 dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp"
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }  
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+collector:
+  image:
+    repository: tancloud/hertzbeat-collector
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+database:
+  image:
+    repository: mysql
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "8"
+  timezone: "Asia/Shanghai"
+  rootPassword: "123456"
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    subPath: ""
+    accessMode: ReadWriteOnce
+    size: 4Gi
+    annotations: {}
+    resourcePolicy: "keep"
+    
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+tsdb:
+  image:
+    repository: victoriametrics/victoria-metrics
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "v1.95.1"
+  timezone: "Asia/Shanghai"
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    subPath: ""
+    accessMode: ReadWriteOnce
+    size: 4Gi
+    annotations: {}
+    resourcePolicy: "keep"
+  
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+# Expose Network
+expose:
+  # Set how to expose the service. Set the type as "ingress", "clusterIP", "nodePort" or "loadBalancer"
+  # and fill the information in the corresponding section
+  type: NodePort
+  clusterIP:
+    ports:
+      # The service port Harbor listens on when serving HTTP
+      port: 1157
+  nodePort:
+    ports:
+      # The service port Harbor listens on when serving HTTP
+      port: 1157
+      # The node port Harbor listens on when serving HTTP
+      nodePort: 31157
+  loadBalancer:
+    # Set the IP if the LoadBalancer supports assigning IP
+    ip: ""
+    ports:
+      # The service port Harbor listens on when serving HTTP
+      port: 1157
+    sourceRanges: [ ]
+  ingress:
+    className: ""
+    annotations: { }
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: hertzbeat.domain
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: [ ]
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+            

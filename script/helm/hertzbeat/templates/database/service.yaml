@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hertzbeat.database" . }}
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    {{- include "hertzbeat.selectorLabels" . | nindent 4 }}
+    component: database

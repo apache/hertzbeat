@@ -1,0 +1,153 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: rocketmq
+name:
+  zh-CN: RocketMQ消息系统
+  en-US: RocketMQ
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: Hertzbeat 对 RocketMQ 消息系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 RocketMQ</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors RocketMQ Message System general performance metrics. You could click the "<i>New RocketMQ</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 RocketMQ 消息系統的通用指標進行測量監控。<br>您可以點擊 “<i>新建 RocketMQ</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/rocketmq
+  en-US: https://hertzbeat.com/docs/help/rocketmq
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 注册中心Host
+      en-US: Namesrv Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9876
+  - field: accessKey
+    name:
+      zh-CN: accessKey
+      en-US: accessKey
+    type: text
+  - field: secretKey
+    name:
+      zh-CN: secretKey
+      en-US: secretKey
+    type: text
+metrics:
+  - name: cluster
+    priority: 0
+    fields:
+      - field: BrokerId
+        type: 1
+      - field: Address
+        type: 1
+        label: true
+      - field: Version
+        type: 1
+      - field: Producer_Message_TPS
+        type: 0
+      - field: Consumer_Message_TPS
+        type: 0
+      - field: Yesterday_Produce_Count
+        type: 0
+      - field: Yesterday_Consume_Count
+        type: 0
+      - field: Today_Produce_Count
+        type: 0
+      - field: Today_Consume_Count
+        type: 0
+    aliasFields:
+      - brokerId
+      - address
+      - version
+      - producerMessageTps
+      - consumerMessageTps
+      - yesterdayProduceCount
+      - yesterdayConsumeCount
+      - todayProduceCount
+      - todayConsumeCount
+    calculates:
+      - BrokerId=brokerId
+      - Address=address
+      - Version=version
+      - Producer_Message_TPS=producerMessageTps
+      - Consumer_Message_TPS=consumerMessageTps
+      - Yesterday_Produce_Count=yesterdayProduceCount
+      - Yesterday_Consume_Count=yesterdayConsumeCount
+      - Today_Produce_Count=todayProduceCount
+      - Today_Consume_Count=todayConsumeCount
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
+    protocol: rocketmq
+    # 当protocol为http协议时具体的采集配置
+    rocketmq:
+      namesrvHost: ^_^host^_^
+      namesrvPort: ^_^port^_^
+      accessKey: ^_^accessKey^_^
+      secretKey: ^_^secretKey^_^
+      parseScript: $.clusterBrokerDataList.*
+  - name: consumer
+    priority: 1
+    fields:
+      - field: Consumer_group
+        type: 1
+        label: true
+      - field: Client_quantity
+        type: 0
+      - field: Message_model
+        type: 1
+      - field: Consume_type
+        type: 1
+      - field: Consume_tps
+        type: 0
+      - field: Delay
+        type: 0
+    aliasFields:
+      - consumerGroup
+      - clientQuantity
+      - messageModel
+      - consumeType
+      - consumeTps
+      - diffTotal
+    calculates:
+      - Consumer_group=consumerGroup
+      - Client_quantity=clientQuantity
+      - Message_model=messageModel
+      - Consume_type=consumeType
+      - Consume_tps=consumeTps
+      - Delay=diffTotal
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
+    protocol: rocketmq
+    # 当protocol为http协议时具体的采集配置
+    rocketmq:
+      namesrvHost: ^_^host^_^
+      namesrvPort: ^_^port^_^
+      parseScript: $.consumerInfoList.*

@@ -1,0 +1,192 @@
+<app-help-massage-show
+  [help_massage_content]="'define.help' | i18n"
+  [guild_link]="'define.help.link' | i18n"
+  [module_name]="'menu.extras.define'"
+  [icon_name]="'code'"
+></app-help-massage-show>
+<nz-divider></nz-divider>
+
+<nz-layout style="min-height: 100vh">
+  <nz-sider style="height: 100%; overflow: auto; margin: 4px" [nzTrigger]="null">
+    <ul nz-menu nzTheme="light" nzMode="inline" nzInlineCollapsed="false">
+      <li nz-submenu [nzTitle]="'menu.monitor.service' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['service']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.program' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['program']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.db' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['db']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.cache' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['cache']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.os' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['os']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.mid' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['mid']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.bigdata' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['bigdata']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.webserver' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['webserver']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.cn' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['cn']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.network' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['network']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+      <li nz-submenu [nzTitle]="'menu.monitor.custom' | i18n">
+        <ul>
+          <li
+            nz-menu-item
+            *ngFor="let app of appMenus['custom']; let i = index"
+            [nzSelected]="app.selected"
+            routerLink="/setting/define"
+            [queryParams]="{ app: app.value }"
+            >{{ app.label }}</li
+          >
+        </ul>
+      </li>
+    </ul>
+  </nz-sider>
+  <nz-layout>
+    <nz-content>
+      <div style="margin: 10px 10px 4px 10px">
+        <button nzGhost *ngIf="currentApp != null" nz-button nzType="primary">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          {{ 'app-' + currentApp + '.yml' }}
+        </button>
+        <button *ngIf="code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
+          <i nz-icon nzType="save" nzTheme="outline"></i>
+          {{ 'define.save-apply' | i18n }}
+        </button>
+        <button *ngIf="currentApp != null" nz-button nzType="primary" (click)="onNewMonitorDefine()">
+          <i nz-icon nzType="save" nzTheme="outline"></i>
+          {{ 'define.new' | i18n }}
+        </button>
+        <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+          {{ 'define.delete' | i18n }}
+        </button>
+
+        <nz-switch
+          style="margin-right: 25px; float: right"
+          [ngModel]="dark"
+          (ngModelChange)="onDarkModeChange($event)"
+          [nzUnCheckedChildren]="unchecked"
+          [nzCheckedChildren]="checked"
+        ></nz-switch>
+        <ng-template #unchecked>
+          <span nz-icon nzType="bulb"></span>
+        </ng-template>
+        <ng-template #checked>
+          <span nz-icon nzType="poweroff"></span>
+        </ng-template>
+      </div>
+      <div style="margin: 4px 10px 4px 4px; height: 100%; width: 100%">
+        <nz-code-editor
+          class="editor"
+          [nzLoading]="loading"
+          [nzOriginalText]="originalCode"
+          [(ngModel)]="code"
+          [nzEditorMode]="'diff'"
+          [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true }"
+        ></nz-code-editor>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

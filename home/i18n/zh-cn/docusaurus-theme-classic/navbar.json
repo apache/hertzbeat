@@ -3,52 +3,76 @@
     "message": "HertzBeat",
     "description": "The title in the navbar"
   },
-  "item.label.首页": {
+  "item.label.main": {
     "message": "首页",
-    "description": "Navbar item with label 首页"
+    "description": "Navbar item with label main"
   },
-  "item.label.文档": {
-    "message": "文档",
-    "description": "Navbar item with label 文档"
+  "item.label.document": {
+    "message": "文档中心",
+    "description": "Navbar item with label document"
   },
-  "item.label.博客": {
+  "item.label.blog": {
     "message": "博客",
-    "description": "Navbar item with label 博客"
+    "description": "Navbar item with label blog"
   },
-  "item.label.讨论交流": {
+  "item.label.discuss": {
     "message": "讨论交流",
-    "description": "Navbar item with label 讨论交流"
+    "description": "Navbar item with label discuss"
   },
-  "item.label.私有化部署": {
-    "message": "私有化部署",
-    "description": "Navbar item with label 私有化部署"
-  },
-  "item.label.贡献者指南": {
+  "item.label.contributing": {
     "message": "贡献者指南",
-    "description": "Navbar item with label 贡献者指南"
+    "description": "Navbar item with label contributing"
   },
-  "item.label.项目看板": {
+  "item.label.kanban": {
     "message": "项目看板",
-    "description": "Navbar item with label 项目看板"
+    "description": "Navbar item with label kanban"
   },
-  "item.label.其它": {
-    "message": "其它",
-    "description": "Navbar item with label 其它"
-  },
-  "item.label.登录/注册": {
+  "item.label.login": {
     "message": "登录/注册",
-    "description": "Navbar item with label 登录/注册"
+    "description": "Navbar item with label login"
   },
-  "item.label.设计文档": {
+  "item.label.design": {
     "message": "设计文档",
-    "description": "Navbar item with label 设计文档"
+    "description": "Navbar item with label design"
   },
-  "item.label.赞助我们": {
+  "item.label.sponsor": {
     "message": "赞助我们",
-    "description": "Navbar item with label 赞助我们"
+    "description": "Navbar item with label sponsor"
   },
-  "item.label.相关资源": {
+  "item.label.resource": {
     "message": "相关资源",
-    "description": "Navbar item with label 相关资源"
+    "description": "Navbar item with label resource"
+  },
+  "item.label.about": {
+    "message": "关于",
+    "description": "Navbar item with label about"
+  },
+  "item.label.developer": {
+    "message": "开发者们",
+    "description": "Navbar item with label developer"
+  },
+  "item.label.enterprise": {
+    "message": "企业版",
+    "description": "Navbar item with label enterprise"
+  },
+  "item.label.开源之夏": {
+    "message": "开源之夏",
+    "description": "Navbar item with label 开源之夏"
+  },
+  "item.label.华为云开源活动": {
+    "message": "华为云开源活动",
+    "description": "Navbar item with label 华为云开源活动"
+  },
+  "item.label.Docs": {
+    "message": "文档中心",
+    "description": "Navbar item with label Docs"
+  },
+  "item.label.Others": {
+    "message": "其它信息",
+    "description": "Navbar item with label Others"
+  },
+  "item.label.contributors": {
+    "message": "开发者们",
+    "description": "Navbar item with label contributors"
   }
 }

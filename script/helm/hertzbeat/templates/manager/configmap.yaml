@@ -1,0 +1,238 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "hertzbeat.manager" . }}"
+  labels:
+    {{- include "hertzbeat.labels" . | nindent 4 }}
+data:
+  application.yml: |+
+    server:
+      port: 1157
+    spring:
+      application:
+        name: ${HOSTNAME:@hertzbeat@}${PID}
+      profiles:
+        active: prod
+      mvc:
+        static-path-pattern: /**
+      jackson:
+        default-property-inclusion: ALWAYS
+      web:
+        resources:
+          static-locations:
+            - classpath:/dist/
+            - classpath:../dist/
+      # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed..
+      autoconfigure:
+        exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      freemarker:
+        enabled: false
+    management:
+      health:
+        mail:
+          enabled: off
+      endpoints:
+        web:
+          exposure:
+            include:
+              - 'metrics'
+              - 'health'
+              - 'env'
+        enabled-by-default: on
+    
+    sureness:
+      auths:
+        - digest
+        - basic
+        - jwt
+      jwt:
+        secret: {{ .Values.manager.jwtSecretKey }}
+    
+    ---
+    spring:
+      config:
+        activate:
+          on-profile: prod
+    
+      datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        username: root
+        password: {{ .Values.database.rootPassword }}
+        url: jdbc:mysql://{{ include "hertzbeat.database" . }}:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+        hikari:
+          max-lifetime: 120000
+    
+      jpa:
+        hibernate:
+          ddl-auto: update
+    
+      mail:
+        # Attention: this is mail server address.
+        # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com
+        host: smtp.qq.com
+        username: tancloud@qq.com
+        # Attention: this is not email account password, this requires an email authorization code
+        # 请注意此非邮箱账户密码 此需填写邮箱授权码
+        password: your-password
+        #Attention: Tencent mail smtps 465,smtp 587
+        #请注意腾讯邮箱465为smtps,587为smtp
+        port: 587
+        properties:
+          mail:
+            smtp:
+              socketFactoryClass: javax.net.ssl.SSLSocketFactory
+              ssl:
+                enable: true
+    
+    common:
+      queue:
+        # memory or kafka
+        type: memory
+        # properties when queue type is kafka
+        kafka:
+          servers: 127.0.0.1:9092
+          metrics-data-topic: async-metrics-data
+          alerts-data-topic: async-alerts-data
+    
+    warehouse:
+      store:
+        # store history metrics data, enable only one below
+        # 存储历史数据方式, 下方只能enabled启用一种方式
+        jpa:
+          enabled: false
+        victoria-metrics:
+          enabled: true
+          url: http://{{ include "hertzbeat.tsdb" . }}:8428
+          username: root
+          password: root
+        td-engine:
+          enabled: false
+          driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+          url: jdbc:TAOS-RS://{{ include "hertzbeat.tsdb" . }}:6041/hertzbeat
+          username: root
+          password: taosdata
+        greptime:
+          enabled: false
+          endpoint: localhost:4001
+        iot-db:
+          enabled: false
+          host: {{ include "hertzbeat.tsdb" . }}
+          rpc-port: 6667
+          username: root
+          password: root
+          # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
+          version: V_1_0
+          query-timeout-in-ms: -1
+          # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
+          # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
+          expire-time: '7776000000'
+        influxdb:
+          enabled: false
+          server-url: http://127.0.0.1:8086
+          username: root
+          password: root
+          expire-time: '30d'
+          replication: 1
+    
+        # store real-time metrics data, enable only one below
+        # 存储实时数据方式, 下方只能enabled启用一种方式
+        memory:
+          enabled: true
+          init-size: 16
+        redis:
+          enabled: false
+          host: 127.0.0.1
+          port: 6379
+          password: 123456
+          db: 0
+    
+    alerter:
+      # custom console url
+      console-url: https://console.tancloud.cn
+    
+    scheduler:
+      server:
+        enabled: true
+        port: 1158
+
+
+  sureness.yml: |+
+    resourceRole:
+      - /api/account/auth/refresh===post===[admin,user,guest]
+      - /api/apps/**===get===[admin,user,guest]
+      - /api/monitor/**===get===[admin,user,guest]
+      - /api/monitor/**===post===[admin,user]
+      - /api/monitor/**===put===[admin,user]
+      - /api/monitor/**===delete==[admin]
+      - /api/monitors/**===get===[admin,user,guest]
+      - /api/monitors/**===post===[admin,user]
+      - /api/monitors/**===put===[admin,user]
+      - /api/monitors/**===delete===[admin]
+      - /api/alert/**===get===[admin,user,guest]
+      - /api/alert/**===post===[admin,user]
+      - /api/alert/**===put===[admin,user]
+      - /api/alert/**===delete===[admin]
+      - /api/alerts/**===get===[admin,user,guest]
+      - /api/alerts/**===post===[admin,user]
+      - /api/alerts/**===put===[admin,user]
+      - /api/alerts/**===delete===[admin]
+      - /api/notice/**===get===[admin,user,guest]
+      - /api/notice/**===post===[admin,user]
+      - /api/notice/**===put===[admin,user]
+      - /api/notice/**===delete===[admin]
+      - /api/tag/**===get===[admin,user,guest]
+      - /api/tag/**===post===[admin,user]
+      - /api/tag/**===put===[admin,user]
+      - /api/tag/**===delete===[admin]
+      - /api/summary/**===get===[admin,user,guest]
+      - /api/summary/**===post===[admin,user]
+      - /api/summary/**===put===[admin,user]
+      - /api/summary/**===delete===[admin]
+    
+    excludedResource:
+      - /api/account/auth/**===*
+      - /api/i18n/**===get
+      - /api/metrics===get
+      - /api/apps/hierarchy===get
+      - /actuator/**===get
+      # web ui 
+      - /===get
+      - /dashboard/**===get
+      - /monitors/**===get
+      - /alert/**===get
+      - /account/**===get
+      - /setting/**===get
+      - /passport/**===get
+      - /**/*.html===get
+      - /**/*.js===get
+      - /**/*.css===get
+      - /**/*.ico===get
+      - /**/*.ttf===get
+      - /**/*.png===get
+      - /**/*.gif===get
+      - /**/*.jpg===get
+      - /**/*.svg===get
+      - /**/*.json===get
+      - /**/*.woff===get
+      - /**/*.eot===get
+      # swagger ui 
+      - /swagger-resources/**===get
+      - /v2/api-docs===get
+      - /v3/api-docs===get
+      # h2 database
+      - /h2-console/**===*
+    
+    account:
+      - appId: {{ .Values.manager.account.username }}
+        credential: {{ .Values.manager.account.password }}
+        role: [admin]
+      - appId: tom
+        credential: hertzbeat
+        role: [user]
+      - appId: guest
+        credential: hertzbeat
+        role: [guest]
+      - appId: lili
+        credential: 1A676730B0C7F54654B0E09184448289
+        salt: 123
+        role: [guest]

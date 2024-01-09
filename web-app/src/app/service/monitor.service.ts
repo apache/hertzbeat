@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -10,6 +10,7 @@ const monitor_uri = '/monitor';
 const monitors_uri = '/monitors';
 const detect_monitor_uri = '/monitor/detect';
 const manage_monitors_uri = '/monitors/manage';
+const export_monitors_uri = '/monitors/export';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
 
@@ -42,12 +43,28 @@ export class MonitorService {
     return this.http.delete<Message<any>>(monitors_uri, options);
   }
 
+  public exportMonitors(monitorIds: Set<number>, type: string): Observable<HttpResponse<Blob>> {
+    let httpParams = new HttpParams();
+    monitorIds.forEach(monitorId => {
+      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
+      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      httpParams = httpParams.append('ids', monitorId);
+    });
+    httpParams = httpParams.append('type', type);
+    return this.http.get(export_monitors_uri, {
+      params: httpParams,
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
       // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
       // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
       httpParams = httpParams.append('ids', monitorId);
+      httpParams = httpParams.append('type', 'JSON');
     });
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(manage_monitors_uri, options);
@@ -74,23 +91,41 @@ export class MonitorService {
     return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
   }
 
-  public getMonitors(app: string, pageIndex: number, pageSize: number): Observable<Message<Page<Monitor>>> {
-    app = app.trim();
+  public getMonitors(
+    app: string | undefined,
+    tag: string | undefined,
+    pageIndex: number,
+    pageSize: number,
+    sortField?: string | null,
+    sortOrder?: string | null
+  ): Observable<Message<Page<Monitor>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      app: app,
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (app != undefined) {
+      httpParams = httpParams.append('app', app.trim());
+    }
+    if (tag != undefined) {
+      httpParams = httpParams.append('tag', tag);
+    }
+    if (sortField != null && sortOrder != null) {
+      httpParams = httpParams.appendAll({
+        sort: sortField,
+        order: sortOrder == 'ascend' ? 'asc' : 'desc'
+      });
+    }
     const options = { params: httpParams };
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
 
   public searchMonitors(
-    app: string | null,
+    app: string | undefined,
+    tag: string | undefined,
     searchValue: string,
     status: number,
     pageIndex: number,
@@ -104,6 +139,9 @@ export class MonitorService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
+    if (tag != undefined) {
+      httpParams = httpParams.append('tag', tag);
+    }
     if (status != undefined && status != 9) {
       httpParams = httpParams.append('status', status);
     }
@@ -144,12 +182,7 @@ export class MonitorService {
     return this.http.get<Message<any>>(summary_uri);
   }
 
-  public getWarehouseStorageServerStatus(storage: string): Observable<Message<any>> {
-    let httpParams = new HttpParams();
-    httpParams = httpParams.appendAll({
-      storage: storage
-    });
-    const options = { params: httpParams };
-    return this.http.get<Message<any>>(warehouse_storage_status_uri, options);
+  public getWarehouseStorageServerStatus(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(warehouse_storage_status_uri);
   }
 }

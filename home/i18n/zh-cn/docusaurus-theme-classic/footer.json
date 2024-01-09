@@ -1,62 +1,62 @@
 {
-  "link.title.产品介绍": {
+  "link.title.intro": {
     "message": "产品介绍",
-    "description": "The title of the footer links column with title=产品介绍 in the footer"
+    "description": "The title of the footer links column with title=intro in the footer"
   },
-  "link.title.社区交流": {
+  "link.title.contact": {
     "message": "社区交流",
-    "description": "The title of the footer links column with title=社区交流 in the footer"
+    "description": "The title of the footer links column with title=contact in the footer"
   },
-  "link.title.相关资源": {
-    "message": "相关资源",
-    "description": "The title of the footer links column with title=相关资源 in the footer"
-  },
-  "link.item.label.使用介绍": {
+  "link.item.label.use": {
     "message": "使用介绍",
-    "description": "The label of footer link with label=使用介绍 linking to docs/"
+    "description": "The label of footer link with label=use linking to /docs/"
   },
-  "link.item.label.安装文档": {
+  "link.item.label.quickstart": {
     "message": "安装文档",
-    "description": "The label of footer link with label=安装文档 linking to docs/start/quickstart"
+    "description": "The label of footer link with label=quickstart linking to /docs/start/quickstart"
   },
-  "link.item.label.自定义监控": {
+  "link.item.label.custom": {
     "message": "自定义监控",
-    "description": "The label of footer link with label=自定义监控 linking to docs/advanced/extend-point"
+    "description": "The label of footer link with label=custom linking to /docs/advanced/extend-point"
   },
-  "link.item.label.帮助文档": {
+  "link.item.label.help": {
     "message": "帮助文档",
-    "description": "The label of footer link with label=帮助文档 linking to docs/help/guide"
+    "description": "The label of footer link with label=help linking to /docs/help/guide"
   },
-  "link.item.label.Dromara开源社区": {
+  "link.item.label.dromara": {
     "message": "Dromara开源社区",
-    "description": "The label of footer link with label=Dromara开源社区 linking to https://dromara.org/"
+    "description": "The label of footer link with label=dromara linking to https://dromara.org/"
   },
-  "link.item.label.交流联系": {
+  "link.item.label.discuss": {
     "message": "交流联系",
-    "description": "The label of footer link with label=交流联系 linking to docs/others/contact"
+    "description": "The label of footer link with label=discuss linking to /docs/others/contact"
   },
-  "link.item.label.我们的故事": {
+  "link.item.label.team": {
     "message": "我们的故事",
-    "description": "The label of footer link with label=我们的故事 linking to https://support.qq.com/products/379369/team"
+    "description": "The label of footer link with label=team linking to https://support.qq.com/products/379369/team"
   },
-  "link.item.label.TanCloud探云": {
+  "link.item.label.tancloud": {
     "message": "TanCloud探云",
-    "description": "The label of footer link with label=TanCloud探云 linking to https://tancloud.cn"
+    "description": "The label of footer link with label=tancloud linking to https://tancloud.cn"
   },
-  "link.item.label.Github仓库": {
+  "link.item.label.github": {
     "message": "Github仓库",
-    "description": "The label of footer link with label=Github仓库 linking to https://github.com/dromara/hertzbeat"
+    "description": "The label of footer link with label=github linking to https://github.com/dromara/hertzbeat"
   },
-  "link.item.label.Gitee仓库": {
+  "link.item.label.gitee": {
     "message": "Gitee仓库",
-    "description": "The label of footer link with label=Gitee仓库 linking to https://gitee.com/dromara/hertzbeat"
-  },
-  "link.item.label.相关资源": {
-    "message": "相关资源",
-    "description": "The label of footer link with label=相关资源 linking to docs/others/resource"
+    "description": "The label of footer link with label=gitee linking to https://gitee.com/dromara/hertzbeat"
   },
   "copyright": {
-    "message": "<a target=\"_blank\" href=\"https://beian.miit.gov.cn/\">蜀ICP备2022002218号</a> | Copyright TANCLOUD© 2022",
+    "message": "<a target=\"_blank\" href=\"https://beian.miit.gov.cn/\">蜀ICP备2022002218号</a> | Copyright © 2021-2023 TANCLOUD",
     "description": "The footer copyright"
+  },
+  "link.title.resource": {
+    "message": "相关资源",
+    "description": "The title of the footer links column with title=resource in the footer"
+  },
+  "link.item.label.relate": {
+    "message": "其它资源",
+    "description": "The label of footer link with label=relate linking to /docs/others/resource"
   }
 }

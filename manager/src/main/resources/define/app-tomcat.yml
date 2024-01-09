@@ -1,0 +1,446 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: webserver
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: tomcat
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Tomcat应用服务器
+  en-US: Tomcat WebServer
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 协议</a> 对 Tomcat 的通用性能指标(基础信息，内存池，类加载，线程信息等)进行采集监控。<br>⚠️注意：您需要在 Tomcat 应用中开启 JMX 服务，应用启动时添加 JMX 参数, 可自定义暴露端口,对外IP。<a href="https://hertzbeat.com/zh-cn/docs/help/tomcat">点击查看开启步骤</a>。
+  en-US: HertzBeat uses <a href='https://hertzbeat.com/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring and collect general performance metric of Tomcat. <br>⚠️Note:You need to enable JMX services in Tomcat application, and add the JXM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://hertzbeat.com/docs/help/tomcat'>Click here to view the activation steps.</a>"
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 協議</a> 對 Tomcat 的通用性能指標(基礎信息，內存池，類加載，線程信息等)進行采集監控。<br>⚠️注意：您需要在 Tomcat 應用中開啓 JMX 服務，應用啓動時添加 JMX 參數, 可自定義暴露端口,對外IP。<a href="https://hertzbeat.com/zh-cn/docs/help/tomcat">點擊查看開啓步驟</a>。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/tomcat
+  en-US: https://hertzbeat.com/docs/help/tomcat
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 9999
+  # field-param field key
+  # field-变量字段标识符
+  - field: url
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: JMX URL
+      en-US: JMX URL
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    # 参数输入框提示信息
+    # param field input placeholder
+    placeholder: 'service:jmx:rmi:///jndi/rmi://host:port/jmxrmi'
+  # field-param field key
+  # field-变量字段标识符
+  - field: username
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # when type is text, use limit to limit string length
+    # 当type为text时,用limit表示字符串限制大小
+    limit: 20
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: password
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: password
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - server
+  # 监控指标 - server
+  - name: server
+    i18n:
+      zh-CN: Tomcat 信息
+      en-US: Tomcat Server
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: serverInfo
+        type: 1
+        i18n:
+          zh-CN: 服务信息
+          en-US: Server Info
+      - field: serverNumber
+        type: 1
+        i18n:
+          zh-CN: 服务版本
+          en-US: Server Number
+      - field: serverBuilt
+        type: 1
+        i18n:
+          zh-CN: Server Built
+          en-US: Server Built
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: address
+        type: 1
+        i18n:
+          zh-CN: 地址
+          en-US: Address
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jmx
+    # the config content when protocol is http
+    jmx:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # jmx username
+      username: ^_^username^_^
+      # jmx password
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: Catalina:type=Server
+      # jmx url
+      url: ^_^url^_^
+
+  - name: memory_pool
+    priority: 1
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
+      - field: committed
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
+      - field: init
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
+      - field: max
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
+      - field: used
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - Name
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - name=Name
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
+    protocol: jmx
+    jmx:
+      # host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # port
+      # 端口
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=MemoryPool,name=*
+      url: ^_^url^_^
+
+  - name: class_loading
+    priority: 2
+    i18n:
+      zh-CN: 类加载信息
+      en-US: Class Loading
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: LoadedClassCount
+        type: 0
+        i18n:
+          zh-CN: 当前已加载类数量
+          en-US: Loaded Class Count
+      - field: TotalLoadedClassCount
+        type: 0
+        i18n:
+          zh-CN: 已加载类总数量
+          en-US: Total Loaded Class Count
+      - field: UnloadedClassCount
+        type: 0
+        i18n:
+          zh-CN: 未加载类总数量
+          en-US: Unloaded Class Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=ClassLoading
+      url: ^_^url^_^
+
+  - name: thread
+    priority: 3
+    i18n:
+      zh-CN: 线程信息
+      en-US: Thread
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: TotalStartedThreadCount
+        type: 0
+        i18n:
+          zh-CN: 已启动线程总数
+          en-US: Total Started Thread Count
+      - field: ThreadCount
+        type: 0
+        i18n:
+          zh-CN: 活跃线程数
+          en-US: Thread Count
+      - field: PeakThreadCount
+        type: 0
+        i18n:
+          zh-CN: 最大峰值线程数
+          en-US: Peak Thread Count
+      - field: DaemonThreadCount
+        type: 0
+        i18n:
+          zh-CN: 活跃守护线程数
+          en-US: Daemon Thread Count
+      - field: CurrentThreadUserTime
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间(用户态)
+          en-US: Current Thread User Time
+      - field: CurrentThreadCpuTime
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间
+          en-US: Current Thread CPU Time
+    units:
+      - CurrentThreadUserTime=NS->S
+      - CurrentThreadCpuTime=NS->S
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=Threading
+      url: ^_^url^_^
+
+  - name: application
+    i18n:
+      zh-CN: 应用信息
+      en-US: Application
+    priority: 4
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: acceptCount
+        type: 0
+        i18n:
+          zh-CN: 接收请求数
+          en-US: Accept Count
+      - field: acceptorThreadCount
+        type: 0
+        i18n:
+          zh-CN: 接收处理线程数
+          en-US: Acceptor Thread Count
+      - field: acceptorThreadPriority
+        type : 0
+        i18n:
+          zh-CN: 接收线程级别
+          en-US: Acceptor Thread Priority
+      - field: connectionTimeout
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 链接超时时间
+          en-US: Connection Timeout
+      - field: currentThreadCount
+        type: 0
+        i18n:
+          zh-CN: 当前线程数
+          en-US: Current Thread Count
+      - field: currentThreadsBusy
+        type: 0
+        i18n:
+          zh-CN: 繁忙线程数
+          en-US: Current Threads Busy
+      - field: keepAliveCount
+        type: 0
+        i18n:
+          zh-CN: 心跳保持链接数量
+          en-US: Keep Alive Count
+      - field: keepAliveTimeout
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 心跳超时时间
+          en-US: Keep Alive Timeout
+      - field: maxConnections
+        type: 0
+        i18n:
+          zh-CN: 最大链接数
+          en-US: Max Connections
+      - field: maxKeepAliveRequests
+        type: 0
+        i18n:
+          zh-CN: 最大链接保持请求
+          en-US: Max KeepAlive Requests
+      - field: maxThreads
+        type: 0
+        i18n:
+          zh-CN: 最大线程数
+          en-US: Max Threads
+      - field: minSpareThreads
+        type: 0
+        i18n:
+          zh-CN: 最小备用线程数
+          en-US: Min Spare Threads
+      - field: pollerThreadCount
+        type: 0
+        i18n:
+          zh-CN: 轮询线程数
+          en-US: Poller Thread Count
+      - field: pollerThreadPriority
+        type: 0
+        i18n:
+          zh-CN: 轮询线程级别
+          en-US: Poller Thread Priority
+      - field: running
+        type: 1
+        i18n:
+          zh-CN: 运行中
+          en-US: Running
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: Catalina:type=ThreadPool,name=*
+      url: ^_^url^_^

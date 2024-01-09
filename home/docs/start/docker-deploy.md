@@ -1,198 +1,136 @@
 ---
 id: docker-deploy  
-title: 通过Docker方式安装HertzBeat    
-sidebar_label: Docker方式部署    
+title: Install HertzBeat via Docker   
+sidebar_label: Install via Docker      
 ---
 
-> 推荐使用docker部署HertzBeat  
+> Recommend to use docker deploy HertzBeat
 
-安装部署视频教程: [HertzBeat安装部署-BiliBili](https://www.bilibili.com/video/BV1GY41177YL)  
 
-1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。
+1. Download and install the Docker environment   
+   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
+   After the installation you can check if the Docker version normally output at the terminal.
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
-2. 拉取HertzBeat Docker镜像   
-   镜像版本TAG可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
-   ``` 
+2. pull HertzBeat Docker mirror  
+   you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)  
+   or in [quay.io mirror repository](https://quay.io/repository/tancloud/hertzbeat)     
+   ```shell
    $ docker pull tancloud/hertzbeat   
+   $ docker pull tancloud/hertzbeat-collector       
    ```
-3. 配置HertzBeat的配置文件(可选)      
-   在主机目录下创建application.yml，eg:/opt/application.yml        
-   配置文件内容参考 项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，替换里面的`td-engine`服务参数，IP端口账户密码   
-   注意⚠️（若使用邮件告警，需替换里面的邮件服务器参数。若使用MYSQL数据源，需替换里面的datasource参数 参见[H2数据库切换为MYSQL](mysql-init)）       
-   具体替换参数如下:     
-```
-   
-   warehouse.store.td-engine.url
-   warehouse.store.td-engine.username
-   warehouse.store.td-engine.password
-   
-   spring.mail.host
-   spring.mail.port
-   spring.mail.username
-   spring.mail.password
-```
+   or  
+   ```shell
+   $ docker pull quay.io/tancloud/hertzbeat
+   $ docker pull quay.io/tancloud/hertzbeat-collector
+   ```
 
-4. 配置用户配置文件(可选,自定义配置用户密码)         
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
-   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
-   在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
-   配置文件内容参考 项目仓库[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
-   
-```yaml
+3. Mounted HertzBeat configuration file (optional)    
+   Download and config `application.yml` in the host directory, eg:`$(pwd)/application.yml`    
+   Download from [github/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml).    
+   You can modify the configuration yml file according to your needs.      
+   - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
+   - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)  
+   - **Recommended** If you need to use the time series database TDengine to store metric data, you need to replace the `warehouse.store.td-engine` parameter in `application.yml` for specific steps, see [Using TDengine to store metrics data](tdengine-init)   
+   - **Recommended** If you need to use the time series database IotDB to store the metric database, you need to replace the `warehouse.storeiot-db` parameter in `application.yml` For specific steps, see [Use IotDB to store metrics data](iotdb-init)   
 
-resourceRole:
-   - /api/account/auth/refresh===post===[admin,user,guest]
-   - /api/apps/**===get===[admin,user,guest]
-   - /api/monitor/**===get===[admin,user,guest]
-   - /api/monitor/**===post===[admin,user]
-   - /api/monitor/**===put===[admin,user]
-   - /api/monitor/**===delete==[admin]
-   - /api/monitors/**===get===[admin,user,guest]
-   - /api/monitors/**===post===[admin,user]
-   - /api/monitors/**===put===[admin,user]
-   - /api/monitors/**===delete===[admin]
-   - /api/alert/**===get===[admin,user,guest]
-   - /api/alert/**===post===[admin,user]
-   - /api/alert/**===put===[admin,user]
-   - /api/alert/**===delete===[admin]
-   - /api/alerts/**===get===[admin,user,guest]
-   - /api/alerts/**===post===[admin,user]
-   - /api/alerts/**===put===[admin,user]
-   - /api/alerts/**===delete===[admin]
-   - /api/notice/**===get===[admin,user,guest]
-   - /api/notice/**===post===[admin,user]
-   - /api/notice/**===put===[admin,user]
-   - /api/notice/**===delete===[admin]
-   - /api/tag/**===get===[admin,user,guest]
-   - /api/tag/**===post===[admin,user]
-   - /api/tag/**===put===[admin,user]
-   - /api/tag/**===delete===[admin]
-   - /api/summary/**===get===[admin,user,guest]
-   - /api/summary/**===post===[admin,user]
-   - /api/summary/**===put===[admin,user]
-   - /api/summary/**===delete===[admin]
+4. Mounted the account file(optional)           
+   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
+   If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
+   Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
+   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)    
+   For detail steps, please refer to [Configure Account Password](account-modify)    
 
-# 需要被过滤保护的资源,不认证鉴权直接访问
-# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
-excludedResource:
-   - /api/account/auth/**===*
-   - /api/i18n/**===get
-   - /api/apps/hierarchy===get
-   # web ui 前端静态资源
-   - /===get
-   - /dashboard/**===get
-   - /monitors/**===get
-   - /alert/**===get
-   - /account/**===get
-   - /setting/**===get
-   - /passport/**===get
-   - /**/*.html===get
-   - /**/*.js===get
-   - /**/*.css===get
-   - /**/*.ico===get
-   - /**/*.ttf===get
-   - /**/*.png===get
-   - /**/*.gif===get
-   - /**/*.jpg===get
-   - /**/*.svg===get
-   - /**/*.json===get
-   # swagger ui 资源
-   - /swagger-resources/**===get
-   - /v2/api-docs===get
-   - /v3/api-docs===get
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
-account:
-   - appId: admin
-     credential: hertzbeat
-     role: [admin,user]
-   - appId: tom
-     credential: hertzbeat
-     role: [user]
-   - appId: guest
-     credential: hertzbeat
-     role: [guest]
-```
-   
-   修改sureness.yml的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**  
-
-```yaml
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
-account:
-   - appId: admin
-     credential: hertzbeat
-     role: [admin,user]
-   - appId: tom
-     credential: hertzbeat
-     role: [user]
-   - appId: guest
-     credential: hertzbeat
-     role: [guest]
-```
-
-6. 启动HertzBeat Docker容器    
+5. Start the HertzBeat Docker container    
 
 ```shell 
-$ docker run -d -p 1157:1157 \
-    -v /opt/data:/opt/hertzbeat/data \
-    -v /opt/logs:/opt/hertzbeat/logs \
-    -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
-    -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
+$ docker run -d -p 1157:1157 -p 1158:1158 \
+    -e LANG=en_US.UTF-8 \
+    -e TZ=Asia/Shanghai \
+    -v $(pwd)/data:/opt/hertzbeat/data \
+    -v $(pwd)/logs:/opt/hertzbeat/logs \
+    -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
+    -v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml \
     --name hertzbeat tancloud/hertzbeat
 ```
 
-   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
-   - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
-   - `-p 1157:1157`  : 映射容器端口到主机端口
-   - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失  
-   - `-v /opt/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看  
-   - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
-   - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
-   - `--name hertzbeat` : 命名容器名称 hertzbeat 
-   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,版本可查看[官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
+   - `docker run -d` : Run a container in the background via Docker
+   - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
+   - `-e LANG=en_US.UTF-8`  : Set the system language
+   - `-e TZ=Asia/Shanghai` : Set the system timezone
+   - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.  
+   - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional, if you don't have a need, just delete it) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
+   - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    
+   - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional, if you don't have a need, just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if no needs.  
+   - `--name hertzbeat` : Naming container name hertzbeat 
+   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**     
 
-7. 开始探索HertzBeat  
-   浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat。  
+6. Begin to explore HertzBeat  
+
+   Access `http://ip:1157/` using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!     
+
+7. Deploy collector cluster (Optional)
+
+```shell 
+$ docker run -d \
+    -e IDENTITY=custom-collector-name \
+    -e MODE=public \
+    -e MANAGER_HOST=127.0.0.1 \
+    -e MANAGER_PORT=1158 \
+    --name hertzbeat-collector tancloud/hertzbeat-collector
+```
+
+   This command starts a running HertzBeat-Collector container.
+   - `docker run -d` : Run a container in the background via Docker
+   - `-e IDENTITY=custom-collector-name`  : (optional) Set the collector unique identity name. Attention the clusters collector name must unique.
+   - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+   - `-e MANAGER_HOST=127.0.0.1` : Important⚠️ Set the main hertzbeat server ip.
+   - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
+   - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
+   - `--name hertzbeat-collector` : Naming container name hertzbeat-collector
+   - `tancloud/hertzbeat-collector` : Use the pulled latest HertzBeat-Collector official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat-collector` instead if you pull `quay.io` docker image.**
+
+8. Access `http://localhost:1157` and you will see the registered new collector in dashboard.  
 
 **HAVE FUN**   
 
-### Docker部署常见问题   
+### FAQ  
 
-1. **MYSQL,TDENGINE和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**     
-此问题本质为Docker容器访问宿主机端口连接失败，由于docker默认网络模式为Bridge模式，其通过localhost访问不到宿主机。
-> 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
-> 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`   
+**The most common problem is network problems, please check in advance**
 
-2. **按照流程部署，访问 http://ip:1157/ 无界面**   
-请参考下面几点排查问题：  
-> 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
-> 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
-> 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
+1. **MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
+The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
+> Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
+> Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
 
-3. **日志报错TDengine连接或插入SQL失败**  
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
+2. **According to the process deploy，visit http://ip:1157/ no interface**   
+Please refer to the following points to troubleshoot issues：  
+> 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+> 3：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
-4. **监控历史图表长时间都一直无数据**  
-> 一：Tdengine是否配置，未配置则无历史图表数据  
-> 二：Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 Tdengine IP账户密码等配置是否正确  
+3. **Log an error TDengine connection or insert SQL failed**  
+> 1：Check whether database account and password configured is correct, the database is created.   
+> 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.  
 
-5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖服务TDengine时序数据库]
-> 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
-> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init)  
+4. **Historical monitoring charts have been missing data for a long time**  
+> 1：Check whether you configure Tdengine or IoTDB. No configuration means no historical chart data.  
+> 2：Check whether Tdengine database `hertzbeat` is created. 
+> 3: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+
+5. If the history chart on the monitoring page is not displayed，popup [please configure time series database]
+> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - IoTDB or TDengine database.
+> Installation and initialization this database refer to [TDengine Installation](tdengine-init) or [IoTDB Installation](iotdb-init)  
+
+6. The historical picture of monitoring details is not displayed or has no data, and TDengine has been deployed  
+> Please confirm whether the installed TDengine version is near 2.4.0.12, version 3.0 and 2.2 are not compatible.  
+
+7. The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]
+> Please check if the configuration parameters are correct
+> Is iot-db or td-engine enable set to true
+> Note⚠️If both hertzbeat and IotDB, TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
+> You can check the startup logs according to the logs directory

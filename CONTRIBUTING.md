@@ -32,19 +32,18 @@ Even small corrections to typos are very welcome :)
 
 - Backend start   
 
-1. Deploy and start dependent services `MYSQL` and `TDengine` database   
-2. Requires `maven3+`, `java8+` and `lombok` environments    
-3. Modify the dependent service address and other information of the configuration file-`manager/src/main/resources/application.yml`
-4. Start `springboot manager` service `manager/src/main/java/com/usthe/manager/Manager.java`   
+1. Requires `maven3+`, `java11` and `lombok` environments    
+2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
+3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
 
 - Front-web start   
 
-1. Need `nodejs npm angular-cli` environment
+1. Need `nodejs npm angular-cli` environment, Make sure `Node.js >= 18`
 2. Install yarn: `npm install -g yarn`   
 3. Execute under the front-end project directory web-app: `yarn install`
-5. Install angular-cli globally: `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
-6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-7. Browser access to localhost:4200 to start   
+4. Install angular-cli globally: `yarn global add @angular/cli@15`
+5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
+6. Browser access to localhost:4200 to start   
 
 ### Find tasks   
 
@@ -80,7 +79,7 @@ Please note that the title of the PR needs to conform to our spec, and write the
 
 ### Wait for the code to be merged   
 
-After submitting the PR, the Committer or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.  
+After submitting the PR, the Committee or the community's friends will review the code you submitted (Code Review), and will propose some modification suggestions or conduct some discussions. Please pay attention to your PR in time.  
 
 If subsequent changes are required, there is no need to initiate a new PR. After submitting a commit on the original branch and pushing it to the remote repository, the PR will be automatically updated.  
 
@@ -113,13 +112,13 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [User Club](https://support.qq.com/products/379369)  
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.     
 
-QQ group number `718618151`, verify code: `tancloud`      
+QQ group number `236915833`, verify code: `tancloud`      
 
 Public WeChat: `tancloudtech`  
 
@@ -136,7 +135,7 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](home/static/img/docs/hertzbeat-stru-en.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 <br>  
 
@@ -177,19 +176,18 @@ Public WeChat: `tancloudtech`
 
 - 后端启动
 
-1. 部署启动依赖服务`MYSQL`和`TDengine`数据库  
-2. 需要`maven3+`, `java8+`和`lombok`环境  
-3. 修改配置文件的依赖服务地址等信息-`manager/src/main/resources/application.yml`
-4. 启动`springboot manager`服务 `manager/src/main/java/com/usthe/manager/Manager.java`  
+1. 需要`maven3+`, `java11`和`lombok`环境  
+2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
+3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
 
 - 前端启动
 
-1. 需要`nodejs npm angular-cli`环境
+1. 需要`nodejs npm angular-cli`环境, 确保你的版本 `Node.js >= 18`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@12 --registry=https://registry.npm.taobao.org`
+4. 全局安装angular-cli `yarn global add @angular/cli@15`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
-6. 浏览器访问 localhost:4200 即可开始
+6. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat
 
 ### 寻找任务  
 
@@ -231,7 +229,7 @@ git push origin a-feature-branch
 
 另外，我们的项目有比较规范和严格的 CI 检查流程，在提交 PR 之后会触发 CI，请注意是否通过 CI 检查。
 
-最后，Committer 可以将 PR 合并入DEV主分支。  
+最后，Committer 可以将 PR 合并入 master 主分支。  
 
 ### 代码被合并后  
 
@@ -258,13 +256,13 @@ git pull upstream master
 
 [Gitter Channel](https://gitter.im/hertzbeat/community)
 
-[Github Discussion](https://github.com/usthe/hertzbeat/discussions)
+[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 [HertzBeat答疑网站](https://support.qq.com/products/379369)
 
 加微信号 `tan-cloud` 拉您进微信交流群   
 
-加QQ群号 `718618151` 进QQ交流群, 验证信息: `tancloud`     
+加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`     
 
 微信公众号: `tancloudtech`  
 
@@ -277,8 +275,8 @@ git pull upstream master
 - **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 - **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
-> 告警计算触发，监控状态联动，告警配置，告警通知。
+> 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     

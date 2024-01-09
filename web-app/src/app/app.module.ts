@@ -1,7 +1,7 @@
 /* eslint-disable import/order */
 /* eslint-disable import/no-duplicates */
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { APP_INITIALIZER, Injector, LOCALE_ID, NgModule, Type } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { APP_INITIALIZER, LOCALE_ID, NgModule, Type } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NzMessageModule } from 'ng-zorro-antd/message';
@@ -10,12 +10,12 @@ import { Observable } from 'rxjs';
 
 // #region default language
 // Reference: https://ng-alain.com/docs/i18n
-import { default as ngLang } from '@angular/common/locales/zh';
-import { DELON_LOCALE, zh_CN as delonLang } from '@delon/theme';
-import { zhCN as dateLang } from 'date-fns/locale';
-import { NZ_DATE_LOCALE, NZ_I18N, zh_CN as zorroLang } from 'ng-zorro-antd/i18n';
+import { default as ngLang } from '@angular/common/locales/en';
+import { DELON_LOCALE, en_US as delonLang } from '@delon/theme';
+import { enUS as dateLang } from 'date-fns/locale';
+import { NZ_DATE_LOCALE, NZ_I18N, en_US as zorroLang } from 'ng-zorro-antd/i18n';
 const LANG = {
-  abbr: 'zh',
+  abbr: 'en-US',
   ng: ngLang,
   zorro: zorroLang,
   date: dateLang,
@@ -46,15 +46,11 @@ const FORM_MODULES = [JsonSchemaModule];
 // #region Http Interceptors
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { DefaultInterceptor } from '@core';
-import { SimpleInterceptor } from '@delon/auth';
-const INTERCEPTOR_PROVIDES = [
-  // { provide: HTTP_INTERCEPTORS, useClass: SimpleInterceptor, multi: true},
-  { provide: HTTP_INTERCEPTORS, useClass: DefaultInterceptor, multi: true }
-];
+const INTERCEPTOR_PROVIDES = [{ provide: HTTP_INTERCEPTORS, useClass: DefaultInterceptor, multi: true }];
 // #endregion
 
 // #region global third module
-const GLOBAL_THIRD_MODULES: Array<Type<void>> = [];
+const GLOBAL_THIRD_MODULES: Array<Type<void>> = [SlickCarouselModule, TagCloudComponent];
 // #endregion
 
 // #region Startup Service
@@ -82,6 +78,8 @@ import { SharedModule } from './shared/shared.module';
 import { STWidgetModule } from './shared/st-widget/st-widget.module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
+import { SlickCarouselModule } from 'ngx-slick-carousel';
+import { TagCloudComponent } from 'angular-tag-cloud-module';
 
 @NgModule({
   declarations: [AppComponent],
