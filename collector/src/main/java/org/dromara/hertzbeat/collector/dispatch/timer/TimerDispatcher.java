@@ -67,7 +67,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             ret.setDaemon(true);
             return ret;
         }, 1, TimeUnit.SECONDS, 512);
-        this.currentCyclicTaskMap = new ConcurrentHashMap<>(64);
+        this.currentCyclicTaskMap = new ConcurrentHashMap<>(8);
         this.currentTempTaskMap = new ConcurrentHashMap<>(8);
         this.eventListeners = new ConcurrentHashMap<>(8);
         this.started = new AtomicBoolean(true);
