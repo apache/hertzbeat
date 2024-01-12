@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link CommonCache}
+ * Test case for {@link ConnectionCommonCache}
  */
 class CommonCacheTest {
 

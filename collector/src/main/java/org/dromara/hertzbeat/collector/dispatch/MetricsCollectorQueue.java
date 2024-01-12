@@ -33,7 +33,7 @@ public class MetricsCollectorQueue {
     private final PriorityBlockingQueue<MetricsCollect> jobQueue;
 
     public MetricsCollectorQueue() {
-        jobQueue = new PriorityBlockingQueue<>(2000);
+        jobQueue = new PriorityBlockingQueue<>();
     }
 
     public void addJob(MetricsCollect job) {

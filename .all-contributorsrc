@@ -1467,7 +1467,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/74083801?v=4",
       "profile": "https://github.com/ZY945",
       "contributions": [
-        "code"
+        "code",
+        "design",
+        "doc"
       ]
     },
     {
@@ -1475,6 +1477,42 @@
       "name": "sonam singh",
       "avatar_url": "https://avatars.githubusercontent.com/u/51995525?v=4",
       "profile": "https://github.com/prolevel1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ZhangZixuan1994",
+      "name": "ZhangZixuan1994",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20011653?v=4",
+      "profile": "https://github.com/ZhangZixuan1994",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "hurenjie1",
+      "name": "SHIG",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40120355?v=4",
+      "profile": "https://github.com/hurenjie1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "tslj1024",
+      "name": "泰上老菌",
+      "avatar_url": "https://avatars.githubusercontent.com/u/155222677?v=4",
+      "profile": "https://tslj1024.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ldysdu",
+      "name": "ldysdu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15815338?v=4",
+      "profile": "https://github.com/ldysdu",
       "contributions": [
         "code"
       ]

@@ -1,7 +1,7 @@
 ---
 id: nebulaGraph
-title: 监控 NebulaGraph
-sidebar_label: NebulaGraph 监控
+title: 监控 NebulaGraph 数据库
+sidebar_label: NebulaGraph 数据库
 keywords: [ 开源监控工具, 开源 NebulaGraph 监控工具, 监控 NebulaGraph 指标 ]
 ---
 

@@ -214,7 +214,7 @@
   "alert.center.tags": "标签",
   "alert.center.status": "状态",
   "alert.center.time": "告警时间",
-  "alert.center.time.tip": "此告警期间统计触发 {{times}} 次告警",
+  "alert.center.time.tip": "此告警期间累计触发 {{times}} 次告警",
   "alert.center.first-time": "开始",
   "alert.center.last-time": "最新",
   "alert.center.confirm.delete": "请确认是否删除!",
