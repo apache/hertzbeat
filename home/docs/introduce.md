@@ -151,6 +151,10 @@ In an isolated network where multiple networks are not connected, we need to dep
 - Open source is not the same as free , if based on HertzBeat secondary development modified logo , name , copyright , etc., [please find us authorized , otherwise there will be legal risks](https://hertzbeat.com/docs/others/private).
 
 
+**HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
+
+![cncf](/img/home/cncf-landscape-left-logo.svg)
+
 -----
 
 **HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.**
