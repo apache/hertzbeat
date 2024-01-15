@@ -494,6 +494,7 @@
   "tag.name": "標簽名",
   "tag.value": "標簽值",
   "tag.color": "顔色",
+  "tag.description": "標簽描述",
   "tag.update-time": "更新時間",
   "tag.display": "效果",
   "tag.bind": "綁定標簽",
