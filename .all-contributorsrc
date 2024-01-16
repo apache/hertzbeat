@@ -1525,6 +1525,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "avvCode",
+      "name": "avv",
+      "avatar_url": "https://avatars.githubusercontent.com/u/113538532?v=4",
+      "profile": "https://github.com/avvCode",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
