@@ -126,6 +126,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         log.error("[Dispatcher]-{}.", e.getMessage(), e);
                     }
                 }
+                log.info("Thread Interrupted, Shutdown the [metrics-task-dispatcher]");
             });
             // monitoring metrics collection task execution timeout
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -178,7 +179,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
         metricsSet.forEach(metrics -> {
-            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this, 
+            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
                     collectorIdentity, unitConvertList);
             jobRequestQueue.addJob(metricsCollect);
             if (metrics.getPrometheus() != null) {
