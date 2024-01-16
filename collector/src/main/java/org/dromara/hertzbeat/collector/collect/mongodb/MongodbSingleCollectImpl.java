@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.client.ClientSession;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.MongodbConnect;
@@ -99,15 +100,17 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             builder.setMsg("unsupported mongodb diagnostic command: " + command);
             return;
         }
+        ClientSession clientSession = null;
         try {
             MongoClient mongoClient = getClient(metrics);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
+            clientSession = mongoClient.startSession();
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             Document document;
             if (metricsParts.length == 1) {
-                document = mongoDatabase.runCommand(new Document(command, 1));
+                document = mongoDatabase.runCommand(clientSession, new Document(command, 1));
             } else {
-                document = mongoDatabase.runCommand(new Document(command, 1));
+                document = mongoDatabase.runCommand(clientSession, new Document(command, 1));
                 for (int i = 1; i < metricsParts.length; i++) {
                     document = (Document) document.get(metricsParts[i]);
                 }
@@ -126,6 +129,12 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             String message = CommonUtil.getMessageFromThrowable(e);
             builder.setMsg(message);
             log.warn(message, e);
+        } finally {
+            if (clientSession != null) {
+                try {
+                    clientSession.close();
+                } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -168,7 +177,9 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 通过metrics中的mongodb连接信息获取 mongodb client
+     * 通过metrics中的mongodb连接信息获取 
+     * mongodb client本身不存在网络调用，和网络链接。对每次采集，我们需要新建session并使用后关闭它
+     * mongodb client is thread pool, we need to create the session for each collect
      */
     private MongoClient getClient(Metrics metrics) {
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
@@ -181,32 +192,18 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         if (cacheOption.isPresent()) {
             MongodbConnect mongodbConnect = (MongodbConnect) cacheOption.get();
             mongoClient = mongodbConnect.getMongoClient();
-            try {
-                // detect this connection is available?
-                mongoClient.getClusterDescription();
-            } catch (Exception e) {
-                log.info("The mongodb connect client from cache is invalid: {}", e.getMessage());
-                try {
-                    mongoClient.close();
-                } catch (Exception e2) {
-                    log.error(e2.getMessage());
-                }
-                mongoClient = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
-            }
         }
         if (mongoClient != null) {
             return mongoClient;
         }
         // 复用失败则新建连接 connect to mongodb
-        String url;
         // 密码可能包含特殊字符，需要使用类似js的encodeURIComponent进行编码，这里使用java的URLEncoder
-        url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+        String url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
                 URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
                 mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
         mongoClient = MongoClients.create(url);
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
-        ConnectionCommonCache.getInstance().addCache(identifier, mongodbConnect);
+        ConnectionCommonCache.getInstance().addCache(identifier, mongodbConnect, 3600 * 1000L);
         return mongoClient;
     }
 }
