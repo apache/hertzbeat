@@ -35,7 +35,8 @@
     "lint": "npm run lint:fix && npm run lint:style",
     "lint:ts": "ng lint",
     "lint:fix": "ng lint --fix",
-    "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix"
+    "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix",
+    "package": "ng build --configuration production"
   },
   "private": true,
   "dependencies": {
