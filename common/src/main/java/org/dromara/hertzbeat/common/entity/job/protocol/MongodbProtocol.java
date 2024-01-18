@@ -63,6 +63,11 @@ public class MongodbProtocol {
     private String authenticationDatabase;
 
     /**
+     * Mongodb超时时间(可选)
+     */
+    private Integer connectTimeout;
+
+    /**
      * run command
      */
     private String command;

@@ -198,9 +198,9 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
         // 复用失败则新建连接 connect to mongodb
         // 密码可能包含特殊字符，需要使用类似js的encodeURIComponent进行编码，这里使用java的URLEncoder
-        String url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+        String url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s&connectTimeoutMS=%s", mongodbProtocol.getUsername(),
                 URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
-                mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+                mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase(), mongodbProtocol.getConnectTimeout());
         mongoClient = MongoClients.create(url);
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
         ConnectionCommonCache.getInstance().addCache(identifier, mongodbConnect, 3600 * 1000L);

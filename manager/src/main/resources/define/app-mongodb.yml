@@ -102,6 +102,12 @@ params:
     limit: 20
     required: true
     defaultValue: 'admin'
+  - field: connectTimeout
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: connectTimeout(ms)
+    type: number
+    required: false
 # can get status information and other config params of MongoDB by running Diagnostic Commands
 # 可以通过执行 Diagnostic Commands 获取 mongodb 的状态信息以及一些性能、配置参数
 # https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
@@ -180,6 +186,8 @@ metrics:
       #Specifies the database in which the User is created
       #指定创建User的数据库
       authenticationDatabase: ^_^authenticationDatabase^_^
+      #mongodb's timeout
+      timeout: ^_^connectTimeout^_^
       #The buildInfo command is an administrative command which returns a build summary for the current mongod.
       command: buildInfo
 
@@ -218,6 +226,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      timeout: ^_^connectTimeout^_^
       command: serverStatus.metrics.document
 
   - name: server_operation
@@ -270,6 +279,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      timeout: ^_^connectTimeout^_^
       command: serverStatus.metrics.ttl
 
   # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
@@ -329,6 +339,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      timeout: ^_^connectTimeout^_^
       command: hostInfo.system
 
   - name: os
@@ -360,6 +371,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      timeout: ^_^connectTimeout^_^
       command: hostInfo.os
 
   - name: extra
@@ -416,4 +428,5 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
+      timeout: ^_^connectTimeout^_^
       command: hostInfo.extra.extra
