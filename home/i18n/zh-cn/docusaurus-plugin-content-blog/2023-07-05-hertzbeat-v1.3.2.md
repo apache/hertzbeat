@@ -11,8 +11,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 官网: hertzbeat.com | tancloud.cn
 
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
+![hertzBeat](/img/home/0.png)
 
 ### HertzBeat 介绍
 
