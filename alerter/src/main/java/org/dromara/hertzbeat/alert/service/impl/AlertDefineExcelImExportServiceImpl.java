@@ -226,8 +226,9 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 AlertDefineDTO alertDefineDTO = alertDefine.getAlertDefine();
                 // 获取标签信息
                 List<TagItem> tagList = alertDefineDTO.getTags();
+                int size = tagList == null ? 0 : tagList.size();
                 // 将阀值规则信息和标签信息合并到一行中
-                for (int i = 0; i < Math.max(tagList.size(), 1); i++) {
+                for (int i = 0; i < Math.max(size, 1); i++) {
                     Row row = sheet.createRow(rowIndex++);
                     if (i == 0) {
                         // 阀值规则信息只需要写一次
@@ -265,7 +266,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                         templateCell.setCellValue(alertDefineDTO.getTemplate());
                         recoverNoticeCell.setCellStyle(cellStyle);
                     }
-                    if (i < tagList.size()) {
+                    if (i < size) {
                         TagItem tagItem = tagList.get(i);
                         Cell nameCell = row.createCell(7);
                         nameCell.setCellValue(tagItem.getName());
@@ -275,7 +276,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                         valueCell.setCellStyle(cellStyle);
                     }
                 }
-                if (!tagList.isEmpty()) {
+                if (null != tagList && !tagList.isEmpty()) {
                     RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);

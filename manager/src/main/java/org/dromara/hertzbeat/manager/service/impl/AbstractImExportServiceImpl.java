@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -75,6 +76,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
     public void exportConfig(OutputStream os, List<Long> configList) {
         var monitorList = configList.stream()
                 .map(it -> monitorService.getMonitorDto(it))
+                .filter(Objects::nonNull)
                 .map(this::convert)
                 .collect(Collectors.toUnmodifiableList());
         writeOs(monitorList, os);

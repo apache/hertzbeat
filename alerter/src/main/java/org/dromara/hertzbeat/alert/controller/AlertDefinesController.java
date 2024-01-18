@@ -136,7 +136,7 @@ public class AlertDefinesController {
 
     @PostMapping("/import")
     @Operation(summary = "import alertDefine config", description = "导入告警阀值配置")
-    public void export(MultipartFile file) throws Exception {
+    public void importDefines(MultipartFile file) throws Exception {
         alertDefineService.importConfig(file);
     }
 }
