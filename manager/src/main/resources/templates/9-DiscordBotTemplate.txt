@@ -3,4 +3,5 @@ ${targetLabel} : ${target}
 <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
 ${priorityLabel} : ${priority}
 ${triggerTimeLabel} : ${triggerTime}
+<#if (restoreTimeLabel??)>${restoreTimeLabel} : ${restoreTime} </#if>
 ${contentLabel} : ${content}

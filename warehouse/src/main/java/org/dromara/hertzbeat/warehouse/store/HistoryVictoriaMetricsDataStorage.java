@@ -92,10 +92,10 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         }
         this.restTemplate = restTemplate;
         victoriaMetricsProp = properties.getStore().getVictoriaMetrics();
-        serverAvailable = initVictoriaMetricsDatasource();
+        serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 
-    private boolean initVictoriaMetricsDatasource() {
+    private boolean checkVictoriaMetricsDatasourceAvailable() {
         // check server status
         try {
             String result = restTemplate.getForObject(victoriaMetricsProp.getUrl() + STATUS_PATH, String.class);
@@ -106,17 +106,16 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             }
             log.error("check victoria metrics server status not success: {}.", result);
         } catch (Exception e) {
-            log.error("check victoria metrics server status error: {}.", e.getMessage(), e);
+            log.error("check victoria metrics server status error: {}.", e.getMessage());
         }
-        log.warn("\n\t------------------WARN WARN WARN------------------\n" +
-                "\t---------------Init VictoriaMetrics Failed---------------\n" +
-                "\t--------------Please Config VictoriaMetrics--------------\n" +
-                "\t---------Or Can Not Use Metric History Now---------\n");
         return false;
     }
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
+        if (!isServerAvailable()) {
+            serverAvailable = checkVictoriaMetricsDatasourceAvailable();
+        }
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
@@ -221,6 +220,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + EXPORT_PATH)
                     .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
+                    .queryParam("end", "now")
                     .build(true).toUri();
             ResponseEntity<String> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, String.class);

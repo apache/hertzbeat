@@ -129,7 +129,9 @@ export class MonitorService {
     searchValue: string,
     status: number,
     pageIndex: number,
-    pageSize: number
+    pageSize: number,
+    sortField?: string | null,
+    sortOrder?: string | null
   ): Observable<Message<Page<Monitor>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
@@ -147,6 +149,12 @@ export class MonitorService {
     }
     if (app != undefined) {
       httpParams = httpParams.append('app', app);
+    }
+    if (sortField != null && sortOrder != null) {
+      httpParams = httpParams.appendAll({
+        sort: sortField,
+        order: sortOrder == 'ascend' ? 'asc' : 'desc'
+      });
     }
     if (searchValue != undefined && searchValue != '' && searchValue.trim() != '') {
       httpParams = httpParams.append('name', searchValue);

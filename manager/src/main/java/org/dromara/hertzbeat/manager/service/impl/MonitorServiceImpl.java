@@ -651,7 +651,6 @@ public class MonitorServiceImpl implements MonitorService {
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
-                monitor.setJobId(null);
             }
             monitorDao.saveAll(managedMonitors);
         }

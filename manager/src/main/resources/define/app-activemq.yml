@@ -134,6 +134,9 @@ metrics:
   # metrics - basic
   # 监控指标 - basic
   - name: basic
+    i18n:
+      zh-CN: 虚拟机基础信息
+      en-US: JVM Basic
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -146,13 +149,25 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: VmName
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Vm Name
       - field: VmVendor
         type: 1
+        i18n:
+          zh-CN: 厂商
+          en-US: Vm Vendor
       - field: VmVersion
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Vm Version
       - field: Uptime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 运行时长
+          en-US: Up time
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -289,23 +304,41 @@ metrics:
       url: ^_^url^_^
 
   - name: memory_pool
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
     priority: 2
     fields:
       - field: name
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
       - field: committed
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
       - field: init
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
       - field: max
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
       - field: used
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
     units:
       - committed=B->MB
       - init=B->MB
@@ -333,14 +366,26 @@ metrics:
       url: ^_^url^_^
 
   - name: class_loading
+    i18n:
+      zh-CN: 类加载信息
+      en-US: Class Loading
     priority: 2
     fields:
       - field: LoadedClassCount
         type: 0
+        i18n:
+          zh-CN: 当前已加载类数量
+          en-US: Loaded Class Count
       - field: TotalLoadedClassCount
         type: 0
+        i18n:
+          zh-CN: 已加载类总数量
+          en-US: Total Loaded Class Count
       - field: UnloadedClassCount
         type: 0
+        i18n:
+          zh-CN: 未加载类总数量
+          en-US: Unloaded Class Count
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -351,22 +396,43 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
+    i18n:
+      zh-CN: 线程信息
+      en-US: Thread
     priority: 2
     fields:
       - field: TotalStartedThreadCount
         type: 0
+        i18n:
+          zh-CN: 已启动线程总数
+          en-US: Total Started Thread Count
       - field: ThreadCount
         type: 0
+        i18n:
+          zh-CN: 活跃线程数
+          en-US: Thread Count
       - field: PeakThreadCount
         type: 0
+        i18n:
+          zh-CN: 最大峰值线程数
+          en-US: Peak Thread Count
       - field: DaemonThreadCount
         type: 0
+        i18n:
+          zh-CN: 活跃守护线程数
+          en-US: Daemon Thread Count
       - field: CurrentThreadUserTime
         type: 0
         unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间(用户态)
+          en-US: Current Thread User Time
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
+        i18n:
+          zh-CN: 线程占用的CPU时间
+          en-US: Current Thread CPU Time
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S

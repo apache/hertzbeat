@@ -3,6 +3,7 @@ export class Tag {
   name!: string;
   value!: string;
   color: string = this.getRandomColor();
+  description!: string;
   // 标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置
   type!: number;
   creator!: string;

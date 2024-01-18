@@ -1,42 +1,41 @@
 ---
 id: smtp
-title: Monitoring SMTP
-sidebar_label: SMTP Monitor
+title: SMTP 邮件服务器监控
+sidebar_label: SMTP 监控
 keywords: [ open source monitoring tool, open source SMTP monitoring tool, monitoring SMTP metrics ]
 ---
 
-> Collect and monitor the general performance Metrics of SMTP.
+> 收集和监控 SMTP 邮件服务器的常规性能指标。
 
 ```text
-Determine whether the server is available through the hello command in SMTP
+通过 SMTP 的 hello 命令确定服务器是否可用
 ```
 
-> see https://datatracker.ietf.org/doc/html/rfc821#page-13
+> 详见 https://datatracker.ietf.org/doc/html/rfc821#page-13
 
 
-**Protocol Use：SMTP**
+**协议使用：SMTP**
 
-### Configuration parameter
+### 配置参数
 
-| Parameter name      | Parameter help description                                                                                                                                                |
-|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
-| Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
-| Port                | Port provided by SMTP                                                                                                                                                     |
-| Email               | Your email name, parameters for the hello command                                                                                                                         |
-| Timeout             | Allow collection response time                                                                                                                                            |
-| Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
-| Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
-| Description remarks | For more information about identifying and describing this monitoring, users can note information here                                                                    |
+| 参数名称    | 参数帮助描述                                            |
+|---------|---------------------------------------------------|
+| 监控主机    | 被监控的 IPV4、IPV6 或域名。注意⚠️无需协议头（例如：https://、http://） |
+| 监控名称    | 标识此监控的名称。名称需要保持唯一                                 |
+| 端口      | SMTP 提供的端口号                                       |
+| 电子邮件    | 您的电子邮件名称，用于 hello 命令的参数                           |
+| 超时时间    | 允许的收集响应时间                                         |
+| 收集间隔    | 监视定期数据收集的间隔时间，单位：秒，最小可设置的间隔为 30 秒                 |
+| 是否检测可用性 | 是否在添加监控之前检测和验证监控的可用性。只有在检测成功后，才会继续进行添加和修改操作       |
+| 描述备注    | 用于标识和描述此监控的更多信息，用户可以在此处添加备注信息                     |
 
-### Collection Metrics
+### 收集的指标
 
-#### Metrics Set：summary
+#### 指标集：概要
 
-| Metric name  | Metric unit | Metric help description                                        |
-|--------------|-------------|----------------------------------------------------------------|
-| responseTime | ms          | The time it takes for the SMTP server to respond to a request. |
-| response     |             | Response Status.                                               |
-| smtpBanner   |             | Banner of SMTP server.                                         |
-| heloInfo     |             | Response information returned by helo.                         |
-
+| 指标名称        | 指标单位 | 指标帮助描述            |
+|-------------|------|-------------------|
+| 响应时间        | 毫秒   | SMTP 服务器响应请求所需的时间 |
+| 响应状态        |      | 响应状态              |
+| SMTP 服务器标语  |      | SMTP 服务器的标语       |
+| helo 命令返回信息 |      | helo 命令返回的响应信息    |
