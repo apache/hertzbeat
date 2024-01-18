@@ -15,6 +15,9 @@
 server:
   port: 1159
   shutdown: graceful
+  tomcat:
+    threads:
+      min-spare: 1
 spring:
   application:
     name: ${HOSTNAME:@hertzbeat-collector@}${PID}

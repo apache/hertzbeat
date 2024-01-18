@@ -496,6 +496,7 @@
   "tag.name": "Tag Name",
   "tag.value": "Tag Value",
   "tag.color": "Color",
+  "tag.description": "Description",
   "tag.update-time": "Update Time",
   "tag.display": "Display",
   "tag.bind": "Bind Tags",
