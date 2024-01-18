@@ -44,8 +44,8 @@ sidebar_label: 媒体推荐
 
 #### HertzBeat作为一个新兴项目，迫切需要一定的途径进行项目推广。如果您也是媒体公众号运营者，欢迎您将HertzBeat推荐给您的粉丝:  
 
-1. 推荐文案参考: [MarkDown源内容](https://gitee.com/dromara/hertzbeat/raw/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/introduce.md) [网页文章](https://hertzbeat.com/zh-cn/docs/) [图片资源](https://gitee.com/dromara/hertzbeat/tree/master/home/static/img/home)
-2. 在文章底部或内容中留下项目GitHub仓库链接
+1. 推荐文案参考: [公众号文章](https://mp.weixin.qq.com/s/9TlqN5qrF_pRmpjDkQr5Eg) [MarkDown源内容](https://gitee.com/dromara/hertzbeat/raw/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/introduce.md) [网页文章](https://hertzbeat.com/zh-cn/docs/) [图片资源](https://gitee.com/dromara/hertzbeat/tree/master/home/static/img/home)
+2. 在文章底部或内容中留下项目GitHub仓库链接 https://github.com/dromara/hertzbeat
 3. 文章需要是 `1000+` 的阅读量
 
 #### 作为回报，HertzBeat将:
