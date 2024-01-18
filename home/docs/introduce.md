@@ -145,10 +145,10 @@ In an isolated network where multiple networks are not connected, we need to dep
 
 ### Completely Open Source
 
-- An open source collaboration product using the `Apache2` protocol, maintained by a free and open open source community.
+- An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
 - No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
 - Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-- Open source is not the same as free , if based on HertzBeat secondary development modified logo , name , copyright , etc., [please find us authorized , otherwise there will be legal risks](https://hertzbeat.com/docs/others/private).
+- Open source is not the same as free , can not modify logo, name, copyright based on HertzBeat etc.
 
 
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
