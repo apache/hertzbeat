@@ -55,7 +55,6 @@ public class ContentRender {
     private static final String TEMPLATE_NAME = "freeMakerTemplate";
 
     protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static ContentRender instance;
 
     private Configuration cfg;
 
@@ -71,13 +70,6 @@ public class ContentRender {
         cfg = new Configuration(Configuration.VERSION_2_3_23);
         cfg.setNumberFormat(NUMBER_FORMAT);
         bundle = ResourceBundleUtil.getBundle("alerter");
-    }
-
-    public static synchronized ContentRender getInstance() {
-        if (instance == null){
-            instance = new ContentRender();
-        }
-        return instance;
     }
 
     public String renderContent(NoticeTemplate noticeTemplate, Alert alert, byte type) throws TemplateException, IOException {

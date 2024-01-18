@@ -46,11 +46,12 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected RestTemplate restTemplate;
     @Resource
     protected AlerterProperties alerterProperties;
+    @Resource
+    protected ContentRender contentRender;
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
-        ContentRender instance = ContentRender.getInstance();
-        return instance.renderContent(noticeTemplate, alert, type());
+        return contentRender.renderContent(noticeTemplate, alert, type());
     }
 
     @EventListener(SystemConfigChangeEvent.class)
