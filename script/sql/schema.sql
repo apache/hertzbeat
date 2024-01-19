@@ -386,23 +386,22 @@ CREATE TABLE  hzb_status_page_org
     modifier     varchar(100)     comment 'modifier',
     gmt_create   timestamp        default current_timestamp comment 'create time',
     gmt_update   datetime         default current_timestamp on update current_timestamp comment 'update time',
-    primary key (id),
-    unique key (component)
+    primary key (id)
 ) ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
--- Table structure for hzb_status_page_config
+-- Table structure for hzb_status_page_component
 -- ----------------------------
-DROP TABLE IF EXISTS  hzb_status_page_config ;
-CREATE TABLE  hzb_status_page_config
+DROP TABLE IF EXISTS  hzb_status_page_component ;
+CREATE TABLE  hzb_status_page_component
 (
     id             bigint           not null auto_increment comment 'ID',
     org_id         bigint           not null comment 'org id',
     component      varchar(255)     not null comment 'component name',
     desc           varchar(255)     comment 'component description',
-    tag            varchar(255)     not null comment 'match tag{labelName:labelValue}',
+    tag            varchar(255)     not null comment 'match single tag{labelName:labelValue}',
     method         tinyint          not null default 0 comment 'calculate status method: 0-auto 1-manual',
-    config_state   tinyint          comment 'config state when use auto method: 0-Normal 1-Abnormal 2-Suspended',
+    config_state   tinyint          comment 'config state when use manual method: 0-Normal 1-Abnormal 2-Suspended',
     current_state  tinyint          comment 'component current state: 0-Normal 1-Abnormal 2-Suspended',
     creator        varchar(100)     comment 'creator',
     modifier       varchar(100)     comment 'modifier',
