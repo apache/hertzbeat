@@ -1,11 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
-import {ModalButtonOptions, NzModalService} from 'ng-zorro-antd/modal';
+import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
-import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
+import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
