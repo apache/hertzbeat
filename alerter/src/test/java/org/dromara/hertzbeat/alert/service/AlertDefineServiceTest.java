@@ -1,8 +1,12 @@
 package org.dromara.hertzbeat.alert.service;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.alert.dao.AlertDefineDao;
+import org.dromara.hertzbeat.alert.service.impl.AlertDefineExcelImExportServiceImpl;
+import org.dromara.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
 import org.dromara.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
+import org.dromara.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
@@ -39,7 +43,7 @@ class AlertDefineServiceTest {
     private AlertDefineBindDao alertDefineBindDao;
 
     @InjectMocks
-    private AlertDefineServiceImpl alertDefineService;
+    private AlertDefineServiceImpl alertDefineService = new AlertDefineServiceImpl(Collections.emptyList());
 
     @BeforeEach
     void setUp() {
