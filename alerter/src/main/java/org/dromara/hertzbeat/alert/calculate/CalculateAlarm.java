@@ -132,6 +132,9 @@ public class CalculateAlarm {
         long currentTimeMilli = System.currentTimeMillis();
         long monitorId = metricsData.getId();
         String app = metricsData.getApp();
+        if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
+            app = CommonConstants.PROMETHEUS;
+        }
         String metrics = metricsData.getMetrics();
         // If the metrics whose scheduling priority is 0 has the status of collecting response data UN_REACHABLE/UN_CONNECTABLE,
         // the highest severity alarm is generated to monitor the status change
