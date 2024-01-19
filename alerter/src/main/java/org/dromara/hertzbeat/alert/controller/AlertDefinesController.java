@@ -30,14 +30,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -126,5 +124,19 @@ public class AlertDefinesController {
         }
         return ResponseEntity.ok(Message.success());
     }
-    
+
+    @GetMapping("/export")
+    @Operation(summary = "export alertDefine config", description = "导出告警阀值配置")
+    public void export(
+        @Parameter(description = "AlertDefine ID List | 告警阀值ID列表", example = "656937901") @RequestParam List<Long> ids,
+        @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+        HttpServletResponse res) throws Exception {
+        alertDefineService.export(ids, type, res);
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "import alertDefine config", description = "导入告警阀值配置")
+    public void importDefines(MultipartFile file) throws Exception {
+        alertDefineService.importConfig(file);
+    }
 }

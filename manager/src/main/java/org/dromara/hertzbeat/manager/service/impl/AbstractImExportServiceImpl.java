@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -75,6 +76,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
     public void exportConfig(OutputStream os, List<Long> configList) {
         var monitorList = configList.stream()
                 .map(it -> monitorService.getMonitorDto(it))
+                .filter(Objects::nonNull)
                 .map(this::convert)
                 .collect(Collectors.toUnmodifiableList());
         writeOs(monitorList, os);
@@ -127,8 +129,8 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         BeanUtils.copyProperties(exportMonitor.monitor, monitor);
         monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
-                .stream().
-                filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                .stream()
+                .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
                 .collect(Collectors.toList()));
         monitorDto.setMonitor(monitor);
         monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
