@@ -163,6 +163,9 @@ export class SettingTagsComponent implements OnInit {
     if (this.tag.value != undefined) {
       this.tag.value = this.tag.value.trim();
     }
+    if (this.tag.description != undefined) {
+      this.tag.description = this.tag.description.trim();
+    }
     if (this.isManageModalAdd) {
       const modalOk$ = this.tagService
         .newTag(this.tag)
