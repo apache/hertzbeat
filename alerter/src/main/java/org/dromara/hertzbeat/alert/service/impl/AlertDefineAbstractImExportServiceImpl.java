@@ -114,8 +114,8 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
     protected static class AlertDefineDTO {
         @Excel(name = "App")
         private String app;
-        @Excel(name = "Metrics")
-        private String metrics;
+        @Excel(name = "Metric")
+        private String metric;
         @Excel(name = "Field")
         private String field;
         @Excel(name = "Preset")

@@ -170,7 +170,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
 
         alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
-        alertDefineDTO.setMetrics(getCellValueAsString(row.getCell(1)));
+        alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
         alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
         alertDefineDTO.setPreset(getCellValueAsBoolean(row.getCell(3)));
         alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
@@ -210,7 +210,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // 设置表头
-            String[] headers = {"app", "metrics", "field", "preset", "expr", "priority", "times", "name", "value",
+            String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "name", "value",
                     "enable", "recoverNotice", "template"};
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -235,9 +235,9 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                         Cell appCell = row.createCell(0);
                         appCell.setCellValue(alertDefineDTO.getApp());
                         appCell.setCellStyle(cellStyle);
-                        Cell metricsCell = row.createCell(1);
-                        metricsCell.setCellValue(alertDefineDTO.getMetrics());
-                        metricsCell.setCellStyle(cellStyle);
+                        Cell metricCell = row.createCell(1);
+                        metricCell.setCellValue(alertDefineDTO.getMetric());
+                        metricCell.setCellStyle(cellStyle);
                         Cell fieldCell = row.createCell(2);
                         fieldCell.setCellValue(alertDefineDTO.getField());
                         fieldCell.setCellStyle(cellStyle);

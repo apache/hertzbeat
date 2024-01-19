@@ -36,7 +36,7 @@ public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExp
 
     @Override
     public String getFileName() {
-        return getFileName() + FILE_SUFFIX;
+        return fileNamePrefix() + FILE_SUFFIX;
     }
 
     @Override
