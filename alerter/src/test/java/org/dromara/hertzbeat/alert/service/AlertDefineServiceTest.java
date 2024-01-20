@@ -41,7 +41,7 @@ class AlertDefineServiceTest {
     private List<AlertDefineImExportService> alertDefineImExportServiceList;
 
     @InjectMocks
-    private AlertDefineServiceImpl alertDefineService = new AlertDefineServiceImpl(Collections.emptyList());
+    private AlertDefineServiceImpl alertDefineService;
 
     @BeforeEach
     void setUp() {
