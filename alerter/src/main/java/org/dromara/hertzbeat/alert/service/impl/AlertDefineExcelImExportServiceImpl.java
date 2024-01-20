@@ -61,45 +61,19 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     List<ExportAlertDefineDTO> parseImport(InputStream is) {
         try (Workbook workbook = WorkbookFactory.create(is)) {
             Sheet sheet = workbook.getSheetAt(0);
-
             List<ExportAlertDefineDTO> alertDefines = new ArrayList<>();
-            List<Integer> startRowList = new ArrayList<>();
-
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
                     continue;
                 }
                 String app = getCellValueAsString(row.getCell(0));
                 if (StringUtils.hasText(app)) {
-                    startRowList.add(row.getRowNum());
                     AlertDefineDTO alertDefineDTO = extractAlertDefineDataFromRow(row);
                     ExportAlertDefineDTO exportAlertDefineDTO = new ExportAlertDefineDTO();
                     exportAlertDefineDTO.setAlertDefine(alertDefineDTO);
                     alertDefines.add(exportAlertDefineDTO);
                 }
             }
-
-//            List<List<TagItem>> tagsList = new ArrayList<>();
-//            for (int i = 0; i < startRowList.size(); i++) {
-//                int startRowIndex = startRowList.get(i);
-//                int endRowIndex = (i + 1 < startRowList.size() ? startRowList.get(i + 1) : sheet.getLastRowNum() + 1);
-//                List<TagItem> tags = new ArrayList<>();
-//
-//                for (int j = startRowIndex; j < endRowIndex; j++) {
-//                    Row row = sheet.getRow(j);
-//                    if (row == null) {
-//                        continue;
-//                    }
-//                    TagItem tagItem = extractTagDataFromRow(row);
-//                    if (tagItem != null) {
-//                        tags.add(tagItem);
-//                    }
-//                }
-//                tagsList.add(tags);
-//            }
-//            for (int i = 0; i < alertDefines.size(); i++) {
-//                alertDefines.get(i).getAlertDefine().setTags(tagsList.get(i));
-//            }
             return alertDefines;
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse alertDefine data", e);
@@ -176,7 +150,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
-
         alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
         alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
         alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
@@ -188,7 +161,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
         alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
         alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
-
         return alertDefineDTO;
     }
 
