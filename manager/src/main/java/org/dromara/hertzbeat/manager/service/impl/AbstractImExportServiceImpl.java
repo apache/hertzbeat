@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 /**
  *
@@ -123,25 +124,41 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
     }
 
     private MonitorDto convert(ExportMonitorDTO exportMonitor) {
+        if (exportMonitor == null || exportMonitor.monitor == null) {
+            throw new IllegalArgumentException("exportMonitor and exportMonitor.monitor must not be null");
+        }
+
         var monitorDto = new MonitorDto();
         monitorDto.setDetected(exportMonitor.getDetected());
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
-        BeanUtils.copyProperties(exportMonitor.monitor, monitor);
-        monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
-                .stream()
-                .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                .collect(Collectors.toList()));
+        if (exportMonitor.monitor != null) { //多增加一个null检测
+            BeanUtils.copyProperties(exportMonitor.monitor, monitor);
+            if (exportMonitor.monitor.tags != null) {
+                monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
+                        .stream()
+                        .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
+                        .collect(Collectors.toList()));
+            } else {
+                monitor.setTags(Collections.emptyList());
+            }
+        }
         monitorDto.setMonitor(monitor);
-        monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
+        if (exportMonitor.getMonitor() != null) {
+            monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
+        }
         monitorDto.setMetrics(exportMonitor.metrics);
-        monitorDto.setParams(exportMonitor.params.stream()
-                .map(it -> {
-                    var param = new Param();
-                    BeanUtils.copyProperties(it, param);
-                    return param;
-                })
-                .collect(Collectors.toUnmodifiableList()));
+        if (exportMonitor.params != null) {
+            monitorDto.setParams(exportMonitor.params.stream()
+                    .map(it -> {
+                        var param = new Param();
+                        BeanUtils.copyProperties(it, param);
+                        return param;
+                    })
+                    .collect(Collectors.toUnmodifiableList()));
+        } else {
+            monitorDto.setParams(Collections.emptyList());
+        }
         return monitorDto;
     }
 
