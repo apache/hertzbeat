@@ -84,7 +84,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
                 model.put("thresholdId", thresholdId);
             }
         }
-        
         model.put("alarmId", alert.getId());
         model.put("status", alert.getStatus());
         model.put("monitorIdLabel", bundle.getString("alerter.notify.monitorId"));
@@ -127,7 +126,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
-
 }
 
 
