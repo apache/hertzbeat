@@ -150,7 +150,7 @@ class AlertDefineServiceTest {
 
     @Test
     void getAlertDefines() {
-        Specification<AlertDefine> specification = mock(Specification.class);
+        Specification<AlertDefine> sspecification = mock(Specification.class);
         when(alertDefineDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
         assertNotNull(alertDefineService.getAlertDefines(specification, PageRequest.of(1, 1)));
     }
