@@ -17,6 +17,29 @@
     <i nz-icon nzType="delete" nzTheme="outline"></i>
     {{ 'alert.setting.delete' | i18n }}
   </button>
+
+  <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+    {{ 'common.button.operation.more' | i18n }}
+    <span nz-icon nzType="down"></span>
+  </button>
+  <nz-dropdown-menu #more_menu="nzDropdownMenu">
+    <ul nz-menu>
+      <li nz-menu-item>
+        <button nz-button nzType="primary" (click)="onExportDefines()">
+          <i nz-icon nzType="export" nzTheme="outline"></i>
+          {{ 'alert.setting.export' | i18n }}
+        </button>
+      </li>
+      <li nz-menu-item>
+        <nz-upload nzAction="/alert/defines/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportDefines($event)">
+          <button nz-button nzType="primary">
+            <i nz-icon nzType="import" nzTheme="outline"></i>
+            {{ 'alert.setting.import' | i18n }}
+          </button>
+        </nz-upload>
+      </li>
+    </ul>
+  </nz-dropdown-menu>
   <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertDefineTable()">
     {{ 'common.search' | i18n }}
   </button>
@@ -596,4 +619,33 @@
       </nz-table>
     </ng-template>
   </nz-transfer>
+</nz-modal>
+
+<!-- 导出告警定义弹出框 -->
+<nz-modal
+  [(nzVisible)]="isSwitchExportTypeModalVisible"
+  [nzTitle]="'monitors.export.switch-type' | i18n"
+  nzOkDisabled="true"
+  [nzFooter]="switchExportTypeModalFooter"
+>
+  <ng-container *nzModalContent>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('YAML')" [nzLoading]="exportYamlButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('JSON')" [nzLoading]="exportJsonButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}
+      </button>
+    </p>
+    <p style="text-align: center">
+      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('EXCEL')" [nzLoading]="exportExcelButtonLoading">
+        <span nz-icon nzType="download"></span>
+        {{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}
+      </button>
+    </p>
+  </ng-container>
 </nz-modal>

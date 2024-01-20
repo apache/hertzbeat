@@ -92,10 +92,10 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         }
         this.restTemplate = restTemplate;
         victoriaMetricsProp = properties.getStore().getVictoriaMetrics();
-        serverAvailable = initVictoriaMetricsDatasource();
+        serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 
-    private boolean initVictoriaMetricsDatasource() {
+    private boolean checkVictoriaMetricsDatasourceAvailable() {
         // check server status
         try {
             String result = restTemplate.getForObject(victoriaMetricsProp.getUrl() + STATUS_PATH, String.class);
@@ -106,17 +106,16 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             }
             log.error("check victoria metrics server status not success: {}.", result);
         } catch (Exception e) {
-            log.error("check victoria metrics server status error: {}.", e.getMessage(), e);
+            log.error("check victoria metrics server status error: {}.", e.getMessage());
         }
-        log.warn("\n\t------------------WARN WARN WARN------------------\n" +
-                "\t---------------Init VictoriaMetrics Failed---------------\n" +
-                "\t--------------Please Config VictoriaMetrics--------------\n" +
-                "\t---------Or Can Not Use Metric History Now---------\n");
         return false;
     }
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
+        if (!isServerAvailable()) {
+            serverAvailable = checkVictoriaMetricsDatasourceAvailable();
+        }
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
