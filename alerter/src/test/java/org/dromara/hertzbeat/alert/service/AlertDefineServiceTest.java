@@ -9,12 +9,12 @@ import org.dromara.hertzbeat.common.entity.manager.Monitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -37,11 +37,17 @@ class AlertDefineServiceTest {
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
 
+    @Mock
+    private List<AlertDefineImExportService> alertDefineImExportServiceList;
+
     @InjectMocks
-    private AlertDefineServiceImpl alertDefineService = new AlertDefineServiceImpl(Collections.emptyList());
+    private AlertDefineServiceImpl alertDefineService;
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(this.alertDefineService, "alertDefineDao", alertDefineDao);
+        ReflectionTestUtils.setField(this.alertDefineService, "alertDefineBindDao", alertDefineBindDao);
+
         this.alertDefine = AlertDefine.builder()
                 .id(1L)
                 .app("app")
