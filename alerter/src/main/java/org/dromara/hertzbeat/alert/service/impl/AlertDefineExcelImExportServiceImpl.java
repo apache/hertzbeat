@@ -1,10 +1,10 @@
 package org.dromara.hertzbeat.alert.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.ss.util.RegionUtil;
 import org.dromara.hertzbeat.common.entity.manager.TagItem;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -61,44 +61,18 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     List<ExportAlertDefineDTO> parseImport(InputStream is) {
         try (Workbook workbook = WorkbookFactory.create(is)) {
             Sheet sheet = workbook.getSheetAt(0);
-
             List<ExportAlertDefineDTO> alertDefines = new ArrayList<>();
-            List<Integer> startRowList = new ArrayList<>();
-
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
                     continue;
                 }
                 String app = getCellValueAsString(row.getCell(0));
                 if (StringUtils.hasText(app)) {
-                    startRowList.add(row.getRowNum());
                     AlertDefineDTO alertDefineDTO = extractAlertDefineDataFromRow(row);
                     ExportAlertDefineDTO exportAlertDefineDTO = new ExportAlertDefineDTO();
                     exportAlertDefineDTO.setAlertDefine(alertDefineDTO);
                     alertDefines.add(exportAlertDefineDTO);
                 }
-            }
-
-            List<List<TagItem>> tagsList = new ArrayList<>();
-            for (int i = 0; i < startRowList.size(); i++) {
-                int startRowIndex = startRowList.get(i);
-                int endRowIndex = (i + 1 < startRowList.size() ? startRowList.get(i + 1) : sheet.getLastRowNum() + 1);
-                List<TagItem> tags = new ArrayList<>();
-
-                for (int j = startRowIndex; j < endRowIndex; j++) {
-                    Row row = sheet.getRow(j);
-                    if (row == null) {
-                        continue;
-                    }
-                    TagItem tagItem = extractTagDataFromRow(row);
-                    if (tagItem != null) {
-                        tags.add(tagItem);
-                    }
-                }
-                tagsList.add(tags);
-            }
-            for (int i = 0; i < alertDefines.size(); i++) {
-                alertDefines.get(i).getAlertDefine().setTags(tagsList.get(i));
             }
             return alertDefines;
         } catch (IOException e) {
@@ -113,6 +87,14 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             tagItem.setName(name);
             tagItem.setValue(getCellValueAsString(row.getCell(8)));
             return tagItem;
+        }
+        return null;
+    }
+
+    private List<TagItem> extractTagDataFromRow(Cell cell) {
+        String jsonStr = getCellValueAsString(cell);
+        if (StringUtils.hasText(jsonStr)) {
+            return JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {});
         }
         return null;
     }
@@ -168,7 +150,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
-
         alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
         alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
         alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
@@ -176,10 +157,10 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
         alertDefineDTO.setPriority(getCellValueAsByte(row.getCell(5)));
         alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(6)));
-        alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(9)));
-        alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(10)));
-        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(11)));
-
+        alertDefineDTO.setTags(extractTagDataFromRow(row.getCell(7)));
+        alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
+        alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
+        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
         return alertDefineDTO;
     }
 
@@ -210,7 +191,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
             // 设置表头
-            String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "name", "value",
+            String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "tags",
                     "enable", "recoverNotice", "template"};
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -224,64 +205,47 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             for (ExportAlertDefineDTO alertDefine : exportAlertDefineList) {
                 // 获取阀值规则信息
                 AlertDefineDTO alertDefineDTO = alertDefine.getAlertDefine();
+                // 阀值规则信息一行中
+                Row row = sheet.createRow(rowIndex++);
+                // 阀值规则信息只需要写一次
+                Cell appCell = row.createCell(0);
+                appCell.setCellValue(alertDefineDTO.getApp());
+                appCell.setCellStyle(cellStyle);
+                Cell metricCell = row.createCell(1);
+                metricCell.setCellValue(alertDefineDTO.getMetric());
+                metricCell.setCellStyle(cellStyle);
+                Cell fieldCell = row.createCell(2);
+                fieldCell.setCellValue(alertDefineDTO.getField());
+                fieldCell.setCellStyle(cellStyle);
+                Cell presetCell = row.createCell(3);
+                presetCell.setCellValue(alertDefineDTO.getPreset() != null
+                        && alertDefineDTO.getPreset());
+                presetCell.setCellStyle(cellStyle);
+                Cell exprCell = row.createCell(4);
+                exprCell.setCellValue(alertDefineDTO.getExpr());
+                exprCell.setCellStyle(cellStyle);
+                Cell priorityCell = row.createCell(5);
+                priorityCell.setCellValue(alertDefineDTO.getPriority());
+                priorityCell.setCellStyle(cellStyle);
+                Cell timesCell = row.createCell(6);
+                timesCell.setCellValue(alertDefineDTO.getTimes());
+                Cell tagCell = row.createCell(7);
                 // 获取标签信息
                 List<TagItem> tagList = alertDefineDTO.getTags();
-                int size = tagList == null ? 0 : tagList.size();
-                // 将阀值规则信息和标签信息合并到一行中
-                for (int i = 0; i < Math.max(size, 1); i++) {
-                    Row row = sheet.createRow(rowIndex++);
-                    if (i == 0) {
-                        // 阀值规则信息只需要写一次
-                        Cell appCell = row.createCell(0);
-                        appCell.setCellValue(alertDefineDTO.getApp());
-                        appCell.setCellStyle(cellStyle);
-                        Cell metricCell = row.createCell(1);
-                        metricCell.setCellValue(alertDefineDTO.getMetric());
-                        metricCell.setCellStyle(cellStyle);
-                        Cell fieldCell = row.createCell(2);
-                        fieldCell.setCellValue(alertDefineDTO.getField());
-                        fieldCell.setCellStyle(cellStyle);
-                        Cell presetCell = row.createCell(3);
-                        presetCell.setCellValue(alertDefineDTO.getPreset() != null
-                                && alertDefineDTO.getPreset());
-                        presetCell.setCellStyle(cellStyle);
-                        Cell exprCell = row.createCell(4);
-                        exprCell.setCellValue(alertDefineDTO.getExpr());
-                        exprCell.setCellStyle(cellStyle);
-                        Cell priorityCell = row.createCell(5);
-                        priorityCell.setCellValue(alertDefineDTO.getPriority());
-                        priorityCell.setCellStyle(cellStyle);
-                        Cell timesCell = row.createCell(6);
-                        timesCell.setCellValue(alertDefineDTO.getTimes());
-                        timesCell.setCellStyle(cellStyle);
-                        Cell enableCell = row.createCell(9);
-                        enableCell.setCellValue(alertDefineDTO.getEnable() != null
-                                && alertDefineDTO.getEnable());
-                        enableCell.setCellStyle(cellStyle);
-                        Cell recoverNoticeCell = row.createCell(10);
-                        recoverNoticeCell.setCellValue(alertDefineDTO.getRecoverNotice() != null
-                                && alertDefineDTO.getRecoverNotice());
-                        recoverNoticeCell.setCellStyle(cellStyle);
-                        Cell templateCell = row.createCell(11);
-                        templateCell.setCellValue(alertDefineDTO.getTemplate());
-                        recoverNoticeCell.setCellStyle(cellStyle);
-                    }
-                    if (i < size) {
-                        TagItem tagItem = tagList.get(i);
-                        Cell nameCell = row.createCell(7);
-                        nameCell.setCellValue(tagItem.getName());
-                        nameCell.setCellStyle(cellStyle);
-                        Cell valueCell = row.createCell(8);
-                        valueCell.setCellValue(tagItem.getValue());
-                        valueCell.setCellStyle(cellStyle);
-                    }
-                }
-                if (null != tagList && !tagList.isEmpty()) {
-                    RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
-                    RegionUtil.setBorderRight(BorderStyle.THICK, new CellRangeAddress(rowIndex - tagList.size(), rowIndex - 1, 0, 10), sheet);
-                }
+                String tagValue = tagList == null || tagList.size() == 0 ? "" : JsonUtil.toJson(tagList);
+                tagCell.setCellValue(tagValue);
+                tagCell.setCellStyle(cellStyle);
+                Cell enableCell = row.createCell(8);
+                enableCell.setCellValue(alertDefineDTO.getEnable() != null
+                        && alertDefineDTO.getEnable());
+                enableCell.setCellStyle(cellStyle);
+                Cell recoverNoticeCell = row.createCell(9);
+                recoverNoticeCell.setCellValue(alertDefineDTO.getRecoverNotice() != null
+                        && alertDefineDTO.getRecoverNotice());
+                recoverNoticeCell.setCellStyle(cellStyle);
+                Cell templateCell = row.createCell(10);
+                templateCell.setCellValue(alertDefineDTO.getTemplate());
+                recoverNoticeCell.setCellStyle(cellStyle);
             }
             workbook.write(os);
             os.close();
