@@ -20,7 +20,9 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
+import { StatusComponent } from './status/status.component';
 import { SettingTagsComponent } from './tags/tags.component';
+import {NzRadioModule} from "ng-zorro-antd/radio";
 
 const COMPONENTS: Array<Type<void>> = [
   SettingTagsComponent,
@@ -29,7 +31,8 @@ const COMPONENTS: Array<Type<void>> = [
   MessageServerComponent,
   SystemConfigComponent,
   ObjectStoreComponent,
-  CollectorComponent
+  CollectorComponent,
+  StatusComponent
 ];
 
 @NgModule({
@@ -47,7 +50,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzLayoutModule,
     NzCodeEditorModule,
     ClipboardModule,
-    NzBadgeModule
+    NzBadgeModule,
+    NzRadioModule
   ],
   declarations: COMPONENTS
 })

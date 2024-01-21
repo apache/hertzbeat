@@ -379,9 +379,9 @@ CREATE TABLE  hzb_status_page_org
 (
     id           bigint           not null auto_increment comment 'ID',
     name         varchar(255)     not null comment 'org name',
-    desc         varchar(255)     comment 'org description',
+    desc         varchar(255)     not null comment 'org description',
     home         varchar(255)     not null comment 'org home link',
-    logo         longtext         comment 'org logo pic, only support svg format',
+    logo         varchar(255)     not null comment 'org logo pic url',
     creator      varchar(100)     comment 'creator',
     modifier     varchar(100)     comment 'modifier',
     gmt_create   timestamp        default current_timestamp comment 'create time',
@@ -397,7 +397,7 @@ CREATE TABLE  hzb_status_page_component
 (
     id             bigint           not null auto_increment comment 'ID',
     org_id         bigint           not null comment 'org id',
-    component      varchar(255)     not null comment 'component name',
+    name           varchar(255)     not null comment 'component name',
     desc           varchar(255)     comment 'component description',
     tag            varchar(255)     not null comment 'match single tag{labelName:labelValue}',
     method         tinyint          not null default 0 comment 'calculate status method: 0-auto 1-manual',
