@@ -1,7 +1,6 @@
 package org.dromara.hertzbeat.manager.service;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.assertj.core.util.Maps;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
@@ -23,7 +22,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
