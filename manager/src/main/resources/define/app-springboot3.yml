@@ -208,10 +208,16 @@ metrics:
       parseScript: '$'
 
   - name: space_name
+    i18n:
+      zh-CN: 空间名称
+      en-US: space name
     visible: false
     priority: 3
     fields:
       - field: id
+        i18n:
+          zh-CN: ID
+          en-US: ID
         type: 1
     protocol: http
     http:
@@ -261,7 +267,7 @@ metrics:
   - name: health
     i18n:
       zh-CN: 健康状态
-      en-US: memory used
+      en-US: health
     priority: 5
     fields:
       - field: status

@@ -96,6 +96,7 @@ CREATE TABLE  hzb_tag
     `value`      varchar(100)     comment 'TAG标签值(可为空)',
     type         tinyint          not null default 0 comment '标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预制',
     color        varchar(100)     default '#ffffff' comment '标签颜色' ,
+    description  varchar(255)     comment '标签描述(可为空)',
     creator      varchar(100)     comment '创建者',
     modifier     varchar(100)     comment '最新修改者',
     gmt_create   timestamp        default current_timestamp comment 'create time',

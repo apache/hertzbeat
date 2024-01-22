@@ -72,6 +72,9 @@ metrics:
   # metrics - summary
   # 监控指标 - summary
   - name: server_info
+    i18n:
+      zh-CN: 系统信息
+      en-US: Server Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -90,86 +93,86 @@ metrics:
       - field: pid
         type: 1
         i18n:
-          zh-CN: memcache服务器进程ID
-          en-US: pid
+          zh-CN: 服务器进程ID
+          en-US: Pid
       - field: uptime
         type: 0
         unit: s
         i18n:
-          zh-CN: 服务器已运行秒数
-          en-US: uptime
+          zh-CN: 已运行秒数
+          en-US: Uptime
       - field: version
         type: 1
         i18n:
-          zh-CN: memcache版本
-          en-US: version
+          zh-CN: 版本
+          en-US: Version
       - field: curr_connections
         type: 0
         i18n:
           zh-CN: 当前连接数量
-          en-US: curr_connections
+          en-US: Curr Connections
       - field: auth_errors
         type: 0
         i18n:
           zh-CN: 认证失败数目
-          en-US: auth_errors
+          en-US: Auth Errors
       - field: threads
         type: 0
         i18n:
           zh-CN: 当前线程数
-          en-US: threads
+          en-US: Threads
       - field: item_size
         type: 0
         unit: byte
         i18n:
-          zh-CN: item的大小
-          en-US: item_size
+          zh-CN: Item 大小
+          en-US: Item Size
       - field: item_count
         type: 0
         i18n:
-          zh-CN: item的数量
-          en-US: item_count
+          zh-CN: Item 数量
+          en-US: Item Count
       - field: curr_items
         type: 0
         i18n:
           zh-CN: 当前存储的数据总数
-          en-US: curr_items
+          en-US: Curr Items
       - field: total_items
         type: 0
         i18n:
           zh-CN: 启动以来存储的数据总数
-          en-US: total_items
+          en-US: Total Items
       - field: bytes
         type: 0
         unit: byte
         i18n:
           zh-CN: 当前存储占用的字节数
-          en-US: bytes
+          en-US: Bytes
       - field: cmd_get
         type: 0
         i18n:
-          zh-CN: get命令请求次数
-          en-US: cmd_get
+          zh-CN: Get命令请求次数
+          en-US: Cmd Get
       - field: cmd_set
         type: 0
         i18n:
-          zh-CN: set命令请求次数
-          en-US: cmd_set
+          zh-CN: Set命令请求次数
+          en-US: Cmd Set
       - field: cmd_flush
         type: 0
         i18n:
-          zh-CN: flush命令请求次数
-          en-US: cmd_flush
+          zh-CN: Flush命令请求次数
+          en-US: Cmd Flush
       - field: get_misses
         type: 0
         i18n:
-          zh-CN: get命令未命中次数
-          en-US: get_misses
+          zh-CN: Get命令未命中次数
+          en-US: Get Misses
       - field: delete_misses
         type: 0
         i18n:
-          zh-CN: delete命令未命中次数
-          en-US: delete_misses
+          zh-CN: Delete命令未命中次数
+          en-US: Delete Misses
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: memcached

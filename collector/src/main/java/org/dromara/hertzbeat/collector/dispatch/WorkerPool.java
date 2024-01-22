@@ -45,14 +45,14 @@ public class WorkerPool implements DisposableBean {
         // thread factory
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
+                    log.error("[Important] WorkerPool workerExecutor has uncaughtException.", throwable);
+                    log.error("Thread Name {} : {}", thread.getName(), throwable.getMessage(), throwable);
                 })
                 .setDaemon(true)
                 .setNameFormat("collect-worker-%d")
                 .build();
         workerExecutor = new ThreadPoolExecutor(100,
-                800,
+                1024,
                 10,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(),

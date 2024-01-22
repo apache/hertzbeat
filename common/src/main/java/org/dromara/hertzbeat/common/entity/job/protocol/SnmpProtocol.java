@@ -77,4 +77,21 @@ public class SnmpProtocol {
      * oid map
      */
     private Map<String, String> oids;
+
+    /**
+     * contextName
+     */
+    private String contextName;
+
+    /**
+     * authPasswordEncryption
+     * v3 需要
+     */
+    private String authPasswordEncryption;
+
+    /**
+     * privPasswordEncryption
+     * v3 需要
+     */
+    private String privPasswordEncryption;
 }

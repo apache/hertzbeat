@@ -12,6 +12,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
+import { NzUploadModule } from 'ng-zorro-antd/upload';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertConvergeComponent } from './alert-converge/alert-converge.component';
@@ -43,7 +44,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzListModule,
     NzTimePickerModule,
     NzDatePickerModule,
-    NzBadgeModule
+    NzBadgeModule,
+    NzUploadModule
   ],
   declarations: COMPONENTS
 })

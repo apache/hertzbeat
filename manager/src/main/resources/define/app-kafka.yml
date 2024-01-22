@@ -121,17 +121,32 @@ metrics:
       url: ^_^url^_^
 
   - name: jvm_basic
+    i18n:
+      zh-CN: 虚拟机基础信息
+      en-US: JVM Basic
     priority: 1
     fields:
       - field: VmName
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Vm Name
       - field: VmVendor
         type: 1
+        i18n:
+          zh-CN: 厂商
+          en-US: Vm Vendor
       - field: VmVersion
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Vm Version
       - field: Uptime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 运行时长
+          en-US: Up time
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -144,19 +159,37 @@ metrics:
       url: ^_^url^_^
 
   - name: jvm_memory_pool
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
     priority: 1
     fields:
       - field: name
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
       - field: committed
         type: 0
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
       - field: init
         type: 0
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
       - field: max
         type: 0
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
       - field: used
         type: 0
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
     aliasFields:
       - Name
       - Usage->committed

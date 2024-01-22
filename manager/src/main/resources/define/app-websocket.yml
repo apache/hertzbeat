@@ -90,28 +90,29 @@ metrics:
       - field: httpVersion
         type: 1
         i18n:
-          zh-CN: http版本
-          en-US: httpVersion
+          zh-CN: Http 版本
+          en-US: Http Version
       - field: responseCode
         type: 1
         i18n:
           zh-CN: 响应状态码
-          en-US: responseCode
+          en-US: Response Code
       - field: statusMessage
         type: 1
         i18n:
           zh-CN: 状态消息
-          en-US: statusMessage
+          en-US: Status Message
       - field: connection
         type: 1
         i18n:
-          zh-CN: 是否支持升级(不存在表示是普通http请求,存在表示支持升级)
-          en-US: connection
+          # 是否支持升级(不存在表示是普通http请求,存在表示支持升级)
+          zh-CN: 是否升级
+          en-US: Connection
       - field: upgrade
         type: 1
         i18n:
           zh-CN: 升级(协议)
-          en-US: upgrade
+          en-US: Upgrade
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk

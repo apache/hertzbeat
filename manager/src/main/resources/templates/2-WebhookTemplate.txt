@@ -1,16 +1,17 @@
 {
-  "alarmId": ${alarmId},
   "target": "${target}",
-  <#if (thresholdId??)>"thresholdId": ${thresholdId},</#if>
-  "priority": ${priorityValue},
+  <#if alarmId??>"alarmId": ${alarmId},</#if>
+  <#if thresholdId??>"thresholdId": "${thresholdId}",</#if>
+  <#if priorityValue??>"priority": ${priorityValue},</#if>
   "content": "${content}",
-  "status": ${status},
-  "times": ${times},
+  <#if status??>"status": ${status},</#if>
+  <#if times??>"times": ${times},</#if>
   "triggerTime": "${triggerTime}",
-  <#if (restoreTime??)>"restoreTime": "${restoreTime}",</#if>
+  <#if restoreTime??>"restoreTime": "${restoreTime}",</#if>
+  <#if tags??>
   "tags": {
     <#list tags as key,value>
-      "${key}": "${value}",
-    </#list>  
-  }
+    "${key}": "${value}"<#if key_has_next>,</#if>
+    </#list>
+  }</#if>
 }
