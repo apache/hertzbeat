@@ -21,11 +21,19 @@ import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
+
 /**
  * StatusPageComponent DAO interface.
  * @author tom
  *
  */
 public interface StatusPageComponentDao extends JpaRepository<StatusPageComponent, Long>, JpaSpecificationExecutor<StatusPageComponent> {
-    
+
+    /**
+     * find by org id.
+     * @param orgId org id
+     * @return StatusPageComponent list
+     */
+    List<StatusPageComponent> findByOrgId(long orgId);
 }

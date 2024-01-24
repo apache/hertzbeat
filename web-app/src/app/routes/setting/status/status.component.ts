@@ -140,6 +140,11 @@ export class StatusComponent implements OnInit {
       }
       this.currentStatusComponent.tag = tagItem;
     }
+    if (this.statusOrg.id == undefined) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('status.component.notify.need-org'), '');
+      return;
+    }
+    this.currentStatusComponent.orgId = this.statusOrg.id;
     if (this.isManageModalAdd) {
       this.statusPageService.newStatusPageComponent(this.currentStatusComponent).subscribe(
         (message: Message<void>) => {

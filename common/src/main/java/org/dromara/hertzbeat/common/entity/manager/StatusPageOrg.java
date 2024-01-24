@@ -51,6 +51,9 @@ public class StatusPageOrg {
     @NotBlank
     private String logo;
 
+    @Schema(title = "org current state: 0-All Systems Operational 1-Some Systems Abnormal 2-All Systems Abnormal ", example = "0")
+    private byte state;
+
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy
     private String creator;

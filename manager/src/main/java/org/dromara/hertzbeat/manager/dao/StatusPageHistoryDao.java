@@ -21,11 +21,20 @@ import org.dromara.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
+
 /**
  * StatusPageOrg DAO interface.
  * @author tom
  *
  */
 public interface StatusPageHistoryDao extends JpaRepository<StatusPageHistory, Long>, JpaSpecificationExecutor<StatusPageHistory> {
-    
+
+    /**
+     * find status page history by timestamp between start and end.
+     * @param start start timestamp
+     * @param end end timestamp
+     * @return status page history list
+     */
+    List<StatusPageHistory> findStatusPageHistoriesByTimestampBetween(long start, long end);
 }

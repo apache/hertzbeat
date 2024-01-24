@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.manager.service.impl;
 
+import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.dao.StatusPageComponentDao;
@@ -40,11 +41,17 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public void newStatusPageComponent(StatusPageComponent statusPageComponent) {
+        if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
+            statusPageComponent.setCurrentState(statusPageComponent.getConfigState());
+        }
         statusPageComponentDao.save(statusPageComponent);
     }
 
     @Override
     public void updateStatusPageComponent(StatusPageComponent statusPageComponent) {
+        if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
+            statusPageComponent.setCurrentState(statusPageComponent.getConfigState());
+        }
         statusPageComponentDao.save(statusPageComponent);
     }
 
