@@ -231,25 +231,23 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             hikariDataSource.close();
         }
     }
-    
+
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
         String selectSql =  label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
         log.debug(selectSql);
-        Connection connection = null;
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
-        try {
-            if (!serverAvailable) {
-                log.error("\n\t---------------TdEngine Init Failed---------------\n" +
-                        "\t--------------Please Config Tdengine--------------\n" +
-                        "\t----------Can Not Use Metric History Now----------\n");
-                return instanceValuesMap;
-            }
-            connection = hikariDataSource.getConnection();
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(selectSql);
+        if (!serverAvailable) {
+            log.error("\n\t---------------TdEngine Init Failed---------------\n" +
+                    "\t--------------Please Config Tdengine--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
+            return instanceValuesMap;
+        }
+        try (Connection connection = hikariDataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(selectSql)) {
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
                 if (ts == null) {
@@ -265,22 +263,14 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
                 valueList.add(new Value(strValue, ts.getTime() / 100 * 100));
             }
-            resultSet.close();
             return instanceValuesMap;
         } catch (SQLException sqlException) {
-          String msg = sqlException.getMessage();
-          if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
-              log.warn(sqlException.getMessage());
-          }
+            String msg = sqlException.getMessage();
+            if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
+                log.warn(sqlException.getMessage());
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-        } finally {
-            try {
-                assert connection != null;
-                connection.close();
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
         }
         return instanceValuesMap;
     }
