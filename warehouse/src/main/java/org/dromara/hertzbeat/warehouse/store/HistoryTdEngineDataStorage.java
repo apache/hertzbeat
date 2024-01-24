@@ -239,15 +239,15 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
         log.debug(selectSql);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
+        if (!serverAvailable) {
+            log.error("\n\t---------------TdEngine Init Failed---------------\n" +
+                    "\t--------------Please Config Tdengine--------------\n" +
+                    "\t----------Can Not Use Metric History Now----------\n");
+            return instanceValuesMap;
+        }
         try (Connection connection = hikariDataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(selectSql)) {
-            if (!serverAvailable) {
-                log.error("\n\t---------------TdEngine Init Failed---------------\n" +
-                        "\t--------------Please Config Tdengine--------------\n" +
-                        "\t----------Can Not Use Metric History Now----------\n");
-                return instanceValuesMap;
-            }
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
                 if (ts == null) {
