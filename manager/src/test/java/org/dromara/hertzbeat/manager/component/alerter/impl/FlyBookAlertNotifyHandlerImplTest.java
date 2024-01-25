@@ -39,6 +39,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         noticeTemplate.setContent("{targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n" +
                 "${priorityLabel} : ${priority}\n" +
                 "${triggerTimeLabel} : ${triggerTime}\n" +
                 "${contentLabel} : ${content}");
@@ -48,6 +49,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         Map<String, String> map = new HashMap<>();
         map.put(CommonConstants.TAG_MONITOR_ID, "Mock monitor id");
         map.put(CommonConstants.TAG_MONITOR_NAME, "Mock monitor name");
+        map.put(CommonConstants.TAG_MONITOR_HOST, "Mock monitor host");
         alert.setTags(map);
         alert.setContent("mock content");
         alert.setPriority((byte) 0);

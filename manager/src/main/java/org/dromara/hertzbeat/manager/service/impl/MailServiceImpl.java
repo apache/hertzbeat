@@ -68,20 +68,25 @@ public class MailServiceImpl implements MailService {
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         String monitorId = null;
         String monitorName = null;
+        String monitorHost = null;
         if (alert.getTags() != null) {
             monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
             monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+            monitorHost = alert.getTags().get(CommonConstants.TAG_MONITOR_HOST);
         }
         monitorId = monitorId == null ? "External Alarm, No ID" : monitorId;
         monitorName = monitorName == null ? "External Alarm, No Name" : monitorName;
+        monitorHost = monitorHost == null ? "External Alarm, No Host" : monitorHost;
         // Introduce context parameters to render pages
         Map<String, String> model = new HashMap<>(16);
         model.put("nameTitle", bundle.getString("alerter.notify.title"));
         model.put("nameMonitorId", bundle.getString("alerter.notify.monitorId"));
         model.put("nameMonitorName", bundle.getString("alerter.notify.monitorName"));
+        model.put("nameMonitorHost", bundle.getString("alerter.notify.monitorHost"));
         model.put("target", alert.getTarget());
         model.put("monitorId", monitorId);
         model.put("monitorName", monitorName);
+        model.put("monitorHost", monitorHost);
         model.put("nameTarget", bundle.getString("alerter.notify.target"));
         model.put("nameConsole", bundle.getString("alerter.notify.console"));
         model.put("namePriority", bundle.getString("alerter.notify.priority"));
