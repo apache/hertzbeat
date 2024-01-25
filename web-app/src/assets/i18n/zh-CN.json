@@ -126,6 +126,8 @@
   "alert.setting.new": "新增阈值规则",
   "alert.setting.edit": "编辑阈值规则",
   "alert.setting.delete": "删除阈值规则",
+  "alert.setting.export": "导出规则",
+  "alert.setting.import": "导入规则",
   "alert.setting.target": "指标对象",
   "alert.setting.target.place-holder": "请搜索或选择指标对象",
   "alert.setting.expr": "阈值触发表达式",
