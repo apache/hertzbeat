@@ -247,6 +247,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         Map<String, String> tags = new HashMap<>(8);
         tags.put(CommonConstants.TAG_MONITOR_ID, "100");
         tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
+        tags.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
         tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
         Alert alert = new Alert();
         alert.setTags(tags);

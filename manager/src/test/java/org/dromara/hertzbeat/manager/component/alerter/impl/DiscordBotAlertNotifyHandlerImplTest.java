@@ -43,6 +43,7 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         noticeTemplate.setContent("${targetLabel} : ${target}\n" +
                 "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                 "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n" +
                 "${priorityLabel} : ${priority}\n" +
                 "${triggerTimeLabel} : ${triggerTime}\n" +
                 "${contentLabel} : ${content}");
@@ -51,7 +52,8 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         alert.setTarget("Mock Target");
         var map = Map.of(
                 CommonConstants.TAG_MONITOR_ID, "Mock monitor id",
-                CommonConstants.TAG_MONITOR_NAME, "Mock monitor name"
+                CommonConstants.TAG_MONITOR_NAME, "Mock monitor name",
+                CommonConstants.TAG_MONITOR_HOST, "Mock monitor host"
         );
         alert.setTags(map);
         alert.setContent("mock content");
