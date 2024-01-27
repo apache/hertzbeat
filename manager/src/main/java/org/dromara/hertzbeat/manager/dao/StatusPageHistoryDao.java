@@ -37,4 +37,13 @@ public interface StatusPageHistoryDao extends JpaRepository<StatusPageHistory, L
      * @return status page history list
      */
     List<StatusPageHistory> findStatusPageHistoriesByTimestampBetween(long start, long end);
+    
+    /**
+     * find status page history by component id and timestamp between start and end.
+     * @param componentId component id
+     * @param start start timestamp
+     * @param end end timestamp
+     * @return status page history list
+     */
+    List<StatusPageHistory> findStatusPageHistoriesByComponentIdAndTimestampBetween(long componentId, long start, long end);
 }

@@ -94,6 +94,12 @@
     <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
     {{ 'status.component.new' | i18n }}
   </button>
+  <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
+    <a routerLink="/status" target="_blank">
+      <i nz-icon nzType="link" nzTheme="outline"></i>
+      {{ statusOrg.name + ' ' + ('menu.extras.status' | i18n) }}
+    </a>
+  </button>
 </div>
 
 <nz-table #fixedTable [nzData]="statusComponents" nzFrontPagination="false" [nzLoading]="loading" [nzScroll]="{ x: '1240px', y: '100%' }">

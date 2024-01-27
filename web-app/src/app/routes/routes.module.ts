@@ -15,13 +15,16 @@ import { UserLockComponent } from './passport/lock/lock.component';
 // passport pages
 import { UserLoginComponent } from './passport/login/login.component';
 import { RouteRoutingModule } from './routes-routing.module';
+import { StatusPublicComponent } from './status-public/status-public.component';
 
 const COMPONENTS: Array<Type<void>> = [
   DashboardComponent,
   // passport pages
   UserLoginComponent,
   // single pages
-  UserLockComponent
+  UserLockComponent,
+  // status pages
+  StatusPublicComponent
 ];
 
 @NgModule({

@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.manager.service;
 
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
+import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 
 import java.util.List;
 
@@ -53,4 +54,17 @@ public interface StatusPageService {
      * @return status page component
      */
     StatusPageComponent queryStatusPageComponent(long id);
+
+    /**
+     * query status page components status.
+     * @return status page components status
+     */
+    List<ComponentStatus> queryComponentsStatus();
+
+    /**
+     * query status page component status.
+     * @param id status page component id
+     * @return status page component status
+     */
+    ComponentStatus queryComponentStatus(long id);
 }
