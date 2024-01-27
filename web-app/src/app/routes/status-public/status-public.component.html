@@ -16,11 +16,11 @@
           <span style="margin-left: 4px" nz-icon nzType="question-circle" nzTheme="outline"></span>
         </div>
         <div style="font-weight: normal">
-          <span>Operational</span>
+          <span style="color: green">Operational</span>
         </div>
       </div>
-      <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px">
-        <span>AAAAA</span>
+      <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
+        <div *ngFor="let i of Array.from({ length: 30 })" style="width: 2.33%; height: 60px; background: green; margin-right: 1%"></div>
       </div>
     </div>
     <div class="component-status">

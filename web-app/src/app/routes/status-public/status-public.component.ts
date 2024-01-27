@@ -100,4 +100,6 @@ export class StatusPublicComponent implements OnInit {
       }
     );
   }
+
+  protected readonly Array = Array;
 }
