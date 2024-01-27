@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.service;
+package org.dromara.hertzbeat.grafana.service;
 
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;

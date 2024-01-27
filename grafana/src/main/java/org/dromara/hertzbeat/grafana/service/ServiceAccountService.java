@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.service;
+package org.dromara.hertzbeat.grafana.service;
 
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
@@ -15,7 +15,7 @@ public class ServiceAccountService {
                 .addBody("name", "hertzbeat")
                 .addBody("role", "Admin")
                 .addBody("isDisabled", false);
-        return forestRequest.execute(HashMap.class).get("id").toString();
+        return forestRequest.execute().toString();
     }
 
     public String createToken() {

@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.model;
+package org.dromara.hertzbeat.grafana.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
