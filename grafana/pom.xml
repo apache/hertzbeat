@@ -16,15 +16,27 @@
     </properties>
 
     <dependencies>
+        <!-- hertzbeat common -->
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
+            <version>1.0</version>
         </dependency>
-        <!-- spring -->
+        <!-- jpa -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <scope>provided</scope>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+        </dependency>
+        <!--forest-->
+        <dependency>
+            <groupId>com.dtflys.forest</groupId>
+            <artifactId>forest-spring-boot-starter</artifactId>
+            <version>1.5.35</version>
         </dependency>
     </dependencies>
 
