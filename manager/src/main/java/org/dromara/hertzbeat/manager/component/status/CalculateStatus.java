@@ -37,6 +37,8 @@ public class CalculateStatus {
     private final StatusPageHistoryDao statusPageHistoryDao;
     
     private final MonitorDao monitorDao;
+    
+    private final int intervals;
 
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
                            StatusProperties statusProperties, StatusPageHistoryDao statusPageHistoryDao,
@@ -45,12 +47,12 @@ public class CalculateStatus {
         this.monitorDao = monitorDao;
         this.statusPageComponentDao = statusPageComponentDao;
         this.statusPageHistoryDao = statusPageHistoryDao;
-        startCalculate(statusProperties.getCalculate());
+        intervals = statusProperties.getCalculate() == null ? DEFAULT_CALCULATE_INTERVAL_TIME : statusProperties.getCalculate().getInterval();
+        startCalculate();
         startCombineHistory();
     }
 
-    private void startCalculate(StatusProperties.CalculateProperties calculate) {
-        int intervals = calculate == null ? DEFAULT_CALCULATE_INTERVAL_TIME : calculate.getInterval();
+    private void startCalculate() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("Status calculate has uncaughtException.");
@@ -152,20 +154,20 @@ public class CalculateStatus {
                     if (statusPageHistoryMap.containsKey(statusPageHistory.getComponentId())) {
                         StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                            history.setAbnormal(history.getAbnormal() + DEFAULT_CALCULATE_INTERVAL_TIME);
+                            history.setAbnormal(history.getAbnormal() + intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED) {
-                            history.setSuspended(history.getSuspended() + DEFAULT_CALCULATE_INTERVAL_TIME);
+                            history.setSuspended(history.getSuspended() + intervals);
                         } else {
-                            history.setNormal(history.getNormal() + DEFAULT_CALCULATE_INTERVAL_TIME);
+                            history.setNormal(history.getNormal() + intervals);
                         }
                         statusPageHistoryMap.put(statusPageHistory.getComponentId(), history);
                     } else {
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                            statusPageHistory.setAbnormal(DEFAULT_CALCULATE_INTERVAL_TIME);
+                            statusPageHistory.setAbnormal(intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED) {
-                            statusPageHistory.setSuspended(DEFAULT_CALCULATE_INTERVAL_TIME);
+                            statusPageHistory.setSuspended(intervals);
                         } else {
-                            statusPageHistory.setNormal(DEFAULT_CALCULATE_INTERVAL_TIME);
+                            statusPageHistory.setNormal(intervals);
                         }
                         statusPageHistoryMap.put(statusPageHistory.getComponentId(), statusPageHistory);
                     }
@@ -187,5 +189,13 @@ public class CalculateStatus {
                 log.error("status page combine history error: {}", e.getMessage(), e);
             }
         }, delay, TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * get calculate status intervals
+     * @return intervals
+     */
+    public int getCalculateStatusIntervals() {
+        return intervals;
     }
 }

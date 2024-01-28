@@ -4,6 +4,7 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
+import org.dromara.hertzbeat.manager.component.status.CalculateStatus;
 import org.dromara.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageHistoryDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageOrgDao;
@@ -34,6 +35,9 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Autowired
     private StatusPageHistoryDao statusPageHistoryDao;
+    
+    @Autowired
+    private CalculateStatus calculateStatus;
     
     @Override
     public StatusPageOrg queryStatusPageOrg() {
@@ -83,15 +87,63 @@ public class StatusPageServiceImpl implements StatusPageService {
         for (StatusPageComponent component : components) {
             ComponentStatus componentStatus = new ComponentStatus();
             componentStatus.setInfo(component);
-            // query 30d component status history
+            List<StatusPageHistory> histories = new LinkedList<>();
+            // query today status
             LocalDateTime nowTime = LocalDateTime.now();
-            LocalDateTime preTime = nowTime.minusDays(30);
+            LocalDateTime todayStartTime = nowTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
             ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(Instant.now());
             long nowTimestamp = nowTime.toInstant(zoneOffset).toEpochMilli();
+            long todayStartTimestamp = todayStartTime.toInstant(zoneOffset).toEpochMilli();
+            List<StatusPageHistory> todayStatusPageHistoryList = statusPageHistoryDao
+                    .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
+            StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
+                    .normal(0).abnormal(0).suspended(0)
+                    .componentId(component.getId()).state(component.getCurrentState()).build();
+            for (StatusPageHistory statusPageHistory : todayStatusPageHistoryList) {
+                if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
+                    todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
+                } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED) {
+                    todayStatus.setSuspended(todayStatus.getSuspended() + calculateStatus.getCalculateStatusIntervals());
+                } else {
+                    todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
+                }
+            }
+            double uptime = (double) todayStatus.getNormal() / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getSuspended());
+            todayStatus.setUptime(uptime);
+            if (todayStatus.getAbnormal() > 0) {
+                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
+            } else if (todayStatus.getNormal() > 0) {
+                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
+            } else {
+                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED);
+            }
+            histories.add(todayStatus);
+
+            // query 30d component status history
+            LocalDateTime preTime = todayStartTime.minusDays(29);
             long preTimestamp = preTime.toInstant(zoneOffset).toEpochMilli();
             List<StatusPageHistory> history = statusPageHistoryDao
-                    .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), preTimestamp, nowTimestamp);
-            componentStatus.setHistory(history);
+                    .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), preTimestamp, todayStartTimestamp);
+            LinkedList<StatusPageHistory> historyList = new LinkedList<>(history);
+            historyList.sort((o1, o2) -> (int) (o1.getTimestamp() - o2.getTimestamp()));
+            LocalDateTime endTime = todayStartTime.minusSeconds(1);
+            LocalDateTime startTime = endTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
+            for (int index = 0; index < 29; index++) {
+                long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
+                long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
+                if (!historyList.isEmpty() && historyList.peekFirst().getTimestamp() >= startTimestamp
+                        && historyList.peekFirst().getTimestamp() <= endTimestamp) {
+                    StatusPageHistory statusPageHistory = historyList.pop();
+                    histories.add(statusPageHistory);
+                } else {
+                    StatusPageHistory statusPageHistory = StatusPageHistory.builder().timestamp(endTimestamp)
+                            .componentId(component.getId()).state(CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED).build();
+                    histories.add(statusPageHistory);
+                }
+                startTime = startTime.minusDays(1);
+                endTime = endTime.minusDays(1);
+            }
+            componentStatus.setHistory(histories);
             componentStatusList.add(componentStatus);
         }
         return componentStatusList;
@@ -102,6 +154,7 @@ public class StatusPageServiceImpl implements StatusPageService {
         StatusPageComponent component = statusPageComponentDao.findById(id).orElseThrow(() -> new IllegalArgumentException("component not found"));
         ComponentStatus componentStatus = new ComponentStatus();
         componentStatus.setInfo(component);
+        // todo
         // query 30d component status history
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime preTime = nowTime.minusDays(30);
