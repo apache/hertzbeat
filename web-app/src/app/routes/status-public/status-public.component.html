@@ -1,33 +1,45 @@
-<div class="status-header" style="background: #5865f2">
-  <div>
-    <img class="status-logo" [src]="statusOrg.logo" alt="" />
+<nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
+  <div class="status-header" style="background: #5865f2">
+    <div>
+      <a [href]="statusOrg.home" target="_blank">
+        <img class="status-logo" [src]="statusOrg.logo" alt="" />
+      </a>
+    </div>
   </div>
-</div>
+</nz-spin>
 
-<div class="status-content">
-  <div class="org-status">
-    <span style="color: #f0f0f0"> All Systems Operational </span>
-  </div>
-  <div style="margin-top: 50px">
-    <div class="component-status">
-      <div style="margin: 10px; display: flex; justify-content: space-between">
-        <div style="font-weight: bold">
-          <span>API</span>
-          <span style="margin-left: 4px" nz-icon nzType="question-circle" nzTheme="outline"></span>
-        </div>
-        <div style="font-weight: normal">
-          <span style="color: green">Operational</span>
-        </div>
-      </div>
-      <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
-        <div *ngFor="let i of Array.from({ length: 30 })" style="width: 2.33%; height: 60px; background: green; margin-right: 1%"></div>
+<nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
+  <div class="status-content">
+    <div style="margin-top: 20px; margin-bottom: 20px">
+      <div style="width: 60%; margin: 0 auto; text-align: right">
+        <button nz-button> FEEDBACK ISSUES </button>
       </div>
     </div>
-    <div class="component-status">
-      <span>dsfsfdsfdsf</span>
+    <div class="org-status">
+      <span style="color: #f0f0f0"> All Systems Operational </span>
     </div>
-    <div class="component-status">
-      <span>dsfsfdsfdsf</span>
+    <div style="margin-top: 50px">
+      <div class="component-status">
+        <div style="margin: 10px; display: flex; justify-content: space-between">
+          <div style="font-weight: bold">
+            <span>API</span>
+            <span style="margin-left: 4px" nz-icon nzType="question-circle" nzTheme="outline"></span>
+          </div>
+          <div style="font-weight: normal">
+            <span nz-icon style="color: green" nzType="check-circle" nzTheme="outline"></span>
+            <span style="color: green; margin-left: 4px">Operational</span>
+          </div>
+        </div>
+        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
+          <div *ngFor="let i of Array.from({ length: 30 })" style="width: 2.33%; height: 60px; background: green; margin-right: 1%"></div>
+        </div>
+      </div>
+      <div class="component-status">
+        <span>dsfsfdsfdsf</span>
+      </div>
+      <div class="component-status">
+        <span>dsfsfdsfdsf</span>
+      </div>
     </div>
   </div>
-</div>
+</nz-spin>
