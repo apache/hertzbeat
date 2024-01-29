@@ -27,6 +27,8 @@ import java.util.List;
 @Service
 public class StatusPageServiceImpl implements StatusPageService {
     
+    private static final int HISTORY_SPAN_DAYS = 29;
+    
     @Autowired
     private StatusPageOrgDao statusPageOrgDao;
     
@@ -120,7 +122,7 @@ public class StatusPageServiceImpl implements StatusPageService {
             histories.add(todayStatus);
 
             // query 30d component status history
-            LocalDateTime preTime = todayStartTime.minusDays(29);
+            LocalDateTime preTime = todayStartTime.minusDays(HISTORY_SPAN_DAYS);
             long preTimestamp = preTime.toInstant(zoneOffset).toEpochMilli();
             List<StatusPageHistory> history = statusPageHistoryDao
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), preTimestamp, todayStartTimestamp);
@@ -128,7 +130,7 @@ public class StatusPageServiceImpl implements StatusPageService {
             historyList.sort((o1, o2) -> (int) (o1.getTimestamp() - o2.getTimestamp()));
             LocalDateTime endTime = todayStartTime.minusSeconds(1);
             LocalDateTime startTime = endTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
-            for (int index = 0; index < 29; index++) {
+            for (int index = 0; index < HISTORY_SPAN_DAYS; index++) {
                 long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
                 long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
                 if (!historyList.isEmpty() && historyList.peekFirst().getTimestamp() >= startTimestamp
@@ -187,7 +189,7 @@ public class StatusPageServiceImpl implements StatusPageService {
         histories.add(todayStatus);
 
         // query 30d component status history
-        LocalDateTime preTime = todayStartTime.minusDays(29);
+        LocalDateTime preTime = todayStartTime.minusDays(HISTORY_SPAN_DAYS);
         long preTimestamp = preTime.toInstant(zoneOffset).toEpochMilli();
         List<StatusPageHistory> history = statusPageHistoryDao
                 .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), preTimestamp, todayStartTimestamp);
@@ -195,7 +197,7 @@ public class StatusPageServiceImpl implements StatusPageService {
         historyList.sort((o1, o2) -> (int) (o1.getTimestamp() - o2.getTimestamp()));
         LocalDateTime endTime = todayStartTime.minusSeconds(1);
         LocalDateTime startTime = endTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
-        for (int index = 0; index < 29; index++) {
+        for (int index = 0; index < HISTORY_SPAN_DAYS; index++) {
             long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
             long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
             if (!historyList.isEmpty() && historyList.peekFirst().getTimestamp() >= startTimestamp
