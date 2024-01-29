@@ -51,10 +51,10 @@ public class StatusPageComponent {
     @Schema(title = "calculate status method: 0-auto 1-manual", example = "0")
     private byte method;
 
-    @Schema(title = "config state when use manual method: 0-Normal 1-Abnormal 2-Suspended", example = "0")
+    @Schema(title = "config state when use manual method: 0-Normal 1-Abnormal 2-unknown", example = "0")
     private byte configState;
     
-    @Schema(title = "component current state: 0-Normal 1-Abnormal 2-Suspended", example = "0")
+    @Schema(title = "component current state: 0-Normal 1-Abnormal 2-unknown", example = "0")
     private byte currentState;
 
     @Schema(title = "The creator of this record", example = "tom")

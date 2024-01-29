@@ -402,7 +402,7 @@ CREATE TABLE  hzb_status_page_component
     tag            varchar(255)     not null comment 'match single tag{labelName:labelValue}',
     method         tinyint          not null default 0 comment 'calculate status method: 0-auto 1-manual',
     config_state   tinyint          comment 'config state when use manual method: 0-Normal 1-Abnormal 2-Suspended',
-    current_state  tinyint          comment 'component current state: 0-Normal 1-Abnormal 2-Suspended',
+    current_state  tinyint          comment 'component current state: 0-Normal 1-Abnormal 2-Unknown',
     creator        varchar(100)     comment 'creator',
     modifier       varchar(100)     comment 'modifier',
     gmt_create     timestamp        default current_timestamp comment 'create time',
@@ -418,7 +418,7 @@ CREATE TABLE  hzb_status_page_history
 (
     id           bigint           not null auto_increment comment 'ID',
     component_id bigint           not null comment 'component id',
-    state        tinyint          not null comment 'component state: 0-Normal 1-Abnormal 2-Suspended',
+    state        tinyint          not null comment 'component state: 0-Normal 1-Abnormal 2-Unknown',
     timestamp    bigint           not null comment 'state calculate timestamp',
     creator      varchar(100)     comment 'creator',
     modifier     varchar(100)     comment 'modifier',

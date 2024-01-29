@@ -35,7 +35,7 @@ public class StatusPageHistory {
     @Schema(title = "component id", example = "1234")
     private Long componentId;
 
-    @Schema(title = "component state: 0-Normal 1-Abnormal 2-Suspended", example = "0")
+    @Schema(title = "component state: 0-Normal 1-Abnormal 2-unknown", example = "0")
     private byte state;
 
     @Schema(title = "state calculate timestamp", example = "4248574985744")
@@ -47,8 +47,9 @@ public class StatusPageHistory {
     @Schema(title = "state abnormal time(s)", example = "1000")
     private Integer abnormal;
 
-    @Schema(title = "state suspended time(s)", example = "1000")
-    private Integer suspended;
+    @Schema(title = "state unknown time(s)", example = "1000")
+    @Column(name = "`unknown`")
+    private Integer unknown;
 
     @Schema(title = "state normal tim(s)", example = "1000")
     private Integer normal;

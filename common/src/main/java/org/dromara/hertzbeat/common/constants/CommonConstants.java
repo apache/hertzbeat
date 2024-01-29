@@ -351,9 +351,9 @@ public interface CommonConstants {
     byte STATUS_PAGE_COMPONENT_STATE_ABNORMAL = 1;
     
     /**
-     * status page component state suspended
+     * status page component state unknown
      */
-    byte STATUS_PAGE_COMPONENT_STATE_SUSPENDED = 2;
+    byte STATUS_PAGE_COMPONENT_STATE_UNKNOWN = 2;
 
     /**
      * status page org state all normal

@@ -8,9 +8,9 @@ export class StatusPageComponent {
   tag!: TagItem;
   // calculate status method: 0-auto 1-manual
   method: number = 0;
-  // config state when use manual method: 0-Normal 1-Abnormal 2-Suspended
+  // config state when use manual method: 0-Normal 1-Abnormal 2-unknown
   configState: number = 0;
-  // component status when use auto method: 0-Normal 1-Abnormal 2-Suspended
+  // component status when use auto method: 0-Normal 1-Abnormal 2-unknown
   currentState: number = 0;
   creator!: string;
   modifier!: string;

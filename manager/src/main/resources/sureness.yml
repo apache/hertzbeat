@@ -67,6 +67,7 @@ excludedResource:
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/push/**===*
+  - /api/status/page/public/**===*
   # web ui 前端静态资源
   - /===get
   - /dashboard/**===get

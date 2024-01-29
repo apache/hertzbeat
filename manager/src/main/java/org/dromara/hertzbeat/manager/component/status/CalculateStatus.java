@@ -93,7 +93,7 @@ public class CalculateStatus {
                                     return query.where(andPredicate).getRestriction();
                                 };
                                 List<Monitor> monitorList = monitorDao.findAll(specification);
-                                state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED;
+                                state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN;
                                 for (Monitor monitor : monitorList) {
                                     if (monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL;
@@ -155,8 +155,8 @@ public class CalculateStatus {
                         StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             history.setAbnormal(history.getAbnormal() + intervals);
-                        } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED) {
-                            history.setSuspended(history.getSuspended() + intervals);
+                        } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
+                            history.setUnknown(history.getUnknown() + intervals);
                         } else {
                             history.setNormal(history.getNormal() + intervals);
                         }
@@ -164,8 +164,8 @@ public class CalculateStatus {
                     } else {
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             statusPageHistory.setAbnormal(intervals);
-                        } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED) {
-                            statusPageHistory.setSuspended(intervals);
+                        } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
+                            statusPageHistory.setUnknown(intervals);
                         } else {
                             statusPageHistory.setNormal(intervals);
                         }
@@ -174,14 +174,14 @@ public class CalculateStatus {
                 }
                 statusPageHistoryDao.deleteAllById(statusPageHistoryMap.keySet());
                 for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                    double uptime = (double) history.getNormal() / (double) (history.getNormal() + history.getAbnormal() + history.getSuspended());
+                    double uptime = (double) (history.getNormal() + history.getUnknown()) / (double) (history.getNormal() + history.getAbnormal() + history.getUnknown());
                     history.setUptime(uptime);
                     if (history.getAbnormal() > 0) {
                         history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
                     } else if (history.getNormal() > 0) {
                         history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
                     } else {
-                        history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_SUSPENDED);
+                        history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
                     }
                     statusPageHistoryDao.save(history);
                 }

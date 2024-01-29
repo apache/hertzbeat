@@ -16,6 +16,7 @@ import { UserLockComponent } from './passport/lock/lock.component';
 import { UserLoginComponent } from './passport/login/login.component';
 import { RouteRoutingModule } from './routes-routing.module';
 import { StatusPublicComponent } from './status-public/status-public.component';
+import {NzDividerModule} from "ng-zorro-antd/divider";
 
 const COMPONENTS: Array<Type<void>> = [
   DashboardComponent,
@@ -28,7 +29,7 @@ const COMPONENTS: Array<Type<void>> = [
 ];
 
 @NgModule({
-  imports: [SharedModule, RouteRoutingModule, NgxEchartsModule, NzTagModule, NzTimelineModule, SlickCarouselModule, TagCloudComponent],
+  imports: [SharedModule, RouteRoutingModule, NgxEchartsModule, NzTagModule, NzTimelineModule, SlickCarouselModule, TagCloudComponent, NzDividerModule],
   declarations: COMPONENTS
 })
 export class RoutesModule {}

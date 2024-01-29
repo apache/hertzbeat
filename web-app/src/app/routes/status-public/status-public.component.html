@@ -19,11 +19,18 @@
       <span style="color: #f0f0f0"> All Systems Operational </span>
     </div>
     <div style="margin-top: 50px">
-      <div class="component-status">
+      <div *ngFor="let component of componentStatus" class="component-status">
         <div style="margin: 10px; display: flex; justify-content: space-between">
           <div style="font-weight: bold">
-            <span>API</span>
-            <span style="margin-left: 4px" nz-icon nzType="question-circle" nzTheme="outline"></span>
+            <span>{{ component.info.name }}</span>
+            <span
+              style="margin-left: 4px"
+              nz-icon
+              nzType="question-circle"
+              nzTheme="outline"
+              nz-tooltip
+              [nzTooltipTitle]="component.info.desc"
+            ></span>
           </div>
           <div style="font-weight: normal">
             <span nz-icon style="color: green" nzType="check-circle" nzTheme="outline"></span>
@@ -31,15 +38,27 @@
           </div>
         </div>
         <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
-          <div *ngFor="let i of Array.from({ length: 30 })" style="width: 2.33%; height: 60px; background: green; margin-right: 1%"></div>
+          <div
+            *ngFor="let historyItem of component.history"
+            style="width: 2.33%; height: 60px; background: green; margin-right: 1%"
+            nz-popover
+            [nzPopoverContent]="contentTemplate"
+            nzPopoverPlacement="bottom"
+          >
+            <ng-template #contentTemplate>
+              <div>
+                <p style="font-weight: bold">{{ historyItem.timestamp | date }}</p>
+                <p>Uptime {{ (100 * historyItem.uptime).toFixed(2) }}%</p>
+                <p>Normal {{ historyItem.normal }}s</p>
+                <p>Abnormal {{ historyItem.abnormal }}s</p>
+                <p>Unknown {{ historyItem.unknown }}s</p>
+              </div>
+            </ng-template>
+          </div>
         </div>
-      </div>
-      <div class="component-status">
-        <span>dsfsfdsfdsf</span>
-      </div>
-      <div class="component-status">
-        <span>dsfsfdsfdsf</span>
       </div>
     </div>
   </div>
 </nz-spin>
+
+<nz-divider></nz-divider>

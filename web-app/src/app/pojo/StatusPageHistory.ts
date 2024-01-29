@@ -3,6 +3,10 @@ export class StatusPageHistory {
   componentId!: number;
   state!: number;
   timestamp!: number;
+  uptime!: number;
+  abnormal!: number;
+  unknown!: number;
+  normal!: number;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;
