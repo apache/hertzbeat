@@ -64,10 +64,10 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: dromara@123
-    url: jdbc:mysql://82.157.76.80:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123456
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
     hikari:
       max-lifetime: 120000
 
@@ -110,7 +110,7 @@ warehouse:
     # store history metrics data, enable only one below
     # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
-      enabled: false
+      enabled: true
       # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
       # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
@@ -118,8 +118,8 @@ warehouse:
       # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
       max-history-record-num: 6000
     victoria-metrics:
-      enabled: true
-      url: http://82.157.76.80:8428
+      enabled: false
+      url: http://localhost:8428
       username: root
       password: root
     td-engine:
@@ -172,8 +172,9 @@ scheduler:
   server:
     enabled: true
     port: 1158
+
 grafana:
-  enabled: true
-  url: http://82.157.76.80:3000
+  enabled: false
+  url: http://localhost:3000
   username: admin
   password: admin
