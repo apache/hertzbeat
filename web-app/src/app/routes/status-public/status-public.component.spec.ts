@@ -8,9 +8,8 @@ describe('StatusPublicComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ StatusPublicComponent ]
-    })
-    .compileComponents();
+      declarations: [StatusPublicComponent]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(StatusPublicComponent);
     component = fixture.componentInstance;

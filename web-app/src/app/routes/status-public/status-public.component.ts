@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
-import {ALAIN_I18N_TOKEN, TitleService} from '@delon/theme';
+import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs';

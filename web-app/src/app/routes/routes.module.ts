@@ -4,11 +4,13 @@ import { SharedModule } from '@shared';
 
 // dashboard pages
 import { TagCloudComponent } from 'angular-tag-cloud-module';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { SlickCarouselModule } from 'ngx-slick-carousel';
 
+import { LayoutModule } from '../layout/layout.module';
 import { DashboardComponent } from './dashboard/dashboard.component';
 // single pages
 import { UserLockComponent } from './passport/lock/lock.component';
@@ -16,8 +18,6 @@ import { UserLockComponent } from './passport/lock/lock.component';
 import { UserLoginComponent } from './passport/login/login.component';
 import { RouteRoutingModule } from './routes-routing.module';
 import { StatusPublicComponent } from './status-public/status-public.component';
-import {NzDividerModule} from "ng-zorro-antd/divider";
-import {LayoutModule} from "../layout/layout.module";
 
 const COMPONENTS: Array<Type<void>> = [
   DashboardComponent,
@@ -30,7 +30,17 @@ const COMPONENTS: Array<Type<void>> = [
 ];
 
 @NgModule({
-  imports: [SharedModule, RouteRoutingModule, NgxEchartsModule, NzTagModule, NzTimelineModule, SlickCarouselModule, TagCloudComponent, NzDividerModule, LayoutModule],
+  imports: [
+    SharedModule,
+    RouteRoutingModule,
+    NgxEchartsModule,
+    NzTagModule,
+    NzTimelineModule,
+    SlickCarouselModule,
+    TagCloudComponent,
+    NzDividerModule,
+    LayoutModule
+  ],
   declarations: COMPONENTS
 })
 export class RoutesModule {}

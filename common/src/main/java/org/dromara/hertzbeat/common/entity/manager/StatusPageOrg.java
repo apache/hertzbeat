@@ -51,6 +51,12 @@ public class StatusPageOrg {
     @NotBlank
     private String logo;
 
+    @Schema(title = "org feedback issue url", example = "contact@email.com")
+    private String feedback;
+    
+    @Schema(title = "org theme background color", example = "#ffffff")
+    private String color;
+
     @Schema(title = "org current state: 0-All Systems Operational 1-Some Systems Abnormal 2-All Systems Abnormal ", example = "0")
     private byte state;
 
