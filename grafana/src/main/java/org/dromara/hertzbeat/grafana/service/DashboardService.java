@@ -2,36 +2,49 @@ package org.dromara.hertzbeat.grafana.service;
 
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import com.dtflys.forest.http.ForestResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.dromara.hertzbeat.grafana.dao.DashboardDao;
+import org.dromara.hertzbeat.common.entity.grafana.Dashboard;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class DashboardService {
+    private final ServiceAccountService serviceAccountService;
+    private final DashboardDao dashboardDao;
 
     /**
      * create dashboard
      * @return dashboard info
      */
-    public String createDashboard(Object dashboard) {
+    public ForestResponse<?> createDashboard(Object dashboardJson, Long monitorId) {
+        String token = serviceAccountService.getToken();
         ForestRequest<?> request = Forest.post("http://82.157.76.80:3000/api/dashboards/db");
-        ForestRequest<?> forestRequest = request
+        ForestResponse<?> forestResponse = request
                 .contentTypeJson()
-                .addHeader("Authorization", "Bearer glsa_txmyqjeXArcLsDwBeuCctfpGfy77Y59s_bdad3797")
-                .addBody("dashboard", dashboard)
-                .addBody("overwrite", true);
-        return forestRequest.execute().toString();
+                .addHeader("Authorization", "Bearer "+ token)
+                .addBody("dashboard", dashboardJson)
+                .addBody("overwrite", true) .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    Dashboard dashboard = JsonUtil.fromJson(res.getContent(), Dashboard.class);
+                    if (dashboard != null) {
+                        dashboard.setMonitorId(monitorId);
+                        dashboardDao.save(dashboard);
+                        log.info("create token success, token: {}", res.getContent());
+                    }
+                })
+                .onError((ex, req, res) -> {
+                    log.error("create token error", ex);
+                }).executeAsResponse();
+        return forestResponse;
+    }
+
+    public Dashboard getDashboardByMonitorId(Long monitorId) {
+        return dashboardDao.findByMonitorId(monitorId);
     }
 
 }

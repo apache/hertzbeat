@@ -172,7 +172,7 @@
           ></app-metrics-field-input>
         </nz-form-control>
       </nz-form-item>
-
+      <!-- 高级设置 -->
       <nz-collapse [nzGhost]="true">
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
@@ -402,6 +402,39 @@
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea [(ngModel)]="monitor.description" rows="3" nz-input name="description" id="description"></textarea>
           </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-divider *ngIf="monitor.app === 'prometheus'"></nz-divider>
+      <!-- 是否启用grafana -->
+      <nz-form-item *ngIf="monitor.app === 'prometheus'">
+        <nz-form-label nzSpan="7" nzFor="grafana" [nzTooltipTitle]="'monitor.grafana.enabled.tip' | i18n">
+          {{ 'monitor.grafana.enabled.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="monitor.grafana.enabled" name="grafana" id="grafana"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- 上传grafana模板json文件 -->
+      <nz-form-item *ngIf="monitor.grafana.enabled && monitor.app === 'prometheus'">
+        <nz-form-label nzSpan="7" nzFor="grafanaJson" [nzTooltipTitle]="'monitor.grafana.upload.tip' | i18n">
+          {{ 'monitor.grafana.upload.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-upload
+            nzName="file"
+            nzListType="text"
+            [nzShowUploadList]="false"
+            [nzMultiple]="false"
+            [nzLimit]="1"
+            [nzCustomRequest]="handleTemplateInput"
+            (nzChange)="handleTemplateInput($event)"
+          >
+            <button nz-button>
+              <i nz-icon nzType="upload"></i>
+              {{ 'monitor.grafana.upload.label' | i18n }}
+            </button>
+          </nz-upload>
         </nz-form-control>
       </nz-form-item>
 

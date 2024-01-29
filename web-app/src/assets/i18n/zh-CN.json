@@ -102,6 +102,16 @@
       "unavailable": "不可用",
       "unreachable": "不可达",
       "unmonitored": "未监控"
+    },
+    "grafana": {
+      "enabled":{
+        "label": "启用Grafana",
+        "tip": "是否启用Grafana图表展示"
+      },
+      "upload": {
+        "label": "上传Grafana模版",
+        "tip": "上传Grafana模版文件"
+      }
     }
   },
   "alert": {

@@ -40,6 +40,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   interval$!: any;
   whichTabIndex = 0;
   showBasic = true;
+  grafanaUrl!: string;
 
   ngOnInit(): void {
     this.loadRealTimeMetric();
@@ -182,7 +183,21 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
   }
-
+  getGrafanaUrl() {
+    this.monitorSvc.getGrafanaDashboardUrl(this.monitor.id).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.grafanaUrl = message.msg;
+          console.log(this.grafanaUrl);
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.error(error.msg);
+      }
+    );
+  }
   ngOnDestroy(): void {
     clearInterval(this.interval$);
   }

@@ -1,16 +1,19 @@
 package org.dromara.hertzbeat.grafana.controller;
 
 
+import com.dtflys.forest.http.ForestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.grafana.service.ServiceAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-
+import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -25,21 +28,27 @@ public class ServiceAccountController {
     private ServiceAccountService serviceAccountService;
     /**
      * create service admin account
-     * @return account id
      */
     @PostMapping(path = "/account")
     @Operation(summary = "Create service account | 创建服务账号", description = "Create service account | 创建服务账号")
-    public String createServiceAccount() {
-        return serviceAccountService.createServiceAccount();
+    public ResponseEntity<Message<?>> createServiceAccount() {
+        ForestResponse<?> response = serviceAccountService.createServiceAccount();
+        if (response.isError()) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, response.getContent()));
+        }
+        return ResponseEntity.ok(Message.success(response.getContent()));
     }
     /**
      * create api token
-     * @return token
      */
     @PostMapping(path = "/token")
     @Operation(summary = "Create service account token | 创建服务账号token", description = "Create service account token | 创建服务账号token")
-    public String createToken() {
-        return serviceAccountService.createToken();
+    public ResponseEntity<Message<?>> createToken() {
+        ForestResponse<?> response = serviceAccountService.createToken();
+        if (response.isError()) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, response.getContent()));
+        }
+        return ResponseEntity.ok(Message.success(response.getContent()));
     }
 
 }

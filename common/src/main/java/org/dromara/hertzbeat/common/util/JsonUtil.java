@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
@@ -81,12 +82,35 @@ public class JsonUtil {
             return null;
         }
     }
+    public static <T> T fromJson(MultipartFile jsonFile, Class<T> clazz) {
+        if (jsonFile.isEmpty()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonFile.getBytes(), clazz);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
     public static String fromJson(File jsonFile) {
         if (!jsonFile.exists()) {
             return null;
         }
         try {
             Object object = OBJECT_MAPPER.readValue(jsonFile, Object.class);
+            return OBJECT_MAPPER.writeValueAsString(object);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+    public static String fromJson(MultipartFile jsonFile) {
+        if (jsonFile.isEmpty()) {
+            return null;
+        }
+        try {
+            Object object = OBJECT_MAPPER.readValue(jsonFile.getBytes(), Object.class);
             return OBJECT_MAPPER.writeValueAsString(object);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

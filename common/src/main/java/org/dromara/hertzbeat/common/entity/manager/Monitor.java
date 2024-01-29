@@ -17,18 +17,20 @@
 
 package org.dromara.hertzbeat.common.entity.manager;
 
-import org.dromara.hertzbeat.common.support.valid.HostValid;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.dromara.hertzbeat.common.entity.grafana.Grafana;
+import org.dromara.hertzbeat.common.support.valid.HostValid;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -161,4 +163,10 @@ public class Monitor {
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
+    /**
+     * grafana dashboard
+     */
+    @Schema(title = "grafana dashboard")
+    @Transient
+    private Grafana grafana;
 }

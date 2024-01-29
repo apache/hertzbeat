@@ -102,6 +102,16 @@
       "unavailable": "Unavailable",
       "unreachable": "Unreachable",
       "unmonitored": "Unmonitored"
+    },
+    "grafana": {
+      "enabled":{
+        "label": "Enable Grafana",
+        "tip": "Enable Grafana to display the monitoring data of this task in the form of a dashboard"
+      },
+      "upload": {
+        "label": "Upload Grafana Template",
+        "tip": "Upload Grafana template file, support json format"
+      }
     }
   },
   "alert": {

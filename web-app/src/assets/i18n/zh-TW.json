@@ -102,6 +102,16 @@
       "unavailable": "不可用",
       "unreachable": "不可達",
       "unmonitored": "未監控"
+    },
+    "grafana": {
+      "enabled":{
+        "label": "啓用Grafana展示",
+        "tip": "啓用後將在監控詳情頁面展示Grafana圖表"
+      },
+      "upload": {
+        "label": "上傳Grafana模版文件",
+        "tip": "上傳grafana模版文件,支持json格式"
+      }
     }
   },
   "alert": {
