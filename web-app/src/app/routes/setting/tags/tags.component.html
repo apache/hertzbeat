@@ -57,6 +57,7 @@
       <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'tag.color' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'tag.description' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -76,6 +77,7 @@
       <td nzAlign="center">
         <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger">{{ data.color }}</nz-tag>
       </td>
+      <td nzAlign="center">{{ data.description }}</td>
       <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <button nz-button nzType="primary" (click)="onEditOneTag(data)" nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n">
@@ -128,6 +130,12 @@
             name="color"
             id="color"
           />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="description">{{ 'tag.description' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="tag.description" nz-input name="description" type="text" id="description" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="tag.name != undefined">

@@ -240,6 +240,11 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
+     * 内有标签: monitorHost 任务主机
+     */
+    String TAG_MONITOR_HOST = "monitorHost";
+
+    /**
      * 内有标签: policyId 告警阈值规则ID
      */
     String TAG_THRESHOLD_ID = "thresholdId";
@@ -250,9 +255,19 @@ public interface CommonConstants {
     String TAG_MONITOR_APP = "app";
 
     /**
-     * 内有标签: alarm type
+     * 内有标签: metrics
      */
-    String TAG_ALARM_TYPE = "type";
+    String TAG_METRICS = "metrics";
+
+    /**
+     * 内有标签: metric
+     */
+    String TAG_METRIC = "metric";
+
+    /**
+     * 内有标签: code
+     */
+    String TAG_CODE = "code";
 
     /**
      * notice_period type 类型字段, 每日类型
