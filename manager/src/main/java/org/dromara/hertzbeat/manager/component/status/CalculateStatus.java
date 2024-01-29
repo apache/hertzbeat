@@ -70,6 +70,7 @@ public class CalculateStatus {
                 for (StatusPageOrg statusPageOrg : statusPageOrgList) {
                     long orgId = statusPageOrg.getId();
                     List<StatusPageComponent> pageComponentList = statusPageComponentDao.findByOrgId(orgId);
+                    Set<Byte> stateSet = new HashSet<>(8);
                     for (StatusPageComponent component : pageComponentList) {
                         byte state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
                         if (component.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
@@ -104,6 +105,7 @@ public class CalculateStatus {
                                 }   
                             }
                         }
+                        stateSet.add(state);
                         component.setCurrentState(state);
                         statusPageComponentDao.save(component);
                         // insert component state history
@@ -114,6 +116,17 @@ public class CalculateStatus {
                                 .build();
                         statusPageHistoryDao.save(statusPageHistory);
                     }
+                    stateSet.remove(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
+                    if (stateSet.remove(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL)) {
+                        if (stateSet.contains(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL)) {
+                            statusPageOrg.setState(CommonConstants.STATUS_PAGE_ORG_STATE_SOME_ABNORMAL);
+                        } else {
+                            statusPageOrg.setState(CommonConstants.STATUS_PAGE_ORG_STATE_ALL_ABNORMAL);
+                        }
+                    } else {
+                        statusPageOrg.setState(CommonConstants.STATUS_PAGE_ORG_STATE_ALL_NORMAL);
+                    }
+                    statusPageOrgDao.save(statusPageOrg);
                 }
             } catch (Exception e) {
                 log.error("status page calculate component state error: {}", e.getMessage(), e);
@@ -174,7 +187,7 @@ public class CalculateStatus {
                 }
                 statusPageHistoryDao.deleteAllById(statusPageHistoryMap.keySet());
                 for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                    double uptime = (double) (history.getNormal() + history.getUnknown()) / (double) (history.getNormal() + history.getAbnormal() + history.getUnknown());
+                    double uptime = (double) history.getNormal() / (double) (history.getNormal() + history.getAbnormal() + history.getUnknown());
                     history.setUptime(uptime);
                     if (history.getAbnormal() > 0) {
                         history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);

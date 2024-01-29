@@ -9,6 +9,7 @@ import { Message } from '../../pojo/Message';
 import { StatusPageComponentStatus } from '../../pojo/StatusPageComponentStatus';
 import { StatusPageOrg } from '../../pojo/StatusPageOrg';
 import { StatusPagePublicService } from '../../service/status-page-public.service';
+import {StatusPageHistory} from "../../pojo/StatusPageHistory";
 
 @Component({
   selector: 'app-status-public',
@@ -59,6 +60,16 @@ export class StatusPublicComponent implements OnInit {
           loadInit$.unsubscribe();
         }
       );
+  }
+
+  calculateHistoryBlockRgb(history: StatusPageHistory): string {
+    if (history.state == 0) {
+      return 'green';
+    } else if (history.state == 2) {
+      return 'gray';
+    } else {
+      return `rgb(255, ${(history.uptime * 300).toFixed(0)}, 0)`;
+    }
   }
 
   protected readonly Array = Array;

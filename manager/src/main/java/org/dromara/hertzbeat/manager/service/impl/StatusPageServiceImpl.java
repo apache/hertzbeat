@@ -108,7 +108,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                     todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
                 }
             }
-            double uptime = (double) (todayStatus.getNormal() + todayStatus.getUnknown()) / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
+            double uptime = (double) todayStatus.getNormal() / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
             todayStatus.setUptime(uptime);
             if (todayStatus.getAbnormal() > 0) {
                 todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
@@ -175,7 +175,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                 todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
             }
         }
-        double uptime = (double) (todayStatus.getNormal() + todayStatus.getUnknown()) / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
+        double uptime = (double) todayStatus.getNormal() / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
         todayStatus.setUptime(uptime);
         if (todayStatus.getAbnormal() > 0) {
             todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);

@@ -1,6 +1,8 @@
 export class StatusPageOrg {
   id!: number;
   name!: string;
+  // org current state: 0-All Systems Operational 1-Some Systems Abnormal 2-All Systems Abnormal
+  state!: number;
   desc!: string;
   home!: string;
   logo!: string;
