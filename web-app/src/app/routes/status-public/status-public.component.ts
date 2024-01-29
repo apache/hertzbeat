@@ -1,15 +1,15 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import {ALAIN_I18N_TOKEN, TitleService} from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs';
 
 import { Message } from '../../pojo/Message';
 import { StatusPageComponentStatus } from '../../pojo/StatusPageComponentStatus';
+import { StatusPageHistory } from '../../pojo/StatusPageHistory';
 import { StatusPageOrg } from '../../pojo/StatusPageOrg';
 import { StatusPagePublicService } from '../../service/status-page-public.service';
-import {StatusPageHistory} from "../../pojo/StatusPageHistory";
 
 @Component({
   selector: 'app-status-public',
@@ -19,7 +19,7 @@ import {StatusPageHistory} from "../../pojo/StatusPageHistory";
 export class StatusPublicComponent implements OnInit {
   constructor(
     private notifySvc: NzNotificationService,
-    private modal: NzModalService,
+    private titleService: TitleService,
     private statusPagePublicService: StatusPagePublicService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -40,6 +40,7 @@ export class StatusPublicComponent implements OnInit {
         switchMap((message: Message<StatusPageOrg>) => {
           if (message.code === 0) {
             this.statusOrg = message.data;
+            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.extras.status')}`);
           } else {
             this.statusOrg = new StatusPageOrg();
             console.log(message.msg);
@@ -66,7 +67,7 @@ export class StatusPublicComponent implements OnInit {
     if (history.state == 0) {
       return 'green';
     } else if (history.state == 2) {
-      return 'gray';
+      return 'rgb(200 200 200)';
     } else {
       return `rgb(255, ${(history.uptime * 300).toFixed(0)}, 0)`;
     }

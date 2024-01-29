@@ -73,6 +73,42 @@
           />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="feedback" nzRequired="true">
+          {{ 'status.org.feedback' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.feedback"
+            nz-input
+            required
+            name="feedback"
+            type="text"
+            id="feedback"
+            [placeholder]="'status.org.feedback.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="color">
+          {{ 'status.org.color' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8">
+          <input
+            [(colorPicker)]="statusOrg.color"
+            cpFallbackColor="#376e69"
+            cpOutputFormat="hex"
+            [style.background]="statusOrg.color"
+            style="border-radius: 5px; width: 100%"
+            nz-input
+            required
+            name="color"
+            type="text"
+            id="color"
+            [placeholder]="'status.org.color.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
       <div nz-row>
         <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
           <button nz-button nzType="primary" type="submit" (click)="onSaveStatusOrg(newForm.form)">

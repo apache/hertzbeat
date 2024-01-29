@@ -6,6 +6,8 @@ export class StatusPageOrg {
   desc!: string;
   home!: string;
   logo!: string;
+  feedback!: string;
+  color!: string;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;
