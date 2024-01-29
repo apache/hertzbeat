@@ -240,6 +240,11 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
+     * 内有标签: monitorHost 任务主机
+     */
+    String TAG_MONITOR_HOST = "monitorHost";
+
+    /**
      * 内有标签: policyId 告警阈值规则ID
      */
     String TAG_THRESHOLD_ID = "thresholdId";
