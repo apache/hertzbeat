@@ -180,6 +180,12 @@
           "badge": 1
         },
         {
+          "text": "status",
+          "i18n": "menu.extras.status",
+          "icon": "anticon-mobile",
+          "link": "/setting/status"
+        },
+        {
           "text": "settings",
           "i18n": "menu.extras.settings",
           "icon": "anticon-setting",

@@ -7,11 +7,13 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
+import { StatusComponent } from './status/status.component';
 import { SettingTagsComponent } from './tags/tags.component';
 
 const routes: Routes = [
   { path: 'tags', component: SettingTagsComponent },
   { path: 'collector', component: CollectorComponent },
+  { path: 'status', component: StatusComponent },
   { path: 'define', component: DefineComponent, data: { titleI18n: 'menu.extras.define' } },
   {
     path: 'settings',

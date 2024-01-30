@@ -17,44 +17,33 @@
 
 package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.manager.Tag;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
- * tag repository
- *
+ * StatusPageOrg DAO interface.
  * @author tom
  *
  */
-public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
+public interface StatusPageHistoryDao extends JpaRepository<StatusPageHistory, Long>, JpaSpecificationExecutor<StatusPageHistory> {
 
     /**
-     * delete tags by tag id
-     *
-     * @param ids id list
+     * find status page history by timestamp between start and end.
+     * @param start start timestamp
+     * @param end end timestamp
+     * @return status page history list
      */
-    void deleteTagsByIdIn(Set<Long> ids);
-
-    /**
-     * find tags by tag id
-     *
-     * @param ids id list
-     * @return tag list
-     */
-    List<Tag> findByIdIn(Set<Long> ids);
+    List<StatusPageHistory> findStatusPageHistoriesByTimestampBetween(long start, long end);
     
     /**
-     * find tag by name and value
-     *
-     * @param name tag name
-     * @param value tag value
-     * @return tag
+     * find status page history by component id and timestamp between start and end.
+     * @param componentId component id
+     * @param start start timestamp
+     * @param end end timestamp
+     * @return status page history list
      */
-    Optional<Tag> findTagByNameAndValue(String name, String value);
-    
+    List<StatusPageHistory> findStatusPageHistoriesByComponentIdAndTimestampBetween(long componentId, long start, long end);
 }

@@ -17,44 +17,23 @@
 
 package org.dromara.hertzbeat.manager.dao;
 
-import org.dromara.hertzbeat.common.entity.manager.Tag;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
- * tag repository
- *
+ * StatusPageComponent DAO interface.
  * @author tom
  *
  */
-public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
+public interface StatusPageComponentDao extends JpaRepository<StatusPageComponent, Long>, JpaSpecificationExecutor<StatusPageComponent> {
 
     /**
-     * delete tags by tag id
-     *
-     * @param ids id list
+     * find by org id.
+     * @param orgId org id
+     * @return StatusPageComponent list
      */
-    void deleteTagsByIdIn(Set<Long> ids);
-
-    /**
-     * find tags by tag id
-     *
-     * @param ids id list
-     * @return tag list
-     */
-    List<Tag> findByIdIn(Set<Long> ids);
-    
-    /**
-     * find tag by name and value
-     *
-     * @param name tag name
-     * @param value tag value
-     * @return tag
-     */
-    Optional<Tag> findTagByNameAndValue(String name, String value);
-    
+    List<StatusPageComponent> findByOrgId(long orgId);
 }

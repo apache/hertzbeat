@@ -15,26 +15,28 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.manager.pojo.dto;
+package org.dromara.hertzbeat.common.entity.manager;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.dromara.hertzbeat.common.util.JsonUtil;
 
-import java.util.List;
+import javax.persistence.AttributeConverter;
 
 /**
- * 大屏仪表盘统计信息
+ * json str to tag item
  * @author tom
  *
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "Dashboard App Count Info")
-public class Dashboard {
+public class JsonTagAttributeConverter implements AttributeConverter<TagItem, String> {
 
-    List<AppCount> apps;
+    @Override
+    public String convertToDatabaseColumn(TagItem attribute) {
+        return JsonUtil.toJson(attribute);
+    }
 
+    @Override
+    public TagItem convertToEntityAttribute(String dbData) {
+        TypeReference<TagItem> typeReference = new TypeReference<>() {};
+        return JsonUtil.fromJson(dbData, typeReference);
+    }
 }
