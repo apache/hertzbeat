@@ -344,4 +344,44 @@ public interface CommonConstants {
      * prometheus 
      */
     String PROMETHEUS = "prometheus";
+
+    /**
+     * status page component state normal
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_NORMAL = 0;
+    
+    /**
+     * status page component state abnormal
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_ABNORMAL = 1;
+    
+    /**
+     * status page component state unknown
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_UNKNOWN = 2;
+
+    /**
+     * status page org state all normal
+     */
+    byte STATUS_PAGE_ORG_STATE_ALL_NORMAL = 0;
+
+    /**
+     * status page org state some abnormal
+     */
+    byte STATUS_PAGE_ORG_STATE_SOME_ABNORMAL = 1;
+
+    /**
+     * status page org state all abnormal
+     */
+    byte STATUS_PAGE_ORG_STATE_ALL_ABNORMAL = 2;
+    
+    /**
+     * status page component calculate method auto
+     */
+    byte STATUE_PAGE_CALCULATE_METHOD_AUTO = 0;
+    
+    /**
+     * status page component calculate method manual
+     */
+    byte STATUS_PAGE_CALCULATE_METHOD_MANUAL = 1;
 }

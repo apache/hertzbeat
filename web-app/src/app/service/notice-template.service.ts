@@ -1,10 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { List } from 'echarts';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
-import { NoticeRule } from '../pojo/NoticeRule';
 import { NoticeTemplate } from '../pojo/NoticeTemplate';
 
 const notice_template_uri = '/notice/template';
