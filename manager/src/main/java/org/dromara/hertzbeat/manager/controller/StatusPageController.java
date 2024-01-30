@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,5 +80,40 @@ public class StatusPageController {
     public ResponseEntity<Message<StatusPageComponent>> queryStatusPageComponent(@PathVariable("id") final long id) {
         StatusPageComponent statusPageComponent = statusPageService.queryStatusPageComponent(id);
         return ResponseEntity.ok(Message.success(statusPageComponent));
+    }
+
+    @PostMapping("/incident")
+    @Operation(summary = "Save Status Page Incident")
+    public ResponseEntity<Message<Void>> newStatusPageIncident(@Valid @RequestBody StatusPageIncident incident) {
+        statusPageService.newStatusPageIncident(incident);
+        return ResponseEntity.ok(Message.success("Add success"));
+    }
+
+    @PutMapping("/incident")
+    @Operation(summary = "Update Status Page Incident")
+    public ResponseEntity<Message<Void>> updateStatusPageIncident(@Valid @RequestBody StatusPageIncident incident) {
+        statusPageService.updateStatusPageIncident(incident);
+        return ResponseEntity.ok(Message.success("Update success"));
+    }
+
+    @DeleteMapping("/incident/{id}")
+    @Operation(summary = "Delete Status Page Incident")
+    public ResponseEntity<Message<Void>> deleteStatusPageIncident(@PathVariable("id") final long id) {
+        statusPageService.deleteStatusPageIncident(id);
+        return ResponseEntity.ok(Message.success("Delete success"));
+    }
+
+    @GetMapping("/incident/{id}")
+    @Operation(summary = "Get Status Page Incident")
+    public ResponseEntity<Message<StatusPageIncident>> queryStatusPageIncident(@PathVariable("id") final long id) {
+        StatusPageIncident incident = statusPageService.queryStatusPageIncident(id);
+        return ResponseEntity.ok(Message.success(incident));
+    }
+
+    @GetMapping("/incident")
+    @Operation(summary = "Query Status Page Incidents")
+    public ResponseEntity<Message<List<StatusPageIncident>>> queryStatusPageIncident() {
+        List<StatusPageIncident> incidents = statusPageService.queryStatusPageIncidents();
+        return ResponseEntity.ok(Message.success(incidents));
     }
 }

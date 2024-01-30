@@ -3,10 +3,12 @@ package org.dromara.hertzbeat.manager.service.impl;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageHistory;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.component.status.CalculateStatus;
 import org.dromara.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageHistoryDao;
+import org.dromara.hertzbeat.manager.dao.StatusPageIncidentDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.dromara.hertzbeat.manager.service.StatusPageService;
@@ -37,6 +39,9 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Autowired
     private StatusPageHistoryDao statusPageHistoryDao;
+    
+    @Autowired
+    private StatusPageIncidentDao statusPageIncidentDao;
     
     @Autowired
     private CalculateStatus calculateStatus;
@@ -214,5 +219,30 @@ public class StatusPageServiceImpl implements StatusPageService {
         }
         componentStatus.setHistory(histories);
         return componentStatus;
+    }
+
+    @Override
+    public List<StatusPageIncident> queryStatusPageIncidents() {
+        return statusPageIncidentDao.findAll();
+    }
+
+    @Override
+    public StatusPageIncident queryStatusPageIncident(long id) {
+        return statusPageIncidentDao.findById(id).orElse(null);
+    }
+
+    @Override
+    public void newStatusPageIncident(StatusPageIncident statusPageIncident) {
+        statusPageIncidentDao.save(statusPageIncident);
+    }
+
+    @Override
+    public void updateStatusPageIncident(StatusPageIncident statusPageIncident) {
+        statusPageIncidentDao.save(statusPageIncident);
+    }
+
+    @Override
+    public void deleteStatusPageIncident(long id) {
+        statusPageIncidentDao.deleteById(id);
     }
 }
