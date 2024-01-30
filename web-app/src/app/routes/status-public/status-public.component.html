@@ -81,7 +81,7 @@
           <div
             *ngFor="let historyItem of component.history"
             class="history_block"
-            [style]="'background:' + calculateHistoryBlockRgb(historyItem)"
+            [style]="'border-radius: 3px;background:' + calculateHistoryBlockRgb(historyItem)"
             nz-popover
             [nzPopoverContent]="contentTemplate"
             nzPopoverPlacement="bottom"
@@ -97,9 +97,26 @@
             </ng-template>
           </div>
         </div>
+        <div style="margin: 10px; display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
+          <span>{{ 'status.public.today' | i18n }}</span>
+          <span>{{ 'status.public.30-day' | i18n }}</span>
+        </div>
       </div>
     </div>
   </div>
 </nz-spin>
+
+<nz-divider style="margin-top: 30px"></nz-divider>
+
+<div style="margin-top: 10px; margin-bottom: 250px">
+  <div style="width: 60%; margin: 0 auto">
+    <div style="display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
+      <a href="https://github.com/dromara/hertzbeat" target="_blank">
+        <button nzType="link" nz-button> {{ 'status.public.power-by' | i18n }} </button>
+      </a>
+      <button nzType="primary" nz-button> {{ '历史事件信息' | i18n }} <span nz-icon nzType="right-circle"></span></button>
+    </div>
+  </div>
+</div>
 
 <nz-divider style="margin-top: 60px"></nz-divider>
