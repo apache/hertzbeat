@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "grafana_dashboard")
@@ -17,7 +18,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Grafana dashboard entity | Grafana 仪表盘实体")
-public class Dashboard {
+public class Dashboard implements Serializable {
     @Id
     @Schema(description = "Dashboard id | 仪表盘id")
     private Long id;

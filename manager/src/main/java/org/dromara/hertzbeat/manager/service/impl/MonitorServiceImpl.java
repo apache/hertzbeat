@@ -589,6 +589,10 @@ public class MonitorServiceImpl implements MonitorService {
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(id);
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            //delete grafana dashboard
+            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                dashboardService.deleteDashboard(monitor.getId());
+            }
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
     }
@@ -608,6 +612,10 @@ public class MonitorServiceImpl implements MonitorService {
                 tagService.deleteMonitorSystemTags(monitor);
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                //delete grafana dashboard
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    dashboardService.deleteDashboard(monitor.getId());
+                }
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }

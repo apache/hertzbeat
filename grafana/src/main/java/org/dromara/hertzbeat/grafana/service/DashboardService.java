@@ -6,6 +6,7 @@ import com.dtflys.forest.http.ForestResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.util.JsonUtil;
+import org.dromara.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.dromara.hertzbeat.grafana.dao.DashboardDao;
 import org.dromara.hertzbeat.common.entity.grafana.Dashboard;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DashboardService {
     private final ServiceAccountService serviceAccountService;
+
     private final DashboardDao dashboardDao;
+
+    private final GrafanaConfiguration grafanaConfiguration;
+
+    private static final String CREATE_DASHBOARD_API = "/api/dashboards/db";
+
+    private static final String DELETE_DASHBOARD_API = "/api/dashboards/uid/%s";
 
     /**
      * create dashboard
@@ -23,7 +31,7 @@ public class DashboardService {
      */
     public ForestResponse<?> createDashboard(Object dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
-        ForestRequest<?> request = Forest.post("http://82.157.76.80:3000/api/dashboards/db");
+        ForestRequest<?> request = Forest.post(grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API);
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
                 .addHeader("Authorization", "Bearer "+ token)
@@ -39,6 +47,23 @@ public class DashboardService {
                 })
                 .onError((ex, req, res) -> {
                     log.error("create token error", ex);
+                }).executeAsResponse();
+        return forestResponse;
+    }
+    public ForestResponse<?> deleteDashboard(Long monitorId) {
+        Dashboard dashboard = dashboardDao.findByMonitorId(monitorId);
+        dashboardDao.deleteByMonitorId(monitorId);
+        String token = serviceAccountService.getToken();
+        ForestRequest<?> request = Forest.delete(grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, dashboard.getUid()));
+        ForestResponse<?> forestResponse = request
+                .contentTypeJson()
+                .addHeader("Authorization", "Bearer "+ token)
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    log.info("delete dashboard success");
+                })
+                .onError((ex, req, res) -> {
+                    log.error("delete dashboard error", ex);
                 }).executeAsResponse();
         return forestResponse;
     }

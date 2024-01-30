@@ -14,4 +14,9 @@ public interface DashboardDao extends JpaRepository<Dashboard, Long>, JpaSpecifi
      * @return dashboard
      */
     Dashboard findByMonitorId(Long monitorId);
+    /**
+     * delete by monitor id
+     * @param monitorId monitor id
+     */
+    void deleteByMonitorId(Long monitorId);
 }
