@@ -42,7 +42,7 @@ public class StatusPageComponent {
     private String name;
 
     @Schema(title = "component desc", example = "TanCloud Gateway")
-    private String desc;
+    private String description;
     
     @Schema(title = "component match single tag", example = "{labelName:labelValue}")
     @Convert(converter = JsonTagAttributeConverter.class)
@@ -55,7 +55,7 @@ public class StatusPageComponent {
     private byte configState;
     
     @Schema(title = "component current state: 0-Normal 1-Abnormal 2-unknown", example = "0")
-    private byte currentState;
+    private byte state;
 
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy

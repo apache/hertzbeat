@@ -41,7 +41,7 @@ public class StatusPageOrg {
 
     @Schema(title = "org desc", example = "TanCloud inc")
     @NotBlank
-    private String desc;
+    private String description;
 
     @Schema(title = "org home url", example = "https://tancloud.com")
     @NotBlank
