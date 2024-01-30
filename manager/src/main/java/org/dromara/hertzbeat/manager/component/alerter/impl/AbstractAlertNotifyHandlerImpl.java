@@ -79,6 +79,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (monitorName != null) {
                 model.put("monitorName", monitorName);
             }
+            String monitorHost = alert.getTags().get(CommonConstants.TAG_MONITOR_HOST);
+            if (monitorHost != null) {
+                model.put("monitorHost", monitorHost);
+            }
             String thresholdId = alert.getTags().get(CommonConstants.TAG_THRESHOLD_ID);
             if (thresholdId != null) {
                 model.put("thresholdId", thresholdId);
@@ -88,6 +92,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("status", alert.getStatus());
         model.put("monitorIdLabel", bundle.getString("alerter.notify.monitorId"));
         model.put("monitorNameLabel", bundle.getString("alerter.notify.monitorName"));
+        model.put("monitorHostLabel", bundle.getString("alerter.notify.monitorHost"));
         model.put("target", alert.getTarget());
         model.put("targetLabel", bundle.getString("alerter.notify.target"));
         model.put("priorityLabel", bundle.getString("alerter.notify.priority"));

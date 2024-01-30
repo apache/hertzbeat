@@ -86,6 +86,7 @@ public class NoticeTemplate {
                     "${targetLabel} : ${target}\n" +
                     "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
                     "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
+                    "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n" +
                     "${priorityLabel} : ${priority}\n" +
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
