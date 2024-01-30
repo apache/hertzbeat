@@ -3,7 +3,7 @@ export class StatusPageOrg {
   name!: string;
   // org current state: 0-All Systems Operational 1-Some Systems Abnormal 2-All Systems Abnormal
   state!: number;
-  desc!: string;
+  description!: string;
   home!: string;
   logo!: string;
   feedback!: string;

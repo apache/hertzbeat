@@ -61,18 +61,18 @@
               nzTheme="outline"
               nz-tooltip
               nzTooltipPlacement="right"
-              [nzTooltipTitle]="component.info.desc"
+              [nzTooltipTitle]="component.info.description"
             ></span>
           </div>
-          <div *ngIf="component.info.currentState == 0" style="font-weight: bold">
+          <div *ngIf="component.info.state == 0" style="font-weight: bold">
             <span style="color: green">{{ 'status.component.state.0' | i18n }}</span>
             <span nz-icon style="color: green; margin-left: 4px" nzType="check-circle" nzTheme="outline"></span>
           </div>
-          <div *ngIf="component.info.currentState == 1" style="font-weight: bold">
+          <div *ngIf="component.info.state == 1" style="font-weight: bold">
             <span style="color: red">{{ 'status.component.state.1' | i18n }}</span>
             <span nz-icon style="color: red; margin-left: 4px" nzType="exclamation-circle" nzTheme="outline"></span>
           </div>
-          <div *ngIf="component.info.currentState == 2" style="font-weight: bold">
+          <div *ngIf="component.info.state == 2" style="font-weight: bold">
             <span>{{ 'status.component.state.2' | i18n }}</span>
             <span nz-icon style="margin-left: 4px" nzType="stop" nzTheme="outline"></span>
           </div>
