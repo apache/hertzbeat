@@ -211,12 +211,10 @@ public class MonitorsController {
 	@Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
 	public ResponseEntity<Message<Void>> duplicateMonitors(
 			@Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam List<Long> ids
-	) throws Exception {
+	){
 		if (ids != null && !ids.isEmpty()) {
 			monitorService.copyMonitors(ids);
 		}
 		return ResponseEntity.ok(Message.success("copy success"));
 	}
-
-
 }

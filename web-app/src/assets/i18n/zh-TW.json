@@ -103,16 +103,6 @@
       "unavailable": "不可用",
       "unreachable": "不可達",
       "unmonitored": "未監控"
-    },
-    "grafana": {
-      "enabled":{
-        "label": "啓用Grafana展示",
-        "tip": "啓用後將在監控詳情頁面展示Grafana圖表"
-      },
-      "upload": {
-        "label": "上傳Grafana模版文件",
-        "tip": "上傳grafana模版文件,支持json格式"
-      }
     }
   },
   "alert": {
@@ -624,6 +614,9 @@
   "status.public.org.state.0": "所有系統正常運行",
   "status.public.org.state.1": "部分系統運行異常",
   "status.public.org.state.2": "所有系統運行異常",
+  "status.public.today": "今天",
+  "status.public.30-day": "30天前",
+  "status.public.power-by": "由 HertzBeat 提供構建. Star Us !",
   "status.component": "服務組件",
   "status.component.name": "服務組件",
   "status.component.name.tip": "配置狀態頁展示的組件服務名稱,如網關Gateway",

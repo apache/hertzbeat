@@ -31,7 +31,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.desc"
+            [(ngModel)]="statusOrg.description"
             nz-input
             required
             name="desc"
@@ -96,7 +96,7 @@
         <nz-form-control [nzSpan]="8">
           <input
             [(colorPicker)]="statusOrg.color"
-            cpFallbackColor="#376e69"
+            cpFallbackColor="#e9f3d3"
             cpOutputFormat="hex"
             [style.background]="statusOrg.color"
             style="border-radius: 5px; width: 100%"
@@ -153,13 +153,13 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center">{{ data.name }}</td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.currentState == 0" [nzColor]="'#09b919'">
+        <nz-tag *ngIf="data.state == 0" [nzColor]="'#09b919'">
           {{ 'status.component.state.0' | i18n }}
         </nz-tag>
-        <nz-tag *ngIf="data.currentState == 1" [nzColor]="'#fd4357'">
+        <nz-tag *ngIf="data.state == 1" [nzColor]="'#fd4357'">
           {{ 'status.component.state.1' | i18n }}
         </nz-tag>
-        <nz-tag *ngIf="data.currentState == 2" [nzColor]="'#b2b2b2'">
+        <nz-tag *ngIf="data.state == 2" [nzColor]="'#b2b2b2'">
           {{ 'status.component.state.2' | i18n }}
         </nz-tag>
       </td>
@@ -205,7 +205,7 @@
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
-  nzWidth="40%"
+  nzWidth="55%"
   [nzOkLoading]="currentComponentLoading"
 >
   <div *nzModalContent class="-inner-content">
@@ -228,7 +228,7 @@
         <nz-form-label [nzSpan]="7" nzFor="component-desc">{{ 'status.component.desc' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="currentStatusComponent.desc"
+            [(ngModel)]="currentStatusComponent.description"
             nz-input
             name="component-desc"
             type="text"

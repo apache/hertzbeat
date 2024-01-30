@@ -59,7 +59,7 @@ public class StatusPageServiceImpl implements StatusPageService {
     @Override
     public void newStatusPageComponent(StatusPageComponent statusPageComponent) {
         if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
-            statusPageComponent.setCurrentState(statusPageComponent.getConfigState());
+            statusPageComponent.setState(statusPageComponent.getConfigState());
         }
         statusPageComponentDao.save(statusPageComponent);
     }
@@ -67,7 +67,7 @@ public class StatusPageServiceImpl implements StatusPageService {
     @Override
     public void updateStatusPageComponent(StatusPageComponent statusPageComponent) {
         if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
-            statusPageComponent.setCurrentState(statusPageComponent.getConfigState());
+            statusPageComponent.setState(statusPageComponent.getConfigState());
         }
         statusPageComponentDao.save(statusPageComponent);
     }
@@ -100,7 +100,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
             StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
                     .normal(0).abnormal(0).unknown(0)
-                    .componentId(component.getId()).state(component.getCurrentState()).build();
+                    .componentId(component.getId()).state(component.getState()).build();
             for (StatusPageHistory statusPageHistory : todayStatusPageHistoryList) {
                 if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                     todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
@@ -167,7 +167,7 @@ public class StatusPageServiceImpl implements StatusPageService {
                 .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
         StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
                 .normal(0).abnormal(0).unknown(0)
-                .componentId(component.getId()).state(component.getCurrentState()).build();
+                .componentId(component.getId()).state(component.getState()).build();
         for (StatusPageHistory statusPageHistory : todayStatusPageHistoryList) {
             if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                 todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());

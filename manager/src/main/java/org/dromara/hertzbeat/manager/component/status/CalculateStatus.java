@@ -106,7 +106,7 @@ public class CalculateStatus {
                             }
                         }
                         stateSet.add(state);
-                        component.setCurrentState(state);
+                        component.setState(state);
                         statusPageComponentDao.save(component);
                         // insert component state history
                         StatusPageHistory statusPageHistory = StatusPageHistory.builder()
