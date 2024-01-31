@@ -26,6 +26,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class DashboardController {
     @Autowired
     private DashboardService dashboardService;
+
     @Autowired
     GrafanaConfiguration grafanaConfiguration;
 

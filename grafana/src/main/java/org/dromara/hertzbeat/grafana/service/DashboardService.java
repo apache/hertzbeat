@@ -31,7 +31,8 @@ public class DashboardService {
      */
     public ForestResponse<?> createDashboard(Object dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
-        ForestRequest<?> request = Forest.post(grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API);
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        ForestRequest<?> request = Forest.post(url + CREATE_DASHBOARD_API);
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
                 .addHeader("Authorization", "Bearer "+ token)
@@ -54,7 +55,8 @@ public class DashboardService {
         Dashboard dashboard = dashboardDao.findByMonitorId(monitorId);
         dashboardDao.deleteByMonitorId(monitorId);
         String token = serviceAccountService.getToken();
-        ForestRequest<?> request = Forest.delete(grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, dashboard.getUid()));
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        ForestRequest<?> request = Forest.delete(url + String.format(DELETE_DASHBOARD_API, dashboard.getUid()));
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
                 .addHeader("Authorization", "Bearer "+ token)
