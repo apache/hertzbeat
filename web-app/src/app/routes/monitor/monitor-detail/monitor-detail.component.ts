@@ -41,6 +41,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   whichTabIndex = 0;
   showBasic = true;
   grafanaUrl!: string;
+  isGrafanaUrlAvailable: boolean = false; // 默认为false，表示未获取到URL
 
   ngOnInit(): void {
     this.loadRealTimeMetric();
@@ -132,6 +133,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                 this.port = Number(param.value);
               }
             });
+            this.getGrafanaUrl();
             this.metrics = [];
             this.cdr.detectChanges();
             this.metrics = message.data.metrics;
@@ -186,15 +188,17 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   getGrafanaUrl() {
     this.monitorSvc.getGrafanaDashboardUrl(this.monitor.id).subscribe(
       message => {
-        if (message.code === 0) {
+        if (message.code === 0 && message.msg != null) {
           this.grafanaUrl = message.msg;
-          console.log(this.grafanaUrl);
+          this.isGrafanaUrlAvailable = true; // 成功获取到URL，设置为true
         } else {
           console.warn(message.msg);
+          this.isGrafanaUrlAvailable = false; // 获取失败，设置为false
         }
       },
       error => {
         console.error(error.msg);
+        this.isGrafanaUrlAvailable = false; // 出现错误，设置为false
       }
     );
   }

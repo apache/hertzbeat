@@ -3,6 +3,9 @@ package org.dromara.hertzbeat.grafana.service;
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -12,6 +15,9 @@ import org.dromara.hertzbeat.grafana.dao.ServiceTokenDao;
 import org.dromara.hertzbeat.common.entity.grafana.ServiceAccount;
 import org.dromara.hertzbeat.common.entity.grafana.ServiceToken;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 /**
  * ServiceAccount Service
  * @author zqr10159
@@ -24,14 +30,18 @@ public class ServiceAccountService {
     private static final String ACCOUNT_ROLE = "Admin";
     private static final String ACCOUNT_TOKEN_NAME = "hertzbeat-token";
     private static final String CREATE_SERVICE_ACCOUNT_API = "http://%s:%s@%s/api/serviceaccounts";
-
+    private static final String GET_SERVICE_ACCOUNTS_API = "http://%s:%s@%s/api/serviceaccounts/search";
+    private static final String DELETE_SERVICE_ACCOUNT_API = "http://%s:%s@%s/api/serviceaccounts/%d";
     private static final String CREATE_SERVICE_TOKEN_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
+    private static final String GET_SERVICE_TOKENS_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
 
     private final GrafanaConfiguration grafanaConfiguration;
 
     private final ServiceAccountDao serviceAccountDao;
 
     private final ServiceTokenDao serviceTokenDao;
+
+    private final ObjectMapper objectMapper;
     /**
      * create service admin account
      */
@@ -56,6 +66,26 @@ public class ServiceAccountService {
                 })
                 .onError((ex, req, res) -> {
                     log.error("service account already exists");
+                }).executeAsResponse();
+        return forestResponse;
+    }
+    /**
+     * delete service account
+     */
+    public ForestResponse<?> deleteAccount(Long id) {
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        String username = grafanaConfiguration.getUsername();
+        String password = grafanaConfiguration.getPassword();
+        String post = String.format(DELETE_SERVICE_ACCOUNT_API, username, password, url, id);
+        ForestRequest<?> request = Forest.delete(post);
+        ForestResponse<?> forestResponse = request
+                .addHeader("Content-type", "application/json")
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    log.info("delete service account success");
+                })
+                .onError((ex, req, res) -> {
+                    log.error("delete service account error", ex);
                 }).executeAsResponse();
         return forestResponse;
     }
@@ -90,6 +120,69 @@ public class ServiceAccountService {
             return forestResponse;
         }
     }
+    /**
+     * delete api token
+     */
+    public ForestResponse<?> deleteToken(Long id) {
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        String username = grafanaConfiguration.getUsername();
+        String password = grafanaConfiguration.getPassword();
+        String post = String.format(CREATE_SERVICE_TOKEN_API, username, password, url, id);
+        ForestRequest<?> request = Forest.delete(post);
+        ForestResponse<?> forestResponse = request
+                .addHeader("Content-type", "application/json")
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    log.info("delete token success");
+                })
+                .onError((ex, req, res) -> {
+                    log.error("delete token error", ex);
+                }).executeAsResponse();
+        return forestResponse;
+    }
+    /**
+     * get service accounts
+     */
+    public ForestResponse<?> getAccounts() {
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        String username = grafanaConfiguration.getUsername();
+        String password = grafanaConfiguration.getPassword();
+        String post = String.format(GET_SERVICE_ACCOUNTS_API, username, password, url);
+        ForestRequest<?> request = Forest.get(post);
+        ForestResponse<?> forestResponse = request
+                .addHeader("Content-type", "application/json")
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    log.info("get accounts success");
+                })
+                .onError((ex, req, res) -> {
+                    log.error("get accounts error", ex);
+                }).executeAsResponse();
+        return forestResponse;
+    }
+    /**
+     * get service account tokens
+     */
+    public ForestResponse<?> getTokens() {
+        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        String username = grafanaConfiguration.getUsername();
+        String password = grafanaConfiguration.getPassword();
+        String post = String.format(GET_SERVICE_TOKENS_API, username, password, url, getAccountId());
+        ForestRequest<?> request = Forest.get(post);
+        ForestResponse<?> forestResponse = request
+                .addHeader("Content-type", "application/json")
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .onSuccess((ex, req, res) -> {
+                    log.info("get tokens success");
+                })
+                .onError((ex, req, res) -> {
+                    log.error("get tokens error", ex);
+                }).executeAsResponse();
+        return forestResponse;
+    }
+    /**
+     * get service account token
+     */
     public String getToken() {
         ServiceToken hertzbeatToken = serviceTokenDao.findByName(ACCOUNT_TOKEN_NAME);
         if (hertzbeatToken == null) {
@@ -98,6 +191,9 @@ public class ServiceAccountService {
         }
         return hertzbeatToken.getKey();
     }
+    /**
+     * delete service account tokens
+     */
     public void deleteToken() {
         ServiceToken hertzbeatToken = serviceTokenDao.findByName(ACCOUNT_TOKEN_NAME);
         if (hertzbeatToken == null) {
@@ -106,6 +202,9 @@ public class ServiceAccountService {
         }
         serviceTokenDao.delete(hertzbeatToken);
     }
+    /**
+     * get service account id
+     */
     public long getAccountId() {
         ServiceAccount hertzbeat = serviceAccountDao.findByName(ACCOUNT_NAME);
         if (hertzbeat == null) {
@@ -115,6 +214,9 @@ public class ServiceAccountService {
         log.info("service account: {}", hertzbeat);
         return hertzbeat.getId();
     }
+    /**
+     * get service account
+     */
     public ServiceAccount getAccount() {
         ServiceAccount hertzbeat = serviceAccountDao.findByName(ACCOUNT_NAME);
         if (hertzbeat == null) {
@@ -124,6 +226,9 @@ public class ServiceAccountService {
         log.info("service account: {}", hertzbeat);
         return hertzbeat;
     }
+    /**
+     * delete service account
+     */
     public void deleteAccount() {
         ServiceAccount hertzbeat = serviceAccountDao.findByName(ACCOUNT_NAME);
         if (hertzbeat == null) {
@@ -131,6 +236,17 @@ public class ServiceAccountService {
             throw new RuntimeException("service account not found");
         }
         serviceAccountDao.delete(hertzbeat);
+    }
+    /**
+     * reload service account
+     */
+    public void reload() throws JsonProcessingException {
+        List<JsonNode> idList = objectMapper.readTree(getAccounts().getContent()).path("serviceAccounts").findValues("id");
+        for (JsonNode jsonNode : idList) {
+            deleteAccount(jsonNode.asLong());
+        }
+        serviceAccountDao.truncate();
+        serviceTokenDao.truncate();
     }
 
 

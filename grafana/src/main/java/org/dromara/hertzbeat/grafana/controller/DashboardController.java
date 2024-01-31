@@ -62,7 +62,12 @@ public class DashboardController {
     @Operation(summary = "Get dashboardUrl by monitor id | 根据监控id获取仪表盘Url", description = "Get dashboardUrl by monitor id | 根据监控id获取仪表盘Url")
     @GetMapping("/url")
     public ResponseEntity<Message<?>> getDashboardUrlByMonitorId(@RequestParam Long monitorId) {
-        String suffix = dashboardService.getDashboardByMonitorId(monitorId).getUrl();
+        String suffix;
+        try {
+            suffix = dashboardService.getDashboardByMonitorId(monitorId).getUrl();
+        } catch (NullPointerException e) {
+            return ResponseEntity.ok(Message.success());
+        }
         String url = grafanaConfiguration.getUrl() + suffix + KIOSK;
         return ResponseEntity.ok(Message.success(url));
     }
