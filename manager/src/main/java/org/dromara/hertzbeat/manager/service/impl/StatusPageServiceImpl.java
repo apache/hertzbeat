@@ -233,11 +233,18 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public void newStatusPageIncident(StatusPageIncident statusPageIncident) {
+        statusPageIncident.setStartTime(System.currentTimeMillis());
+        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            statusPageIncident.setEndTime(System.currentTimeMillis());
+        }
         statusPageIncidentDao.save(statusPageIncident);
     }
 
     @Override
     public void updateStatusPageIncident(StatusPageIncident statusPageIncident) {
+        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            statusPageIncident.setEndTime(System.currentTimeMillis());
+        }
         statusPageIncidentDao.save(statusPageIncident);
     }
 

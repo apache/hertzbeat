@@ -15,6 +15,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * status page incident entity
@@ -77,7 +78,7 @@ public class StatusPageIncident {
     private List<StatusPageComponent> components;
     
     @Schema(title = "status page incident content")
-    @OneToMany(targetEntity = StatusPageIncidentContent.class, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(targetEntity = StatusPageIncidentContent.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "incident_id", referencedColumnName = "id")
-    private List<StatusPageIncidentContent> contents;
+    private Set<StatusPageIncidentContent> contents;
 }
