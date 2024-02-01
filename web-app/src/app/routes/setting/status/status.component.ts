@@ -262,6 +262,9 @@ export class StatusComponent implements OnInit {
                 });
               });
             }
+            this.currentStatusIncident.contents.sort((a, b) => {
+              return b.timestamp - a.timestamp;
+            });
           } else {
             this.notifySvc.error(message.msg, '');
           }
@@ -331,7 +334,7 @@ export class StatusComponent implements OnInit {
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('app.setting.status.save.error'), '');
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), '');
         }
       );
     }
@@ -368,10 +371,12 @@ export class StatusComponent implements OnInit {
             this.syncIncidence();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+            this.onIncidentModalCancel();
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), '');
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+          this.onIncidentModalCancel();
         }
       );
     } else {
@@ -382,11 +387,13 @@ export class StatusComponent implements OnInit {
             this.onIncidentModalCancel();
             this.syncIncidence();
           } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), '');
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+            this.onIncidentModalCancel();
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('app.setting.status.save.error'), '');
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+          this.onIncidentModalCancel();
         }
       );
     }
@@ -480,10 +487,6 @@ export class StatusComponent implements OnInit {
     );
   }
 
-  routerToPublicStatusPage(): void {
-    window.open('/status', '_blank');
-  }
-
   getLatestIncidentContentMsg(incidents: StatusPageIncidentContent[]): string {
     if (incidents == undefined || incidents.length == 0) {
       return '';
@@ -495,6 +498,17 @@ export class StatusComponent implements OnInit {
       }
     });
     return latestContent.message;
+  }
+
+  sliceStringLength(message: string, maxLength: number): string {
+    if (message == undefined || message.trim() == '') {
+      return '';
+    }
+    if (message.length > maxLength) {
+      return `${message.slice(0, maxLength)}...`;
+    } else {
+      return message;
+    }
   }
 
   sliceTagName(tag: TagItem): string {

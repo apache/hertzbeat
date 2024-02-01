@@ -13,6 +13,7 @@ import org.dromara.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.dromara.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -223,7 +224,8 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public List<StatusPageIncident> queryStatusPageIncidents() {
-        return statusPageIncidentDao.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "startTime");
+        return statusPageIncidentDao.findAll(sort);
     }
 
     @Override
