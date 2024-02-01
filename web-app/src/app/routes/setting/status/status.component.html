@@ -455,6 +455,7 @@
             </label>
             <label nz-radio-button [nzValue]="3">
               {{ 'status.incident.state.3' | i18n }}
+              <span nz-icon nzType="poweroff" nzTheme="outline"></span>
             </label>
           </nz-radio-group>
         </nz-form-control>
@@ -469,7 +470,7 @@
             name="incident-message"
             type="text"
             id="incident-message"
-            [placeholder]="'status.incident.message.tip.' + currentIncidentContent.state | i18n"
+            [placeholder]="'status.incident.message.tip.' + currentStatusIncident.state | i18n"
             rows="2"
           ></textarea>
         </nz-form-control>
