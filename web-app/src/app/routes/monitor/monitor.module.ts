@@ -19,6 +19,7 @@ import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
 import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 import { MonitorRoutingModule } from './monitor-routing.module';
+import {SafePipe} from "../SafePipe";
 
 const COMPONENTS: Array<Type<void>> = [
   MonitorNewComponent,
@@ -30,21 +31,22 @@ const COMPONENTS: Array<Type<void>> = [
 ];
 
 @NgModule({
-  imports: [
-    SharedModule,
-    MonitorRoutingModule,
-    NzBreadCrumbModule,
-    NzDividerModule,
-    NzSwitchModule,
-    NzTagModule,
-    NzRadioModule,
-    NgxEchartsModule,
-    NzLayoutModule,
-    NzSpaceModule,
-    NzCollapseModule,
-    ClipboardModule,
-    NzUploadModule
-  ],
+    imports: [
+        SharedModule,
+        MonitorRoutingModule,
+        NzBreadCrumbModule,
+        NzDividerModule,
+        NzSwitchModule,
+        NzTagModule,
+        NzRadioModule,
+        NgxEchartsModule,
+        NzLayoutModule,
+        NzSpaceModule,
+        NzCollapseModule,
+        ClipboardModule,
+        NzUploadModule,
+        SafePipe
+    ],
   declarations: COMPONENTS
 })
 export class MonitorModule {}

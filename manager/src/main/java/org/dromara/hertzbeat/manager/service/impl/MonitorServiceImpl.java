@@ -34,6 +34,7 @@ import org.dromara.hertzbeat.common.entity.manager.Tag;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.dromara.hertzbeat.common.util.*;
+import org.dromara.hertzbeat.grafana.service.DashboardService;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.dromara.hertzbeat.manager.dao.MonitorDao;
@@ -118,6 +119,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
@@ -204,6 +208,12 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setJobId(jobId);
             monitor.setStatus(CommonConstants.AVAILABLE_CODE);
             monitorDao.save(monitor);
+            // if monitor type is prometheus ,create grafana dashboard
+            if (CommonConstants.PROMETHEUS.equals(monitor.getApp()) && monitor.getGrafana().isEnabled()) {
+                String template = monitor.getGrafana().getTemplate();
+                Object dashboard = JsonUtil.fromJson(template, Object.class);
+                dashboardService.createDashboard(dashboard, monitorId);
+            }
             paramDao.saveAll(params);
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
@@ -579,6 +589,10 @@ public class MonitorServiceImpl implements MonitorService {
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(id);
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            //delete grafana dashboard
+            if (CommonConstants.PROMETHEUS.equals(monitor.getApp()) && dashboardService.getDashboardByMonitorId(monitor.getId()) != null) {
+                dashboardService.deleteDashboard(monitor.getId());
+            }
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
     }
@@ -598,6 +612,10 @@ public class MonitorServiceImpl implements MonitorService {
                 tagService.deleteMonitorSystemTags(monitor);
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                //delete grafana dashboard
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp()) && dashboardService.getDashboardByMonitorId(monitor.getId()) != null) {
+                    dashboardService.deleteDashboard(monitor.getId());
+                }
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }
