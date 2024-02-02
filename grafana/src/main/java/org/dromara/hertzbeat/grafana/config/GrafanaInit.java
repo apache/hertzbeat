@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.grafana.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.hertzbeat.grafana.service.DatasourceService;
 import org.dromara.hertzbeat.grafana.service.ServiceAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -12,6 +13,8 @@ public class GrafanaInit implements CommandLineRunner {
     private GrafanaConfiguration grafanaConfiguration;
     @Autowired
     private ServiceAccountService serviceAccountService;
+    @Autowired
+    private DatasourceService datasourceService;
     //1.判断配置是否填写完整
     //2.判断是否有账号，没有则创建且保证账号唯一
     //2.判断是否有token，没有则创建且保证账号唯一
@@ -31,6 +34,8 @@ public class GrafanaInit implements CommandLineRunner {
                 log.info("service token is not exist, create service token");
                 serviceAccountService.createToken();
             }
+            datasourceService.deleteDatasource();
+            datasourceService.createDatasource();
         }
     }
 

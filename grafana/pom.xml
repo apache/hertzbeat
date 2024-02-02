@@ -20,7 +20,11 @@
         <dependency>
             <groupId>org.dromara.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
-            <version>1.0</version>
+        </dependency>
+        <!-- hertzbeat warehouse -->
+        <dependency>
+            <groupId>org.dromara.hertzbeat</groupId>
+            <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
         <!-- jpa -->
         <dependency>
