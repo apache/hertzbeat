@@ -6,6 +6,7 @@ import com.dtflys.forest.http.ForestResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.util.JsonUtil;
@@ -14,8 +15,10 @@ import org.dromara.hertzbeat.grafana.dao.ServiceAccountDao;
 import org.dromara.hertzbeat.grafana.dao.ServiceTokenDao;
 import org.dromara.hertzbeat.common.entity.grafana.ServiceAccount;
 import org.dromara.hertzbeat.common.entity.grafana.ServiceToken;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 /**
@@ -24,7 +27,6 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class ServiceAccountService {
     private static final String ACCOUNT_NAME = "hertzbeat";
     private static final String ACCOUNT_ROLE = "Admin";
@@ -34,21 +36,44 @@ public class ServiceAccountService {
     private static final String DELETE_SERVICE_ACCOUNT_API = "http://%s:%s@%s/api/serviceaccounts/%d";
     private static final String CREATE_SERVICE_TOKEN_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
     private static final String GET_SERVICE_TOKENS_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
-
     private final GrafanaConfiguration grafanaConfiguration;
-
     private final ServiceAccountDao serviceAccountDao;
-
     private final ServiceTokenDao serviceTokenDao;
-
     private final ObjectMapper objectMapper;
+    private String url;
+    private String username;
+    private String password;
+    private String token;
+
+    @Autowired
+    public ServiceAccountService(
+            GrafanaConfiguration grafanaConfiguration,
+            ServiceAccountDao serviceAccountDao,
+            ServiceTokenDao serviceTokenDao,
+            ObjectMapper objectMapper
+    ) {
+        this.grafanaConfiguration = grafanaConfiguration;
+        this.serviceAccountDao = serviceAccountDao;
+        this.serviceTokenDao = serviceTokenDao;
+        this.objectMapper = objectMapper;
+    }
+    @PostConstruct
+    public void init() {
+        this.url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        this.username = grafanaConfiguration.getUsername();
+        this.password = grafanaConfiguration.getPassword();
+        ServiceToken serviceToken = serviceTokenDao.findByName(ACCOUNT_TOKEN_NAME);
+        if (serviceToken != null) {
+            this.token = serviceToken.getKey();
+        } else {
+            log.error("Service token {} not found", ACCOUNT_TOKEN_NAME);
+        }
+    }
+
     /**
      * create service admin account
      */
     public ForestResponse<?> createServiceAccount() {
-        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        String username = grafanaConfiguration.getUsername();
-        String password = grafanaConfiguration.getPassword();
         String post = String.format(CREATE_SERVICE_ACCOUNT_API, username, password, url);
         ForestRequest<?> request = Forest.post(post);
         ForestResponse<?> forestResponse = request
@@ -73,9 +98,6 @@ public class ServiceAccountService {
      * delete service account
      */
     public ForestResponse<?> deleteAccount(Long id) {
-        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        String username = grafanaConfiguration.getUsername();
-        String password = grafanaConfiguration.getPassword();
         String post = String.format(DELETE_SERVICE_ACCOUNT_API, username, password, url, id);
         ForestRequest<?> request = Forest.delete(post);
         ForestResponse<?> forestResponse = request
@@ -98,9 +120,6 @@ public class ServiceAccountService {
             log.error("service account not found");
             throw new RuntimeException("service account not found");
         }else {
-            String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-            String username = grafanaConfiguration.getUsername();
-            String password = grafanaConfiguration.getPassword();
             String post = String.format(CREATE_SERVICE_TOKEN_API, username, password, url, hertzbeat.getId());
             ForestRequest<?> request = Forest.post(post);
             ForestResponse<?> forestResponse = request
@@ -124,9 +143,6 @@ public class ServiceAccountService {
      * delete api token
      */
     public ForestResponse<?> deleteToken(Long id) {
-        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        String username = grafanaConfiguration.getUsername();
-        String password = grafanaConfiguration.getPassword();
         String post = String.format(CREATE_SERVICE_TOKEN_API, username, password, url, id);
         ForestRequest<?> request = Forest.delete(post);
         ForestResponse<?> forestResponse = request
@@ -144,9 +160,6 @@ public class ServiceAccountService {
      * get service accounts
      */
     public ForestResponse<?> getAccounts() {
-        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        String username = grafanaConfiguration.getUsername();
-        String password = grafanaConfiguration.getPassword();
         String post = String.format(GET_SERVICE_ACCOUNTS_API, username, password, url);
         ForestRequest<?> request = Forest.get(post);
         ForestResponse<?> forestResponse = request
@@ -164,9 +177,6 @@ public class ServiceAccountService {
      * get service account tokens
      */
     public ForestResponse<?> getTokens() {
-        String url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        String username = grafanaConfiguration.getUsername();
-        String password = grafanaConfiguration.getPassword();
         String post = String.format(GET_SERVICE_TOKENS_API, username, password, url, getAccountId());
         ForestRequest<?> request = Forest.get(post);
         ForestResponse<?> forestResponse = request

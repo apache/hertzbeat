@@ -9,17 +9,18 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 import org.dromara.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.dromara.hertzbeat.grafana.dao.DashboardDao;
 import org.dromara.hertzbeat.common.entity.grafana.Dashboard;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DashboardService {
-    private final ServiceAccountService serviceAccountService;
-
-    private final DashboardDao dashboardDao;
-
-    private final GrafanaConfiguration grafanaConfiguration;
+    @Autowired
+    private ServiceAccountService serviceAccountService;
+    @Autowired
+    private DashboardDao dashboardDao;
+    @Autowired
+    private GrafanaConfiguration grafanaConfiguration;
 
     private static final String CREATE_DASHBOARD_API = "/api/dashboards/db";
 
