@@ -617,6 +617,8 @@
   "status.public.today": "今天",
   "status.public.30-day": "30天前",
   "status.public.power-by": "由 HertzBeat 提供構建. Star Us !",
+  "status.public.to-incident": "事件信息",
+  "status.public.to-component": "狀態頁面",
   "status.incident": "維護事件",
   "status.incident.name": "事件名稱",
   "status.incident.name.tip": "請簡短說明當前事件標題",

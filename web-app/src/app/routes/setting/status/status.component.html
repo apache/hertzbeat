@@ -441,6 +441,7 @@
                   {{ content.message }}
                 </nz-list-item>
                 <nz-list-item>
+                  <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
                   <nz-tag *ngIf="content.state == 0" [nzColor]="'#ff2f2f'">
                     {{ 'status.incident.state.0' | i18n }}
                   </nz-tag>
@@ -453,7 +454,6 @@
                   <nz-tag *ngIf="content.state == 3" [nzColor]="'#34be8f'">
                     {{ 'status.incident.state.3' | i18n }}
                   </nz-tag>
-                  <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
                 </nz-list-item>
               </nz-list>
               <ng-template #panelHeader>

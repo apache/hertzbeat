@@ -619,6 +619,8 @@
   "status.public.today": "Today",
   "status.public.30-day": "30 days ago",
   "status.public.power-by": "Power by HertzBeat. Star Us !",
+  "status.public.to-incident": "Incident History",
+  "status.public.to-component": "Status Page",
   "status.incident": "Incident",
   "status.incident.name": "Incident Name",
   "status.incident.name.tip": "Please briefly describe the current incident title",
