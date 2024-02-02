@@ -147,32 +147,64 @@
       </div>
     </div>
     <div style="margin-top: 50px">
-      <div *ngFor="let incident of incidentStatus" class="component-status">
-        <div style="margin: 10px; display: flex; justify-content: space-between">
-          <div style="font-weight: bold; font-size: large">
-            <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ incident.name }}</span>
-            <span *ngIf="incident.state == 1" style="color: #e56c23">{{ incident.name }}</span>
-            <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ incident.name }}</span>
-            <span *ngIf="incident.state == 3" style="color: #34be8f">{{ incident.name }}</span>
-          </div>
-          <div style="font-weight: bold">
-            <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-            <span *ngIf="incident.state == 1" style="color: #e56c23">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-            <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-            <span *ngIf="incident.state == 3" style="color: #34be8f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-          </div>
-        </div>
-        <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">
-          {{ getLatestIncidentContentMsg(incident.contents) }}
-        </div>
-        <div style="margin: 10px; display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
-          <span>{{ 'status.incident.public.update-at' | i18n }} {{ incident.endTime || incident.startTime | date }}</span>
-          <span
-            >--- {{ 'status.incident.public.process-time' | i18n }} {{ getProcessTimeStr(incident.startTime, incident.endTime) }}---</span
+      <nz-collapse style="width: 60%; margin: 10px auto" nzGhost>
+        <nz-collapse-panel *ngFor="let incident of incidentStatus" [nzHeader]="incidentHeader" nzShowArrow="false">
+          <div
+            *ngFor="let content of incident.contents"
+            style="border: 1px dotted green; border-radius: 3px; margin-bottom: 4px; background: #f8f6f3"
           >
-          <span>{{ 'status.incident.public.start-at' | i18n }} {{ incident.startTime || incident.endTime | date }}</span>
-        </div>
-      </div>
+            <nz-list nzSize="small" nzSplit="false">
+              <nz-list-item style="font-size: medium">
+                {{ content.message }}
+              </nz-list-item>
+              <nz-list-item>
+                <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
+                <nz-tag *ngIf="content.state == 0" [nzColor]="'#ff2f2f'">
+                  {{ 'status.incident.state.0' | i18n }}
+                </nz-tag>
+                <nz-tag *ngIf="content.state == 1" [nzColor]="'#e56c23'">
+                  {{ 'status.incident.state.1' | i18n }}
+                </nz-tag>
+                <nz-tag *ngIf="content.state == 2" [nzColor]="'#19a7e7'">
+                  {{ 'status.incident.state.2' | i18n }}
+                </nz-tag>
+                <nz-tag *ngIf="content.state == 3" [nzColor]="'#34be8f'">
+                  {{ 'status.incident.state.3' | i18n }}
+                </nz-tag>
+              </nz-list-item>
+            </nz-list>
+          </div>
+          <ng-template #incidentHeader>
+            <div style="width: 100%; border: 1px dotted gray; border-radius: 3px">
+              <div style="margin: 10px; display: flex; justify-content: space-between">
+                <div style="font-weight: bold; font-size: large">
+                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ incident.name }}</span>
+                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ incident.name }}</span>
+                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ incident.name }}</span>
+                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ incident.name }}</span>
+                </div>
+                <div style="font-weight: bold">
+                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                </div>
+              </div>
+              <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">
+                {{ getLatestIncidentContentMsg(incident.contents) }}
+              </div>
+              <div style="margin: 10px; display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
+                <span>{{ 'status.incident.public.update-at' | i18n }} {{ incident.endTime || incident.startTime | date }}</span>
+                <span
+                  >--- {{ 'status.incident.public.process-time' | i18n }}
+                  {{ getProcessTimeStr(incident.startTime, incident.endTime) }}---</span
+                >
+                <span>{{ 'status.incident.public.start-at' | i18n }} {{ incident.startTime || incident.endTime | date }}</span>
+              </div>
+            </div>
+          </ng-template>
+        </nz-collapse-panel>
+      </nz-collapse>
     </div>
   </div>
 </nz-spin>
