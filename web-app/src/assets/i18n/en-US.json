@@ -643,7 +643,7 @@
   "status.incident.public.start-at": "Start at",
   "status.incident.public.update-at": "Update at",
   "status.incident.public.process-time": "Process time",
-  "status.component": "Service Component",
+  "status.component": "Component",
   "status.component.name": "Service Component",
   "status.component.name.tip": "Config component service displayed name, such as Gateway",
   "status.component.desc": "Component Description",
