@@ -127,7 +127,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), instance-if is metrics unique identifier
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-if is metrics label
       - field: name
         type: 1
       - field: descr

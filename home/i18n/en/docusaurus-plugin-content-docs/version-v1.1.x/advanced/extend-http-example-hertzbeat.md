@@ -139,7 +139,7 @@ metrics:
    - name: summary
      priority: 0
      fields:
-       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
+       # metric information includes field name type field type: 0-number, 1-string , label-if is metrics label,  unit: metric unit
        - field: responseTime
          type: 0
          unit: ms

@@ -122,7 +122,7 @@ metrics:
     priority: 0
     # 具体监控指标列表
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: hostname
         type: 1
         label: true
@@ -147,7 +147,7 @@ metrics:
   - name: cpu
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: info
         type: 1
       - field: cores
@@ -177,7 +177,7 @@ metrics:
   - name: memory
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: total
         type: 0
         unit: Mb
