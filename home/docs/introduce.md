@@ -5,7 +5,7 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> An open-source, real-time monitoring system with custom-monitoring, performance-cluster, prometheus-compatible and agentless.
+> An easy-to-use, open-source real-time monitoring and alerting system with agentless, high-performance, prometheus-compatible, and offers powerful custom monitoring and status page building capabilities.
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)

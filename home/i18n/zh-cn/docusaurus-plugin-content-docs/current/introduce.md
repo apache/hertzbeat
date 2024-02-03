@@ -5,7 +5,7 @@ sidebar_label: 介绍
 slug: /
 ---
 
-> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控能力。
+> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控功能，还有状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)

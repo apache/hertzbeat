@@ -8,7 +8,8 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open-source, real-time monitoring system with custom-monitoring, performance-cluster, prometheus-compatible and agentless. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控能力.   
+> An easy-to-use, open-source real-time monitoring and alerting system with agentless, high-performance, prometheus-compatible, and offers powerful custom monitoring and status page building capabilities.    
+> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控功能，还有状态页构建能力.
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
