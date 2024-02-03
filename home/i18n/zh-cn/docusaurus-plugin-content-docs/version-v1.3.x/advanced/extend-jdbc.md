@@ -124,7 +124,7 @@ metrics:
     priority: 0
     # 具体监控指标列表
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: version
         type: 1
         instance: true
@@ -168,7 +168,7 @@ metrics:
   - name: status
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: threads_created
         type: 0
       - field: threads_connected
@@ -209,7 +209,7 @@ metrics:
   - name: innodb
     priority: 2
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
       - field: innodb_data_reads
         type: 0
         unit: 次数
