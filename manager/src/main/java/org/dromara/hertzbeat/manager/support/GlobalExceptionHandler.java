@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Objects;
 
 import static org.dromara.hertzbeat.common.constants.CommonConstants.*;
@@ -165,6 +166,34 @@ public class GlobalExceptionHandler {
         if (log.isDebugEnabled()) {
             log.debug("[input argument not valid happen]-{}", errorMsg, e);
         }
+        Message<Void> message = Message.fail(PARAM_INVALID_CODE, errorMsg);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    /**
+     * handler the exception thrown for data input verify
+     * valid注解校验框架校验异常统一处理
+     *
+     * @param e data input verify exception
+     * @return response
+     */
+    @ExceptionHandler({ConstraintViolationException.class})
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleInputOtherValidException(ConstraintViolationException e) {
+        StringBuffer errorMessage = new StringBuffer();
+        e.getConstraintViolations().forEach(error -> {
+            try {
+                String field = error.getPropertyPath().toString();
+                errorMessage.append(field).append(":").append(error.getMessage()).append(CONNECT_STR);
+            } catch (Exception e1) {
+                errorMessage.append(error.getMessage()).append(CONNECT_STR);
+            }
+        });
+        String errorMsg = errorMessage.toString();
+        if (errorMsg.endsWith(CONNECT_STR)) {
+            errorMsg = errorMsg.substring(0, errorMsg.length() - 2);
+        }
+        log.warn("[input argument not valid happen]-{}", errorMsg);
         Message<Void> message = Message.fail(PARAM_INVALID_CODE, errorMsg);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }

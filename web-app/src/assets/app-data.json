@@ -160,6 +160,12 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "status",
+          "i18n": "menu.extras.status",
+          "icon": "anticon-mobile",
+          "link": "/setting/status"
+        },
+        {
           "text": "collector",
           "i18n": "menu.extras.collector",
           "icon": "anticon-cluster",
@@ -178,12 +184,6 @@
           "link": "/setting/define",
           "badgeDot": true,
           "badge": 1
-        },
-        {
-          "text": "status",
-          "i18n": "menu.extras.status",
-          "icon": "anticon-mobile",
-          "link": "/setting/status"
         },
         {
           "text": "settings",
