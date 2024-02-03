@@ -4,7 +4,8 @@ title: Use Time Series Database IoTDB to Store Metrics Data (Optional)
 sidebar_label: Use IoTDB Store Metrics 
 ---
 
-HertzBeat's historical data storage relies on the time series database IoTDB or TDengine, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
+HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+We recommend VictoriaMetrics for long term support.
 
 Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.  
 
