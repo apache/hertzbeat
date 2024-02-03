@@ -664,7 +664,7 @@
   "status.component.state.1": "Abnormal",
   "status.component.state.2": "Unknown",
   "status.component.notify.need-org": "Please config your organization information first!",
-  "status.help": "Does your team need to provide a system service status page to the outside world so that users can know the service status at any time, such as the service status page <a href='https://www.githubstatus.com'>https://www.githubstatus.com</a>. <br>Simply configure the team service information etc. that need to be displayed externally on the HertzBeat status page, and you can automatically build your status page using the monitors status data monitored by the system. ",
+  "status.help": "Quickly build a powerful status page based on HertzBeat to easily communicate the real-time status of your services to users. For example, the status page provided by Github <a href='https://www.githubstatus.com'> https://www.githubstatus.com</a>. <br>Supports linkage and synchronization of status page component status and monitoring status, fault event maintenance and management mechanism, etc. Improve your transparency, professionalism and user trust, and reduce communication costs." ,
   "status.help.link": "https://hertzbeat.com/docs/help/status",
   "validation.email.required": "Please enter your email!",
   "validation.email.wrong-format": "The email address is in the wrong format!",
