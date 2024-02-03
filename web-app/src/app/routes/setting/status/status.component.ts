@@ -9,6 +9,8 @@ import { switchMap } from 'rxjs';
 import { Message } from '../../../pojo/Message';
 import { TagItem } from '../../../pojo/NoticeRule';
 import { StatusPageComponent } from '../../../pojo/StatusPageComponent';
+import { StatusPageIncident } from '../../../pojo/StatusPageIncident';
+import { StatusPageIncidentContent } from '../../../pojo/StatusPageIncidentContent';
 import { StatusPageOrg } from '../../../pojo/StatusPageOrg';
 import { StatusPageService } from '../../../service/status-page.service';
 import { TagService } from '../../../service/tag.service';
@@ -29,11 +31,21 @@ export class StatusComponent implements OnInit {
 
   statusOrg: StatusPageOrg = new StatusPageOrg();
   statusComponents!: StatusPageComponent[];
+  statusIncidences!: StatusPageIncident[];
   loading: boolean = false;
+  orgLoading: boolean = false;
+  componentLoading: boolean = false;
+  incidentLoading: boolean = false;
   currentStatusComponent!: StatusPageComponent;
   currentComponentLoading: boolean = false;
   currentComponentVisible: boolean = false;
-  isManageModalAdd: boolean = true;
+  isComponentModalAdd: boolean = true;
+  currentStatusIncident!: StatusPageIncident;
+  currentIncidentContent!: StatusPageIncidentContent;
+  currentIncidentLoading: boolean = false;
+  currentIncidentVisible: boolean = false;
+  currentIncidentComponentOptions!: any[];
+  isIncidentModalAdd: boolean = true;
 
   search!: string;
   tagsOption: any[] = [];
@@ -43,12 +55,73 @@ export class StatusComponent implements OnInit {
     this.loadStatusPageConfig();
   }
 
-  sync() {
-    this.loadStatusPageConfig();
+  syncComponent() {
+    this.loadComponentInfo();
+  }
+
+  syncIncidence() {
+    this.loadIncidenceInfo();
+  }
+
+  loadOrgInfo() {
+    this.orgLoading = true;
+    let orgLoad$ = this.statusPageService.getStatusPageOrg().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.statusOrg = message.data;
+        } else {
+          console.log(message.msg);
+        }
+        this.orgLoading = false;
+        orgLoad$.unsubscribe();
+      },
+      error => {
+        this.orgLoading = false;
+        orgLoad$.unsubscribe();
+      }
+    );
+  }
+
+  loadComponentInfo() {
+    this.currentComponentLoading = true;
+    let componentLoad$ = this.statusPageService.getStatusPageComponents().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.statusComponents = message.data;
+        } else {
+          console.log(message.msg);
+        }
+        this.currentComponentLoading = false;
+        componentLoad$.unsubscribe();
+      },
+      error => {
+        this.currentComponentLoading = false;
+        componentLoad$.unsubscribe();
+      }
+    );
+  }
+
+  loadIncidenceInfo() {
+    this.incidentLoading = true;
+    let incidenceLoad$ = this.statusPageService.getStatusPageIncidents().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.statusIncidences = message.data;
+        } else {
+          console.log(message.msg);
+        }
+        this.incidentLoading = false;
+        incidenceLoad$.unsubscribe();
+      },
+      error => {
+        this.incidentLoading = false;
+        incidenceLoad$.unsubscribe();
+      }
+    );
   }
 
   loadStatusPageConfig() {
-    this.loading = true;
+    this.orgLoading = true;
     let loadInit$ = this.statusPageService
       .getStatusPageOrg()
       .pipe(
@@ -65,11 +138,11 @@ export class StatusComponent implements OnInit {
       .subscribe(
         (message: Message<StatusPageComponent[]>) => {
           this.statusComponents = message.data;
-          this.loading = false;
+          this.orgLoading = false;
           loadInit$.unsubscribe();
         },
         error => {
-          this.loading = false;
+          this.orgLoading = false;
           loadInit$.unsubscribe();
         }
       );
@@ -103,14 +176,45 @@ export class StatusComponent implements OnInit {
   }
 
   onNewStatusComponent() {
-    this.isManageModalAdd = true;
+    this.isComponentModalAdd = true;
     this.currentStatusComponent = new StatusPageComponent();
     this.matchTag = '';
     this.currentComponentVisible = true;
   }
 
+  onNewStatusIncident() {
+    this.isIncidentModalAdd = true;
+    this.currentStatusIncident = new StatusPageIncident();
+    this.currentIncidentContent = new StatusPageIncidentContent();
+    let componentLoad$ = this.statusPageService.getStatusPageComponents().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.currentIncidentComponentOptions = [];
+          message.data.forEach(item => {
+            this.currentIncidentComponentOptions.push({
+              value: item,
+              label: item.name,
+              checked: false
+            });
+          });
+          this.statusComponents = message.data;
+        } else {
+          console.log(message.msg);
+          this.notifySvc.error(message.msg, '');
+        }
+        this.currentIncidentVisible = true;
+        componentLoad$.unsubscribe();
+      },
+      error => {
+        this.currentIncidentVisible = true;
+        this.notifySvc.error(error.msg, '');
+        componentLoad$.unsubscribe();
+      }
+    );
+  }
+
   onEditOneComponent(data: StatusPageComponent) {
-    this.isManageModalAdd = false;
+    this.isComponentModalAdd = false;
     this.currentStatusComponent = data;
     if (this.currentStatusComponent.tag != undefined) {
       this.matchTag = this.sliceTagName(this.currentStatusComponent.tag);
@@ -122,13 +226,71 @@ export class StatusComponent implements OnInit {
     this.currentComponentVisible = true;
   }
 
-  onManageModalCancel() {
-    this.isManageModalAdd = true;
+  onUpdateOneIncident(incidentId: number) {
+    this.isIncidentModalAdd = false;
+    this.currentIncidentContent = new StatusPageIncidentContent();
+    let loadIncident$ = this.statusPageService
+      .getStatusPageComponents()
+      .pipe(
+        switchMap((message: Message<StatusPageComponent[]>) => {
+          if (message.code === 0) {
+            this.currentIncidentComponentOptions = [];
+            message.data.forEach(item => {
+              this.currentIncidentComponentOptions.push({
+                value: item,
+                label: item.name,
+                checked: false
+              });
+            });
+          } else {
+            console.log(message.msg);
+            this.notifySvc.error(message.msg, '');
+          }
+          return this.statusPageService.getStatusPageIncident(incidentId);
+        })
+      )
+      .subscribe(
+        (message: Message<StatusPageIncident>) => {
+          if (message.code === 0) {
+            this.currentStatusIncident = message.data;
+            if (this.currentStatusIncident.components != undefined) {
+              this.currentStatusIncident.components.forEach(item => {
+                this.currentIncidentComponentOptions.forEach(option => {
+                  if (option.value.id == item.id) {
+                    option.checked = true;
+                  }
+                });
+              });
+            }
+            this.currentStatusIncident.contents.sort((a, b) => {
+              return b.timestamp - a.timestamp;
+            });
+          } else {
+            this.notifySvc.error(message.msg, '');
+          }
+          this.currentIncidentVisible = true;
+          loadIncident$.unsubscribe();
+        },
+        error => {
+          this.orgLoading = false;
+          loadIncident$.unsubscribe();
+        }
+      );
+  }
+
+  onComponentModalCancel() {
+    this.isComponentModalAdd = true;
     this.currentStatusComponent = new StatusPageComponent();
     this.currentComponentVisible = false;
   }
 
-  onManageModalOk() {
+  onIncidentModalCancel() {
+    this.isIncidentModalAdd = true;
+    this.currentStatusIncident = new StatusPageIncident();
+    this.currentIncidentVisible = false;
+  }
+
+  onComponentModalOk() {
     if (this.matchTag != undefined && this.matchTag.trim() != '') {
       let tmp: string[] = this.matchTag.split(':');
       let tagItem = new TagItem();
@@ -145,12 +307,13 @@ export class StatusComponent implements OnInit {
       return;
     }
     this.currentStatusComponent.orgId = this.statusOrg.id;
-    if (this.isManageModalAdd) {
+    if (this.isComponentModalAdd) {
       this.statusPageService.newStatusPageComponent(this.currentStatusComponent).subscribe(
         (message: Message<void>) => {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-            this.sync();
+            this.onComponentModalCancel();
+            this.syncComponent();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
           }
@@ -164,17 +327,76 @@ export class StatusComponent implements OnInit {
         (message: Message<void>) => {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-            this.sync();
+            this.onComponentModalCancel();
+            this.syncComponent();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), '');
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('app.setting.status.save.error'), '');
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), '');
         }
       );
     }
-    this.onManageModalCancel();
+  }
+
+  onIncidentModalOk() {
+    if (this.statusOrg.id == undefined) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('status.component.notify.need-org'), '');
+      return;
+    }
+    // incident message content
+    if (this.currentStatusIncident.contents == undefined) {
+      this.currentStatusIncident.contents = [];
+    }
+    this.currentIncidentContent.timestamp = new Date().getTime();
+    this.currentIncidentContent.state = this.currentStatusIncident.state;
+    this.currentIncidentContent.incidentId = this.currentStatusIncident.id;
+    this.currentStatusIncident.contents.push(this.currentIncidentContent);
+    // components check options
+    let components: StatusPageComponent[] = [];
+    this.currentIncidentComponentOptions.forEach(item => {
+      if (item.checked) {
+        components.push(item.value);
+      }
+    });
+    this.currentStatusIncident.components = components;
+    this.currentStatusIncident.orgId = this.statusOrg.id;
+    if (this.isIncidentModalAdd) {
+      this.statusPageService.newStatusPageIncident(this.currentStatusIncident).subscribe(
+        (message: Message<void>) => {
+          if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
+            this.onIncidentModalCancel();
+            this.syncIncidence();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+            this.onIncidentModalCancel();
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), error.msg);
+          this.onIncidentModalCancel();
+        }
+      );
+    } else {
+      this.statusPageService.editStatusPageIncident(this.currentStatusIncident).subscribe(
+        (message: Message<void>) => {
+          if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+            this.onIncidentModalCancel();
+            this.syncIncidence();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+            this.onIncidentModalCancel();
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+          this.onIncidentModalCancel();
+        }
+      );
+    }
   }
 
   deleteStatusComponent(id: number) {
@@ -182,7 +404,7 @@ export class StatusComponent implements OnInit {
       (message: Message<void>) => {
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.sync();
+          this.syncComponent();
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
         }
@@ -191,7 +413,24 @@ export class StatusComponent implements OnInit {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), '');
       }
     );
-    this.onManageModalCancel();
+    this.onComponentModalCancel();
+  }
+
+  deleteStatusIncident(id: number) {
+    this.statusPageService.deleteStatusPageIncident(id).subscribe(
+      (message: Message<void>) => {
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.syncIncidence();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), '');
+      }
+    );
+    this.onIncidentModalCancel();
   }
 
   onDeleteOneComponent(id: number) {
@@ -203,6 +442,18 @@ export class StatusComponent implements OnInit {
       nzOkType: 'primary',
       nzClosable: false,
       nzOnOk: () => this.deleteStatusComponent(id)
+    });
+  }
+
+  onDeleteOneIncident(id: number) {
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzClosable: false,
+      nzOnOk: () => this.deleteStatusIncident(id)
     });
   }
 
@@ -234,6 +485,30 @@ export class StatusComponent implements OnInit {
         console.error(error.msg);
       }
     );
+  }
+
+  getLatestIncidentContentMsg(incidents: StatusPageIncidentContent[]): string {
+    if (incidents == undefined || incidents.length == 0) {
+      return '';
+    }
+    let latestContent: StatusPageIncidentContent = incidents[0];
+    incidents.forEach(item => {
+      if (item.timestamp > latestContent.timestamp) {
+        latestContent = item;
+      }
+    });
+    return latestContent.message;
+  }
+
+  sliceStringLength(message: string, maxLength: number): string {
+    if (message == undefined || message.trim() == '') {
+      return '';
+    }
+    if (message.length > maxLength) {
+      return `${message.slice(0, maxLength)}...`;
+    } else {
+      return message;
+    }
   }
 
   sliceTagName(tag: TagItem): string {

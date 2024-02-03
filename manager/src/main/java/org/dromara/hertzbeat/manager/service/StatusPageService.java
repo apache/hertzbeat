@@ -1,6 +1,7 @@
 package org.dromara.hertzbeat.manager.service;
 
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 
@@ -67,4 +68,35 @@ public interface StatusPageService {
      * @return status page component status
      */
     ComponentStatus queryComponentStatus(long id);
+    
+    /**
+     * query status page incidents.
+     * @return status page incidents
+     */
+    List<StatusPageIncident> queryStatusPageIncidents();
+    
+    /**
+     * query status page incident.
+     * @param id status page incident id
+     * @return status page incident
+     */
+    StatusPageIncident queryStatusPageIncident(long id);
+    
+    /**
+     * save status page incident.
+     * @param statusPageIncident status page incident
+     */
+    void newStatusPageIncident(StatusPageIncident statusPageIncident);
+    
+    /**
+     * update status page incident.
+     * @param statusPageIncident status page incident
+     */
+    void updateStatusPageIncident(StatusPageIncident statusPageIncident);
+    
+    /**
+     * delete status page incident.
+     * @param id status page incident id
+     */
+    void deleteStatusPageIncident(long id);
 }

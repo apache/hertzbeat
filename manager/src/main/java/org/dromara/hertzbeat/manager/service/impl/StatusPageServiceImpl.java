@@ -3,14 +3,17 @@ package org.dromara.hertzbeat.manager.service.impl;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageHistory;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.component.status.CalculateStatus;
 import org.dromara.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageHistoryDao;
+import org.dromara.hertzbeat.manager.dao.StatusPageIncidentDao;
 import org.dromara.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.dromara.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -37,6 +40,9 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Autowired
     private StatusPageHistoryDao statusPageHistoryDao;
+    
+    @Autowired
+    private StatusPageIncidentDao statusPageIncidentDao;
     
     @Autowired
     private CalculateStatus calculateStatus;
@@ -214,5 +220,38 @@ public class StatusPageServiceImpl implements StatusPageService {
         }
         componentStatus.setHistory(histories);
         return componentStatus;
+    }
+
+    @Override
+    public List<StatusPageIncident> queryStatusPageIncidents() {
+        Sort sort = Sort.by(Sort.Direction.DESC, "startTime");
+        return statusPageIncidentDao.findAll(sort);
+    }
+
+    @Override
+    public StatusPageIncident queryStatusPageIncident(long id) {
+        return statusPageIncidentDao.findById(id).orElse(null);
+    }
+
+    @Override
+    public void newStatusPageIncident(StatusPageIncident statusPageIncident) {
+        statusPageIncident.setStartTime(System.currentTimeMillis());
+        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            statusPageIncident.setEndTime(System.currentTimeMillis());
+        }
+        statusPageIncidentDao.save(statusPageIncident);
+    }
+
+    @Override
+    public void updateStatusPageIncident(StatusPageIncident statusPageIncident) {
+        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            statusPageIncident.setEndTime(System.currentTimeMillis());
+        }
+        statusPageIncidentDao.save(statusPageIncident);
+    }
+
+    @Override
+    public void deleteStatusPageIncident(long id) {
+        statusPageIncidentDao.deleteById(id);
     }
 }

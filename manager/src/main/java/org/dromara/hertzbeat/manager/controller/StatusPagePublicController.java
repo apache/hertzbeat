@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.dromara.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.dromara.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.dromara.hertzbeat.manager.service.StatusPageService;
@@ -50,5 +51,12 @@ public class StatusPagePublicController {
     public ResponseEntity<Message<ComponentStatus>> queryStatusPageComponent(@PathVariable("id") final long id) {
         ComponentStatus componentStatus = statusPageService.queryComponentStatus(id);
         return ResponseEntity.ok(Message.success(componentStatus));
+    }
+
+    @GetMapping("/incident")
+    @Operation(summary = "Query Status Page Incidents")
+    public ResponseEntity<Message<List<StatusPageIncident>>> queryStatusPageIncident() {
+        List<StatusPageIncident> incidents = statusPageService.queryStatusPageIncidents();
+        return ResponseEntity.ok(Message.success(incidents));
     }
 }

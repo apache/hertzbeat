@@ -384,4 +384,25 @@ public interface CommonConstants {
      * status page component calculate method manual
      */
     byte STATUS_PAGE_CALCULATE_METHOD_MANUAL = 1;
+    
+    
+    /**
+     * status page incident state investigating
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_INVESTIGATING = 0;
+    
+    /**
+     * status page incident state identified
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_IDENTIFIED = 1;
+    
+    /**
+     * status page incident state monitoring
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_MONITORING = 2;
+    
+    /**
+     * status page incident state resolved
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_RESOLVED = 3;
 }

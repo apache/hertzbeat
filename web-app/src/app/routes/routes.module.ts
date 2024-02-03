@@ -4,7 +4,9 @@ import { SharedModule } from '@shared';
 
 // dashboard pages
 import { TagCloudComponent } from 'angular-tag-cloud-module';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzListModule } from 'ng-zorro-antd/list';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimelineModule } from 'ng-zorro-antd/timeline';
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -39,7 +41,9 @@ const COMPONENTS: Array<Type<void>> = [
     SlickCarouselModule,
     TagCloudComponent,
     NzDividerModule,
-    LayoutModule
+    LayoutModule,
+    NzCollapseModule,
+    NzListModule
   ],
   declarations: COMPONENTS
 })
