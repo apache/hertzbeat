@@ -26,7 +26,7 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster, prometheus-compatible and agentless capabilities.   
+[HertzBeat](https://github.com/dromara/hertzbeat) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
 
 ### Features
 

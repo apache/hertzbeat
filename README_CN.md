@@ -8,7 +8,7 @@
 
 ## HertzBeat 赫兹跳动 | [English Documentation](README.md)           
 
-> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控功能，还有状态页构建能力。
+> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -26,7 +26,7 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。     
+[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
