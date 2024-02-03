@@ -663,7 +663,7 @@
   "status.component.state.1": "异常",
   "status.component.state.2": "未知",
   "status.component.notify.need-org": "请先配置您的组织信息！",
-  "status.help": "您团队是否需要对外提供系统服务状态页面以便用户随时知晓服务状态情况，例如 Github 提供的服务状态页面 <a href='https://www.githubstatus.com'>https://www.githubstatus.com</a>。<br>简单在 HertzBeat 状态页面配置需要对外展示的团队信息，服务信息等，即可使用系统监控的指标状态数据自动构建您的状态页面。",
+  "status.help": "基于 HertzBeat 快速构建强大的状态页，轻松向用户传达您产品服务的实时状态。例如 Github 提供的服务状态页 <a href='https://www.githubstatus.com'>https://www.githubstatus.com</a>。<br>支持状态页组件状态和监控状态联动同步，故障事件维护管理机制等。提高您的透明度，专业度和用户信任，降低沟通成本。",
   "status.help.link": "https://hertzbeat.com/zh-cn/docs/help/status",
   "validation.email.required": "请输入邮箱地址！",
   "validation.email.wrong-format": "邮箱地址格式错误！",

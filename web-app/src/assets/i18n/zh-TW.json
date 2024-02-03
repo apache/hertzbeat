@@ -662,7 +662,7 @@
   "status.component.state.1": "異常",
   "status.component.state.2": "未知",
   "status.component.notify.need-org": "請先配置您的組織信息！",
-  "status.help": "您團隊是否需要對外提供系統服務狀態頁面以便用戶隨時知曉服務狀態情況，例如 Github 提供的服務狀態頁面 https://www.githubstatus.com。簡單在 HertzBeat 狀態頁面配置需要對外展示的團隊信息，服務信息等，即可使用系統監控的指標狀態數據自動構建您的狀態頁面。",
+  "status.help": "基於 HertzBeat 快速構建強大的狀態頁，輕鬆向用戶傳達您產品服務的實時狀態。例如 Github 提供的服務狀態頁 <a href='https://www.githubstatus.com'>https://www.githubstatus.com</a>。<br>支持狀態頁組件狀態和監控狀態聯動同步，故障事件維護管理機制等。提高您的透明度，專業度和用戶信任，降低溝通成本。",
   "status.help.link": "https://hertzbeat.com/zh-cn/docs/help/status",
   "validation.email.required": "請輸入郵箱地址！",
   "validation.email.wrong-format": "郵箱地址格式錯誤！",
