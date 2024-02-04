@@ -35,37 +35,37 @@ public class AlerterProperties {
     /**
      * Alarm content console link
      */
-    private String consoleUrl = "https://console.tancloud.cn";
+    private String consoleUrl;
 
     /**
      * WeWork webhook url
      */
-    private String weWorkWebHookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+    private String weWorkWebHookUrl;
 
     /**
      * DingDing talk webhook url
      */
-    private String dingTalkWebHookUrl = "https://oapi.dingtalk.com/robot/send?access_token=";
+    private String dingTalkWebHookUrl;
 
     /**
      * FlyBook webhook url
      */
-    private String flyBookWebHookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/";
+    private String flyBookWebHookUrl;
 
     /**
      * Telegram Bot api url
      */
-    private String telegramBotApiUrl = "https://api.telegram.org/bot%s/sendMessage";
+    private String telegramBotApiUrl;
 
     /**
      * Discord Notify url
      */
-    private String discordNotifyUrl = "https://discord.com/api/v9/channels/%s/messages";
+    private String discordNotifyUrl;
 
     /**
      * ServerChan Notify url
      */
-    private String serverChanNotifyUrl = "https://sctapi.ftqq.com/%s.send";
+    private String serverChanNotifyUrl;
 
     /**
      * Data entry configuration properties
