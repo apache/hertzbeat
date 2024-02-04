@@ -9,11 +9,32 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 
 **使用的协议：Nginx**
 
-### 启用 Nginx 的 `ngx_http_stub_status_module` 和 `ngx_http_reqstat_module` 配置
+### 需要启用 Nginx 的 `ngx_http_stub_status_module` 和 `ngx_http_reqstat_module` 监控模块
 
 如果你想使用这种监控方式监控 'Nginx' 的信息，你需要修改你的 Nginx 配置文件以启用监控模块。
 
-**1、添加 ngx_http_stub_status_module 配置：**
+### 启用 ngx_http_stub_status_module    
+
+1. 检查是否已添加 `ngx_http_stub_status_module`
+
+```shell
+nginx -V
+```
+查看是否包含 `--with-http_stub_status_module`，如果没有则需要重新编译安装 Nginx。
+
+2. 编译安装 Nginx, 添加 `ngx_http_stub_status_module` 模块
+
+下载 Nginx 并解压，在目录下执行 
+
+```shell
+./configure --prefix=/usr/local/nginx --with-http_stub_status_module
+
+make && make install
+```
+
+3. 修改 Nginx 配置文件
+
+修改 `nginx.conf` 文件，添加监控模块暴露端点，如下配置：
 
 ```shell
 # modify nginx.conf
@@ -29,9 +50,17 @@ server {
 }
 ```
 
+4. 重新加载 Nginx
 
+```shell
+nginx -s reload
+```
 
-**2、添加 ngx_http_reqstat_module 配置：**
+5. 在浏览器访问 `http://localhost/nginx-status` 即可查看 Nginx 监控状态信息。
+
+### 启用 `ngx_http_reqstat_module` 
+
+1. 安装 `ngx_http_reqstat_module` 模块
 
 ```shell
 # install `ngx_http_reqstat_module`
@@ -41,33 +70,47 @@ unzip ngx_req_status.zip
 
 patch -p1 < ../ngx_req_status-master/write_filter.patch
 
-./configure --prefix=/usr/local/nginx-1.4.2 --add-module=../ngx_req_status-master
+./configure --prefix=/usr/local/nginx --add-module=/path/to/ngx_req_status-master
 
 make -j2
 
 make install
 ```
 
+2. 修改 Nginx 配置文件
+
+修改 `nginx.conf` 文件，添加状态模块暴露端点，如下配置：
+
 ```shell
 # modify nginx.conf
 http {
-        req_status_zone server_name $server_name 256k;
-        req_status_zone server_addr $server_addr 256k;
-        req_status_zone server_url  $server_name$uri 256k;
-        req_status server_name server_addr server_url;
-        server {
-            server_name xxx; // server_name
-            location /req-status {
-              req_status_show on;
-            }
+    req_status_zone server_name $server_name 256k;
+    req_status_zone server_addr $server_addr 256k;
+
+    req_status server_name server_addr;
+
+    server {
+        location /req-status {
+            req_status_show on;
+            #allow 127.0.0.1;	#only allow requests from localhost
+ 	        #deny all;		#deny all other hosts
         }
+    }
 }
 ```
 
-**⚠️`ngx_http_reqstat_module` 需要自行下载安装，如果不需要监控该模块，只需收集 `ngx_http_stub_status_module` 模块的信息即可**
+3. 重新加载 Nginx
 
-**这里有帮助文档： https://blog.csdn.net/weixin_55985097/article/details/116722309**
+```shell
+nginx -s reload
+```
 
+4. 在浏览器访问 `http://localhost/req-status` 即可查看 Nginx 监控状态信息。
+
+
+**参考文档： https://blog.csdn.net/weixin_55985097/article/details/116722309**
+
+**⚠️注意监控模块的端点路径为 `/nginx-status` `/req-status`**
 
 ### 配置参数
 
