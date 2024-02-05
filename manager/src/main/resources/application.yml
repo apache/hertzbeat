@@ -12,8 +12,176 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# 生效环境: prod,dev,test
+server:
+  port: 1157
 spring:
+  application:
+    name: ${HOSTNAME:@hertzbeat@}${PID}
   profiles:
     active: prod
+  mvc:
+    static-path-pattern: /**
+  jackson:
+    default-property-inclusion: ALWAYS
+  web:
+    resources:
+      static-locations:
+        - classpath:/dist/
+        - classpath:../dist/
+  # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed..
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+  freemarker:
+    enabled: false
+
+
+management:
+  health:
+    mail:
+      enabled: off
+  endpoints:
+    web:
+      exposure:
+        include:
+          - 'metrics'
+          - 'health'
+    enabled-by-default: on
+
+sureness:
+  auths:
+    - digest
+    - basic
+    - jwt
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123456
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  # Not Require, Please config if you need email notify
+  # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
+  mail:
+    # Attention: this is mail server address.
+    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com
+    host: smtp.qq.com
+    username: tancloud@qq.com
+    # Attention: this is not email account password, this requires an email authorization code
+    # 请注意此非邮箱账户密码 此需填写邮箱授权码
+    password: your-password
+    #Attention: Tencent mail smtps 465,smtp 587
+    #请注意腾讯邮箱465为smtps,587为smtp
+    port: 587
+    properties:
+      mail:
+        smtp:
+          socketFactoryClass: javax.net.ssl.SSLSocketFactory
+          ssl:
+            enable: true
+
+common:
+  queue:
+    # memory or kafka
+    type: memory
+    # properties when queue type is kafka
+    kafka:
+      servers: 127.0.0.1:9092
+      metrics-data-topic: async-metrics-data
+      alerts-data-topic: async-alerts-data
+
+warehouse:
+  store:
+    # store history metrics data, enable only one below
+    # 存储历史数据方式, 下方只能enabled启用一种方式
+    jpa:
+      enabled: true
+      # The maximum retention time for history records, after which records will be deleted
+      expire-time: 1h
+      # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
+      # (please set this configuration reasonably as history records can affect performance when it is large)
+      # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
+      max-history-record-num: 6000
+    victoria-metrics:
+      enabled: false
+      url: http://localhost:8428
+      username: root
+      password: root
+    td-engine:
+      enabled: false
+      driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
+      url: jdbc:TAOS-RS://localhost:6041/hertzbeat
+      username: root
+      password: taosdata
+    greptime:
+      enabled: false
+      endpoint: localhost:4001
+    iot-db:
+      enabled: false
+      host: 127.0.0.1
+      rpc-port: 6667
+      username: root
+      password: root
+      # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
+      version: V_1_0
+      query-timeout-in-ms: -1
+      # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
+      # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
+      expire-time: '7776000000'
+    influxdb:
+      enabled: false
+      server-url: http://127.0.0.1:8086
+      username: root
+      password: root
+      expire-time: '30d'
+      replication: 1
+
+    # store real-time metrics data, enable only one below
+    # 存储实时数据方式, 下方只能enabled启用一种方式
+    memory:
+      enabled: true
+      init-size: 16
+    redis:
+      enabled: false
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+      #redis使用数据库，默认为DB0
+      db: 0
+
+alerter:
+  # custom console url
+  console-url: https://console.tancloud.cn
+  # 企业微信
+  wework-webHook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+  # 钉钉
+  dingtalk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+  # 飞书
+  flybook-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+  # telegram
+  telegram-bot-api-url: https://api.telegram.org/bot%s/sendMessage
+  # discord
+  discord-notify-url: https://discord.com/api/v9/channels/%s/messages
+  # server酱
+  server-chan-notify-url: https://sctapi.ftqq.com/%s.send
+
+scheduler:
+  server:
+    enabled: true
+    port: 1158
