@@ -163,7 +163,9 @@
           "text": "status",
           "i18n": "menu.extras.status",
           "icon": "anticon-mobile",
-          "link": "/setting/status"
+          "link": "/setting/status",
+          "badgeDot": true,
+          "badge": 1
         },
         {
           "text": "collector",
