@@ -34,7 +34,7 @@
   <nz-content>
     <nz-spin [nzSpinning]="isSpinning" nzTip="Loading..." nzSize="large">
       <nz-tabset nzType="card" [nzTabBarExtraContent]="tab_extra_template">
-        <nz-tab [nzTitle]="titleTemplate" (nzClick)="loadRealTimeMetric()">
+        <nz-tab [nzTitle]="titleTemplate" (nzClick)="loadRealTimeMetric(); configRefreshDeadline(30)">
           <ng-template #titleTemplate>
             <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
             {{ 'monitors.detail.realtime' | i18n }}
@@ -137,7 +137,7 @@
             ></app-monitor-data-table>
           </div>
         </nz-tab>
-        <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart()">
+        <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart(); configRefreshDeadline(30)">
           <ng-template #title2Template>
             <i nz-icon nzType="line-chart" style="margin-left: 10px"></i>
             {{ 'monitors.detail.history' | i18n }}
