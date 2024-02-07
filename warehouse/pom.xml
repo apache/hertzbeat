@@ -155,5 +155,11 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.dtflys.forest</groupId>
+            <artifactId>forest-core</artifactId>
+            <version>1.5.35</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

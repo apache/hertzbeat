@@ -17,6 +17,9 @@
 
 package org.dromara.hertzbeat.warehouse.store;
 
+import com.dtflys.forest.Forest;
+import com.dtflys.forest.http.ForestRequest;
+import com.dtflys.forest.http.ForestResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -160,8 +163,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 if (entry.getKey() != null && entry.getValue() != null) {
                     try {
                         labels.putAll(defaultLabels);
-                        String labelName = isPrometheusAuto ? metricsData.getMetrics() 
-                                : metricsData.getMetrics() + SPILT + entry.getKey();
+                        String labelName = isPrometheusAuto ? metricsData.getMetrics() : metricsData.getMetrics() + SPILT + entry.getKey();
                         labels.put(LABEL_KEY_NAME, labelName);
                         labels.put(MONITOR_METRIC_KEY, entry.getKey());
                         VictoriaMetricsContent content = VictoriaMetricsContent.builder()
@@ -169,27 +171,30 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 .values(new Double[]{entry.getValue()})
                                 .timestamps(timestamp)
                                 .build();
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.APPLICATION_JSON);
+
+                        String encodedAuth = null;
                         if (StringUtils.hasText(victoriaMetricsProp.getUsername())
                                 && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
                             String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
-                            String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                            headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                            encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                         }
-                        HttpEntity<VictoriaMetricsContent> httpEntity = new HttpEntity<>(content, headers);
-                        ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.getUrl() + IMPORT_PATH,
-                                httpEntity, String.class);
-                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                            log.debug("insert metrics data to victoria-metrics success. {}", content);
-                        } else {
-                            log.error("insert metrics data to victoria-metrics failed. {}", content);
-                        }
+                        ForestRequest<?> request = Forest.post(victoriaMetricsProp.getUrl() + IMPORT_PATH);
+                        ForestResponse<?> response = request
+                                .contentTypeJson()
+                                .addHeader(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth)
+                                .addBody(content)
+                                .successWhen(((req, res) -> res.noException() && res.statusOk()))
+                                .onSuccess((ex, req, res) -> {
+                                    log.debug("insert metrics data to victoria-metrics success. {}", content);
+                                })
+                                .onError((ex, req, res) -> {
+                                    log.error("insert metrics data to victoria-metrics failed. {}", content);
+                                }).executeAsResponse();
                     } catch (Exception e) {
                         log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
                     }
-                    
                 }
+
             }
         }
     }
