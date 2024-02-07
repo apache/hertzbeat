@@ -31,6 +31,8 @@ public class DashboardController {
     GrafanaConfiguration grafanaConfiguration;
 
     private static final String KIOSK = "?kiosk=tv";
+
+    private static final String REFRESH = "&refresh=10m";
     /**
      * create dashboard
      */
@@ -68,7 +70,7 @@ public class DashboardController {
         } catch (NullPointerException e) {
             return ResponseEntity.ok(Message.success());
         }
-        String url = grafanaConfiguration.getUrl() + suffix + KIOSK;
+        String url = grafanaConfiguration.getUrl() + suffix + KIOSK + REFRESH;
         return ResponseEntity.ok(Message.success(url));
     }
 
