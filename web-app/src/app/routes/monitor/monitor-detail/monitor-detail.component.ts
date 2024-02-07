@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -11,6 +11,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import {NzDropdownMenuComponent} from "ng-zorro-antd/dropdown";
 
 @Component({
   selector: 'app-monitor-detail',
@@ -26,7 +27,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
-
+  @ViewChild('time_menu', { static: false }) time_menu!: NzDropdownMenuComponent | null;
   isSpinning: boolean = false;
   monitorId!: number;
   app!: string;

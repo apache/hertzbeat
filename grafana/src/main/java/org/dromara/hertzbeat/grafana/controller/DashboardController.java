@@ -32,7 +32,7 @@ public class DashboardController {
 
     private static final String KIOSK = "?kiosk=tv";
 
-    private static final String REFRESH = "&refresh=10m";
+    private static final String REFRESH = "&refresh=15s";
     /**
      * create dashboard
      */
