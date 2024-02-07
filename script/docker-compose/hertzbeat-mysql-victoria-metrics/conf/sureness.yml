@@ -76,6 +76,7 @@ excludedResource:
   - /account/**===get
   - /setting/**===get
   - /passport/**===get
+  - /status/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
