@@ -314,6 +314,20 @@
                                     </descriptors>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>make-docker-compose-script</id>
+                                <!--绑定的maven操作-->
+                                <phase>package</phase>
+                                <!--运行一次-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
