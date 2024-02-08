@@ -157,7 +157,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, label-if is metrics label, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
         instance: true

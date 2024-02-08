@@ -126,6 +126,7 @@ public class CalculateStatus {
                     } else {
                         statusPageOrg.setState(CommonConstants.STATUS_PAGE_ORG_STATE_ALL_NORMAL);
                     }
+                    statusPageOrg.setGmtUpdate(LocalDateTime.now());
                     statusPageOrgDao.save(statusPageOrg);
                 }
             } catch (Exception e) {
