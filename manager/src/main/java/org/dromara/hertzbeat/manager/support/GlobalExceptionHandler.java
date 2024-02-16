@@ -257,7 +257,7 @@ public class GlobalExceptionHandler {
      * 处理监控指标传参异常
      *
      * @param exception 指标参数异常
-     * @return
+     * @return response
      */
     @ExceptionHandler(MonitorMetricsException.class)
     @ResponseBody
