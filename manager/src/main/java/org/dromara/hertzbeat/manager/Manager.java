@@ -27,8 +27,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import javax.annotation.PostConstruct;
 
 /**
+ * start up class.
  * @author tomsun28
- *
  */
 
 @SpringBootApplication(exclude = MailSenderAutoConfiguration.class)
