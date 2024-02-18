@@ -54,6 +54,7 @@
         <slf4j.version>1.7.36</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>1.33</snake.yaml.version>
+        <okhttp.version>4.12.0</okhttp.version>
         <kafka-clients.version>3.4.0</kafka-clients.version>
 
         <mysql.version>8.0.30</mysql.version>
@@ -285,6 +286,12 @@
                 <groupId>com.tencentcloudapi</groupId>
                 <artifactId>tencentcloud-sdk-java-sms</artifactId>
                 <version>${tencentcloud-sdk-java-sms.version}</version>
+            </dependency>
+            <!-- okhttp -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
             </dependency>
             <!-- caffeine-->
             <dependency>

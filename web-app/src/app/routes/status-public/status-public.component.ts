@@ -138,7 +138,7 @@ export class StatusPublicComponent implements OnInit {
     } else if (hours > 0) {
       processTime += `${hours} hour${hours > 1 ? 's' : ''} `;
     } else if (minutes > 0) {
-      processTime += `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+      processTime += `${minutes} minute${minutes > 1 ? 's' : ''} `;
     } else {
       return 'few seconds';
     }

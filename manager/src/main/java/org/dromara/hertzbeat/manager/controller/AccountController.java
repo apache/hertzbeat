@@ -69,22 +69,22 @@ public class AccountController {
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户密码错误"));
+            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Incorrect Account or Password"));
         } else {
             String password = loginDto.getCredential();
             if (account.getSalt() != null) {
                 password = Md5Util.md5(password + account.getSalt());
             }
             if (!account.getPassword().equals(password)) {
-                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户密码错误"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Incorrect Account or Password"));
             }
             if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
-                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "账户过期或被锁定"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Expired or Illegal Account"));
             }
         }
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
-        // Issue TOKEN      签发TOKEN
+        // Issue TOKEN  
         String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
@@ -106,11 +106,11 @@ public class AccountController {
             String userId = String.valueOf(claims.getSubject());
             boolean isRefresh = claims.get("refresh", Boolean.class);
             if (userId == null || !isRefresh) {
-                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "非法的刷新TOKEN"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Illegal Refresh Token"));
             }
             SurenessAccount account = accountProvider.loadAccount(userId);
             if (account == null) {
-                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "TOKEN对应的账户不存在"));
+                return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Not Exists This Token Mapping Account"));
             }
             List<String> roles = account.getOwnRoles();
             String issueToken = issueToken(userId, roles, PERIOD_TIME);
@@ -119,7 +119,7 @@ public class AccountController {
             return ResponseEntity.ok(Message.success(response));
         } catch (Exception e) {
             log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "刷新TOKEN过期或错误"));
+            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Refresh Token Expired or Error"));
         }
     }
 
