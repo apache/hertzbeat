@@ -288,6 +288,8 @@
   "alert.notice.type.smn-topicUrn": "TopicUrn",
   "alert.notice.type.serverchan": "ServerChan",
   "alert.notice.type.serverchan-token": "ServerChanToken",
+  "alert.notice.type.gotify": "Gotify",
+  "alert.notice.type.gotify-token": "Gotify Token",
   "alert.notice.type.telegram": "Telegram",
   "alert.notice.rule": "通知策略",
   "alert.notice.rule.new": "新增通知策略",
