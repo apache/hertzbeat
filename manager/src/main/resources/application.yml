@@ -180,6 +180,8 @@ alerter:
   discord-notify-url: https://discord.com/api/v9/channels/%s/messages
   # server酱
   server-chan-notify-url: https://sctapi.ftqq.com/%s.send
+  # gotify
+  gotify-notify-url: http://127.0.0.1/message?token=%s
 
 scheduler:
   server:

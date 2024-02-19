@@ -193,6 +193,13 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String serverChanToken;
 
+    @Schema(title = "Gotify token : The notification method is valid for Gotify",
+            description = "访问token : 通知方式为Gotify有效",
+            example = "A845h__ZMqDxZlO", accessMode = READ_WRITE)
+    @Length(max = 300)
+    @Column(length = 300)
+    private String gotifyToken;
+
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy
