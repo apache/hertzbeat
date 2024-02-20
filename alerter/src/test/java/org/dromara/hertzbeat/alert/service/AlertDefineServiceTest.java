@@ -1,12 +1,8 @@
 package org.dromara.hertzbeat.alert.service;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.dromara.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.dromara.hertzbeat.alert.dao.AlertDefineDao;
-import org.dromara.hertzbeat.alert.service.impl.AlertDefineExcelImExportServiceImpl;
-import org.dromara.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
 import org.dromara.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
-import org.dromara.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefine;
 import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.dromara.hertzbeat.common.entity.manager.Monitor;
@@ -20,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +41,7 @@ class AlertDefineServiceTest {
     private List<AlertDefineImExportService> alertDefineImExportServiceList;
 
     @InjectMocks
-    private AlertDefineServiceImpl alertDefineService = new AlertDefineServiceImpl(Collections.emptyList());
+    private AlertDefineServiceImpl alertDefineService;
 
     @BeforeEach
     void setUp() {
@@ -88,7 +83,6 @@ class AlertDefineServiceTest {
     void validate() {
         assertDoesNotThrow(() -> alertDefineService.validate(alertDefine, true));
         assertDoesNotThrow(() -> alertDefineService.validate(alertDefine, false));
-
     }
 
     @Test
@@ -96,7 +90,6 @@ class AlertDefineServiceTest {
         assertDoesNotThrow(() -> alertDefineService.addAlertDefine(alertDefine));
         when(alertDefineDao.save(alertDefine)).thenThrow(new RuntimeException());
         assertThrows(RuntimeException.class, () -> alertDefineService.addAlertDefine(alertDefine));
-
     }
 
     @Test
@@ -115,7 +108,6 @@ class AlertDefineServiceTest {
         doNothing().doThrow(new RuntimeException()).when(alertDefineDao).deleteById(id);
         assertDoesNotThrow(() -> alertDefineService.deleteAlertDefine(id));
         assertThrows(RuntimeException.class, () -> alertDefineService.deleteAlertDefine(id));
-
     }
 
     @Test
@@ -137,8 +129,6 @@ class AlertDefineServiceTest {
         Specification<AlertDefine> specification = mock(Specification.class);
         when(alertDefineDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
         assertNotNull(alertDefineService.getMonitorBindAlertDefines(specification, PageRequest.of(1, 1)));
-
-
     }
 
     @Test
@@ -156,7 +146,6 @@ class AlertDefineServiceTest {
         when(alertDefineDao.queryAlertDefinesByMonitor(1L, "app", "test")).thenReturn(alertDefineList);
         when(alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue("app", "test")).thenReturn(alertDefineList);
         assertNotNull(alertDefineService.getMonitorBindAlertDefines(1L, "app", "test"));
-
     }
 
     @Test
