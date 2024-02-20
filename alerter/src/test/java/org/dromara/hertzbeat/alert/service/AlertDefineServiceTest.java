@@ -83,7 +83,6 @@ class AlertDefineServiceTest {
     void validate() {
         assertDoesNotThrow(() -> alertDefineService.validate(alertDefine, true));
         assertDoesNotThrow(() -> alertDefineService.validate(alertDefine, false));
-
     }
 
     @Test
@@ -91,7 +90,6 @@ class AlertDefineServiceTest {
         assertDoesNotThrow(() -> alertDefineService.addAlertDefine(alertDefine));
         when(alertDefineDao.save(alertDefine)).thenThrow(new RuntimeException());
         assertThrows(RuntimeException.class, () -> alertDefineService.addAlertDefine(alertDefine));
-
     }
 
     @Test
@@ -110,7 +108,6 @@ class AlertDefineServiceTest {
         doNothing().doThrow(new RuntimeException()).when(alertDefineDao).deleteById(id);
         assertDoesNotThrow(() -> alertDefineService.deleteAlertDefine(id));
         assertThrows(RuntimeException.class, () -> alertDefineService.deleteAlertDefine(id));
-
     }
 
     @Test
@@ -132,8 +129,6 @@ class AlertDefineServiceTest {
         Specification<AlertDefine> specification = mock(Specification.class);
         when(alertDefineDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
         assertNotNull(alertDefineService.getMonitorBindAlertDefines(specification, PageRequest.of(1, 1)));
-
-
     }
 
     @Test
@@ -151,7 +146,6 @@ class AlertDefineServiceTest {
         when(alertDefineDao.queryAlertDefinesByMonitor(1L, "app", "test")).thenReturn(alertDefineList);
         when(alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue("app", "test")).thenReturn(alertDefineList);
         assertNotNull(alertDefineService.getMonitorBindAlertDefines(1L, "app", "test"));
-
     }
 
     @Test
