@@ -50,6 +50,14 @@ resourceRole:
   - /api/summary/**===post===[admin,user]
   - /api/summary/**===put===[admin,user]
   - /api/summary/**===delete===[admin]
+  - /api/collector/**===get===[admin,user,guest]
+  - /api/collector/**===post===[admin,user]
+  - /api/collector/**===put===[admin,user]
+  - /api/collector/**===delete===[admin]
+  - /api/status/page/**===get===[admin,user,guest]
+  - /api/status/page/**===post===[admin,user]
+  - /api/status/page/**===put===[admin,user]
+  - /api/status/page/**===delete===[admin]
 
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
@@ -59,6 +67,7 @@ excludedResource:
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/push/**===*
+  - /api/status/page/public/**===*
   # web ui 前端静态资源
   - /===get
   - /dashboard/**===get
@@ -67,6 +76,7 @@ excludedResource:
   - /account/**===get
   - /setting/**===get
   - /passport/**===get
+  - /status/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get

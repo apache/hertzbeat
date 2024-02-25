@@ -4,7 +4,8 @@ title: 依赖时序数据库服务InfluxDB安装初始化
 sidebar_label: 使用InfluxDB存储指标数据(可选)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库 InfluxDB, TDengine 或 IoTDB，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+HertzBeat的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+我们推荐使用并长期支持VictoriaMetrics
 
 InfluxDB是一个由InfluxData开发的开源时序型数据库，专注于海量时序数据的高性能读、高性能写、高效存储与实时分析等。 注意支持⚠️ 1.x版本。   
 

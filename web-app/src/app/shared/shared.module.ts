@@ -11,6 +11,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { HelpMassageShowComponent } from './components/help-massage-show/help-massage-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
+import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
@@ -25,7 +26,7 @@ const ThirdModules: Array<Type<void>> = [];
 // #region your components & directives
 
 const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent, HelpMassageShowComponent, MetricsFieldInputComponent];
-const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe];
+const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
 // #endregion
 

@@ -240,6 +240,11 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
+     * 内有标签: monitorHost 任务主机
+     */
+    String TAG_MONITOR_HOST = "monitorHost";
+
+    /**
      * 内有标签: policyId 告警阈值规则ID
      */
     String TAG_THRESHOLD_ID = "thresholdId";
@@ -339,4 +344,65 @@ public interface CommonConstants {
      * prometheus 
      */
     String PROMETHEUS = "prometheus";
+
+    /**
+     * status page component state normal
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_NORMAL = 0;
+    
+    /**
+     * status page component state abnormal
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_ABNORMAL = 1;
+    
+    /**
+     * status page component state unknown
+     */
+    byte STATUS_PAGE_COMPONENT_STATE_UNKNOWN = 2;
+
+    /**
+     * status page org state all normal
+     */
+    byte STATUS_PAGE_ORG_STATE_ALL_NORMAL = 0;
+
+    /**
+     * status page org state some abnormal
+     */
+    byte STATUS_PAGE_ORG_STATE_SOME_ABNORMAL = 1;
+
+    /**
+     * status page org state all abnormal
+     */
+    byte STATUS_PAGE_ORG_STATE_ALL_ABNORMAL = 2;
+    
+    /**
+     * status page component calculate method auto
+     */
+    byte STATUE_PAGE_CALCULATE_METHOD_AUTO = 0;
+    
+    /**
+     * status page component calculate method manual
+     */
+    byte STATUS_PAGE_CALCULATE_METHOD_MANUAL = 1;
+    
+    
+    /**
+     * status page incident state investigating
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_INVESTIGATING = 0;
+    
+    /**
+     * status page incident state identified
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_IDENTIFIED = 1;
+    
+    /**
+     * status page incident state monitoring
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_MONITORING = 2;
+    
+    /**
+     * status page incident state resolved
+     */
+    byte STATUS_PAGE_INCIDENT_STATE_RESOLVED = 3;
 }

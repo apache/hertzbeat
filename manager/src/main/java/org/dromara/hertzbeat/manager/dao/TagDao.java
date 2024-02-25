@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -46,5 +47,14 @@ public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecut
      * @return tag list
      */
     List<Tag> findByIdIn(Set<Long> ids);
+    
+    /**
+     * find tag by name and value
+     *
+     * @param name tag name
+     * @param value tag value
+     * @return tag
+     */
+    Optional<Tag> findTagByNameAndValue(String name, String value);
     
 }

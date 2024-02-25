@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 
@@ -30,7 +31,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 public class History {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "myid")
+    @GenericGenerator(name = "myid", strategy = "org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator")
     @Schema(description = "指标数据历史实体主键索引ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 

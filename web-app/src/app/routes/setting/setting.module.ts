@@ -9,6 +9,7 @@ import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ColorPickerModule } from 'ngx-color-picker';
@@ -20,6 +21,7 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
+import { StatusComponent } from './status/status.component';
 import { SettingTagsComponent } from './tags/tags.component';
 
 const COMPONENTS: Array<Type<void>> = [
@@ -29,7 +31,8 @@ const COMPONENTS: Array<Type<void>> = [
   MessageServerComponent,
   SystemConfigComponent,
   ObjectStoreComponent,
-  CollectorComponent
+  CollectorComponent,
+  StatusComponent
 ];
 
 @NgModule({
@@ -47,7 +50,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzLayoutModule,
     NzCodeEditorModule,
     ClipboardModule,
-    NzBadgeModule
+    NzBadgeModule,
+    NzRadioModule
   ],
   declarations: COMPONENTS
 })

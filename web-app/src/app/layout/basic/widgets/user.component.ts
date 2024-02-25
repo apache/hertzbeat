@@ -54,6 +54,8 @@ import { CONSTANTS } from '../../../shared/constants';
           <br />
           <nz-badge nzStatus="processing" [nzText]="'about.point.5' | i18n"></nz-badge>
           <br />
+          <nz-badge nzStatus="processing" [nzText]="'about.point.6' | i18n"></nz-badge>
+          <br />
         </div>
         <div style="margin-top: 10px; font-weight: normal; font-size: small;">
           {{ 'about.help' | i18n }}

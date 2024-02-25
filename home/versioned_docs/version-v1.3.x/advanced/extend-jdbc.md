@@ -122,7 +122,7 @@ metrics:
     priority: 0
     # metrics fields list
     fields:
-      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   label-if is metrics label   unit: Metric unit
       - field: version
         type: 1
         instance: true
@@ -166,7 +166,7 @@ metrics:
   - name: status
     priority: 1
     fields:
-      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   label-if is metrics label   unit: Metric unit
       - field: threads_created
         type: 0
       - field: threads_connected
@@ -207,7 +207,7 @@ metrics:
   - name: innodb
     priority: 2
     fields:
-      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   instance: primary key of instance or not   unit: Metric unit
+      # Metric information include field: name   type: field type(0-number: number, 1-string: string)   label-if is metrics label   unit: Metric unit
       - field: innodb_data_reads
         type: 0
         unit: times
