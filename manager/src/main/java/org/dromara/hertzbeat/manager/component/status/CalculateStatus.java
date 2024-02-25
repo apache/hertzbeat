@@ -157,7 +157,7 @@ public class CalculateStatus {
                 // combine pre day status history to one record
                 LocalDateTime nowTime = LocalDateTime.now();
                 ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(Instant.now());
-                LocalDateTime midnight = nowTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
+                LocalDateTime midnight = nowTime.withHour(20).withMinute(0).withSecond(0).withNano(0);
                 LocalDateTime preNight = midnight.minusDays(1);
                 long midnightTimestamp = midnight.toInstant(zoneOffset).toEpochMilli();
                 long preNightTimestamp = preNight.toInstant(zoneOffset).toEpochMilli();
@@ -165,6 +165,9 @@ public class CalculateStatus {
                         .findStatusPageHistoriesByTimestampBetween(preNightTimestamp, midnightTimestamp);
                 Map<Long, StatusPageHistory> statusPageHistoryMap = new HashMap<>(8);
                 for (StatusPageHistory statusPageHistory : statusPageHistoryList) {
+                    statusPageHistory.setNormal(0);
+                    statusPageHistory.setAbnormal(0);
+                    statusPageHistory.setUnknown(0);
                     if (statusPageHistoryMap.containsKey(statusPageHistory.getComponentId())) {
                         StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
@@ -186,9 +189,13 @@ public class CalculateStatus {
                         statusPageHistoryMap.put(statusPageHistory.getComponentId(), statusPageHistory);
                     }
                 }
-                statusPageHistoryDao.deleteAllById(statusPageHistoryMap.keySet());
+                statusPageHistoryDao.deleteAll(statusPageHistoryList);
                 for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                    double uptime = (double) history.getNormal() / (double) (history.getNormal() + history.getAbnormal() + history.getUnknown());
+                    double total = history.getNormal() + history.getAbnormal() + history.getUnknown();
+                    double uptime = 0;
+                    if (total > 0) {
+                        uptime = (double) history.getNormal() / total;
+                    }
                     history.setUptime(uptime);
                     if (history.getAbnormal() > 0) {
                         history.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
