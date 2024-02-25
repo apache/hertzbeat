@@ -21,22 +21,18 @@ import { AuthService } from '../../service/auth.service';
 import { LocalStorageService } from '../../service/local-storage.service';
 
 const CODE_MESSAGE: { [key: number]: string } = {
-  200: '服务器成功返回请求的数据。',
-  201: '新建或修改数据成功。',
-  202: '一个请求已经进入后台排队（异步任务）。',
-  204: '删除数据成功。',
-  400: '发出的请求有错误，服务器没有进行新建或修改数据的操作。',
-  401: '用户认证信息异常。',
-  403: '用户无此操作权限。',
-  404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
-  406: '请求的格式不可得。',
-  409: '请求与服务器端目标资源的当前状态相冲突',
-  410: '请求的资源被永久删除，且不会再得到的。',
-  422: '当创建一个对象时，发生一个验证错误。',
-  500: '服务器发生错误，请检查服务器。',
-  502: '网关错误。',
-  503: '服务不可用，服务器暂时过载或维护。',
-  504: '网关超时。'
+  400: 'Request Illegal Content, No Response.',
+  401: 'Auth Error.',
+  403: 'No Permission For This Request.',
+  404: 'Not Found.',
+  406: 'Request Illegal Content.',
+  409: 'Request Conflict.',
+  410: 'Request Resource Already Deleted.',
+  422: 'Validate Error.',
+  500: 'Server Error Happen.',
+  502: 'Gateway Error.',
+  503: 'Service Not Available, Try After.',
+  504: 'Gateway Timeout.'
 };
 
 /**
@@ -171,7 +167,7 @@ export class DefaultInterceptor implements HttpInterceptor {
     let url = req.url;
     if (!url.startsWith('https://') && !url.startsWith('http://') && !url.startsWith('.')) {
       const { baseUrl } = environment.api;
-      url = baseUrl + (baseUrl.endsWith('/') && url.startsWith('/') ? url.substring(1) : url);
+      url = baseUrl + (baseUrl?.endsWith('/') && url.startsWith('/') ? url.substring(1) : url);
     }
     const newReq = req.clone({ url, setHeaders: this.fillHeaders(req.headers) });
     return next.handle(newReq).pipe(

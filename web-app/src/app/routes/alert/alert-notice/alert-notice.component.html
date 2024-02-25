@@ -92,6 +92,10 @@
               <i nz-icon nzTheme="outline" nzType="notification"></i>
               <span>{{ 'alert.notice.type.serverchan' | i18n }}</span>
             </nz-tag>
+            <nz-tag *ngIf="data.type == 13" nzColor="orange">
+              <i nz-icon nzTheme="outline" nzType="notification"></i>
+              <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
+            </nz-tag>
           </td>
           <td nzAlign="center">
             <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -107,6 +111,7 @@
             <span *ngIf="data.type == 10">{{ data.corpId }}<br />{{ data.agentId }}<br />{{ data.appSecret }}</span>
             <span *ngIf="data.type == 11">{{ data.smnAk }}</span>
             <span *ngIf="data.type == 12">{{ data.serverChanToken }}</span>
+            <span *ngIf="data.type == 13">{{ data.gotifyToken }}</span>
           </td>
           <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -283,6 +288,9 @@
               </nz-tag>
               <nz-tag *ngIf="data.type == 12" nzColor="orange">
                 <span>{{ 'alert.notice.type.serverchan' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.type == 13" nzColor="orange">
+                <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
               </nz-tag>
             </span>
           </td>
@@ -511,6 +519,7 @@
             <nz-option [nzLabel]="'alert.notice.type.weChatApp' | i18n" [nzValue]="10"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -697,6 +706,14 @@
           <input [(ngModel)]="receiver.serverChanToken" [required]="receiver.type === 12" name="serverChanToken" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 13">
+        <nz-form-label [nzRequired]="receiver.type === 13" [nzSpan]="7" nzFor="gotifyToken">{{
+          'alert.notice.type.gotify-token' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.gotifyToken" [required]="receiver.type === 13" name="gotifyToken" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-control [nzOffset]="7" [nzSpan]="12">
           <button (click)="onSendAlertTestMsg()" [nzLoading]="isSendTestButtonLoading" nz-button nzDanger nzType="primary">
@@ -743,6 +760,7 @@
             <nz-option [nzLabel]="'alert.notice.type.weChatApp' | i18n" [nzValue]="10"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
