@@ -290,6 +290,8 @@
   "alert.notice.type.smn-topicUrn": "TopicUrn",
   "alert.notice.type.serverchan": "Server酱(ServerChan)",
   "alert.notice.type.serverchan-token": "Server酱Token",
+  "alert.notice.type.gotify": "Gotify",
+  "alert.notice.type.gotify-token": "Gotify Token",
   "alert.notice.rule": "通知策略",
   "alert.notice.rule.new": "新增通知策略",
   "alert.notice.rule.edit": "编辑通知策略",

@@ -49,6 +49,7 @@ public class AlertReportController {
                 CloudAlertReportAbstract cloudAlertReport = JsonUtil
                         .fromJson(alertReport, cloudService.getCloudServiceAlarmInformationEntity());
                 // 模板填充
+                assert cloudAlertReport != null;
                 alert = AlertReport.builder()
                         .content(cloudAlertReport.getContent())
                         .alertName(cloudAlertReport.getAlertName())

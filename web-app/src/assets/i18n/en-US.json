@@ -289,6 +289,8 @@
   "alert.notice.type.smn-topicUrn": "TopicUrn",
   "alert.notice.type.serverchan": "ServerChan",
   "alert.notice.type.serverchan-token": "ServerChanToken",
+  "alert.notice.type.gotify": "Gotify",
+  "alert.notice.type.gotify-token": "Gotify Token",
   "alert.notice.rule": "Notice Policy",
   "alert.notice.rule.new": "New Notice Policy",
   "alert.notice.rule.edit": "Edit Notice Policy",
