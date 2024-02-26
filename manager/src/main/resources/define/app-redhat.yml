@@ -403,16 +403,19 @@ metrics:
           en-US: Interface Name
       - field: receive_bytes
         type: 0
-        unit: byte
+        unit: Mb
         i18n:
           zh-CN: 入站数据流量
           en-US: Receive Bytes
       - field: transmit_bytes
         type: 0
-        unit: byte
+        unit: Mb
         i18n:
           zh-CN: 出站数据流量
           en-US: Transmit Bytes
+    units:
+      - receive_bytes=B->MB
+      - transmit_bytes=B->MB
     protocol: ssh
     ssh:
       host: ^_^host^_^

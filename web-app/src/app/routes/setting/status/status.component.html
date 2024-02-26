@@ -1,0 +1,519 @@
+<app-help-massage-show
+  [help_massage_content]="'status.help' | i18n"
+  [guild_link]="'status.help.link' | i18n"
+  [module_name]="'menu.extras.status'"
+  [icon_name]="'mobile'"
+></app-help-massage-show>
+<nz-divider></nz-divider>
+
+<nz-spin [nzSpinning]="orgLoading" [nzTip]="'Loading...'" nzSize="large">
+  <div class="-inner-content">
+    <form nz-form #newForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">
+          {{ 'status.org.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.name"
+            nz-input
+            name="name"
+            type="text"
+            id="name"
+            required
+            [placeholder]="'status.org.name.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="desc" nzRequired="true">
+          {{ 'status.org.desc' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.description"
+            nz-input
+            required
+            name="desc"
+            type="text"
+            id="desc"
+            [placeholder]="'status.org.desc.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="home" nzRequired="true">
+          {{ 'status.org.home' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.home"
+            nz-input
+            required
+            name="home"
+            type="text"
+            id="home"
+            [placeholder]="'status.org.home.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="logo" nzRequired="true">
+          {{ 'status.org.logo' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.logo"
+            nz-input
+            required
+            name="logo"
+            type="text"
+            id="logo"
+            [placeholder]="'status.org.logo.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="feedback" nzRequired="true">
+          {{ 'status.org.feedback' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="statusOrg.feedback"
+            nz-input
+            required
+            name="feedback"
+            type="text"
+            id="feedback"
+            [placeholder]="'status.org.feedback.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="color">
+          {{ 'status.org.color' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="8">
+          <input
+            [(colorPicker)]="statusOrg.color"
+            cpFallbackColor="#e9f3d3"
+            cpOutputFormat="hex"
+            [style.background]="statusOrg.color"
+            style="border-radius: 5px; width: 100%"
+            nz-input
+            required
+            name="color"
+            type="text"
+            id="color"
+            [placeholder]="statusOrg.color == undefined ? ('status.org.color.tip' | i18n) : ''"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <div nz-row>
+        <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
+          <button nz-button nzType="primary" type="submit" (click)="onSaveStatusOrg(newForm.form)">
+            {{ 'common.button.ok' | i18n }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</nz-spin>
+
+<nz-divider></nz-divider>
+<nz-tabset nzSize="large" [nzTabBarGutter]="8">
+  <nz-tab [nzTitle]="'status.component' | i18n" (nzClick)="loadComponentInfo()">
+    <div style="margin-bottom: 20px">
+      <button nz-button nzType="primary" nz-tooltip (click)="syncComponent()" [nzTooltipTitle]="'common.refresh' | i18n">
+        <i nz-icon nzType="sync" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onNewStatusComponent()">
+        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+        {{ 'status.component.new' | i18n }}
+      </button>
+      <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
+        <a routerLink="/status" target="_blank">
+          <i nz-icon nzType="link" nzTheme="outline"></i>
+          {{ statusOrg.name + ' ' + ('menu.extras.status' | i18n) }}
+        </a>
+      </button>
+    </div>
+    <nz-table
+      #fixedTable
+      [nzData]="statusComponents"
+      nzFrontPagination="false"
+      [nzLoading]="componentLoading"
+      [nzScroll]="{ x: '1240px', y: '100%' }"
+    >
+      <thead>
+        <tr>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.component.name' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.component.state' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.component.method' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.component.tag' | i18n }}</th>
+          <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of fixedTable.data">
+          <td nzAlign="center">{{ data.name }}</td>
+          <td nzAlign="center">
+            <nz-tag *ngIf="data.state == 0" [nzColor]="'#09b919'">
+              {{ 'status.component.state.0' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.state == 1" [nzColor]="'#fd4357'">
+              {{ 'status.component.state.1' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.state == 2" [nzColor]="'#b2b2b2'">
+              {{ 'status.component.state.2' | i18n }}
+            </nz-tag>
+          </td>
+          <td nzAlign="center">
+            <nz-tag *ngIf="data.method == 0" [nzColor]="'success'">
+              {{ 'status.component.method.0' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.method == 1" [nzColor]="'processing'">
+              {{ 'status.component.method.1' | i18n }}
+            </nz-tag>
+          </td>
+          <td nzAlign="center">
+            <a routerLink="/monitors" [queryParams]="{ tag: sliceTagName(data.tag) }">
+              <nz-tag class="hoverClass">
+                {{ sliceTagName(data.tag) }}
+              </nz-tag>
+            </a>
+          </td>
+          <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+          <td nzAlign="center">
+            <button
+              nz-button
+              nzType="primary"
+              (click)="onEditOneComponent(data)"
+              nz-tooltip
+              [nzTooltipTitle]="'status.component.edit' | i18n"
+            >
+              <i nz-icon nzType="edit" nzTheme="outline"></i>
+            </button>
+            <button
+              nz-button
+              nzType="primary"
+              nzDanger
+              (click)="onDeleteOneComponent(data.id)"
+              nz-tooltip
+              [nzTooltipTitle]="'status.component.delete' | i18n"
+            >
+              <i nz-icon nzType="delete" nzTheme="outline"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-tab>
+  <nz-tab [nzTitle]="'status.incident' | i18n" (nzClick)="loadIncidenceInfo()">
+    <div style="margin-bottom: 20px">
+      <button nz-button nzType="primary" nz-tooltip (click)="syncIncidence()" [nzTooltipTitle]="'common.refresh' | i18n">
+        <i nz-icon nzType="sync" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzType="primary" (click)="onNewStatusIncident()">
+        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+        {{ 'status.incident.new' | i18n }}
+      </button>
+      <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
+        <a routerLink="/status" target="_blank">
+          <i nz-icon nzType="link" nzTheme="outline"></i>
+          {{ statusOrg.name + ' ' + ('menu.extras.status' | i18n) }}
+        </a>
+      </button>
+    </div>
+    <nz-table
+      #incidentTable
+      [nzData]="statusIncidences"
+      nzFrontPagination="false"
+      [nzLoading]="incidentLoading"
+      [nzScroll]="{ x: '1240px', y: '100%' }"
+    >
+      <thead>
+        <tr>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.incident.name' | i18n }}</th>
+          <th nzAlign="center" nzWidth="10%">{{ 'status.incident.state' | i18n }}</th>
+          <th nzAlign="center" nzWidth="25%">{{ 'status.incident.message-latest' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'status.incident.component' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'common.new-time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of incidentTable.data">
+          <td nzAlign="center">{{ data.name }}</td>
+          <td nzAlign="center">
+            <nz-tag *ngIf="data.state == 0" [nzColor]="'#ff2f2f'">
+              {{ 'status.incident.state.0' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.state == 1" [nzColor]="'#e56c23'">
+              {{ 'status.incident.state.1' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.state == 2" [nzColor]="'#19a7e7'">
+              {{ 'status.incident.state.2' | i18n }}
+            </nz-tag>
+            <nz-tag *ngIf="data.state == 3" [nzColor]="'#34be8f'">
+              {{ 'status.incident.state.3' | i18n }}
+            </nz-tag>
+          </td>
+          <td nzAlign="center">
+            {{ getLatestIncidentContentMsg(data.contents) }}
+          </td>
+          <td nzAlign="center">
+            <nz-tag *ngFor="let item of data.components" class="hoverClass">
+              {{ item.name }}
+            </nz-tag>
+          </td>
+          <td nzAlign="center">{{ data.startTime | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+          <td nzAlign="center">
+            <button
+              nz-button
+              nzType="primary"
+              (click)="onUpdateOneIncident(data.id)"
+              nz-tooltip
+              [nzTooltipTitle]="'status.incident.update' | i18n"
+            >
+              <i nz-icon nzType="redo" nzTheme="outline"></i>
+            </button>
+            <button
+              nz-button
+              nzType="primary"
+              nzDanger
+              (click)="onDeleteOneIncident(data.id)"
+              nz-tooltip
+              [nzTooltipTitle]="'status.incident.delete' | i18n"
+            >
+              <i nz-icon nzType="delete" nzTheme="outline"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-tab>
+</nz-tabset>
+
+<!-- 新增或修改component弹出框 -->
+<nz-modal
+  [(nzVisible)]="currentComponentVisible"
+  [nzTitle]="isComponentModalAdd ? ('status.component.new' | i18n) : ('status.component.edit' | i18n)"
+  (nzOnCancel)="onComponentModalCancel()"
+  (nzOnOk)="onComponentModalOk()"
+  nzMaskClosable="false"
+  nzWidth="55%"
+  [nzOkLoading]="currentComponentLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #tagForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="component-name" nzRequired="true">{{ 'status.component.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="currentStatusComponent.name"
+            nz-input
+            required
+            name="component-name"
+            type="text"
+            id="component-name"
+            [placeholder]="'status.component.name.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="component-desc">{{ 'status.component.desc' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="currentStatusComponent.description"
+            nz-input
+            name="component-desc"
+            type="text"
+            id="component-desc"
+            [placeholder]="'status.component.desc.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="method" [nzTooltipTitle]="'status.component.method.tip' | i18n">{{
+          'status.component.method' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group [(ngModel)]="currentStatusComponent.method" nzButtonStyle="solid" [required]="'true'" name="method" id="method">
+            <label nz-radio-button [nzValue]="0">
+              {{ 'status.component.method.0' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="1">
+              {{ 'status.component.method.1' | i18n }}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="currentStatusComponent.method == 0">
+        <nz-form-label [nzSpan]="7" nzFor="tag" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
+          'status.component.tag' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            [(ngModel)]="matchTag"
+            (nzOpenChange)="loadTagsOption()"
+            [nzOptions]="tagsOption"
+            [nzMaxTagCount]="5"
+            [nzDropdownMatchSelectWidth]="false"
+            nzShowSearch
+            nzPlaceHolder="Select Tag"
+            required
+            name="tag"
+            id="tag"
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="currentStatusComponent.method == 1">
+        <nz-form-label [nzSpan]="7" nzFor="config-state" [nzTooltipTitle]="'status.component.config-state.tip' | i18n">{{
+          'status.component.config-state' | i18n
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="currentStatusComponent.configState"
+            nzButtonStyle="solid"
+            [required]="'true'"
+            name="config-state"
+            id="config-state"
+          >
+            <label nz-radio-button [nzValue]="0">
+              {{ 'status.component.state.0' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="1">
+              {{ 'status.component.state.1' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="2">
+              {{ 'status.component.state.2' | i18n }}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- status incident modal -->
+<nz-modal
+  [(nzVisible)]="currentIncidentVisible"
+  [nzTitle]="isIncidentModalAdd ? ('status.incident.new' | i18n) : ('status.incident.update' | i18n)"
+  (nzOnCancel)="onIncidentModalCancel()"
+  (nzOnOk)="onIncidentModalOk()"
+  nzMaskClosable="false"
+  nzWidth="60%"
+  [nzOkLoading]="currentIncidentLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #incidentForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="incident-name" nzRequired="true">{{ 'status.incident.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="currentStatusIncident.name"
+            nz-input
+            required
+            name="incident-name"
+            type="text"
+            id="incident-name"
+            [placeholder]="'status.incident.name.tip' | i18n"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="incident-component" nzRequired="true">{{ 'status.incident.component' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-checkbox-group name="incident-component" id="incident-component" [(ngModel)]="currentIncidentComponentOptions">
+          </nz-checkbox-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="!isIncidentModalAdd">
+        <nz-form-label [nzSpan]="7" nzFor="incident-history">{{ 'status.incident.history' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-collapse>
+            <nz-collapse-panel *ngFor="let content of currentStatusIncident.contents" [nzHeader]="panelHeader">
+              <nz-list nzSize="small" nzSplit="false">
+                <nz-list-item>
+                  {{ content.message }}
+                </nz-list-item>
+                <nz-list-item>
+                  <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
+                  <nz-tag *ngIf="content.state == 0" [nzColor]="'#ff2f2f'">
+                    {{ 'status.incident.state.0' | i18n }}
+                  </nz-tag>
+                  <nz-tag *ngIf="content.state == 1" [nzColor]="'#e56c23'">
+                    {{ 'status.incident.state.1' | i18n }}
+                  </nz-tag>
+                  <nz-tag *ngIf="content.state == 2" [nzColor]="'#19a7e7'">
+                    {{ 'status.incident.state.2' | i18n }}
+                  </nz-tag>
+                  <nz-tag *ngIf="content.state == 3" [nzColor]="'#34be8f'">
+                    {{ 'status.incident.state.3' | i18n }}
+                  </nz-tag>
+                </nz-list-item>
+              </nz-list>
+              <ng-template #panelHeader>
+                <div style="width: 100%; display: flex; justify-content: space-between">
+                  <div>
+                    <span>{{ sliceStringLength(content.message, 20) }}</span>
+                  </div>
+                  <div>
+                    <span>{{ content.timestamp | date : 'MM-dd HH:mm:ss' }}</span>
+                  </div>
+                </div>
+              </ng-template>
+            </nz-collapse-panel>
+          </nz-collapse>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="incident-state" nzRequired="true">{{ 'status.incident.state' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="currentStatusIncident.state"
+            nzButtonStyle="solid"
+            [required]="'true'"
+            name="incident-state"
+            id="incident-state"
+          >
+            <label nz-radio-button [nzValue]="0">
+              {{ 'status.incident.state.0' | i18n }}
+              <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+            </label>
+            <label nz-radio-button [nzValue]="1">
+              {{ 'status.incident.state.1' | i18n }}
+              <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+            </label>
+            <label nz-radio-button [nzValue]="2">
+              {{ 'status.incident.state.2' | i18n }}
+              <span nz-icon nzType="arrow-right" nzTheme="outline"></span>
+            </label>
+            <label nz-radio-button [nzValue]="3">
+              {{ 'status.incident.state.3' | i18n }}
+              <span nz-icon nzType="poweroff" nzTheme="outline"></span>
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="incident-message" nzRequired="true">{{ 'status.incident.message' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <textarea
+            [(ngModel)]="currentIncidentContent.message"
+            nz-input
+            required
+            name="incident-message"
+            type="text"
+            id="incident-message"
+            [placeholder]="'status.incident.message.tip.' + currentStatusIncident.state | i18n"
+            rows="2"
+          ></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

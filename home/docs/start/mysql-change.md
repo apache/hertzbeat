@@ -26,7 +26,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 1. Enter MYSQL or use the client to connect MYSQL service   
    `mysql -uroot -p123456`  
 2. Create database named hertzbeat    
-   `create database hertzbeat;`
+   `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
 3. Check if hertzbeat database has been successfully created
    `show databases;`
 

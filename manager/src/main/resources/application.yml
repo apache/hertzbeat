@@ -34,6 +34,7 @@ spring:
   freemarker:
     enabled: false
 
+
 management:
   health:
     mail:
@@ -167,6 +168,20 @@ warehouse:
 alerter:
   # custom console url
   console-url: https://console.tancloud.cn
+  # 企业微信
+  wework-webHook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+  # 钉钉
+  dingtalk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+  # 飞书
+  flybook-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+  # telegram
+  telegram-bot-api-url: https://api.telegram.org/bot%s/sendMessage
+  # discord
+  discord-notify-url: https://discord.com/api/v9/channels/%s/messages
+  # server酱
+  server-chan-notify-url: https://sctapi.ftqq.com/%s.send
+  # gotify
+  gotify-notify-url: http://127.0.0.1/message?token=%s
 
 scheduler:
   server:

@@ -8,7 +8,8 @@
 
 ## HertzBeat | [中文文档](README_CN.md)   
 
-> An open-source, real-time monitoring system with custom-monitoring, performance-cluster, prometheus-compatible and agentless. | 易用友好的开源实时监控告警系统，无需Agent，高性能集群，兼容Prometheus，强大自定义监控能力.   
+> A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.    
+> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -25,7 +26,7 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster, prometheus-compatible and agentless capabilities.   
+[HertzBeat](https://github.com/dromara/hertzbeat) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
 
 ### Features
 
@@ -35,7 +36,7 @@
 * Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-
+* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
 > We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
@@ -43,6 +44,8 @@
 ----
 
 ![hertzbeat](home/static/img/home/1.png)
+
+![hertzbeat](home/static/img/home/status.png)
 
 ![hertzbeat](home/static/img/home/9.png)
 

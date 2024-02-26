@@ -32,7 +32,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "大屏仪表盘统计信息")
+@Schema(description = "Dashboard App Count Info")
 public class Dashboard {
 
     List<AppCount> apps;
