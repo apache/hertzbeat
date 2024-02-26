@@ -322,7 +322,7 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Test dependencies: -->
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -345,23 +345,13 @@
             <!-- java code style check -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>${maven-pmd-plugin.version}</version>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.3.0</version>
                 <configuration>
+                    <configLocation>./script/checkstyle/checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
-                    <rulesets>
-<!--                        <ruleset>rulesets/java/ali-comment.xml</ruleset>-->
-                        <!--<ruleset>rulesets/java/ali-concurrent.xml</ruleset>-->
-                        <ruleset>rulesets/java/ali-constant.xml</ruleset>
-                        <!--<ruleset>rulesets/java/ali-exception.xml</ruleset>-->
-                        <!--<ruleset>rulesets/java/ali-flowcontrol.xml</ruleset>-->
-<!--                        <ruleset>rulesets/java/ali-naming.xml</ruleset>-->
-                        <ruleset>rulesets/java/ali-oop.xml</ruleset>
-                        <ruleset>rulesets/java/ali-orm.xml</ruleset>
-                        <!--<ruleset>rulesets/java/ali-other.xml</ruleset>-->
-                        <ruleset>rulesets/java/ali-set.xml</ruleset>
-                    </rulesets>
-                    <printFailingErrors>true</printFailingErrors>
                 </configuration>
                 <executions>
                     <execution>
@@ -372,13 +362,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.alibaba.p3c</groupId>
-                        <artifactId>p3c-pmd</artifactId>
-                        <version>${p3c-pmd.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
