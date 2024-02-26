@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * Snmp protocol collection implementation
+ *
  * @author wangtao
  */
 @Slf4j
@@ -199,7 +200,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                             if (value == null) {
                                 // get leaf
                                 for (String key : oidsValueMap.keySet()) {
-                                    if (key.startsWith(oid)){
+                                    if (key.startsWith(oid)) {
                                         value = oidsValueMap.get(key);
                                         break;
                                     }
@@ -319,7 +320,7 @@ public class SnmpCollectImpl extends AbstractCollect {
 
     private TargetBuilder.AuthProtocol getAuthPasswordEncryption(String authPasswordEncryption) {
         if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
-        else if (SHA1.equals(authPasswordEncryption))  return TargetBuilder.AuthProtocol.sha1;
+        else if (SHA1.equals(authPasswordEncryption)) return TargetBuilder.AuthProtocol.sha1;
         else return TargetBuilder.AuthProtocol.md5;
     }
 

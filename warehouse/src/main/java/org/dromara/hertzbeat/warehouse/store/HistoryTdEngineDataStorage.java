@@ -41,8 +41,8 @@ import java.util.regex.Pattern;
 
 /**
  * tdengine data storage
- * @author tom
  *
+ * @author tom
  */
 @Primary
 @Component
@@ -216,7 +216,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
-    private String formatStringValue(String value){
+    private String formatStringValue(String value) {
         String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
         // bugfix Argument list too long
         if (formatValue != null && formatValue.length() > tableStrColumnDefineMaxLength) {
@@ -235,7 +235,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql =  label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
+        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
         log.debug(selectSql);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -322,7 +322,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 instanceValue = "";
             }
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                            metric, metric, metric, metric, table, instanceValue, history);
+                    metric, metric, metric, metric, table, instanceValue, history);
             log.debug(selectSql);
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;

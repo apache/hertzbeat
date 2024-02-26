@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Details of the monitoring metrics collected 
+ * Details of the monitoring metrics collected
  * eg: cpu | memory | health
  *
  * @author tomsun28

@@ -19,6 +19,7 @@ import java.util.Set;
 
 /**
  * status page incident entity
+ *
  * @author tom
  */
 @Entity
@@ -35,14 +36,14 @@ public class StatusPageIncident {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "ID", example = "87584674384")
     private Long id;
-    
+
     @Schema(title = "org id", example = "1234")
     private Long orgId;
 
     @Schema(title = "incident name", example = "Gateway")
     @NotBlank
     private String name;
-    
+
     @Schema(title = "incident current state: 0-Investigating 1-Identified 2-Monitoring 3-Resolved", example = "0")
     private byte state;
 
@@ -67,7 +68,7 @@ public class StatusPageIncident {
     @Schema(title = "Record modify time", example = "1612198444000")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-    
+
     @Schema(title = "status page components")
     @ManyToMany(targetEntity = StatusPageComponent.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(name = "hzb_status_page_incident_component_bind",
@@ -76,7 +77,7 @@ public class StatusPageIncident {
             joinColumns = {@JoinColumn(name = "incident_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "component_id", referencedColumnName = "id")})
     private List<StatusPageComponent> components;
-    
+
     @Schema(title = "status page incident content")
     @OneToMany(targetEntity = StatusPageIncidentContent.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "incident_id", referencedColumnName = "id")

@@ -3,8 +3,8 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
 /**
  * the enum of data size
  * 数据空间大小的枚举类
- * @author ceilzcx
  *
+ * @author ceilzcx
  */
 public enum DataUnit {
     /**

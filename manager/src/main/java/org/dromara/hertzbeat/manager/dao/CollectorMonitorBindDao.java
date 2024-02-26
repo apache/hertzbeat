@@ -31,13 +31,13 @@ import java.util.Set;
  * CollectorMonitorBind repository
  *
  * @author tom
- *
  */
 public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorBind, Long>, JpaSpecificationExecutor<CollectorMonitorBind> {
-    
-    
+
+
     /**
      * find monitors by collector
+     *
      * @param collector collector
      * @return monitor bind
      */
@@ -45,21 +45,24 @@ public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorB
 
     /**
      * find monitor collector bind by monitor ids
+     *
      * @param monitorIds monitor ids
      * @return binds
      */
     List<CollectorMonitorBind> findCollectorMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
-    
+
     /**
      * find bind collector by monitor id
+     *
      * @param monitorId monitor id
      * @return collector bind
      */
     Optional<CollectorMonitorBind> findCollectorMonitorBindByMonitorId(Long monitorId);
-    
-    
+
+
     /**
      * delete bind by monitor id
+     *
      * @param monitorId monitor id
      */
     @Modifying

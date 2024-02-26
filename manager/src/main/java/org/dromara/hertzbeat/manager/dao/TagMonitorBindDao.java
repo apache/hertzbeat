@@ -27,7 +27,6 @@ import java.util.Set;
  * TagMonitorBindDao repository
  *
  * @author tom
- *
  */
 public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, JpaSpecificationExecutor<TagMonitorBind> {
 
@@ -37,11 +36,12 @@ public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, 
      * @param monitorId monitorId
      */
     void deleteTagMonitorBindsByMonitorId(Long monitorId);
-    
+
     /**
      * delete tags bind by monitor id
+     *
      * @param monitorIds monitor list
      */
     void deleteTagMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
-    
+
 }

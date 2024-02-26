@@ -29,7 +29,6 @@ import java.util.Set;
  * tag repository
  *
  * @author tom
- *
  */
 public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
 
@@ -47,14 +46,14 @@ public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecut
      * @return tag list
      */
     List<Tag> findByIdIn(Set<Long> ids);
-    
+
     /**
      * find tag by name and value
      *
-     * @param name tag name
+     * @param name  tag name
      * @param value tag value
      * @return tag
      */
     Optional<Tag> findTagByNameAndValue(String name, String value);
-    
+
 }

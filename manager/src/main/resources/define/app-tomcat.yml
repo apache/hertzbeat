@@ -370,7 +370,7 @@ metrics:
           zh-CN: 接收处理线程数
           en-US: Acceptor Thread Count
       - field: acceptorThreadPriority
-        type : 0
+        type: 0
         i18n:
           zh-CN: 接收线程级别
           en-US: Acceptor Thread Priority

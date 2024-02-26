@@ -104,17 +104,17 @@ excludedResource:
 account:
   - appId: admin
     credential: hertzbeat
-    role: [admin]
+    role: [ admin ]
   - appId: tom
     credential: hertzbeat
-    role: [user]
+    role: [ user ]
   - appId: guest
     credential: hertzbeat
-    role: [guest]
+    role: [ guest ]
   - appId: lili
     # 注意 Digest认证不支持加盐加密的密码账户
     # 加盐加密的密码，通过 MD5(password+salt)计算
     # 此账户的原始密码为 lili
     credential: 1A676730B0C7F54654B0E09184448289
     salt: 123
-    role: [guest]
+    role: [ guest ]

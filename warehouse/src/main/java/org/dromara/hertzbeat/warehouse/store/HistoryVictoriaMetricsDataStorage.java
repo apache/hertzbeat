@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 
 /**
  * tdengine data storage
+ *
  * @author tom
  */
 @Primary
@@ -65,7 +66,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String IMPORT_PATH = "/api/v1/import";
     /**
      * <a href="https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format">
-     *     https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format
+     * https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format
      * </a>
      */
     private static final String EXPORT_PATH = "/api/v1/export";
@@ -80,9 +81,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String BASIC = "Basic";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
-    
+
     private final WarehouseProperties.StoreProperties.VictoriaMetricsProperties victoriaMetricsProp;
-    
+
     private final RestTemplate restTemplate;
 
     public HistoryVictoriaMetricsDataStorage(WarehouseProperties properties, RestTemplate restTemplate) {
@@ -129,12 +130,12 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         if (metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             isPrometheusAuto = true;
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp()
-                    .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));   
+                    .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
         } else {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
         defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
-        
+
         List<CollectRep.Field> fields = metricsData.getFieldsList();
         Long[] timestamp = new Long[]{metricsData.getTime()};
         Map<String, Double> fieldsValue = new HashMap<>(fields.size());
@@ -160,7 +161,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 if (entry.getKey() != null && entry.getValue() != null) {
                     try {
                         labels.putAll(defaultLabels);
-                        String labelName = isPrometheusAuto ? metricsData.getMetrics() 
+                        String labelName = isPrometheusAuto ? metricsData.getMetrics()
                                 : metricsData.getMetrics() + SPILT + entry.getKey();
                         labels.put(LABEL_KEY_NAME, labelName);
                         labels.put(MONITOR_METRIC_KEY, entry.getKey());
@@ -175,7 +176,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
                             String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
                             String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                            headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                            headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
                         }
                         HttpEntity<VictoriaMetricsContent> httpEntity = new HttpEntity<>(content, headers);
                         ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.getUrl() + IMPORT_PATH,
@@ -188,22 +189,23 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     } catch (Exception e) {
                         log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
                     }
-                    
+
                 }
             }
         }
     }
-    
+
     @Override
-    public void destroy() {}
-    
+    public void destroy() {
+    }
+
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" + 
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" +
                 "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
                 "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -215,7 +217,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
                 String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + EXPORT_PATH)
@@ -230,7 +232,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 if (StringUtils.hasText(responseEntity.getBody())) {
                     String[] contentJsonArr = responseEntity.getBody().split("\n");
                     List<VictoriaMetricsContent> contents = Arrays.stream(contentJsonArr).map(
-                            item ->  JsonUtil.fromJson(item, VictoriaMetricsContent.class)
+                            item -> JsonUtil.fromJson(item, VictoriaMetricsContent.class)
                     ).collect(Collectors.toList());
                     for (VictoriaMetricsContent content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -301,7 +303,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
                 String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + QUERY_RANGE_PATH)
@@ -331,7 +333,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 long timestamp = Long.parseLong(String.valueOf(valueArr[0]));
                                 String value = String.valueOf(valueArr[1]);
                                 // read timestamp here is s unit
-                                valueList.add(new Value(value, timestamp * 1000));   
+                                valueList.add(new Value(value, timestamp * 1000));
                             }
                         }
                     }
@@ -446,7 +448,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         }
         return instanceValuesMap;
     }
-    
+
     @Data
     @Builder
     @AllArgsConstructor
@@ -475,18 +477,18 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     @AllArgsConstructor
     @NoArgsConstructor
     public static final class VictoriaMetricsQueryContent {
-        
+
         private String status;
-        
+
         private ContentData data;
-        
+
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static final class ContentData {
-            
+
             private String resultType;
-            
+
             private List<Content> result;
 
             @Data

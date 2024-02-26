@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * alerter prop config
+ *
  * @author tom
  */
 @Component

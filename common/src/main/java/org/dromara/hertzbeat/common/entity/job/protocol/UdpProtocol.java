@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 使用socket实现的udp进行服务端口可用性探测
+ *
  * @author tomsun28
  */
 @Data
@@ -35,7 +36,7 @@ public class UdpProtocol {
      * 对端主机ip或域名
      */
     private String host;
-    
+
     /**
      * 端口号
      */
@@ -45,7 +46,7 @@ public class UdpProtocol {
      * 超时时间
      */
     private String timeout;
-    
+
     /**
      * 自定义协议数据包 hexString 16进制字符串
      */

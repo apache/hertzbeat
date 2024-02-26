@@ -44,6 +44,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Define the batch API for alarms
+ *
  * @author tom
  */
 @Tag(name = "Alert Define Batch API | 告警定义管理API")
@@ -128,9 +129,9 @@ public class AlertDefinesController {
     @GetMapping("/export")
     @Operation(summary = "export alertDefine config", description = "导出告警阀值配置")
     public void export(
-        @Parameter(description = "AlertDefine ID List | 告警阀值ID列表", example = "656937901") @RequestParam List<Long> ids,
-        @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
-        HttpServletResponse res) throws Exception {
+            @Parameter(description = "AlertDefine ID List | 告警阀值ID列表", example = "656937901") @RequestParam List<Long> ids,
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            HttpServletResponse res) throws Exception {
         alertDefineService.export(ids, type, res);
     }
 

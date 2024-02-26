@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 
 /**
  * status page history entity
+ *
  * @author tom
  */
 @Entity
@@ -40,10 +41,10 @@ public class StatusPageHistory {
 
     @Schema(title = "state calculate timestamp", example = "4248574985744")
     private Long timestamp;
-    
+
     @Schema(title = "state uptime percentage", example = "99.99")
     private Double uptime;
-    
+
     @Schema(title = "state abnormal time(s)", example = "1000")
     private Integer abnormal;
 

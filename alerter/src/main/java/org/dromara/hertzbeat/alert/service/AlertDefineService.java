@@ -31,76 +31,86 @@ import java.util.Set;
 
 /**
  * Alarm define manager service
+ *
  * @author tom
  */
 public interface AlertDefineService {
 
     /**
      * Verify the correctness of the request data parameters
+     *
      * @param alertDefine alertDefine
-     * @param isModify whether modify
-     * @throws IllegalArgumentException A checksum parameter error is thrown 
+     * @param isModify    whether modify
+     * @throws IllegalArgumentException A checksum parameter error is thrown
      */
     void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException;
 
     /**
      * New Alarm Definition
-     * @param alertDefine Alarm definition Entity 
-     * @throws RuntimeException Added procedure exception throwing 
+     *
+     * @param alertDefine Alarm definition Entity
+     * @throws RuntimeException Added procedure exception throwing
      */
     void addAlertDefine(AlertDefine alertDefine) throws RuntimeException;
 
     /**
-     * Modifying an Alarm Definition 
-     * @param alertDefine Alarm definition Entity 
-     * @throws RuntimeException Exception thrown during modification 
+     * Modifying an Alarm Definition
+     *
+     * @param alertDefine Alarm definition Entity
+     * @throws RuntimeException Exception thrown during modification
      */
     void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException;
 
     /**
      * Deleting an Alarm Definition
-     * @param alertId Alarm Definition ID 
-     * @throws RuntimeException Exception thrown during deletion 
+     *
+     * @param alertId Alarm Definition ID
+     * @throws RuntimeException Exception thrown during deletion
      */
     void deleteAlertDefine(long alertId) throws RuntimeException;
 
     /**
      * Obtain alarm definition information
-     * @param alertId Monitor the ID 
+     *
+     * @param alertId Monitor the ID
      * @return AlertDefine
-     * @throws RuntimeException An exception was thrown during the query 
+     * @throws RuntimeException An exception was thrown during the query
      */
     AlertDefine getAlertDefine(long alertId) throws RuntimeException;
 
 
     /**
-     * Delete alarm definitions in batches 
+     * Delete alarm definitions in batches
+     *
      * @param alertIds Alarm Definition IDs
-     * @throws RuntimeException Exception thrown during deletion 
+     * @throws RuntimeException Exception thrown during deletion
      */
     void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException;
 
     /**
-     * Dynamic conditional query 
-     * @param specification Query conditions 
-     * @param pageRequest Paging parameters 
-     * @return The query results 
+     * Dynamic conditional query
+     *
+     * @param specification Query conditions
+     * @param pageRequest   Paging parameters
+     * @return The query results
      */
     Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 
     /**
-     * Association between application alarm schedule and monitoring 
-     * @param alertId Alarm Definition ID 
-     * @param alertDefineBinds correlation 
+     * Association between application alarm schedule and monitoring
+     *
+     * @param alertId          Alarm Definition ID
+     * @param alertDefineBinds correlation
      */
     void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds);
 
     /**
      * Query the alarm definitions that match the specified metrics associated with the monitoring ID
      * 查询与此监控任务ID关联的指定指标匹配的告警定义
-     * @param monitorId Monitor the ID 
-     * @param app Monitoring type 
-     * @param metrics metrics
+     *
+     * @param monitorId Monitor the ID
+     * @param app       Monitoring type
+     * @param metrics   metrics
      * @return field - define[]
      */
     Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics);
@@ -108,35 +118,39 @@ public interface AlertDefineService {
     /**
      * Query the alarm definitions that match the specified metrics associated with the monitoring ID
      * 查询与此监控任务ID关联的可用性告警定义
-     * @param monitorId Monitor the ID 
-     * @param app Monitoring type 
-     * @param metrics metrics
+     *
+     * @param monitorId Monitor the ID
+     * @param app       Monitoring type
+     * @param metrics   metrics
      * @return field - define[]
      */
     AlertDefine getMonitorBindAlertAvaDefine(long monitorId, String app, String metrics);
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions 
-     * @param pageRequest Paging parameters
-     * @return The query results 
+     *
+     * @param specification Query conditions
+     * @param pageRequest   Paging parameters
+     * @return The query results
      */
     Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
 
     /**
      * Query the associated monitoring list information based on the alarm definition ID
      * 根据告警定义ID查询其关联的监控列表关联信息
-     * @param alertDefineId Alarm Definition ID 
-     * @return Associated information about the monitoring list 
+     *
+     * @param alertDefineId Alarm Definition ID
+     * @return Associated information about the monitoring list
      */
     List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId);
 
     /**
      * Export file configuration of specified type based on ID list and export file type
      * 根据ID列表、导出文件类型导出指定类型文件配置
-     * @param ids AlertDefine ID
+     *
+     * @param ids  AlertDefine ID
      * @param type File Type
-     * @param res Response
+     * @param res  Response
      * @throws Exception An exception was thrown during the export
      */
     void export(List<Long> ids, String type, HttpServletResponse res) throws Exception;
@@ -144,6 +158,7 @@ public interface AlertDefineService {
     /**
      * Add alarm threshold rules based on the uploaded alarm threshold file
      * 根据上传的告警阀值文件，增加告警阀值规则
+     *
      * @param file Upload File
      * @throws Exception An exception was thrown during the importConfig
      */

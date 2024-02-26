@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 
 /**
  * Ssh protocol collection implementation
+ *
  * @author tom
  */
 @Slf4j

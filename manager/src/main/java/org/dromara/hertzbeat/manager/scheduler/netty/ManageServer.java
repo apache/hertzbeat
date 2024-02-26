@@ -59,7 +59,7 @@ public class ManageServer implements CommandLineRunner {
         nettyServerConfig.setIdleStateEventTriggerTime(schedulerProperties.getServer().getIdleStateEventTriggerTime());
         NettyEventListener nettyEventListener = new ManageNettyEventListener();
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
-        
+
         // register processor
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
@@ -81,7 +81,7 @@ public class ManageServer implements CommandLineRunner {
                         this.clientChannelTable.remove(collector);
                         this.collectorAndJobScheduler.collectorGoOffline(collector);
                     }
-                });   
+                });
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

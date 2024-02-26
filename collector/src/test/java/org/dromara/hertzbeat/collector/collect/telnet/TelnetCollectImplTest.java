@@ -29,14 +29,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test case for {@link TelnetCollectImpl}
  */
 class TelnetCollectImplTest {
-    
+
     void telnet() {
         TelnetClient telnetClient = null;
         try {
             telnetClient = new TelnetClient("vt200");
             telnetClient.setConnectTimeout(5000);
             TelnetClient finalTelnetClient = telnetClient;
-            assertThrows(ConnectException.class,() -> finalTelnetClient.connect("127.0.0.1",0));
+            assertThrows(ConnectException.class, () -> finalTelnetClient.connect("127.0.0.1", 0));
             telnetClient.disconnect();
         } catch (IOException e) {
             e.printStackTrace();

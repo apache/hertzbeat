@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collection task and response data scheduler
+ *
  * @author tomsun28
  */
 @Component
@@ -82,7 +83,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private final List<UnitConvert> unitConvertList;
 
     private final WorkerPool workerPool;
-    
+
     private final String collectorIdentity;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
@@ -139,7 +140,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             log.error("Common Dispatcher error: {}.", e.getMessage(), e);
         }
     }
-    
+
     private void monitorCollectTaskTimeout() {
         try {
             // Detect whether the collection unit of each metrics has timed out for 4 minutes,
@@ -187,7 +188,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         new MetricsTime(System.currentTimeMillis(), metrics, timeout));
             } else {
                 metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));   
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
             }
         });
     }
@@ -338,7 +339,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // and the result listener is notified of the combination of all metrics data
             timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
         }
-        
+
     }
 
     private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
@@ -362,7 +363,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         return mapList;
     }
-    
+
     @Data
     @AllArgsConstructor
     private static class MetricsTime {

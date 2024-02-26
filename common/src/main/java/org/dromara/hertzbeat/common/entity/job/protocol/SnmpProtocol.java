@@ -26,6 +26,7 @@ import java.util.Map;
 
 /**
  * snmp 协议配置
+ *
  * @author wangtao
  */
 @Data

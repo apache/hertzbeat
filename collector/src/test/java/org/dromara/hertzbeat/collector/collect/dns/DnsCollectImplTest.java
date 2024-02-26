@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link DnsCollectImpl}
+ *
  * @author Calvin
  */
 public class DnsCollectImplTest {

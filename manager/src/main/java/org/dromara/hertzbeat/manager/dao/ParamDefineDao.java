@@ -27,7 +27,6 @@ import java.util.List;
  * ParamDefine数据库操作
  *
  * @author tomsun28
- *
  */
 public interface ParamDefineDao extends JpaRepository<ParamDefine, Long> {
 

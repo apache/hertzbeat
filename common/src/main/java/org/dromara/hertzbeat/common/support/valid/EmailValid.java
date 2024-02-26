@@ -28,10 +28,11 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * EmailValid 
+ * EmailValid
+ *
  * @author tomsun28
  */
-@Target({ FIELD, PARAMETER })
+@Target({FIELD, PARAMETER})
 @Retention(RUNTIME)
 @Documented
 @Constraint(validatedBy = EmailParamValidator.class)

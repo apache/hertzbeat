@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
  * Monitoring configuration parameter properties and values
  * During the process, you need to replace the content with the identifier ^_^key^_^
  * in the protocol configuration parameter with the real value in the configuration parameter
+ *
  * @author tomsun28
  */
 @Data

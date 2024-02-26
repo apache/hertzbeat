@@ -19,8 +19,8 @@ package org.dromara.hertzbeat.manager.support.exception;
 
 /**
  * 数据库操作异常
- * @author tomsun28
  *
+ * @author tomsun28
  */
 public class MonitorDatabaseException extends RuntimeException {
     public MonitorDatabaseException(String message) {

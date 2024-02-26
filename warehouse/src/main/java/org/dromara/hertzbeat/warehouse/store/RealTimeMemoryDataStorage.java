@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 存储采集实时数据 - memory
- * @author tom
  *
+ * @author tom
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.memory",

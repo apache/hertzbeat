@@ -46,6 +46,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alarm Define Rule Entity
+ *
  * @author tom
  */
 @Entity
@@ -95,7 +96,7 @@ public class AlertDefine {
     @Min(0)
     @Max(10)
     private Integer times;
-    
+
     @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
@@ -104,7 +105,7 @@ public class AlertDefine {
 
     @Schema(title = "Is Enable", example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
-    
+
     @Schema(title = "Is Send Alarm Recover Notice | 是否发送告警恢复通知", example = "false", accessMode = READ_WRITE)
     @Column(columnDefinition = "boolean default false")
     private boolean recoverNotice = false;

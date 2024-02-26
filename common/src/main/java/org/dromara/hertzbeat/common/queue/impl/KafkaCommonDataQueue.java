@@ -30,8 +30,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * common data queue implement kafka
- * @author tablerow
  *
+ * @author tablerow
  */
 @Configuration
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "kafka")
@@ -53,7 +53,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
     private final CommonProperties.KafkaProperties kafka;
-    
+
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
             log.error("init error, please config common.queue.kafka props in application.yml");
@@ -66,8 +66,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
-    
-    private void initDataQueue(){
+
+    private void initDataQueue() {
         try {
             Map<String, Object> producerConfig = new HashMap<>(3);
             producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
@@ -88,17 +88,17 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             alertConsumerConfig.put("group.id", "alert-consumer");
             alertDataConsumer = new KafkaConsumer<>(alertConsumerConfig, new LongDeserializer(), new AlertDeserializer());
             alertDataConsumer.subscribe(Collections.singletonList(kafka.getAlertsDataTopic()));
-            
+
             Map<String, Object> metricsToAlertConsumerConfig = new HashMap<>(consumerConfig);
             metricsToAlertConsumerConfig.put("group.id", "metrics-alert-consumer");
             metricsDataToAlertConsumer = new KafkaConsumer<>(metricsToAlertConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToAlertConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
-            
+
             Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
             metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
             metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
-            
+
             Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
             metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
             metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
@@ -137,7 +137,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
                 index++;
             }
             alertDataConsumer.commitAsync();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
             lock1.unlock();
@@ -164,7 +164,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
                 index++;
             }
             metricsDataToAlertConsumer.commitAsync();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
             lock2.unlock();
@@ -191,7 +191,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
                 index++;
             }
             metricsDataToPersistentStorageConsumer.commitAsync();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
             lock3.unlock();
@@ -218,7 +218,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
                 index++;
             }
             metricsDataToRealTimeStorageConsumer.commitAsync();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
             lock4.unlock();

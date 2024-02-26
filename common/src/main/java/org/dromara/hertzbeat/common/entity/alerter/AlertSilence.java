@@ -43,6 +43,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alert Silence strategy entity
+ *
  * @author tomsun28
  */
 @Entity
@@ -73,7 +74,7 @@ public class AlertSilence {
             description = "是否启用此策略",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
-    
+
     @Schema(title = "Whether to match all",
             description = "是否应用匹配所有",
             example = "true", accessMode = READ_WRITE)

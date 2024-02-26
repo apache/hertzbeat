@@ -11,17 +11,18 @@ import java.util.List;
 
 /**
  * status page's component status dto
+ *
  * @author tom
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Status Page's Component Status")
-public class ComponentStatus { 
-    
+public class ComponentStatus {
+
     @Schema(description = "Component Info")
     private StatusPageComponent info;
-    
+
     @Schema(description = "Component History")
     private List<StatusPageHistory> history;
 }

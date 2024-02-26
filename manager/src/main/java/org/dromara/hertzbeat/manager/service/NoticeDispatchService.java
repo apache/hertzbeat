@@ -19,8 +19,8 @@ package org.dromara.hertzbeat.manager.service;
 
 /**
  * 消息通知转发接口
- * @author tom
  *
+ * @author tom
  */
 public interface NoticeDispatchService {
 

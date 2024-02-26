@@ -10,8 +10,8 @@ import java.math.RoundingMode;
 /**
  * the convert of time length
  * 时间长短转换
- * @author rbsrcy
  *
+ * @author rbsrcy
  */
 @Component
 public final class TimeLengthConvert implements UnitConvert {

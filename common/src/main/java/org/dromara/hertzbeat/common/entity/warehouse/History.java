@@ -14,6 +14,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * metrics history data entity
+ *
  * @author tom
  */
 @Entity
@@ -47,7 +48,7 @@ public class History {
 
     @Schema(title = "Monitoring Metric usage speed count")
     private String metric;
-    
+
     @Column(length = 5000)
     private String instance;
 

@@ -31,7 +31,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
  * monitor define
  *
  * @author tomsun28
- *
  */
 @Data
 @Builder

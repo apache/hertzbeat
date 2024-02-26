@@ -38,6 +38,7 @@ import java.util.Objects;
 
 /**
  * dns protocol collection implementation
+ *
  * @author Calvin
  */
 @Slf4j
@@ -107,7 +108,7 @@ public class DnsCollectImpl extends AbstractCollect {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
@@ -191,7 +192,9 @@ public class DnsCollectImpl extends AbstractCollect {
     @AllArgsConstructor
     private static class DNSResolveResult {
         private Map<String, String> headerInfo;
-        /** example: www.google.com.		140	IN	A	192.133.77.133 **/
+        /**
+         * example: www.google.com.		140	IN	A	192.133.77.133
+         **/
         private List<String> questionList;
         private List<String> answerList;
         private List<String> authorityList;
@@ -199,11 +202,16 @@ public class DnsCollectImpl extends AbstractCollect {
 
         public List<String> getList(String metricsName) {
             switch (metricsName) {
-                case QUESTION: return questionList;
-                case ANSWER: return answerList;
-                case AUTHORITY: return authorityList;
-                case ADDITIONAL: return additionalList;
-                default: return Collections.emptyList();
+                case QUESTION:
+                    return questionList;
+                case ANSWER:
+                    return answerList;
+                case AUTHORITY:
+                    return authorityList;
+                case ADDITIONAL:
+                    return additionalList;
+                default:
+                    return Collections.emptyList();
             }
         }
     }

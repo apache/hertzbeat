@@ -30,11 +30,12 @@ import java.util.regex.Pattern;
 
 /**
  * ipv4 ipv6 domain util
+ *
  * @author tomsun28
  */
 @Slf4j
 public class IpDomainUtil {
-    
+
     private static final Pattern DOMAIN_PATTERN =
             Pattern.compile("^[-\\w]+(\\.[-\\w]+)*$");
 
@@ -47,6 +48,7 @@ public class IpDomainUtil {
 
     /**
      * whether it is ip or domain
+     *
      * @param ipDomain ip domain string
      * @return true-yes false-no
      */
@@ -69,6 +71,7 @@ public class IpDomainUtil {
 
     /**
      * if domain or ip has http / https schema
+     *
      * @param domainIp host
      * @return true or false
      */
@@ -81,6 +84,7 @@ public class IpDomainUtil {
 
     /**
      * get localhost IP
+     *
      * @return ip
      */
     public static String getLocalhostIp() {
@@ -106,25 +110,25 @@ public class IpDomainUtil {
     }
 
     /**
-     *
      * @param ipDomain ip domain
      * @return IP address type
      */
-    public static String checkIpAddressType(String ipDomain){
+    public static String checkIpAddressType(String ipDomain) {
         if (InetAddressUtils.isIPv6Address(ipDomain)) {
             return CollectorConstants.IPV6;
         }
         return CollectorConstants.IPV4;
     }
-    
+
     /**
      * get current local host name
+     *
      * @return hostname
      */
     public static String getCurrentHostName() {
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
-            return inetAddress.getHostName();   
+            return inetAddress.getHostName();
         } catch (UnknownHostException e) {
             return null;
         }

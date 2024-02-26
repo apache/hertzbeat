@@ -18,6 +18,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * status page public endpoint controller
+ *
  * @author tom
  */
 @Tag(name = "Status Page Public API | 状态页对外API")
@@ -28,7 +29,7 @@ public class StatusPagePublicController {
 
     @Autowired
     private StatusPageService statusPageService;
-    
+
     @GetMapping("/org")
     @Operation(summary = "Query Status Page Organization")
     public ResponseEntity<Message<StatusPageOrg>> queryStatusPageOrg() {
@@ -38,14 +39,14 @@ public class StatusPagePublicController {
         }
         return ResponseEntity.ok(Message.success(statusPageOrg));
     }
-    
+
     @GetMapping("/component")
     @Operation(summary = "Query Status Page Components")
     public ResponseEntity<Message<List<ComponentStatus>>> queryStatusPageComponent() {
         List<ComponentStatus> componentStatusList = statusPageService.queryComponentsStatus();
         return ResponseEntity.ok(Message.success(componentStatusList));
     }
-    
+
     @GetMapping("/component/{id}")
     @Operation(summary = "Query Status Page Component")
     public ResponseEntity<Message<ComponentStatus>> queryStatusPageComponent(@PathVariable("id") final long id) {

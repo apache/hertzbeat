@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * common http client
+ *
  * @author tomsun28
  */
 @Slf4j
@@ -87,14 +88,16 @@ public class CommonHttpClient {
     /**
      * ssl supported version
      */
-    private static final String[] SUPPORTED_SSL = {"TLSv1","TLSv1.1","TLSv1.2","SSLv3"};
+    private static final String[] SUPPORTED_SSL = {"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"};
 
     static {
         try {
             SSLContext sslContext = SSLContexts.createDefault();
             X509TrustManager x509TrustManager = new X509TrustManager() {
                 @Override
-                public void checkClientTrusted(X509Certificate[] x509Certificates, String s) { }
+                public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
+                }
+
                 @Override
                 public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
                     // check server ssl certificate expired
@@ -108,8 +111,11 @@ public class CommonHttpClient {
                         }
                     }
                 }
+
                 @Override
-                public X509Certificate[] getAcceptedIssuers() { return null; }
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
             };
             sslContext.init(null, new TrustManager[]{x509TrustManager}, null);
             SSLConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslContext, SUPPORTED_SSL, null, new NoopHostnameVerifier());
@@ -146,7 +152,8 @@ public class CommonHttpClient {
                 connectionManager.closeExpiredConnections();
                 connectionManager.closeIdleConnections(100, TimeUnit.SECONDS);
             }, 40L, 40L, TimeUnit.SECONDS);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     public static CloseableHttpClient getHttpClient() {

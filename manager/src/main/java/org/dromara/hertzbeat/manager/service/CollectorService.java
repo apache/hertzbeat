@@ -10,27 +10,30 @@ import java.util.List;
 
 /**
  * collector service
+ *
  * @author tom
  */
 public interface CollectorService {
-    
+
     /**
      * Dynamic conditional query
      *
      * @param specification Query conditions
-     * @param pageRequest pageIndex pageSize
+     * @param pageRequest   pageIndex pageSize
      * @return Search result
      */
     Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest);
-    
+
     /**
      * delete registered collectors
+     *
      * @param collectors collector
      */
     void deleteRegisteredCollector(List<String> collectors);
 
     /**
      * is has the collector name
+     *
      * @param collector collector name
      * @return return true if it has
      */

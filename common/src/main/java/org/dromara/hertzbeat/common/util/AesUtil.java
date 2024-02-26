@@ -29,18 +29,19 @@ import java.util.Base64;
 
 /**
  * AES Util
+ *
  * @author tomsun28
  */
 @Slf4j
 public class AesUtil {
 
     /**
-     *  默认加密秘钥 AES加密秘钥为约定16位，大于小于16位会报错
+     * 默认加密秘钥 AES加密秘钥为约定16位，大于小于16位会报错
      */
     private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
-     *  默认算法
+     * 默认算法
      */
     private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
@@ -49,7 +50,8 @@ public class AesUtil {
      */
     private static String secretKey = ENCODE_RULES;
 
-    private AesUtil() {}
+    private AesUtil() {
+    }
 
     public static void setDefaultSecretKey(String secretKeyNow) {
         secretKey = secretKeyNow;
@@ -70,7 +72,7 @@ public class AesUtil {
     /**
      * 加密明文 aes cbc模式
      *
-     * @param content 明文
+     * @param content    明文
      * @param encryptKey 密钥
      * @return 密文
      */
@@ -86,7 +88,7 @@ public class AesUtil {
             //根据密码器的初始化方式--加密：将数据加密
             byte[] byteAes = cipher.doFinal(byteEncode);
             //将加密后的byte[]数据转换为Base64字符串
-            return new String(Base64.getEncoder().encode(byteAes),StandardCharsets.UTF_8);
+            return new String(Base64.getEncoder().encode(byteAes), StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.error("密文加密失败: {}", e.getMessage(), e);
             return content;
@@ -96,7 +98,7 @@ public class AesUtil {
     /**
      * 解密密文
      *
-     * @param content 密文
+     * @param content    密文
      * @param decryptKey 密钥
      * @return 明文
      */
@@ -113,19 +115,20 @@ public class AesUtil {
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            log.error("没有指定的加密算法::{}", e.getMessage(),e);
+            log.error("没有指定的加密算法::{}", e.getMessage(), e);
         } catch (IllegalBlockSizeException e) {
-            log.error("非法的块大小::{}", e.getMessage(),e);
+            log.error("非法的块大小::{}", e.getMessage(), e);
         } catch (NullPointerException e) {
-            log.error("秘钥解析空指针异常::{}", e.getMessage(),e);
+            log.error("秘钥解析空指针异常::{}", e.getMessage(), e);
         } catch (Exception e) {
-            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(),e);
+            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(), e);
         }
         return content;
     }
 
     /**
      * 判断是否已经被加密
+     *
      * @param text text
      * @return true-是 false-否
      */

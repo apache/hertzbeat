@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * job timer dispatcher
+ *
  * @author tomsun28
  */
 @Component
@@ -55,12 +56,12 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
      * jobId - listener
      */
     private final Map<Long, CollectResponseEventListener> eventListeners;
-    
+
     /**
      * is dispatcher online running
      */
     private final AtomicBoolean started;
-    
+
     public TimerDispatcher() {
         this.wheelTimer = new HashedWheelTimer(r -> {
             Thread ret = new Thread(r, "wheelTimer");
@@ -118,7 +119,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             }
         }
     }
-    
+
     @Override
     public void goOnline() {
         currentCyclicTaskMap.forEach((key, value) -> value.cancel());
@@ -127,7 +128,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentTempTaskMap.clear();
         started.set(true);
     }
-    
+
     @Override
     public void goOffline() {
         started.set(false);
@@ -136,8 +137,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentTempTaskMap.forEach((key, value) -> value.cancel());
         currentTempTaskMap.clear();
     }
-    
-    
+
+
     @Override
     public void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps) {
         currentTempTaskMap.remove(jobId);
@@ -146,7 +147,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             eventListener.response(metricsDataTemps);
         }
     }
-    
+
     @Override
     public void destroy() throws Exception {
         this.wheelTimer.stop();

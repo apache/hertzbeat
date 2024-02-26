@@ -11,7 +11,6 @@ import java.util.Map;
 
 /**
  * @author mikezzb
- *
  */
 class AviatorConfigurationTest {
 
@@ -61,11 +60,11 @@ class AviatorConfigurationTest {
         String expr7 = "exists(k6)";
         Boolean res7 = (Boolean) AviatorEvaluator.compile(expr7).execute(env);
         Assertions.assertFalse(res7);
-        
+
         String expr21 = "exists('k5')";
         Boolean res21 = (Boolean) AviatorEvaluator.compile(expr21).execute(env);
         Assertions.assertTrue(res21);
-        
+
         String expr22 = "exists(k5)";
         Boolean res22 = (Boolean) AviatorEvaluator.compile(expr22).execute(env);
         Assertions.assertTrue(res22);

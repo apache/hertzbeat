@@ -28,19 +28,22 @@ import java.util.List;
 
 /**
  * Alert Monitor Dao
+ *
  * @author tomsun28
  */
 public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
-    
+
     /**
      * Query the monitoring status of a specified monitoring state
+     *
      * @param status status value
      * @return Monitor the list
      */
     List<Monitor> findMonitorsByStatus(Byte status);
-    
+
     /**
      * find monitor bind tags by monitorId
+     *
      * @param monitorId monitorId
      * @return bind tags
      */

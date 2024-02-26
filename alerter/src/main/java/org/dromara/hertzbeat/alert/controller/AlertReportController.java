@@ -21,6 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Extern Alarm Manage API
+ *
  * @author zqr10159
  */
 @Tag(name = "Extern Alarm Manage API | 第三方告警管理API")
@@ -77,7 +78,7 @@ public class AlertReportController {
                 alertService.addNewAlertReport(alertReportPresent));
         return ResponseEntity.ok(Message.success("Add report success"));
     }
-    
+
     @PostMapping
     @Operation(summary = "Interface for reporting external and general alarm information ｜ 对外上报告警信息 接口",
             description = "对外 新增一个云服务通用告警")

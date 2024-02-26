@@ -19,8 +19,8 @@ package org.dromara.hertzbeat.manager.support.exception;
 
 /**
  * normal ignore
- * @author tom
  *
+ * @author tom
  */
 public class IgnoreException extends RuntimeException {
     public IgnoreException(String message) {

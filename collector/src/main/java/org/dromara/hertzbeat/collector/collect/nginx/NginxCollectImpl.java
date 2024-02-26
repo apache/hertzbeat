@@ -81,7 +81,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
         HttpContext httpContext = createHttpContext(metrics.getNginx());
         HttpUriRequest request = createHttpRequest(metrics.getNginx());
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             // 发起http请求，获取响应数据
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
@@ -122,7 +122,7 @@ public class NginxCollectImpl extends AbstractCollect {
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
-        
+
         if (nginxProtocol.getUrl() == null
                 || "".equals(nginxProtocol.getUrl())
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {

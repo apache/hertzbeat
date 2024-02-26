@@ -19,12 +19,14 @@ package org.dromara.hertzbeat.common.cache;
 
 /**
  * common cache service
+ *
  * @author ceilzcx
  */
 public interface ICacheService<K, V> {
 
     /**
      * get cache by key use clazz
+     *
      * @param key key
      * @return object
      */
@@ -32,7 +34,8 @@ public interface ICacheService<K, V> {
 
     /**
      * set cache
-     * @param key key
+     *
+     * @param key   key
      * @param value value
      * @return old value
      */
@@ -40,6 +43,7 @@ public interface ICacheService<K, V> {
 
     /**
      * if contain cache by key
+     *
      * @param key key
      * @return true is contain
      */
@@ -47,6 +51,7 @@ public interface ICacheService<K, V> {
 
     /**
      * remove cache
+     *
      * @param key key
      * @return old value
      */
@@ -54,6 +59,7 @@ public interface ICacheService<K, V> {
 
     /**
      * clear cache
+     *
      * @return is clear success
      */
     boolean clear();

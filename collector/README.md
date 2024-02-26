@@ -1,15 +1,15 @@
-### Collector     
+### Collector
 
 Collect Metrics Data from peer-to-peer machine by common protocols.  
-使用通用协议远程采集获取对端指标数据。  
+使用通用协议远程采集获取对端指标数据。
 
 support protocols：http/https, jdbc, ssh, telnet, jmx, ping, prometheus...
 
 ## Supported
 
-> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing users to import them to support corresponding types of monitoring.
+> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing
+> users to import them to support corresponding types of monitoring.
 > Welcome everyone to contribute your customized general monitoring type YML template during use.
-
 
 - [Website](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
@@ -41,7 +41,7 @@ support protocols：http/https, jdbc, ssh, telnet, jmx, ping, prometheus...
 - And More Your Custom Template.
 - Notified Support `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-## Build HertzBeat Collector Install Package  
+## Build HertzBeat Collector Install Package
 
 1. Execute command in root
 

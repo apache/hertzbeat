@@ -26,9 +26,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * json str to tag list 
- * @author tom
+ * json str to tag list
  *
+ * @author tom
  */
 public class JsonTagListAttributeConverter implements AttributeConverter<List<TagItem>, String> {
 
@@ -40,11 +40,13 @@ public class JsonTagListAttributeConverter implements AttributeConverter<List<Ta
     @Override
     public List<TagItem> convertToEntityAttribute(String dbData) {
         try {
-            TypeReference<List<TagItem>> typeReference = new TypeReference<>() {};
+            TypeReference<List<TagItem>> typeReference = new TypeReference<>() {
+            };
             return JsonUtil.fromJson(dbData, typeReference);
         } catch (Exception e) {
             // history data handler
-            TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+            TypeReference<Map<String, String>> typeReference = new TypeReference<>() {
+            };
             Map<String, String> map = JsonUtil.fromJson(dbData, typeReference);
             if (map != null) {
                 return map.entrySet().stream().map(entry -> new TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());

@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.common.util;
 
 /**
  * network util
+ *
  * @author ceilzcx
  */
 public class NetworkUtil {
@@ -27,6 +28,7 @@ public class NetworkUtil {
 
     /**
      * whether the running environment is linux
+     *
      * @return is linux platform or not
      */
     public static boolean isLinuxPlatform() {
@@ -35,6 +37,7 @@ public class NetworkUtil {
 
     /**
      * whether the running environment is windows
+     *
      * @return is windows platform or not
      */
     public static boolean isWindowsPlatform() {

@@ -31,28 +31,29 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitoring Information External Interaction Entities
+ *
  * @author tomsun28
  */
 @Data
 @Schema(description = "Monitoring information entities | 监控信息实体")
 public class MonitorDto {
-    
+
     @Schema(description = "Monitor Content", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private Monitor monitor;
-    
+
     @Schema(description = "Monitor Params", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private List<Param> params;
-    
+
     @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
     private List<String> metrics;
-    
+
     @Schema(description = "Whether to Detect", accessMode = READ_WRITE)
     private boolean detected;
-    
+
     /**
      * which collector this monitoring want to pin
      */

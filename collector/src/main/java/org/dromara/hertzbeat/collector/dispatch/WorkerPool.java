@@ -63,8 +63,8 @@ public class WorkerPool implements DisposableBean {
     /**
      * Run the collection task thread
      *
-     * @param runnable Task  
-     * @throws RejectedExecutionException when thread pool full 
+     * @param runnable Task
+     * @throws RejectedExecutionException when thread pool full
      */
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);

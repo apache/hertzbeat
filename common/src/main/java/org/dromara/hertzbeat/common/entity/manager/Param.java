@@ -40,10 +40,11 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Monitor parameter values
  * 监控参数值
+ *
  * @author tomsun28
  */
 @Entity
-@Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
+@Table(name = "hzb_param", indexes = {@Index(columnList = "monitorId")},
         uniqueConstraints = @UniqueConstraint(columnNames = {"monitorId", "field"}))
 @Data
 @Builder

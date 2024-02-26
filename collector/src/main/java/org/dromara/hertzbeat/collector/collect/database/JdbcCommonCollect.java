@@ -47,6 +47,7 @@ import java.util.Optional;
 
 /**
  * common query for database query
+ *
  * @author tomsun28
  */
 @Slf4j
@@ -57,7 +58,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
 
-    public JdbcCommonCollect(){}
+    public JdbcCommonCollect() {
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -134,7 +136,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url,Integer timeout) throws Exception {
+    private Statement getConnection(String username, String password, String url, Integer timeout) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
@@ -184,13 +186,14 @@ public class JdbcCommonCollect extends AbstractCollect {
      * eg:
      * query metrics：one tow three four
      * query sql：select one, tow, three, four from book limit 1;
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRow(Statement statement, String sql, List<String> columns,
-                                           CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
+                             CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         statement.setMaxRows(1);
         try (ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
@@ -215,14 +218,15 @@ public class JdbcCommonCollect extends AbstractCollect {
      * eg:
      * query metrics：one two three four
      * query sql：select key, value from book; the key is the query metrics fields
-     * select key, value from book; 
+     * select key, value from book;
      * one    -  value1
      * two    -  value2
      * three  -  value3
      * four   -  value4
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
@@ -255,9 +259,10 @@ public class JdbcCommonCollect extends AbstractCollect {
      * query metrics：one tow three four
      * query sql：select one, tow, three, four from book;
      * and return multi row record mapping with the metrics
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
@@ -282,6 +287,7 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     /**
      * construct jdbc url due the jdbc protocol
+     *
      * @param jdbcProtocol jdbc
      * @return URL
      */
@@ -318,7 +324,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                         + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
                 break;
             case "dm":
-                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" +jdbcProtocol.getPort();
+                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort();
                 break;
             default:
                 throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());

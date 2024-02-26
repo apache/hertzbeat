@@ -56,8 +56,8 @@ class TagControllerTest {
 
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/tag")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(tags)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(tags)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
@@ -89,7 +89,7 @@ class TagControllerTest {
 
     @Test
     void getTags() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/tag?type={type}&search={search}", (byte)1, "status"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/tag?type={type}&search={search}", (byte) 1, "status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

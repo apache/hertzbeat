@@ -38,8 +38,8 @@ import java.util.Map;
 
 /**
  * redis存储采集实时数据
- * @author tom
  *
+ * @author tom
  */
 @Primary
 @Component
@@ -56,9 +56,11 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         this.serverAvailable = initRedisClient(properties);
         this.db = getRedisSelectDb(properties);
     }
-    private Integer getRedisSelectDb(WarehouseProperties properties){
+
+    private Integer getRedisSelectDb(WarehouseProperties properties) {
         return properties.getStore().getRedis().getDb();
     }
+
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
         RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();

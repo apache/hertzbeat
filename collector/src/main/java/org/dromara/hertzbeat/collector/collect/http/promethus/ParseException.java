@@ -2,7 +2,6 @@ package org.dromara.hertzbeat.collector.collect.http.promethus;
 
 /**
  * @author ceilzcx
- *
  */
 public class ParseException extends RuntimeException {
 

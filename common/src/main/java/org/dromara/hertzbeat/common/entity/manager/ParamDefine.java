@@ -40,6 +40,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Monitoring parameter definitions
  * 监控参数定义
+ *
  * @author tomsun28
  */
 @Entity

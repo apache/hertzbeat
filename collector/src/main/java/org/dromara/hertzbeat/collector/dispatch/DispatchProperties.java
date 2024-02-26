@@ -58,29 +58,28 @@ public class DispatchProperties {
      * The entry can be netty information, http request, message middleware message request
      */
     public static class EntranceProperties {
-        
+
         /**
          * netty server client config
          */
         private NettyProperties netty;
-        
+
         public NettyProperties getNetty() {
             return netty;
         }
-        
+
         public void setNetty(NettyProperties netty) {
             this.netty = netty;
         }
-        
-        
-        
+
+
         public static class NettyProperties {
-            
+
             /**
              * whether netty scheduling is started
              */
             private boolean enabled = false;
-            
+
             /**
              * this collector unique identity
              * default is the host name
@@ -93,29 +92,29 @@ public class DispatchProperties {
              * private: for private network, support cloud-edge
              */
             private String mode;
-            
+
             /**
              * connect cluster master host
              */
             private String managerHost;
-            
+
             /**
              * connect cluster master port
              */
             private int managerPort = 1158;
-            
+
             public boolean isEnabled() {
                 return enabled;
             }
-            
+
             public void setEnabled(boolean enabled) {
                 this.enabled = enabled;
             }
-            
+
             public String getIdentity() {
                 return identity;
             }
-            
+
             public void setIdentity(String identity) {
                 this.identity = identity;
             }
@@ -131,15 +130,15 @@ public class DispatchProperties {
             public String getManagerHost() {
                 return managerHost;
             }
-            
+
             public void setManagerHost(String managerHost) {
                 this.managerHost = managerHost;
             }
-            
+
             public int getManagerPort() {
                 return managerPort;
             }
-            
+
             public void setManagerPort(int managerPort) {
                 this.managerPort = managerPort;
             }

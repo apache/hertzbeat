@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.common.util;
 
 /**
  * @author ceilzcx
- *
+ * <p>
  * 为了避免ExporterParser解析过程中, 使用subString的方式生成过多的String对象, 使用该类控制
  */
 public class StrBuffer {

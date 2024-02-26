@@ -26,32 +26,37 @@ import java.util.Set;
 
 /**
  * AlertDefineBind database operations
+ *
  * @author tom
  */
 public interface AlertDefineBindDao extends JpaRepository<AlertDefineMonitorBind, Long>, JpaSpecificationExecutor<AlertDefineMonitorBind> {
 
     /**
      * Delete the alarm definition and monitor association based on the alarm definition ID
-     * @param alertDefineId Alarm Definition ID  
+     *
+     * @param alertDefineId Alarm Definition ID
      */
     void deleteAlertDefineBindsByAlertDefineIdEquals(Long alertDefineId);
 
     /**
      * Deleting alarms based on monitoring IDs defines monitoring associations
-     * @param monitorId Monitor Id 
+     *
+     * @param monitorId Monitor Id
      */
     void deleteAlertDefineMonitorBindsByMonitorIdEquals(Long monitorId);
 
     /**
      * Delete alarm definition monitoring association based on monitoring ID list
-     * @param monitorIds Monitoring ID List  
+     *
+     * @param monitorIds Monitoring ID List
      */
     void deleteAlertDefineMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
 
     /**
      * Query monitoring related information based on alarm definition ID
-     * @param alertDefineId Alarm Definition ID     
-     * @return Associated monitoring information    
+     *
+     * @param alertDefineId Alarm Definition ID
+     * @return Associated monitoring information
      */
     List<AlertDefineMonitorBind> getAlertDefineBindsByAlertDefineIdEquals(Long alertDefineId);
 }

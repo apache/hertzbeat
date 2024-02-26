@@ -24,6 +24,7 @@ import java.util.Objects;
 
 /**
  * resource identifier in cache
+ *
  * @author tomsun28
  */
 @Data

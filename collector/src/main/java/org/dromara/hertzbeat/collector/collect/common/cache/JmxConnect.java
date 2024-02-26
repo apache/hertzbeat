@@ -6,6 +6,7 @@ import javax.management.remote.JMXConnector;
 
 /**
  * jmx connect object
+ *
  * @author huacheng
  **/
 @Slf4j

@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 
 /**
  * aviator config
+ *
  * @author tomsun28
  */
 @Configuration
@@ -54,7 +55,7 @@ public class AviatorConfiguration {
 
         // limit loop 限制循环次数
         instance.setOption(Options.MAX_LOOP_COUNT, 10);
-        
+
         // 启用部分Aviator语法特性集合
         instance.setOption(Options.FEATURE_SET,
                 Feature.asSet(Feature.If,
@@ -81,6 +82,7 @@ public class AviatorConfiguration {
                 }
                 return arg1.bitOr(arg2, env);
             }
+
             @Override
             public String getName() {
                 return OperatorType.BIT_OR.getToken();
@@ -110,6 +112,7 @@ public class AviatorConfiguration {
             String right = String.valueOf(rightTmp);
             return AviatorBoolean.valueOf(left.equalsIgnoreCase(right));
         }
+
         @Override
         public String getName() {
             return "equals";
@@ -134,6 +137,7 @@ public class AviatorConfiguration {
             String right = String.valueOf(rightTmp);
             return AviatorBoolean.valueOf(StringUtils.containsIgnoreCase(left, right));
         }
+
         @Override
         public String getName() {
             return "contains";
@@ -157,6 +161,7 @@ public class AviatorConfiguration {
                 return AviatorBoolean.valueOf(StringUtils.isNotEmpty(key));
             }
         }
+
         @Override
         public String getName() {
             return "exists";
@@ -183,6 +188,7 @@ public class AviatorConfiguration {
             boolean isMatch = Pattern.compile(regex).matcher(str).matches();
             return AviatorBoolean.valueOf(isMatch);
         }
+
         @Override
         public String getName() {
             return "matches";

@@ -40,7 +40,7 @@ class TelegramBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTes
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
-        NoticeTemplate noticeTemplate=new NoticeTemplate();
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("Telegram");
         noticeTemplate.setContent("[${title}]\n" +
@@ -60,6 +60,6 @@ class TelegramBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTes
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        telegramBotAlertNotifyHandler.send(receiver, noticeTemplate,alert);
+        telegramBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

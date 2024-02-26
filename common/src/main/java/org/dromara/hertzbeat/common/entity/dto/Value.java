@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Monitoring Metrics Data
+ *
  * @author tom
  */
 @Data

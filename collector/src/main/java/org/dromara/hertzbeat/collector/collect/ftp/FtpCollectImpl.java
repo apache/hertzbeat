@@ -18,6 +18,7 @@ import java.util.Objects;
 
 /**
  * ftp protocol collection implementation
+ *
  * @author 落阳
  */
 @Slf4j
@@ -94,14 +95,14 @@ public class FtpCollectImpl extends AbstractCollect {
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         try {
             // username: not empty, password: not empty
-            if(StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
-                if(!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
+            if (StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
+                if (!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
                     throw new IllegalArgumentException("The username or password may be wrong.");
                 }
                 return;
             }
             // anonymous access
-            if(!ftpClient.login(ANONYMOUS, PASSWORD)) {
+            if (!ftpClient.login(ANONYMOUS, PASSWORD)) {
                 throw new IllegalArgumentException("The server may not allow anonymous access, we need to username and password.");
             }
         } catch (Exception e) {

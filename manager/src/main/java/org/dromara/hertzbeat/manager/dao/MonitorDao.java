@@ -33,7 +33,6 @@ import java.util.Set;
  * AuthResources 数据库操作
  *
  * @author tomsun28
- *
  */
 public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
 

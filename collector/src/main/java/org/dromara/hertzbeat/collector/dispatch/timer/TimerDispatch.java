@@ -42,6 +42,7 @@ public interface TimerDispatch {
 
     /**
      * Cyclic job
+     *
      * @param timerTask timerTask
      * @param interval  collect interval
      * @param timeUnit  time unit
@@ -50,16 +51,17 @@ public interface TimerDispatch {
 
     /**
      * Delete existing job
+     *
      * @param jobId    jobId
      * @param isCyclic Whether it is a periodic task, true is, false is a temporary task
      */
     void deleteJob(long jobId, boolean isCyclic);
-    
+
     /**
      * job dispatcher go online
      */
     void goOnline();
-    
+
     /**
      * job dispatcher go offline
      */
@@ -67,6 +69,7 @@ public interface TimerDispatch {
 
     /**
      * response sync collect task data
+     *
      * @param jobId            jobId
      * @param metricsDataTemps collect data
      */

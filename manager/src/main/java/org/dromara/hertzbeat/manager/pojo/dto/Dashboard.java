@@ -26,8 +26,8 @@ import java.util.List;
 
 /**
  * 大屏仪表盘统计信息
- * @author tom
  *
+ * @author tom
  */
 @Data
 @AllArgsConstructor

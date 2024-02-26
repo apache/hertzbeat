@@ -15,8 +15,8 @@ import java.util.List;
 
 /**
  * Test case for {@link RedisCommonCollectImpl}
- * @author hdd
  *
+ * @author hdd
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {

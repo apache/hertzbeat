@@ -31,7 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MonitorControllerTest {
 
 
-
     private MockMvc mockMvc;
 
 
@@ -41,7 +40,7 @@ class MonitorControllerTest {
     @InjectMocks
     private MonitorController monitorController;
 
-    public MonitorDto DataTest(){
+    public MonitorDto DataTest() {
         Monitor monitor = new Monitor();
         monitor.setApp("website");
         monitor.setId(87584674384L);
@@ -77,8 +76,8 @@ class MonitorControllerTest {
 
         MonitorDto monitorDto = DataTest();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(monitorDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -90,8 +89,8 @@ class MonitorControllerTest {
         MonitorDto monitorDto = DataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(monitorDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

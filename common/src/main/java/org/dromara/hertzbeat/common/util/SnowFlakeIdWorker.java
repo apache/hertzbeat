@@ -22,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Random;
 
 /**
- * SnowFlakeId Instance 
+ * SnowFlakeId Instance
  * 注意 由于前端JS TS 在json解析大数会造成精度丢失 UUID 不能超过 9007199254740991（10进制）16进制为 0x1FFFFFFFFFFFFF (小于53bit)
  * 1位符号位+41位时间戳+4位机器ID+8位序列号 = 53位
  * Note that because the front-end JS TS parses large numbers in json, the precision will be lost.
  * UUID cannot exceed hexadecimal 0x1FFFFFFFFFFFFFF (less than 53bit)
- * @author from https://www.cnblogs.com/vchar/p/14857677.html
  *
+ * @author from https://www.cnblogs.com/vchar/p/14857677.html
  */
 @Slf4j
 public class SnowFlakeIdWorker {
@@ -118,6 +118,7 @@ public class SnowFlakeIdWorker {
     /**
      * get next id
      * thread safe
+     *
      * @return id with 15 length
      */
     public synchronized long nextId() {

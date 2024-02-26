@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 /**
  * common util
+ *
  * @author tomsun28
  */
 @Slf4j

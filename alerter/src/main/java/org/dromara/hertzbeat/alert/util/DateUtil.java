@@ -17,6 +17,7 @@ public class DateUtil {
 
     /**
      * convert date to timestamp
+     *
      * @param date date
      */
     public static Long getTimeStampFromSomeFormats(String date) {

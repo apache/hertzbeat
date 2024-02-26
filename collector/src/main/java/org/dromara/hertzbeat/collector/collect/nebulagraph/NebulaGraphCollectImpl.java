@@ -63,7 +63,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 
-        if (!Objects.isNull(nebulaGraph.getTimePeriod())&&!Arrays.asList(TIME_RANGE).contains(timePeriod)) {
+        if (!Objects.isNull(nebulaGraph.getTimePeriod()) && !Arrays.asList(TIME_RANGE).contains(timePeriod)) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("The time range for metric statistics, currently supporting 5 seconds, 60 seconds, 600 seconds, and 3600 seconds.");
             return;

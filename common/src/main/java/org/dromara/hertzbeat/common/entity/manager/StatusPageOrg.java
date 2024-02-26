@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 
 /**
  * status page org entity
+ *
  * @author tom
  */
 @Entity
@@ -34,7 +35,7 @@ public class StatusPageOrg {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "ID", example = "87584674384")
     private Long id;
-    
+
     @Schema(title = "org name", example = "TanCloud")
     @NotBlank
     private String name;
@@ -46,14 +47,14 @@ public class StatusPageOrg {
     @Schema(title = "org home url", example = "https://tancloud.com")
     @NotBlank
     private String home;
-    
+
     @Schema(title = "org logo url", example = "logo.svg url")
     @NotBlank
     private String logo;
 
     @Schema(title = "org feedback issue url", example = "contact@email.com")
     private String feedback;
-    
+
     @Schema(title = "org theme background color", example = "#ffffff")
     private String color;
 
@@ -63,15 +64,15 @@ public class StatusPageOrg {
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy
     private String creator;
-    
+
     @Schema(title = "The modifier of this record", example = "tom")
     @LastModifiedBy
     private String modifier;
-    
+
     @Schema(title = "Record create time", example = "1612198922000")
     @CreatedDate
     private LocalDateTime gmtCreate;
-    
+
     @Schema(title = "Record modify time", example = "1612198444000")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;

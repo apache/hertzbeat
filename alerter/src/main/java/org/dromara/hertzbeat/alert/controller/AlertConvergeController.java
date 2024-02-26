@@ -34,6 +34,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Alarm Converge management API
+ *
  * @author tom
  */
 @Tag(name = "Alert Converge API | 告警收敛管理API")

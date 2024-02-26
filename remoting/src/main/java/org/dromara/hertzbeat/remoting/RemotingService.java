@@ -34,6 +34,7 @@ public interface RemotingService {
 
     /**
      * test use
+     *
      * @return is server start
      */
     boolean isStart();

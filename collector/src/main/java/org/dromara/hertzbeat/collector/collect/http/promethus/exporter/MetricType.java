@@ -2,8 +2,8 @@ package org.dromara.hertzbeat.collector.collect.http.promethus.exporter;
 
 /**
  * prometheus metrics type
- * @author ceilzcx
  *
+ * @author ceilzcx
  */
 public enum MetricType {
     // for string metric info

@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * common module config
+ *
  * @author tom
  */
 @ComponentScan(basePackages = "org.dromara.hertzbeat.common")

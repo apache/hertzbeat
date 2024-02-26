@@ -67,18 +67,19 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * prometheus auto collect
+ *
  * @author tomsun28
  */
 @Slf4j
 public class PrometheusAutoCollectImpl {
-    
+
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
-    
+
     public PrometheusAutoCollectImpl() {
     }
-    
+
     public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder,
                                                 Metrics metrics) {
         try {
@@ -92,7 +93,7 @@ public class PrometheusAutoCollectImpl {
         HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
         try {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+                    .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = defaultSuccessStatusCodes.contains(statusCode);
             log.debug("http response status: {}", statusCode);
@@ -117,7 +118,7 @@ public class PrometheusAutoCollectImpl {
                     log.info("parse error: {}.", e.getMessage(), e);
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("parse response data error:" + e.getMessage());
-                }   
+                }
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
@@ -151,23 +152,23 @@ public class PrometheusAutoCollectImpl {
         }
         return Collections.singletonList(builder.build());
     }
-    
+
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_PROMETHEUS;
     }
-    
+
     private void validateParams(Metrics metrics) throws Exception {
         if (metrics == null || metrics.getPrometheus() == null) {
             throw new Exception("Prometheus collect must has prometheus params");
         }
         PrometheusProtocol protocol = metrics.getPrometheus();
         if (protocol.getPath() == null
-                    || "".equals(protocol.getPath())
-                    || !protocol.getPath().startsWith(RIGHT_DASH)) {
+                || "".equals(protocol.getPath())
+                || !protocol.getPath().startsWith(RIGHT_DASH)) {
             protocol.setPath(protocol.getPath() == null ? RIGHT_DASH : RIGHT_DASH + protocol.getPath().trim());
         }
     }
-    
+
     private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                                            CollectRep.MetricsData.Builder builder) {
         Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
@@ -208,7 +209,7 @@ public class PrometheusAutoCollectImpl {
         }
         return metricsDataList;
     }
-    
+
     /**
      * create httpContext
      *
@@ -220,7 +221,7 @@ public class PrometheusAutoCollectImpl {
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
             if (StringUtils.hasText(auth.getDigestAuthUsername())
-                        && StringUtils.hasText(auth.getDigestAuthPassword())) {
+                    && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials
                         = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
@@ -237,6 +238,7 @@ public class PrometheusAutoCollectImpl {
 
     /**
      * create http request
+     *
      * @param protocol http params
      * @return http uri request
      */
@@ -267,7 +269,7 @@ public class PrometheusAutoCollectImpl {
         }
         // add accept
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
-        
+
         if (protocol.getAuthorization() != null) {
             PrometheusProtocol.Authorization authorization = protocol.getAuthorization();
             if (DispatchConstants.BEARER_TOKEN.equalsIgnoreCase(authorization.getType())) {
@@ -275,7 +277,7 @@ public class PrometheusAutoCollectImpl {
                 requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
             } else if (DispatchConstants.BASIC_AUTH.equals(authorization.getType())) {
                 if (StringUtils.hasText(authorization.getBasicAuthUsername())
-                            && StringUtils.hasText(authorization.getBasicAuthPassword())) {
+                        && StringUtils.hasText(authorization.getBasicAuthPassword())) {
                     String authStr = authorization.getBasicAuthUsername() + ":" + authorization.getBasicAuthPassword();
                     String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                     requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, DispatchConstants.BASIC + " " + encodedAuth);
@@ -287,17 +289,17 @@ public class PrometheusAutoCollectImpl {
         if (StringUtils.hasLength(protocol.getPayload())) {
             requestBuilder.setEntity(new StringEntity(protocol.getPayload(), StandardCharsets.UTF_8));
         }
-        
+
         // uri
         String uri = CollectUtil.replaceUriSpecialChar(protocol.getPath());
         if (IpDomainUtil.isHasSchema(protocol.getHost())) {
-            
+
             requestBuilder.setUri(protocol.getHost() + ":" + protocol.getPort() + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(protocol.getHost());
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
-                                     ? String.format("[%s]:%s%s", protocol.getHost(), protocol.getPort(), uri)
-                                     : String.format("%s:%s%s", protocol.getHost(), protocol.getPort(), uri);
+                    ? String.format("[%s]:%s%s", protocol.getHost(), protocol.getPort(), uri)
+                    : String.format("%s:%s%s", protocol.getHost(), protocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(protocol.getSsl());
             if (ssl) {
                 requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
@@ -305,15 +307,15 @@ public class PrometheusAutoCollectImpl {
                 requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
             }
         }
-        
+
         // custom timeout
         int timeout = CollectUtil.getTimeout(protocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
-                                                  .setConnectTimeout(timeout)
-                                                  .setSocketTimeout(timeout)
-                                                  .setRedirectsEnabled(true)
-                                                  .build();
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout)
+                    .setRedirectsEnabled(true)
+                    .build();
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();
@@ -321,12 +323,13 @@ public class PrometheusAutoCollectImpl {
 
     /**
      * get collect instance
+     *
      * @return instance
      */
     public static PrometheusAutoCollectImpl getInstance() {
         return PrometheusAutoCollectImpl.SingleInstance.INSTANCE;
     }
-    
+
     /**
      * static instance
      */

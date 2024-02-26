@@ -21,30 +21,34 @@ import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**
  * slave collector service
+ *
  * @author tom
  */
 public interface CollectorScheduling {
-    
+
     /**
      * register collector go online
-     * @param identity collector identity name
+     *
+     * @param identity      collector identity name
      * @param collectorInfo collector information
      */
     void collectorGoOnline(String identity, CollectorInfo collectorInfo);
-    
+
     /**
      * register collector go offline
+     *
      * @param identity collector identity name
      */
     void collectorGoOffline(String identity);
-    
+
     /**
      * reBalance dispatch monitoring jobs when collector go online or offline or timeout
      */
     void reBalanceCollectorAssignJobs();
-    
+
     /**
      * offline collector(stop collector collect operation)
+     *
      * @param identity collector identity name
      * @return true/false
      */
@@ -52,6 +56,7 @@ public interface CollectorScheduling {
 
     /**
      * online collector(start collector collect operation)
+     *
      * @param identity collector identity name
      * @return true/false
      */

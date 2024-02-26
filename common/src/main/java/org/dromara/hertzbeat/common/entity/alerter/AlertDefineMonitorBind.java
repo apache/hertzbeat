@@ -38,6 +38,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alarm Threshold Relate Monitor Entity
+ *
  * @author tom
  */
 @Entity

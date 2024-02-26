@@ -39,7 +39,7 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         var alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
-        var noticeTemplate=new NoticeTemplate();
+        var noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("Slack");
         noticeTemplate.setContent("*[${title}]*\n" +
@@ -60,6 +60,6 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        slackAlertNotifyHandler.send(receiver, noticeTemplate,alert);
+        slackAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

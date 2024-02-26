@@ -28,19 +28,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.criteria.Predicate;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Tags management API
  * 标签管理API
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @io.swagger.v3.oas.annotations.tags.Tag(name = "Tag Manage API | 标签管理API")
 @RestController
@@ -56,7 +58,7 @@ public class TagController {
         tags = tags.stream().peek(tag -> {
             tag.setType((byte) 1);
             tag.setId(null);
-            }).distinct().collect(Collectors.toList());
+        }).distinct().collect(Collectors.toList());
         tagService.addTags(tags);
         return ResponseEntity.ok(Message.success("Add success"));
     }

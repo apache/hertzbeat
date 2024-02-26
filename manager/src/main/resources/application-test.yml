@@ -42,7 +42,7 @@ spring:
 common:
   queue:
     type: memory
-    
+
 warehouse:
   store:
     jpa:

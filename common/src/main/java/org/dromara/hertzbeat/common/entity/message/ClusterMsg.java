@@ -7,17 +7,17 @@ package org.dromara.hertzbeat.common.entity.message;
 public final class ClusterMsg {
     private ClusterMsg() {
     }
-    
+
     public static void registerAllExtensions(
             com.google.protobuf.ExtensionRegistryLite registry) {
     }
-    
+
     public static void registerAllExtensions(
             com.google.protobuf.ExtensionRegistry registry) {
         registerAllExtensions(
                 (com.google.protobuf.ExtensionRegistryLite) registry);
     }
-    
+
     /**
      * Protobuf enum {@code org.dromara.hertzbeat.common.entity.message.MessageType}
      */
@@ -97,7 +97,7 @@ public final class ClusterMsg {
         GO_CLOSE(8),
         UNRECOGNIZED(-1),
         ;
-        
+
         /**
          * <pre>
          * heartbeat message
@@ -170,8 +170,8 @@ public final class ClusterMsg {
          * <code>GO_CLOSE = 8;</code>
          */
         public static final int GO_CLOSE_VALUE = 8;
-        
-        
+
+
         public final int getNumber() {
             if (this == UNRECOGNIZED) {
                 throw new IllegalArgumentException(
@@ -179,7 +179,7 @@ public final class ClusterMsg {
             }
             return value;
         }
-        
+
         /**
          * @param value The numeric wire value of the corresponding enum entry.
          * @return The enum associated with the given numeric wire value.
@@ -189,7 +189,7 @@ public final class ClusterMsg {
         public static MessageType valueOf(int value) {
             return forNumber(value);
         }
-        
+
         /**
          * @param value The numeric wire value of the corresponding enum entry.
          * @return The enum associated with the given numeric wire value.
@@ -218,20 +218,20 @@ public final class ClusterMsg {
                     return null;
             }
         }
-        
+
         public static com.google.protobuf.Internal.EnumLiteMap<MessageType>
         internalGetValueMap() {
             return internalValueMap;
         }
-        
+
         private static final com.google.protobuf.Internal.EnumLiteMap<
-                                                                             MessageType> internalValueMap =
+                MessageType> internalValueMap =
                 new com.google.protobuf.Internal.EnumLiteMap<MessageType>() {
                     public MessageType findValueByNumber(int number) {
                         return MessageType.forNumber(number);
                     }
                 };
-        
+
         public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
             if (this == UNRECOGNIZED) {
@@ -240,19 +240,19 @@ public final class ClusterMsg {
             }
             return getDescriptor().getValues().get(ordinal());
         }
-        
+
         public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
             return getDescriptor();
         }
-        
+
         public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
             return ClusterMsg.getDescriptor().getEnumTypes().get(0);
         }
-        
+
         private static final MessageType[] VALUES = values();
-        
+
         public static MessageType valueOf(
                 com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
@@ -264,16 +264,16 @@ public final class ClusterMsg {
             }
             return VALUES[desc.getIndex()];
         }
-        
+
         private final int value;
-        
+
         private MessageType(int value) {
             this.value = value;
         }
-        
+
         // @@protoc_insertion_point(enum_scope:org.dromara.hertzbeat.common.entity.message.MessageType)
     }
-    
+
     /**
      * Protobuf enum {@code org.dromara.hertzbeat.common.entity.message.Direction}
      */
@@ -297,7 +297,7 @@ public final class ClusterMsg {
         RESPONSE(1),
         UNRECOGNIZED(-1),
         ;
-        
+
         /**
          * <pre>
          * request message
@@ -314,8 +314,8 @@ public final class ClusterMsg {
          * <code>RESPONSE = 1;</code>
          */
         public static final int RESPONSE_VALUE = 1;
-        
-        
+
+
         public final int getNumber() {
             if (this == UNRECOGNIZED) {
                 throw new IllegalArgumentException(
@@ -323,7 +323,7 @@ public final class ClusterMsg {
             }
             return value;
         }
-        
+
         /**
          * @param value The numeric wire value of the corresponding enum entry.
          * @return The enum associated with the given numeric wire value.
@@ -333,7 +333,7 @@ public final class ClusterMsg {
         public static Direction valueOf(int value) {
             return forNumber(value);
         }
-        
+
         /**
          * @param value The numeric wire value of the corresponding enum entry.
          * @return The enum associated with the given numeric wire value.
@@ -348,20 +348,20 @@ public final class ClusterMsg {
                     return null;
             }
         }
-        
+
         public static com.google.protobuf.Internal.EnumLiteMap<Direction>
         internalGetValueMap() {
             return internalValueMap;
         }
-        
+
         private static final com.google.protobuf.Internal.EnumLiteMap<
-                                                                             Direction> internalValueMap =
+                Direction> internalValueMap =
                 new com.google.protobuf.Internal.EnumLiteMap<Direction>() {
                     public Direction findValueByNumber(int number) {
                         return Direction.forNumber(number);
                     }
                 };
-        
+
         public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
             if (this == UNRECOGNIZED) {
@@ -370,19 +370,19 @@ public final class ClusterMsg {
             }
             return getDescriptor().getValues().get(ordinal());
         }
-        
+
         public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
             return getDescriptor();
         }
-        
+
         public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
             return ClusterMsg.getDescriptor().getEnumTypes().get(1);
         }
-        
+
         private static final Direction[] VALUES = values();
-        
+
         public static Direction valueOf(
                 com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
@@ -394,20 +394,20 @@ public final class ClusterMsg {
             }
             return VALUES[desc.getIndex()];
         }
-        
+
         private final int value;
-        
+
         private Direction(int value) {
             this.value = value;
         }
-        
+
         // @@protoc_insertion_point(enum_scope:org.dromara.hertzbeat.common.entity.message.Direction)
     }
-    
+
     public interface MessageOrBuilder extends
             // @@protoc_insertion_point(interface_extends:org.dromara.hertzbeat.common.entity.message.Message)
-                    com.google.protobuf.MessageOrBuilder {
-        
+            com.google.protobuf.MessageOrBuilder {
+
         /**
          * <pre>
          * collector identity
@@ -418,7 +418,7 @@ public final class ClusterMsg {
          * @return The identity.
          */
         String getIdentity();
-        
+
         /**
          * <pre>
          * collector identity
@@ -430,7 +430,7 @@ public final class ClusterMsg {
          */
         com.google.protobuf.ByteString
         getIdentityBytes();
-        
+
         /**
          * <pre>
          * message direction
@@ -441,7 +441,7 @@ public final class ClusterMsg {
          * @return The enum numeric value on the wire for direction.
          */
         int getDirectionValue();
-        
+
         /**
          * <pre>
          * message direction
@@ -452,7 +452,7 @@ public final class ClusterMsg {
          * @return The direction.
          */
         Direction getDirection();
-        
+
         /**
          * <pre>
          * message type
@@ -463,7 +463,7 @@ public final class ClusterMsg {
          * @return The enum numeric value on the wire for type.
          */
         int getTypeValue();
-        
+
         /**
          * <pre>
          * message type
@@ -474,7 +474,7 @@ public final class ClusterMsg {
          * @return The type.
          */
         MessageType getType();
-        
+
         /**
          * <pre>
          * message content
@@ -485,7 +485,7 @@ public final class ClusterMsg {
          * @return The msg.
          */
         String getMsg();
-        
+
         /**
          * <pre>
          * message content
@@ -498,41 +498,41 @@ public final class ClusterMsg {
         com.google.protobuf.ByteString
         getMsgBytes();
     }
-    
+
     /**
      * Protobuf type {@code org.dromara.hertzbeat.common.entity.message.Message}
      */
     public static final class Message extends
             com.google.protobuf.GeneratedMessageV3 implements
             // @@protoc_insertion_point(message_implements:org.dromara.hertzbeat.common.entity.message.Message)
-                    MessageOrBuilder {
+            MessageOrBuilder {
         private static final long serialVersionUID = 0L;
-        
+
         // Use Message.newBuilder() to construct.
         private Message(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
             super(builder);
         }
-        
+
         private Message() {
             identity_ = "";
             direction_ = 0;
             type_ = 0;
             msg_ = "";
         }
-        
+
         @Override
         @SuppressWarnings({"unused"})
         protected Object newInstance(
                 UnusedPrivateParameter unused) {
             return new Message();
         }
-        
+
         @Override
         public final com.google.protobuf.UnknownFieldSet
         getUnknownFields() {
             return this.unknownFields;
         }
-        
+
         private Message(
                 com.google.protobuf.CodedInputStream input,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -553,25 +553,25 @@ public final class ClusterMsg {
                             break;
                         case 10: {
                             String s = input.readStringRequireUtf8();
-                            
+
                             identity_ = s;
                             break;
                         }
                         case 16: {
                             int rawValue = input.readEnum();
-                            
+
                             direction_ = rawValue;
                             break;
                         }
                         case 24: {
                             int rawValue = input.readEnum();
-                            
+
                             type_ = rawValue;
                             break;
                         }
                         case 34: {
                             String s = input.readStringRequireUtf8();
-                            
+
                             msg_ = s;
                             break;
                         }
@@ -596,23 +596,23 @@ public final class ClusterMsg {
                 makeExtensionsImmutable();
             }
         }
-        
+
         public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
             return ClusterMsg.internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor;
         }
-        
+
         @Override
         protected FieldAccessorTable
         internalGetFieldAccessorTable() {
             return ClusterMsg.internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable
-                           .ensureFieldAccessorsInitialized(
-                                   Message.class, Builder.class);
+                    .ensureFieldAccessorsInitialized(
+                            Message.class, Builder.class);
         }
-        
+
         public static final int IDENTITY_FIELD_NUMBER = 1;
         private volatile Object identity_;
-        
+
         /**
          * <pre>
          * collector identity
@@ -635,7 +635,7 @@ public final class ClusterMsg {
                 return s;
             }
         }
-        
+
         /**
          * <pre>
          * collector identity
@@ -659,10 +659,10 @@ public final class ClusterMsg {
                 return (com.google.protobuf.ByteString) ref;
             }
         }
-        
+
         public static final int DIRECTION_FIELD_NUMBER = 2;
         private int direction_;
-        
+
         /**
          * <pre>
          * message direction
@@ -676,7 +676,7 @@ public final class ClusterMsg {
         public int getDirectionValue() {
             return direction_;
         }
-        
+
         /**
          * <pre>
          * message direction
@@ -692,10 +692,10 @@ public final class ClusterMsg {
             Direction result = Direction.valueOf(direction_);
             return result == null ? Direction.UNRECOGNIZED : result;
         }
-        
+
         public static final int TYPE_FIELD_NUMBER = 3;
         private int type_;
-        
+
         /**
          * <pre>
          * message type
@@ -709,7 +709,7 @@ public final class ClusterMsg {
         public int getTypeValue() {
             return type_;
         }
-        
+
         /**
          * <pre>
          * message type
@@ -725,10 +725,10 @@ public final class ClusterMsg {
             MessageType result = MessageType.valueOf(type_);
             return result == null ? MessageType.UNRECOGNIZED : result;
         }
-        
+
         public static final int MSG_FIELD_NUMBER = 4;
         private volatile Object msg_;
-        
+
         /**
          * <pre>
          * message content
@@ -751,7 +751,7 @@ public final class ClusterMsg {
                 return s;
             }
         }
-        
+
         /**
          * <pre>
          * message content
@@ -775,19 +775,19 @@ public final class ClusterMsg {
                 return (com.google.protobuf.ByteString) ref;
             }
         }
-        
+
         private byte memoizedIsInitialized = -1;
-        
+
         @Override
         public final boolean isInitialized() {
             byte isInitialized = memoizedIsInitialized;
             if (isInitialized == 1) return true;
             if (isInitialized == 0) return false;
-            
+
             memoizedIsInitialized = 1;
             return true;
         }
-        
+
         @Override
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                 throws java.io.IOException {
@@ -805,23 +805,23 @@ public final class ClusterMsg {
             }
             unknownFields.writeTo(output);
         }
-        
+
         @Override
         public int getSerializedSize() {
             int size = memoizedSize;
             if (size != -1) return size;
-            
+
             size = 0;
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(identity_)) {
                 size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, identity_);
             }
             if (direction_ != Direction.REQUEST.getNumber()) {
                 size += com.google.protobuf.CodedOutputStream
-                                .computeEnumSize(2, direction_);
+                        .computeEnumSize(2, direction_);
             }
             if (type_ != MessageType.HEARTBEAT.getNumber()) {
                 size += com.google.protobuf.CodedOutputStream
-                                .computeEnumSize(3, type_);
+                        .computeEnumSize(3, type_);
             }
             if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msg_)) {
                 size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, msg_);
@@ -830,7 +830,7 @@ public final class ClusterMsg {
             memoizedSize = size;
             return size;
         }
-        
+
         @Override
         public boolean equals(final Object obj) {
             if (obj == this) {
@@ -840,17 +840,17 @@ public final class ClusterMsg {
                 return super.equals(obj);
             }
             Message other = (Message) obj;
-            
+
             if (!getIdentity()
-                         .equals(other.getIdentity())) return false;
+                    .equals(other.getIdentity())) return false;
             if (direction_ != other.direction_) return false;
             if (type_ != other.type_) return false;
             if (!getMsg()
-                         .equals(other.getMsg())) return false;
+                    .equals(other.getMsg())) return false;
             if (!unknownFields.equals(other.unknownFields)) return false;
             return true;
         }
-        
+
         @Override
         public int hashCode() {
             if (memoizedHashCode != 0) {
@@ -870,176 +870,176 @@ public final class ClusterMsg {
             memoizedHashCode = hash;
             return hash;
         }
-        
+
         public static Message parseFrom(
                 java.nio.ByteBuffer data)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
         }
-        
+
         public static Message parseFrom(
                 java.nio.ByteBuffer data,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
         }
-        
+
         public static Message parseFrom(
                 com.google.protobuf.ByteString data)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
         }
-        
+
         public static Message parseFrom(
                 com.google.protobuf.ByteString data,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
         }
-        
+
         public static Message parseFrom(byte[] data)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
         }
-        
+
         public static Message parseFrom(
                 byte[] data,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
         }
-        
+
         public static Message parseFrom(java.io.InputStream input)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseWithIOException(PARSER, input);
+                    .parseWithIOException(PARSER, input);
         }
-        
+
         public static Message parseFrom(
                 java.io.InputStream input,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseWithIOException(PARSER, input, extensionRegistry);
+                    .parseWithIOException(PARSER, input, extensionRegistry);
         }
-        
+
         public static Message parseDelimitedFrom(java.io.InputStream input)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseDelimitedWithIOException(PARSER, input);
+                    .parseDelimitedWithIOException(PARSER, input);
         }
-        
+
         public static Message parseDelimitedFrom(
                 java.io.InputStream input,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+                    .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
         }
-        
+
         public static Message parseFrom(
                 com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseWithIOException(PARSER, input);
+                    .parseWithIOException(PARSER, input);
         }
-        
+
         public static Message parseFrom(
                 com.google.protobuf.CodedInputStream input,
                 com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
             return com.google.protobuf.GeneratedMessageV3
-                           .parseWithIOException(PARSER, input, extensionRegistry);
+                    .parseWithIOException(PARSER, input, extensionRegistry);
         }
-        
+
         @Override
         public Builder newBuilderForType() {
             return newBuilder();
         }
-        
+
         public static Builder newBuilder() {
             return DEFAULT_INSTANCE.toBuilder();
         }
-        
+
         public static Builder newBuilder(Message prototype) {
             return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
         }
-        
+
         @Override
         public Builder toBuilder() {
             return this == DEFAULT_INSTANCE
-                           ? new Builder() : new Builder().mergeFrom(this);
+                    ? new Builder() : new Builder().mergeFrom(this);
         }
-        
+
         @Override
         protected Builder newBuilderForType(
                 BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
         }
-        
+
         /**
          * Protobuf type {@code org.dromara.hertzbeat.common.entity.message.Message}
          */
         public static final class Builder extends
                 com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
                 // @@protoc_insertion_point(builder_implements:org.dromara.hertzbeat.common.entity.message.Message)
-                        MessageOrBuilder {
+                MessageOrBuilder {
             public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
                 return ClusterMsg.internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor;
             }
-            
+
             @Override
             protected FieldAccessorTable
             internalGetFieldAccessorTable() {
                 return ClusterMsg.internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable
-                               .ensureFieldAccessorsInitialized(
-                                       Message.class, Builder.class);
+                        .ensureFieldAccessorsInitialized(
+                                Message.class, Builder.class);
             }
-            
+
             // Construct using org.dromara.hertzbeat.common.entity.message.ClusterMsg.Message.newBuilder()
             private Builder() {
                 maybeForceBuilderInitialization();
             }
-            
+
             private Builder(
                     BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
             }
-            
+
             private void maybeForceBuilderInitialization() {
                 if (com.google.protobuf.GeneratedMessageV3
-                            .alwaysUseFieldBuilders) {
+                        .alwaysUseFieldBuilders) {
                 }
             }
-            
+
             @Override
             public Builder clear() {
                 super.clear();
                 identity_ = "";
-                
+
                 direction_ = 0;
-                
+
                 type_ = 0;
-                
+
                 msg_ = "";
-                
+
                 return this;
             }
-            
+
             @Override
             public com.google.protobuf.Descriptors.Descriptor
             getDescriptorForType() {
                 return ClusterMsg.internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor;
             }
-            
+
             @Override
             public Message getDefaultInstanceForType() {
                 return Message.getDefaultInstance();
             }
-            
+
             @Override
             public Message build() {
                 Message result = buildPartial();
@@ -1048,7 +1048,7 @@ public final class ClusterMsg {
                 }
                 return result;
             }
-            
+
             @Override
             public Message buildPartial() {
                 Message result = new Message(this);
@@ -1059,45 +1059,45 @@ public final class ClusterMsg {
                 onBuilt();
                 return result;
             }
-            
+
             @Override
             public Builder clone() {
                 return super.clone();
             }
-            
+
             @Override
             public Builder setField(
                     com.google.protobuf.Descriptors.FieldDescriptor field,
                     Object value) {
                 return super.setField(field, value);
             }
-            
+
             @Override
             public Builder clearField(
                     com.google.protobuf.Descriptors.FieldDescriptor field) {
                 return super.clearField(field);
             }
-            
+
             @Override
             public Builder clearOneof(
                     com.google.protobuf.Descriptors.OneofDescriptor oneof) {
                 return super.clearOneof(oneof);
             }
-            
+
             @Override
             public Builder setRepeatedField(
                     com.google.protobuf.Descriptors.FieldDescriptor field,
                     int index, Object value) {
                 return super.setRepeatedField(field, index, value);
             }
-            
+
             @Override
             public Builder addRepeatedField(
                     com.google.protobuf.Descriptors.FieldDescriptor field,
                     Object value) {
                 return super.addRepeatedField(field, value);
             }
-            
+
             @Override
             public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof Message) {
@@ -1107,7 +1107,7 @@ public final class ClusterMsg {
                     return this;
                 }
             }
-            
+
             public Builder mergeFrom(Message other) {
                 if (other == Message.getDefaultInstance()) return this;
                 if (!other.getIdentity().isEmpty()) {
@@ -1128,12 +1128,12 @@ public final class ClusterMsg {
                 onChanged();
                 return this;
             }
-            
+
             @Override
             public final boolean isInitialized() {
                 return true;
             }
-            
+
             @Override
             public Builder mergeFrom(
                     com.google.protobuf.CodedInputStream input,
@@ -1152,9 +1152,9 @@ public final class ClusterMsg {
                 }
                 return this;
             }
-            
+
             private Object identity_ = "";
-            
+
             /**
              * <pre>
              * collector identity
@@ -1176,7 +1176,7 @@ public final class ClusterMsg {
                     return (String) ref;
                 }
             }
-            
+
             /**
              * <pre>
              * collector identity
@@ -1199,7 +1199,7 @@ public final class ClusterMsg {
                     return (com.google.protobuf.ByteString) ref;
                 }
             }
-            
+
             /**
              * <pre>
              * collector identity
@@ -1215,12 +1215,12 @@ public final class ClusterMsg {
                 if (value == null) {
                     throw new NullPointerException();
                 }
-                
+
                 identity_ = value;
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * collector identity
@@ -1231,12 +1231,12 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder clearIdentity() {
-                
+
                 identity_ = getDefaultInstance().getIdentity();
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * collector identity
@@ -1253,14 +1253,14 @@ public final class ClusterMsg {
                     throw new NullPointerException();
                 }
                 checkByteStringIsUtf8(value);
-                
+
                 identity_ = value;
                 onChanged();
                 return this;
             }
-            
+
             private int direction_ = 0;
-            
+
             /**
              * <pre>
              * message direction
@@ -1274,7 +1274,7 @@ public final class ClusterMsg {
             public int getDirectionValue() {
                 return direction_;
             }
-            
+
             /**
              * <pre>
              * message direction
@@ -1286,12 +1286,12 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder setDirectionValue(int value) {
-                
+
                 direction_ = value;
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message direction
@@ -1307,7 +1307,7 @@ public final class ClusterMsg {
                 Direction result = Direction.valueOf(direction_);
                 return result == null ? Direction.UNRECOGNIZED : result;
             }
-            
+
             /**
              * <pre>
              * message direction
@@ -1322,12 +1322,12 @@ public final class ClusterMsg {
                 if (value == null) {
                     throw new NullPointerException();
                 }
-                
+
                 direction_ = value.getNumber();
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message direction
@@ -1338,14 +1338,14 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder clearDirection() {
-                
+
                 direction_ = 0;
                 onChanged();
                 return this;
             }
-            
+
             private int type_ = 0;
-            
+
             /**
              * <pre>
              * message type
@@ -1359,7 +1359,7 @@ public final class ClusterMsg {
             public int getTypeValue() {
                 return type_;
             }
-            
+
             /**
              * <pre>
              * message type
@@ -1371,12 +1371,12 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder setTypeValue(int value) {
-                
+
                 type_ = value;
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message type
@@ -1392,7 +1392,7 @@ public final class ClusterMsg {
                 MessageType result = MessageType.valueOf(type_);
                 return result == null ? MessageType.UNRECOGNIZED : result;
             }
-            
+
             /**
              * <pre>
              * message type
@@ -1407,12 +1407,12 @@ public final class ClusterMsg {
                 if (value == null) {
                     throw new NullPointerException();
                 }
-                
+
                 type_ = value.getNumber();
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message type
@@ -1423,14 +1423,14 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder clearType() {
-                
+
                 type_ = 0;
                 onChanged();
                 return this;
             }
-            
+
             private Object msg_ = "";
-            
+
             /**
              * <pre>
              * message content
@@ -1452,7 +1452,7 @@ public final class ClusterMsg {
                     return (String) ref;
                 }
             }
-            
+
             /**
              * <pre>
              * message content
@@ -1475,7 +1475,7 @@ public final class ClusterMsg {
                     return (com.google.protobuf.ByteString) ref;
                 }
             }
-            
+
             /**
              * <pre>
              * message content
@@ -1491,12 +1491,12 @@ public final class ClusterMsg {
                 if (value == null) {
                     throw new NullPointerException();
                 }
-                
+
                 msg_ = value;
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message content
@@ -1507,12 +1507,12 @@ public final class ClusterMsg {
              * @return This builder for chaining.
              */
             public Builder clearMsg() {
-                
+
                 msg_ = getDefaultInstance().getMsg();
                 onChanged();
                 return this;
             }
-            
+
             /**
              * <pre>
              * message content
@@ -1529,39 +1529,39 @@ public final class ClusterMsg {
                     throw new NullPointerException();
                 }
                 checkByteStringIsUtf8(value);
-                
+
                 msg_ = value;
                 onChanged();
                 return this;
             }
-            
+
             @Override
             public final Builder setUnknownFields(
                     final com.google.protobuf.UnknownFieldSet unknownFields) {
                 return super.setUnknownFields(unknownFields);
             }
-            
+
             @Override
             public final Builder mergeUnknownFields(
                     final com.google.protobuf.UnknownFieldSet unknownFields) {
                 return super.mergeUnknownFields(unknownFields);
             }
-            
-            
+
+
             // @@protoc_insertion_point(builder_scope:org.dromara.hertzbeat.common.entity.message.Message)
         }
-        
+
         // @@protoc_insertion_point(class_scope:org.dromara.hertzbeat.common.entity.message.Message)
         private static final Message DEFAULT_INSTANCE;
-        
+
         static {
             DEFAULT_INSTANCE = new Message();
         }
-        
+
         public static Message getDefaultInstance() {
             return DEFAULT_INSTANCE;
         }
-        
+
         private static final com.google.protobuf.Parser<Message>
                 PARSER = new com.google.protobuf.AbstractParser<Message>() {
             @Override
@@ -1572,37 +1572,37 @@ public final class ClusterMsg {
                 return new Message(input, extensionRegistry);
             }
         };
-        
+
         public static com.google.protobuf.Parser<Message> parser() {
             return PARSER;
         }
-        
+
         @Override
         public com.google.protobuf.Parser<Message> getParserForType() {
             return PARSER;
         }
-        
+
         @Override
         public Message getDefaultInstanceForType() {
             return DEFAULT_INSTANCE;
         }
-        
+
     }
-    
+
     private static final com.google.protobuf.Descriptors.Descriptor
             internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor;
     private static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
             internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable;
-    
+
     public static com.google.protobuf.Descriptors.FileDescriptor
     getDescriptor() {
         return descriptor;
     }
-    
+
     private static com.google.protobuf.Descriptors.FileDescriptor
             descriptor;
-    
+
     static {
         String[] descriptorData = {
                 "\n\021cluster_msg.proto\022+org.dromara.hertzbe" +
@@ -1620,16 +1620,16 @@ public final class ClusterMsg {
                         "\013\n\007REQUEST\020\000\022\014\n\010RESPONSE\020\001b\006proto3"
         };
         descriptor = com.google.protobuf.Descriptors.FileDescriptor
-                             .internalBuildGeneratedFileFrom(descriptorData,
-                                     new com.google.protobuf.Descriptors.FileDescriptor[]{
-                                     });
+                .internalBuildGeneratedFileFrom(descriptorData,
+                        new com.google.protobuf.Descriptors.FileDescriptor[]{
+                        });
         internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor =
                 getDescriptor().getMessageTypes().get(0);
         internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable = new
-                                                                                                         com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+                com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
                 internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor,
                 new String[]{"Identity", "Direction", "Type", "Msg",});
     }
-    
+
     // @@protoc_insertion_point(outer_class_scope)
 }

@@ -33,13 +33,14 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * udp collect
+ *
  * @author tom
  */
 @Slf4j
 public class UdpCollectImpl extends AbstractCollect {
-    
+
     private static final byte[] HELLO = "hello".getBytes(StandardCharsets.UTF_8);
-    
+
     public UdpCollectImpl() {
     }
 

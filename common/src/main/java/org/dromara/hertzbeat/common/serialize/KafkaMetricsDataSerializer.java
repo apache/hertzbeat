@@ -10,6 +10,7 @@ import java.util.Map;
 
 /**
  * kafka metrics data serializer
+ *
  * @author tablerow
  */
 public class KafkaMetricsDataSerializer implements Serializer<CollectRep.MetricsData> {

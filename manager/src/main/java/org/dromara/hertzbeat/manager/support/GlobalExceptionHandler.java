@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.fail(FAIL_CODE, exception.getMessage());
         return ResponseEntity.ok(message);
     }
-    
+
     /**
      * 处理参数错误的失败
      *

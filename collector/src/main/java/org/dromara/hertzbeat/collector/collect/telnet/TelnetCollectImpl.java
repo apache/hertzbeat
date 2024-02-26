@@ -37,12 +37,14 @@ import java.util.stream.Collectors;
 
 /**
  * telnet collect
+ *
  * @author tom
  */
 @Slf4j
 public class TelnetCollectImpl extends AbstractCollect {
 
-    public TelnetCollectImpl(){}
+    public TelnetCollectImpl() {
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {

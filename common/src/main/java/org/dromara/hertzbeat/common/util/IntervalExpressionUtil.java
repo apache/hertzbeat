@@ -27,8 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  * [a,+∞) = {a <= x}
  * (-∞,b] = {x <= b}
  * (-∞,a]||[b,+∞) = {x <= a || x >= b}
- * @author tomsun28
  *
+ * @author tomsun28
  */
 @Slf4j
 public class IntervalExpressionUtil {
@@ -44,8 +44,9 @@ public class IntervalExpressionUtil {
 
     /**
      * 校验数值是否在区间范围
+     *
      * @param numberValue 数值
-     * @param expression 区间表达式
+     * @param expression  区间表达式
      * @return true-是 false-否
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {

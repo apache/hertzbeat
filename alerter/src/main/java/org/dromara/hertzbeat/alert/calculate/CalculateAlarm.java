@@ -55,6 +55,7 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
+ *
  * @author tom
  */
 @Component
@@ -69,7 +70,7 @@ public class CalculateAlarm {
      * key - monitorId+alertDefineId+tags 为普通阈值告警 ｜ The alarm is a common threshold alarm
      * key - monitorId 为任务状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
      */
-    private final Map<String, Alert>  triggeredAlertMap;
+    private final Map<String, Alert> triggeredAlertMap;
     /**
      * The not recover alert
      * key - monitorId + alertDefineId + tags
@@ -178,7 +179,8 @@ public class CalculateAlarm {
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
-                    } catch (Exception ignored) {} 
+                    } catch (Exception ignored) {
+                    }
                 }
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
 
@@ -232,11 +234,12 @@ public class CalculateAlarm {
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
-                            }   
+                            }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
@@ -262,7 +265,7 @@ public class CalculateAlarm {
         }
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr, 
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr,
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
         String alarmKey = String.valueOf(monitorId) + define.getId() + tagStr;
         Alert triggeredAlert = triggeredAlertMap.get(alarmKey);
@@ -348,7 +351,7 @@ public class CalculateAlarm {
             return;
         }
         long currentTimeMill = System.currentTimeMillis();
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS ) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             Alert preAlert = triggeredAlertMap.get(String.valueOf(monitorId));
             Map<String, String> tags = new HashMap<>(6);
             tags.put(CommonConstants.TAG_MONITOR_ID, String.valueOf(monitorId));
@@ -381,7 +384,7 @@ public class CalculateAlarm {
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
                     alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
-                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());   
+                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
                 }
             } else {
                 int times = preAlert.getTriggerTimes() + 1;

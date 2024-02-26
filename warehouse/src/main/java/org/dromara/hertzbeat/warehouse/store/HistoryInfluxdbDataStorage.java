@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author ceilzcx
- *
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.influxdb",
@@ -49,9 +48,9 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE instance = '%s' and time >= now() - %s GROUP BY time(4h)";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
-    
+
     private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"instance\"";
-    
+
     private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
@@ -229,7 +228,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
                             Value.ValueBuilder valueBuilder = Value.builder();
                             long time = this.parseTimeToMillis(value.get(0));
                             valueBuilder.time(time);
-                            
+
                             if (value.get(1) != null) {
                                 valueBuilder.origin(this.parseDoubleValue(value.get(1).toString()));
                             } else {

@@ -2,6 +2,7 @@ package org.dromara.hertzbeat.common.util;
 
 /**
  * map initial capacity calculation
+ *
  * @author hdd
  */
 public class MapCapUtil {
@@ -11,10 +12,11 @@ public class MapCapUtil {
 
     /**
      * Prevent expansion
+     *
      * @param size size
      * @return capacity
      */
     public static int calInitMap(int size) {
-        return (int) Math.ceil (size / LOAD_FACTOR);
+        return (int) Math.ceil(size / LOAD_FACTOR);
     }
 }

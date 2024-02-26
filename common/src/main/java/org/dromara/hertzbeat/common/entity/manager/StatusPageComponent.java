@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 
 /**
  * status page component entity
+ *
  * @author tom
  */
 @Entity
@@ -33,7 +34,7 @@ public class StatusPageComponent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "ID", example = "87584674384")
     private Long id;
-    
+
     @Schema(title = "org id", example = "1234")
     private Long orgId;
 
@@ -43,7 +44,7 @@ public class StatusPageComponent {
 
     @Schema(title = "component desc", example = "TanCloud Gateway")
     private String description;
-    
+
     @Schema(title = "component match single tag", example = "{labelName:labelValue}")
     @Convert(converter = JsonTagAttributeConverter.class)
     private TagItem tag;
@@ -53,7 +54,7 @@ public class StatusPageComponent {
 
     @Schema(title = "config state when use manual method: 0-Normal 1-Abnormal 2-unknown", example = "0")
     private byte configState;
-    
+
     @Schema(title = "component current state: 0-Normal 1-Abnormal 2-unknown", example = "0")
     private byte state;
 

@@ -9,6 +9,7 @@ import org.dromara.hertzbeat.common.entity.manager.Collector;
 
 /**
  * collector summary
+ *
  * @author tom
  */
 @Data
@@ -17,13 +18,13 @@ import org.dromara.hertzbeat.common.entity.manager.Collector;
 @NoArgsConstructor
 @Schema(description = "collector summary")
 public class CollectorSummary {
-    
+
     @Schema(description = "the collector info")
     private Collector collector;
-    
+
     @Schema(description = "the number of monitors pinned in this collector")
     private int pinMonitorNum;
-    
+
     @Schema(description = "the number of monitors dispatched in this collector")
     private int dispatchMonitorNum;
 }

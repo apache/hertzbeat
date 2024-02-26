@@ -28,14 +28,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.Map;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Internationalization I 18 N
  * 国际化I18N
- * @author tom
  *
+ * @author tom
  */
 @Tag(name = "I18N API | I18N国际化资源API")
 @RestController

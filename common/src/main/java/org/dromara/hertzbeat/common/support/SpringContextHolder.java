@@ -25,13 +25,14 @@ import org.springframework.stereotype.Component;
 
 /**
  * Spring ApplicationContext Holder
+ *
  * @author tomsun28
  */
 @Component
 public class SpringContextHolder implements ApplicationContextAware {
 
     private static ApplicationContext applicationContext;
-    
+
     private static ConfigurableApplicationContext configurableApplicationContext;
 
     @Override
@@ -61,12 +62,12 @@ public class SpringContextHolder implements ApplicationContextAware {
         assertApplicationContext();
         return (T) applicationContext.getBean(tClass);
     }
-    
+
     public static void shutdown() {
         assertApplicationContext();
         configurableApplicationContext.close();
     }
-    
+
     public static boolean isActive() {
         if (configurableApplicationContext == null) {
             return false;

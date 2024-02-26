@@ -26,6 +26,7 @@ import java.util.ResourceBundle;
 
 /**
  * i18n ResourceBundle util
+ *
  * @author tom
  */
 @Slf4j
@@ -57,6 +58,7 @@ public class ResourceBundleUtil {
 
     /**
      * get resource bundle by bundle name
+     *
      * @param bundleName bundle name
      * @return resource bundle
      */

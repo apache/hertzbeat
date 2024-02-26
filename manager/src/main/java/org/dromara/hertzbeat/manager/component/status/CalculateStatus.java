@@ -22,22 +22,23 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * calculate component status for status page
+ *
  * @author tom
  */
 @Component
 @Slf4j
 public class CalculateStatus {
-    
+
     private static final int DEFAULT_CALCULATE_INTERVAL_TIME = 300;
-    
+
     private final StatusPageOrgDao statusPageOrgDao;
-    
+
     private final StatusPageComponentDao statusPageComponentDao;
-    
+
     private final StatusPageHistoryDao statusPageHistoryDao;
-    
+
     private final MonitorDao monitorDao;
-    
+
     private final int intervals;
 
     public CalculateStatus(StatusPageOrgDao statusPageOrgDao, StatusPageComponentDao statusPageComponentDao,
@@ -102,7 +103,7 @@ public class CalculateStatus {
                                     } else if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
                                     }
-                                }   
+                                }
                             }
                         }
                         stateSet.add(state);
@@ -148,7 +149,7 @@ public class CalculateStatus {
         // combine history every day at 1:00 AM
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = now.withHour(1).withMinute(0).withSecond(0);
-        if(now.isAfter(nextRun)) {
+        if (now.isAfter(nextRun)) {
             nextRun = nextRun.plusDays(1);
         }
         long delay = Duration.between(now, nextRun).toMillis();
@@ -207,6 +208,7 @@ public class CalculateStatus {
 
     /**
      * get calculate status intervals
+     *
      * @return intervals
      */
     public int getCalculateStatusIntervals() {

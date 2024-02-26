@@ -119,7 +119,7 @@ public interface NoticeConfigService {
     List<NoticeRule> getReceiverFilterRule(Alert alert);
 
     /**
-     * Query the recipient information according to the recipient ID 
+     * Query the recipient information according to the recipient ID
      * 根据接收人ID查询接收人信息
      *
      * @param id Receiver ID     接收人ID
@@ -131,8 +131,8 @@ public interface NoticeConfigService {
      * Query the template information according to the template ID
      * 根据通知模板ID查询模板信息
      *
-     * @param id Template ID     
-     * @return Template   
+     * @param id Template ID
+     * @return Template
      */
     NoticeTemplate getOneTemplateById(Long id);
 
@@ -157,14 +157,14 @@ public interface NoticeConfigService {
     /**
      * Add a notification template
      *
-     * @param noticeTemplate template information 
+     * @param noticeTemplate template information
      */
     void addNoticeTemplate(NoticeTemplate noticeTemplate);
 
     /**
      * Modify notification templates
      *
-     * @param noticeTemplate template information 
+     * @param noticeTemplate template information
      */
     void editNoticeTemplate(NoticeTemplate noticeTemplate);
 
@@ -190,11 +190,11 @@ public interface NoticeConfigService {
      * Query specific notification templates according to the template type
      * 根据模板类型查询具体模版
      *
-     * @param type            Template type     模板类型
+     * @param type Template type     模板类型
      * @return Notification Template Entity    通知模板实体
      */
     NoticeTemplate getDefaultNoticeTemplateByType(Byte type);
-    
+
     /**
      * alert Send test message
      * 告警 发送测试消息

@@ -87,7 +87,7 @@ class AlertDefinesControllerTest {
             @Override
             public boolean matches(PageRequest pageRequestMidden) {
                 // 看源码有三个方法要对比，分别是getPageNumber()、getPageSize()、getSort()
-                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
+                if (pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
                         pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
                         pageRequestMidden.getSort().equals(pageRequest.getSort())) {
                     return true;
@@ -97,13 +97,13 @@ class AlertDefinesControllerTest {
         }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
 
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "/api/alert/defines")
-                .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
-                .param("priority", priority.toString())
-                .param("sort", sort)
-                .param("order", order)
-                .param("pageIndex", pageIndex.toString())
-                .param("pageSize", pageSize.toString()))
+                                "/api/alert/defines")
+                        .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
+                        .param("priority", priority.toString())
+                        .param("sort", sort)
+                        .param("order", order)
+                        .param("pageIndex", pageIndex.toString())
+                        .param("pageSize", pageSize.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content").value(new ArrayList<>()))
@@ -125,8 +125,8 @@ class AlertDefinesControllerTest {
     @Test
     void deleteAlertDefines() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/defines")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

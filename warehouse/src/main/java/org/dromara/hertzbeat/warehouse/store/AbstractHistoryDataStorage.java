@@ -27,6 +27,7 @@ import java.util.Map;
 
 /**
  * data storage abstract class
+ *
  * @author ceilzcx
  */
 @Slf4j
@@ -42,18 +43,20 @@ public abstract class AbstractHistoryDataStorage implements DisposableBean {
 
     /**
      * save metrics data
+     *
      * @param metricsData metrics data
      */
     abstract void saveData(CollectRep.MetricsData metricsData);
 
     /**
      * query history range metrics data from tsdb
+     *
      * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history range
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param label     label
+     * @param history   range
      * @return metrics data
      */
     public abstract Map<String, List<Value>> getHistoryMetricData(
@@ -62,12 +65,13 @@ public abstract class AbstractHistoryDataStorage implements DisposableBean {
     /**
      * query history range interval metrics data from tsdb
      * max min mean metrics value
+     *
      * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history history range
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @param label     label
+     * @param history   history range
      * @return metrics data
      */
     public abstract Map<String, List<Value>> getHistoryIntervalMetricData(

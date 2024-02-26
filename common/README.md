@@ -1,4 +1,3 @@
-## Common lib    
-
+## Common lib
 
 ### Some Conventions      

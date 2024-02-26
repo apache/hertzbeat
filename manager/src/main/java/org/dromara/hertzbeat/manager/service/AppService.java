@@ -47,6 +47,7 @@ public interface AppService {
     /**
      * get auto generate dynamic template define
      * for prometheus and more type
+     *
      * @param monitorId monitor id
      * @return define
      */
@@ -66,7 +67,7 @@ public interface AppService {
     /**
      * Get monitor structure definition based on monitor type name
      *
-     * @param app Monitoring type name 
+     * @param app Monitoring type name
      * @return Monitoring Structure Definition Optional
      */
     Optional<Job> getAppDefineOption(String app);
@@ -92,9 +93,9 @@ public interface AppService {
     /**
      * Query all types of monitoring hierarchy
      * 查询所有监控的层级资源
-     * 
-     * @param lang language     
-     * @return hierarchy information 
+     *
+     * @param lang language
+     * @return hierarchy information
      */
     List<Hierarchy> getAllAppHierarchy(String lang);
 

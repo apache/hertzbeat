@@ -23,8 +23,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * NoticeReceiver数据库操作
- * @author tom
  *
+ * @author tom
  */
 public interface NoticeReceiverDao extends JpaRepository<NoticeReceiver, Long>, JpaSpecificationExecutor<NoticeReceiver> {
 

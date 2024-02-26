@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * @author myth
- *
+ * <p>
  * 处理prometheus返回类型为“vector”的响应格式
  */
 @NoArgsConstructor
@@ -38,7 +38,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
         boolean setTimeFlag = false;
         boolean setValueFlag = false;
         PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(resp, PromVectorOrMatrix.class);
-        if (promVectorOrMatrix == null){
+        if (promVectorOrMatrix == null) {
             return;
         }
         List<PromVectorOrMatrix.Result> result = promVectorOrMatrix.getData().getResult();

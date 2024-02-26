@@ -27,7 +27,6 @@ import java.util.Set;
  * ParamDao 数据库操作
  *
  * @author tomsun28
- *
  */
 public interface ParamDao extends JpaRepository<Param, Long> {
 

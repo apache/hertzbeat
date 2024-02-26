@@ -7,6 +7,7 @@ import javax.annotation.PostConstruct;
 
 /**
  * collector startup
+ *
  * @author tom
  */
 @SpringBootApplication

@@ -9,13 +9,14 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * scheduler config
+ *
  * @author tom
  */
 @Configuration
 @AutoConfigureAfter(value = {SchedulerProperties.class})
 @Slf4j
 public class SchedulerConfig {
-    
+
     @Bean
     public ConsistentHash consistentHasInstance() {
         return new ConsistentHash();

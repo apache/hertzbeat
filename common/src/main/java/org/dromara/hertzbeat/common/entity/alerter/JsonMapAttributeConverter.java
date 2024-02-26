@@ -25,6 +25,7 @@ import java.util.Map;
 
 /**
  * json map converter
+ *
  * @author tom
  */
 public class JsonMapAttributeConverter implements AttributeConverter<Map<String, String>, String> {
@@ -36,7 +37,8 @@ public class JsonMapAttributeConverter implements AttributeConverter<Map<String,
 
     @Override
     public Map<String, String> convertToEntityAttribute(String dbData) {
-        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {
+        };
         return JsonUtil.fromJson(dbData, typeReference);
     }
 }

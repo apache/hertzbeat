@@ -94,7 +94,8 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     private List<TagItem> extractTagDataFromRow(Cell cell) {
         String jsonStr = getCellValueAsString(cell);
         if (StringUtils.hasText(jsonStr)) {
-            return JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {});
+            return JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {
+            });
         }
         return null;
     }
@@ -170,7 +171,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
      * 导出配置到输出流
      *
      * @param exportAlertDefineList 配置列表
-     * @param os          输出流
+     * @param os                    输出流
      */
     @Override
     void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {

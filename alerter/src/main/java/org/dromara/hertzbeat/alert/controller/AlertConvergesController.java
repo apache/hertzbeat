@@ -42,6 +42,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Converge the batch API for alarms
+ *
  * @author tom
  */
 @Tag(name = "Alert Converge Batch API | 告警收敛管理API")

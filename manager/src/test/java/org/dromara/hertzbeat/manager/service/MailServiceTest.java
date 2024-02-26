@@ -40,8 +40,8 @@ class MailServiceTest {
 
     @Test
     void buildAlertHtmlTemplate() throws TemplateException, IOException {
-        Alert alert=new Alert();
-        NoticeTemplate noticeTemplate=new NoticeTemplate();
+        Alert alert = new Alert();
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
         alert.setTarget("Test Target");
         alert.setContent("Test");
         alert.setTriggerTimes(1);
@@ -52,7 +52,7 @@ class MailServiceTest {
         noticeTemplate.setName("test");
         noticeTemplate.setContent("result");
 
-        assertEquals("result", mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
-        assertNotNull(mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
+        assertEquals("result", mailService.buildAlertHtmlTemplate(alert, noticeTemplate));
+        assertNotNull(mailService.buildAlertHtmlTemplate(alert, noticeTemplate));
     }
 }

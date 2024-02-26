@@ -24,6 +24,7 @@ import javax.validation.ConstraintValidatorContext;
 
 /**
  * email validator
+ *
  * @author tomsun28
  */
 public class EmailParamValidator implements ConstraintValidator<EmailValid, String> {

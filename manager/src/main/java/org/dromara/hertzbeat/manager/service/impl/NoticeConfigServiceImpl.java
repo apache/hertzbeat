@@ -65,16 +65,16 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     private static final String ALERT_TEST_CONTENT = "test send msg! \\n This is the test data. It is proved that it can be received successfully";
 
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
-    
+
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
-    
+
     @Autowired
     private NoticeTemplateDao noticeTemplateDao;
-    
+
     @Autowired
     @Lazy
     private DispatcherAlarm dispatcherAlarm;
@@ -167,7 +167,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                             }
                         }
                     }
-                    
+
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
                     int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
@@ -179,9 +179,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                     }
                     // filter time
                     LocalTime nowTime = nowDate.toLocalTime();
-                    boolean startMatch = rule.getPeriodStart() == null || 
+                    boolean startMatch = rule.getPeriodStart() == null ||
                             nowTime.isAfter(rule.getPeriodStart().toLocalTime()) ||
-                            (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd()) 
+                            (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
                                     && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
                     boolean endMatch = rule.getPeriodEnd() == null ||
                             nowTime.isBefore(rule.getPeriodEnd().toLocalTime());

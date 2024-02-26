@@ -6,9 +6,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * concurrent treemap
+ *
  * @author tom
  */
-public class ConcurrentTreeMap<K,V> extends TreeMap<K,V> {
+public class ConcurrentTreeMap<K, V> extends TreeMap<K, V> {
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 

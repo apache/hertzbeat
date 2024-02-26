@@ -72,7 +72,7 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         receiver.setSmnProjectId(smnProjectId);
         receiver.setSmnRegion(smnRegion);
         receiver.setSmnTopicUrn(smnTopicUrn);
-        var noticeTemplate=new NoticeTemplate();
+        var noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("HuaWeiCloud");
         noticeTemplate.setContent("[${title}]\n" +
@@ -96,6 +96,6 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        huaweiyunSmnAlertNotifyHandler.send(receiver, noticeTemplate,alert);
+        huaweiyunSmnAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

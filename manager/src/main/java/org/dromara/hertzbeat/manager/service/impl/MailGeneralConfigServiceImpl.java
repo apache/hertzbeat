@@ -36,12 +36,12 @@ public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceIm
     public MailGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
-    
+
     @Override
     public String type() {
         return "email";
     }
-    
+
     /**
      * 该方法用于获取NoticeSender类型的TypeReference，以供后续处理。
      * This method is used to get the TypeReference of NoticeSender type for subsequent processing.

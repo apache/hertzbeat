@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * Timer Task implementation
+ *
  * @author tomsun28
  */
 @Slf4j
@@ -55,6 +56,7 @@ public class WheelTimerTask implements TimerTask {
 
     /**
      * Initialize job fill information
+     *
      * @param job job
      */
     private void initJobMetrics(Job job) {

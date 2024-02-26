@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 
 /**
  * i18n resource bundle control
+ *
  * @author tom
  */
 public class ResourceBundleUtf8Control extends ResourceBundle.Control {
@@ -49,7 +50,7 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
             try {
                 @SuppressWarnings("unchecked")
                 Class<? extends ResourceBundle> bundleClass
-                        = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
+                        = (Class<? extends ResourceBundle>) loader.loadClass(bundleName);
 
                 // If the class isn't a ResourceBundle subclass, throw a
                 // ClassCastException.

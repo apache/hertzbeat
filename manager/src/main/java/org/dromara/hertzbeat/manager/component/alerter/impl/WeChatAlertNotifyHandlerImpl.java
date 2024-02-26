@@ -22,10 +22,12 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 

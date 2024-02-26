@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Refresh Token Response
+ *
  * @author Carpe-Wang
  */
 @Data

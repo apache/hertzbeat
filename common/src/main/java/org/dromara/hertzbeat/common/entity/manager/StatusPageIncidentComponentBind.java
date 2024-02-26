@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 
 /**
  * status page incident component bind entity
+ *
  * @author tom
  */
 @Entity
@@ -38,7 +39,7 @@ public class StatusPageIncidentComponentBind {
     @Schema(title = "Incident ID", example = "87432674384")
     @Column(name = "incident_id")
     private Long incidentId;
-    
+
     @Schema(title = "Component ID", example = "87432674336")
     @Column(name = "component_id")
     private Long componentId;
@@ -50,5 +51,5 @@ public class StatusPageIncidentComponentBind {
     @Schema(title = "Record modify time", example = "1612198444000")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-    
+
 }

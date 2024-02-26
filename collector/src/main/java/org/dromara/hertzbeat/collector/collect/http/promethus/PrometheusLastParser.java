@@ -10,15 +10,14 @@ import java.util.List;
 
 /**
  * @author myth
- *
  */
 @Slf4j
 @NoArgsConstructor
 public class PrometheusLastParser extends AbstractPrometheusParse {
     @Override
     public Boolean checkType(String responseStr) {
-        log.error("prometheus response data:{} ,no adaptive parser",responseStr);
-       return true;
+        log.error("prometheus response data:{} ,no adaptive parser", responseStr);
+        return true;
     }
 
     @Override

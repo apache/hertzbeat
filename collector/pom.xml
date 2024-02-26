@@ -180,7 +180,7 @@
             <version>3.5.2</version>
         </dependency>
     </dependencies>
-    
+
     <profiles>
         <profile>
             <id>inner</id>
@@ -356,5 +356,5 @@
             </build>
         </profile>
     </profiles>
-    
+
 </project>

@@ -25,6 +25,7 @@ import java.util.*;
 
 /**
  * json path parser
+ *
  * @author tomsun28
  */
 public class JsonPathParser {
@@ -40,8 +41,9 @@ public class JsonPathParser {
     }
 
     /**
-     * use json path to parse content 
-     * @param content json content
+     * use json path to parse content
+     *
+     * @param content  json content
      * @param jsonPath jsonPath
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
@@ -53,8 +55,9 @@ public class JsonPathParser {
     }
 
     /**
-     * use json path to parse content 
-     * @param content json content
+     * use json path to parse content
+     *
+     * @param content  json content
      * @param jsonPath jsonPath
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */

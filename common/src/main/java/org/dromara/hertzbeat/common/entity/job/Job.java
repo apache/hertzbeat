@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 /**
  * Collect task details
+ *
  * @author tomsun28
  */
 @Data
@@ -55,7 +56,7 @@ public class Job {
      */
     private long monitorId;
     /**
-     * Large categories of monitoring   
+     * Large categories of monitoring
      * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring...
      */
     private String category;
@@ -64,7 +65,7 @@ public class Job {
      */
     private String app;
     /**
-     * The internationalized name of the monitoring type   
+     * The internationalized name of the monitoring type
      * zh-CN: PING连通性
      * en-US: PING CONNECT
      */
@@ -122,7 +123,7 @@ public class Job {
      */
     @JsonIgnore
     private transient long dispatchTime;
-    
+
     /**
      * collector usage - metric group task execution priority view
      * 0 - availability
@@ -185,8 +186,8 @@ public class Job {
      * collector使用 - 获取下一组优先级的采集任务
      *
      * @param metrics Current Metrics
-     * @param first   Is it the first time to get  
-     * @return Metrics Tasks       
+     * @param first   Is it the first time to get
+     * @return Metrics Tasks
      * Returning null means: the job has been completed, and the collection of all metrics has ended
      * 返回null表示：job已完成,所有采集任务结束
      * Returning the empty set metrics that there are still metrics collection tasks at the current
@@ -241,7 +242,7 @@ public class Job {
         if (this.envConfigmaps == null) {
             this.envConfigmaps = envConfigmaps;
         } else {
-            this.envConfigmaps.putAll(envConfigmaps);   
+            this.envConfigmaps.putAll(envConfigmaps);
         }
     }
 
