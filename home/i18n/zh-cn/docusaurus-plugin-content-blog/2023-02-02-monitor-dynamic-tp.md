@@ -1,5 +1,5 @@
 ---
-title: 使用 HertzBeat 对 线程池框架 DynamicTp 的监控实践    
+title: Monitoring Practices for DynamicTp Thread Pooling Framework with HertzBeat    
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -7,35 +7,35 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 ---
 
-## 使用 HertzBeat 对 线程池框架 DynamicTp 进行监控实践，5分钟搞定！
+## Monitoring practice for thread pooling framework DynamicTp using HertzBeat, 5 minutes!
 
-### 线程池框架 DynamicTp 介绍  
+### Introducing DynamicTp, the thread pooling framework.
 
-> DynamicTp 是Jvm语言的基于配置中心的轻量级动态线程池，内置监控告警功能，可通过SPI自定义扩展实现。  
+> DynamicTp is a lightweight configuration-centric dynamic thread pool in Jvm with built-in monitoring and alerting capabilities, which can be customized through SPI extensions.
 
-- 支持对运行中线程池参数的动态修改，实时生效。   
-- 实时监控线程池的运行状态，触发设置的报警策略时报警，报警信息推送办公平台。   
-- 定时采集线程池指标数据，配合像 grafana 这种可视化监控平台做大盘监控。    
+- Support for dynamic modification of the running thread pool parameters , real-time effective .
+- Real-time monitoring of the running status of the thread pool, alarms are triggered when the alarm policy is set, and alarm information is pushed to the office platform.
+- Collect thread pool metrics data regularly, and use grafana as a visual monitoring platform to monitor the overall situation.
 
 
-### HertzBeat 介绍  
+### HertzBeat Introduction
 
-> HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。    
+> HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool with powerful customizable monitoring capabilities.
 
-- 支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Slack Discord Telegram)。    
-- 其将Http, Jmx, Ssh, Snmp, Jdbc, Prometheus等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？   
-- HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。  
+- Support for application services , database , operating system , middleware , cloud native monitoring , threshold alarms , alarm notification (email WeChat Dingtalk SMS Slack Discord Telegram).
+- Its Http, Jmx, Ssh, Snmp, Jdbc, Prometheus and other protocol specifications configurable, just configure YML can use these protocols to customize the collection of any metrics you want to collect. Would you believe that you can instantly adapt a new monitoring type such as K8s or Docker by simply configuring YML?
+- HertzBeat's powerful customization, multi-type support, easy scalability, and low coupling will hopefully help developers and small to medium sized teams to quickly build their own monitoring systems.
 
-### 在 HertzBeat 5分钟搞定监控 DynamicTp   
+### Monitor DynamicTp in 5 minutes at HertzBeat!
 
-#### 操作前提，您已拥有 DynamicTp 环境和 HertzBeat 环境。  
+#### operation, you already have a DynamicTp environment and a HertzBeat environment.
 
-- DynamicTp [集成接入文档](https://dynamictp.cn/guide/use/quick-start.html)   
-- HertzBeat [部署安装文档](https://hertzbeat.com/docs/start/docker-deploy)   
+- DynamicTp [Integration Access Documentation](https://dynamictp.cn/guide/use/quick-start.html)
+- HertzBeat [Deployment and Installation Documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 一. 在 DynamicTp 端暴露出`DynamicTp`指标接口 `/actuator/dynamic-tp`，它将提供 metrics 接口数据。
+#### i. Expose the `DynamicTp` metrics interface `/actuator/dynamic-tp` on the DynamicTp side, which will provide the metrics interface data.
 
-1. 开启 SpringBoot Actuator Endpoint 暴露出`DynamicTp`指标接口  
+1. Enable the SpringBoot Actuator Endpoint to expose the `DynamicTp` metrics interface.
 
 ```yaml
 management:
@@ -45,7 +45,7 @@ management:
         include: '*'
 ```
 
-2. 重启后测试访问指标接口 `ip:port/actuator/dynamic-tp` 是否有响应json数据如下:
+2. Reboot and test access to the metrics interface `ip:port/actuator/dynamic-tp` to see if it responds with json data as follows.
 
 ```json
 [
@@ -79,102 +79,102 @@ management:
 ]
 ```
 
-#### 二. 在 HertzBeat 监控页面添加 DynamicTp 线程池监控   
+#### ii. To add DynamicTp thread pool monitoring to the HertzBeat monitoring page
 
-1. 点击新增 DynamicTp 监控  
+1. Click Add DynamicTp Monitor
 
-路径：菜单 -> 中间件监控 -> DynamicTp监控 -> 新增DynamicTp监控  
+Path: Menu -> Middleware Monitor -> DynamicTp Monitor -> Add DynamicTp Monitor
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
 
-2. 配置监控 DynamicTp 所需参数   
+2. Configure the parameters required for monitoring DynamicTp.
 
-在监控页面填写 DynamicTp **服务IP**，**监控端口**(默认8080)，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/dynamic_tp/) https://hertzbeat.com/docs/help/dynamic_tp/   
+On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.   
+For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) https://hertzbeat.com/docs/help/dynamic_tp/
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)    
+![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
 
-3. 完成✅,现在我们已经添加好对 DynamicTp 的监控了，查看监控列表即可看到我们的添加项。  
+3. Done ✅, now we have added monitoring for DynamicTp, check the monitor list to see our additions.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)  
+![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
 
-4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 DynamicTp线程池 的实时监控指标数据。  
+4. Click **Options**->**Monitor Details icon** in the Monitor list to view the real-time monitoring metrics of the DynamicTp thread pool.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-3.png)  
+![hertzbeat](/img/blog/monitor-dynamic-tp-3.png)
 
-5. 点击**监控历史详情TAB** 即可浏览 DynamicTp线程池 的历史监控指标数据图表📈。  
+5. Click the **Monitoring History TAB** to view a graphical representation of the historical monitoring metrics for the DynamicTp thread pool 📈.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-4.png)      
+![hertzbeat](/img/blog/monitor-dynamic-tp-4.png)
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
 
-**DONE！完成啦！通过上面几步，总结起来其实也就只用两步**  
-- **第一步暴露 DynamicTp 端`metrics`端点`/actuator/dynamic-tp`**   
-- **第二步在 HertzBeat 监控页面配置IP端口添加监控即可**         
+**DONE! With the above steps, it's really just two steps**
+- **The first step is to expose the DynamicTp `metrics` endpoint `/actuator/dynamic-tp`**.
+- **The second step is to configure the IP ports on the HertzBeat monitoring page to add the monitoring**
 
 :::tip
-通过上面的两步我们就完成了对 DynamicTp 的监控，我们可以在 HertzBeat 随时查看监控详情指标信息来观测其服务状态。
-当然只是看肯定是不完美的，监控往往伴随着告警阈值，当 DynamicTp 的线程池指标超出我们的期望值或异常时，能及时的通知到我们对应的负责人，负责人收到通知处理问题，这样才是一个完整的监控告警流程。
+With the above two steps we have finished monitoring DynamicTp, and we can view the monitoring details and metrics information in HertzBeat at any time to observe its service status.
+Of course, just watching is not perfect, monitoring is often accompanied by alarm thresholds, when DynamicTp's thread pool metrics exceed our expectations or abnormalities, we can promptly notify the person in charge of our counterparts, the person in charge of the notification received to deal with the problem, so that is a complete monitoring and alerting process.
 :::
 
-**接下来我们就来一步一步演示如何配置 HertzBeat 系统里的阈值告警通知，让 DynamicTp线程池 的指标异常时，及时通知给我们**     
+**Next, we will demonstrate step-by-step how to configure the threshold alarm notification in HertzBeat system, so that when the DynamicTp thread pool metrics are abnormal, we will be notified in a timely manner** **This is a complete monitoring and alerting process.
 
-#### 三. 在 HertzBeat 系统添加 DynamicTp线程池 指标阈值告警   
+#### iii. Adding Threshold Alerts for DynamicTp Thread Pool Metrics in HertzBeat System
 
-1. 对某个重要指标配置告警阈值     
+1. Configure an alarm threshold for an important metric.
 
-路径：菜单 -> 告警阈值 -> 新增阈值  
+Path: Menu -> Alert Thresholds -> Add Thresholds
 
-- 选择配置的指标对象，DynamicTp监控主要是一些线程池相关指标，我们举例对 `运行超时线程数量` `thread_pool_running` -> `run_timeout_count` 这个指标进行阈值设置， 当线程运行超时数量大于1时发出告警。       
-- 这里我们就配置当此指标`thread_pool_running` 的 `run_timeout_count>1` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。  
+- DynamicTp monitors some thread pool related metrics, for example, we set the threshold for the `run_timeout_count` `thread_pool_running` -> `run_timeout_count` metric, which will raise an alarm when the thread_timeout_count is greater than one.
+- Here we configure an alert to be issued when `thread_pool_running` has a `run_timeout_count>1`, with an alert level of **Serious Alert**, which is triggered three times, as shown in the following figure.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)   
-
-
-2. 新增消息通知接收人
-
-> 配置接收人，让告警消息知道要发给谁，用什么方式发。  
-
-路径：菜单 -> 告警通知 -> 告警接收人 -> 新增接收人  
-
-消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。  
-
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。 
-- 在 HertzBeat 配置接收人参数如下。  
-
-【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
-
-![hertzbeat](/img/blog/alert-notice-1.png)    
-
-3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】 
-
-> 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
-
-![hertzbeat](/img/blog/alert-notice-2.png)    
+![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
 
 
-### 完毕，现在坐等告警消息过来啦。叮叮叮叮 
+2. Add message notification recipients
+
+> Configure recipients to let alert message know who to send to and in what way.
+
+Path: Menu -> Alert Notification -> Alert Recipient -> Add Recipient.
+
+Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
+
+- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk Configure the bot on Dingtalk side, set the security customization keyword ` HertzBeat`, get the corresponding `access_token` value.
+- Configure the recipient parameters in HertzBeat as follows.
+
+[Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
+
+![hertzbeat](/img/blog/alert-notice-1.png)
+
+3. Configure the associated alert notification policy ⚠️ [Add Notification Policy] -> [Associate the recipient you just set] -> [OK] !
+
+> Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
+
+![hertzbeat](/img/blog/alert-notice-2.png)
+
+
+### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding.
 
 ```
-[HertzBeat告警通知]
-告警目标对象 : dynamic_tp.thread_pool_running.run_timeout_count
-所属监控任务ID : 205540620349493
-所属任务名称 : DynamicTp_localhost
-告警级别 : 严重告警
-告警触发时间 : 2023-02-02 22:17:06
-内容详情 : DynamicTp has run timeout thread, count is 2
+[HertzBeat alert notification]
+Alert target object : dynamic_tp.thread_pool_running.run_timeout_count
+Task ID : 205540620349493
+Task Name : dynamic_tp_localhost
+Alarm Level : Critical Alarm
+Alarm Trigger Time : 2023-02-02 22:17:06
+Details : DynamicTp has run timeout thread, count is 2
 ```
 
-## 小结   
+## Summary
 
 :::tip
-这篇实践文章带我们体验了如何使用 HertzBeat 监控 DynamicTp线程池 指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 DynamicTp线程池 纳入监控并告警通知，再也不需要部署多个组件写YML配置文件那些繁琐操作了。  
+This practical article takes us to experience how to use HertzBeat to monitor DynamicTp thread pool metrics data, and we can find that HertzBeat with ``monitoring-alerting-notification`` is much more convenient to operate and use, and you only need to point and click on a page to include DynamicTp thread pool into the monitoring and alert notification, and you don't need to deploy multiple components to write YML configuration files anymore. There is no need to deploy multiple components and write YML configuration files.  
 :::
 
 DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/dromara/hertzbeat
 
-**欢迎了解使用Star支持哦！**
+**Welcome to learn how to use Star Support!**
 
-只需要一条docker命令即可安装体验heartbeat ：   
+Experience heartbeat with a single docker command:   
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
