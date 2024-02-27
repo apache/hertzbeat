@@ -1,67 +1,67 @@
 ---
-title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据    
+title: GreptimeDB & HertzBeat, using the open source temporal database GreptimeDB to store metrics for the open source real-time monitoring HertzBeat    
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
-keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
+keywords: [open source monitoring system, open source temporal database, HertzBeat, GreptimeDB]
 ---
 
-## 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据
+## Using GreptimeDB, an open source temporal database, to store metrics for open source real-time monitoring HertzBeat
 
-### 什么是 GreptimeDB  
+### What is GreptimeDB?
 
-> [GreptimeDB](https://github.com/GreptimeTeam/greptimedb) 是一款开源、分布式、云原生时序数据库，融合时序数据处理和分析。 
+> [GreptimeDB](https://github.com/GreptimeTeam/greptimedb) is an open source, distributed, cloud-native temporal database that fuses temporal data processing and analytics.
 
-- 完善的生态系统，支持大量开放协议，与 MySQL/PostreSQL/PromQL/OpenTSDB 等兼容，学习成本低，开箱即用。
-- 时序、分析混合负载，支持高并发的读/写；原生支持 PromQL， 支持 SQL/Python 进行强大的库内分析。
-- 高效存储与计算，通过对象存储和高数据压缩率实现超低的存储成本。内置数据分析解决方案，避免将数据复制到外部数据仓库。
-- 分布式、高可靠与高可用，通过解耦的云原生架构，轻松独立地扩展每个模块。通过可配置的副本和自动的故障转移机制，确保数据的可靠性和可用性。
+- Complete ecosystem, support a large number of open protocols, compatible with MySQL/PostreSQL/PromQL/OpenTSDB, etc., low learning cost, out-of-the-box.
+- Mixed load of timing and analytics, support for highly concurrent read/write; native support for PromQL, support for SQL/Python for powerful in-library analytics.
+- Efficient storage and computation, with object storage and high data compression rate to achieve ultra-low storage costs. Built-in data analytics solution to avoid replicating data to external data warehouses.
+- Distributed, Highly Reliable & Highly Available, easily scale each module independently with decoupled cloud-native architecture. Ensure data reliability and availability with configurable replicas and automated failover mechanisms.
 
 Cloud: **[GreptimePlay](https://greptime.com/playground)**
 
-### 什么是 HertzBeat  
+### What is HertzBeat?
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) 一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
+> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source real-time monitoring and alerting tool with powerful customizable monitoring capabilities and no Agent required.
 
-- 集 **监控+告警+通知** All in one，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控，阈值告警通知一步到位。
-- 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
-- 将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需在浏览器配置`YML`监控模版就能使用这些协议去自定义采集想要的指标。
+- HertzBeat is an open source real-time monitoring and alerting tool with powerful customizable monitoring capabilities without the need for an agent. It integrates **Monitoring+Alerting+Notification** All in one, supports monitoring of application services, applications, databases, caching, operating systems, big data, middleware, web servers, cloud native, network, customization, etc., and notifies you of thresholds and alerts all in one step.
+- More liberalized threshold rules (calculation expressions), `Email` `Discord` `Slack` `Telegram` `Pinned` `Dingtalk` `WeChat` `Flybook` `SMS` `Webhook` and other ways to deliver in time.
+- Configurable `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` and other protocol specifications, just configure the `YML` monitoring template in the browser to use these protocols to customize the collection of desired metrics.
 
-> `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。    
+> With `HertzBeat`'s powerful customization, multi-type support, easy scalability and low coupling, we hope to help developers and small and medium-sized teams to quickly build their own monitoring system.
 
 Cloud: **[TanCloud](https://console.tancloud.cn/)**
 
 ### GreptimeDB & HertzBeat
 
-> 下面内容我们会通过一步一步的形式演示 HertzBeat 如何结合 GreptimeDB 作为存储端来存储收集到的指标数据。
+> In the following section, we will demonstrate step-by-step how HertzBeat can be combined with GreptimeDB as a storage to store the collected metrics data.
 
-#### 安装部署 GreptimeDB 
+#### Installing and Deploying GreptimeDB
 
-具体可以参考 [官方文档](https://docs.greptime.com/getting-started/overview#docker)
+You can refer to the [official documentation](https://docs.greptime.com/getting-started/overview#docker) for more details.
 
-1. Docker 安装 GreptimeDB
+1. Docker installation of GreptimeDB
 
 ```shell
 $ docker run -p 4000-4004:4000-4004 \
     -p 4242:4242 -v "$(pwd)/greptimedb:/tmp/greptimedb" \
     --name greptime \
     greptime/greptimedb:0.2.0 standalone start \
-    --http-addr 0.0.0.0:4000 \
+    --http-addr 0.0.0.0.0:4000 \
     --rpc-addr 0.0.0.0:4001
 ```
 
-- `-v "$(pwd)/greptimedb:/tmp/greptimedb"` 为 greptimeDB 数据目录本地持久化挂载，建议将`$(pwd)/greptimedb`替换为您想指定存放的实际本地目录
+- `-v "$(pwd)/greptimedb:/tmp/greptimedb"` is the local persistent mount for the greptimeDB data directory, it is recommended to replace `$(pwd)/greptimedb` with the actual local directory you want to specify for storage.
 
-2. 使用```$ docker ps | grep greptime```查看 GreptimeDB 是否启动成功
+2. Use ``$ docker ps | grep greptime`` to see if GreptimeDB started successfully.
 
 
-#### 安装部署 HertzBeat   
+#### Installing and Deploying HertzBeat
 
-具体可以参考 [官方文档](https://hertzbeat.com/zh-cn/docs/start/docker-deploy) 
+See the [official documentation](https://hertzbeat.com/zh-cn/docs/start/docker-deploy) for details.
 
-1. Docker 安装 HertzBeat 
+1. Docker installs HertzBeat.
 
 ```shell 
 $ docker run -d -p 1157:1157 \
@@ -73,61 +73,62 @@ $ docker run -d -p 1157:1157 \
     --name hertzbeat tancloud/hertzbeat
 ```
 
-- `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失
 
-- `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : 挂载自定义本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。
 
-注意⚠️ 本地挂载配置文件 `application.yml` 需提前存在，文件完整内容见项目仓库[/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)
+- `-v /opt/data:/opt/hertzbeat/data` : (Optional, data persistence) Important ⚠️ Mount the H2 database files to the local host to ensure that the data will not be lost due to the creation and deletion of the container
 
-2. 浏览器访问 http://ip:1157/ 默认账户密码 admin/hertzbeat，查看 HertzBeat 是否启动成功。
+- `-v /opt/application.yml:/opt/hertzbeat/config/application.yml` : Mount customized local configuration files to the container, i.e. use local configuration files to overwrite the container configuration files.
 
-#### 配置使用 GreptimeDB 存储 HertzBeat 监控指标度量数据 
+Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/ application.yml)
 
-1. 修改 HertzBeat 端配置文件 
+2. Go to http://ip:1157/ with the default account and password admin/hertzbeat to see if HertzBeat starts successfully.
 
-修改挂载到本地的 HertzBeat 配置文件 [application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml), 安装包模式下修改 `hertzbeat/config/application.yml`   
+#### Configure to use GreptimeDB to store HertzBeat monitoring metrics metrics data
 
-**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.greptime`数据源参数，URL账户密码，并启用`enabled`为`true`**
+1. Modify the HertzBeat configuration file.
+
+Modify the locally mounted HertzBeat configuration file [application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml), in package mode modify `hertzbeat/ config/application.yml
+
+**Modify the `warehouse.store.jpa.enabled` parameter in there to `false`, configure the `warehouse.store.greptime` datasource parameter in there, the URL account password, and enable `enabled` to `true`**.
 
 ```yaml
 warehouse:
-   store:
-      # 关闭默认JPA
-      jpa:
-         enabled: false
-      greptime:
-         enabled: true
-         endpoint: localhost:4001
+  store:
+    jpa:
+      enabled: false
+    greptime:
+      enabled: true
+      endpoint: localhost:4001
 ```
 
-2. 重启 HertzBeat 
+2. Restart HertzBeat. 
 
 ```shell
 $ docker restart hertzbeat
 ```
 
-#### 观察验证效果 
+#### Observe the authentication effect
 
-1. 浏览器访问 HertzBeat http://ip:1157/ 默认账户密码 admin/hertzbeat
-2. 使用 HertzBeat 添加应用监控，比如网站监控，Linux监控，Mysql监控
-3. 监控采集几个周期之后，查看 GreptimeDB 数据库是否存储指标度量数据，HertzBeat 指标数据图表数据是否展示正常。
+1. visit HertzBeat in your browser http://ip:1157/ default account password admin/hertzbeat
+2. Use HertzBeat to add application monitors, such as website monitors, Linux monitors, Mysql monitors, and so on.
+3. After monitoring and collecting several cycles, check whether GreptimeDB database stores the metrics data and whether HertzBeat metrics data graph data is displayed normally.
 
-直接上图哇:  
+Here's the picture: !
 
-![1](/img/blog/greptime-1.png)  
+![1](/img/blog/greptime-1.png)
 
 ![1](/img/blog/greptime-2.png)
 
 ![1](/img/blog/greptime-3.png)
 
-## 小结   
+## Summary
 
-这篇文章带我们体验了如何使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的指标度量数据，总的来看两款开源产品上手是非常简单的，关键是如果嫌麻烦不想部署他俩都还有云服务😂让你折腾。   
-作为特性 [HertzBeat支持GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) 的开发者之一，在实际适配使用过程中，GreptimeDB的丝滑原生SDK和类似关系数据库的SQL，让我们从其它时序数据库 `TDengine, IotDB, InfluxDB` 切换过去还是非常容易，体验丝滑的。
+This article took us to experience how to use the open source time-series database GreptimeDB to store the metrics data of the open source real-time monitoring HertzBeat, in general, the two open source products is very simple to get started, the key is that if it is too much trouble do not want to deploy both of them still have cloud services 😂 let you toss.   
+As one of the developers of the feature [HertzBeat supports GreptimeDB](https://github.com/dromara/hertzbeat/pull/834), in the actual adaptation process, GreptimeDB's silky-smooth native SDK and relational database-like SQL, let us from other GreptimeDB native SDK and relational database-like SQL make it very easy to switch from other time-series databases like `TDengine, IotDB, InfluxDB` to GreptimeDB, and the experience is very smooth.
 
 GreptimeDB Github: https://github.com/GreptimeTeam/greptimedb    
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/dromara/hertzbeat
 
-**最后就是欢迎大家一定要多多了解，多多使用，多多提意见，多多ISSUE，多多PR，多多Star支持这俩没出来多久希望得到呵护的开源牛牛不怕困难 一颗小星星哦！做开源，我们是蒸(真)的，爱心💗**
+** Finally, you are welcome to be more understanding, more use, more comments, more ISSUE, more PR, more Star support these two did not come out for a long time hope to get care of open source cattle are not afraid of difficulties a small star oh! Do open source, we are sincere, love 💗**
 
-感谢此特性 [HertzBeat支持GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) 的贡献者们 @zqr10159, @fengjiachun, @killme2008, @tomsun28
+Thanks to the contributors of this feature [HertzBeat support GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) @zqr10159, @fengjiachun, @killme2008, @tomsun28
