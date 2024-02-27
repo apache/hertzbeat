@@ -23,34 +23,34 @@ import java.util.Set;
 @Slf4j
 public class AvailableAlertDefineInit implements CommandLineRunner {
 
-	@Autowired
-	private AlertDefineDao alertDefineDao;
+    @Autowired
+    private AlertDefineDao alertDefineDao;
 
-	@Autowired
-	private AppService appService;
+    @Autowired
+    private AppService appService;
 
-	@Override
-	public void run(String... args) throws Exception {
-		Set<String> apps = appService.getAllAppDefines().keySet();
-		for (String app : apps) {
-			try {
-				List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetric(app, CommonConstants.AVAILABILITY);
-				if (defines.isEmpty()) {
-					AlertDefine alertDefine = AlertDefine.builder()
-							.app(app)
-							.metric(CommonConstants.AVAILABILITY)
-							.preset(true)
-							.times(2)
-							.enable(true)
+    @Override
+    public void run(String... args) throws Exception {
+        Set<String> apps = appService.getAllAppDefines().keySet();
+        for (String app : apps) {
+            try {
+                List<AlertDefine> defines = alertDefineDao.queryAlertDefineByAppAndMetric(app, CommonConstants.AVAILABILITY);
+                if (defines.isEmpty()) {
+                    AlertDefine alertDefine = AlertDefine.builder()
+                            .app(app)
+                            .metric(CommonConstants.AVAILABILITY)
+                            .preset(true)
+                            .times(2)
+                            .enable(true)
                             .recoverNotice(false)
-							.priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
-							.template("${app} monitoring availability alert, code is ${code}")
-							.build();
-					alertDefineDao.save(alertDefine);
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-		}
-	}
+                            .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
+                            .template("${app} monitoring availability alert, code is ${code}")
+                            .build();
+                    alertDefineDao.save(alertDefine);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
 }

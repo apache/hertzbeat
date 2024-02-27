@@ -179,6 +179,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         this.nettyHookList.addAll(nettyHookList);
     }
 
+    /**
+     * netty server handler
+     */
     @ChannelHandler.Sharable
     public class NettyServerHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
 

@@ -27,13 +27,15 @@ import java.util.Set;
 /**
  * AlertSilence Dao
  *
+ *
  */
 public interface AlertSilenceDao extends JpaRepository<AlertSilence, Long>, JpaSpecificationExecutor<AlertSilence> {
 
-	/**
-	 * Delete alarm silence based on the ID list
-	 * @param silenceIds alert silence id list
-	 */
-	@Modifying
-	void deleteAlertSilencesByIdIn(Set<Long> silenceIds);
+    /**
+     * Delete alarm silence based on the ID list
+     *
+     * @param silenceIds alert silence id list
+     */
+    @Modifying
+    void deleteAlertSilencesByIdIn(Set<Long> silenceIds);
 }

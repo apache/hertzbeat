@@ -3,7 +3,7 @@
 
 package org.dromara.hertzbeat.common.entity.message;
 
-@SuppressWarnings("PMD")
+@SuppressWarnings("all")
 public final class ClusterMsg {
     private ClusterMsg() {
     }

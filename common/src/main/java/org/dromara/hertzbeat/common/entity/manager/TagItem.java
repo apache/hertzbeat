@@ -10,17 +10,18 @@ import javax.validation.constraints.NotBlank;
 /**
  * tag item
  *
+ *
  */
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 public class TagItem {
 
-	@Schema(title = "Tag Name")
-	@NotBlank
-	private String name;
+    @Schema(title = "Tag Name")
+    @NotBlank
+    private String name;
 
-	@Schema(title = "Tag Value")
-	private String value;
+    @Schema(title = "Tag Value")
+    private String value;
 
 }
