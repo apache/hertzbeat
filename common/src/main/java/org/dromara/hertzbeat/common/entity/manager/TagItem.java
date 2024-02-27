@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * tag item
+ *
  * @author tom
  */
 @AllArgsConstructor
@@ -16,11 +17,11 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class TagItem {
 
-	@Schema(title = "Tag Name")
-	@NotBlank
-	private String name;
+    @Schema(title = "Tag Name")
+    @NotBlank
+    private String name;
 
-	@Schema(title = "Tag Value")
-	private String value;
+    @Schema(title = "Tag Value")
+    private String value;
 
 }

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Schedules {@link TimerTask}s for one-time future execution in a background
  * thread.
+ *
  * @author from netty | <a href="https://github.com/apache/dubbo">dubbo</a>
  */
 public interface Timer {
@@ -31,9 +32,9 @@ public interface Timer {
      * Schedules the specified {@link TimerTask} for one-time execution after
      * the specified delay.
      *
-     * @param task the {@link TimerTask
+     * @param task  the {@link TimerTask}
      * @param delay the delay
-     * @param unit the unit of time
+     * @param unit  the unit of time
      * @return a handle which is associated with the specified task
      * @throws IllegalStateException      if this timer has been {@linkplain #stop() stopped} already
      * @throws RejectedExecutionException if the pending timeouts are too many and creating new timeout

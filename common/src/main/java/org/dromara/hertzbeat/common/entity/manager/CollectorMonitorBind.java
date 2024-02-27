@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 
 /**
  * collector entity
+ *
  * @author tom
  */
 @Entity
@@ -37,32 +38,32 @@ import java.time.LocalDateTime;
 @Schema(description = "slave collector monitor bind entity | 采集器与监控关联实体")
 @EntityListeners(AuditingEntityListener.class)
 public class CollectorMonitorBind {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "primary id", example = "23")
     private Long id;
-    
+
     @Schema(title = "collector name", example = "87432674384")
     private String collector;
-    
+
     @Schema(title = "monitor ID", example = "87432674336")
     @Column(name = "monitor_id")
     private Long monitorId;
-	
-	@Schema(title = "The creator of this record", example = "tom")
-	@CreatedBy
-	private String creator;
-	
-	@Schema(title = "This record was last modified by")
-	@LastModifiedBy
-	private String modifier;
-	
-	@Schema(title = "This record creation time (millisecond timestamp)")
-	@CreatedDate
-	private LocalDateTime gmtCreate;
-	
-	@Schema(title = "Record the latest modification time (timestamp in milliseconds)")
-	@LastModifiedDate
-	private LocalDateTime gmtUpdate;
+
+    @Schema(title = "The creator of this record", example = "tom")
+    @CreatedBy
+    private String creator;
+
+    @Schema(title = "This record was last modified by")
+    @LastModifiedBy
+    private String modifier;
+
+    @Schema(title = "This record creation time (millisecond timestamp)")
+    @CreatedDate
+    private LocalDateTime gmtCreate;
+
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
+    @LastModifiedDate
+    private LocalDateTime gmtUpdate;
 }
