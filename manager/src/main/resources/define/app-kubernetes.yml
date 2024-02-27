@@ -95,7 +95,6 @@ params:
       en-US: Access Token
     type: text
     required: true
-
 # collect metrics config list
 # 采集指标配置列表
 metrics:
@@ -114,20 +113,41 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: node_name
         type: 1
+        i18n:
+          zh-CN: 节点名称
+          en-US: Node Name
       - field: is_ready
         type: 1
+        i18n:
+          zh-CN: 节点就绪状态
+          en-US: Node Ready Status
       - field: capacity_cpu
         type: 0
+        i18n:
+          zh-CN: CPU 容量
+          en-US: CPU Capacity
       - field: allocatable_cpu
         type: 0
+        i18n:
+          zh-CN: 可分配 CPU
+          en-US: Allocatable CPU
       - field: capacity_memory
         type: 0
         unit: Mi
+        i18n:
+          zh-CN: 内存容量
+          en-US: Memory Capacity
       - field: allocatable_memory
         type: 0
         unit: Mi
+        i18n:
+          zh-CN: 可分配内存
+          en-US: Allocatable Memory
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -172,10 +192,19 @@ metrics:
     fields:
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     aliasFields:
       - $.metadata.name
       - $.status.phase
@@ -202,20 +231,44 @@ metrics:
     fields:
       - field: pod
         type: 1
+        i18n:
+          zh-CN: Pod名称
+          en-US: Pod Name
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
       - field: restart
         type: 1
+        i18n:
+          zh-CN: 重启次数
+          en-US: Restart Count
       - field: host_ip
         type: 1
+        i18n:
+          zh-CN: 主机IP
+          en-US: Host IP
       - field: pod_ip
         type: 1
+        i18n:
+          zh-CN: Pod IP
+          en-US: Pod IP
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
       - field: start_time
         type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace
@@ -252,16 +305,34 @@ metrics:
     fields:
       - field: service
         type: 1
+        i18n:
+          zh-CN: 服务
+          en-US: Service
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: type
         type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
       - field: cluster_ip
         type: 1
+        i18n:
+          zh-CN: 集群IP
+          en-US: Cluster IP
       - field: selector
         type: 1
+        i18n:
+          zh-CN: 选择器
+          en-US: Selector
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace
