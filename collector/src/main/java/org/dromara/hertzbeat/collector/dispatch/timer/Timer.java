@@ -32,7 +32,7 @@ public interface Timer {
      * Schedules the specified {@link TimerTask} for one-time execution after
      * the specified delay.
      *
-     * @param task  the {@link TimerTask
+     * @param task  the {@link TimerTask}
      * @param delay the delay
      * @param unit  the unit of time
      * @return a handle which is associated with the specified task
