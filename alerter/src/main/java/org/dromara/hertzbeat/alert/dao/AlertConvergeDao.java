@@ -26,14 +26,16 @@ import java.util.Set;
 
 /**
  * AlertConverge Dao
+ *
  * @author tom
  */
 public interface AlertConvergeDao extends JpaRepository<AlertConverge, Long>, JpaSpecificationExecutor<AlertConverge> {
-	
-	/**
-	 * Delete alarm converge based on the ID list
-	 * @param convergeIds alert converge id list
-	 */
-	@Modifying
-	void deleteAlertConvergesByIdIn(Set<Long> convergeIds);
+
+    /**
+     * Delete alarm converge based on the ID list
+     *
+     * @param convergeIds alert converge id list
+     */
+    @Modifying
+    void deleteAlertConvergesByIdIn(Set<Long> convergeIds);
 }

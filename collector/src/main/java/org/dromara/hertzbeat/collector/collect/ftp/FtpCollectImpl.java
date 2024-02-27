@@ -23,8 +23,8 @@ import java.util.Objects;
 @Slf4j
 public class FtpCollectImpl extends AbstractCollect {
 
-    private final String ANONYMOUS = "anonymous";
-    private final String PASSWORD = "password";
+    private static final String ANONYMOUS = "anonymous";
+    private static final String PASSWORD = "password";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -82,10 +82,12 @@ public class FtpCollectImpl extends AbstractCollect {
             log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
         }
-        return new HashMap<>(8) {{
-            put("isActive", Boolean.toString(isActive));
-            put("responseTime", responseTime);
-        }};
+        return new HashMap<>(8) {
+            {
+                put("isActive", Boolean.toString(isActive));
+                put("responseTime", responseTime);
+            }
+        };
     }
 
     /**
