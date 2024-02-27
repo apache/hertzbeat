@@ -29,10 +29,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Host Param Validator
- *
  * @author tomsun28
  */
-@Target({FIELD, PARAMETER})
+@Target({ FIELD, PARAMETER })
 @Retention(RUNTIME)
 @Documented
 @Constraint(validatedBy = HostParamValidator.class)

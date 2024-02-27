@@ -35,30 +35,30 @@ import java.util.stream.Collectors;
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
-
+    
     @Autowired
     private CollectorScheduling collectorScheduling;
-
+    
     @Autowired
     private CollectJobScheduling collectJobScheduling;
-
+   
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
-
+    
     @Autowired
     private AppService appService;
-
+    
     @Autowired
     private MonitorDao monitorDao;
-
+    
     @Autowired
     private ParamDao paramDao;
-
+    
     @Autowired
     private CollectorDao collectorDao;
-
+    
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-
+    
     @Override
     public void run(String... args) throws Exception {
         // init pre collector status
@@ -68,9 +68,9 @@ public class SchedulerInit implements CommandLineRunner {
         collectorDao.saveAll(collectors);
         // insert default consistent node
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                .name(CommonConstants.MAIN_COLLECTOR_NODE)
-                .ip(MAIN_COLLECTOR_NODE_IP)
-                .build();
+                                              .name(CommonConstants.MAIN_COLLECTOR_NODE)
+                                              .ip(MAIN_COLLECTOR_NODE_IP)
+                                              .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of((byte) 0));

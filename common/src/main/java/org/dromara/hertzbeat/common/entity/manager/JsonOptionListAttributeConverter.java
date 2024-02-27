@@ -24,9 +24,9 @@ import javax.persistence.AttributeConverter;
 import java.util.List;
 
 /**
- * json str to list paramDefine.Option
- *
+ * json str to list paramDefine.Option 
  * @author tom
+ *
  */
 public class JsonOptionListAttributeConverter implements AttributeConverter<List<ParamDefine.Option>, String> {
 
@@ -37,8 +37,7 @@ public class JsonOptionListAttributeConverter implements AttributeConverter<List
 
     @Override
     public List<ParamDefine.Option> convertToEntityAttribute(String dbData) {
-        TypeReference<List<ParamDefine.Option>> typeReference = new TypeReference<>() {
-        };
+        TypeReference<List<ParamDefine.Option>> typeReference = new TypeReference<>() {};
         return JsonUtil.fromJson(dbData, typeReference);
     }
 }

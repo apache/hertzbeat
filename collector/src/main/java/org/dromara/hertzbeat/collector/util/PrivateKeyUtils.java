@@ -11,7 +11,6 @@ import java.util.Objects;
 /**
  * private key util
  * write private key to ~/.ssh
- *
  * @author <a href="mailto:gcwm99@gmail.com">gcdd1993</a>
  */
 @Slf4j

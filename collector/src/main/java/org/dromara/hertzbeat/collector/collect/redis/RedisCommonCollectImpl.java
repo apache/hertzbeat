@@ -36,6 +36,7 @@ import java.util.*;
  *
  * @author <a href="mailto:Musk.Chen@fanruan.com">Musk.Chen</a> , hdd
  * @version 1.0
+ *
  */
 @Slf4j
 public class RedisCommonCollectImpl extends AbstractCollect {
@@ -85,14 +86,13 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * get single redis metrics data
-     *
      * @param metrics metrics config
      * @return data
      */
     private Map<String, String> getSingleRedisInfo(Metrics metrics) {
         StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
         String info = connection.sync().info(metrics.getName());
-        Map<String, String> valueMap = parseInfo(info, metrics);
+        Map<String, String> valueMap = parseInfo(info ,metrics);
         if (log.isDebugEnabled()) {
             log.debug("[RedisSingleCollectImpl] fetch redis info");
             valueMap.forEach((k, v) -> log.debug("{} : {}", k, v));
@@ -102,14 +102,13 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * get cluster redis metrics data
-     *
      * @param metrics metrics config
      * @return data
      */
     private List<Map<String, String>> getClusterRedisInfo(Metrics metrics) {
         Map<String, StatefulRedisClusterConnection<String, String>> connectionMap = getConnectionList(metrics.getRedis());
         List<Map<String, String>> list = new ArrayList<>(connectionMap.size());
-        connectionMap.forEach((identity, connection) -> {
+        connectionMap.forEach((identity, connection) ->{
             String info = connection.sync().info(metrics.getName());
             Map<String, String> valueMap = parseInfo(info, metrics);
             valueMap.put(UNIQUE_IDENTITY, identity);
@@ -128,10 +127,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * Build monitoring parameters according to redis info
-     *
-     * @param builder      builder
+     * @param builder builder
      * @param valueMapList map list
-     * @param metrics      metrics
+     * @param metrics metrics
      */
     private void doMetricsDataList(CollectRep.MetricsData.Builder builder, List<Map<String, String>> valueMapList, Metrics metrics) {
         valueMapList.forEach(e -> doMetricsData(builder, e, metrics));
@@ -139,10 +137,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * Build monitoring parameters according to redis info
-     *
-     * @param builder  builder
+     * @param builder builder
      * @param valueMap map value
-     * @param metrics  metrics
+     * @param metrics metrics
      */
     private void doMetricsData(CollectRep.MetricsData.Builder builder, Map<String, String> valueMap, Metrics metrics) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -159,7 +156,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * get single connection
-     *
      * @param redisProtocol protocol
      * @return connection
      */
@@ -177,7 +173,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * get cluster connect list
-     *
      * @param redisProtocol protocol
      * @return connection map
      */

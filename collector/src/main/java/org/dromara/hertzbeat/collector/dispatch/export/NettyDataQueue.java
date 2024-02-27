@@ -27,24 +27,22 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * for collector instance
- * send collect response data by netty
- *
+ * send collect response data by netty 
  * @author tom
  */
 @Configuration
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty")
 @Slf4j
 public class NettyDataQueue implements CommonDataQueue {
-
+    
     private final CollectJobService collectJobService;
-
+    
     public NettyDataQueue(CollectJobService collectJobService) {
         this.collectJobService = collectJobService;
     }
 
     @Override
-    public void sendAlertsData(Alert alert) {
-    }
+    public void sendAlertsData(Alert alert) {}
 
     @Override
     public Alert pollAlertsData() throws InterruptedException {

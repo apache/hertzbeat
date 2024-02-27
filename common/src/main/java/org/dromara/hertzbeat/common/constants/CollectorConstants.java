@@ -19,7 +19,6 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * collector constant
- *
  * @author tom
  */
 public interface CollectorConstants {

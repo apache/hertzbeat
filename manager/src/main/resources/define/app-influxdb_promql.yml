@@ -140,11 +140,11 @@ metrics:
         type: 1
       - field: value
         type: 1
-    # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+# Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # When the protocol is HTTP, the specific collection configuration is as follows
-    # 当protocol为http协议时具体的采集配置
+# When the protocol is HTTP, the specific collection configuration is as follows
+# 当protocol为http协议时具体的采集配置
     http:
       # Host: IPv4, IPv6 or domain name of the host.
       # 主机host: ipv4 ipv6 域名

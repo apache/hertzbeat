@@ -29,7 +29,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.*;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -41,7 +40,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitor Entity
- *
  * @author tomsun28
  */
 @Entity
@@ -151,16 +149,16 @@ public class Monitor {
     /**
      * 多对多关联中，需设置第三张关联中间表JoinTable
      * JoinTable name 为关联关系中间表名称
-     * joinColumns：中间表的外键字段关联当前实体类所对应表的主键字段
-     * inverseJoinColumn：中间表的外键字段关联对方表的主键字段
-     * JoinColumn  name 中间表的关联字段名称
-     * referencedColumnName 关联表的映射字段名称
+     *           joinColumns：中间表的外键字段关联当前实体类所对应表的主键字段
+     *           inverseJoinColumn：中间表的外键字段关联对方表的主键字段
+     *           JoinColumn  name 中间表的关联字段名称
+     *                       referencedColumnName 关联表的映射字段名称
      */
     @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(name = "hzb_tag_monitor_bind",
-            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-            inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-            joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
+        foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+        inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+        joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
+        inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
 }

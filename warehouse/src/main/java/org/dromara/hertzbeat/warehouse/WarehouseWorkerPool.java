@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * warehouse 工作线程池
- *
  * @author tom
+ *
  */
 @Component
 @Slf4j
@@ -47,8 +47,7 @@ public class WarehouseWorkerPool {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
+                    log.error(throwable.getMessage(), throwable); })
                 .setDaemon(true)
                 .setNameFormat("warehouse-worker-%d")
                 .build();
@@ -63,7 +62,6 @@ public class WarehouseWorkerPool {
 
     /**
      * 运行warehouse任务
-     *
      * @param runnable 任务
      * @throws RejectedExecutionException when 线程池满
      */

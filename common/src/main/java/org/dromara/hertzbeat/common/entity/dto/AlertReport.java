@@ -30,7 +30,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alarm Report Content Entity
- *
  * @author yuye
  */
 @Data
@@ -66,7 +65,7 @@ public class AlertReport {
             example = "{\"key1\":\"value1\"}", accessMode = READ_WRITE)
     private Map<String, String> labels;
 
-    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example = "{\"key1\":\"value1\"}"
+    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example ="{\"key1\":\"value1\"}"
             , accessMode = READ_WRITE)
     private Map<String, String> annotations;
 

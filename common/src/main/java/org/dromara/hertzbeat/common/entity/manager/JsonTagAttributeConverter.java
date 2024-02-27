@@ -24,8 +24,8 @@ import javax.persistence.AttributeConverter;
 
 /**
  * json str to tag item
- *
  * @author tom
+ *
  */
 public class JsonTagAttributeConverter implements AttributeConverter<TagItem, String> {
 
@@ -36,8 +36,7 @@ public class JsonTagAttributeConverter implements AttributeConverter<TagItem, St
 
     @Override
     public TagItem convertToEntityAttribute(String dbData) {
-        TypeReference<TagItem> typeReference = new TypeReference<>() {
-        };
+        TypeReference<TagItem> typeReference = new TypeReference<>() {};
         return JsonUtil.fromJson(dbData, typeReference);
     }
 }

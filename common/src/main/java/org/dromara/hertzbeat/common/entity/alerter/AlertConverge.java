@@ -43,7 +43,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alert Converge strategy entity
- *
  * @author tomsun28
  */
 @Entity
@@ -72,7 +71,7 @@ public class AlertConverge {
     @Schema(title = "Whether to enable this policy", description = "是否启用此策略",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
-
+    
     @Schema(title = "Whether to match all", description = "是否应用匹配所有",
             example = "true", accessMode = READ_WRITE)
     private boolean matchAll = true;
@@ -87,7 +86,7 @@ public class AlertConverge {
     @Convert(converter = JsonTagListAttributeConverter.class)
     @Column(length = 2048)
     private List<TagItem> tags;
-
+    
     @Schema(title = "Repeat Alert Converge Time Range, unit s", example = "600", accessMode = READ_WRITE)
     @Min(0)
     private Integer evalInterval;

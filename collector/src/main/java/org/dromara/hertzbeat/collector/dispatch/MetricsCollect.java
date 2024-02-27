@@ -173,8 +173,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
      * Calculate the real metrics value according to the calculates and aliasFields configuration
      *
-     * @param metrics     Metrics configuration
-     * @param collectData Data collection
+     * @param metrics     Metrics configuration     
+     * @param collectData Data collection    
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
@@ -286,7 +286,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                 }
-
+                
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
                 if (aliasFieldUnit != null) {
                     if (unitPair != null) {
@@ -320,7 +320,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
 
     /**
-     * @param cal           cal
+     * @param cal cal
      * @param fieldAliasMap field alias map
      * @return expr
      */
@@ -341,7 +341,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     /**
      * transform unit
-     *
      * @param unit unit
      * @return units
      */

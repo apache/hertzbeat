@@ -21,7 +21,6 @@ import java.util.Base64;
 
 /**
  * base64 util
- *
  * @author tom
  */
 public class Base64Util {

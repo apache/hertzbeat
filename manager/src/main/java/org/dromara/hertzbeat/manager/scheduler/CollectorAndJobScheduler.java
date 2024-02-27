@@ -88,7 +88,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
             if (collectorInfo != null) {
                 collector.setIp(collectorInfo.getIp());
-                collector.setMode(collectorInfo.getMode());
+                collector.setMode(collectorInfo.getMode());   
             }
         } else {
             if (collectorInfo == null) {

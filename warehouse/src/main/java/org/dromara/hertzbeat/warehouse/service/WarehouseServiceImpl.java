@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * warehouse service impl
- *
  * @author tom
  */
 @Service

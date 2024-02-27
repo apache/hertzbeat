@@ -7,13 +7,12 @@ import java.util.List;
 
 /**
  * metric family
- *
  * @author ceilzcx
  */
 @Data
 @ToString
 public class MetricFamily {
-
+    
     /**
      * metric name
      */
@@ -26,7 +25,7 @@ public class MetricFamily {
 
     @Data
     public static class Metric {
-
+        
         private List<Label> labels;
 
         private double value;

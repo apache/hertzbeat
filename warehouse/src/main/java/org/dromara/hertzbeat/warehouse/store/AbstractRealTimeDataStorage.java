@@ -26,8 +26,8 @@ import java.util.List;
 
 /**
  * 实时数据存储抽象类
- *
  * @author tom
+ *
  */
 @Slf4j
 public abstract class AbstractRealTimeDataStorage implements DisposableBean {
@@ -43,23 +43,20 @@ public abstract class AbstractRealTimeDataStorage implements DisposableBean {
 
     /**
      * save collect metrics data
-     *
      * @param metricsData metrics data
      */
     abstract void saveData(CollectRep.MetricsData metricsData);
 
     /**
      * query real-time last metrics data
-     *
      * @param monitorId monitorId
-     * @param metric    metric name
+     * @param metric metric name
      * @return metrics data
      */
     public abstract CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
 
     /**
      * query real-time last metrics data
-     *
      * @param monitorId monitor id
      * @return metrics data
      */

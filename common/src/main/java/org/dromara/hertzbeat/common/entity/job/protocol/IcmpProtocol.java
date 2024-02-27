@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * icmp(即ping)协议配置
- *
  * @author tomsun28
  */
 @Data

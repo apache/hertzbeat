@@ -25,7 +25,6 @@ import java.util.List;
 /**
  * Collection job management provides api interface
  * 调度采集job管理api接口
- *
  * @author tom
  */
 public interface CollectJobScheduling {
@@ -38,12 +37,12 @@ public interface CollectJobScheduling {
      * @return Collection results       采集结果
      */
     List<CollectRep.MetricsData> collectSyncJobData(Job job);
-
+    
     /**
      * Execute a one-time collection task and get the collected data response
      * 执行一次性采集任务,获取采集数据响应
      *
-     * @param job       Collect task details  采集任务详情
+     * @param job Collect task details  采集任务详情
      * @param collector collector identity name
      * @return Collection results       采集结果
      */
@@ -53,7 +52,7 @@ public interface CollectJobScheduling {
      * Issue periodic asynchronous collection tasks
      * 下发周期性异步采集任务
      *
-     * @param job       Collect task details      采集任务详情
+     * @param job Collect task details      采集任务详情
      * @param collector collector identity name
      * @return long Job ID      采集任务ID
      */
@@ -67,7 +66,7 @@ public interface CollectJobScheduling {
      * @return long Job ID      新采集任务ID
      */
     long updateAsyncCollectJob(Job modifyJob);
-
+    
     /**
      * Update the periodic asynchronous collection tasks that have been delivered
      * 更新已经下发的周期性异步采集任务
@@ -85,10 +84,9 @@ public interface CollectJobScheduling {
      * @param jobId Job ID      采集任务ID
      */
     void cancelAsyncCollectJob(Long jobId);
-
+    
     /**
      * one-time collect job response data
-     *
      * @param metricsDataList collect data
      */
     void collectSyncJobResponse(List<CollectRep.MetricsData> metricsDataList);

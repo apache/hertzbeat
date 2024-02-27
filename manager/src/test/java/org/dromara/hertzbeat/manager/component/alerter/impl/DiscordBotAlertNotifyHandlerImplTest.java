@@ -37,7 +37,7 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         receiver.setName("Mock 告警");
         receiver.setDiscordChannelId(discordChannelId);
         receiver.setDiscordBotToken(discordBotToken);
-        var noticeTemplate = new NoticeTemplate();
+        var noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("DiscordBot");
         noticeTemplate.setContent("${targetLabel} : ${target}\n" +
@@ -60,6 +60,6 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        discordBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        discordBotAlertNotifyHandler.send(receiver, noticeTemplate,alert);
     }
 }

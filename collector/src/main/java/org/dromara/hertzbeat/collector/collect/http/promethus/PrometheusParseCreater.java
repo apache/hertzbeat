@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author myth
+ *
  */
 @Slf4j
 @Component
@@ -15,8 +16,7 @@ public class PrometheusParseCreater implements InitializingBean {
     private static void create() {
         PROMETHEUSPARSE.setInstance(new PrometheusMatrixParser().setInstance(new PrometheusLastParser()));
     }
-
-    public static AbstractPrometheusParse getPrometheusParse() {
+    public static AbstractPrometheusParse getPrometheusParse(){
         return PROMETHEUSPARSE;
     }
 

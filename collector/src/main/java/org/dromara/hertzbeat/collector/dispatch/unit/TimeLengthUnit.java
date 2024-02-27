@@ -2,8 +2,8 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
 
 /**
  * the enum of time length
- *
  * @author rbsrcy
+ *
  */
 public enum TimeLengthUnit {
     /**

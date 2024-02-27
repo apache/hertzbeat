@@ -29,10 +29,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * PhoneNum Param Validator
- *
  * @author tomsun28
  */
-@Target({FIELD, PARAMETER})
+@Target({ FIELD, PARAMETER })
 @Retention(RUNTIME)
 @Documented
 @Constraint(validatedBy = PhoneNumParamValidator.class)

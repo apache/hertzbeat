@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 /**
  * util for collector
- *
  * @author tom
  */
 @Slf4j
@@ -192,7 +191,6 @@ public class CollectUtil {
 
     /**
      * match existed cry placeholder fields ^o^field^o^
-     *
      * @param jsonElement json element
      * @return match field str
      */
@@ -411,7 +409,7 @@ public class CollectUtil {
         // todo more special
         return uri;
     }
-
+    
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
@@ -424,7 +422,6 @@ public class CollectUtil {
      * convert 16 hexString to byte[]
      * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500
      * 16进制字符串不区分大小写，返回的数组相同
-     *
      * @param hexString 16 hexString
      * @return byte[]
      */

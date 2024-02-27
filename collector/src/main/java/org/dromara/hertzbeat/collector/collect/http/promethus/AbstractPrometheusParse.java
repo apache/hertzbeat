@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @author myth
- * <p>
+ *
  * todo: string类型 和 scalar类型 响应格式解析
  */
 public abstract class AbstractPrometheusParse {
@@ -28,7 +28,6 @@ public abstract class AbstractPrometheusParse {
     /**
      * prom响应类型校验：string、matrix、vector、scalar
      * todo：string、scalar类型响应未实现
-     *
      * @param responseStr
      * @return
      */
@@ -36,7 +35,6 @@ public abstract class AbstractPrometheusParse {
 
     /**
      * 解析prom接口响应数据
-     *
      * @param resp
      * @param aliasFields
      * @param http
@@ -47,7 +45,6 @@ public abstract class AbstractPrometheusParse {
 
     /**
      * 处理prom接口响应数据
-     *
      * @param resp
      * @param aliasFields
      * @param http

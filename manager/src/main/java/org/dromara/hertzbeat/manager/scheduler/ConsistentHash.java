@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 /**
  * 一致性hash实现的采集器与任务映射调度
- *
  * @author tom
  */
 @Slf4j
@@ -38,14 +37,13 @@ public class ConsistentHash {
     private static final byte VIRTUAL_NODE_DEFAULT_SIZE = 10;
 
     public ConsistentHash() {
-        hashCircle = new ConcurrentTreeMap<>();
+        hashCircle  = new ConcurrentTreeMap<>();
         existNodeMap = new ConcurrentHashMap<>(16);
         dispatchJobCache = Collections.synchronizedList(new LinkedList<>());
     }
 
     /**
      * 添加采集器节点
-     *
      * @param newNode 节点
      */
     public void addNode(Node newNode) {
@@ -85,7 +83,7 @@ public class ConsistentHash {
                         newNode.assignJobs.addAddingJobs(jobIds);
                     }
                 }
-            }
+            }   
         }
         existNodeMap.put(newNode.identity, newNode);
         if (!dispatchJobCache.isEmpty()) {
@@ -99,7 +97,6 @@ public class ConsistentHash {
 
     /**
      * 删除采集器节点
-     *
      * @param name 采集器 name
      */
     public Node removeNode(String name) {
@@ -156,16 +153,14 @@ public class ConsistentHash {
 
     /**
      * 获取所有采集器节点
-     *
      * @return nodes
      */
     public Map<String, Node> getAllNodes() {
         return existNodeMap;
     }
-
+    
     /**
      * get node
-     *
      * @param collectorName collector name
      * @return node
      */
@@ -175,7 +170,6 @@ public class ConsistentHash {
 
     /**
      * 获取暂被缓存的采集调度任务
-     *
      * @return 缓存任务
      */
     public List<DispatchJob> getDispatchJobCache() {
@@ -186,7 +180,7 @@ public class ConsistentHash {
      * 根据采集任务信息获取其分配到的采集器节点
      *
      * @param dispatchKey 采集任务路由key: ip+appId
-     * @param jobId       jobId
+     * @param jobId jobId
      * @return 采集器节点
      */
     public Node dispatchJob(String dispatchKey, Long jobId) {
@@ -197,7 +191,7 @@ public class ConsistentHash {
         int dispatchHash = hash(dispatchKey);
         return dispatchJob(dispatchHash, jobId, true);
     }
-
+    
     /**
      * 预先根据采集任务信息获取其分配到的采集器节点
      *
@@ -217,8 +211,8 @@ public class ConsistentHash {
      * 根据采集任务信息获取其分配到的采集器节点
      *
      * @param dispatchHash 采集任务路由hash
-     * @param jobId        jobId
-     * @param isFlushed    is has flush this job or wait to dispatch 此任务是否已被下发调度还是等待后续下发
+     * @param jobId jobId
+     * @param isFlushed is has flush this job or wait to dispatch 此任务是否已被下发调度还是等待后续下发
      * @return 采集器节点
      */
     public Node dispatchJob(Integer dispatchHash, Long jobId, boolean isFlushed) {
@@ -237,7 +231,7 @@ public class ConsistentHash {
         curNode.addJob(virtualKey, dispatchHash, jobId, isFlushed);
         return curNode;
     }
-
+    
     /**
      * 预先根据采集任务信息获取其分配到的采集器节点
      *
@@ -258,7 +252,6 @@ public class ConsistentHash {
 
     /**
      * hash long
-     *
      * @param key long value
      * @return hash value
      */
@@ -269,7 +262,6 @@ public class ConsistentHash {
 
     /**
      * FNV1_32_HASH算法
-     *
      * @param key the key
      * @return hash
      */
@@ -365,7 +357,7 @@ public class ConsistentHash {
             Set<Long[]> virtualNodeJob = virtualNodeMap.computeIfAbsent(virtualNodeKey, k -> ConcurrentHashMap.newKeySet(16));
             virtualNodeJob.add(new Long[]{jobId, dispatchHash.longValue()});
             if (isFlushed) {
-                assignJobs.addAssignJob(jobId);
+                assignJobs.addAssignJob(jobId);   
             } else {
                 assignJobs.addAddingJob(jobId);
             }
@@ -373,7 +365,6 @@ public class ConsistentHash {
 
         /**
          * 根据virtualNodeKey清除指定虚拟节点所路由的采集任务
-         *
          * @param virtualNodeKey 虚拟节点key
          * @return 采集任务
          */
@@ -399,7 +390,7 @@ public class ConsistentHash {
             }
             virtualNodeMap.put(virtualHashKey, reDispatchJobs);
         }
-
+        
         public void removeVirtualNodeJob(Long jobId) {
             if (jobId == null || virtualNodeMap == null) {
                 return;

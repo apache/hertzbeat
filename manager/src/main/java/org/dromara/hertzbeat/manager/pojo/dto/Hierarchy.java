@@ -29,7 +29,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Hierarchical structure
  * eg: Monitoring Type metrics Information Hierarchy Relationship
- *
  * @author tom
  */
 @AllArgsConstructor
@@ -61,14 +60,14 @@ public class Hierarchy {
      */
     @Schema(description = "Is it a leaf node", example = "true", accessMode = READ_WRITE)
     Boolean isLeaf = false;
-
+    
     /**
      * For leaf metric
      * metric type 0-number: number 1-string: string
      */
     @Schema(description = "metric type 0-number: number 1-string: string")
     private Byte type;
-
+    
     /**
      * metric unit
      */

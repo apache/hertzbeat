@@ -41,7 +41,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 /**
  * Message notification recipient entity
  * 消息通知接收人实体
- *
  * @author tomsun28
  */
 @Entity

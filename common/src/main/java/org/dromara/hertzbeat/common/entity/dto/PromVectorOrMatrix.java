@@ -53,7 +53,7 @@ public class PromVectorOrMatrix {
     @lombok.Data
     @NoArgsConstructor
     @Accessors(chain = true)
-    public static class MetricJsonObjectDeserializer extends JsonDeserializer<JsonObject> {
+    public static class MetricJsonObjectDeserializer extends JsonDeserializer<JsonObject>{
 
         @Override
         public JsonObject deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {

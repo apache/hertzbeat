@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 /**
  * Configure the import and export Yaml format
  * 配置导入导出 Yaml格式
@@ -20,7 +19,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class YamlImExportServiceImpl extends AbstractImExportServiceImpl {
+public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     public static final String TYPE = "YAML";
     public static final String FILE_SUFFIX = ".yaml";
 

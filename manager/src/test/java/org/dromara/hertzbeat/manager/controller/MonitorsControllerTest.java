@@ -43,12 +43,12 @@ class MonitorsControllerTest {
     void getMonitors() throws Exception {
 
         this.mockMvc.perform(MockMvcRequestBuilders.get(
-                        "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
+                "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
                         "website",
-                        6565463543L,
-                        "127.0.0.1",
-                        "id"
-                ))
+                                    6565463543L,
+                                    "127.0.0.1",
+                                    "id"
+                        ))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -68,8 +68,8 @@ class MonitorsControllerTest {
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(ids)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -81,8 +81,8 @@ class MonitorsControllerTest {
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors/manage")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(ids)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

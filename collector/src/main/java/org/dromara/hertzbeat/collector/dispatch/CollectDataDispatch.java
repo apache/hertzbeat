@@ -31,19 +31,18 @@ public interface CollectDataDispatch {
 
     /**
      * Processing and distributing collection result data
-     *
-     * @param timeout     time wheel timeout
-     * @param metrics     The following metrics collection tasks
-     * @param metricsData Collect result data
+     * @param timeout     time wheel timeout        
+     * @param metrics     The following metrics collection tasks   
+     * @param metricsData Collect result data       
      */
     void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
 
     /**
      * Processing and distributing collection result data
      *
-     * @param timeout         time wheel timeout
-     * @param metrics         The following metrics collection tasks
-     * @param metricsDataList Collect result data
+     * @param timeout     time wheel timeout        
+     * @param metrics     The following metrics collection tasks    
+     * @param metricsDataList Collect result data       
      */
     void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList);
 

@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * load the jdbc driver first to avoid spi concurrent deadlock
- *
  * @author tom
  */
 @Service

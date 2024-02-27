@@ -135,22 +135,22 @@ metrics:
         i18n:
           zh-CN: Helo日志
           en-US: HeloInfo
-    #      - field: emailMaxSize
-    #        type: 0
-    #        unit: byte
-    #        i18n:
-    #          zh-CN: 最大邮件大小
-    #          en-US: EmailMaxSize
-    #      - field: serverInfo
-    #        type: 1
-    #        i18n:
-    #          zh-CN: 服务器相关信息
-    #          en-US: ServerInfo
-    #      - field: heloInfo
-    #        type: 1
-    #        i18n:
-    #          zh-CN: Helo日志
-    #          en-US: HeloInfo
+#      - field: emailMaxSize
+#        type: 0
+#        unit: byte
+#        i18n:
+#          zh-CN: 最大邮件大小
+#          en-US: EmailMaxSize
+#      - field: serverInfo
+#        type: 1
+#        i18n:
+#          zh-CN: 服务器相关信息
+#          en-US: ServerInfo
+#      - field: heloInfo
+#        type: 1
+#        i18n:
+#          zh-CN: Helo日志
+#          en-US: HeloInfo
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk

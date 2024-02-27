@@ -23,25 +23,24 @@ import java.util.List;
 
 /**
  * collector service impl
- *
  * @author tom
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class CollectorServiceImpl implements CollectorService {
-
+    
     @Autowired
     private CollectorDao collectorDao;
 
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-
+    
     @Autowired
     private ConsistentHash consistentHash;
-
+    
     @Autowired(required = false)
     private ManageServer manageServer;
-
+    
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest) {
@@ -59,7 +58,7 @@ public class CollectorServiceImpl implements CollectorService {
         }
         return new PageImpl<>(collectorSummaryList, pageRequest, collectors.getTotalElements());
     }
-
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRegisteredCollector(List<String> collectors) {

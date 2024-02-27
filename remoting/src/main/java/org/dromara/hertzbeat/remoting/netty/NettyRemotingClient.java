@@ -91,7 +91,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
             this.channel = null;
             boolean first = true;
-            while (!Thread.currentThread().isInterrupted()
+            while (!Thread.currentThread().isInterrupted() 
                     && (first || this.channel == null || !this.channel.isActive())) {
                 first = false;
                 try {

@@ -132,7 +132,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * preCheck params
-     *
      * @param metrics metrics config
      */
     private void preCheck(Metrics metrics) {
@@ -147,7 +146,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     /**
      * create the DefaultMQAdminExt
      * one problem the DefaultMQAdminExt can not reuse
-     *
      * @param metrics metrics
      * @return DefaultMQAdminExt
      */
@@ -166,7 +164,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * collect rocketmq data
-     *
      * @param mqAdminExt          rocketmq rpc admin
      * @param rocketmqCollectData rocketmq data
      * @throws Exception when rpc error
@@ -179,7 +176,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * collect rocketmq cluster data
-     *
      * @param mqAdminExt          rocketmq rpc admin
      * @param rocketmqCollectData rocketmq data
      * @throws Exception when rpc error
@@ -249,7 +245,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * collect rocketmq consumer data
-     *
      * @param mqAdminExt          rocketmq rpc admin
      * @param rocketmqCollectData rocketmq data
      * @throws Exception when rpc error
@@ -317,7 +312,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     /**
      * collect topic data
-     *
      * @param mqAdminExt          rocketmq rpc admin
      * @param rocketmqCollectData rocketmq data
      * @throws Exception when rpc error

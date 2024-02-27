@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * Metric History Range Query Data
- *
  * @author tom
  */
 @Data

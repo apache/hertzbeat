@@ -40,7 +40,7 @@ class NoticeConfigControllerTest {
     private NoticeConfigController noticeConfigController;
 
 
-    public NoticeRule getNoticeRule() {
+    public NoticeRule getNoticeRule(){
         List<TagItem> tags = new ArrayList<>();
         TagItem tagItem = new TagItem();
         tagItem.setName("key1");
@@ -61,7 +61,7 @@ class NoticeConfigControllerTest {
         return noticeRule;
     }
 
-    public NoticeReceiver getNoticeReceiver() {
+    public NoticeReceiver getNoticeReceiver(){
 
         NoticeReceiver noticeReceiver = new NoticeReceiver();
         noticeReceiver.setName("tom");
@@ -74,8 +74,7 @@ class NoticeConfigControllerTest {
         return noticeReceiver;
 
     }
-
-    public NoticeTemplate getNoticeTemplate() {
+    public NoticeTemplate getNoticeTemplate(){
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");

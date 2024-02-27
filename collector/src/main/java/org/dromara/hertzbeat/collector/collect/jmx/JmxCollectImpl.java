@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 /**
  * jmx protocol acquisition implementation
- *
  * @author huacheng
  */
 @Slf4j
@@ -106,7 +105,7 @@ public class JmxCollectImpl extends AbstractCollect {
                 log.info("attribute {} value is null.", attribute.getName());
                 continue;
             }
-            if (value instanceof Number || value instanceof String || value instanceof ObjectName
+            if (value instanceof Number || value instanceof  String || value instanceof ObjectName
                     || value instanceof Boolean || value instanceof Date || value instanceof TimeUnit) {
                 attributeValueMap.put(attribute.getName(), value.toString());
             } else if (value instanceof CompositeData) {
@@ -119,7 +118,7 @@ public class JmxCollectImpl extends AbstractCollect {
             } else if (value instanceof String[]) {
                 String[] values = (String[]) value;
                 StringBuilder builder = new StringBuilder();
-                for (int index = 0; index < values.length; index++) {
+                for (int index = 0; index < values.length; index ++) {
                     builder.append(values[index]);
                     if (index < values.length - 1) {
                         builder.append(",");
@@ -166,7 +165,7 @@ public class JmxCollectImpl extends AbstractCollect {
         }
         Map<String, Object> environment = new HashMap<>(4);
         if (StringUtils.hasText(jmxProtocol.getUsername()) && StringUtils.hasText(jmxProtocol.getPassword())) {
-            String[] credential = new String[]{jmxProtocol.getUsername(), jmxProtocol.getPassword()};
+            String[] credential = new String[] {jmxProtocol.getUsername(), jmxProtocol.getPassword()};
             environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credential);
         }
         if (Boolean.TRUE.toString().equals(jmxProtocol.getSsl())) {

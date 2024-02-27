@@ -87,7 +87,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Resource
     private ParamDao paramDao;
-
+    
     @Resource
     private WarehouseService warehouseService;
 
@@ -141,12 +141,12 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         List<Metrics> metricsList = new LinkedList<>();
         for (CollectRep.MetricsData metricsData : metricsDataList) {
             List<Metrics.Field> fields = metricsData.getFieldsList().stream().map(item ->
-                            Metrics.Field.builder()
-                                    .field(item.getName())
-                                    .type((byte) item.getType())
-                                    .label(item.getLabel())
-                                    .unit(item.getUnit())
-                                    .build())
+                    Metrics.Field.builder()
+                            .field(item.getName())
+                            .type((byte) item.getType())
+                            .label(item.getLabel())
+                            .unit(item.getUnit())
+                            .build())
                     .collect(Collectors.toList());
             Metrics metrics = Metrics.builder()
                     .visible(true)
@@ -280,7 +280,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                                     hierarchyField.setValue(item.getName());
                                     hierarchyField.setLabel(item.getName());
                                     hierarchyField.setIsLeaf(true);
-                                    hierarchyField.setType((byte) item.getType());
+                                    hierarchyField.setType((byte)item.getType());
                                     hierarchyField.setUnit(item.getUnit());
                                     return hierarchyField;
                                 }).collect(Collectors.toList());
@@ -397,7 +397,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             fieldsSet.clear();
             for (Metrics.Field field : metrics.getFields()) {
                 if (fieldsSet.contains(field.getField())) {
-                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
                             + field.getField() + " can not duplicated.");
                 }
                 fieldsSet.add(field.getField());

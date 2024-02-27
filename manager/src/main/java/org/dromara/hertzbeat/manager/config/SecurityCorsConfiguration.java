@@ -28,6 +28,7 @@ import java.util.Collections;
 
 /**
  * @author tom
+ *
  */
 @Configuration
 public class SecurityCorsConfiguration {

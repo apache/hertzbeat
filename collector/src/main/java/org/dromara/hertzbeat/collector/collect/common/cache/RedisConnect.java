@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * redis connection
- *
  * @author tom
  */
 @Slf4j

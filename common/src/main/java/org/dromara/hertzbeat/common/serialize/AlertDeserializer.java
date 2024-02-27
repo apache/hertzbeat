@@ -9,7 +9,6 @@ import java.util.Map;
 
 /**
  * kafka alert deserializer
- *
  * @author tablerow
  */
 public class AlertDeserializer implements Deserializer<Alert> {

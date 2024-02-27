@@ -20,41 +20,41 @@ package org.dromara.hertzbeat.common.entity.message;
 
 message Message
 {
-  // collector identity
-  string identity = 1;
-  // message direction
-  Direction direction = 2;
-  // message type
-  MessageType type = 3;
-  // message content
-  string msg = 4;
+    // collector identity
+    string identity = 1;
+    // message direction
+    Direction direction = 2;
+    // message type
+    MessageType type = 3;
+    // message content
+    string msg = 4;
 }
 
 enum MessageType
 {
-  // heartbeat message
-  HEARTBEAT = 0;
-  // collector go online to master message
-  GO_ONLINE = 1;
-  // collector go offline to master message
-  GO_OFFLINE = 2;
-  // issue cyclic collect task 
-  ISSUE_CYCLIC_TASK = 3;
-  // delete cyclic collect task
-  DELETE_CYCLIC_TASK = 4;
-  // issue one-time collect task
-  ISSUE_ONE_TIME_TASK = 5;
-  // response one-time collect data
-  RESPONSE_ONE_TIME_TASK_DATA = 6;
-  // response cyclic collect data
-  RESPONSE_CYCLIC_TASK_DATA = 7;
-  // collector go close to master
-  GO_CLOSE = 8;
+    // heartbeat message
+    HEARTBEAT = 0;
+    // collector go online to master message
+    GO_ONLINE = 1;
+    // collector go offline to master message
+    GO_OFFLINE = 2;
+    // issue cyclic collect task 
+    ISSUE_CYCLIC_TASK = 3;
+    // delete cyclic collect task
+    DELETE_CYCLIC_TASK = 4;
+    // issue one-time collect task
+    ISSUE_ONE_TIME_TASK = 5;
+    // response one-time collect data
+    RESPONSE_ONE_TIME_TASK_DATA = 6;
+    // response cyclic collect data
+    RESPONSE_CYCLIC_TASK_DATA = 7;
+    // collector go close to master
+    GO_CLOSE = 8;
 }
 
 enum Direction {
-  // request message
-  REQUEST = 0;
-  // request response
-  RESPONSE = 1;
+    // request message
+    REQUEST = 0;
+    // request response
+    RESPONSE = 1;
 }

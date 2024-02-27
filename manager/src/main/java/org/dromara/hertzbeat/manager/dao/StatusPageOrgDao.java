@@ -23,9 +23,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * StatusPageOrg DAO interface.
- *
  * @author tom
+ *
  */
 public interface StatusPageOrgDao extends JpaRepository<StatusPageOrg, Long>, JpaSpecificationExecutor<StatusPageOrg> {
-
+    
 }

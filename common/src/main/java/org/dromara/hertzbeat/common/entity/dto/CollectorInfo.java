@@ -11,7 +11,6 @@ import javax.validation.constraints.NotNull;
 
 /**
  * collector info
- *
  * @author tom
  */
 @Data
@@ -20,16 +19,16 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @Schema(description = "collector info")
 public class CollectorInfo {
-
+    
     @NotNull
     private String name;
-
+    
     @NotNull
     private String ip;
-
+    
     @NotNull
     private String mode = CommonConstants.MODE_PUBLIC;
-
+    
     // todo more
-
+    
 }

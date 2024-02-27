@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * rocketmq protocol
- *
  * @author ceilzcx
  */
 @Data

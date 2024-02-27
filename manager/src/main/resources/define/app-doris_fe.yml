@@ -99,7 +99,7 @@ metrics:
         label: true
       - field: value
         type: 0
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -120,7 +120,7 @@ metrics:
         label: true
       - field: value
         type: 0
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -141,7 +141,7 @@ metrics:
         label: true
       - field: value
         type: 0
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -162,7 +162,7 @@ metrics:
         label: true
       - field: value
         type: 0
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -181,7 +181,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -200,7 +200,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -219,7 +219,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -238,7 +238,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -257,7 +257,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -270,14 +270,14 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       parseType: prometheus
-
+  
   - name: doris_fe_report_queue_size
     priority: 0
     fields:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -296,7 +296,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -315,7 +315,7 @@ metrics:
       - field: value
         type: 0
         label: true
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:
@@ -336,7 +336,7 @@ metrics:
         label: true
       - field: value
         type: 0
-      # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
     http:

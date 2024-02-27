@@ -33,7 +33,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
         receiver.setId(1L);
         receiver.setName("Mock 告警");
         receiver.setAccessToken(ddAccessToken);
-        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        NoticeTemplate noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("dingding");
         noticeTemplate.setContent("#### [${title}]\n" +
@@ -56,7 +56,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        dingTalkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        dingTalkRobotAlertNotifyHandler.send(receiver,noticeTemplate, alert);
     }
 
 }

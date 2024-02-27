@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * sms service client for tencent cloud
- *
  * @author tom
  */
 @Component
@@ -47,12 +46,11 @@ public class TencentSmsClient {
 
     /**
      * 发送短信
-     *
-     * @param appId          appId
-     * @param signName       sign name
-     * @param templateId     template id
+     * @param appId appId
+     * @param signName sign name
+     * @param templateId template id
      * @param templateValues template values
-     * @param phones         phones num
+     * @param phones phones num
      * @return true when send success
      */
     public void sendMessage(String appId, String signName, String templateId,
@@ -77,9 +75,8 @@ public class TencentSmsClient {
 
     /**
      * 发送短信
-     *
      * @param templateValues template values
-     * @param phones         phones num
+     * @param phones phones num
      * @return true when send success
      */
     public void sendMessage(String[] templateValues, String[] phones) {

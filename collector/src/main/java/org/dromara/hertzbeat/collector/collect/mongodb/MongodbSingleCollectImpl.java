@@ -116,7 +116,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 }
             }
             if (document == null) {
-                throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
+                throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand()  + " is null.");
             }
             fillBuilder(metrics, valueRowBuilder, document);
             builder.addValues(valueRowBuilder.build());
@@ -133,8 +133,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             if (clientSession != null) {
                 try {
                     clientSession.close();
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
             }
         }
     }
@@ -178,7 +177,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 通过metrics中的mongodb连接信息获取
+     * 通过metrics中的mongodb连接信息获取 
      * mongodb client本身不存在网络调用，和网络链接。对每次采集，我们需要新建session并使用后关闭它
      * mongodb client is thread pool, we need to create the session for each collect
      */

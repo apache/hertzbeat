@@ -20,7 +20,6 @@ package org.dromara.hertzbeat.collector.dispatch.timer;
 /**
  * A handle associated with a {@link TimerTask} that is returned by a
  * {@link Timer}.
- *
  * @author from netty | <a href="https://github.com/apache/dubbo">dubbo</a>
  */
 @SuppressWarnings("PMD")

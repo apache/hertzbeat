@@ -73,7 +73,7 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
      * 导出配置到输出流
      *
      * @param exportAlertDefineList 配置列表
-     * @param os                    输出流
+     * @param os          输出流
      */
     abstract void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os);
 

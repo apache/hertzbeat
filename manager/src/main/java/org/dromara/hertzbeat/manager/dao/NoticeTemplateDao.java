@@ -27,6 +27,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @author Eden
  */
 public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
-
+    
 
 }

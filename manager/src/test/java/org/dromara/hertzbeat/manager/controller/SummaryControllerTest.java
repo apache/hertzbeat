@@ -36,7 +36,7 @@ class SummaryControllerTest {
 
 
     @BeforeEach
-    void setUp() {
+    void setUp()  {
         this.mockMvc = MockMvcBuilders.standaloneSetup(summaryController).build();
     }
 

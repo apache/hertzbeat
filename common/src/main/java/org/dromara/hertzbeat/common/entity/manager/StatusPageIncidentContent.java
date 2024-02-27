@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 
 /**
  * status page incident entity content.
- *
  * @author tom
  */
 @Entity
@@ -34,7 +33,7 @@ public class StatusPageIncidentContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "ID", example = "87584674384")
     private Long id;
-
+    
     @Schema(title = "org id", example = "1234")
     @Column(name = "incident_id")
     private Long incidentId;
@@ -42,7 +41,7 @@ public class StatusPageIncidentContent {
     @Schema(title = "incident content message", example = "we find the gateway connection timeout")
     @NotBlank
     private String message;
-
+    
     @Schema(title = "incident state: 0-Investigating 1-Identified 2-Monitoring 3-Resolved", example = "0")
     private byte state;
 

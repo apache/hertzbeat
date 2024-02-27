@@ -42,7 +42,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Alarm Management API
- *
  * @author tom
  * @author <a href="mailto:1252532896@qq.com">Hua.Cheng</a>
  */
@@ -141,5 +140,5 @@ public class AlertsController {
         Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
-
+    
 }

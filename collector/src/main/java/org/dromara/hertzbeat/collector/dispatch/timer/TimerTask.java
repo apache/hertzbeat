@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * A task which is executed after the delay specified with
  * {@link Timer#newTimeout(TimerTask, long, TimeUnit)} (TimerTask, long, TimeUnit)}.
- *
  * @author from netty | <a href="https://github.com/apache/dubbo">dubbo</a>
  */
 public interface TimerTask {

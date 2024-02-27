@@ -2,7 +2,6 @@ package org.dromara.hertzbeat.common.constants;
 
 /**
  * Sign Constants
- *
  * @author hdd
  */
 public interface SignConstants {

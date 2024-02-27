@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * alarm module thread pool
- *
  * @author tom
  */
 @Component
@@ -62,7 +61,6 @@ public class AlerterWorkerPool {
 
     /**
      * Run the alerter task
-     *
      * @param runnable task
      * @throws RejectedExecutionException when The thread pool is full of
      */

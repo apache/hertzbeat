@@ -622,7 +622,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<String> metrics = job.getMetrics().stream()
                         .filter(Metrics::isVisible)
                         .map(Metrics::getName).collect(Collectors.toList());
-                monitorDto.setMetrics(metrics);
+                monitorDto.setMetrics(metrics);   
             }
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
@@ -757,7 +757,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // deep copy original monitor to achieve persist in JPA
                 Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
                 if (newMonitor != null) {
-                    copyMonitor(newMonitor, params);
+                    copyMonitor(newMonitor, params);   
                 }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
@@ -805,7 +805,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // 下发采集任务
                 long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
-                monitorDao.save(monitor);
+                monitorDao.save(monitor);   
             } catch (Exception e) {
                 log.error("update monitor job error when template modify: {}.continue", e.getMessage(), e);
             }

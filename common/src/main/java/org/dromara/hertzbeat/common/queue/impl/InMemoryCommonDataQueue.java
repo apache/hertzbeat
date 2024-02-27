@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * common data queue implement memory
- *
  * @author tom
  */
 @Configuration

@@ -33,14 +33,12 @@ import java.net.UnknownHostException;
 
 /**
  * icmp ping collect
- *
  * @author tom
  */
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {
 
-    public IcmpCollectImpl() {
-    }
+    public IcmpCollectImpl(){}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {

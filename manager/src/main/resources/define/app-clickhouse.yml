@@ -188,8 +188,8 @@ metrics:
         label: true
       - field: value
         type: 0
-    #      - field: description
-    #        type: 1
+#      - field: description
+#        type: 1
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -210,8 +210,8 @@ metrics:
         label: true
       - field: value
         type: 0
-    #      - field: description
-    #        type: 1
+#      - field: description
+#        type: 1
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -232,8 +232,8 @@ metrics:
         label: true
       - field: value
         type: 0
-    #      - field: description
-    #        type: 1
+#      - field: description
+#        type: 1
     protocol: jdbc
     jdbc:
       host: ^_^host^_^

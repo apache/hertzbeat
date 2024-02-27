@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * protobuf json convert util
- *
  * @author tomsun28
  */
 @Slf4j
@@ -34,7 +33,6 @@ public class ProtoJsonUtil {
 
     /**
      * protobuf to json
-     *
      * @param proto protobuf
      * @return json
      */
@@ -49,8 +47,7 @@ public class ProtoJsonUtil {
 
     /**
      * json to protobuf
-     *
-     * @param json    json str
+     * @param json json str
      * @param builder proto instance builder
      * @return protobuf
      */

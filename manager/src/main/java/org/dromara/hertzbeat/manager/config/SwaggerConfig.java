@@ -31,8 +31,8 @@ import org.springframework.context.annotation.Configuration;
 /**
  * swagger config
  * url: /swagger-ui/index.html
- *
  * @author tomsun28
+ *
  */
 @Configuration
 public class SwaggerConfig {

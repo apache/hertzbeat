@@ -318,5 +318,5 @@ metrics:
       url: ^_^base_path^_^/health
       method: GET
       ssl: ^_^ssl^_^
-      successCodes: [ 200, 503 ]
+      successCodes: [200, 503]
       parseType: default

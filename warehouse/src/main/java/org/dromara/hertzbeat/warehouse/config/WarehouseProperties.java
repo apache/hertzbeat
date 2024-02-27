@@ -24,8 +24,8 @@ import java.util.List;
 
 /**
  * 数据仓储配置属性
- *
  * @author tom
+ *
  */
 @ConfigurationProperties(prefix = "warehouse")
 public class WarehouseProperties {
@@ -366,11 +366,11 @@ public class WarehouseProperties {
             public void setExpireTime(String expireTime) {
                 this.expireTime = expireTime;
             }
-
+            
             public int getReplication() {
                 return replication;
             }
-
+            
             public void setReplication(int replication) {
                 this.replication = replication;
             }
@@ -500,7 +500,7 @@ public class WarehouseProperties {
             public void setPassword(String password) {
                 this.password = password;
             }
-
+            
         }
 
         public static class RedisProperties {
@@ -613,7 +613,7 @@ public class WarehouseProperties {
              * save data expire time(ms)，-1 means it never expires
              * 数据存储时间(单位：ms,-1代表永不过期)
              * 注：这里为什么使用String而不是Long？
-             * 目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
+             *    目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
              */
             private String expireTime;
 

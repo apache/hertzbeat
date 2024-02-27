@@ -45,7 +45,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Alarm definition management API
- *
  * @author tom
  */
 @Tag(name = "Alert Define API | 告警定义管理API")

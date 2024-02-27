@@ -10,7 +10,6 @@ import java.util.Map;
 
 /**
  * kafka alert entity serializer
- *
  * @author tablerow
  */
 public class AlertSerializer implements Serializer<Alert> {
@@ -22,7 +21,7 @@ public class AlertSerializer implements Serializer<Alert> {
 
     @Override
     public byte[] serialize(String s, Alert alert) {
-        if (alert == null) {
+        if (alert == null){
             return null;
         }
         return JsonUtil.toJson(alert).getBytes();

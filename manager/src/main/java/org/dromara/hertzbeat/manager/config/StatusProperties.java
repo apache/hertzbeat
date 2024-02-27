@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * status page properties
- *
  * @author tom
  */
 @ConfigurationProperties(prefix = "status")

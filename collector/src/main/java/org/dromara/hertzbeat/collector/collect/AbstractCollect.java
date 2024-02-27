@@ -23,24 +23,21 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * Specific metrics collection implementation abstract class
- *
  * @author tomsun28
  */
 public abstract class AbstractCollect {
 
     /**
      * Real acquisition implementation interface
-     *
-     * @param builder   response builder
-     * @param monitorId monitor id
-     * @param app       monitor type
-     * @param metrics   metric configuration
+     * @param builder response builder
+     * @param monitorId  monitor id   
+     * @param app monitor type 
+     * @param metrics metric configuration
      */
     public abstract void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics);
 
     /**
      * the protocol this collect instance support
-     *
      * @return protocol str
      */
     public abstract String supportProtocol();

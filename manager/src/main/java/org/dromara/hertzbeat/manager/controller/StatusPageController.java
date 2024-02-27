@@ -19,7 +19,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * status page endpoint controller
- *
  * @author tom
  */
 @Tag(name = "Status Page API | 状态页API")
@@ -30,7 +29,7 @@ public class StatusPageController {
 
     @Autowired
     private StatusPageService statusPageService;
-
+    
     @GetMapping("/org")
     @Operation(summary = "Query Status Page Organization")
     public ResponseEntity<Message<StatusPageOrg>> queryStatusPageOrg() {
@@ -47,35 +46,35 @@ public class StatusPageController {
         StatusPageOrg org = statusPageService.saveStatusPageOrg(statusPageOrg);
         return ResponseEntity.ok(Message.success(org));
     }
-
+    
     @GetMapping("/component")
     @Operation(summary = "Query Status Page Components")
     public ResponseEntity<Message<List<StatusPageComponent>>> queryStatusPageComponent() {
         List<StatusPageComponent> statusPageComponents = statusPageService.queryStatusPageComponents();
         return ResponseEntity.ok(Message.success(statusPageComponents));
     }
-
+    
     @PostMapping("/component")
     @Operation(summary = "Save Status Page Component")
     public ResponseEntity<Message<Void>> newStatusPageComponent(@Valid @RequestBody StatusPageComponent statusPageComponent) {
         statusPageService.newStatusPageComponent(statusPageComponent);
         return ResponseEntity.ok(Message.success("Add success"));
     }
-
+    
     @PutMapping("/component")
     @Operation(summary = "Update Status Page Component")
     public ResponseEntity<Message<Void>> updateStatusPageComponent(@Valid @RequestBody StatusPageComponent statusPageComponent) {
         statusPageService.updateStatusPageComponent(statusPageComponent);
         return ResponseEntity.ok(Message.success("Update success"));
     }
-
+    
     @DeleteMapping("/component/{id}")
     @Operation(summary = "Delete Status Page Component")
     public ResponseEntity<Message<Void>> deleteStatusPageComponent(@PathVariable("id") final long id) {
         statusPageService.deleteStatusPageComponent(id);
         return ResponseEntity.ok(Message.success("Delete success"));
     }
-
+    
     @GetMapping("/component/{id}")
     @Operation(summary = "Query Status Page Component")
     public ResponseEntity<Message<StatusPageComponent>> queryStatusPageComponent(@PathVariable("id") final long id) {

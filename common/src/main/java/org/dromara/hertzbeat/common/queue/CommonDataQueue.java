@@ -22,14 +22,13 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * common data queue
- *
  * @author tom
+ *
  */
 public interface CommonDataQueue {
 
     /**
      * poll alert data
-     *
      * @return alert data
      * @throws InterruptedException when poll timeout
      */
@@ -37,7 +36,6 @@ public interface CommonDataQueue {
 
     /**
      * poll collect metrics data for alerter
-     *
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
@@ -45,7 +43,6 @@ public interface CommonDataQueue {
 
     /**
      * poll collect metrics data for Persistent Storage
-     *
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
@@ -53,22 +50,19 @@ public interface CommonDataQueue {
 
     /**
      * poll collect metrics data for real-time Storage
-     *
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
     CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException;
-
+    
     /**
      * offer alert data
-     *
      * @param alert alert data
      */
     void sendAlertsData(Alert alert);
-
+    
     /**
      * send collect metrics data
-     *
      * @param metricsData metrics data
      */
     void sendMetricsData(CollectRep.MetricsData metricsData);

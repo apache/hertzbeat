@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * telnet协议配置
- *
  * @author tomsun28
  */
 @Data

@@ -23,9 +23,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * StatusPageIncident DAO interface.
- *
  * @author tom
+ *
  */
 public interface StatusPageIncidentDao extends JpaRepository<StatusPageIncident, Long>, JpaSpecificationExecutor<StatusPageIncident> {
-
+    
 }

@@ -29,20 +29,19 @@ import java.util.Optional;
  * Collector repository
  *
  * @author tom
+ *
  */
 public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
-
+    
     /**
      * find collector by name
-     *
      * @param name name
      * @return collector
      */
     Optional<Collector> findCollectorByName(String name);
-
+    
     /**
      * delete collector by name
-     *
      * @param collector collector name
      */
     @Modifying

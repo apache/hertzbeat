@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * mongodb connect client
- *
  * @author tom
  */
 @Slf4j
@@ -26,7 +25,6 @@ public class MongodbConnect implements CacheCloseable {
             log.error("[connection common cache] close mongodb connect error: {}", e.getMessage());
         }
     }
-
     public MongoClient getMongoClient() {
         return mongoClient;
     }

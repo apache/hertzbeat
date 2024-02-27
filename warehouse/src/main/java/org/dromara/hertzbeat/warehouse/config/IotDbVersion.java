@@ -21,6 +21,7 @@ package org.dromara.hertzbeat.warehouse.config;
  * IoTDB user version
  *
  * @author ceilzcx
+ *
  */
 public enum IotDbVersion {
     /**

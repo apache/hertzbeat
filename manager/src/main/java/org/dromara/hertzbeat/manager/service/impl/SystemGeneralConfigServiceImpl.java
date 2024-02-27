@@ -20,12 +20,12 @@ import java.util.TimeZone;
  */
 @Service
 public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig> {
-
+    
     private static final Integer LANG_REGION_LENGTH = 2;
-
+    
     @Resource
     private ApplicationContext applicationContext;
-
+    
     /**
      * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
      *
@@ -37,7 +37,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
     protected SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
-
+    
     @Override
     public void handler(SystemConfig systemConfig) {
         if (systemConfig != null) {
@@ -55,7 +55,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
             applicationContext.publishEvent(new SystemConfigChangeEvent(applicationContext));
         }
     }
-
+    
     @Override
     public String type() {
         return "system";

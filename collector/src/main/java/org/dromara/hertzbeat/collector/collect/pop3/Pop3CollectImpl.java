@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * pop3 collect
- *
  * @author a-little-fool
  */
 @Slf4j
@@ -95,7 +94,6 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 校验参数
-     *
      * @param metrics
      * @throws Exception
      */
@@ -108,7 +106,6 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 创建POP3连接【支持SSL加密】
-     *
      * @param pop3Protocol
      * @param ssl
      * @return
@@ -144,15 +141,14 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 获取Pop3指标信息
-     *
      * @param builder
      * @param pop3Client
      * @param aliasFields
      * @param responseTime
      */
     private void obtainPop3Metrics(CollectRep.MetricsData.Builder builder, POP3Client pop3Client,
-                                   List<String> aliasFields, long responseTime) throws IOException {
-        Map<String, Object> pop3Metrics = parsePop3Metrics(pop3Client, aliasFields);
+                                                 List<String> aliasFields, long responseTime) throws IOException {
+        Map<String,Object> pop3Metrics = parsePop3Metrics(pop3Client, aliasFields);
 
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
@@ -170,15 +166,15 @@ public class Pop3CollectImpl extends AbstractCollect {
         builder.addValues(valueRowBuilder);
     }
 
-    private Map<String, Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {
-        Map<String, Object> pop3Metrics = new HashMap<>(aliasFields.size());
+    private Map<String,Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {
+        Map<String,Object> pop3Metrics = new HashMap<>(aliasFields.size());
         POP3MessageInfo status = pop3Client.status();
         int emailCount = 0;
         double mailboxSize = 0.0;
         if (status != null) {
             emailCount = status.number;
             // byte -> kb
-            mailboxSize = (double) status.size / 1024.0;
+            mailboxSize = (double)status.size / 1024.0;
             pop3Metrics.put(EMAIL_COUNT, emailCount);
             pop3Metrics.put(MAILBOX_SIZE, mailboxSize);
         }

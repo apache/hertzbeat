@@ -13,7 +13,6 @@ public interface WarehouseService {
 
     /**
      * query monitor real time metrics data by monitor id
-     *
      * @param monitorId monitor id
      * @return metrics data
      */

@@ -31,7 +31,6 @@ import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * json util
- *
  * @author tomsun28
  */
 @ThreadSafe
@@ -82,7 +81,7 @@ public class JsonUtil {
             return null;
         }
     }
-
+    
     public static JsonNode fromJson(String jsonStr) {
         if (!StringUtils.hasText(jsonStr)) {
             return null;

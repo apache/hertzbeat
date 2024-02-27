@@ -30,21 +30,18 @@ import java.util.Set;
 
 /**
  * Alert Database Operations
- *
  * @author tom
  */
 public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationExecutor<Alert> {
 
     /**
      * Delete alerts based on ID list
-     *
-     * @param alertIds Alert ID List
+     * @param alertIds Alert ID List 
      */
     void deleteAlertsByIdIn(Set<Long> alertIds);
 
     /**
      * Updates the alarm status based on the alarm ID-status value
-     *
      * @param status status value
      * @param ids    alarm ids
      */
@@ -55,8 +52,7 @@ public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationEx
     /**
      * Query the number of unhandled alarms of each alarm severity
      * 查询各个告警级别的未处理告警数量
-     *
-     * @return List of alerts num
+     * @return List of alerts num 
      */
     @Query("select new org.dromara.hertzbeat.alert.dto.AlertPriorityNum(mo.priority, count(mo.id)) from Alert mo where mo.status = 0 group by mo.priority")
     List<AlertPriorityNum> findAlertPriorityNum();

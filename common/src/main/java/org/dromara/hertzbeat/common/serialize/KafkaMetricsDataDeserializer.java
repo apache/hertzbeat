@@ -9,7 +9,6 @@ import java.util.Map;
 
 /**
  * kafka metrics data deserializer
- *
  * @author tablerow
  */
 public class KafkaMetricsDataDeserializer implements Deserializer<CollectRep.MetricsData> {
@@ -20,7 +19,7 @@ public class KafkaMetricsDataDeserializer implements Deserializer<CollectRep.Met
     }
 
     @Override
-    public CollectRep.MetricsData deserialize(String s, byte[] bytes) {
+    public CollectRep.MetricsData deserialize(String s, byte[] bytes){
         try {
             return CollectRep.MetricsData.parseFrom(bytes);
         } catch (InvalidProtocolBufferException e) {

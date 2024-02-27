@@ -24,22 +24,22 @@ import javax.validation.ConstraintValidatorContext;
 
 /**
  * Host Param Validator
- *
  * @author tomsun28
+ *
  */
 public class HostParamValidator implements ConstraintValidator<HostValid, String> {
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
     public static final String BLANK = "";
-    public static final String PATTERN_HTTP = "(?i)http://";
-    public static final String PATTERN_HTTPS = "(?i)https://";
+    public static final String PATTERN_HTTP  = "(?i)http://";
+    public static final String PATTERN_HTTPS  = "(?i)https://";
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value != null && value.toLowerCase().contains(HTTP)) {
+        if(value != null && value.toLowerCase().contains(HTTP)){
             value = value.replaceAll(PATTERN_HTTP, BLANK);
         }
-        if (value != null && value.toLowerCase().contains(HTTPS)) {
+        if(value != null && value.toLowerCase().contains(HTTPS)){
             value = value.replace(PATTERN_HTTPS, BLANK);
         }
         return IpDomainUtil.validateIpDomain(value);

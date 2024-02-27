@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * Monitoring Metrics Data
- *
  * @author tom
  */
 @Data

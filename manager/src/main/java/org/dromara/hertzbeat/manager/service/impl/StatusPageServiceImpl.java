@@ -25,29 +25,28 @@ import java.util.List;
 
 /**
  * status page service implement.
- *
  * @author tom
  */
 @Service
 public class StatusPageServiceImpl implements StatusPageService {
-
+    
     private static final int HISTORY_SPAN_DAYS = 29;
-
+    
     @Autowired
     private StatusPageOrgDao statusPageOrgDao;
-
+    
     @Autowired
     private StatusPageComponentDao statusPageComponentDao;
 
     @Autowired
     private StatusPageHistoryDao statusPageHistoryDao;
-
+    
     @Autowired
     private StatusPageIncidentDao statusPageIncidentDao;
-
+    
     @Autowired
     private CalculateStatus calculateStatus;
-
+    
     @Override
     public StatusPageOrg queryStatusPageOrg() {
         return statusPageOrgDao.findAll().stream().findFirst().orElse(null);

@@ -36,7 +36,6 @@ class AppControllerTest {
 
     @InjectMocks
     private AppController appController;
-
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(appController).build();
@@ -108,9 +107,10 @@ class AppControllerTest {
 
         // Request interface ｜ 请求接口
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/hierarchy", "zh-CN"))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data[0].category").value("os"))
-                .andReturn();
+                    .andExpect( jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data[0].category").value("os"))
+                    .andReturn();
+
 
 
     }

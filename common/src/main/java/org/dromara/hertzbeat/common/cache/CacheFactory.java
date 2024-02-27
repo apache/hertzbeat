@@ -21,34 +21,30 @@ import java.time.Duration;
 
 /**
  * common cache factory
- *
  * @author ceilzcx
  */
 public class CacheFactory {
-    private CacheFactory() {
-    }
+    private CacheFactory() {}
 
     private static final ICacheService<String, Object> NOTICE_CACHE =
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
-
+    
     private static final ICacheService<String, Object> ALERT_SILENCE_CACHE =
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
-
+    
     private static final ICacheService<String, Object> ALERT_CONVERGE_CACHE =
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
-
+    
     /**
      * get notice cache
-     *
      * @return caffeine cache
      */
     public static ICacheService<String, Object> getNoticeCache() {
         return NOTICE_CACHE;
     }
-
+    
     /**
      * get alert silence cache
-     *
      * @return caffeine cache
      */
     public static ICacheService<String, Object> getAlertSilenceCache() {
@@ -57,7 +53,6 @@ public class CacheFactory {
 
     /**
      * get alert converge cache
-     *
      * @return converge cache
      */
     public static ICacheService<String, Object> getAlertConvergeCache() {

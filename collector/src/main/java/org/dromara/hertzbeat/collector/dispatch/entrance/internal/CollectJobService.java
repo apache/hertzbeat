@@ -55,7 +55,7 @@ public class CollectJobService {
     private final WorkerPool workerPool;
 
     private final String collectorIdentity;
-
+    
     private String mode = null;
 
     private CollectServer collectServer;
@@ -172,7 +172,7 @@ public class CollectJobService {
     public String getCollectorIdentity() {
         return collectorIdentity;
     }
-
+    
     public String getCollectorMode() {
         return mode;
     }

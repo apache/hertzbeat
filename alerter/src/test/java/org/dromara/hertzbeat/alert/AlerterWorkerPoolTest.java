@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class AlerterWorkerPoolTest {
 
     private static final int NUMBER_OF_THREADS = 10;
-    private AlerterWorkerPool pool;
+    private AlerterWorkerPool pool ;
     private AtomicInteger counter;
     private CountDownLatch latch;
 

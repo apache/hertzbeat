@@ -26,7 +26,6 @@ public interface NettyEventListener {
 
     /**
      * do something when channel active
-     *
      * @param channel netty channel
      */
     default void onChannelActive(final Channel channel) throws Exception {
@@ -34,7 +33,6 @@ public interface NettyEventListener {
 
     /**
      * do something when channel idle
-     *
      * @param channel netty channel
      */
     default void onChannelIdle(final Channel channel) throws Exception {

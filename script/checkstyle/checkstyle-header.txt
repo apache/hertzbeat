@@ -14,32 +14,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.dromara.hertzbeat.common.support.valid;
-
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-/**
- * EmailValid 
- * @author tomsun28
- */
-@Target({ FIELD, PARAMETER })
-@Retention(RUNTIME)
-@Documented
-@Constraint(validatedBy = EmailParamValidator.class)
-public @interface EmailValid {
-
-    String message() default "Email value is invalid";
-
-    Class<?>[] groups() default {};
-
-    Class<? extends Payload>[] payload() default {};
-}

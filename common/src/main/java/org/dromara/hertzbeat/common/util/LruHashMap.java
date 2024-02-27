@@ -23,8 +23,8 @@ import java.util.Map;
 /**
  * lru hash map
  * 最近最少使用淘汰算法map
- *
  * @author tom
+ *
  */
 public class LruHashMap<K, V> extends LinkedHashMap<K, V> {
 

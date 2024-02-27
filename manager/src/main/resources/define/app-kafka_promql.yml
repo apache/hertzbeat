@@ -139,9 +139,9 @@ metrics:
         type: 1
       - field: value
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+# 当protocol为http协议时具体的采集配置
     http:
       # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^

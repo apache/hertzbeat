@@ -25,7 +25,6 @@ import java.io.Serializable;
 
 /**
  * Snowflake Algorithm Generator Tool
- *
  * @author tomsun28
  */
 public class SnowFlakeIdGenerator extends IdentityGenerator {

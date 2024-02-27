@@ -18,8 +18,7 @@
 package org.dromara.hertzbeat.collector.collect.common.cache;
 
 /**
- * resource in cache remove callback
- *
+ * resource in cache remove callback 
  * @author tomsun28
  */
 public interface CacheCloseable {

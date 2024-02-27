@@ -26,8 +26,8 @@ import java.util.Map;
 
 /**
  * json str to list Byte converter
- *
  * @author tom
+ *
  */
 public class JsonByteListAttributeConverter implements AttributeConverter<List<Byte>, String> {
 
@@ -38,8 +38,7 @@ public class JsonByteListAttributeConverter implements AttributeConverter<List<B
 
     @Override
     public List<Byte> convertToEntityAttribute(String dbData) {
-        TypeReference<List<Byte>> typeReference = new TypeReference<>() {
-        };
+        TypeReference<List<Byte>> typeReference = new TypeReference<>() {};
         return JsonUtil.fromJson(dbData, typeReference);
     }
 }

@@ -49,7 +49,6 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         @JsonProperty("objID")
         private String objId;
     }
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -62,7 +61,6 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private String policyTypeCname;
         private Conditions conditions;
     }
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

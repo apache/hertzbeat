@@ -28,8 +28,8 @@ import java.util.Map;
 
 /**
  * Monitoring Metrics DataRow
- *
  * @author tom
+ *
  */
 @Data
 @Builder
@@ -37,7 +37,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Schema(description = "Monitoring Metrics DataRow")
 public class ValueRow {
-
+    
     @Schema(title = "Value Row Labels")
     private Map<String, String> labels;
 

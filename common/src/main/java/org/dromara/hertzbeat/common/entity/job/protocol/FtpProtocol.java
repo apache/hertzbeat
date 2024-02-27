@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * ftp protocol
- *
  * @author 落阳
  */
 @Data

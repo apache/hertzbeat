@@ -25,14 +25,13 @@ import java.util.List;
 
 /**
  * NoticeRule数据库操作
- *
  * @author tom
+ *
  */
 public interface NoticeRuleDao extends JpaRepository<NoticeRule, Long>, JpaSpecificationExecutor<NoticeRule> {
 
     /**
      * 查询所有已启用的通知策略
-     *
      * @return 通知策略
      */
     List<NoticeRule> findNoticeRulesByEnableTrue();

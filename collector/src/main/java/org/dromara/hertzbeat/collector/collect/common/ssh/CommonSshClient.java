@@ -14,14 +14,13 @@ import java.util.ArrayList;
 
 /**
  * common ssh pool client
- *
  * @author tom
  */
 @Slf4j
 public class CommonSshClient {
 
     private static final SshClient SSH_CLIENT;
-
+    
     static {
         SSH_CLIENT = SshClient.setUpDefaultClient();
         // accept all server key verifier, will print warn log : Server at {} presented unverified {} key: {}

@@ -1,8 +1,7 @@
 package org.dromara.hertzbeat.common.util;
 
 /**
- * Pair KV
- *
+ * Pair KV 
  * @author ceilzcx
  */
 public class Pair<K, V> {

@@ -22,7 +22,6 @@ import lombok.Data;
 
 /**
  * Number of monitoring level alarms
- *
  * @author tom
  */
 @Data
@@ -35,7 +34,7 @@ public class AlertPriorityNum {
     private byte priority;
 
     /**
-     * Alarm count
+     * Alarm count 
      */
     private long num;
 }

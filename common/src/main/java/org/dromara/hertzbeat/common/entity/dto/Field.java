@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * monitoring metrics field
- *
  * @author tom
  */
 @Data
@@ -43,7 +42,7 @@ public class Field {
 
     @Schema(title = "Field Unit")
     private String unit;
-
+    
     @Schema(title = "Whether is a label")
     private Boolean label;
 

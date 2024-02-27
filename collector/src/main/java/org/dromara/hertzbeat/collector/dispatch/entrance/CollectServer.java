@@ -139,7 +139,7 @@ public class CollectServer implements CommandLineRunner {
                                 .setType(ClusterMsg.MessageType.HEARTBEAT)
                                 .build();
                         CollectServer.this.sendMsg(heartbeat);
-                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
                     } catch (Exception e) {
                         log.error("schedule send heartbeat to server error.{}", e.getMessage());
                     }

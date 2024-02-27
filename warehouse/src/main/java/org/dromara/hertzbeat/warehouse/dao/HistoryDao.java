@@ -28,14 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * history entity dao
- *
  * @author tom
+ *
  */
 public interface HistoryDao extends JpaRepository<History, Long>, JpaSpecificationExecutor<History> {
 
     /**
      * delete history before expireTime
-     *
      * @param expireTime expireTime
      * @return rows deleted
      */
@@ -45,7 +44,6 @@ public interface HistoryDao extends JpaRepository<History, Long>, JpaSpecificati
 
     /**
      * delete older history record
-     *
      * @param delNum number to be deleted
      * @return rows deleted
      */

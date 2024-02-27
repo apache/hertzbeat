@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
-
+    
     /**
      * 通过类型查询
      *

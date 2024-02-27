@@ -44,7 +44,6 @@ import java.util.Map;
 
 /**
  * Realization of Alarm Information Service
- *
  * @author tom
  */
 @Service
@@ -54,7 +53,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Autowired
     private AlertDao alertDao;
-
+    
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
 
@@ -138,23 +137,22 @@ public class AlertServiceImpl implements AlertService {
     }
 
     /**
-     * The external alarm information is converted to Alert
-     *
+     * The external alarm information is converted to Alert  
      * @param alertReport alarm body
      * @return Alert entity
      */
-    private Alert buildAlertData(AlertReport alertReport) {
+    private Alert buildAlertData(AlertReport alertReport){
         Map<String, String> annotations = alertReport.getAnnotations();
         StringBuilder sb = new StringBuilder();
-        if (alertReport.getContent() == null || alertReport.getContent().length() <= 0) {
+        if(alertReport.getContent() == null || alertReport.getContent().length() <= 0){
             StringBuilder finalSb = sb;
             annotations.forEach((k, v) -> {
                 finalSb.append(k).append(":").append(v).append("\n");
             });
-        } else {
+        }else{
             sb = new StringBuilder(alertReport.getContent());
         }
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()),
+        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), 
                 ZoneId.systemDefault());
         return Alert.builder()
                 .content("Alert Center\n" + sb)
@@ -169,6 +167,7 @@ public class AlertServiceImpl implements AlertService {
                 .gmtUpdate(dateTime)
                 .build();
     }
+
 
 
 }

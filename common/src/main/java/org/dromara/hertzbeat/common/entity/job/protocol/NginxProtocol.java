@@ -33,7 +33,6 @@ public class NginxProtocol {
 
     /**
      * 校验相关参数
-     *
      * @return
      */
     public boolean isInValid() {

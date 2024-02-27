@@ -42,7 +42,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Silence the batch API for alarms
- *
  * @author tom
  */
 @Tag(name = "Alert Silence Batch API | 告警静默管理API")
@@ -67,7 +66,7 @@ public class AlertSilencesController {
         Specification<AlertSilence> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }
@@ -87,7 +86,7 @@ public class AlertSilencesController {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification, pageRequest);
+        Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification,pageRequest);
         Message<Page<AlertSilence>> message = Message.success(alertSilencePage);
         return ResponseEntity.ok(message);
     }

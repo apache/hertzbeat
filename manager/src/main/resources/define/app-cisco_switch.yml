@@ -414,7 +414,7 @@ metrics:
         type: 1
         i18n:
           zh-CN: 配置状态
-          en-US: Config Status
+          en-US: Config Status        
       - field: oper_status
         type: 1
         i18n:

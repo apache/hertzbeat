@@ -45,7 +45,6 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * ssl Certificate
- *
  * @author tomsun28
  */
 @Slf4j
@@ -58,8 +57,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     private static final String NAME_END_TIME = "end_time";
     private static final String NAME_END_TIMESTAMP = "end_timestamp";
 
-    public SslCertificateCollectImpl() {
-    }
+    public SslCertificateCollectImpl() {}
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
@@ -81,7 +79,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             } else {
                 uri = "https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort();
             }
-            urlConnection = (HttpsURLConnection) new URL(uri).openConnection();
+            urlConnection = (HttpsURLConnection)new URL(uri).openConnection();
             urlConnection.connect();
             Certificate[] certificates = urlConnection.getServerCertificates();
             if (certificates == null || certificates.length == 0) {
@@ -90,7 +88,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 return;
             }
 
-            long responseTime = System.currentTimeMillis() - startTime;
+            long responseTime  = System.currentTimeMillis() - startTime;
             for (Certificate certificate : urlConnection.getServerCertificates()) {
                 X509Certificate x509Certificate = (X509Certificate) certificate;
                 Date now = new Date();

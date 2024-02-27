@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Specific metrics collection factory
- *
  * @author myth
  */
 @Configuration
@@ -25,7 +24,6 @@ public class CollectStrategyFactory implements CommandLineRunner {
 
     /**
      * get instance of this protocol collection
-     *
      * @param protocol collect protocol
      * @return implement of Metrics Collection
      */

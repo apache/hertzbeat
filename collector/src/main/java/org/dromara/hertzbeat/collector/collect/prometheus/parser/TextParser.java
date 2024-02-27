@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author ceilzcx
- * <p>
+ *
  * 解析prometheus的exporter接口传递的数据 http:xxx/metrics
  * 参考: prometheus的text_parse.go的代码, 入口: TextToMetricFamilies
  */
@@ -32,7 +32,6 @@ public class TextParser {
     /**
      * parser prometheus exporter text metrics data
      * todo use inputStream bytebuffer instead of resp string
-     *
      * @param resp txt data
      * @return metrics family
      */

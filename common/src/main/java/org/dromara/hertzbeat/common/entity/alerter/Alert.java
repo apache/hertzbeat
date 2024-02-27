@@ -43,7 +43,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alarm record entity
- *
  * @author tom
  */
 @Entity
@@ -75,7 +74,7 @@ public class Alert {
             example = "8743267443543", accessMode = READ_WRITE)
     private Long alertDefineId;
 
-    @Schema(title = "Alarm level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
+    @Schema(title = "Alarm level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning", 
             example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(2)
@@ -94,17 +93,17 @@ public class Alert {
     @Min(0)
     @Max(3)
     private byte status;
-
+    
     @Schema(title = "Alarm times",
             description = "告警次数",
             example = "3", accessMode = READ_WRITE)
     private Integer times;
-
+    
     @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
             description = "首次告警时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY)
     private Long firstAlarmTime;
-
+    
     @Schema(title = "Alarm trigger time (timestamp in milliseconds)",
             description = "最近告警时间(毫秒时间戳)",
             example = "1612198922000", accessMode = READ_ONLY)

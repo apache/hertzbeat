@@ -26,8 +26,8 @@ import java.util.Optional;
 
 /**
  * generate auditor for jpa auditing
- *
  * @author tom
+ *
  */
 @Configuration
 public class JpaAuditorConfig implements AuditorAware<String> {

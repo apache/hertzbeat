@@ -44,7 +44,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * collector API
- *
  * @author tom
  */
 @Tag(name = "Collector Manage API | 采集器信息管理API")
@@ -54,7 +53,7 @@ public class CollectorController {
 
     @Autowired
     private CollectorService collectorService;
-
+    
     @Autowired(required = false)
     private ManageServer manageServer;
 
@@ -89,7 +88,7 @@ public class CollectorController {
             @RequestParam(required = false) List<String> collectors) {
         if (collectors != null) {
             collectors.forEach(collector ->
-                    this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
+                                       this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
         }
         return ResponseEntity.ok(Message.success("Online success"));
     }
@@ -97,7 +96,7 @@ public class CollectorController {
     @PutMapping("/offline")
     @Operation(summary = "Offline collectors")
     public ResponseEntity<Message<Void>> offlineCollector(
-            @Parameter(description = "collector name", example = "demo-collector")
+            @Parameter(description = "collector name", example = "demo-collector") 
             @RequestParam(required = false) List<String> collectors) {
         if (collectors != null) {
             collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));

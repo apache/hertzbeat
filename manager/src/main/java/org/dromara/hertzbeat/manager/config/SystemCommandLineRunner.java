@@ -19,15 +19,15 @@ import java.util.TimeZone;
  */
 @Component
 public class SystemCommandLineRunner implements CommandLineRunner {
-
+    
     private static final Integer LANG_REGION_LENGTH = 2;
-
+    
     @Resource
     private SystemGeneralConfigServiceImpl systemGeneralConfigService;
-
+    
     @Resource
     protected GeneralConfigDao generalConfigDao;
-
+    
     @Resource
     protected ObjectMapper objectMapper;
 
@@ -43,20 +43,20 @@ public class SystemCommandLineRunner implements CommandLineRunner {
                 if (arr.length == LANG_REGION_LENGTH) {
                     String language = arr[0];
                     String country = arr[1];
-                    Locale.setDefault(new Locale(language, country));
+                    Locale.setDefault(new Locale(language, country));   
                 }
             }
         } else {
             // init system config data
             systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID())
-                    .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
-                            + Locale.getDefault().getCountry())
-                    .build();
+                                   .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR 
+                                                   + Locale.getDefault().getCountry())
+                                   .build();
             String contentJson = objectMapper.writeValueAsString(systemConfig);
             GeneralConfig generalConfig2Save = GeneralConfig.builder()
-                    .type(systemGeneralConfigService.type())
-                    .content(contentJson)
-                    .build();
+                                                       .type(systemGeneralConfigService.type())
+                                                       .content(contentJson)
+                                                       .build();
             generalConfigDao.save(generalConfig2Save);
         }
     }

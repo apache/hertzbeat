@@ -14,9 +14,9 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
  */
 @Slf4j
 public class GoOnlineProcessor implements NettyRemotingProcessor {
-
+    
     private TimerDispatch timerDispatch;
-
+    
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         if (this.timerDispatch == null) {

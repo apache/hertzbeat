@@ -41,23 +41,23 @@ public class PushServiceImpl implements PushService {
 
     private static final long deleteBeforeTime = deleteMetricsPeriod / 2;
 
-    PushServiceImpl() {
+    PushServiceImpl(){
         monitorIdCache = new HashMap<>();
         lastPushMetrics = new HashMap<>();
 
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                try {
+                try{
                     deletePeriodically();
-                } catch (Exception e) {
+                }catch (Exception e) {
                     log.error("periodical deletion failed. {}", e.getMessage());
                 }
             }
         }, 1000, deleteMetricsPeriod);
     }
 
-    public void deletePeriodically() {
+    public void deletePeriodically(){
         metricsDao.deleteAllByTimeBefore(System.currentTimeMillis() - deleteBeforeTime);
     }
 
@@ -96,7 +96,8 @@ public class PushServiceImpl implements PushService {
         PushMetricsDto pushMetricsDto = new PushMetricsDto();
         if (lastPushMetrics.containsKey(monitorId)) {
             metrics = lastPushMetrics.get(monitorId);
-        } else {
+        }
+        else {
             try {
                 PushMetrics pushMetrics = metricsDao.findFirstByMonitorIdOrderByTimeDesc(monitorId);
                 if (pushMetrics == null || pushMetrics.getMetrics() == null) {
@@ -106,7 +107,8 @@ public class PushServiceImpl implements PushService {
                 });
                 metrics = PushMetricsDto.Metrics.builder().monitorId(monitorId).metrics(jsonMap).time(pushMetrics.getTime()).build();
                 lastPushMetrics.put(monitorId, metrics);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("no metrics found, monitor id: {}, {}, {}", monitorId, e.getMessage(), e);
                 return pushMetricsDto;
             }

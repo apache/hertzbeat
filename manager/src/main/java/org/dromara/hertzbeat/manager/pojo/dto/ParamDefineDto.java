@@ -26,8 +26,8 @@ import java.util.List;
 
 /**
  * 参数定义传输实体
- *
  * @author tomsun28
+ *
  */
 @Data
 @AllArgsConstructor

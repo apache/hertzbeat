@@ -13,7 +13,6 @@ import java.util.List;
  */
 public interface PushMetricsDao extends JpaRepository<PushMetrics, Long> {
     PushMetrics findFirstByMonitorIdOrderByTimeDesc(Long monitorId);
-
     @Transactional
     void deleteAllByTimeBefore(Long time);
 }

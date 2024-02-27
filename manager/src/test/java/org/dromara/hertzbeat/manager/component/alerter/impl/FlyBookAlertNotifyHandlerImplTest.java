@@ -33,7 +33,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         receiver.setId(1L);
         receiver.setName("Mock 告警");
         receiver.setWechatId(flyBookId);
-        NoticeTemplate noticeTemplate = new NoticeTemplate();
+        NoticeTemplate noticeTemplate=new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("FlyBook");
         noticeTemplate.setContent("{targetLabel} : ${target}\n" +
@@ -55,7 +55,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        flyBookAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        flyBookAlertNotifyHandler.send(receiver,noticeTemplate, alert);
     }
 
 }
