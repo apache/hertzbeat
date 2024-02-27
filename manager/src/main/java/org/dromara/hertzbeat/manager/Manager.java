@@ -29,7 +29,6 @@ import javax.annotation.PostConstruct;
 /**
  * start up class.
  * @author tomsun28
- *
  */
 
 @SpringBootApplication(exclude = MailSenderAutoConfiguration.class)
