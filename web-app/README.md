@@ -11,8 +11,8 @@
 
 1. 需要nodejs npm环境，下载地址：https://nodejs.org/en/download 确保你的版本 `Node.js >= 16.10.0`
 2. 安装yarn `npm install -g yarn`
-3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `yarn global add @angular/cli@15 --registry=https://registry.npm.taobao.org`
+3. 在前端工程目录web-app下执行 `yarn install --registry=https://registry.npmmirror.com`
+4. 全局安装angular-cli `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
 5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 
 ### Build HertzBeat Install Package    

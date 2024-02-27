@@ -77,11 +77,6 @@ module.exports = {
           to: '/blog/',
         },
         {
-          label: 'enterprise',
-          position: 'left',
-          to: '/docs/others/private',
-        },
-        {
           label: 'Others',
           position: 'left',
           items: [
