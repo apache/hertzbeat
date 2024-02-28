@@ -93,11 +93,13 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         return alertDefine;
     }
 
-    protected String
-    fileNamePrefix() {
+    protected String fileNamePrefix() {
         return "hertzbeat_alertDefine_" + LocalDate.now();
     }
 
+    /**
+     * Export data transfer objects for alert configurations
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -107,6 +109,9 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         private AlertDefineDTO alertDefine;
     }
 
+    /**
+     * Data transfer object for alert configuration
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)

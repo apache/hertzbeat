@@ -88,6 +88,9 @@ public class AlerterProperties {
          */
         private KafkaProperties kafka;
 
+        /**
+         * kafka configuration information
+         */
         @Getter
         @Setter
         public static class KafkaProperties {
