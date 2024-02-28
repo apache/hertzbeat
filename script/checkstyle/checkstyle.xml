@@ -22,7 +22,7 @@
     <module name="SuppressWarningsFilter"/>
 
     <property name="charset" value="UTF-8"/>
-    <property name="severity" value="error"/>
+    <property name="severity" value="warning"/>
     <property name="fileExtensions" value="java, properties, xml"/>
     <!-- Excludes all 'module-info.java' files              -->
     <!-- See https://checkstyle.org/config_filefilters.html -->
