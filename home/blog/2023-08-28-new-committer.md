@@ -1,5 +1,5 @@
 ---
-title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
+title: Welcome to HertzBeat Community Committer!
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -9,82 +9,82 @@ keywords: [open source monitoring system, alerting system]
 ---
 
 
-![hertzBeat](/img/blog/new-committer.png)
+! [hertzBeat](/img/blog/new-committer.png)
 
-很高兴迎来了新的社区`Committer`，和其它贡献者不一样的是`logicz`来自讯飞的运维实施岗位而不是开发岗位，但不管是代码还是文档等贡献质量都非常高👍。这也是我们`HertzBeat`与其它开源项目不一样的地方，因为用户群体更多面向运维开发，在我们139位贡献者中运维工程师的占比超30%，这打破了开源项目的协作贡献对象都是开发岗位的固有认知，这说明不管是运维工程师还是测试工程师对开源项目的贡献参与都是非常热情的，而不仅仅只是作为开源协作的旁观者。开源项目的参与并不是只专属于某一类人群，而是面向所有的想来参与的人，可能是一篇文档，一个脚本或者一段代码，想象一下你参与的开源项目被部署到成千上万的服务器上运行跑起来，帮助到他人被使用或者浏览Review讨论，git记录永留存，这也许就是参与开源项目的意义。
+It's great to welcome a new community `Committer`, unlike other contributors `logicz` comes from an Ops implementation position at Cyberoam rather than a development position, but the quality of the contributions, both in terms of code and documentation etc. is very high 👍. This is also our `HertzBeat` and other open source projects are not the same place, because the user group is more oriented to the operation and maintenance of the development, in our 139 contributors in the operation and maintenance engineers accounted for more than 30%, which breaks the open source project collaboration and contribution to the object are the inherent cognition of the development position, which shows that whether it is the operation and maintenance engineers and test engineers to contribute to the open source project participation is very enthusiastic! This shows that both operation and maintenance engineers and test engineers are very enthusiastic about contributing to open source projects, not just as bystanders to open source collaboration. Participation in open source projects is not exclusive to a certain group of people, but is open to all who want to participate, it may be a document, a script or a piece of code, imagine your participation in the open source project is deployed to thousands of servers to run running, to help others to be used or browse the Review discussion, git record will always be kept, this may be the significance of participation in open source projects.
 
-> 欢迎 Dromara HertzBeat 新晋社区 Committer logicz, 让我们来了解下他的开源经历吧！
+> Welcome Dromara HertzBeat's newest community committer logicz, let's learn more about his open source experience!
 
 ## logicz
 
-昵称：logicz
+Nickname: logicz
 
-姓名：赵青然
+Name：QingraZhao
 
-现从事：科大讯飞技术支持&运维
+Work：iFLYTEK technical support & operation and maintenance
 
 Hertzbeat Committer
 
-github：zqr10159
+github:zqr10159
 
-## 初识Hertzbeat
+## Getting to know Hertzbeat
 
-2023年3月开始接触Hertzbeat，由于项目上需要一个完整的监控->告警平台，由于项目在内网部署，公司内部闭源的监控平台无法二次开发以满足跨网段告警的需求。后来在github寻找开源监控平台，发现了Hertzbeat，易于部署且功能全面。最重要的是作者tom回复issue和更新的都很快，非常符合我对开源社区的想象，很高兴能够参与开源并且能够看到自己的成果为大家所用。
+In March 2023, I started to contact Hertzbeat, due to the need for a complete monitoring->alerting platform for the project, due to the deployment of the project on the intranet, the company's internal closed-source monitoring platform can not be developed to meet the needs of cross-network segment alerts. Later in the github looking for open source monitoring platform, found Hertzbeat, easy to deploy and full-featured. The most important thing is that the author tom replies to issues and updates very quickly, very much in line with my imagination of the open source community, I'm very happy to be able to participate in open source and can see their own results for everyone to use.
 
-## 持续的开源贡献与收获
+## Ongoing open source contributions and gains
 
-到目前为止，参与Hertzbeat开源项目已有五个多月时间，从第一次提交issue到第一次提交pr，都是成长与进步的过程，满打满算还是有不少pr的，具体如下：
+So far, to participate in the Hertzbeat open source project has been more than five months, from the first time to submit issues to the first time to submit pr, are the process of growth and progress, full count or a lot of pr, specific as follows:
 
-**贡献**：
+** contribution **:
 
-*   实现实时数据存入Redis自定义db
+* Realize real-time data deposited into Redis custom db
 
-*   新增历史数据存入GreptimeDB
+* New historical data deposited into GreptimeDB
 
-*   提供监控批量导入、导出为xlsx和yml文件功能
+* provide monitoring batch import, export to xlsx and yml file function
 
-*   提供Web页面自定义邮件服务器设置功能
+* Provide Web page custom mail server settings
 
-*   提供Apache doris FE,BE监控模板
+* Provide Apache doris FE,BE monitoring template.
 
-*   实现ServerChan(Server酱)告警推送通知
+* Implement Server Chan (Server Chan) alarm push notification.
 
-*   接入第三方告警(腾讯云)，实现第三方告警与Hertzbeat告警统一推送
+* Access to third-party alarms (Tencent Cloud) to realize unified push notification of third-party alarms and Hertzbeat alarms.
 
-*   修复导入、导出监控时不含采集器信息等bug
+* Fix bugs such as not including collector information when importing and exporting monitoring.
 
-*   若干文档的更新
+* Several document updates
 
-**收获**：
+* * Harvesting **:
 
-*   Hertzbeat真的是个很优秀的项目，在项目部署方面，脚本和配置都非常规范，我自己写的很多项目都有借鉴
+* Hertzbeat is really an excellent project, in terms of project deployment, scripts and configuration are very standardized, I write a lot of my own projects have to draw on
 
-*   最重要的还是收获到了开源精神，大家在一个社区里面共同交流、进步
+* The most important thing is to harvest the spirit of open source, we are in a community to communicate together, progress
 
-## 感谢社区小伙伴
+## Thanks to the community partners
 
-感谢作者tom的指导，他人的真的非常好，有耐心还很勤奋，经常半夜改bug，感谢他一步步带我走向开源之路(还送了我两件开源社区T恤^\_^)
+Thanks to the author tom's guidance, he is really very good, patient and diligent, often in the middle of the night to change the bugs, thanks to him step by step to take me to the open source road (and also sent me two open source community T-shirts ^\_^)
 
-## 对新人的一点建议
+## A little advice for newcomers
 
-*   开源不易，要能够坚持下来，与大家分享自己的成果是很有成就感的一件事情
-*   养成良好的代码习惯，代码可以写的不好，注释一定要写清楚，方便其他人阅读和修改你的代码
+* open source is not easy, to be able to stick with it, and share their results with everyone is a great sense of achievement
+* Adopt good code habits, code can be written poorly, comments must be written clearly, so that other people can read and modify your code.
 
-## 什么是 HertzBeat?
+## What is HertzBeat?
 
-HertzBeat 赫兹跳动是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+HertzBeat HertzBeat is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high-performance clustering, and no Agent required.
 
-### 特点
+### Features
 
-*   集 **监控+告警+通知** 为一体，支持对应用服务，数据库，操作系统，中间件，云原生，网络等监控阈值告警通知一步到位。
-*   易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-*   将 `Http,Jmx,Ssh,Snmp,Jdbc` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
-*   高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-*   自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
+* HertzBeat is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, and no agent required.
+* Easy to use and friendly, no need for `Agent`, full `WEB` page operation, a little mouse click to monitor and alerts, zero hands-on learning costs.
+* Configurable protocols such as `Http, Jmx, Ssh, Snmp, Jdbc`, etc. Just configure the monitoring template `YML` in your browser to customize the metrics you want to collect using these protocols. Can you believe that you can instantly adapt to a new type of monitoring such as `K8s` or `Docker` by just configuring it?
+* High performance, support for horizontal scaling of multiple collector clusters, support for multi-isolated network monitoring, cloud-side collaboration.
+* Free alert threshold rules, `Email` `Discord` `Slack` `Telegram` `WeChat` `Dingtalk` `Flybook` `SMS` `Webhook` `Server Chan` and other methods of timely delivery of messages.
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
+> `HertzBeat`'s powerful customization, multi-type support, high performance, easy to extend, low-coupling, and hopefully can help developers and teams to quickly build their own monitoring system.
 
 
 Github: https://github.com/dromara/hertzbeat
 
-欢迎更多的用户参与到`HertzBeat`的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎。
+More users are welcome to participate in `HertzBeat` open source collaboration, no matter a typo or punctuation we are very welcome.
