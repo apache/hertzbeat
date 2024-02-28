@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.gson.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import java.io.IOException;
@@ -50,6 +47,7 @@ public class PromVectorOrMatrix {
         List<List<Object>> values;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @lombok.Data
     @NoArgsConstructor
     @Accessors(chain = true)

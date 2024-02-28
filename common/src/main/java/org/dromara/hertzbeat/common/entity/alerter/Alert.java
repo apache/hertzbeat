@@ -117,7 +117,6 @@ public class Alert {
 
     @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
-    @SuppressWarnings("JpaAttributeTypeInspection")
     @Column(length = 2048)
     private Map<String, String> tags;
 
@@ -141,6 +140,11 @@ public class Alert {
 
     @Override
     public Alert clone() {
+        try {
+            Alert clone = (Alert) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
         // deep clone
         return JsonUtil.fromJson(JsonUtil.toJson(this), Alert.class);
     }
