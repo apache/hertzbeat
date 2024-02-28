@@ -72,7 +72,7 @@ public class CommonProperties {
         }
     }
 
-    public static enum QueueType {
+    public enum QueueType {
         /** in memory **/
         Memory,
         /** kafka **/
