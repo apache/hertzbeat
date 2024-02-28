@@ -162,6 +162,9 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                                         .int32(null);
                                 break;
                             }
+                            default:
+                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
+                                break;
                         }
                     } else {
                         switch (fieldType) {
@@ -182,6 +185,10 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                                         .int32(Integer.parseInt(columnValue));
                                 break;
                             }
+                            default:
+                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                        .dou(Double.parseDouble(columnValue));
+                                break;
                         }
 
                         if (field.getLabel()) {
