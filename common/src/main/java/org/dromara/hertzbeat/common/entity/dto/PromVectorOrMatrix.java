@@ -59,9 +59,7 @@ public class PromVectorOrMatrix {
             JsonNode node = oc.readTree(jp);
 
             JsonObject metric = new JsonObject();
-            node.fields().forEachRemaining(entry -> {
-                metric.addProperty(entry.getKey(), entry.getValue().asText());
-            });
+            node.fields().forEachRemaining(entry -> metric.addProperty(entry.getKey(), entry.getValue().asText()));
 
             return metric;
         }
