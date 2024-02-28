@@ -71,9 +71,11 @@ public class DispatchProperties {
         public void setNetty(NettyProperties netty) {
             this.netty = netty;
         }
-        
-        
-        
+
+
+        /**
+         * Netty Properties
+         */
         public static class NettyProperties {
             
             /**

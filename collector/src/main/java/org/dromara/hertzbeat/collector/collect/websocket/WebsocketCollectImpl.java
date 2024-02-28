@@ -45,9 +45,9 @@ public class WebsocketCollectImpl extends AbstractCollect {
             builder.setMsg("Websocket collect must has Websocket params");
             return;
         }
-        WebsocketProtocol WebsocketProtocol = metrics.getWebsocket();
-        String host = WebsocketProtocol.getHost();
-        String port = WebsocketProtocol.getPort();
+        WebsocketProtocol websocketProtocol = metrics.getWebsocket();
+        String host = websocketProtocol.getHost();
+        String port = websocketProtocol.getPort();
         Socket socket = null;
         try {
             socket = new Socket();

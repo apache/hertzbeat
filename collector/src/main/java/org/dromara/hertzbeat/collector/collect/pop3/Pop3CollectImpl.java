@@ -174,7 +174,7 @@ public class Pop3CollectImpl extends AbstractCollect {
         if (status != null) {
             emailCount = status.number;
             // byte -> kb
-            mailboxSize = (double)status.size / 1024.0;
+            mailboxSize = (double) status.size / 1024.0;
             pop3Metrics.put(EMAIL_COUNT, emailCount);
             pop3Metrics.put(MAILBOX_SIZE, mailboxSize);
         }

@@ -29,14 +29,14 @@ public abstract class AbstractPrometheusParse {
      * prom响应类型校验：string、matrix、vector、scalar
      * todo：string、scalar类型响应未实现
      * @param responseStr 返回字符串
-     * @return
+     * @return return
      */
     abstract Boolean checkType(String responseStr);
 
     /**
      * 解析prom接口响应数据
      * @param resp 返回数据
-     * @param aliasFields
+     * @param aliasFields alias fields
      * @param http httpProtocol
      * @param builder builder
      */
@@ -45,10 +45,10 @@ public abstract class AbstractPrometheusParse {
 
     /**
      * 处理prom接口响应数据
-     * @param resp
-     * @param aliasFields
-     * @param http
-     * @param builder
+     * @param resp resp
+     * @param aliasFields alias fields
+     * @param http http
+     * @param builder builder
      */
     public void handle(String resp, List<String> aliasFields, HttpProtocol http,
                        CollectRep.MetricsData.Builder builder) {

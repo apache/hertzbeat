@@ -23,6 +23,9 @@ public class MetricFamily {
      */
     private List<Metric> metricList;
 
+    /**
+     * Metric
+     */
     @Data
     public static class Metric {
 
@@ -42,6 +45,9 @@ public class MetricFamily {
         private long timestamp;
     }
 
+    /**
+     * Label
+     */
     @Data
     public static class Label {
 
