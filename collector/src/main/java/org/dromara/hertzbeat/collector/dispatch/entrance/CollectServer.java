@@ -99,6 +99,9 @@ public class CollectServer implements CommandLineRunner {
         this.remotingClient.start();
     }
 
+    /**
+     * CollectNettyEventListener
+     */
     public class CollectNettyEventListener implements NettyEventListener {
 
         @Override

@@ -92,12 +92,12 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "/" + snmpProtocol.getPort());
             TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
             if (snmpVersion == SnmpConstants.version3) {
-                TargetBuilder.PrivProtocol PrivPasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
+                TargetBuilder.PrivProtocol privatePasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
                 TargetBuilder.AuthProtocol authPasswordEncryption = getAuthPasswordEncryption(snmpProtocol.getAuthPasswordEncryption());
                 target = targetBuilder
                         .user(snmpProtocol.getUsername())
                         .auth(authPasswordEncryption).authPassphrase(snmpProtocol.getAuthPassphrase())
-                        .priv(PrivPasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .priv(privatePasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
@@ -105,7 +105,11 @@ public class SnmpCollectImpl extends AbstractCollect {
                 SecurityModels.getInstance().addSecurityModel(usm);
                 snmpService.getUSM().addUser(
                         new OctetString(snmpProtocol.getUsername()),
-                        new UsmUser(new OctetString(snmpProtocol.getUsername()), AuthMD5.ID, new OctetString(snmpProtocol.getAuthPassphrase()), PrivDES.ID, new OctetString(snmpProtocol.getPrivPassphrase()))
+                        new UsmUser(new OctetString(snmpProtocol.getUsername()),
+                                AuthMD5.ID,
+                                new OctetString(snmpProtocol.getAuthPassphrase()),
+                                PrivDES.ID,
+                                new OctetString(snmpProtocol.getPrivPassphrase()))
                 );
             } else if (snmpVersion == SnmpConstants.version1) {
                 target = targetBuilder

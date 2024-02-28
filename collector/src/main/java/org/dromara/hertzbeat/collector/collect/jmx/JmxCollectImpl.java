@@ -118,7 +118,7 @@ public class JmxCollectImpl extends AbstractCollect {
             } else if (value instanceof String[]) {
                 String[] values = (String[]) value;
                 StringBuilder builder = new StringBuilder();
-                for (int index = 0; index < values.length; index ++) {
+                for (int index = 0; index < values.length; index++) {
                     builder.append(values[index]);
                     if (index < values.length - 1) {
                         builder.append(",");

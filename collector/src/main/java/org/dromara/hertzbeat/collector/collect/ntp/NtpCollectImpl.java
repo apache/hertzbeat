@@ -59,7 +59,7 @@ public class NtpCollectImpl extends AbstractCollect {
             timeInfo.computeDetails();
 
             // 获取ntp服务器信息
-            Map<String, String> resultMap = getNTPInfo(timeInfo);
+            Map<String, String> resultMap = getNtpInfo(timeInfo);
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
             List<String> aliasFields = metrics.getAliasFields();
@@ -101,7 +101,7 @@ public class NtpCollectImpl extends AbstractCollect {
         }
     }
 
-    private Map<String, String> getNTPInfo(TimeInfo timeInfo) {
+    private Map<String, String> getNtpInfo(TimeInfo timeInfo) {
         Map<String, String> valueMap = new HashMap<>(16);
 
         TimeStamp timeStamp = timeInfo.getMessage().getTransmitTimeStamp();

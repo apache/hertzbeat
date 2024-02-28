@@ -16,6 +16,7 @@ public class PrometheusParseCreater implements InitializingBean {
     private static void create() {
         PROMETHEUSPARSE.setInstance(new PrometheusMatrixParser().setInstance(new PrometheusLastParser()));
     }
+
     public static AbstractPrometheusParse getPrometheusParse(){
         return PROMETHEUSPARSE;
     }

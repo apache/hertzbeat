@@ -79,7 +79,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             } else {
                 uri = "https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort();
             }
-            urlConnection = (HttpsURLConnection)new URL(uri).openConnection();
+            urlConnection = (HttpsURLConnection) new URL(uri).openConnection();
             urlConnection.connect();
             Certificate[] certificates = urlConnection.getServerCertificates();
             if (certificates == null || certificates.length == 0) {

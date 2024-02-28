@@ -7,10 +7,8 @@ import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.kex.BuiltinDHFactories;
-import org.apache.sshd.common.signature.BuiltinSignatures;
 import org.apache.sshd.core.CoreModuleProperties;
 
-import java.util.ArrayList;
 
 /**
  * common ssh pool client

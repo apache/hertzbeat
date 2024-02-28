@@ -92,7 +92,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private Map<String, String> getSingleRedisInfo(Metrics metrics) {
         StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
         String info = connection.sync().info(metrics.getName());
-        Map<String, String> valueMap = parseInfo(info ,metrics);
+        Map<String, String> valueMap = parseInfo(info, metrics);
         if (log.isDebugEnabled()) {
             log.debug("[RedisSingleCollectImpl] fetch redis info");
             valueMap.forEach((k, v) -> log.debug("{} : {}", k, v));

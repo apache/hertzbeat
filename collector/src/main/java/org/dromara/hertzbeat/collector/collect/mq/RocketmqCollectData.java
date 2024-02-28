@@ -29,6 +29,9 @@ public class RocketmqCollectData {
      */
     private List<Map<String, List<TopicQueueInfo>>> topicInfoList;
 
+    /**
+     * ClusterBrokerData
+     */
     @Data
     public static class ClusterBrokerData {
 
@@ -78,6 +81,9 @@ public class RocketmqCollectData {
         private long todayConsumeCount;
     }
 
+    /**
+     * ConsumerInfo
+     */
     @Data
     public static class ConsumerInfo {
 
@@ -112,6 +118,9 @@ public class RocketmqCollectData {
         private long diffTotal;
     }
 
+    /**
+     * TopicQueueInfo
+     */
     @Data
     public static class TopicQueueInfo {
 
