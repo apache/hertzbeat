@@ -94,8 +94,8 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 校验参数
-     * @param metrics
-     * @throws Exception
+     * @param metrics metrics
+     * @throws Exception exception
      */
     private void validateParams(Metrics metrics) throws Exception {
         Pop3Protocol pop3Protocol = metrics.getPop3();
@@ -106,10 +106,10 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 创建POP3连接【支持SSL加密】
-     * @param pop3Protocol
-     * @param ssl
-     * @return
-     * @throws IOException
+     * @param pop3Protocol pop3 Protocol
+     * @param ssl ssl
+     * @return return
+     * @throws IOException IO Exception
      */
     private POP3Client createPOP3Client(Pop3Protocol pop3Protocol, boolean ssl) throws Exception {
         POP3Client pop3Client = null;
@@ -141,14 +141,14 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * 获取Pop3指标信息
-     * @param builder
-     * @param pop3Client
-     * @param aliasFields
-     * @param responseTime
+     * @param builder builder
+     * @param pop3Client pop3 client
+     * @param aliasFields alias Fields
+     * @param responseTime response Time
      */
     private void obtainPop3Metrics(CollectRep.MetricsData.Builder builder, POP3Client pop3Client,
                                                  List<String> aliasFields, long responseTime) throws IOException {
-        Map<String,Object> pop3Metrics = parsePop3Metrics(pop3Client, aliasFields);
+        Map<String, Object> pop3Metrics = parsePop3Metrics(pop3Client, aliasFields);
 
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
@@ -166,8 +166,8 @@ public class Pop3CollectImpl extends AbstractCollect {
         builder.addValues(valueRowBuilder);
     }
 
-    private Map<String,Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {
-        Map<String,Object> pop3Metrics = new HashMap<>(aliasFields.size());
+    private Map<String, Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {
+        Map<String, Object> pop3Metrics = new HashMap<>(aliasFields.size());
         POP3MessageInfo status = pop3Client.status();
         int emailCount = 0;
         double mailboxSize = 0.0;

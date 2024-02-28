@@ -172,10 +172,10 @@ public class NginxCollectImpl extends AbstractCollect {
     /**
      * 解析nginx自带ngx_http_stub_status_module模块暴露信息
      *
-     * @param builder
-     * @param resp
-     * @param metrics
-     * @param responseTime
+     * @param builder builder
+     * @param resp resp
+     * @param metrics metrics
+     * @param responseTime responseTime
      */
     private void parseNginxStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
                                           Long responseTime) {
@@ -207,10 +207,10 @@ public class NginxCollectImpl extends AbstractCollect {
     /**
      * 解析ngx_http_reqstat_module模块暴露信息
      *
-     * @param builder
-     * @param resp
-     * @param metrics
-     * @param responseTime
+     * @param builder builder
+     * @param resp resp
+     * @param metrics metrics
+     * @param responseTime responseTime
      */
     private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
                                         Long responseTime) {

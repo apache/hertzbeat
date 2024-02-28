@@ -166,6 +166,9 @@ public class DispatchProperties {
             this.kafka = kafka;
         }
 
+        /**
+         * Kafka Properties
+         */
         public static class KafkaProperties {
             /**
              * Whether the kafka data export is started
