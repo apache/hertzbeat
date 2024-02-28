@@ -140,11 +140,6 @@ public class Alert {
 
     @Override
     public Alert clone() {
-        try {
-            Alert clone = (Alert) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
         // deep clone
         return JsonUtil.fromJson(JsonUtil.toJson(this), Alert.class);
     }
