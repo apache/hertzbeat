@@ -148,7 +148,7 @@ public class CalculateStatus {
         // combine history every day at 1:00 AM
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = now.withHour(1).withMinute(0).withSecond(0);
-        if(now.isAfter(nextRun)) {
+        if (now.isAfter(nextRun)) {
             nextRun = nextRun.plusDays(1);
         }
         long delay = Duration.between(now, nextRun).toMillis();

@@ -765,8 +765,8 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void updateAppCollectJob(Job job) {
-        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp()).
-                stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
+        List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp())
+                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
                 .collect(Collectors.toList());
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findCollectorMonitorBindsByMonitorIdIn(
                 monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));

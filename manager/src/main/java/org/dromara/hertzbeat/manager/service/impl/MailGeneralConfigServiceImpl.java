@@ -10,9 +10,9 @@ import java.lang.reflect.Type;
 
 
 /**
- * MailGeneralConfigServiceImpl类是通用邮件配置服务实现类，继承了AbstractGeneralConfigServiceImpl<NoticeSender>类。
+ * MailGeneralConfigServiceImpl类是通用邮件配置服务实现类，继承了AbstractGeneralConfigServiceImpl类。
  * MailGeneralConfigServiceImpl class is the implementation of general email configuration service,
- * which inherits the AbstractGeneralConfigServiceImpl<NoticeSender> class.
+ * which inherits the AbstractGeneralConfigServiceImpl class.
  *
  *
  */

@@ -20,7 +20,10 @@ public class SchedulerProperties {
     public void setServer(ServerProperties server) {
         this.server = server;
     }
-    
+
+    /**
+     * server properties
+     */
     public static class ServerProperties {
         
         private boolean enabled = true;
