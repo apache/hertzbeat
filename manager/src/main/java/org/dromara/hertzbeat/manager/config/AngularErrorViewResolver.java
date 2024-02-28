@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.manager.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProviders;
 import org.springframework.boot.autoconfigure.web.WebProperties;
@@ -44,6 +45,7 @@ import java.util.Map;
  *
  */
 @Configuration
+@Slf4j
 public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
 
     private static final Map<HttpStatus.Series, String> SERIES_VIEWS;
@@ -103,6 +105,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
                     return new ModelAndView(new HtmlResourceView(resource), model);
                 }
             } catch (Exception ex) {
+                log.error("Error resolving resource", ex);
             }
         }
         return null;
