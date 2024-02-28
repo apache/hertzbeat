@@ -92,12 +92,12 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "/" + snmpProtocol.getPort());
             TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
             if (snmpVersion == SnmpConstants.version3) {
-                TargetBuilder.PrivProtocol PrivatePasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
+                TargetBuilder.PrivProtocol privatePasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
                 TargetBuilder.AuthProtocol authPasswordEncryption = getAuthPasswordEncryption(snmpProtocol.getAuthPasswordEncryption());
                 target = targetBuilder
                         .user(snmpProtocol.getUsername())
                         .auth(authPasswordEncryption).authPassphrase(snmpProtocol.getAuthPassphrase())
-                        .priv(PrivatePasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .priv(privatePasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
