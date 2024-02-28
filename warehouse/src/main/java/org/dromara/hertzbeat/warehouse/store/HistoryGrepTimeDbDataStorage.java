@@ -63,7 +63,8 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String QUERY_INSTANCE_SQL
             = "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+            = "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s" +
+            " and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
     private static final String TABLE_NOT_EXIST = "not exist";
     private static final String DATABASE_NOT_EXIST = "not exist";
     private GreptimeDB greptimeDb;
