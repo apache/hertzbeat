@@ -73,6 +73,7 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
                     initObs(config);
                     break;
                 // case other object store service
+                default:
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }
