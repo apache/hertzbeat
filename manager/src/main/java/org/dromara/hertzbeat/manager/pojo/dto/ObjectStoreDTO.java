@@ -43,6 +43,9 @@ public class ObjectStoreDTO<T> {
         OBS
     }
 
+    /**
+     * 文件存储配置
+     */
     @Data
     public static class ObsConfig {
         private String accessKey;
