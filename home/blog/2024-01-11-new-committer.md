@@ -1,153 +1,153 @@
 ---
-title: 热烈欢迎 HertzBeat 三位小伙伴新晋社区 Committer!
-author: tom
-author_title: tom
-author_url: https://github.com/tomsun28
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
+title: Welcome to HertzBeat Community Committer!
+author: tom  
+author_title: tom   
+author_url: https://github.com/tomsun28  
+author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
 
-![hertzBeat](/img/blog/new-committer.png)
+! [hertzBeat](/img/blog/new-committer.png)
 
-> 热烈欢迎 Dromara HertzBeat 有三位小伙伴新晋社区 Committer, 让我们来了解下他们的开源经历吧！
+> Welcome to Dromara HertzBeat's three new community committeers, let's learn more about their open source experience!
 
 # New Committer - vinci
 
-**姓名：王佳宁**
+**Name: Wang Jianing**
 
-**浙江大学计算机学院研究生一年级**
+**First year graduate student, School of Computer Science, Zhejiang University**
 
 **Github ID: vinci-897**
 
-## 初识Hertzbeat
+## Getting to know Hertzbeat for the first time
 
-2023年3月，我关注到了Hertzbeat的项目，于是直接给社区的Tom老哥发了邮件咨询是否可以加入，老哥很爽快的给了回复。刚好我当时正是大四时间比较充裕，就果断挑了一个issue解决，在hertzbeat有了第一个pull request。
+In March 2023, I noticed Hertzbeat's project, so I directly sent an email to Tom in the community to ask if I could join, and he replied very quickly. It just so happened that I was in my senior year of college when I had more time, so I decisively picked an issue to resolve and had my first pull request at Hertzbeat.
 
-## 开始提交PR
+## Start submitting PR
 
-在之后一段时间里，我花了一段时间阅读Hertzbeat的代码，又断断续续的交了几个pr。直到4月份，我了解到开源之夏相关活动，刚好Hertzbeat也在参加，所以提交了报名信息后便顺利入选。我的任务主要是负责实现一个推送方式的采集器，在编写代码的过程中，我得到了许多社区的郑晨鑫导师和Tom老哥帮助，最终能够顺利完成代码，整个过程还是比较顺利的。
+In the following period, I spent some time reading Hertzbeat's code, and submitted a few PRs off and on until April, when I learned about the Summer of Open Source event, and it just so happened that Hertzbeat was participating as well, so I submitted my application information and was selected. My task is mainly responsible for the implementation of a push collector, in the process of writing the code, I got a lot of community mentor Zheng Chenxin and Tom to help, and finally was able to successfully complete the code, the whole process is still relatively smooth.
 
-## 开源贡献
+## Open source contributions
 
-- 新增push module，暴露接口供用户推送数据。
-- 在collector模块中实现对推送数据的采集。
-- 在前端中实现展示用户自定义的数据。
+- Add push module to expose interface for users to push data.
+- Implement the collection of push data in the collector module.
+- Implement user-defined data display in the front-end.
 
-## 收获
+## Harvest
 
-- 接触到了很优秀的开源社区，提升了相关领域的技术水平。
-
-
-感谢Tom哥和我的ospp导师郑晨鑫，他们在我接触开源社区的过程中给出了许多帮助和建议。目前我仍然在社区中负责部分代码的开发，希望Hertzbeat以后可以越来越好！
+- Exposed to a great open source community and improved my skills in related areas.
 
 
-
-----
-
-# New Committer - 淞筱
-
-
-
-**姓名：周书胜**
-
-**河南师范大学大三学生**
-
-## 初识Hertzbeat
-
-今年三月份，在小宝学长的影响下，对开源项目有了些许概念，并为后来学习开源项目奠定了基础，但由于当时只学习了一些Java基础，所以并没有再深入了解。
-
-## 开始提交PR
-
-在今年七月份，基本完成Java框架开发的学习后，在小宝学长的鼓励下，我开始尝试拉取issue，并在7月20日提交了第一个PR。在此期间，也咨询了Hertzbeat作者和东风学长一些相关问题，实在感谢。
-
-## 开源贡献
-
-* 支持Spring Gateway、Apache Spark、Apache Hive等服务指标采集
-* 自定义nginx、pop3协议，对Nginx，POP3邮箱服务器进行指标采集，并添加相应帮助文档
-
-
-## 收获
-
-* 接触了更加优秀、结构更加复杂的大型项目，提高了编程和解决问题的能力
-* 将理论知识付诸于实践，收获了JUC，微服务相关的开发经验，以及宝贵的项目经历
-
-
-## 感谢社区小伙伴
-
-感谢HertzBeat的作者、HertzBeat/Sms4j Committer铁甲小宝同学、Sms4j Committer东风同学，在我遇到自己不能解决的问题时，常常向三位哥哥请教，他们也总是不厌其烦，耐心的帮助我解决问题，实在是无以言表。
-
-感谢社区的其它小伙伴，在与他们交流讨论的过程中收获满满，也感受到了Dromara社区活跃的开源氛围。
-
-## 给新人的一些建议
-
-* 初次参与开源项目时，可以从简单的任务开始。逐渐熟悉项目的代码和流程，并逐步承担更复杂的任务。
-* 如果遇到自己无法解决的问题时，可以多多请教社区的小伙伴们。
+Thanks to Tom and my ospp mentor, Zheng Chenxin, who gave me a lot of help and advice during my exposure to the open source community. Currently I am still in charge of some of the code development in the community, I hope Hertzbeat can be better and better in the future!
 
 
 
 ----
 
-# New Committer - 东风
+# New Committer - SongXiao
 
 
 
-**姓名：张洋**
+**Name: Zhou Shusheng**
 
-**河南师范大学应届生**
+**Junior student at Henan Normal University**
 
-## 初识hertzbeat
+## Getting to know Hertzbeat for the first time
 
-今年6月份开始对项目进行深入了解，我是经朋友推荐了解该项目的，一直对开源项目和社区有所探索，很喜欢这种大家互相分享、讨论并改进的氛围。同时之前在项目中也尝试实现一些监控，所以对于该项目比较感兴趣。
+In March this year, under the influence of Xiaobao's seniors, I had some concepts about open source projects and laid the foundation for learning open source projects later, but I didn't go further because I only learned some Java basics at that time.
 
-## 开始提交PR
+## Start submitting PR
 
-在今年7月起，我发现hertzbeat的issue和pr很活跃，于是就通过他们的issue和pr来了解如何实现某个协议的监控。随后我发现有关于smtp协议监控的task，就在issue上与作者进行讨论，随后通过文档和代码完成了自己的pr。
+In July this year, after basically completing the study of Java framework development, with the encouragement of Xiaobao, I started to try to pull issues, and submitted my first PR on July 20, during this period, I also consulted with the author of Hertzbeat and Dongfeng for some related issues, thank you very much.
 
-## 开源贡献
+## Open source contributions
 
-- 实现smtp、ntp、websocket可用性的监控。
-- 实现memcached 、NebulaGraph的监控指标。
-- 为实现的监控添加相关文档。
+* Support for Spring Gateway, Apache Spark, Apache Hive and other services metrics collection
+* Customize nginx and pop3 protocols to collect metrics for Nginx and POP3 mailbox servers, and add corresponding help files.
 
-## 收获
 
-- 收获了监控相关的开发经验，新增了一个宝贵的项目经历。
-- 对于网络协议有了更深刻的了解。
-- 对于开源项目的贡献流程有了初步认识。
+## Harvest
 
-## 感谢社区小伙伴
+* Exposed to better and more complex large-scale projects, improved programming and problem-solving skills.
+* Put the theoretical knowledge into practice, gained JUC, microservice related development experience, and valuable project experience.
 
-感谢hertzbeat的作者提供的相关文档和帮助。感谢朋友的带领，为我提供了勇气，让我敢于尝试进入开源项目进行贡献。感谢社区中其他的小伙伴的issue和pr，加快了我对于该项目的了解。
 
-## 对新人的一点建议
+## Thanks to our community partners
 
-- issue和pr是你了解的项目的敲门砖，一点要敢于讨论并发表观点。
-- 贡献不分大小，要敢于尝试，并不断提升自己。
+Thanks to the author of HertzBeat, HertzBeat/Sms4j Committer Tiejia Xiaobao, Sms4j Committer Dongfeng, when I encountered problems that I could not solve, I often asked the three brothers to ask for advice, and they are always tired of patiently helping me solve the problem, there are really no words.
+
+Thanks to the other partners in the community, I've gained a lot from communicating and discussing with them, and I've also felt the active open source atmosphere in the Dromara community.
+
+## Some advice for newcomers
+
+* When you first get involved in an open source project, start with simple tasks. Gradually familiarize yourself with the code and process of the project, and gradually take on more complex tasks.
+* If you encounter problems that you can't solve by yourself, you can ask for help from the community.
+
 
 
 ----
 
-## 什么是 HertzBeat?
-
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
-
-### 特点
-
-- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
-- 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
-- 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
+# New Committer - Dongfeng
 
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
+
+**Name: Zhang Yang
+
+**Freshman from Henan Normal University**
+
+## Getting to know hertzbeat for the first time
+
+In June of this year, I started to learn more about the project, I was recommended by a friend to learn about the project, I have been exploring open source projects and communities, and I like the atmosphere of sharing, discussing and improving each other. At the same time, I also tried to implement some monitoring in my previous projects, so I am more interested in this project.
+
+## Start submitting PR
+
+Since July this year, I found hertzbeat's issues and prs are very active, so I went through their issues and prs to find out how to implement monitoring for a certain protocol. Then I found out that there is a task about smtp protocol monitoring, so I discussed with the author on the issue, and then I finished my pr through documentation and code.
+
+## Open source contributions
+
+- Implementation of smtp, ntp, websocket availability monitoring.
+- Implement monitoring metrics for memcached and NebulaGraph.
+- Add documentation for the implemented monitoring.
+
+## Harvest
+
+- Gained monitoring-related development experience and added a valuable project experience.
+- Gained a deeper understanding of network protocols.
+- I gained a deeper understanding of network protocols. I gained a preliminary understanding of the contribution process of open source projects.
+
+## Thank you to our community partners.
+
+Thanks to the authors of hertzbeat for the documentation and help. Thanks to my friends for providing me with the courage to try to enter the open source project to contribute. Thanks to other community members for their issues and prs, which accelerated my understanding of the project.
+
+## A bit of advice for newcomers
+
+- Issues and pr's are the knock on the door of the project you are getting to know, so be willing to discuss and express your opinion.
+- No matter how big or small your contribution is, be willing to try and keep improving yourself.
+
+
+----
+
+## What is HertzBeat?
+
+[HertzBeat HertzBeat](https://github.com/dromara/hertzbeat) is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, Prometheus compatibility, and no Agent required.
+
+### Features
+
+- Integrate **Monitoring+Alerting+Notification** into one system, support monitoring thresholds and alerting notifications for application services, applications, databases, caches, operating systems, big data, middleware, web servers, cloud-native, networks, customization, etc. in one step.
+- Easy to use and friendly, no need for `Agent`, full `WEB` page operation, a little mouse click to monitor alarms, zero start-up learning costs.
+- Configurable `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` protocol specification, just configure the monitoring template `YML` in your browser to customize the metrics you want to collect using these protocols. Do you believe that you can instantly adapt to a new type of monitoring such as `K8s` or `Docker` just by configuring it?
+- Compatible with `Prometheus` system ecosystem and more, you can monitor what `Prometheus` can monitor with a single page action.
+- High-performance, supports horizontal scaling of multiple collector clusters, multi-isolated network monitoring, and cloud-side collaboration.
+- Free alarm threshold rules, `Email` `Discord` `Slack` `Telegram` `Nail` `WeChat` `Flybook` `SMS` `Webhook` `Server sauce` and other methods of timely delivery of messages.
+
+
+> ``HertzBeat``s powerful customization, multi-type support, high performance, easy to extend, low coupling, hope to help developers and teams quickly build their own monitoring system.
 
 
 **Github: https://github.com/dromara/hertzbeat**
 
 **Gitee: https://gitee.com/dromara/hertzbeat**
 
-欢迎更多小伙伴参与到HertzBeat的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎，大家一起学习进步，目标做一个世界级开源软件。
+Welcome more partners to participate in HertzBeat's open source collaboration, no matter a typo or punctuation we are very welcome, we learn together to make progress, the goal is to do a world-class open source software.
