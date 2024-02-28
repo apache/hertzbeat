@@ -36,6 +36,9 @@ public class MetricFamily {
      */
     private List<Metric> metricList;
 
+    /**
+     * Metric
+     */
     @Data
     public static class Metric {
 
@@ -44,66 +47,135 @@ public class MetricFamily {
          */
         private List<Label> labelPair;
 
+        /**
+         * info
+         */
         private Info info;
 
+        /**
+         * gauge
+         */
         private Gauge gauge;
 
+        /**
+         * counter
+         */
         private Counter counter;
 
+        /**
+         * summary
+         */
         private Summary summary;
 
+        /**
+         * untyped
+         */
         private Untyped untyped;
 
+        /**
+         * histogram
+         */
         private Histogram histogram;
 
+        /**
+         * timestampMs
+         */
         private Long timestampMs;
     }
 
+    /**
+     * Label
+     */
     @Data
     public static class Label {
 
+        /**
+         * name
+         */
         private String name;
 
+        /**
+         * value
+         */
         private String value;
     }
 
+    /**
+     * Info
+     */
     @Data
     public static class Info {
 
+        /**
+         * value
+         */
         private double value;
 
     }
 
+    /**
+     * Counter
+     */
     @Data
     public static class Counter {
 
+        /**
+         * value
+         */
         private double value;
 
         // Exemplar
     }
 
+    /**
+     * Gauge
+     */
     @Data
     public static class Gauge {
 
+        /**
+         * value
+         */
         private double value;
     }
 
+    /**
+     * untyped
+     */
     @Data
     public static class Untyped {
 
+        /**
+         * value
+         */
         private double value;
     }
 
+    /**
+     * Summary
+     */
     @Data
     public static class Summary {
 
+        /**
+         * count
+         */
         private long count;
 
+        /**
+         * sum
+         */
         private double sum;
 
+        /**
+         * quantileList
+         */
         private List<Quantile> quantileList = new ArrayList<>();
     }
 
+    /**
+     * Quantile
+     */
     @Data
     public static class Quantile {
         /**
@@ -111,24 +183,48 @@ public class MetricFamily {
          */
         private double xLabel;
 
+        /**
+         * value
+         */
         private double value;
     }
 
+    /**
+     * Histogram
+     */
     @Data
     public static class Histogram {
 
+        /**
+         * count
+         */
         private long count;
 
+        /**
+         * sum
+         */
         private double sum;
 
+        /**
+         * bucketList
+         */
         private List<Bucket> bucketList = new ArrayList<>();
     }
 
+    /**
+     * Bucket
+     */
     @Data
     public static class Bucket {
 
+        /**
+         * cumulativeCount
+         */
         private long cumulativeCount;
 
+        /**
+         * upperBound
+         */
         private double upperBound;
     }
 }

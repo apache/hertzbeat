@@ -28,27 +28,27 @@ public abstract class AbstractPrometheusParse {
     /**
      * prom响应类型校验：string、matrix、vector、scalar
      * todo：string、scalar类型响应未实现
-     * @param responseStr
-     * @return
+     * @param responseStr 返回字符串
+     * @return return
      */
     abstract Boolean checkType(String responseStr);
 
     /**
      * 解析prom接口响应数据
-     * @param resp
-     * @param aliasFields
-     * @param http
-     * @param builder
+     * @param resp 返回数据
+     * @param aliasFields alias fields
+     * @param http httpProtocol
+     * @param builder builder
      */
     abstract void parse(String resp, List<String> aliasFields, HttpProtocol http,
                         CollectRep.MetricsData.Builder builder);
 
     /**
      * 处理prom接口响应数据
-     * @param resp
-     * @param aliasFields
-     * @param http
-     * @param builder
+     * @param resp resp
+     * @param aliasFields alias fields
+     * @param http http
+     * @param builder builder
      */
     public void handle(String resp, List<String> aliasFields, HttpProtocol http,
                        CollectRep.MetricsData.Builder builder) {
