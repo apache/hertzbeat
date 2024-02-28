@@ -153,6 +153,9 @@ public class ManageServer implements CommandLineRunner {
         this.start();
     }
 
+    /**
+     * manage netty event listener
+     */
     public class ManageNettyEventListener implements NettyEventListener {
 
         @Override

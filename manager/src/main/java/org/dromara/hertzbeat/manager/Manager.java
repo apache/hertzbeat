@@ -39,6 +39,7 @@ public class Manager {
     public static void main(String[] args) {
         SpringApplication.run(Manager.class, args);
     }
+
     @PostConstruct
     public void init() {
         System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
