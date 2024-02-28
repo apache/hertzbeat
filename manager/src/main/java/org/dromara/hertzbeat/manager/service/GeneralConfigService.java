@@ -4,8 +4,8 @@ package org.dromara.hertzbeat.manager.service;
  * ConfigService接口，提供配置的增删查改操作。
  *
  * <p>ConfigService interface provides CRUD operations for configurations.</p>
- * @author zqr10159
  * @param <T> 配置类型
+ * @author zqr10159
  * @version 1.0
  */
 public interface GeneralConfigService<T> {

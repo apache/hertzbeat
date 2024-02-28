@@ -2,7 +2,11 @@ package org.dromara.hertzbeat.alert.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.dromara.hertzbeat.alert.util.DateUtil;
 
 import java.io.Serializable;
@@ -28,6 +32,9 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     private int durationTime;
     private String recoverTime;
 
+    /**
+     * Alarm Object information
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -40,6 +47,9 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private Dimensions dimensions;
     }
 
+    /**
+     *  Uniform Resource ID information
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -49,6 +59,10 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         @JsonProperty("objID")
         private String objId;
     }
+
+    /**
+     * Alarm policy information
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -61,6 +75,10 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private String policyTypeCname;
         private Conditions conditions;
     }
+
+    /**
+     * Parameters of indicator alarms
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
