@@ -21,6 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @Accessors(chain = true)
 @ToString
+@Getter
 public class PromVectorOrMatrix {
     private String status;
     private Data data;
