@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * nginx protocol
+ */
 @Data
 @Builder
 @AllArgsConstructor
@@ -33,7 +36,7 @@ public class NginxProtocol {
 
     /**
      * 校验相关参数
-     * @return
+     * @return is invalid true or false
      */
     public boolean isInValid() {
         return StringUtils.isAnyBlank(host, port, timeout);
