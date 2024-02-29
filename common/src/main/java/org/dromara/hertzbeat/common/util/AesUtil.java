@@ -86,7 +86,7 @@ public class AesUtil {
             //根据密码器的初始化方式--加密：将数据加密
             byte[] byteAes = cipher.doFinal(byteEncode);
             //将加密后的byte[]数据转换为Base64字符串
-            return new String(Base64.getEncoder().encode(byteAes),StandardCharsets.UTF_8);
+            return new String(Base64.getEncoder().encode(byteAes), StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.error("密文加密失败: {}", e.getMessage(), e);
             return content;
@@ -113,13 +113,13 @@ public class AesUtil {
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            log.error("没有指定的加密算法::{}", e.getMessage(),e);
+            log.error("没有指定的加密算法::{}", e.getMessage(), e);
         } catch (IllegalBlockSizeException e) {
-            log.error("非法的块大小::{}", e.getMessage(),e);
+            log.error("非法的块大小::{}", e.getMessage(), e);
         } catch (NullPointerException e) {
-            log.error("秘钥解析空指针异常::{}", e.getMessage(),e);
+            log.error("秘钥解析空指针异常::{}", e.getMessage(), e);
         } catch (Exception e) {
-            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(),e);
+            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(), e);
         }
         return content;
     }
