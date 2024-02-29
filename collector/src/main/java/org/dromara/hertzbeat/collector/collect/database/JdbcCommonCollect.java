@@ -134,7 +134,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url,Integer timeout) throws Exception {
+    private Statement getConnection(String username, String password, String url, Integer timeout) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();

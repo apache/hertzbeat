@@ -60,8 +60,8 @@ public class MemcachedCollectImpl extends AbstractCollect {
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 // 发送统计命令
                 Map<String, String> resultMap = new HashMap<>(128);
-                parseCMDResponse(resultMap, in, out, STATS);
-                parseCMDResponse(resultMap, in, out, STATS_SETTINGS);
+                parseCmdResponse(resultMap, in, out, STATS);
+                parseCmdResponse(resultMap, in, out, STATS_SETTINGS);
                 parseSizesOutput(resultMap, in, out);
 
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
@@ -107,7 +107,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
         }
     }
 
-    private static void parseCMDResponse(Map<String, String> statsMap,
+    private static void parseCmdResponse(Map<String, String> statsMap,
                                          BufferedReader in,
                                          PrintWriter out,
                                          String cmd) throws IOException {

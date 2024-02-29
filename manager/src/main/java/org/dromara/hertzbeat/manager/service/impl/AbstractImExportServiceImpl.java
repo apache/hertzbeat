@@ -162,8 +162,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         return monitorDto;
     }
 
-    protected String
-    fileNamePrefix() {
+    protected String fileNamePrefix() {
         return "hertzbeat_monitor_" + LocalDate.now();
     }
 
