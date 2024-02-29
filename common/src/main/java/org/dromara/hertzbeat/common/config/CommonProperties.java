@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.common.config;
 
-import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -25,7 +24,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author tom
  */
-@Getter
 @ConfigurationProperties(prefix = "common")
 public class CommonProperties {
 
@@ -74,8 +72,12 @@ public class CommonProperties {
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
-        
+
         private KafkaProperties kafka;
+
+        public QueueType getType() {
+            return type;
+        }
 
         public void setType(QueueType type) {
             this.type = type;
@@ -152,6 +154,10 @@ public class CommonProperties {
     public static class SmsProperties {
         private TencentSmsProperties tencent;
 
+        public TencentSmsProperties getTencent() {
+            return tencent;
+        }
+
         public void setTencent(TencentSmsProperties tencent) {
             this.tencent = tencent;
         }
@@ -195,6 +201,10 @@ public class CommonProperties {
             this.secretId = secretId;
         }
 
+        public String getSecretKey() {
+            return secretKey;
+        }
+
         public void setSecretKey(String secretKey) {
             this.secretKey = secretKey;
         }
@@ -213,6 +223,10 @@ public class CommonProperties {
 
         public void setSignName(String signName) {
             this.signName = signName;
+        }
+
+        public String getTemplateId() {
+            return templateId;
         }
 
         public void setTemplateId(String templateId) {
