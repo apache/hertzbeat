@@ -11,7 +11,7 @@ import java.time.Duration;
  *
  */
 class CaffeineCacheTest {
-    private ICacheService<String, String> cacheService;
+    private CommonCacheService<String, String> cacheService;
 
     @BeforeEach
     void setUp() {

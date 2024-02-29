@@ -194,6 +194,9 @@ public class ParamDefine {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
+    /**
+     * Parameter option configuration
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

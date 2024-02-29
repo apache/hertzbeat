@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
 import org.dromara.hertzbeat.alert.service.AlertSilenceService;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.cache.CommonCacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +68,7 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
     }
 
     private void clearAlertSilencesCache() {
-        ICacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
+        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
         silenceCache.remove(CommonConstants.CACHE_ALERT_SILENCE);
     }
 }

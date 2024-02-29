@@ -22,7 +22,6 @@ import org.dromara.hertzbeat.common.util.JsonUtil;
 
 import javax.persistence.AttributeConverter;
 import java.util.List;
-import java.util.Map;
 
 /**
  * json str to list Byte converter

@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.manager.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.cache.CommonCacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.manager.NoticeReceiver;
@@ -134,7 +134,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     @SuppressWarnings("unchecked")
     public List<NoticeRule> getReceiverFilterRule(Alert alert) {
         // use cache
-        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
+        CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
         if (rules == null) {
             rules = noticeRuleDao.findNoticeRulesByEnableTrue();
@@ -264,7 +264,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     private void clearNoticeRulesCache() {
-        ICacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
+        CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         noticeCache.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
 

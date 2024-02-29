@@ -3,7 +3,7 @@ package org.dromara.hertzbeat.alert.reduce;
 import lombok.RequiredArgsConstructor;
 import org.dromara.hertzbeat.alert.dao.AlertSilenceDao;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.cache.CommonCacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertSilence;
@@ -35,7 +35,7 @@ public class AlarmSilenceReduce {
      */
     @SuppressWarnings("unchecked")
     public boolean filterSilence(Alert alert) {
-        ICacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
+        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
         List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
         if (alertSilenceList == null) {
             alertSilenceList = alertSilenceDao.findAll();

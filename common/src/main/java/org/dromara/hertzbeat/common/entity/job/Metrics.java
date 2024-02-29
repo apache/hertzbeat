@@ -283,6 +283,9 @@ public class Metrics {
         return Objects.hash(name);
     }
 
+    /**
+     * Metrics.Field
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

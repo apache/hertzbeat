@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.alert.dao.AlertConvergeDao;
 import org.dromara.hertzbeat.alert.service.AlertConvergeService;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.cache.CommonCacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.AlertConverge;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +62,7 @@ public class AlertConvergeServiceImpl implements AlertConvergeService {
     }
     
     private void clearAlertConvergesCache() {
-        ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
+        CommonCacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
         convergeCache.remove(CommonConstants.CACHE_ALERT_CONVERGE);
     }
 }

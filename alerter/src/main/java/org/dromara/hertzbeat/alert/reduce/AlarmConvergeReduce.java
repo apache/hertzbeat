@@ -2,7 +2,7 @@ package org.dromara.hertzbeat.alert.reduce;
 
 import org.dromara.hertzbeat.alert.dao.AlertConvergeDao;
 import org.dromara.hertzbeat.common.cache.CacheFactory;
-import org.dromara.hertzbeat.common.cache.ICacheService;
+import org.dromara.hertzbeat.common.cache.CommonCacheService;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.alerter.Alert;
 import org.dromara.hertzbeat.common.entity.alerter.AlertConverge;
@@ -60,7 +60,7 @@ public class AlarmConvergeReduce {
             converageAlertMap.remove(alertHash);
             return true;
         }
-        ICacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
+        CommonCacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
         List<AlertConverge> alertConvergeList = (List<AlertConverge>) convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE);
         if (alertConvergeList == null) {
             alertConvergeList = alertConvergeDao.findAll();
