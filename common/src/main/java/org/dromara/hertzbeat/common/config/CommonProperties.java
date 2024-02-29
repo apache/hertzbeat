@@ -72,7 +72,7 @@ public class CommonProperties {
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
-        
+
         private KafkaProperties kafka;
 
         public QueueType getType() {
