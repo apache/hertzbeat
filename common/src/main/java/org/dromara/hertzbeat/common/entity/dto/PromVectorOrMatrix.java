@@ -14,9 +14,10 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * prometheus vector or matrix entity
  * @author myth
  */
-@Data
+@lombok.Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
@@ -25,6 +26,9 @@ public class PromVectorOrMatrix {
     private String status;
     private Data data;
 
+    /**
+     * PromVectorOrMatrix.Data
+     */
     @lombok.Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -35,6 +39,9 @@ public class PromVectorOrMatrix {
         List<Result> result;
     }
 
+    /**
+     * PromVectorOrMatrix.Result
+     */
     @lombok.Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -47,6 +54,9 @@ public class PromVectorOrMatrix {
         List<List<Object>> values;
     }
 
+    /**
+     * MetricJsonObjectDeserializer
+     */
     @EqualsAndHashCode(callSuper = true)
     @lombok.Data
     @NoArgsConstructor

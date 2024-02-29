@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.common.config;
 
-import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -25,7 +24,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author tom
  */
-@Getter
 @ConfigurationProperties(prefix = "common")
 public class CommonProperties {
 
@@ -44,6 +42,18 @@ public class CommonProperties {
      */
     private SmsProperties sms;
 
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public DataQueueProperties getQueue() {
+        return queue;
+    }
+
+    public SmsProperties getSms() {
+        return sms;
+    }
+
     public void setSecretKey(String secretKey) {
         this.secretKey = secretKey;
     }
@@ -56,15 +66,25 @@ public class CommonProperties {
         this.sms = sms;
     }
 
-    @Getter
+    /**
+     * data queue properties
+     */
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
         
         private KafkaProperties kafka;
 
+        public QueueType getType() {
+            return type;
+        }
+
         public void setType(QueueType type) {
             this.type = type;
+        }
+
+        public KafkaProperties getKafka() {
+            return kafka;
         }
 
         public void setKafka(KafkaProperties kafka) {
@@ -72,6 +92,9 @@ public class CommonProperties {
         }
     }
 
+    /**
+     * data queue type
+     */
     public enum QueueType {
         /** in memory **/
         Memory,
@@ -82,8 +105,10 @@ public class CommonProperties {
         /** rabbit mq **/
         Rabbit_Mq
     }
-    
-    @Getter
+
+    /**
+     * kafka data queue properties
+     */
     public static class KafkaProperties {
         /**
          * kafka的连接服务器url
@@ -98,12 +123,24 @@ public class CommonProperties {
          */
         private String alertsDataTopic;
 
+        public String getServers() {
+            return servers;
+        }
+
         public void setServers(String servers) {
             this.servers = servers;
         }
 
+        public String getMetricsDataTopic() {
+            return metricsDataTopic;
+        }
+
         public void setMetricsDataTopic(String metricsDataTopic) {
             this.metricsDataTopic = metricsDataTopic;
+        }
+
+        public String getAlertsDataTopic() {
+            return alertsDataTopic;
         }
 
         public void setAlertsDataTopic(String alertsDataTopic) {
@@ -111,16 +148,24 @@ public class CommonProperties {
         }
     }
 
-    @Getter
+    /**
+     * sms properties
+     */
     public static class SmsProperties {
         private TencentSmsProperties tencent;
+
+        public TencentSmsProperties getTencent() {
+            return tencent;
+        }
 
         public void setTencent(TencentSmsProperties tencent) {
             this.tencent = tencent;
         }
     }
 
-    @Getter
+    /**
+     * tencent sms properties
+     */
     public static class TencentSmsProperties {
 
         /**
@@ -148,20 +193,40 @@ public class CommonProperties {
          */
         private String templateId;
 
-        public void setAppId(String appId) {
-            this.appId = appId;
+        public String getSecretId() {
+            return secretId;
         }
 
         public void setSecretId(String secretId) {
             this.secretId = secretId;
         }
 
+        public String getSecretKey() {
+            return secretKey;
+        }
+
         public void setSecretKey(String secretKey) {
             this.secretKey = secretKey;
         }
 
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getSignName() {
+            return signName;
+        }
+
         public void setSignName(String signName) {
             this.signName = signName;
+        }
+
+        public String getTemplateId() {
+            return templateId;
         }
 
         public void setTemplateId(String templateId) {
