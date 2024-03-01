@@ -25,6 +25,7 @@ public class MongodbConnect implements CacheCloseable {
             log.error("[connection common cache] close mongodb connect error: {}", e.getMessage());
         }
     }
+
     public MongoClient getMongoClient() {
         return mongoClient;
     }

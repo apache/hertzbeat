@@ -51,7 +51,6 @@ public class TencentSmsClient {
      * @param templateId template id
      * @param templateValues template values
      * @param phones phones num
-     * @return true when send success
      */
     public void sendMessage(String appId, String signName, String templateId,
                             String[] templateValues, String[] phones) {
@@ -77,7 +76,6 @@ public class TencentSmsClient {
      * 发送短信
      * @param templateValues template values
      * @param phones phones num
-     * @return true when send success
      */
     public void sendMessage(String[] templateValues, String[] phones) {
         sendMessage(this.appId, this.signName, this.templateId, templateValues, phones);

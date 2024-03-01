@@ -26,7 +26,7 @@ import java.time.Duration;
  * caffeine cache impl
  * @author ceilzcx
  */
-public class CaffeineCacheServiceImpl<K, V> implements ICacheService<K, V> {
+public class CaffeineCacheServiceImpl<K, V> implements CommonCacheService<K, V> {
     private final Cache<K, V> cache;
 
     public CaffeineCacheServiceImpl(final int initialCapacity, final long maximumSize, final Duration expireAfterWrite, final boolean useWeakKey) {
