@@ -22,6 +22,7 @@ import org.dromara.hertzbeat.common.entity.message.ClusterMsg;
 
 /**
  * netty remoting processor
+ * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRequestProcessor.java">NettyRequestProcessor</a>
  */
 public interface NettyRemotingProcessor {
 
