@@ -174,7 +174,7 @@ public class CalculateStatus {
                 // combine pre day status history to one record
                 LocalDateTime nowTime = LocalDateTime.now();
                 ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(Instant.now());
-                LocalDateTime midnight = nowTime.withHour(20).withMinute(0).withSecond(0).withNano(0);
+                LocalDateTime midnight = nowTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
                 LocalDateTime preNight = midnight.minusDays(1);
                 long midnightTimestamp = midnight.toInstant(zoneOffset).toEpochMilli();
                 long preNightTimestamp = preNight.toInstant(zoneOffset).toEpochMilli();
