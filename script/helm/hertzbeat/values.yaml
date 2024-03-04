@@ -96,9 +96,9 @@ tsdb:
 
 # Expose Network
 expose:
-  # Set how to expose the service. Set the type as "ingress", "clusterIP", "nodePort" or "loadBalancer"
+  # Set how to expose the service. Set the type as "ClusterIP","NodePort","LoadBalancer" or "Ingress"
   # and fill the information in the corresponding section
-  type: NodePort
+  type: Ingress
   clusterIP:
     ports:
       # The service port Harbor listens on when serving HTTP
@@ -117,17 +117,10 @@ expose:
       port: 1157
     sourceRanges: [ ]
   ingress:
-    className: ""
-    annotations: { }
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-    hosts:
-      - host: hertzbeat.domain
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-    tls: [ ]
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
-            
+    enabled: true
+    host: "hertzbeat.domain"
+    annotations: {}    
+    tls:
+      enabled: false
+      tls:
+        - secretName: your-tls-secret 

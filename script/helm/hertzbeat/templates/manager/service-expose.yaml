@@ -1,17 +1,20 @@
-{{- if or (eq .Values.expose.type "ClusterIP") (eq .Values.expose.type "NodePort") (eq .Values.expose.type "LoadBalancer") }}
+{{- if or (eq .Values.expose.type "ClusterIP") (eq .Values.expose.type "NodePort") (eq .Values.expose.type "LoadBalancer") (eq .Values.expose.type "Ingress") }}
 apiVersion: v1
 kind: Service
 metadata:
   name: "{{ include "hertzbeat.manager" . }}-http"
   labels:
     {{- include "hertzbeat.labels" . | nindent 4 }}
-{{- if eq .Values.expose.type "ClusterIP" }}
+{{- if or (eq .Values.expose.type "ClusterIP") (eq .Values.expose.type "Ingress") }} 
 spec:
   type: ClusterIP
   ports:
     - name: http
       port: {{ .Values.expose.clusterIP.ports.port }}
       targetPort: 1157
+  selector:
+    {{- include "hertzbeat.selectorLabels" . | nindent 4 }}
+    component: manager
 {{- else if eq .Values.expose.type "NodePort" }}
 spec:
   type: NodePort
