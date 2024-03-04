@@ -48,7 +48,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
-    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader"};
+    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader", 
+            "ClassPathXmlApplicationContext", "MarshalOutputStream", "InflaterOutputStream", "FileOutputStream"};
 
     @Autowired
     private AppService appService;
