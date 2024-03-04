@@ -407,6 +407,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/avvCode"><img src="https://avatars.githubusercontent.com/u/113538532?v=4?s=100" width="100px;" alt="avv"/><br /><sub><b>avv</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=avvCode" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yqxxgh"><img src="https://avatars.githubusercontent.com/u/42080876?v=4?s=100" width="100px;" alt="yqxxgh"/><br /><sub><b>yqxxgh</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=yqxxgh" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CharlieShi46"><img src="https://avatars.githubusercontent.com/u/149798885?v=4?s=100" width="100px;" alt="CharlieShi46"/><br /><sub><b>CharlieShi46</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=CharlieShi46" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Nctllnty"><img src="https://avatars.githubusercontent.com/u/33241818?v=4?s=100" width="100px;" alt="Nctllnty"/><br /><sub><b>Nctllnty</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Nctllnty" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -473,7 +474,7 @@ HertzBeat is built on so many great open source projects, thanks to them!
 <p align="left">
 <img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="300">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="345" />
 <br /><br />
-HertzBeat has been included in the <a href="https://landscape.cncf.io/card-mode?category=monitoring&grouping=category">
+HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
 CNCF Observability And Analysis - Monitoring Landscape.</a>
 </p>
 
