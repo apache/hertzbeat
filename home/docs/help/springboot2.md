@@ -29,7 +29,22 @@ management:
         include: '*'
     enabled-by-default: on
 ```
-
+*Note: If your project also introduces authentication related dependencies, such as springboot security, the interfaces exposed by SpringBoot Actor may be intercepted. In this case, you need to manually release these interfaces. Taking springboot security as an example, you should add the following code to the Security Configuration class:*
+```java
+public class SecurityConfig extends WebSecurityConfigurerAdapter{
+    @Override
+    protected void configure(HttpSecurity httpSecurity) throws Exception{
+        httpSecurity
+                // Configure the interfaces to be released -----------------------------------
+                .antMatchers("/actuator/**").permitAll()
+                .antMatchers("/metrics/**").permitAll()
+                .antMatchers("/trace").permitAll()
+                .antMatchers("/heapdump").permitAll()
+                // 。。。
+                // For other interfaces, please refer to: https://blog.csdn.net/JHIII/article/details/126601858 -----------------------------------
+    }
+}
+```
 ### Configure parameters
 
 | Parameter name | Parameter Help describes the |
