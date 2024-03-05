@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * DiscoveryClient impl of Consul
  * @author Calvin
  */
 public class ConsulDiscoveryClient implements DiscoveryClient {

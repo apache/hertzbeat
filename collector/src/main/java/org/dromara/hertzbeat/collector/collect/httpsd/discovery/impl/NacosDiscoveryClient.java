@@ -14,6 +14,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * DiscoveryClient impl of Nacos
+ * @author Calvin
+ */
 public class NacosDiscoveryClient implements DiscoveryClient {
     private NamingService namingService;
     private ConnectConfig localConnectConfig;

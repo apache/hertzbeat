@@ -3,7 +3,6 @@ package org.dromara.hertzbeat.collector.collect.httpsd;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
-import org.dromara.hertzbeat.collector.collect.httpsd.discovery.ConnectConfig;
 import org.dromara.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.dromara.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
 import org.dromara.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
