@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,7 +74,9 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     List<ExportMonitorDTO> parseImport(InputStream is) {
-        Yaml yaml = new Yaml();
+        // todo now disable this, will enable it in the future.
+        // upgrade to snakeyaml 2.2 and springboot3.x to fix the issue
+        Yaml yaml = new Yaml(new SafeConstructor());
         return yaml.load(is);
     }
 
