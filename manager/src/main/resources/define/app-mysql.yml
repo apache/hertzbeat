@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 MYSQL 数据库的通用性能指标(basic、status、innodb)进行采集监控，支持版本为 MYSQL5+。<br>您可以点击“<i>新建 MYSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors MYSQL database through general performance metrics such as status and innodb, the version we support is MYSQL5+. You could click the "<i>New SQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat對MYSQL資料庫的通用性能指標（basic、status、innodb）進行採集監控，支持版本為MYSQL5+。<br>您可以點擊“<i>新建MYSQL資料庫</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 Mysql 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 Mysql5+。<br>您可以点击“<i>新建 Mysql 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of Mysql database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is Mysql5+. <br>You can click "<i>New Mysql Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 Mysql 數據庫的通用性能指標(系統信息、性能狀態、Innodb、緩存、事物、用戶線程、慢SQL等)進行采集監控，支持版本爲 Mysql5+。<br>您可以點擊“<i>新建 Mysql 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/mysql
   en-US: https://hertzbeat.com/docs/help/mysql
@@ -260,7 +260,6 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       # SQL查询方式： oneRow, multiRow, columns
       queryType: columns
-      # sql
       # sql
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
       # JDBC url

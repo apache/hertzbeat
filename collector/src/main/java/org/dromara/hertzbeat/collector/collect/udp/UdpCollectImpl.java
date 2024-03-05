@@ -82,7 +82,7 @@ public class UdpCollectImpl extends AbstractCollect {
         } catch (PortUnreachableException portUnreachableException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(portUnreachableException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_AVAILABLE);
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
             builder.setMsg("Peer port unreachable");
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);

@@ -1,10 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
-import { NzModalService } from 'ng-zorro-antd/modal';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
+import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
@@ -33,7 +34,6 @@ export class AlertSettingComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
-    private settingsSvc: SettingsService,
     private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -44,8 +44,14 @@ export class AlertSettingComponent implements OnInit {
   defines!: AlertDefine[];
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
-
+  isSwitchExportTypeModalVisible = false;
+  exportJsonButtonLoading = false;
+  exportYamlButtonLoading = false;
+  exportExcelButtonLoading = false;
   appHierarchies!: any[];
+  switchExportTypeModalFooter: ModalButtonOptions[] = [
+    { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
+  ];
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // 查询监控层级
@@ -255,6 +261,76 @@ export class AlertSettingComponent implements OnInit {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+  }
+
+  onExportDefines() {
+    if (this.checkedDefineIds == null || this.checkedDefineIds.size == 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
+      return;
+    }
+    this.isSwitchExportTypeModalVisible = true;
+  }
+
+  exportDefines(type: string) {
+    if (this.checkedDefineIds == null || this.checkedDefineIds.size == 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
+      return;
+    }
+    switch (type) {
+      case 'JSON':
+        this.exportJsonButtonLoading = true;
+        break;
+      case 'EXCEL':
+        this.exportExcelButtonLoading = true;
+        break;
+      case 'YAML':
+        this.exportYamlButtonLoading = true;
+        break;
+    }
+    const exportDefines$ = this.alertDefineSvc
+      .exportAlertDefines(this.checkedDefineIds, type)
+      .pipe(
+        finalize(() => {
+          this.exportYamlButtonLoading = false;
+          this.exportExcelButtonLoading = false;
+          this.exportJsonButtonLoading = false;
+          exportDefines$.unsubscribe();
+        })
+      )
+      .subscribe(
+        response => {
+          const message = response.body!;
+          if (message.type == 'application/json') {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
+          } else {
+            const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
+            a.href = url;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            this.isSwitchExportTypeModalVisible = false;
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
+        }
+      );
+  }
+
+  onImportDefines(info: NzUploadChangeParam): void {
+    if (info.file.response) {
+      this.tableLoading = true;
+      const message = info.file.response;
+      if (message.code === 0) {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
+        this.loadAlertDefineTable();
+      } else {
+        this.tableLoading = false;
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
+      }
+    }
   }
 
   // begin: 列表多选分页逻辑

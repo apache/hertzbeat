@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 使用 <a href="https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial_zh_CN.html">JMX</a> 协议对 JVM 虚拟机的通用性能指标进行采集监控。⚠️注意：您需要在 JVM 应用中开启 JMX 服务，应用启动时添加 JVM 参数, 可自定义暴露端口,对外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">点击查看开启步骤</a>。
-  en-US: "HertzBeat using <a href='https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial.html'>JMX</a> protocol to monitor and collect general performance metric of virtual machine. ⚠️Note: You need to enable JVM services in JVM application, and add the JVM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>Click here to view the activation steps.</a>"
-  zh-TW: HertzBeat使用<a href=“https://netbeans.apache.org/kb/docs/java/jmx-manager-tutorial_zh_CN.html “>JMX</a>協定對JVM虛擬機器的通用性能指標進行採集監控。 ⚠️ 注意：您需要在JVM應用中開啟JMX服務，應用啟動時添加JVM參數，可自定義暴露埠，對外IP。<a href=“https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote“>點擊查看開啟步驟</a>。
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 协议</a> 对 JVM 虚拟机的通用性能指标(基础信息，内存池，类加载，线程信息等)进行采集监控。<br>⚠️注意：您需要在 JVM 应用中开启 JMX 服务，应用启动时添加 JMX 参数, 可自定义暴露端口,对外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">点击查看开启步骤</a>。
+  en-US: HertzBeat uses <a href='https://hertzbeat.com/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring and collect general performance metric of jvm application. <br>⚠️Note:You need to enable JMX services in JVM application, and add the JXM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>Click here to view the activation steps.</a>"
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 協議</a> 對 JVM 虛擬機的通用性能指標(基礎信息，內存池，類加載，線程信息等)進行采集監控。<br>⚠️注意：您需要在 JVM 應用中開啓 JMX 服務，應用啓動時添加 JMX 參數, 可自定義暴露端口,對外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">點擊查看開啓步驟</a>。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/jvm/
   en-US: https://hertzbeat.com/docs/help/jvm/
@@ -140,7 +140,7 @@ metrics:
     priority: 0
     i18n:
       zh-CN: 虚拟机基础信息
-      en-US: Basic
+      en-US: JVM Basic
     # collect metrics content
     # 具体监控指标列表
     fields:
@@ -257,7 +257,7 @@ metrics:
       url: ^_^url^_^
 
   - name: code_cache
-    priority: 5
+    priority: 2
     i18n:
       zh-CN: 本地代码缓冲区
       en-US: Code Cache
@@ -306,7 +306,7 @@ metrics:
       url: ^_^url^_^
 
   - name: class_loading
-    priority: 6
+    priority: 3
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
@@ -340,7 +340,7 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 7
+    priority: 4
     i18n:
       zh-CN: 线程信息
       en-US: Thread

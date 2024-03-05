@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 Kafka 的通用性能指标(server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent)进行采集监控。<br><span class='help_module_span'>⚠️注意：由于系统使用 <a class='help_module_content' href='https://zh.wikipedia.org/zh-cn/JMX'>JMX 协议</a>对 Kafka 进行指标采集，您需要在 Kafka 开启 JMX 服务, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>点击查看开启步骤</a>。</span>
-  en-US: "HertzBeat monitors kafka through general performance metrics such as code cache, active controller count, broker partition count. <br><span class='help_module_span'>⚠️Note：Due to the system using <a class='help_module_content' href='https://en.wikipedia.org/wiki/Java_Management_Extensions'>JMX protocol </a> for collect metric data in Kafka, you need to enable JMX service in Kafka. <a class='help_module_content' href='https://hertzbeat.com/docs/help/kafka'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat對Kafka的通用性能指標（server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：由於系統使用<a class='help_ module_ content' href='https://zh.wikipedia.org/zh-cn/JMX'>JMX協定</a>對Kafka進行名額採集，您需要在Kafka開啟JMX服務，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>點擊查看開啟步驟</a>。</span>
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 协议</a> 对 Kafka 的通用性能指标 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 开启 JMX 服务，应用启动时添加 JMX 参数，暴露端口，对外IP。<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat uses <a href='https://hertzbeat.com/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring kafka general performance metrics (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc). <br><span class='help_module_span'>Note⚠️:You need to enable JMX service in Kafka, export JMX port and config params. <a class='help_module_content' href='https://hertzbeat.com/docs/help/kafka'>Click here to view the specific steps.</a></span>
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.com/docs/advanced/extend-jmx">JMX 協議</a> 對 Kafka 的通用性能指標 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 開啓 JMX 服務，應用啓動時添加 JMX 參數，暴露端口，對外IP。<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kafka'>點擊查看開啓步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/kafka
   en-US: https://hertzbeat.com/docs/help/kafka
@@ -121,17 +121,32 @@ metrics:
       url: ^_^url^_^
 
   - name: jvm_basic
+    i18n:
+      zh-CN: 虚拟机基础信息
+      en-US: JVM Basic
     priority: 1
     fields:
       - field: VmName
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Vm Name
       - field: VmVendor
         type: 1
+        i18n:
+          zh-CN: 厂商
+          en-US: Vm Vendor
       - field: VmVersion
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Vm Version
       - field: Uptime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 运行时长
+          en-US: Up time
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -144,19 +159,37 @@ metrics:
       url: ^_^url^_^
 
   - name: jvm_memory_pool
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
     priority: 1
     fields:
       - field: name
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
       - field: committed
         type: 0
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
       - field: init
         type: 0
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
       - field: max
         type: 0
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
       - field: used
         type: 0
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
     aliasFields:
       - Name
       - Usage->committed

@@ -1,3 +1,18 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # 监控应用类型名称(与文件名保持一致)
@@ -8,9 +23,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对 Kafka-PromQL的通用指标进行测量监控。<br>您可以点击 “<i>新建 Kafka-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors Kafka-PromQL through general performance metric. You could click the "<i>New Kafka-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對Kafka-PromQL的通用名額進行量測監控。<br>您可以點擊“<i>新建Kafka-PromQL</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 Kafka 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 Kafka，需要从 Prometheus 服务器抓取 Kafka 的监控数据。<br>您可以点击 “<i>新建 Kafka-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring Kafka. This solution is suitable for Prometheus to monitor Kafka, and it need to capture Kafka monitoring data from the Prometheus server. <br>You could click the "<i>New Kafka-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 Kafka 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 Kafka，需要從 Prometheus 服務器抓取 Kafka 的監控數據。<br>您可以點擊 “<i>新建 Kafka-PromQL</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/kafka_promql
   en-US: https://hertzbeat.com/docs/help/kafka_promql

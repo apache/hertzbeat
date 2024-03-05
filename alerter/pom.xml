@@ -87,6 +87,18 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>cn.afterturn</groupId>
+            <artifactId>easypoi-annotation</artifactId>
+            <version>4.3.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>4.1.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

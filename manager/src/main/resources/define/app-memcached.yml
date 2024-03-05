@@ -1,0 +1,185 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: cache
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: memcached
+# 监控类型国际化名称
+name:
+  zh-CN: Memcached
+  en-US: Memcached
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 支持 Memcached 服务监控，通过(stats、stats settings、stats sizes)命令对(服务器进程ID、服务器已运行秒数、版本、当前线程数、item的大小、item的数量、当前存储占用的字节数)等指标进行监测。
+  en-US: HertzBeat supports Memcached service monitoring by using commands such as stats, stats settings, and stats sizes to monitor indicators such as server process ID, server running seconds, version, current number of threads, item size, number of items, and current byte storage usage.
+  zh-TW: HertzBeat支持Memcached服務監控，通過（stats、stats settings、stats sizes）命令對（服務器行程ID、服務器已運行秒數、版本、當前線程數、item的大小、item的數量、當前存儲佔用的位元組數）等名額進行監測。
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Memcached服务的Host
+      en-US: Host of Memcached service
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-字段名称标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 11211
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - summary
+  # 监控指标 - summary
+  - name: server_info
+    i18n:
+      zh-CN: 系统信息
+      en-US: Server Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+    # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+    # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+      - field: pid
+        type: 1
+        i18n:
+          zh-CN: 服务器进程ID
+          en-US: Pid
+      - field: uptime
+        type: 0
+        unit: s
+        i18n:
+          zh-CN: 已运行秒数
+          en-US: Uptime
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+      - field: curr_connections
+        type: 0
+        i18n:
+          zh-CN: 当前连接数量
+          en-US: Curr Connections
+      - field: auth_errors
+        type: 0
+        i18n:
+          zh-CN: 认证失败数目
+          en-US: Auth Errors
+      - field: threads
+        type: 0
+        i18n:
+          zh-CN: 当前线程数
+          en-US: Threads
+      - field: item_size
+        type: 0
+        unit: byte
+        i18n:
+          zh-CN: Item 大小
+          en-US: Item Size
+      - field: item_count
+        type: 0
+        i18n:
+          zh-CN: Item 数量
+          en-US: Item Count
+      - field: curr_items
+        type: 0
+        i18n:
+          zh-CN: 当前存储的数据总数
+          en-US: Curr Items
+      - field: total_items
+        type: 0
+        i18n:
+          zh-CN: 启动以来存储的数据总数
+          en-US: Total Items
+      - field: bytes
+        type: 0
+        unit: byte
+        i18n:
+          zh-CN: 当前存储占用的字节数
+          en-US: Bytes
+      - field: cmd_get
+        type: 0
+        i18n:
+          zh-CN: Get命令请求次数
+          en-US: Cmd Get
+      - field: cmd_set
+        type: 0
+        i18n:
+          zh-CN: Set命令请求次数
+          en-US: Cmd Set
+      - field: cmd_flush
+        type: 0
+        i18n:
+          zh-CN: Flush命令请求次数
+          en-US: Cmd Flush
+      - field: get_misses
+        type: 0
+        i18n:
+          zh-CN: Get命令未命中次数
+          en-US: Get Misses
+      - field: delete_misses
+        type: 0
+        i18n:
+          zh-CN: Delete命令未命中次数
+          en-US: Delete Misses
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: memcached
+    # Specific collection configuration when protocol is telnet protocol
+    # 当protocol为telnet协议时具体的采集配置
+    memcached:
+      # telnet host
+      # 远程登录主机
+      host: ^_^host^_^
+      port: ^_^port^_^

@@ -662,11 +662,22 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span>
+                                                                                                            ${nameMonitorHost}
+                                                                                                        </span>
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        <span>${monitorHost}</span>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td align="right"
+                                                                                                        style="padding-right: 10px; color: #817878; font-weight: 500;">
+                                                                                                        <span>
                                                                                                             ${namePriority}
                                                                                                         </span>
                                                                                                     </td>
-                                                                                                    <td><span
-                                                                                                    >${priority}</span>
+                                                                                                    <td>
+                                                                                                        <span>${priority}</span>
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
@@ -680,6 +691,19 @@
                                                                                                     >${lastTriggerTime}</span>
                                                                                                     </td>
                                                                                                 </tr>
+                                                                                                <#if nameRestoreTime??>
+                                                                                                    <tr>
+                                                                                                        <td align="right"
+                                                                                                            style="padding-right: 10px; color: #817878; font-weight: 500;">
+                                                                                                            <span>
+                                                                                                                ${nameRestoreTime}
+                                                                                                            </span>
+                                                                                                        </td>
+                                                                                                        <td><span
+                                                                                                        >${restoreTime}</span>
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                </#if>
                                                                                             </table>
                                                                                             <br><span
                                                                                         >${content}</span>

@@ -59,9 +59,11 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             if (!tags.containsKey(CommonConstants.TAG_MONITOR_NAME)) {
                 tags.put(CommonConstants.TAG_MONITOR_NAME, monitor.getName());
             }
+            if (!tags.containsKey(CommonConstants.TAG_MONITOR_HOST)) {
+                tags.put(CommonConstants.TAG_MONITOR_HOST, monitor.getHost());
+            }
             if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
-                // When monitoring is not managed, ignore and silence its alarm messages
-                // 当监控未管理时  忽略静默其告警信息
+                // When monitoring is not monitored, ignore and silence its alarm messages
                 return;
             }
             if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {

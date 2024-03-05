@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.collector.collect.ftp;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
@@ -23,8 +40,8 @@ import java.util.Objects;
 @Slf4j
 public class FtpCollectImpl extends AbstractCollect {
 
-    private final String ANONYMOUS = "anonymous";
-    private final String PASSWORD = "password";
+    private static final String ANONYMOUS = "anonymous";
+    private static final String PASSWORD = "password";
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -82,10 +99,12 @@ public class FtpCollectImpl extends AbstractCollect {
             log.info("[FTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException(e.getMessage());
         }
-        return new HashMap<>(8) {{
-            put("isActive", Boolean.toString(isActive));
-            put("responseTime", responseTime);
-        }};
+        return new HashMap<>(8) {
+            {
+                put("isActive", Boolean.toString(isActive));
+                put("responseTime", responseTime);
+            }
+        };
     }
 
     /**
@@ -94,14 +113,14 @@ public class FtpCollectImpl extends AbstractCollect {
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         try {
             // username: not empty, password: not empty
-            if(StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
-                if(!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
+            if (StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
+                if (!ftpClient.login(ftpProtocol.getUsername(), ftpProtocol.getPassword())) {
                     throw new IllegalArgumentException("The username or password may be wrong.");
                 }
                 return;
             }
             // anonymous access
-            if(!ftpClient.login(ANONYMOUS, PASSWORD)) {
+            if (!ftpClient.login(ANONYMOUS, PASSWORD)) {
                 throw new IllegalArgumentException("The server may not allow anonymous access, we need to username and password.");
             }
         } catch (Exception e) {

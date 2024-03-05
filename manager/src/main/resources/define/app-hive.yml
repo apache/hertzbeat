@@ -1,0 +1,319 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: bigdata
+# The monitoring type eg: springboot2 linux windows tomcat mysql aws...
+# 监控类型 eg: springboot2 linux windows tomcat mysql aws...
+app: hive
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: Apache Hive
+  en-US: Apache Hive
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a> 暴露的通用性能指标(basic、environment、thread、code_cache)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 Apache Hive 中的信息，需要您的 Apache Hive 应用集成并开启 Hive Server2, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/hive'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collects and monitors Apache Hive through general performance metric(health, environment, threads, memory_used) that exposed by the Hive Server2. <br><span class='help_module_span'>⚠️Note:You should make sure that your Apache Hive application have already integrated and enabled the Hive Server2, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/hive'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對<a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a>暴露的通用性能指標（basic、environment、thread、code_cache）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控Apache Hive中的指標，需要您的Apache Hive應用集成並開啟Hive Server2，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/hive'>點擊查看具體步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/hive
+  en-US: https://hertzbeat.com/docs/help/hive
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 10002
+  # field-param field key
+  # field-变量字段标识符
+  - field: ssl
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    # 当type为boolean时,前端用switch展示开关
+    type: boolean
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: false
+  # field-param field key
+  # field-变量字段标识符
+  - field: base_path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    # type-字段类型,样式(大部分映射input标签type属性) text类型属于文本输入框
+    type: text
+    # default value
+    # 默认值
+    defaultValue: /jmx
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # hide-true or false
+    # hide-是否隐藏 true-隐藏 false-不隐藏
+    hide: true
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - available
+  # 监控指标 - available
+  - name: available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: responseTime
+        type: 0
+        unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url
+      # url请求接口路径
+      url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: default
+
+  - name: basic
+    priority: 1
+    fields:
+      - field: vm_name
+        type: 1
+      - field: vm_vendor
+        type: 1
+      - field: vm_version
+        type: 1
+      - field: up_time
+        type: 0
+        unit: ms
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmName
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
+    calculates:
+      - vm_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmName`
+      - vm_vendor=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor`
+      - vm_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion`
+      - up_time=#`$.beans[?(@.name == 'java.lang:type=Runtime')].Uptime`
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  # metrics - environment
+  # 监控指标 - environment
+  - name: environment
+    priority: 2
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: https_proxyPort
+        type: 0
+      - field: os_name
+        type: 1
+      - field: os_version
+        type: 1
+      - field: os_arch
+        type: 1
+      - field: java_runtime_name
+        type: 1
+      - field: java_runtime_version
+        type: 1
+    # metric alias list, used to identify metrics in query results
+    # 指标别名列表，用于在查询结果中识别指标
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
+    # A list of calculation scripts for metric values.
+    # 计算指标值的脚本列表
+    calculates:
+      - https_proxyPort=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value`
+      - os_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value`
+      - os_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value`
+      - os_arch=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value`
+      - java_runtime_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value`
+      - java_runtime_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value`
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    http:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # http url
+      # url请求接口路径
+      url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
+      # 请求方式 GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      # 是否启用ssl/tls,即是http还是https,默认false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      parseType: jsonPath
+      # http response data parse script
+      # 响应数据解析脚本
+      parseScript: '$'
+
+  - name: thread
+    priority: 4
+    fields:
+      - field: thread_count
+        type: 0
+      - field: total_started_thread
+        type: 0
+      - field: peak_thread_count
+        type: 0
+      - field: daemon_thread_count
+        type: 0
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
+    calculates:
+      - thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount`
+      - total_started_thread=#`$.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount`
+      - peak_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount`
+      - daemon_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount`
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: code_cache
+    priority: 5
+    fields:
+      - field: committed
+        type: 1
+        unit: MB
+      - field: init
+        type: 0
+        unit: MB
+      - field: max
+        type: 0
+        unit: MB
+      - field: used
+        type: 0
+        unit: MB
+    aliasFields:
+      - $.beans[?(@.Name == 'Code Cache')].Usage.committed
+      - $.beans[?(@.Name == 'Code Cache')].Usage.init
+      - $.beans[?(@.Name == 'Code Cache')].Usage.max
+      - $.beans[?(@.Name == 'Code Cache')].Usage.used
+    calculates:
+      - committed=#`$.beans[?(@.Name == 'Code Cache')].Usage.committed`
+      - init=#`$.beans[?(@.Name == 'Code Cache')].Usage.init`
+      - max=#`$.beans[?(@.Name == 'Code Cache')].Usage.max`
+      - used=#`$.beans[?(@.Name == 'Code Cache')].Usage.used`
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'

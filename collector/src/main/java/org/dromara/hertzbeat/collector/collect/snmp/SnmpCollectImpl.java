@@ -29,7 +29,9 @@ import org.dromara.hertzbeat.common.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
+import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.util.*;
 import org.springframework.util.Assert;
@@ -37,12 +39,9 @@ import org.snmp4j.*;
 import org.snmp4j.fluent.SnmpBuilder;
 import org.snmp4j.fluent.SnmpCompletableFuture;
 import org.snmp4j.fluent.TargetBuilder;
-import org.snmp4j.security.SecurityModel;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +53,9 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class SnmpCollectImpl extends AbstractCollect {
 
+    private static final String AES128 = "1";
+
+    private static final String SHA1 = "1";
     private static final String DEFAULT_PROTOCOL = "udp";
     private static final String OPERATION_GET = "get";
     private static final String OPERATION_WALK = "walk";
@@ -80,21 +82,35 @@ public class SnmpCollectImpl extends AbstractCollect {
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
         int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
+        Snmp snmpService = null;
         try {
             SnmpBuilder snmpBuilder = new SnmpBuilder();
-            Snmp snmpService = getSnmpService(snmpVersion);
+            snmpService = getSnmpService(snmpVersion, snmpBuilder);
+            snmpService.listen();
             Target<?> target;
             Address targetAddress = GenericAddress.parse(DEFAULT_PROTOCOL + ":" + snmpProtocol.getHost()
                     + "/" + snmpProtocol.getPort());
             TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
             if (snmpVersion == SnmpConstants.version3) {
+                TargetBuilder.PrivProtocol privatePasswordEncryption = getPrivPasswordEncryption(snmpProtocol.getPrivPasswordEncryption());
+                TargetBuilder.AuthProtocol authPasswordEncryption = getAuthPasswordEncryption(snmpProtocol.getAuthPasswordEncryption());
                 target = targetBuilder
                         .user(snmpProtocol.getUsername())
-                        .auth(TargetBuilder.AuthProtocol.hmac192sha256).authPassphrase(snmpProtocol.getAuthPassphrase())
-                        .priv(TargetBuilder.PrivProtocol.aes128).privPassphrase(snmpProtocol.getPrivPassphrase())
+                        .auth(authPasswordEncryption).authPassphrase(snmpProtocol.getAuthPassphrase())
+                        .priv(privatePasswordEncryption).privPassphrase(snmpProtocol.getPrivPassphrase())
                         .done()
                         .timeout(timeout).retries(1)
                         .build();
+                USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
+                SecurityModels.getInstance().addSecurityModel(usm);
+                snmpService.getUSM().addUser(
+                        new OctetString(snmpProtocol.getUsername()),
+                        new UsmUser(new OctetString(snmpProtocol.getUsername()),
+                                AuthMD5.ID,
+                                new OctetString(snmpProtocol.getAuthPassphrase()),
+                                PrivDES.ID,
+                                new OctetString(snmpProtocol.getPrivPassphrase()))
+                );
             } else if (snmpVersion == SnmpConstants.version1) {
                 target = targetBuilder
                         .v1()
@@ -113,7 +129,8 @@ public class SnmpCollectImpl extends AbstractCollect {
             String operation = snmpProtocol.getOperation();
             operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
             if (OPERATION_GET.equalsIgnoreCase(operation)) {
-                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).build();
+                String contextName = getContextName(snmpProtocol.getContextName());
+                PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(snmpProtocol.getOids().values().toArray(new String[0])).contextName(contextName).build();
                 SnmpCompletableFuture snmpRequestFuture = SnmpCompletableFuture.send(snmpService, target, pdu);
                 List<VariableBinding> vbs = snmpRequestFuture.get().getAll();
                 long responseTime = System.currentTimeMillis() - startTime;
@@ -212,6 +229,16 @@ public class SnmpCollectImpl extends AbstractCollect {
             log.warn("[snmp collect] error: {}", errorMsg, e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            if (snmpService != null) {
+                if (snmpVersion == SnmpConstants.version3) {
+                    try {
+                        snmpClose(snmpService, SnmpConstants.version3);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
     }
 
@@ -231,14 +258,13 @@ public class SnmpCollectImpl extends AbstractCollect {
         Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
     }
 
-    private synchronized Snmp getSnmpService(int snmpVersion) throws IOException {
+    private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);
         if (snmpService != null) {
             return snmpService;
         }
-        SnmpBuilder snmpBuilder = new SnmpBuilder();
         if (snmpVersion == SnmpConstants.version3) {
-            snmpService = snmpBuilder.udp().v3().usm().threads(4).build();
+            snmpService = snmpBuilder.udp().v3().securityProtocols(SecurityProtocols.SecurityProtocolSet.maxCompatibility).usm().threads(4).build();
         } else if (snmpVersion == SnmpConstants.version1) {
             snmpService = snmpBuilder.udp().v1().threads(4).build();
         } else {
@@ -281,5 +307,27 @@ public class SnmpCollectImpl extends AbstractCollect {
         } else {
             return hexString;
         }
+    }
+
+    private void snmpClose(Snmp snmp, int version) throws IOException {
+        snmp.close();
+        versionSnmpService.remove(version);
+    }
+
+    private TargetBuilder.PrivProtocol getPrivPasswordEncryption(String privPasswordEncryption) {
+        if (privPasswordEncryption == null) return TargetBuilder.PrivProtocol.des;
+        else if (AES128.equals(privPasswordEncryption)) {
+            return TargetBuilder.PrivProtocol.aes128;
+        } else return TargetBuilder.PrivProtocol.des;
+    }
+
+    private TargetBuilder.AuthProtocol getAuthPasswordEncryption(String authPasswordEncryption) {
+        if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
+        else if (SHA1.equals(authPasswordEncryption))  return TargetBuilder.AuthProtocol.sha1;
+        else return TargetBuilder.AuthProtocol.md5;
+    }
+
+    private String getContextName(String contextName) {
+        return contextName == null ? "" : contextName;
     }
 }

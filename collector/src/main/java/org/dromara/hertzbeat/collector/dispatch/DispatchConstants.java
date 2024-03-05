@@ -36,9 +36,29 @@ public interface DispatchConstants {
      */
     String PROTOCOL_TELNET = "telnet";
     /**
+     * protocol nginx
+     */
+    String PROTOCOL_NGINX = "nginx";
+    /**
      * protocol smtp
      */
     String PROTOCOL_SMTP = "smtp";
+    /**
+     * protocol ntp
+     */
+    String PROTOCOL_NTP = "ntp";
+    /**
+     * protocol websocket
+     */
+    String PROTOCOL_WEBSOCKET = "websocket";
+    /**
+     * protocol memcached
+     */
+    String PROTOCOL_MEMCACHED = "memcached";
+    /**
+     * protocol nebulagraph
+     */
+    String PROTOCOL_NEBULAGRAPH = "nebulaGraph";
     /**
      * protocol udp
      */
@@ -87,7 +107,15 @@ public interface DispatchConstants {
      * protocol prometheus
      */
     String PROTOCOL_PROMETHEUS = "prometheus";
-    
+    /**
+     * protocol dns
+     */
+    String PROTOCOL_DNS = "dns";
+    /**
+     * protocol pop3
+     */
+    String PROTOCOL_POP3 = "pop3";
+
     // Protocol type related - end
     // 协议类型相关 - end //
 

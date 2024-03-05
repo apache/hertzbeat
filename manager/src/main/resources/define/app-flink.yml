@@ -28,8 +28,8 @@ name:
 # 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 Flink流引擎的通用指标进行测量监控。<br>您可以点击 “<i>新建 Flink流引擎</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對Flink流引擎的通用名額進行量測監控。<br>您可以點擊“<i>新建Flink流引擎</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  en-US: Hertzbeat monitoring Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 Flink流引擎的通用名額進行量測監控。<br>您可以點擊“<i>新建Flink流引擎</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/flink
   en-US: https://hertzbeat.com/docs/help/flink
@@ -134,6 +134,9 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: flink-version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -165,14 +168,29 @@ metrics:
     fields:
       - field: slots_total        # slots总数
         type: 0
+        i18n:
+          zh-CN: 插槽总数
+          en-US: Slots Total
       - field: slots_used        # slots已经使用的数量
         type: 0
+        i18n:
+          zh-CN: 已用插槽数
+          en-US: Slots Used
       - field: task_total        # 任务总数
         type: 0
+        i18n:
+          zh-CN: 任务总数
+          en-US: Task Total
       - field: jobs_running        # 正在运行的任务数
         type: 0
+        i18n:
+          zh-CN: 正在运行的任务数
+          en-US: Jobs Running
       - field: jobs_failed        # 已经失败的任务数
         type: 0
+        i18n:
+          zh-CN: 已经失败的任务数
+          en-US: Jobs Failed
     aliasFields:
       - slots-total
       - slots-available

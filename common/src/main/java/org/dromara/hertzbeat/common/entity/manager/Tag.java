@@ -67,6 +67,9 @@ public class Tag {
     @Schema(title = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE)
     private String color;
 
+    @Schema(title = "Tag Color | 标签描述", example = "用于监控mysql", accessMode = READ_WRITE)
+    private String description;
+
     @Schema(title = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置", accessMode = READ_WRITE)
     @Min(0)
     @Max(3)

@@ -4,7 +4,8 @@ title: Use Time Series Database TDengine to Store Metrics Data (Optional)
 sidebar_label: Use TDengine Store Metrics  
 ---
 
-HertzBeat's historical data storage depends on the time series database TDengine or IoTDB, choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)   
+HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+We recommend VictoriaMetrics for long term support.
 
 TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring metrics. Pay attention to support ⚠️ 3.x version.  
 

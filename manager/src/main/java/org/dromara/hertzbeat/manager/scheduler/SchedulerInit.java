@@ -1,12 +1,27 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.manager.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.collector.util.CollectUtil;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.dto.CollectorInfo;
 import org.dromara.hertzbeat.common.entity.job.Configmap;
 import org.dromara.hertzbeat.common.entity.job.Job;
-import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.manager.*;
 import org.dromara.hertzbeat.manager.dao.CollectorDao;
 import org.dromara.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -19,9 +34,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,6 +93,9 @@ public class SchedulerInit implements CommandLineRunner {
             try {
                 // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
                 appDefine.setInterval(monitor.getIntervals());

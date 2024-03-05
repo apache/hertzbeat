@@ -22,7 +22,9 @@ import org.dromara.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,4 +130,22 @@ public interface AlertDefineService {
      * @return Associated information about the monitoring list 
      */
     List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId);
+
+    /**
+     * Export file configuration of specified type based on ID list and export file type
+     * 根据ID列表、导出文件类型导出指定类型文件配置
+     * @param ids AlertDefine ID
+     * @param type File Type
+     * @param res Response
+     * @throws Exception An exception was thrown during the export
+     */
+    void export(List<Long> ids, String type, HttpServletResponse res) throws Exception;
+
+    /**
+     * Add alarm threshold rules based on the uploaded alarm threshold file
+     * 根据上传的告警阀值文件，增加告警阀值规则
+     * @param file Upload File
+     * @throws Exception An exception was thrown during the importConfig
+     */
+    void importConfig(MultipartFile file) throws Exception;
 }

@@ -37,7 +37,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = HostParamValidator.class)
 public @interface HostValid {
 
-    String message() default "Host need ipv4,ipv6 or domain,<br>EG:127.0.0.1  hertzbeat.com";
+    String message() default "Host need ipv4,ipv6,hostname or domain,<br>EG:127.0.0.1  hertzbeat.com";
 
     Class<?>[] groups() default {};
 

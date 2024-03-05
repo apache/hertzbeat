@@ -28,9 +28,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>点击查看具体步骤</a>。</span>
-  en-US: "HertzBeat collect and monitors SpringBoot through general performance metric that exposed by the SpringBoot3.0 Actuator. <br><span class='help_module_span'><br>⚠️Note: You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>"
-  zh-TW: HertzBeat對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控SpringBoot中的指標，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>點擊查看具體步驟</a>。</span>
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collect and monitors SpringBoot through general performance metric that exposed by the SpringBoot3.0 Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.com/docs/help/springboot2'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringBoot中的指標，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/springboot2'>點擊查看具體步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/springboot3
   en-US: https://hertzbeat.com/docs/help/springboot3
@@ -111,6 +111,9 @@ metrics:
   # metrics - available
   # 监控指标 - available
   - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: available
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -122,6 +125,9 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: responseTime
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
         type: 0
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -155,6 +161,9 @@ metrics:
     priority: 1
     fields:
       - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
         type: 1
     protocol: http
     http:
@@ -167,12 +176,21 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
+    i18n:
+      zh-CN: 线程
+      en-US: threads
     priority: 2
     fields:
       - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
         type: 1
         label: true
       - field: size
+        i18n:
+          zh-CN: 大小
+          en-US: size
         type: 0
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
@@ -190,10 +208,16 @@ metrics:
       parseScript: '$'
 
   - name: space_name
+    i18n:
+      zh-CN: 空间名称
+      en-US: space name
     visible: false
     priority: 3
     fields:
       - field: id
+        i18n:
+          zh-CN: ID
+          en-US: ID
         type: 1
     protocol: http
     http:
@@ -206,12 +230,21 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
+    i18n:
+      zh-CN: 内存使用
+      en-US: memory used
     priority: 4
     fields:
       - field: space
+        i18n:
+          zh-CN: 空间
+          en-US: space
         type: 1
         label: true
       - field: mem_used
+        i18n:
+          zh-CN: 已使用
+          en-US: memory used
         type: 0
         unit: MB
     aliasFields:
@@ -232,9 +265,15 @@ metrics:
       parseScript: '$'
 
   - name: health
+    i18n:
+      zh-CN: 健康状态
+      en-US: health
     priority: 5
     fields:
       - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
         type: 1
     protocol: http
     http:

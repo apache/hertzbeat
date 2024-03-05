@@ -1,0 +1,277 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: service
+# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+app: nginx
+# The app api i18n name
+# app api国际化名称
+name:
+  zh-CN: Nginx服务器
+  en-US: Nginx Server
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通过配置 ngx_http_stub_status_module 对 nginx 的通用性能指标(nginx_status、req_status等)进行采集监控。<br>您可以点击“<i>新建 nginx</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> to configure ngx_http_stub_status_module for collecting general metrics of Nginx (nginx_status, req_status.). <br>You can click "<i>New Nginx</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通過配置 ngx_http_stub_status_module 對 Nginx 數據庫的通用性能指標(nginx信息、请求信息等)進行采集監控。<br>您可以點擊“<i>新建 Nginx</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/nginx
+  en-US: https://hertzbeat.com/docs/help/nginx
+# app api所需输入参数定义(根据定义渲染页面UI)
+# Input params define for app api(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-变量字段标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 80
+  # field-param field key
+  # field-变量字段标识符
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value 6000
+    # 默认值 6000
+    defaultValue: 6000
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - available
+  # 监控指标 - available
+  - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: Available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 0
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
+      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   instance是否为实例主键   unit:指标单位
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # 采集协议,目前支持sql,ssh,http,telnet,wmi,snmp,sdk
+    protocol: nginx
+    # Specific collection configuration when protocol is http protocol
+    # 当protocol为http协议时具体的采集配置
+    nginx:
+      # http host: ipv4 ipv6 domain
+      # 主机host: ipv4 ipv6 域名
+      host: ^_^host^_^
+      # http port
+      # 端口
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+
+  - name: nginx_status
+    i18n:
+      zh-CN: Nginx 状态信息
+      en-US: Nginx Status
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    fields:
+      - field: accepts
+        type: 0
+        i18n:
+          zh-CN: 接受连接数
+          en-US: Accepts
+      - field: handled
+        type: 0
+        i18n:
+          zh-CN: 成功处理连接数
+          en-US: Handled
+      - field: active
+        type: 0
+        i18n:
+          zh-CN: 当前活跃连接数
+          en-US: Active
+      - field: dropped
+        type: 0
+        i18n:
+          zh-CN: 已丢弃连接数
+          en-US: Dropped
+      - field: requests
+        type: 0
+        i18n:
+          zh-CN: 客户端请求数
+          en-US: Requests
+      - field: reading
+        type: 0
+        i18n:
+          zh-CN: 正在执行读操作的连接数
+          en-US: Reading
+      - field: writing
+        type: 0
+        i18n:
+          zh-CN: 正在执行写操作的连接数
+          en-US: Writing
+      - field: waiting
+        type: 0
+        i18n:
+          zh-CN: 正在等待的连接数
+          en-US: Waiting
+    # 指标别名列表，用于在查询结果中识别指标
+    aliasFields:
+      - accepts
+      - handled
+      - active
+      - dropped
+      - requests
+      - reading
+      - writing
+      - waiting
+    # A list of calculation scripts for metric values.
+    # 计算指标值的脚本列表
+    calculates:
+      - dropped=accepts - handled
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, nginx
+    protocol: nginx
+    # the config content when protocol is http
+    nginx:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+      # http url
+      # url请求接口路径
+      url: /nginx-status
+
+  - name: req_status
+    i18n:
+      zh-CN: 请求详细信息
+      en-US: Req Status
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 2
+    fields:
+      - field: zone_name
+        type: 1
+        i18n:
+          zh-CN: 分组类别
+          en-US: Zone Name
+      - field: key
+        type: 1
+        i18n:
+          zh-CN: 分组名称
+          en-US: Key
+      - field: max_active
+        type: 0
+        i18n:
+          zh-CN: 最大并发连接数
+          en-US: Max Active
+      - field: max_bw
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: 最大带宽
+          en-US: Max BW
+      - field: traffic
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: 总流量
+          en-US: Traffic
+      - field: requests
+        type: 0
+        i18n:
+          zh-CN: 总请求数
+          en-US: Requests
+      - field: active
+        type: 0
+        i18n:
+          zh-CN: 当前并发连接数
+          en-US: Active
+      - field: bandwidth
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: 当前带宽
+          en-US: Bandwidth
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: nginx
+    # the config content when protocol is http
+    nginx:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # timeout
+      # 超时时间
+      timeout: ^_^timeout^_^
+      # http url
+      # url请求接口路径
+      url: /req-status

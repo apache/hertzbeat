@@ -21,8 +21,8 @@ app: api_code
 # The app api i18n name
 # app api国际化名称
 name:
-  zh-CN: API Code
-  en-US: API业务状态码
+  zh-CN: API业务状态码
+  en-US: API Code
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
@@ -335,14 +335,14 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 关键字计数
-      en-US: Keyword Num
+      zh-CN: 计数关键字
+      en-US: Keyword
     # type-param field type(most mapping the html input type)
     # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # 参数输入框提示信息
     # param field input placeholder
-    placeholder: 'Input Keyword'
+    placeholder: 'Enter keyword which occurrences need to be monitored'
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
@@ -370,7 +370,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
       - field: code
         type: 1
         i18n:

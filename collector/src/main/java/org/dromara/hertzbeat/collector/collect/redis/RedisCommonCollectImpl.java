@@ -1,8 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.collector.collect.redis;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.RedisConnect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
@@ -92,7 +109,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private Map<String, String> getSingleRedisInfo(Metrics metrics) {
         StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
         String info = connection.sync().info(metrics.getName());
-        Map<String, String> valueMap = parseInfo(info ,metrics);
+        Map<String, String> valueMap = parseInfo(info, metrics);
         if (log.isDebugEnabled()) {
             log.debug("[RedisSingleCollectImpl] fetch redis info");
             valueMap.forEach((k, v) -> log.debug("{} : {}", k, v));
@@ -166,7 +183,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClient redisClient = buildSingleClient(redisProtocol);
             connection = redisClient.connect();
-            CommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -204,7 +221,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
             connection = redisClusterClient.connect();
-            CommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -217,7 +234,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
         if (cacheOption.isPresent()) {
             RedisConnect redisConnect = (RedisConnect) cacheOption.get();
             connection = redisConnect.getConnection();
@@ -228,7 +245,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     log.info("The redis connect form cache, close error: {}", e.getMessage());
                 }
                 connection = null;
-                CommonCache.getInstance().removeCache(identifier);
+                ConnectionCommonCache.getInstance().removeCache(identifier);
             }
         }
         return connection;

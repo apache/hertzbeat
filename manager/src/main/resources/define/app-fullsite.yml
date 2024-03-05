@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对网站全部页面的 URL 路径、HTTP 状态码、响应时间及请求反馈进行监测。由于一个网站可能有多个不同服务提供的页面，系统将采集网站暴露的<a class='help_module_content' href='https://baike.baidu.com/item/sitemap/6241567?fr=ge_ala'>网站地图(SiteMap)</a>来监控全站。<span class='help_module_span'><br>⚠️注意：此功能需要您的网站支持 XML 和 TXT 格式的 SiteMap。</span>
-  en-US: "HertzBeat monitors all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview#:~:text=A%20sitemap%20is%20a%20file,crawl%20your%20site%20more%20efficiently.'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note: HertzBeat support SiteMap in XML or TXT format.</span>"
-  zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://baike.baidu.com/item/sitemap/6241567?fr=ge_ala'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
+  zh-CN: HertzBeat 对网站全部页面的 URL 路径、HTTP 状态码、响应时间及请求反馈进行监测。由于一个网站可能有多个不同服务提供的页面，系统将采集网站暴露的<a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>网站地图(SiteMap)</a>来监控全站。<span class='help_module_span'><br>⚠️注意：此功能需要您的网站支持 XML 和 TXT 格式的 SiteMap。</span>
+  en-US: HertzBeat monitoring all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note:HertzBeat support SiteMap in XML or TXT format.</span>
+  zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/guide/
   en-US: https://hertzbeat.com/docs/help/guide/
@@ -91,6 +91,9 @@ metrics:
   # metrics - summary
   # 监控指标 - summary
   - name: summary
+    i18n:
+      zh-CN: 概要信息
+      en-US: Summary
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -104,14 +107,25 @@ metrics:
       - field: url
         type: 1
         label: true
+        i18n:
+          zh-CN: URL
+          en-US: URL
       - field: statusCode
         type: 1
+        i18n:
+          zh-CN: 响应状态码
+          en-US: Status Code
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
       - field: errorMsg
         type: 1
-
+        i18n:
+          zh-CN: 错误信息
+          en-US: Error Msg
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http

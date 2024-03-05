@@ -20,7 +20,7 @@
               ><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -47,7 +47,7 @@
               ><span style="font-weight: bolder">{{ appCountProgram.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountProgram.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -73,7 +73,7 @@
               ><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
             </nz-tag>
           </div>
         </div>
@@ -99,7 +99,8 @@
               ><span style="font-weight: bolder">{{ appCountCache.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountCache.unManageSize }}</span>
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
+              ><span style="font-weight: bolder">{{ appCountCache.unManageSize }}</span>
             </nz-tag>
           </div>
         </div>
@@ -124,7 +125,7 @@
               ><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
             </nz-tag>
           </div>
         </div>
@@ -149,7 +150,7 @@
               ><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
             </nz-tag>
           </div>
         </div>
@@ -175,7 +176,7 @@
               ><span style="font-weight: bolder">{{ appCountBigdata.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountBigdata.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -202,7 +203,7 @@
               ><span style="font-weight: bolder">{{ appCountWebserver.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountWebserver.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -228,7 +229,7 @@
               ><span style="font-weight: bolder">{{ appCountCn.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span><span style="font-weight: bolder">{{ appCountCn.unManageSize }}</span>
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span><span style="font-weight: bolder">{{ appCountCn.unManageSize }}</span>
             </nz-tag>
           </div>
         </div>
@@ -254,7 +255,7 @@
               ><span style="font-weight: bolder">{{ appCountNetwork.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountNetwork.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -281,7 +282,7 @@
               ><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
             </nz-tag>
             <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.un-manage' | i18n }} </span
+              <span>{{ 'monitor.status.unmonitored' | i18n }} </span
               ><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
             </nz-tag>
           </div>
@@ -380,7 +381,7 @@
 </div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md" style="height: 100%">
     <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
       <nz-timeline nzMode="left">
         <nz-timeline-item
@@ -407,7 +408,7 @@
       </nz-timeline>
     </nz-card>
   </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 7 }" class="mb-md" style="height: 100%">
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 9 }" class="mb-md" style="height: 100%">
     <div
       echarts
       [options]="alertsEChartOption"
@@ -416,18 +417,6 @@
       [loading]="alertsLoading"
       (chartInit)="onAlertNumChartInit($event)"
       style="width: 100%; height: inherit; padding-left: 30px"
-      class="ant-card ant-card-bordered ant-card-hoverable"
-    ></div>
-  </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 5 }" class="mb-md" style="height: 100%">
-    <div
-      echarts
-      [options]="alertsDealEChartOption"
-      theme="default"
-      [autoResize]="true"
-      [loading]="alertsDealLoading"
-      (chartInit)="onAlertRateChartInit($event)"
-      style="width: 100%; height: inherit"
       class="ant-card ant-card-bordered ant-card-hoverable"
     ></div>
   </div>

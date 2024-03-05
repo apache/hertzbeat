@@ -56,7 +56,7 @@ public class TagController {
         tags = tags.stream().peek(tag -> {
             tag.setType((byte) 1);
             tag.setId(null);
-            }).distinct().collect(Collectors.toList());
+        }).distinct().collect(Collectors.toList());
         tagService.addTags(tags);
         return ResponseEntity.ok(Message.success("Add success"));
     }

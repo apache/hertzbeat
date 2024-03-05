@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 对网站是否可用，响应时间等指标进行监测。<br>您可以点击 “<i>新建 网站监测</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat monitors whether the website is available, response time and other metrics. You could click the "<i>New WEBSITE</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對網站是否可用，回應時間等名額進行監測。<br>您可以點擊“<i>新建網站監測</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-CN: Hertzbeat 支持对网站的是否可用，响应时间等指标进行采集监控。<br>您可以点击 “<i>新建 网站监测</i>” 并配置网站域名或IP进行添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat supports the collection and monitoring of website availability, response time and other metrics. <br>You can click "<i>New Website</i>" and configure the website domain name or IP to add it, or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 支持對網站的是否可用，響應時間等指標進行采集監控。<br>您可以點擊 “<i>新建 網站監測</i>” 並配置網站域名或IP進行添加，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/website
   en-US: https://hertzbeat.com/docs/help/websites
@@ -188,14 +188,14 @@ params:
     # name-param field display i18n name
     # name-参数字段显示名称
     name:
-      zh-CN: 关键字计数
-      en-US: Keyword Num
+      zh-CN: 计数关键字
+      en-US: Keyword
     # type-param field type(key-value mapping the html key-value input tags)
     # type-字段类型(key-value映射为前端key-value的双input格式渲染)
     type: text
     # 参数输入框提示信息
     # param field input placeholder
-    placeholder: 'Input monitored Keyword'
+    placeholder: 'Enter keyword which occurrences need to be monitored'
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false
@@ -225,7 +225,7 @@ metrics:
         unit: ms
         i18n:
           zh-CN: 响应时间
-          en-US: ResponseTime
+          en-US: Response Time
       - field: keyword
         type: 0
         i18n:

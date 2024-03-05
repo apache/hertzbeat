@@ -79,16 +79,20 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             if (monitorName != null) {
                 model.put("monitorName", monitorName);
             }
+            String monitorHost = alert.getTags().get(CommonConstants.TAG_MONITOR_HOST);
+            if (monitorHost != null) {
+                model.put("monitorHost", monitorHost);
+            }
             String thresholdId = alert.getTags().get(CommonConstants.TAG_THRESHOLD_ID);
             if (thresholdId != null) {
                 model.put("thresholdId", thresholdId);
             }
         }
-        
         model.put("alarmId", alert.getId());
         model.put("status", alert.getStatus());
         model.put("monitorIdLabel", bundle.getString("alerter.notify.monitorId"));
         model.put("monitorNameLabel", bundle.getString("alerter.notify.monitorName"));
+        model.put("monitorHostLabel", bundle.getString("alerter.notify.monitorHost"));
         model.put("target", alert.getTarget());
         model.put("targetLabel", bundle.getString("alerter.notify.target"));
         model.put("priorityLabel", bundle.getString("alerter.notify.priority"));
@@ -96,6 +100,10 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("priorityValue", alert.getPriority());
         model.put("triggerTimeLabel", bundle.getString("alerter.notify.triggerTime"));
         model.put("triggerTime", DTF.format(Instant.ofEpochMilli(alert.getLastAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        if (CommonConstants.ALERT_STATUS_CODE_RESTORED == alert.getStatus()) {
+            model.put("restoreTimeLabel", bundle.getString("alerter.notify.restoreTime"));
+            model.put("restoreTime", DTF.format(Instant.ofEpochMilli(alert.getFirstAlarmTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()));
+        }
         model.put("timesLabel", bundle.getString("alerter.notify.times"));
         model.put("times", alert.getTimes());
         model.put("contentLabel", bundle.getString("alerter.notify.content"));
@@ -123,7 +131,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
-
 }
 
 

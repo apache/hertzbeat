@@ -36,7 +36,11 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Mailbox sending service interface implementation class
@@ -56,6 +60,7 @@ public class MailServiceImpl implements MailService {
     protected NoticeConfigService noticeConfigService;
 
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public String buildAlertHtmlTemplate(final Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException {
@@ -63,33 +68,40 @@ public class MailServiceImpl implements MailService {
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         String monitorId = null;
         String monitorName = null;
+        String monitorHost = null;
         if (alert.getTags() != null) {
             monitorId = alert.getTags().get(CommonConstants.TAG_MONITOR_ID);
             monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+            monitorHost = alert.getTags().get(CommonConstants.TAG_MONITOR_HOST);
         }
         monitorId = monitorId == null ? "External Alarm, No ID" : monitorId;
         monitorName = monitorName == null ? "External Alarm, No Name" : monitorName;
+        monitorHost = monitorHost == null ? "External Alarm, No Host" : monitorHost;
         // Introduce context parameters to render pages
         Map<String, String> model = new HashMap<>(16);
         model.put("nameTitle", bundle.getString("alerter.notify.title"));
         model.put("nameMonitorId", bundle.getString("alerter.notify.monitorId"));
         model.put("nameMonitorName", bundle.getString("alerter.notify.monitorName"));
+        model.put("nameMonitorHost", bundle.getString("alerter.notify.monitorHost"));
         model.put("target", alert.getTarget());
         model.put("monitorId", monitorId);
         model.put("monitorName", monitorName);
+        model.put("monitorHost", monitorHost);
         model.put("nameTarget", bundle.getString("alerter.notify.target"));
         model.put("nameConsole", bundle.getString("alerter.notify.console"));
         model.put("namePriority", bundle.getString("alerter.notify.priority"));
         model.put("priority", bundle.getString("alerter.priority." + alert.getPriority()));
         model.put("nameTriggerTime", bundle.getString("alerter.notify.triggerTime"));
+        model.put("lastTriggerTime", simpleDateFormat.format(new Date(alert.getLastAlarmTime())));
+        if (CommonConstants.ALERT_STATUS_CODE_RESTORED == alert.getStatus()) {
+            model.put("nameRestoreTime", bundle.getString("alerter.notify.restoreTime"));
+            model.put("restoreTime", simpleDateFormat.format(new Date(alert.getFirstAlarmTime())));
+        }
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String triggerTime = simpleDateFormat.format(new Date(alert.getLastAlarmTime()));
-        model.put("lastTriggerTime", triggerTime);
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
         if (noticeTemplate == null) {
-            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType((byte)1);
+            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType((byte) 1);
         }
         if (noticeTemplate == null) {
             throw new NullPointerException("email does not have mapping default notice template");

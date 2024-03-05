@@ -76,6 +76,9 @@ public class WarehouseProperties {
             this.kafka = kafka;
         }
 
+        /**
+         * kafka配置信息
+         */
         public static class KafkaProperties {
             /**
              * kafka数据入口是否启动
@@ -234,6 +237,9 @@ public class WarehouseProperties {
             this.greptime = greptime;
         }
 
+        /**
+         * 内存存储配置信息
+         */
         public static class MemoryProperties {
             /**
              * 内存数据存储是否启动
@@ -261,6 +267,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * JPA配置信息
+         */
         public static class JpaProperties {
             /**
              * use mysql/h2 jpa store metrics history data
@@ -302,6 +311,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * Influxdb配置信息
+         */
         public static class InfluxdbProperties {
             /**
              * influxdb数据存储是否启动
@@ -377,6 +389,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * TdEngine配置信息
+         */
         public static class TdEngineProperties {
             /**
              * Whether the TdEngine data store is enabled
@@ -452,6 +467,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * VictoriaMetrics配置信息
+         */
         public static class VictoriaMetricsProperties {
             /**
              * Whether the VictoriaMetrics data store is enabled
@@ -504,6 +522,9 @@ public class WarehouseProperties {
             
         }
 
+        /**
+         * Redis配置信息
+         */
         public static class RedisProperties {
             /**
              * redis数据存储是否启动
@@ -567,6 +588,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * IoTDB配置信息
+         */
         public static class IotDbProperties {
             /**
              * Whether the iotDB data store is enabled
@@ -699,6 +723,9 @@ public class WarehouseProperties {
             }
         }
 
+        /**
+         * GrepTimeDB配置信息
+         */
         public static class GreptimeProperties {
             /**
              * Whether the GrepTimeDB data store is enabled

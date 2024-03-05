@@ -20,7 +20,7 @@ package org.dromara.hertzbeat.collector.collect.database;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.dromara.hertzbeat.collector.collect.common.cache.CommonCache;
+import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.dromara.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.dromara.hertzbeat.collector.dispatch.DispatchConstants;
 import org.dromara.hertzbeat.collector.util.CollectUtil;
@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,6 +57,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
+    
+    private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
     public JdbcCommonCollect(){}
 
@@ -63,9 +66,11 @@ public class JdbcCommonCollect extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         // check the params
-        if (metrics == null || metrics.getJdbc() == null) {
+        try {
+            validateParams(metrics);
+        } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("DATABASE collect must has jdbc params");
+            builder.setMsg(e.getMessage());
             return;
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
@@ -134,11 +139,11 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url,Integer timeout) throws Exception {
+    private Statement getConnection(String username, String password, String url, Integer timeout) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<Object> cacheOption = CommonCache.getInstance().getCache(identifier, true);
+        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
             JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
@@ -161,7 +166,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     log.error(e2.getMessage());
                 }
                 statement = null;
-                CommonCache.getInstance().removeCache(identifier);
+                ConnectionCommonCache.getInstance().removeCache(identifier);
             }
         }
         if (statement != null) {
@@ -175,7 +180,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         statement.setQueryTimeout(timeoutSecond);
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        CommonCache.getInstance().addCache(identifier, jdbcConnect);
+        ConnectionCommonCache.getInstance().addCache(identifier, jdbcConnect);
         return statement;
     }
 
@@ -325,5 +330,18 @@ public class JdbcCommonCollect extends AbstractCollect {
 
         }
         return url;
+    }
+
+    private void validateParams(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getJdbc() == null) {
+            throw new IllegalArgumentException("Database collect must has jdbc params");
+        }
+        if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
+            for (String keyword : VULNERABLE_KEYWORDS) {
+                if (metrics.getJdbc().getUrl().contains(keyword)) {
+                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
+                }
+            }
+        }
     }
 }

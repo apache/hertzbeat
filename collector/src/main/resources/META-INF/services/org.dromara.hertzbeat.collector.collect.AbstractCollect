@@ -9,7 +9,14 @@ org.dromara.hertzbeat.collector.collect.snmp.SnmpCollectImpl
 org.dromara.hertzbeat.collector.collect.ssh.SshCollectImpl
 org.dromara.hertzbeat.collector.collect.telnet.TelnetCollectImpl
 org.dromara.hertzbeat.collector.collect.smtp.SmtpCollectImpl
+org.dromara.hertzbeat.collector.collect.ntp.NtpCollectImpl
+org.dromara.hertzbeat.collector.collect.websocket.WebsocketCollectImpl
 org.dromara.hertzbeat.collector.collect.ftp.FtpCollectImpl
 org.dromara.hertzbeat.collector.collect.mq.RocketmqSingleCollectImpl
 org.dromara.hertzbeat.collector.collect.udp.UdpCollectImpl
 org.dromara.hertzbeat.collector.collect.push.PushCollectImpl
+org.dromara.hertzbeat.collector.collect.dns.DnsCollectImpl
+org.dromara.hertzbeat.collector.collect.nginx.NginxCollectImpl
+org.dromara.hertzbeat.collector.collect.memcached.MemcachedCollectImpl
+org.dromara.hertzbeat.collector.collect.nebulagraph.NebulaGraphCollectImpl
+org.dromara.hertzbeat.collector.collect.pop3.Pop3CollectImpl

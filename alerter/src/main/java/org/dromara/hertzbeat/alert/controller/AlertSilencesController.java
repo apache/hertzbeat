@@ -86,7 +86,7 @@ public class AlertSilencesController {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification,pageRequest);
+        Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification, pageRequest);
         Message<Page<AlertSilence>> message = Message.success(alertSilencePage);
         return ResponseEntity.ok(message);
     }

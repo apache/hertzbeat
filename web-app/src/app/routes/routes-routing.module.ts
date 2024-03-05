@@ -5,6 +5,7 @@ import { environment } from '@env/environment';
 // layout
 import { DetectAuthGuard } from '../core/guard/detect-auth-guard';
 import { LayoutBasicComponent } from '../layout/basic/basic.component';
+import { LayoutBlankComponent } from '../layout/blank/blank.component';
 import { LayoutPassportComponent } from '../layout/passport/passport.component';
 // dashboard pages
 import { DashboardComponent } from './dashboard/dashboard.component';
@@ -12,6 +13,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { UserLockComponent } from './passport/lock/lock.component';
 // passport pages
 import { UserLoginComponent } from './passport/login/login.component';
+import { StatusPublicComponent } from './status-public/status-public.component';
 
 const routes: Routes = [
   {
@@ -28,13 +30,11 @@ const routes: Routes = [
       { path: 'setting', loadChildren: () => import('./setting/setting.module').then(m => m.SettingModule) }
     ]
   },
-  // 空白布局
-  // {
-  //     path: 'blank',
-  //     component: LayoutBlankComponent,
-  //     children: [
-  //     ]
-  // },
+  {
+    path: 'status',
+    component: LayoutBlankComponent,
+    children: [{ path: '', component: StatusPublicComponent, data: { titleI18n: 'menu.extras.status' } }]
+  },
   // passport
   {
     path: 'passport',

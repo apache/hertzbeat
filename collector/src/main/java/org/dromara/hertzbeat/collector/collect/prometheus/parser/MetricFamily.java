@@ -15,46 +15,67 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.common.cache;
+package org.dromara.hertzbeat.collector.collect.prometheus.parser;
+
+import lombok.Data;
+import lombok.ToString;
+
+import java.util.List;
 
 /**
- * common cache service
+ * metric family
  * @author ceilzcx
  */
-public interface ICacheService<K, V> {
+@Data
+@ToString
+public class MetricFamily {
+    
+    /**
+     * metric name
+     */
+    private String name;
 
     /**
-     * get cache by key use clazz
-     * @param key key
-     * @return object
+     * metrics
      */
-    V get(K key);
+    private List<Metric> metricList;
 
     /**
-     * set cache
-     * @param key key
-     * @param value value
-     * @return old value
+     * Metric
      */
-    V put(K key, V value);
+    @Data
+    public static class Metric {
+
+        /**
+         * labels
+         */
+        private List<Label> labels;
+
+        /**
+         * value
+         */
+        private double value;
+
+        /**
+         * timestamp
+         */
+        private long timestamp;
+    }
 
     /**
-     * if contain cache by key
-     * @param key key
-     * @return true is contain
+     * Label
      */
-    boolean containsKey(K key);
+    @Data
+    public static class Label {
 
-    /**
-     * remove cache
-     * @param key key
-     * @return old value
-     */
-    V remove(K key);
+        /**
+         * name
+         */
+        private String name;
 
-    /**
-     * clear cache
-     * @return is clear success
-     */
-    boolean clear();
+        /**
+         * value
+         */
+        private String value;
+    }
 }

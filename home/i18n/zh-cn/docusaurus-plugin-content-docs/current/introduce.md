@@ -5,26 +5,21 @@ sidebar_label: 介绍
 slug: /
 ---
 
-> 易用友好的开源实时监控告警系统，无需Agent，高性能集群，强大自定义监控能力。
+> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
-[![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
-[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
-![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
-![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
-![hertzbeat](https://img.shields.io/badge/monitor-network-red)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+[![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
+[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
+[![QQ](https://img.shields.io/badge/QQ-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 
 ## 🎡 <font color="green">介绍</font>
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
 
 ### 特点
 
@@ -34,26 +29,19 @@ slug: /
 - 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
-
+- 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。    
 > 当然我们也提供了对应的 **[SAAS版本监控云服务](https://console.tancloud.cn)**，中小团队和个人无需再为监控自有资源而去部署一套监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
 ----   
 
-### 完全开源
-
-- 使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
-- 无监控数量`License`，监控类型等伪开源限制。
-- 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 开源不等同于免费，如果基于HertzBeat二次开发修改了logo，名称，版权等，[请找我们授权，否则会有法律风险](https://hertzbeat.com/docs/others/private)。
-
 ### 强大的监控模版
 
 > 开始我们就说 HertzBeat 的特点是自定义监控能力，无需 Agent。在讨论这两点之前，我们先介绍下 HertzBeat 的不一样的监控模版。而正是因为这样的监控模版设计，才会有了后面的高级特性。
 
-HertzBeat 自身并没有去创造一种采集数据协议，让对端来适配它。而是充分使用了现有的生态，SNMP采集网络交换机路由器信息，JMX采集JAVA应用信息，JDBC规范采集数据集信息，SSH直连执行脚本获取回显信息，HTTP+(JsonPath | prometheus等)解析接口信息，IPMI采集服务器信息等等。   
-HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模版的形式，来制定模版使用这些协议来采集任何想要的指标信息。
+HertzBeat 自身并没有去创造一种采集数据协议让监控对端来适配它。而是充分使用了现有的生态，`SNMP协议`采集网络交换机路由器信息，`JMX规范`采集JAVA应用信息，`JDBC规范`采集数据集信息，`SSH`直连执行脚本获取回显信息，`HTTP+(JsonPath | prometheus等)`解析API接口信息，`IPMI协议`采集服务器信息等等。   
+HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模版的形式，来制定模版使用这些协议来采集任何想要的指标数据。
 
 ![hertzbeat](/img/blog/multi-protocol.png)
 
@@ -64,13 +52,17 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 
 ### 内置监控类型
 
-**一款监控类型对应一个YML监控模版**
+**官方内置了大量的监控模版类型，方便用户直接在页面添加使用，一款监控类型对应一个YML监控模版**
 
 - [Website](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
   [Jvm](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
   [Ssl Certificate](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
-  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml)
+  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
+  [Udp Port](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
+  [Pop3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
+  [Api Code](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
+  [Nginx](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
 - [Mysql](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
   [MariaDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
   [ElasticSearch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
@@ -78,66 +70,87 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
   [DM](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
   [ClickHouse](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
   [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
+  [Doris BE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_fe.yml),
+  [Memcached](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-nebulaGraph.yml)
 - [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
-  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml)
+  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
+  [OpenSUSE](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
+  [Red Hat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
+  [AlmaLinux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
 - [Tomcat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
   [Zookeeper](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
   [ShenYu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
-  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml)
+  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
+  [Spring Gateway](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
+  [AirFlow](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
+  [Spark](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
 - [Kubernetes](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
 - [CiscoSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
 - 和更多自定义监控模版。
-- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
+- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ### 强大自定义功能
 
-> 由前面的**监控模版**介绍，大概清楚了 HertzBeat 拥有的强大自定义功能。      
+> 由前面的**监控模版**介绍，大概清楚了 `HertzBeat` 拥有的强大自定义功能。      
 > 我们将每个监控类型都视为一个监控模版，不管是官方内置的还是后期用户自定义新增的。用户都可以方便的通过修改监控模版来新增修改删除监控指标。       
-> 模版里面包含各个协议的使用，指标别名转换，指标计算，单位转换等一系列功能，帮助用户能采集到自己想要的监控指标。
+> 模版里面包含各个协议的使用配置，环境变量，指标转换，指标计算，单位转换，指标采集等一系列功能，帮助用户能采集到自己想要的监控指标。
 
 ![hertzbeat](/img/docs/custom-arch.png)
 
 ### 无需 Agent
 
-> 对于使用过各种系统的用户来说，可能最麻烦头大的不过就是各种 agent 的安装部署调试了。     
-> 每台主机得装个 agent，为了监控不同应用中间件可能还得装几个对应的 agent，量上来了轻轻松松上千个，写个批量脚本可能会减轻点负担。    
-> agent 的版本是否与主应用兼容, agent 与主应用的通讯调试, agent 的同步升级等等等等，这些全是头大的点。
+> 对于使用过各种系统的用户来说，可能最麻烦头大的不过就是各种 `agent` 的安装部署调试升级了。     
+> 每台主机得装个 `agent`，为了监控不同应用中间件可能还得装几个对应的 `agent`，监控数量上来了轻轻松松上千个，写个批量脚本可能会减轻点负担。    
+> `agent` 的版本是否与主应用兼容, `agent` 与主应用的通讯调试, `agent` 的同步升级等等等等，这些全是头大的点。
 
-HertzBeat 的原理就是使用不同的协议去直连对端系统，采集 PULL 的形式去拉取采集数据，无需用户在对端主机上部署安装 Agent | Exporter等。    
-比如监控 linux, 在 HertzBeat 端输入IP端口账户密码或密钥即可。   
-比如监控 mysql, 在 HertzBeat 端输入IP端口账户密码即可。    
+`HertzBeat` 的原理就是使用不同的协议去直连对端系统，采用 `PULL` 的形式去拉取采集数据，无需用户在对端主机上部署安装 `Agent` | `Exporter` 等。    
+- 比如监控 `linux操作系统`, 在 `HertzBeat` 端输入IP端口账户密码或密钥即可。   
+- 比如监控 `mysql数据库`, 在 `HertzBeat` 端输入IP端口账户密码即可。    
 **密码等敏感信息全链路加密**
 
 ### 高性能集群
 
-> 支持部署采集器集群，多采集器集群横向扩展，指数级提高可监控数量与采集性能。    
-> 监控任务在采集器集群中自调度，单采集器挂掉无感知故障迁移采集任务，新加入采集器节点自动调度分担采集压力。     
-> 单机模式与集群模式相互切换部署非常方便，无需额外组件部署。
+> 当监控数量指数级上升，采集性能下降或者环境不稳定容易造成采集器单点故障时，这时我们的采集器集群就出场了。   
+
+- `HertzBeat` 支持部署采集器集群，多采集器集群横向扩展，指数级提高可监控数量与采集性能。    
+- 监控任务在采集器集群中自调度，单采集器挂掉无感知故障迁移采集任务，新加入采集器节点自动调度分担采集压力。     
+- 单机模式与集群模式相互切换部署非常方便，无需额外组件部署。   
 
 ![hertzbeat](/img/docs/cluster-arch.png)
 
 ### 云边协同
 
-> 支持部署边缘采集器集群，与主 HertzBeat 服务云边协同提升采集能力。
+> 两地三中心，多云环境，多隔离网络，这些场景名词可能大家略有耳闻。当需要用一套监控系统统一监控不同隔离网络的IT资源时，这时我们的云边协同就来啦。
 
-在多个网络不相通的隔离网络中，在以往的方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。  
-HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 HertzBeat 服务统一调度管理展示。
+- `HertzBeat` 支持部署边缘采集器集群，与主 `HertzBeat` 服务云边协同提升采集能力。
+
+在多个网络不相通的隔离网络中，在以往方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。  
+`HertzBeat` 提供的云边协同能力，可以在多个隔离网络部署边缘采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主服务统一调度管理展示。
 
 ![hertzbeat](/img/docs/cluster-arch.png)
 
 ### 易用友好
 
-> 集 **监控+告警+通知** All in one, 无需单独部署多个组件服务。    
-> 全UI界面操作，不管是新增监控，修改监控模版，还是告警阈值通知，都可在WEB界面操作完成，无需要修改文件或脚本或重启。     
-> 无需 Agent, 监控对端我们只需在WEB界面填写所需IP端口账户密码等参数即可。   
-> 自定义友好，只需一个监控模版YML，自动生成对应监控类型的监控管理页面，数据图表页面，阈值配置等。   
-> 阈值告警通知友好，基于表达式阈值配置，多种告警通知渠道，支持告警静默，时段标签告警级别过滤等。
+- 集 **监控+告警+通知** All in one, 无需单独部署多个组件服务。    
+- 全UI界面操作，不管是新增监控，修改监控模版，还是告警阈值通知，都可在WEB界面操作完成，无需要修改文件或脚本或重启。     
+- 无需 Agent, 监控对端我们只需在WEB界面填写所需IP端口账户密码等参数即可。   
+- 自定义友好，只需一个监控模版YML，自动生成对应监控类型的监控管理页面，数据图表页面，阈值配置等。   
+- 阈值告警通知友好，基于表达式阈值配置，多种告警通知渠道，支持告警静默，时段标签告警级别过滤等。
 
+### 完全开源
 
+- Dromara开源社区顶级项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
+- 无监控数量`License`，监控类型等伪开源限制。
+- 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
+- 开源不等同于免费，不能基于HertzBeat二次开发修改logo，名称，版权等。
+
+**HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
+
+![cncf](/img/home/cncf-landscape-left-logo.svg)
 
 -----
 
@@ -176,7 +189,11 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
   [Http Api](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
   [Jvm](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
   [Ssl Certificate](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
-  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml)
+  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
+  [Udp Port](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
+  [Pop3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
+  [Api Code](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
+  [Nginx](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
 - [Mysql](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
   [MariaDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
   [ElasticSearch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
@@ -184,6 +201,8 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
   [DM](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
   [ClickHouse](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
   [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
+  [Doris BE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_fe.yml),
+  [Memcached](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-nebulaGraph.yml)
 - [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
@@ -194,7 +213,10 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
   [Zookeeper](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
   [ShenYu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
-  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml)
+  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
+  [Spring Gateway](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
+  [AirFlow](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
+  [Spark](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
 - [Kubernetes](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
 - [CiscoSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
@@ -265,6 +287,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 - 功能包含接收人信息管理和通知策略管理，接收人管理维护接收人信息以其通知方式信息，通知策略管理维护把哪些告警信息通知给哪些接收人的策略规则。
 - 通知方式支持 `邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式。
 - 通知策略支持标签匹配和告警级别匹配，方便的使不同标签的告警和告警级别分派给不同的接收处理人。
+- 支持通知模版，用户可以自定义通过模版内容格式来满足自己的个性化通知展示需求。
 
 ![hertzbeat](/img/home/16.png)
 
@@ -282,7 +305,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 -----
 
-**还有更多强大的功能可以使用探索。Have Fun!**
+**还有更多强大的功能快去探索呀。Have Fun!**
 
 ----- 
 

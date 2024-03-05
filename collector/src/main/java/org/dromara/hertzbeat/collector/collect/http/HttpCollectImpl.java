@@ -112,9 +112,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
-        try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
@@ -389,13 +387,13 @@ public class HttpCollectImpl extends AbstractCollect {
                 for (String aliasField : aliasFields) {
                     if ("value".equals(aliasField)) {
                         if (metric.getCounter() != null) {
-                            valueRowBuilder.addColumns(metric.getCounter().getValue() + "");
+                            valueRowBuilder.addColumns(String.valueOf(metric.getCounter().getValue()));
                         } else if (metric.getGauge() != null) {
-                            valueRowBuilder.addColumns(metric.getGauge().getValue() + "");
+                            valueRowBuilder.addColumns(String.valueOf(metric.getGauge().getValue()));
                         } else if (metric.getUntyped() != null) {
-                            valueRowBuilder.addColumns(metric.getUntyped().getValue() + "");
+                            valueRowBuilder.addColumns(String.valueOf(metric.getUntyped().getValue()));
                         } else if (metric.getInfo() != null) {
-                            valueRowBuilder.addColumns(metric.getInfo().getValue() + "");
+                            valueRowBuilder.addColumns(String.valueOf(metric.getInfo().getValue()));
                         }
                     } else {
                         valueRowBuilder.addColumns(labelMap.get(aliasField));

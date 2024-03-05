@@ -52,6 +52,7 @@ public class NoticeConfigController {
 
     @Autowired
     private NoticeConfigService noticeConfigService;
+
     @PostMapping(path = "/receiver")
     @Operation(summary = "Add a recipient", description = "新增一个接收人")
     public ResponseEntity<Message<Void>> addNewNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {

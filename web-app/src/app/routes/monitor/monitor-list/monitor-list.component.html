@@ -9,7 +9,7 @@
   [help_massage_content]="'monitors.center.help' | i18n"
   [guild_link]="'monitors.center.help.link' | i18n"
   [module_name]="'menu.monitor.center'"
-  [icon_name]="'monitor_icon.center' | i18n"
+  [icon_name]="'laptop'"
 ></app-help-massage-show>
 <nz-divider></nz-divider>
 
@@ -91,7 +91,7 @@
     <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
     <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
     <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.un-manage' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.unmonitored' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -132,15 +132,15 @@
         </button>
       </td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.status == 0" nzColor="default">
+        <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
           <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.un-manage' | i18n }}</span>
+          <span>{{ 'monitor.status.unmonitored' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 1" nzColor="success">
+        <nz-tag *ngIf="data.status == 1" [nzColor]="'#09b919'">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
           <span>{{ 'monitor.status.available' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 2" nzColor="error">
+        <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
           <i nz-icon nzType="frown" nzTheme="outline"></i>
           <span>{{ 'monitor.status.unavailable' | i18n }}</span>
         </nz-tag>
@@ -234,12 +234,12 @@
   [nzFooter]="switchExportTypeModalFooter"
 >
   <ng-container *nzModalContent>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('YAML')" [nzLoading]="exportYamlButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}
-      </button>
-    </p>
+    <!--    <p style="text-align: center">-->
+    <!--      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('YAML')" [nzLoading]="exportYamlButtonLoading">-->
+    <!--        <span nz-icon nzType="download"></span>-->
+    <!--        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}-->
+    <!--      </button>-->
+    <!--    </p>-->
     <p style="text-align: center">
       <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('JSON')" [nzLoading]="exportJsonButtonLoading">
         <span nz-icon nzType="download"></span>

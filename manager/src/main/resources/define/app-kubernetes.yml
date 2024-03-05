@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>⚠️注意：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看获取步骤</a>。</span>
-  en-US: "HertzBeat monitors kubernetes through general performance metrics such as nodes, namespaces and pods. <br><span class='help_module_span'>⚠️Note: In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat對kubernetes的通用性能指標（nodes、namespaces、pods、services）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Kubernetes中的指標，則需要獲取到可訪問Api Server的授權TOKEN，讓採集請求獲取到對應的指標，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看獲取步驟</a>。</span>
+  zh-CN: HertzBeat 通过查询 Kubernetes ApiServer api 来对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes'>点击查看获取步骤</a>。</span>
+  en-US: HertzBeat monitoring Kubernetes general metrics such as nodes, namespaces and pods through querying data from Kubernetes ApiServer api. <br><span class='help_module_span'>Note⚠️:In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.com/docs/help/kubernetes'>Click here to view the specific steps.</a></span>
+  zh-TW: HertzBeat 通過查詢 Kubernetes ApiServer api 來對 kubernetes 的通用性能指標（nodes、namespaces、pods、services）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Kubernetes 中的信息，則需要獲取到可訪問 Api Server 的授權 TOKEN，讓采集請求獲取到對應的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes'>點擊查看獲取步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/kubernetes
   en-US: https://hertzbeat.com/docs/help/kubernetes
@@ -95,7 +95,6 @@ params:
       en-US: Access Token
     type: text
     required: true
-
 # collect metrics config list
 # 采集指标配置列表
 metrics:
@@ -114,20 +113,41 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: node_name
         type: 1
+        i18n:
+          zh-CN: 节点名称
+          en-US: Node Name
       - field: is_ready
         type: 1
+        i18n:
+          zh-CN: 节点就绪状态
+          en-US: Node Ready Status
       - field: capacity_cpu
         type: 0
+        i18n:
+          zh-CN: CPU 容量
+          en-US: CPU Capacity
       - field: allocatable_cpu
         type: 0
+        i18n:
+          zh-CN: 可分配 CPU
+          en-US: Allocatable CPU
       - field: capacity_memory
         type: 0
         unit: Mi
+        i18n:
+          zh-CN: 内存容量
+          en-US: Memory Capacity
       - field: allocatable_memory
         type: 0
         unit: Mi
+        i18n:
+          zh-CN: 可分配内存
+          en-US: Allocatable Memory
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
@@ -172,10 +192,19 @@ metrics:
     fields:
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     aliasFields:
       - $.metadata.name
       - $.status.phase
@@ -202,20 +231,44 @@ metrics:
     fields:
       - field: pod
         type: 1
+        i18n:
+          zh-CN: Pod名称
+          en-US: Pod Name
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
       - field: restart
         type: 1
+        i18n:
+          zh-CN: 重启次数
+          en-US: Restart Count
       - field: host_ip
         type: 1
+        i18n:
+          zh-CN: 主机IP
+          en-US: Host IP
       - field: pod_ip
         type: 1
+        i18n:
+          zh-CN: Pod IP
+          en-US: Pod IP
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
       - field: start_time
         type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace
@@ -252,16 +305,34 @@ metrics:
     fields:
       - field: service
         type: 1
+        i18n:
+          zh-CN: 服务
+          en-US: Service
       - field: namespace
         type: 1
+        i18n:
+          zh-CN: 命名空间
+          en-US: Namespace
       - field: type
         type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
       - field: cluster_ip
         type: 1
+        i18n:
+          zh-CN: 集群IP
+          en-US: Cluster IP
       - field: selector
         type: 1
+        i18n:
+          zh-CN: 选择器
+          en-US: Selector
       - field: creation_time
         type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Time
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace

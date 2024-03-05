@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控 <br><span class='help_module_span'>⚠️注意：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
-  en-US: "HertzBeat monitors Docker through general performance metrics such as containers, status, <br><span class='help_module_span'>⚠️Note: In order to monitor container information of Docker, you need to enable the port so that the collection request can obtain the corresponding information.<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat對Docker容器的通用性能指標（system、containers、stats）進行採集監控<br><span class='help_ module_ span'> ⚠️ 注意：為了監控Docker中的容器指標，您需要打開埠，讓採集請求獲取到對應的指標，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/docker#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C '>點擊查看開啟步驟</a>。</span>
+  zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat monitoring Docker of general performance metrics such as containers, status etc. <br><span class='help_module_span'>Note⚠️:In order to monitoring metrics of Docker, you need to enable the data export port so that the collector can collect data from here，<a class='help_module_content' href='https://hertzbeat.com/docs/help/docker'>Click here to view the steps</a>.</span>
+  zh-TW: HertzBeat 對 Docker 容器的通用性能指標（system、containers、stats）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Docker 中的容器信息，您需要打開端口，讓采集請求獲取到對應的信息, <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/docker'>點擊查看開啓步驟</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/docker/
   en-US: https://hertzbeat.com/docs/help/docker/
@@ -62,7 +62,7 @@ params:
     defaultValue: 2375
   - field: ssl
     name:
-      zh-CN: 启动SSL
+      zh-CN: SSL连接
       en-US: SSL
     # shen the type is boolean, the front end uses switch to display the switch
     # 当type为boolean时,前端用switch展示开关
@@ -70,6 +70,9 @@ params:
     required: false
 metrics:
   - name: system
+    i18n:
+      zh-CN: 系统
+      en-US: system
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -81,29 +84,65 @@ metrics:
       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: name
+        i18n:
+          zh-CN: 主机名
+          en-US: name
         type: 1
       - field: version
+        i18n:
+          zh-CN: 版本
+          en-US: version
         type: 1
       - field: os
+        i18n:
+          zh-CN: 操作系统
+          en-US: os
         type: 1
       - field: root_dir
+        i18n:
+          zh-CN: 根目录
+          en-US: root dir
         type: 1
       - field: containers
+        i18n:
+          zh-CN: 容器总数
+          en-US: containers
         type: 0
       - field: containers_running
+        i18n:
+          zh-CN: 运行容器数
+          en-US: running containers
         type: 0
       - field: containers_paused
+        i18n:
+          zh-CN: 暂停容器数
+          en-US: paused containers
         type: 0
       - field: containers_stopped
+        i18n:
+          zh-CN: 已停止容器数
+          en-US: stopped containers
         type: 0
       - field: images
+        i18n:
+          zh-CN: 镜像数
+          en-US: images
         type: 0
       - field: ncpu
+        i18n:
+          zh-CN: CPU数量
+          en-US: ncpu
         type: 0
       - field: mem_total
+        i18n:
+          zh-CN: 内存总量
+          en-US: total memory
         type: 0
         unit: MB
       - field: system_time
+        i18n:
+          zh-CN: 系统时间
+          en-US: system time
         type: 1
     aliasFields:
       - Name
@@ -159,6 +198,9 @@ metrics:
       parseType: default
 
   - name: containers
+    i18n:
+      zh-CN: 容器总数
+      en-US: containers
     # The smaller the priority value (0-127), the higher the priority of the metrics. Lower-priority metricss will be scheduled after higher-priority metricss have been collected. metricss with the same priority will be scheduled to collect data in parallel.
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
@@ -170,16 +212,34 @@ metrics:
       # metric information includes field name type field type: 0-number, 1-string whether instance is the primary key of the instance unit: metric unit
       # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: id
+        i18n:
+          zh-CN: 主键
+          en-US: ID
         type: 1
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
         type: 1
       - field: image
+        i18n:
+          zh-CN: 镜像
+          en-US: image
         type: 1
       - field: command
+        i18n:
+          zh-CN: 命令行
+          en-US: command
         type: 1
       - field: state
+        i18n:
+          zh-CN: 状态
+          en-US: state
         type: 1
       - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
         type: 1
     aliasFields:
       - Id
@@ -222,24 +282,48 @@ metrics:
       parseScript: '$.*'
 
   - name: stats
+    i18n:
+      zh-CN: 状态
+      en-US: stats
     priority: 2
     fields:
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
         type: 1
       - field: available_memory
+        i18n:
+          zh-CN: 可用内存
+          en-US: available memory
         type: 0
         unit: MB
       - field: used_memory
+        i18n:
+          zh-CN: 已用内存
+          en-US: used memory
         type: 0
         unit: MB
       - field: memory_usage
+        i18n:
+          zh-CN: 内存使用率
+          en-US: memory usage
         type: 0
         unit: '%'
       - field: cpu_delta
+        i18n:
+          zh-CN: 已使用CPU数
+          en-US: cpu delta
         type: 0
       - field: number_cpus
+        i18n:
+          zh-CN: 可使用CPU数
+          en-US: cpus number
         type: 0
       - field: cpu_usage
+        i18n:
+          zh-CN: CPU使用率
+          en-US: cpu usage
         type: 0
         unit: '%'
     aliasFields:

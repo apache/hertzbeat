@@ -75,8 +75,6 @@ import static java.util.Objects.isNull;
 @Slf4j
 public class AppServiceImpl implements AppService, CommandLineRunner {
 
-    private static final Yaml YAML = new Yaml();
-
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
 
     @Resource
@@ -170,6 +168,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             throw new IllegalArgumentException("The app " + app + " not support.");
         }
         return appDefine.clone();
+    }
+
+    @Override
+    public Optional<Job> getAppDefineOption(String app) {
+        if (StringUtils.hasText(app)) {
+            Job appDefine = appDefines.get(app.toLowerCase());
+            return Optional.ofNullable(appDefine);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -271,7 +278,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                                     hierarchyField.setValue(item.getName());
                                     hierarchyField.setLabel(item.getName());
                                     hierarchyField.setIsLeaf(true);
-                                    hierarchyField.setType((byte)item.getType());
+                                    hierarchyField.setType((byte) item.getType());
                                     hierarchyField.setUnit(item.getUnit());
                                     return hierarchyField;
                                 }).collect(Collectors.toList());
@@ -471,12 +478,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public boolean loadAppDefines() {
             try {
+                Yaml yaml = new Yaml();
                 log.info("load define app yml in internal jar");
                 var resolver = new PathMatchingResourcePatternResolver();
                 var resources = resolver.getResources("classpath:define/*.yml");
                 for (var resource : resources) {
                     try (var inputStream = resource.getInputStream()) {
-                        var app = YAML.loadAs(inputStream, Job.class);
+                        var app = yaml.loadAs(inputStream, Job.class);
                         appDefines.put(app.getApp().toLowerCase(), app);
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
@@ -535,6 +543,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 }
             }
             log.info("load define path {}", defineAppPath);
+            Yaml yaml = new Yaml();
             for (var appFile : Objects.requireNonNull(directory.listFiles())) {
                 if (appFile.exists() && appFile.isFile()) {
                     if (appFile.isHidden()
@@ -543,7 +552,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                         continue;
                     }
                     try (var fileInputStream = new FileInputStream(appFile)) {
-                        var app = YAML.loadAs(fileInputStream, Job.class);
+                        var app = yaml.loadAs(fileInputStream, Job.class);
                         if (app != null) {
                             appDefines.put(app.getApp().toLowerCase(), app);
                         }
@@ -591,10 +600,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public boolean loadAppDefines() {
             var objectStoreService = getObjectStoreService();
+            Yaml yaml = new Yaml();
             objectStoreService.list("define")
                     .forEach(it -> {
                         if (it.getInputStream() != null) {
-                            var app = YAML.loadAs(it.getInputStream(), Job.class);
+                            var app = yaml.loadAs(it.getInputStream(), Job.class);
                             if (app != null) {
                                 appDefines.put(app.getApp().toLowerCase(), app);
                             }

@@ -5,8 +5,9 @@ Learn From [webdriverio](https://webdriver.io/)
 
 ## Installation
 
-```console
+```shell
 yarn install
+## yarn install --registry=https://registry.npmmirror.com
 ```
 
 ## I18N

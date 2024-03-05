@@ -52,6 +52,7 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * netty server
+ * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingServer.java">NettyRemotingServer</a>
  */
 @Slf4j
 public class NettyRemotingServer extends NettyRemotingAbstract implements RemotingServer {
@@ -179,6 +180,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         this.nettyHookList.addAll(nettyHookList);
     }
 
+    /**
+     * netty server handler
+     */
     @ChannelHandler.Sharable
     public class NettyServerHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
 

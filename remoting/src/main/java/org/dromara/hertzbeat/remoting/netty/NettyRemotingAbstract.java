@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * netty remote abstract
- * 参考: org.apache.rocketmq.remoting.netty.NettyRemotingAbstract
+ * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingAbstract.java">NettyRemotingAbstract</a>
  */
 @Slf4j
 public abstract class NettyRemotingAbstract implements RemotingService {

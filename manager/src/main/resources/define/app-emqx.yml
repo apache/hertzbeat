@@ -20,7 +20,7 @@ app: emqx
 # The app api i18n name
 # app api国际化名称
 name:
-  zh-CN: EMQX 消息服务器
+  zh-CN: EMQX MQTT
   en-US: EMQX MQTT
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息

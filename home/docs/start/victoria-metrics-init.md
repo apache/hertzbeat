@@ -1,10 +1,12 @@
 ---
 id: victoria-metrics-init
-title: Use Time Series Database VictoriaMetrics to Store Metrics Data (Optional)
+title: Use Time Series Database VictoriaMetrics to Store Metrics Data (Recommended)
 sidebar_label: Use VictoriaMetrics Store Metrics 
 ---
 
-HertzBeat's historical data storage relies on the time series database VictoriaMetrics(Recommend), IoTDB or TDengine, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+We recommend VictoriaMetrics for long term support.
+
 
 VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and time series database.Recommend Version(VictoriaMetrics:v1.95.1+, HertzBeat:v1.4.3+)
 

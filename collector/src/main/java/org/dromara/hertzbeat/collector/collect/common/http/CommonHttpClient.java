@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.collector.collect.common.http;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
@@ -37,6 +38,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,28 +80,27 @@ public class CommonHttpClient {
     private static final int SOCKET_TIMEOUT = 60000;
 
     /**
-     * validated time for idle connection
-     * 空闲连接免检的有效时间，被重用的空闲连接若超过此时间，需检查此连接的可用性
+     * validated time for idle connection. if when reuse this connection after this time, we will check it available.
      */
     private static final int INACTIVITY_VALIDATED_TIME = 10000;
 
     /**
      * ssl supported version
      */
-    private static final String[] SUPPORTED_SSL = {"TLSv1","TLSv1.1","TLSv1.2","SSLv3"};
+    private static final String[] SUPPORTED_SSL = {"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"};
 
     static {
         try {
             SSLContext sslContext = SSLContexts.createDefault();
             X509TrustManager x509TrustManager = new X509TrustManager() {
                 @Override
-                public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException { }
+                public void checkClientTrusted(X509Certificate[] x509Certificates, String s) { }
+
                 @Override
                 public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                    // check server certificate timeout 
-                    // 判断服务器证书有效时间
+                    // check server ssl certificate expired
                     Date now = new Date();
-                    if (x509Certificates != null && x509Certificates.length > 0) {
+                    if (x509Certificates != null) {
                         for (X509Certificate certificate : x509Certificates) {
                             Date deadline = certificate.getNotAfter();
                             if (deadline != null && now.after(deadline)) {
@@ -106,6 +109,7 @@ public class CommonHttpClient {
                         }
                     }
                 }
+
                 @Override
                 public X509Certificate[] getAcceptedIssuers() { return null; }
             };
@@ -130,26 +134,21 @@ public class CommonHttpClient {
             httpClient = HttpClients.custom()
                     .setConnectionManager(connectionManager)
                     .setDefaultRequestConfig(requestConfig)
-                    // 定期清理不可用过期连接
+                    // clean up unavailable expired connections
                     .evictExpiredConnections()
-                    // 定期清理可用但空闲的连接
+                    // clean up available but idle connections
                     .evictIdleConnections(100, TimeUnit.SECONDS)
                     .build();
-            Thread connectCleaner = new Thread(() -> {
-                while (Thread.currentThread().isInterrupted()) {
-                    try {
-                        Thread.sleep(30000);
-                        connectionManager.closeExpiredConnections();
-                        connectionManager.closeIdleConnections(100, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            });
-            connectCleaner.setName("http-connection-pool-cleaner");
-            connectCleaner.setDaemon(true);
-            connectCleaner.start();
-        } catch (Exception e) {
-        }
+            ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                    .setNameFormat("http-connection-pool-cleaner-%d")
+                    .setDaemon(true)
+                    .build();
+            ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1, threadFactory);
+            scheduledExecutor.scheduleWithFixedDelay(() -> {
+                connectionManager.closeExpiredConnections();
+                connectionManager.closeIdleConnections(100, TimeUnit.SECONDS);
+            }, 40L, 40L, TimeUnit.SECONDS);
+        } catch (Exception ignored) {}
     }
 
     public static CloseableHttpClient getHttpClient() {

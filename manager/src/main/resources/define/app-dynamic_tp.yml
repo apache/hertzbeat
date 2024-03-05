@@ -27,9 +27,9 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 对 DynamicTp actuator 暴露的线程池性能指标（thread pool）进行采集监控。<br><span class='help_module_span'>⚠️注意：您需要集成使用 DynamicTp，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>点击查看集成步骤</a>。
-  en-US: "HertzBeat monitors DynamicTp through the thread Pool Performance Metrics which exposed by DynamicTp actuator. <br><span class='help_module_span'>⚠️Note: You should integrate and use DynamicTp, <a class='help_module_content' href='https://hertzbeat.com/docs/help/dynamic_tp'>Click here to view the specific steps.</a>"
-  zh-TW: HertzBeat對DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_ module_ span'> ⚠️ 注意：您需要集成使用DynamicTp，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
+  zh-CN: HertzBeat 对 DynamicTp actuator 暴露的线程池性能指标（thread pool）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要集成使用 DynamicTp，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>点击查看集成步骤</a>。
+  en-US: HertzBeat monitoring DynamicTp of the thread Pool Performance Metrics which exposed by DynamicTp actuator. <br><span class='help_module_span'>Note⚠️:You should integrate and use DynamicTp, <a class='help_module_content' href='https://hertzbeat.com/docs/help/dynamic_tp'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat 對 DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_ module_ span'>注意⚠️：您需要集成使用DynamicTp，<a class='help_ module_ content' href='https://hertzbeat.com/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/dynamic_tp/
   en-US: https://hertzbeat.com/docs/help/dynamic_tp/

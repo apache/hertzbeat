@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +41,7 @@ import java.time.LocalDateTime;
 
 /**
  * collector entity
+ *
  * @author tom
  */
 @Entity
@@ -35,40 +53,40 @@ import java.time.LocalDateTime;
 @Schema(description = "slave collector entity | 注册采集器实体")
 @EntityListeners(AuditingEntityListener.class)
 public class Collector {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "primary id", example = "2")
     private Long id;
-    
-	@Schema(title = "collector identity name", description = "collector identity name")
-	@NotNull
-	private String name;
-    
+
+    @Schema(title = "collector identity name", description = "collector identity name")
+    @NotNull
+    private String name;
+
     @Schema(title = "collector ip", description = "collector remote ip")
     @NotNull
     private String ip;
-    
+
     @Schema(title = "collector status: 0-online 1-offline")
     @Min(0)
     private byte status;
 
-	@Schema(title = "collector mode: public or private")
-	private String mode;
+    @Schema(title = "collector mode: public or private")
+    private String mode;
 
-	@Schema(title = "The creator of this record", example = "tom")
-	@CreatedBy
-	private String creator;
-	
-	@Schema(title = "This record was last modified by")
-	@LastModifiedBy
-	private String modifier;
-	
-	@Schema(title = "This record creation time (millisecond timestamp)")
-	@CreatedDate
-	private LocalDateTime gmtCreate;
-	
-	@Schema(title = "Record the latest modification time (timestamp in milliseconds)")
-	@LastModifiedDate
-	private LocalDateTime gmtUpdate;
+    @Schema(title = "The creator of this record", example = "tom")
+    @CreatedBy
+    private String creator;
+
+    @Schema(title = "This record was last modified by")
+    @LastModifiedBy
+    private String modifier;
+
+    @Schema(title = "This record creation time (millisecond timestamp)")
+    @CreatedDate
+    private LocalDateTime gmtCreate;
+
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
+    @LastModifiedDate
+    private LocalDateTime gmtUpdate;
 }

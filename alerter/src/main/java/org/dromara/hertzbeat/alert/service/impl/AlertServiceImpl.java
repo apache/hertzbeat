@@ -144,12 +144,12 @@ public class AlertServiceImpl implements AlertService {
     private Alert buildAlertData(AlertReport alertReport){
         Map<String, String> annotations = alertReport.getAnnotations();
         StringBuilder sb = new StringBuilder();
-        if(alertReport.getContent() == null || alertReport.getContent().length() <= 0){
+        if (alertReport.getContent() == null || alertReport.getContent().length() <= 0){
             StringBuilder finalSb = sb;
             annotations.forEach((k, v) -> {
                 finalSb.append(k).append(":").append(v).append("\n");
             });
-        }else{
+        }else {
             sb = new StringBuilder(alertReport.getContent());
         }
         LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), 

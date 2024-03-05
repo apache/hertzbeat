@@ -56,9 +56,11 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         this.serverAvailable = initRedisClient(properties);
         this.db = getRedisSelectDb(properties);
     }
+
     private Integer getRedisSelectDb(WarehouseProperties properties){
         return properties.getStore().getRedis().getDb();
     }
+
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
         RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
@@ -78,7 +80,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     public void saveData(CollectRep.MetricsData metricsData) {
         String key = String.valueOf(metricsData.getId());
         String hashKey = metricsData.getMetrics();
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+        if (metricsData.getCode() != CollectRep.Code.SUCCESS || !isServerAvailable()) {
             return;
         }
         if (metricsData.getValuesList().isEmpty()) {

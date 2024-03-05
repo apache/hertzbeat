@@ -66,6 +66,10 @@ public class AlerterProperties {
      * ServerChan Notify url
      */
     private String serverChanNotifyUrl = "https://sctapi.ftqq.com/%s.send";
+    /**
+     * Gotify Notify url
+     */
+    private String gotifyNotifyUrl = "https://push.example.de/message?token=";
 
     /**
      * Data entry configuration properties
@@ -84,6 +88,9 @@ public class AlerterProperties {
          */
         private KafkaProperties kafka;
 
+        /**
+         * kafka configuration information
+         */
         @Getter
         @Setter
         public static class KafkaProperties {
