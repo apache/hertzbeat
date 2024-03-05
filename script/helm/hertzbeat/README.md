@@ -59,7 +59,7 @@ The external URL for HertzBeat core service is used to:
 
 Format: `protocol://domain[:port]`. Usually:
 
-- if service exposed via `Ingress`, the `domain` should be the value of `expose.ingress.hosts.core`
+- if service exposed via `Ingress`, the `domain` should be the value of `expose.ingress.hosts`
 - if service exposed via `ClusterIP`, the `domain` should be the value of `expose.clusterIP.name`
 - if service exposed via `NodePort`, the `domain` should be the IP address of one Kubernetes node
 - if service exposed via `LoadBalancer`, set the `domain` as your own domain name and add a CNAME record to map the domain name to the one you got from the cloud provider
@@ -94,7 +94,7 @@ The following table lists the configurable parameters of the HertzBeat chart and
 | Parameter                             | Description                                                                                                                                                                                                     | Default         |
 |---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
 | **Expose**                            |                                                                                                                                                                                                                 |                 |
-| `expose.type`                         | How to expose the service: `ingress`, `clusterIP`, `nodePort` or `loadBalancer`, other values will be ignored and the creation of service will be skipped.                                                      | `ingress`       |
+| `expose.type`                         | How to expose the service: `Ingress`, `ClusterIP`, `NodePort` or `LoadBalancer`, other values will be ignored and the creation of service will be skipped.                                                      | `Ingress`       |
 | `expose.clusterIP.name`               | The name of ClusterIP service                                                                                                                                                                                   | `hertzbeat`     |
 | `expose.clusterIP.annotations`        | The annotations attached to the ClusterIP service                                                                                                                                                               | {}              |
 | `expose.clusterIP.ports.port`         | The service port HertzBeat listens on when serving HTTP                                                                                                                                                         | `80`            |
