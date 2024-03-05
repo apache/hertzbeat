@@ -33,30 +33,22 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
 # Collection Metrics
 
-#### Metrics Set：nginx_status
+## Metrics Set：server
 
-| Metric name | Metric unit | Metric help description                  |
-|-------------|-------------|------------------------------------------|
-| accepts     |             | Accepted connections                     |
-| handled     |             | Successfully processed connections       |
-| active      |             | Currently active connections             |
-| dropped     |             | Discarded connections                    |
-| requests    |             | Client requests                          |
-| reading     |             | Connections performing read operations   |
-| writing     |             | Connections performing write operations  |
-| waiting     |             | Waiting connections                      |
+| Metric name   | Metric unit | Metric help description |
+| ------------- | ----------- | ----------------------- |
+| Address       |             |                         |
+| Port          |             |                         |
+| Response Time | ms          |                         |
 
-#### Metrics Set：req_status
+## Metrics Set：service
 
-| Metric name | Metric unit | Metric help description         |
-|-------------|-------------|---------------------------------|
-| zone_name   |             | Group category                  |
-| key         |             | Group name                      |
-| max_active  |             | Maximum concurrent connections  |
-| max_bw      | kb          | Maximum bandwidth               |
-| traffic     | kb          | Total traffic                   |
-| requests    |             | Total requests                  |
-| active      |             | Current concurrent connections  |
-| bandwidth   | kb          | Current bandwidth               |
+| Metric name   | Metric unit | Metric help description          |
+| ------------- | ----------- | -------------------------------- |
+| Service Id    |             |                                  |
+| Service Name  |             |                                  |
+| Address       |             |                                  |
+| Port          |             |                                  |
+| Health Status |             | Current health status of service |
 
 
