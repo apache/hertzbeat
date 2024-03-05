@@ -337,9 +337,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             throw new IllegalArgumentException("Database collect must has jdbc params");
         }
         if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
-            for (String KEYWORD : VULNERABLE_KEYWORDS) {
-                if (metrics.getJdbc().getUrl().contains(KEYWORD)) {
-                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + KEYWORD);
+            for (String keyword : VULNERABLE_KEYWORDS) {
+                if (metrics.getJdbc().getUrl().contains(keyword)) {
+                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
                 }
             }
         }
