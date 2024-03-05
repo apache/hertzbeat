@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,6 +57,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
+    
+    private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
     public JdbcCommonCollect(){}
 
@@ -63,9 +66,11 @@ public class JdbcCommonCollect extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         // check the params
-        if (metrics == null || metrics.getJdbc() == null) {
+        try {
+            validateParams(metrics);
+        } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("DATABASE collect must has jdbc params");
+            builder.setMsg(e.getMessage());
             return;
         }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
@@ -325,5 +330,18 @@ public class JdbcCommonCollect extends AbstractCollect {
 
         }
         return url;
+    }
+
+    private void validateParams(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getJdbc() == null) {
+            throw new IllegalArgumentException("Database collect must has jdbc params");
+        }
+        if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
+            for (String keyword : VULNERABLE_KEYWORDS) {
+                if (metrics.getJdbc().getUrl().contains(keyword)) {
+                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
+                }
+            }
+        }
     }
 }
