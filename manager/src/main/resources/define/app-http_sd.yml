@@ -80,12 +80,8 @@ params:
     options:
       - label: Consul
         value: Consul
-      - label: Zookeeper
-        value: Zookeeper
       - label: Nacos
         value: Nacos
-      - label: Eureka
-        value: Eureka
 
 metrics:
   - name: server
