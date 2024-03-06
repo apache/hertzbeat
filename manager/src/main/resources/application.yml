@@ -48,6 +48,7 @@ management:
     enabled-by-default: on
 
 sureness:
+  container: jakarta_servlet
   auths:
     - digest
     - basic
@@ -75,7 +76,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:

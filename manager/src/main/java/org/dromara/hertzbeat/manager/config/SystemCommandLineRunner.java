@@ -26,7 +26,7 @@ import org.dromara.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.Locale;
 import java.util.TimeZone;
 

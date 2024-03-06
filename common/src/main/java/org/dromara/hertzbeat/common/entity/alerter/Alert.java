@@ -31,9 +31,9 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -56,8 +56,8 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 public class Alert {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "myid")
-    @GenericGenerator(name = "myid", strategy = "org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "snow-flake-id")
+    @GenericGenerator(name = "snow-flake-id", strategy = "org.dromara.hertzbeat.common.util.SnowFlakeIdGenerator")
     @Schema(title = "Alarm record entity primary key index ID",
             description = "告警记录实体主键索引ID",
             example = "87584674384", accessMode = READ_ONLY)

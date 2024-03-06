@@ -32,7 +32,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;

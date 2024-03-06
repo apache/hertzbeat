@@ -24,7 +24,7 @@ import org.dromara.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.Map;
 
 /**

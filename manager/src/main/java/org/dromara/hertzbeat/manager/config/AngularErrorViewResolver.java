@@ -32,8 +32,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -58,7 +58,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
         SERIES_VIEWS = Collections.unmodifiableMap(views);
     }
 
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     private final WebProperties.Resources resources;
 
@@ -125,7 +125,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
      */
     private static class HtmlResourceView implements View {
 
-        private Resource resource;
+        private final Resource resource;
 
         HtmlResourceView(Resource resource) {
             this.resource = resource;
