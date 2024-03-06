@@ -276,17 +276,19 @@ export class MonitorDataChartComponent implements OnInit {
               let minSeriesData: Array<{ value: any }> = [];
               let meanSeriesData: Array<{ value: any }> = [];
               this.lineHistoryTheme.series = [];
-              values[Object.keys(values)[0]].forEach((item: { time: number; mean: any; max: any; min: any }) => {
-                maxSeriesData.push({
-                  value: [item.time, item.max]
+              if (values != undefined && Object.keys(values).length > 0) {
+                values[Object.keys(values)[0]].forEach((item: { time: number; mean: any; max: any; min: any }) => {
+                  maxSeriesData.push({
+                    value: [item.time, item.max]
+                  });
+                  minSeriesData.push({
+                    value: [item.time, item.min]
+                  });
+                  meanSeriesData.push({
+                    value: [item.time, item.mean]
+                  });
                 });
-                minSeriesData.push({
-                  value: [item.time, item.min]
-                });
-                meanSeriesData.push({
-                  value: [item.time, item.mean]
-                });
-              });
+              }
               this.lineHistoryTheme.series.push({
                 name: 'Max',
                 type: 'line',
