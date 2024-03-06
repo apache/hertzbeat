@@ -1430,7 +1430,8 @@
       "profile": "https://github.com/Calvin979",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "design"
       ]
     },
     {
@@ -1569,6 +1570,15 @@
       "profile": "https://github.com/Wang-Yonghao",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "dudiao",
+      "name": "读钓",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38355949?v=4",
+      "profile": "https://www.yuque.com/dudiao/yy",
+      "contributions": [
+        "code"
       ]
     }
   ],
