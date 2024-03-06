@@ -65,7 +65,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 ##### 3：Start via source code
 
 1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.
-2. Backend：need `maven3+`, `java11`, `lombok`, start the `manager` service.
+2. Backend：need `maven3+`, `java17`, `lombok`, start the `manager` service.
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 

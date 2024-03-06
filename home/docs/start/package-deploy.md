@@ -64,14 +64,14 @@ sidebar_label: Install via Package
 1. **If using the package not contains JDK, you need to prepare the JAVA environment in advance**
 
    Install JAVA runtime environment-refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   requirement：JDK11 ENV     
+   requirement：JDK17 ENV     
    download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)   
    After installation use command line to check whether you install it successfully.
    ```
    $ java -version
-   java version "11.0.12" 
-   Java(TM) SE Runtime Environment 18.9 (build 11.0.12+8-LTS-237)
-   Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
+   java version "17.0.9"
+   Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
+   Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
 
    ```
 
