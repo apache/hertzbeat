@@ -1,4 +1,4 @@
-FROM openjdk:11.0.16-jre-slim-buster
+FROM openjdk:17-slim-buster
 
 # add args version
 ARG VERSION

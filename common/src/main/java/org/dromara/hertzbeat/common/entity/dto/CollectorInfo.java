@@ -24,7 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * collector info

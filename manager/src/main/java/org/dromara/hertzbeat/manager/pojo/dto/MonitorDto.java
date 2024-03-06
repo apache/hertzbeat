@@ -22,8 +22,8 @@ import org.dromara.hertzbeat.common.entity.manager.Param;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;

@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.warehouse.controller;
 
+import jakarta.servlet.ServletException;
 import org.dromara.hertzbeat.common.entity.dto.Value;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import org.dromara.hertzbeat.common.constants.CommonConstants;
@@ -33,7 +34,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.util.NestedServletException;
 
 import java.util.*;
 
@@ -157,7 +157,7 @@ class MetricsDataControllerTest {
                 .andReturn();
 
         when(historyDataStorage.isServerAvailable()).thenReturn(true);
-        NestedServletException exception = assertThrows(NestedServletException.class, () -> {
+        ServletException exception = assertThrows(ServletException.class, () -> {
             this.mockMvc.perform(MockMvcRequestBuilders.get(getUrlFail).params(params))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
