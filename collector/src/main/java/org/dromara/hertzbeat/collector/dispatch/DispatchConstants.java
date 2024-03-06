@@ -115,6 +115,10 @@ public interface DispatchConstants {
      * protocol pop3
      */
     String PROTOCOL_POP3 = "pop3";
+    /**
+     * protocol http_sd
+     */
+    String PROTOCOL_HTTP_SD = "httpsd";
 
     // Protocol type related - end
     // 协议类型相关 - end //
