@@ -34,6 +34,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Objects;
@@ -236,6 +237,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理监控指标传参异常
+     *
+     * @param exception 指标参数异常
+     * @return response
+     */
+    @ExceptionHandler(MonitorMetricsException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleMonitorMetricsException(MonitorMetricsException exception) {
+        Message<Void> message = Message.fail(PARAM_INVALID_CODE, exception.getMessage());
+        return ResponseEntity.ok(message);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    void ignoreNoResourceFoundException(Exception ex) throws Exception {
+        throw ex;
+    }
+
+    /**
      * handler the exception thrown for unCatch and unKnown
      *
      * @param exception UnknownException
@@ -252,19 +271,4 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
-
-    /**
-     * 处理监控指标传参异常
-     *
-     * @param exception 指标参数异常
-     * @return response
-     */
-    @ExceptionHandler(MonitorMetricsException.class)
-    @ResponseBody
-    ResponseEntity<Message<Void>> handleMonitorMetricsException(MonitorMetricsException exception) {
-        Message<Void> message = Message.fail(PARAM_INVALID_CODE, exception.getMessage());
-        return ResponseEntity.ok(message);
-    }
-
-
 }

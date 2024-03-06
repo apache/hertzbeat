@@ -1,7 +1,6 @@
 package org.dromara.hertzbeat.manager.nativex;
 
 import org.apache.sshd.common.channel.ChannelListener;
-import org.apache.sshd.common.file.root.RootedFileSystemProvider;
 import org.apache.sshd.common.forward.PortForwardingEventListener;
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactory;
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
@@ -24,28 +23,29 @@ import java.util.Set;
  */
 public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
-  private static final String SshConstantsClassName  = "org.apache.sshd.common.SshConstants";
-  @Override
-  public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-    // see: https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java
-    // TODO: move over to GraalVM reachability metadata
-    if (ClassUtils.isPresent(SshConstantsClassName, classLoader)) {
-      hints.reflection().registerTypes(Set.of(TypeReference.of(BouncyCastleSecurityProviderRegistrar.class),
-              TypeReference.of(EdDSASecurityProviderRegistrar.class), TypeReference.of(Nio2ServiceFactory.class),
-              TypeReference.of(Nio2ServiceFactoryFactory.class)),
-          hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS));
-      hints.reflection().registerTypes(Set.of(TypeReference.of(PortForwardingEventListener.class)),
-          hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-              MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.DECLARED_FIELDS));
-      hints.proxies().registerJdkProxy(TypeReference.of(ChannelListener.class),
-          TypeReference.of(PortForwardingEventListener.class), TypeReference.of(SessionListener.class));
-    }
-  }
+    private static final String SshConstantsClassName = "org.apache.sshd.common.SshConstants";
 
-  private void registerConstructor(RuntimeHints hints, Class<?> clazz) {
-    Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-    for (Constructor<?> declaredConstructor : declaredConstructors) {
-      hints.reflection().registerConstructor(declaredConstructor, ExecutableMode.INVOKE);
+    @Override
+    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+        // see: https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java
+        // TODO: move over to GraalVM reachability metadata
+        if (ClassUtils.isPresent(SshConstantsClassName, classLoader)) {
+            hints.reflection().registerTypes(Set.of(TypeReference.of(BouncyCastleSecurityProviderRegistrar.class),
+                            TypeReference.of(EdDSASecurityProviderRegistrar.class), TypeReference.of(Nio2ServiceFactory.class),
+                            TypeReference.of(Nio2ServiceFactoryFactory.class)),
+                    hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS));
+            hints.reflection().registerTypes(Set.of(TypeReference.of(PortForwardingEventListener.class)),
+                    hint -> hint.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+                            MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.DECLARED_FIELDS));
+            hints.proxies().registerJdkProxy(TypeReference.of(ChannelListener.class),
+                    TypeReference.of(PortForwardingEventListener.class), TypeReference.of(SessionListener.class));
+        }
     }
-  }
+
+    private void registerConstructor(RuntimeHints hints, Class<?> clazz) {
+        Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
+        for (Constructor<?> declaredConstructor : declaredConstructors) {
+            hints.reflection().registerConstructor(declaredConstructor, ExecutableMode.INVOKE);
+        }
+    }
 }

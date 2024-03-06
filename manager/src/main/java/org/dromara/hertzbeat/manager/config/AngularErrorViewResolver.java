@@ -58,7 +58,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
         SERIES_VIEWS = Collections.unmodifiableMap(views);
     }
 
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     private final WebProperties.Resources resources;
 
@@ -125,7 +125,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
      */
     private static class HtmlResourceView implements View {
 
-        private Resource resource;
+        private final Resource resource;
 
         HtmlResourceView(Resource resource) {
             this.resource = resource;

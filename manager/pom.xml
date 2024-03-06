@@ -198,33 +198,28 @@
         </resources>
         <plugins>
             <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
-                    <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
-                    <buildArgs>
-                        <arg>
-                            --no-fallback
-                            -H:+ReportExceptionStackTraces
-                            --install-exit-handlers
-                            --report-unsupported-elements-at-runtime
-                            -H:+AddAllCharsets
-                            -H:-AddAllFileSystemProviders
-                            --trace-class-initialization=oracle.i18n.text.converter.CharacterConverterZHTEUC,ch.qos.logback.core.status.InfoStatus,oracle.i18n.text.converter.CharacterConverterShift,ch.qos.logback.core.status.StatusBase,oracle.i18n.text.converter.CharacterConverterGB18030,ch.qos.logback.classic.Logger,ch.qos.logback.classic.Level,oracle.i18n.text.converter.CharacterConverter1Byte,ch.qos.logback.core.util.StatusPrinter,oracle.i18n.text.converter.CharsetMeta,oracle.i18n.text.converter.CharacterConverterJAEUC,ch.qos.logback.core.util.Loader,oracle.i18n.text.converter.CharacterConverterLC,org.slf4j.LoggerFactory
-                        </arg>
-                    </buildArgs>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <!--生成的jar包不包含maven描述相关文件-->
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifest>
+                            <!--项目启动类-->
+                            <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
+                            <addClasspath>true</addClasspath>
+                            <!--外部依赖jar包的位置-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>. config</Class-Path>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

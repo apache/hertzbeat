@@ -31,8 +31,6 @@ import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
 import org.dromara.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.dromara.hertzbeat.manager.service.MailService;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.mail.javamail.JavaMailSender;
