@@ -134,6 +134,7 @@ export class AlertSilenceComponent implements OnInit {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.updatePageIndex(silenceIds.size);
           this.loadAlertSilenceTable();
         } else {
           this.tableLoading = false;
@@ -146,6 +147,11 @@ export class AlertSilenceComponent implements OnInit {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+  }
+
+  updatePageIndex(delSize: number) {
+    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
+    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
   // begin: 列表多选分页逻辑
