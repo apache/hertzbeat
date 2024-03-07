@@ -21,12 +21,16 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * collector startup
  * @author tom
  */
 @SpringBootApplication
+@ComponentScan(basePackages = {"org.dromara.hertzbeat"})
+@ConfigurationPropertiesScan(basePackages = {"org.dromara.hertzbeat"})
 public class Collector {
     public static void main(String[] args) {
         SpringApplication.run(Collector.class, args);
